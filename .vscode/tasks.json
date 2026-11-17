@@ -18,14 +18,14 @@
     {
       "label": "WorkSocial: Diagnostics",
       "type": "shell",
-      "command": "tsx scripts/supervisor-stub.ts diagnostics",
+      "command": "pnpm exec tsx scripts/supervisor-stub.ts diagnostics",
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared" }
     },
     {
       "label": "WorkSocial: Test Local Operations",
       "type": "shell",
-      "command": "tsx scripts/supervisor-stub.ts test-local",
+      "command": "pnpm exec tsx scripts/supervisor-stub.ts test-local",
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared" }
     }

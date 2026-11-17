@@ -7,6 +7,7 @@ export {
   EffectState,
   canTransition,
   transition,
+  isPostApplyPhase,
   type EffectStateValue,
 } from "./effect-state-machine.js";
 export {
@@ -21,6 +22,7 @@ export {
   type EffectOutcome,
 } from "./simulated-effect-ledger.js";
 export {
+  createBudgetAccount,
   reserveBudget,
   settleBudget,
   type BudgetAccount,

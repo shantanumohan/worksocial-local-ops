@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   EffectState,
   canTransition,
+  isPostApplyPhase,
   transition,
 } from "./effect-state-machine.js";
 
@@ -34,5 +35,32 @@ describe("effect state machine", () => {
     expect(
       transition(EffectState.APPLYING, EffectState.UNKNOWN_REMOTE_OUTCOME),
     ).toBe(EffectState.UNKNOWN_REMOTE_OUTCOME);
+  });
+
+  it("allows VALIDATING → CANCELLED (pre-effect cancel)", () => {
+    expect(transition(EffectState.VALIDATING, EffectState.CANCELLED)).toBe(
+      EffectState.CANCELLED,
+    );
+  });
+
+  it("keeps post-apply verification failures on reconciliation, not re-APPLY", () => {
+    expect(
+      canTransition(EffectState.VERIFYING, EffectState.FAILED_RETRYABLE),
+    ).toBe(false);
+    expect(
+      canTransition(EffectState.APPLYING, EffectState.FAILED_RETRYABLE),
+    ).toBe(false);
+
+    const unknown = transition(
+      EffectState.VERIFYING,
+      EffectState.UNKNOWN_REMOTE_OUTCOME,
+    );
+    expect(unknown).toBe(EffectState.UNKNOWN_REMOTE_OUTCOME);
+    expect(transition(unknown, EffectState.VERIFYING)).toBe(
+      EffectState.VERIFYING,
+    );
+    expect(canTransition(unknown, EffectState.QUEUED)).toBe(false);
+    expect(isPostApplyPhase(EffectState.VERIFYING)).toBe(true);
+    expect(isPostApplyPhase(EffectState.FAILED_RETRYABLE)).toBe(false);
   });
 });

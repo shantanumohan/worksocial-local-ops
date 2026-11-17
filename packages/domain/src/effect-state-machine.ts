@@ -1,5 +1,9 @@
 /**
  * Effect / job state machine (v3 §7). Pure transitions only.
+ *
+ * After APPLYING, verification failures must stay on a reconciliation path
+ * (UNKNOWN_REMOTE_OUTCOME → VERIFYING), never FAILED_RETRYABLE → QUEUED,
+ * which would re-enter APPLYING and risk duplicate external effects.
  */
 
 export const EffectState = {
@@ -38,14 +42,16 @@ const TRANSITIONS: Record<EffectStateValue, readonly EffectStateValue[]> = {
     "FAILED_RETRYABLE",
     "QUARANTINED",
     "WAITING_HUMAN",
+    "CANCELLED",
   ],
   AUTHORIZED: ["APPLYING", "CANCELLED", "QUARANTINED"],
-  APPLYING: ["VERIFYING", "UNKNOWN_REMOTE_OUTCOME", "FAILED_RETRYABLE"],
-  VERIFYING: ["COMPLETE", "UNKNOWN_REMOTE_OUTCOME", "FAILED_RETRYABLE"],
+  APPLYING: ["VERIFYING", "UNKNOWN_REMOTE_OUTCOME"],
+  VERIFYING: ["COMPLETE", "UNKNOWN_REMOTE_OUTCOME"],
   COMPLETE: [],
   WAITING_DEPENDENCY: ["QUEUED", "CANCELLED", "QUARANTINED"],
   WAITING_AUTHENTICATION: ["RUNNING", "CANCELLED", "QUARANTINED"],
   WAITING_HUMAN: ["RUNNING", "CANCELLED", "QUARANTINED"],
+  /** Pre-effect retry only — must not follow APPLYING/VERIFYING. */
   FAILED_RETRYABLE: ["QUEUED", "CANCELLED", "QUARANTINED"],
   UNKNOWN_REMOTE_OUTCOME: ["VERIFYING", "QUARANTINED", "CANCELLED"],
   CANCELLED: [],
@@ -67,4 +73,14 @@ export function transition(
     throw new Error(`Invalid effect transition: ${from} -> ${to}`);
   }
   return to;
+}
+
+/** True when the job has entered the apply/verify/reconcile path. */
+export function isPostApplyPhase(state: EffectStateValue): boolean {
+  return (
+    state === EffectState.APPLYING ||
+    state === EffectState.VERIFYING ||
+    state === EffectState.UNKNOWN_REMOTE_OUTCOME ||
+    state === EffectState.COMPLETE
+  );
 }
