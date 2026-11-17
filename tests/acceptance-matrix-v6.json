@@ -1,0 +1,808 @@
+{
+  "catalog": "WorkSocial product acceptance v6",
+  "version": "6.0",
+  "note": "159 cases — all NOT_RUN. This matrix is not production acceptance evidence. 130 reference-core unit tests ≠ production acceptance.",
+  "totals": {
+    "flows": 26,
+    "userStories": 60,
+    "experience": 73,
+    "all": 159
+  },
+  "cases": [
+    {
+      "id": "T-F01",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F02",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F03",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F04",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F05",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F06",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F07",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F08",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F09",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F10",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F11",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F12",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F13",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F14",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F15",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F16",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F17",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F18",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F19",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F20",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F21",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F22",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F23",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F24",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F25",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-F26",
+      "kind": "flow",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-001",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-002",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-003",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-004",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-005",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-006",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-007",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-008",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-009",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-010",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-011",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-012",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-013",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-014",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-015",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-016",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-017",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-018",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-019",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-020",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-021",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-022",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-023",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-024",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-025",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-026",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-027",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-028",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-029",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-030",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-031",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-032",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-033",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-034",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-035",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-036",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-037",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-038",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-039",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-040",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-041",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-042",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-043",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-044",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-045",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-046",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-047",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-048",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-049",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-050",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-051",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-052",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-053",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-054",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-055",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-056",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-057",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-058",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-059",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-US-060",
+      "kind": "user_story",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X001",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X002",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X003",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X004",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X005",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X006",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X007",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X008",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X009",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X010",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X011",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X012",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X013",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X014",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X015",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X016",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X017",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X018",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X019",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X020",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X021",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X022",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X023",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X024",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X025",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X026",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X027",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X028",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X029",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X030",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X031",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X032",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X033",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X034",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X035",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X036",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X037",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X038",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X039",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X040",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X041",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X042",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X043",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X044",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X045",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X046",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X047",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X048",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X049",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X050",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X051",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X052",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X053",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X054",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X055",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X056",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X057",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X058",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X059",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X060",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X061",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X062",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X063",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X064",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X065",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X066",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X067",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X068",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X069",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X070",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X071",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X072",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "T-X073",
+      "kind": "experience",
+      "status": "NOT_RUN"
+    }
+  ]
+}
