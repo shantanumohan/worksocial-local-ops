@@ -35,6 +35,12 @@ importers:
       '@worksocial/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@worksocial/learning-worker':
+        specifier: workspace:*
+        version: link:../../services/learning-worker
+      '@worksocial/ml':
+        specifier: workspace:*
+        version: link:../../packages/ml
       '@worksocial/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence
@@ -87,6 +93,22 @@ importers:
         specifier: 2.1.8
         version: 2.1.8(@types/node@22.10.2)
 
+  packages/ml:
+    dependencies:
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../domain
+    devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)
+
   packages/observability:
     devDependencies:
       typescript:
@@ -98,6 +120,9 @@ importers:
       '@worksocial/domain':
         specifier: workspace:*
         version: link:../domain
+      '@worksocial/ml':
+        specifier: workspace:*
+        version: link:../ml
     devDependencies:
       '@types/node':
         specifier: 22.10.2
@@ -174,6 +199,28 @@ importers:
         specifier: 5.7.2
         version: 5.7.2
 
+  services/learning-worker:
+    dependencies:
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@worksocial/ml':
+        specifier: workspace:*
+        version: link:../../packages/ml
+      '@worksocial/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
+    devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)
+
   services/probes:
     devDependencies:
       typescript:
@@ -226,9 +273,21 @@ importers:
       '@worksocial/claude-runner':
         specifier: workspace:*
         version: link:../../services/claude-runner
+      '@worksocial/credential-broker':
+        specifier: workspace:*
+        version: link:../../services/credential-broker
       '@worksocial/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@worksocial/learning-worker':
+        specifier: workspace:*
+        version: link:../../services/learning-worker
+      '@worksocial/ml':
+        specifier: workspace:*
+        version: link:../../packages/ml
+      '@worksocial/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
     devDependencies:
       typescript:
         specifier: 5.7.2

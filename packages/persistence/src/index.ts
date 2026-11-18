@@ -102,3 +102,11 @@ export {
   type RoleStatusRecord,
   type RoleRunEvidence,
 } from "./role-runtime-store.js";
+
+export {
+  createFileLearningStore,
+  defaultLearningStateDir,
+  emptyLearningState,
+  type LearningStore,
+  type LearningState,
+} from "./learning-store.js";

@@ -18,7 +18,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@worksocial/domain": "workspace:*"
+    "@worksocial/domain": "workspace:*",
+    "@worksocial/ml": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "22.10.2",

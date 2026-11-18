@@ -1,5 +1,11 @@
 import { createServer, type Server } from "node:http";
-import { authorityPage, loginPage, mappingPage, rolesPage } from "./pages.js";
+import {
+  authorityPage,
+  learningPage,
+  loginPage,
+  mappingPage,
+  rolesPage,
+} from "./pages.js";
 
 export type ConsoleServerOptions = {
   port: number;
@@ -15,7 +21,8 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
         serviceId: "console",
         status: "running",
         productionActivated: false,
-        identity: "R1-02/R1-03/R1-04 login + authority + mapping + roles",
+        identity:
+          "R1-02–learning login + authority + mapping + roles + learning",
         message: "Minimal console surface; not full React routes.",
       });
       res.writeHead(200, { "content-type": "application/json" });
@@ -44,6 +51,12 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
     if (url.pathname === "/roles") {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       res.end(rolesPage(options.apiOrigin));
+      return;
+    }
+
+    if (url.pathname === "/learning") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(learningPage(options.apiOrigin));
       return;
     }
 

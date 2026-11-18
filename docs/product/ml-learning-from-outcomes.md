@@ -9,12 +9,25 @@ In-repo pointer for the owner requirement. Full project-store text may be richer
 - Labels come from durable evidence (gateway receipts, journey verification, owner decisions, stop-switch, etc.).
 - ML must not silently expand authority (spend, privacy, CRM write, publishing).
 
-## R1-03 scope
+## Implemented slice
 
-Production mapping stores labeled write-path outcomes (`core.write_path_outcomes` / `writePathOutcomes`) and exposes `listWritePathOutcomesForLearning`.
+| Piece | Location |
+|-------|----------|
+| Model registry (≥2 OSS pins) | `packages/ml` — `outcome-nb-bernoulli@1.0.0`, `outcome-logreg-l2@1.0.0` (BSD-3-Clause sklearn-compatible) |
+| Feature extraction | `packages/ml` — excludes `fixtureOnly` / fixture execution by default; rejects unverified model claims |
+| Train / proposals | `services/learning-worker` + `packages/ml` — versioned playbook/ranking/risk **proposals under review** |
+| Persistence | file-backed learning store + SQL `006_learning.sql` |
+| Console / API | `/learning` + `/learning/status|models|runs|proposals|train` |
+| Isolation | `learning-worker` principal; credential-broker denies mint/reveal; no action-gateway write principal |
 
-## R1-04 scope
+## Honest limits
 
-Role runtime stores labeled role-run outcomes (`measure.role_run_outcomes` / file-backed `role-runtime.json` outcomes) via `createRoleRunOutcome` / `listRoleOutcomesForLearning`.
+- Offline/fixture metrics ≠ production-canary-verified learning.
+- No Hugging Face / ONNX weight download required (or claimed) in CI.
+- Probe/CRM canary labels remain stubbed until R1-05.
+- Proposals never auto-expand grants/spend/CRM/publish authority.
 
-**Not in R1-03/R1-04:** ML frameworks, `services/learning-worker`, training jobs, or authority expansion from scores.
+## Prior hooks (still consumed)
+
+- R1-03: `writePathOutcomes` / `listWritePathOutcomesForLearning`
+- R1-04: role-run outcomes / `listRoleOutcomesForLearning`

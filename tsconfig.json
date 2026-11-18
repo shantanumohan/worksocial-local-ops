@@ -3,6 +3,7 @@
   "references": [
     { "path": "packages/contracts" },
     { "path": "packages/domain" },
+    { "path": "packages/ml" },
     { "path": "packages/persistence" },
     { "path": "packages/provider-adapters" },
     { "path": "packages/observability" },
@@ -14,6 +15,7 @@
     { "path": "services/claude-runner" },
     { "path": "services/action-gateway" },
     { "path": "services/credential-broker" },
+    { "path": "services/learning-worker" },
     { "path": "services/probes" },
     { "path": "services/evaluation-worker" }
   ]

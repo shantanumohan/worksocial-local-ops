@@ -1,7 +1,8 @@
 /**
  * Credential broker — vault reference isolation (R1-02).
  * Gateway/adapters may mint narrow scoped handles.
- * Reasoning workers (claude-runner, evaluation) never receive blanket secrets.
+ * Reasoning / learning workers (claude-runner, evaluation, learning-worker)
+ * never receive blanket secrets or production effect credentials.
  */
 
 import { createHash, randomBytes } from "node:crypto";
@@ -11,6 +12,7 @@ export type BrokerPrincipal =
   | "provider-adapter"
   | "claude-runner"
   | "evaluation-worker"
+  | "learning-worker"
   | "api"
   | "console";
 
@@ -52,6 +54,7 @@ export type BrokerMintResult =
 const REASONING_PRINCIPALS: ReadonlySet<BrokerPrincipal> = new Set([
   "claude-runner",
   "evaluation-worker",
+  "learning-worker",
 ]);
 
 const EFFECT_PRINCIPALS: ReadonlySet<BrokerPrincipal> = new Set([
@@ -160,7 +163,8 @@ export function createCredentialBroker(): CredentialBroker {
       return {
         ok: false,
         code: "PRINCIPAL_DENIED",
-        reason: "Claude runner / evaluation never receive raw secrets",
+        reason:
+          "Claude runner / evaluation / learning-worker never receive raw secrets",
       };
     }
     const handle = handles.get(handleId);
