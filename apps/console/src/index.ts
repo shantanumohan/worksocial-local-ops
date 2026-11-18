@@ -4,6 +4,7 @@ export {
   authorityPage,
   mappingPage,
   rolesPage,
+  monitoringPage,
   learningPage,
 } from "./pages.js";
 export const packageName = "@worksocial/console" as const;

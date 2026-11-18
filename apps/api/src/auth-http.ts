@@ -25,6 +25,8 @@ import {
   isOutcomeEvidenceSource,
   listAgentRoleContracts,
   listWritePathOutcomesForLearning,
+  ProbeMode,
+  createFixturePilotMapping,
   proveFixturePilotWritePath,
   recordWritePathOutcome,
   roleMayPerform,
@@ -41,8 +43,10 @@ import {
   type SourceBinding,
 } from "@worksocial/domain";
 import {
+  createDemoCanaryGrant,
   createFileAuthorityStore,
   createFileLearningStore,
+  createFileProbeStore,
   createFileProductionMappingStore,
   createFileRoleRuntimeStore,
   ensureBootstrapOwner,
@@ -50,6 +54,7 @@ import {
   type AuthorityStore,
   type LearningStore,
   type PolicyDecisionRecord,
+  type ProbeStore,
   type ProductionMappingStore,
   type RoleRuntimeStore,
 } from "@worksocial/persistence";
@@ -72,6 +77,10 @@ import {
   createLearningWorker,
   type LearningWorker,
 } from "@worksocial/learning-worker";
+import {
+  createProbeService,
+  type ProbeService,
+} from "@worksocial/probes";
 import { listPinnedModels } from "@worksocial/ml";
 
 export type ApiRuntime = {
@@ -80,6 +89,8 @@ export type ApiRuntime = {
   roleRuntimeStore: RoleRuntimeStore;
   learningStore: LearningStore;
   learningWorker: LearningWorker;
+  probeStore: ProbeStore;
+  probes: ProbeService;
   runner: ClaudeRunner;
   missions: MissionEnqueueService;
   gateway: ActionGateway;
@@ -101,6 +112,11 @@ export function createApiRuntime(options: {
   const roleRuntimeStore = createFileRoleRuntimeStore(options.stateDir);
   const learningStore = createFileLearningStore(options.stateDir);
   const learningWorker = createLearningWorker(learningStore);
+  const probeStore = createFileProbeStore(options.stateDir);
+  const probes = createProbeService({
+    store: probeStore,
+    mappingStore,
+  });
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
@@ -119,6 +135,8 @@ export function createApiRuntime(options: {
     roleRuntimeStore,
     learningStore,
     learningWorker,
+    probeStore,
+    probes,
     runner,
     missions,
     gateway: createActionGateway(),
@@ -253,9 +271,9 @@ export async function handleApiRequest(
         status: "running",
         productionActivated: false,
         identity:
-          "R1-02 auth + R1-03 mapping + R1-04 thirty-role Claude runner",
+          "R1-02–R1-05 auth + mapping + roles + learning + probes/canaries",
         message:
-          "API identity/authority/mapping/roles surface. No live Zoho/CMS mutations. Claude fixture mode default.",
+          "API surface includes monitoring probes. No live Zoho mutations. Fixture canaries + Claude fixture mode default.",
       },
       cors,
     );
@@ -1692,6 +1710,244 @@ export async function handleApiRequest(
         exampleCount: trained.examples.length,
         honestNote:
           "Offline metrics only. Not production-canary-verified. Proposals await review.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/probes/status") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const status = runtime.probes.status();
+    const last = runtime.probes.lastEvidence();
+    json(
+      res,
+      200,
+      {
+        ...status,
+        lastEvidence: last,
+        note: status.honestNote,
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/probes/runs") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(
+      res,
+      200,
+      {
+        runs: runtime.probes.listRuns(50),
+        lastEvidence: runtime.probes.lastEvidence(),
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/probes/run-http") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: { targetId?: string; mode?: string; liveUrl?: string } = {};
+    try {
+      body = raw ? (JSON.parse(raw) as typeof body) : {};
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    const mode =
+      body.mode === ProbeMode.LIVE ? ProbeMode.LIVE : ProbeMode.FIXTURE;
+    const run = await runtime.probes.runHttp({
+      mode,
+      ...(body.targetId !== undefined ? { targetId: body.targetId } : {}),
+      ...(body.liveUrl !== undefined ? { liveUrl: body.liveUrl } : {}),
+    });
+    json(res, 200, { run, note: "Fixture HTTP by default; live needs liveUrl." }, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/probes/run-dom") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: { targetId?: string; mode?: string } = {};
+    try {
+      body = raw ? (JSON.parse(raw) as typeof body) : {};
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    const mode =
+      body.mode === ProbeMode.LIVE ? ProbeMode.LIVE : ProbeMode.FIXTURE;
+    const run = await runtime.probes.runDom({
+      mode,
+      ...(body.targetId !== undefined ? { targetId: body.targetId } : {}),
+    });
+    json(
+      res,
+      200,
+      {
+        run,
+        note: "Fixture DOM journey by default. Live Playwright remains NOT_WIRED without binding.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/probes/run-form-canary") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason: "Form canary requires administrator manage_standing_policies",
+        },
+        cors,
+      );
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      writePathId?: string;
+      liveZoho?: boolean;
+      ensureFixturePilot?: boolean;
+    } = {};
+    try {
+      body = raw ? (JSON.parse(raw) as typeof body) : {};
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    // Ensure fixture pilot + canary grant exist for offline demos.
+    if (body.ensureFixturePilot !== false) {
+      let mapping = runtime.mappingStore.read();
+      if (mapping.writePaths.length === 0) {
+        const seeded = createFixturePilotMapping(nowIso);
+        mapping = proveFixturePilotWritePath(
+          seeded.state,
+          seeded.writePathId,
+          nowIso,
+        );
+        runtime.mappingStore.write(mapping);
+      } else {
+        const pathId = body.writePathId ?? mapping.writePaths[0]?.writePathId;
+        if (
+          pathId &&
+          !mapping.readEvidence.some((e) => e.writePathId === pathId)
+        ) {
+          try {
+            mapping = proveFixturePilotWritePath(mapping, pathId, nowIso);
+            runtime.mappingStore.write(mapping);
+          } catch {
+            // leave mapping as-is; canary will fail closed
+          }
+        }
+      }
+
+      const auth = runtime.store.read();
+      if (
+        !auth.capabilityGrants.some(
+          (g) => g.grantId === "grant-demo-form-canary",
+        )
+      ) {
+        const { policy, grant } = createDemoCanaryGrant(nowIso);
+        runtime.store.update((state) => ({
+          ...state,
+          standingPolicies: [
+            ...state.standingPolicies.filter(
+              (p) => p.policyId !== policy.policyId,
+            ),
+            policy,
+          ],
+          capabilityGrants: [
+            ...state.capabilityGrants.filter(
+              (g) => g.grantId !== grant.grantId,
+            ),
+            grant,
+          ],
+          updatedAt: nowIso,
+        }));
+      }
+    }
+
+    const authState = runtime.store.read();
+    const mapping = runtime.mappingStore.read();
+    const canary = runtime.probes.runFormCanary({
+      authority: {
+        outboundStopped: authState.ownerControls.outboundStopped,
+        operatingMode: authState.ownerControls.operatingMode,
+        policies: authState.standingPolicies,
+        grants: authState.capabilityGrants,
+        productionMapping: mapping,
+      },
+      ...(body.writePathId !== undefined
+        ? { writePathId: body.writePathId }
+        : {}),
+      ...(body.liveZoho === true ? { liveZoho: true } : {}),
+      gateway: runtime.gateway,
+      nowIso,
+      targetAccountId: "acct-fixture-canary",
+    });
+
+    json(
+      res,
+      200,
+      {
+        run: canary.run,
+        intent: canary.intent,
+        receipt: canary.receipt,
+        outcome: canary.outcome,
+        gatewayAllowed: canary.gatewayAllowed,
+        gatewayCode: canary.gatewayCode,
+        details: canary.details,
+        note:
+          body.liveZoho === true
+            ? "Live Zoho is NOT_WIRED without owner credentials."
+            : "Fixture canary with correlated receipt. Synthetic leads excluded from commercial totals. Outcome labeled fixtureOnly for learning.",
       },
       cors,
     );

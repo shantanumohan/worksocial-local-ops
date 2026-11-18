@@ -15,6 +15,7 @@
     { "path": "../../services/credential-broker" },
     { "path": "../../services/claude-runner" },
     { "path": "../../services/workflow-worker" },
-    { "path": "../../services/learning-worker" }
+    { "path": "../../services/learning-worker" },
+    { "path": "../../services/probes" }
   ]
 }

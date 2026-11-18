@@ -76,6 +76,7 @@ export {
   emptyAuthorityState,
   defaultProviderStatuses,
   createDemoPublishGrant,
+  createDemoCanaryGrant,
   defaultAuthorityStateDir,
   hashPassword,
   verifyPassword,
@@ -110,3 +111,9 @@ export {
   type LearningStore,
   type LearningState,
 } from "./learning-store.js";
+
+export {
+  createFileProbeStore,
+  defaultProbeStateDir,
+  type ProbeStore,
+} from "./probe-store.js";

@@ -19,4 +19,4 @@ Local multi-model learning worker. Consumes verified SUCCESS/FAILURE outcome led
 | Local train from verified outcomes | **real** (file-backed ledgers) |
 | Auto-apply authority / spend changes | **forbidden** |
 | Production-canary-verified learning | **not claimed** |
-| Probe/CRM canary labels | **stub until R1-05** |
+| Probe/CRM canary labels | **wired** (R1-05 fixtureOnly; live Zoho NOT_WIRED) |

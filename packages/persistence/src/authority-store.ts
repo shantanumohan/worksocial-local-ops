@@ -258,6 +258,38 @@ export function createDemoPublishGrant(nowIso: string): {
   return { policy, grant };
 }
 
+/** Standing policy+grant for fixture form-to-CRM canaries (R1-05). */
+export function createDemoCanaryGrant(nowIso: string): {
+  policy: StandingPolicy;
+  grant: CapabilityGrant;
+} {
+  const policy: StandingPolicy = {
+    policyId: "pol-demo-form-canary",
+    version: 1,
+    actorRole: LocalRole.ADMINISTRATOR,
+    channelId: "owned-site",
+    actionClass: ActionClass.ROUTINE_CUSTOMER_SERVICE,
+    allowedAssetScope: ["page-contact"],
+    enabled: true,
+    emergencyStopApplies: true,
+    expiresAtIso: null,
+    createdAtIso: nowIso,
+  };
+  const grant: CapabilityGrant = {
+    grantId: "grant-demo-form-canary",
+    policyId: policy.policyId,
+    targetAccountId: "acct-fixture-canary",
+    allowedOperations: ["submit_form_canary"],
+    allowedAssetScope: ["page-contact"],
+    contentRevisionBound: null,
+    rateLimitPerHour: 12,
+    expiresAtIso: null,
+    revoked: false,
+    createdAtIso: nowIso,
+  };
+  return { policy, grant };
+}
+
 export function defaultAuthorityStateDir(repoRoot: string): string {
   return join(repoRoot, ".worksocial", "local-state");
 }

@@ -24,10 +24,11 @@ In-repo pointer for the owner requirement. Full project-store text may be richer
 
 - Offline/fixture metrics ≠ production-canary-verified learning.
 - No Hugging Face / ONNX weight download required (or claimed) in CI.
-- Probe/CRM canary labels remain stubbed until R1-05.
+- Probe/CRM canary SUCCESS/FAILURE labels are wired (R1-05) as `fixtureOnly` until live credentials exist.
 - Proposals never auto-expand grants/spend/CRM/publish authority.
 
 ## Prior hooks (still consumed)
 
 - R1-03: `writePathOutcomes` / `listWritePathOutcomesForLearning`
 - R1-04: role-run outcomes / `listRoleOutcomesForLearning`
+- R1-05: probe/canary outcomes via `buildProbeWritePathOutcome` (fixtureOnly by default)

@@ -49,8 +49,21 @@ export const R1_03_ADAPTERS: readonly AdapterDescriptor[] = [
     adapterId: "zoho-crm",
     providerId: "crm",
     status: AdapterStatus.FIXTURE,
-    capabilities: ["fixture_read_module", "fixture_read_org"],
-    notes: "Fixture CRM identity/module reads only; no live Zoho writes.",
+    capabilities: [
+      "fixture_read_module",
+      "fixture_read_org",
+      "fixture_canary_receipt",
+    ],
+    notes:
+      "Fixture CRM identity/module reads + correlated canary receipts. Live Zoho writes remain NOT_WIRED without owner credentials.",
+  },
+  {
+    adapterId: "zoho-crm-live",
+    providerId: "crm",
+    status: AdapterStatus.NOT_WIRED,
+    capabilities: [],
+    notes:
+      "Live Zoho CRM adapter scaffold — NOT_WIRED until owner credentials and org validation exist (R1-05).",
   },
   {
     adapterId: "booking",

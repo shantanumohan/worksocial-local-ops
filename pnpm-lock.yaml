@@ -44,6 +44,9 @@ importers:
       '@worksocial/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence
+      '@worksocial/probes':
+        specifier: workspace:*
+        version: link:../../services/probes
       '@worksocial/provider-adapters':
         specifier: workspace:*
         version: link:../../packages/provider-adapters
@@ -222,10 +225,26 @@ importers:
         version: 2.1.8(@types/node@22.10.2)
 
   services/probes:
+    dependencies:
+      '@worksocial/action-gateway':
+        specifier: workspace:*
+        version: link:../action-gateway
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@worksocial/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
     devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
       typescript:
         specifier: 5.7.2
         version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)
 
   services/supervisor:
     dependencies:
@@ -288,7 +307,35 @@ importers:
       '@worksocial/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence
+      '@worksocial/probes':
+        specifier: workspace:*
+        version: link:../../services/probes
     devDependencies:
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)
+
+  tests/e2e:
+    dependencies:
+      '@worksocial/action-gateway':
+        specifier: workspace:*
+        version: link:../../services/action-gateway
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@worksocial/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
+      '@worksocial/probes':
+        specifier: workspace:*
+        version: link:../../services/probes
+    devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
       typescript:
         specifier: 5.7.2
         version: 5.7.2

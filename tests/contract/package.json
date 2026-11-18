@@ -13,7 +13,8 @@
     "@worksocial/domain": "workspace:*",
     "@worksocial/learning-worker": "workspace:*",
     "@worksocial/ml": "workspace:*",
-    "@worksocial/persistence": "workspace:*"
+    "@worksocial/persistence": "workspace:*",
+    "@worksocial/probes": "workspace:*"
   },
   "devDependencies": {
     "typescript": "5.7.2",
