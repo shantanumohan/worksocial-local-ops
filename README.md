@@ -4,7 +4,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 
 **Not production-activated.** No live providers, credentials, schedules, website changes, CRM writes, or customer replies. External effects: none.
 
-## What is real (R1-01 + R1-02)
+## What is real (R1-01 → R1-03)
 
 ### R1-01 local execution
 - **Supervisor-owned local lifecycle** — `pnpm local:start|stop|doctor|health` and VS Code tasks call `services/supervisor`.
@@ -21,16 +21,25 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - **Stop switch** enforced at the gateway before every external effect.
 - **Console** — `/login` and `/authority` with honest **connected / authorized / verified** labels (never fake connected).
 
+### R1-03 production mapping
+- **Domain + file store + SQL `004_production_mapping.sql`** for site/CMS/repo bindings, forms, booking/CRM ownership, journey registry, read evidence, and labeled write-path outcomes.
+- **Read-first gates** — pilot write classes require mapped ownership **and** prior read evidence (`OWNERSHIP_UNPROVEN` / `READ_EVIDENCE_MISSING`).
+- **Provider adapters** — `NOT_WIRED` / `FIXTURE` scaffolds only; **no live Zoho/CMS/booking mutations**.
+- **Console `/mapping`** — honest binding/adapter status; fixture seed + prove-read helpers.
+- **Learning hooks only** — `writePathOutcomes` + `listWritePathOutcomesForLearning` store SUCCESS/FAILURE labels for a later local multi-model learning-worker. **No ML frameworks or training in this PR.**
+
 ## What is still stub / NOT_WIRED
 
 | Area | Status |
 |------|--------|
 | Temporal runtime / durable workflows | **stub** — `NOT_WIRED` |
-| Full console React routes (v5 25 screens) | minimal login + authority only |
-| Live OAuth / provider connections | excluded (R1-03+) |
+| Full console React routes (v5 25 screens) | minimal login + authority + mapping only |
+| Live OAuth / provider connections | **excluded** — fixture/NOT_WIRED scaffolds only |
+| Live Zoho / CMS / booking mutations | **excluded** |
 | Postgres bound as live control plane | schema ready; runtime state is **file-backed** |
 | Full Temporal Claude runner fleet | out of scope (R1-04) |
-| CRM, publishing, after-hours | excluded |
+| Multi-model learning-worker | **hooks only** (outcome labels); training deferred |
+| After-hours / publishing pipelines | excluded |
 
 Status labels stay honest: fixture / stub / `NOT_RUN` ≠ sandbox-verified or production-canary-verified.
 
@@ -54,7 +63,7 @@ pnpm install
 pnpm local:doctor | local:start | local:stop | local:health
 pnpm check
 pnpm test:unit          # domain + persistence + supervisor + gateway + broker + api
-pnpm test:contract      # unauthorized-write + stop-switch
+pnpm test:contract      # unauthorized-write + stop-switch + read-evidence-required
 pnpm test:database | test:workflow | test:e2e | test:security | test:eval
 pnpm recovery:rehearse | release:evidence
 ```
@@ -78,10 +87,11 @@ Optional env: `WORKSOCIAL_SYNC_DENY`, `WORKSOCIAL_STATE_DIR`, `WORKSOCIAL_HOST_I
 ## Acceptance vs reference-core
 
 - `tests/acceptance-matrix-v6.json` — **159** product acceptance cases (bootstrap statuses unchanged unless a later WP updates them).
-- Domain / persistence / gateway / broker / API unit tests prove R1-02 offline; they are **not** production acceptance (see `docs/product/reference-core-vs-acceptance.md`).
+- Domain / persistence / gateway / broker / API unit tests prove R1-03 offline; they are **not** production acceptance (see `docs/product/reference-core-vs-acceptance.md`).
 
 ## Specs in-repo
 
 - `docs/product/WorkSocial_Operations_v6_implementation_baseline.md`
 - `docs/WorkSocial_Local_30_Agent_Operating_System_v3.md`
 - `docs/v5/*`
+- `docs/product/ml-learning-from-outcomes.md` — owner requirement; R1-03 leaves labeled outcome hooks only

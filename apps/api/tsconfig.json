@@ -9,6 +9,7 @@
   "references": [
     { "path": "../../packages/domain" },
     { "path": "../../packages/persistence" },
+    { "path": "../../packages/provider-adapters" },
     { "path": "../../services/action-gateway" },
     { "path": "../../services/credential-broker" }
   ]

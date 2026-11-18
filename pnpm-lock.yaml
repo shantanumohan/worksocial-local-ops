@@ -35,6 +35,9 @@ importers:
       '@worksocial/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence
+      '@worksocial/provider-adapters':
+        specifier: workspace:*
+        version: link:../../packages/provider-adapters
     devDependencies:
       '@types/node':
         specifier: 22.10.2

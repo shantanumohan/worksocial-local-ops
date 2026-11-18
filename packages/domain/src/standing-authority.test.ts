@@ -49,6 +49,7 @@ function baseRequest(
     assetId: "page-home",
     contentRevision: "rev-1",
     ownershipProven: true,
+    readEvidencePresent: true,
     sourceStale: false,
     prerequisiteMissing: false,
     prerequisiteConflict: false,

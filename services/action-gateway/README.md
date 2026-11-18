@@ -1,9 +1,10 @@
 # `@worksocial/action-gateway`
 
-R1-02 sole mutation authority stub:
+Sole mutation authority stub (R1-02 + R1-03):
 
 - Durable intent recorded before authorize/apply
 - Standing grants + stop switch enforced via `@worksocial/domain`
+- Pilot write classes require mapped ownership + prior read evidence when `productionMapping` is supplied
 - Stub apply yields `ACCEPTED_PENDING` — never auto-`VERIFIED`
 - No live providers; independent of Claude runner credentials
 

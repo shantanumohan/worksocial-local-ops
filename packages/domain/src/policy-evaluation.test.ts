@@ -7,6 +7,7 @@ const base: PolicyInput = {
   grantPresent: true,
   grantExpired: false,
   ownershipProven: true,
+  readEvidencePresent: true,
   prerequisiteMissing: false,
   prerequisiteConflict: false,
   revisionMatches: true,
@@ -35,6 +36,28 @@ describe("evaluatePolicy", () => {
     expect(evaluatePolicy({ ...base, grantPresent: false })).toMatchObject({
       allowed: false,
       code: "GRANT_MISSING",
+    });
+  });
+
+  it("denies missing read evidence before grant check", () => {
+    expect(
+      evaluatePolicy({ ...base, readEvidencePresent: false, grantPresent: false }),
+    ).toMatchObject({
+      allowed: false,
+      code: "READ_EVIDENCE_MISSING",
+    });
+  });
+
+  it("denies unproven ownership before read-evidence check", () => {
+    expect(
+      evaluatePolicy({
+        ...base,
+        ownershipProven: false,
+        readEvidencePresent: false,
+      }),
+    ).toMatchObject({
+      allowed: false,
+      code: "OWNERSHIP_UNPROVEN",
     });
   });
 });

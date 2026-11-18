@@ -67,6 +67,8 @@ export type AuthorityRequest = {
   assetId: string;
   contentRevision: string | null;
   ownershipProven: boolean;
+  /** Required for pilot write classes (R1-03); observe/create may pass true. */
+  readEvidencePresent: boolean;
   sourceStale: boolean;
   prerequisiteMissing: boolean;
   prerequisiteConflict: boolean;
@@ -200,6 +202,7 @@ export function evaluateStandingAuthority(
     grantPresent: match !== null,
     grantExpired,
     ownershipProven: request.ownershipProven,
+    readEvidencePresent: request.readEvidencePresent,
     prerequisiteMissing: request.prerequisiteMissing,
     prerequisiteConflict: request.prerequisiteConflict,
     revisionMatches,

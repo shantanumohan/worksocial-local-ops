@@ -7,18 +7,45 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import {
   LocalRole,
   OperatingMode,
+  OutcomeEvidenceSource,
+  OutcomeLabel,
+  AdapterWiring,
+  BindingKind,
+  ConnectionState,
+  EvidenceKind,
+  ResourceOwnerSystem,
+  VerificationState,
+  WriteReadiness,
+  applyBindingReadEvidence,
+  bindingStatusView,
+  assertNonEmptyEvidenceKinds,
+  createReadEvidence,
   findActiveUser,
+  isOutcomeEvidenceSource,
+  listWritePathOutcomesForLearning,
+  proveFixturePilotWritePath,
+  recordWritePathOutcome,
   roleMayPerform,
+  upsertFixturePilotMapping,
   validateSession,
+  writePathIsFixtureOnly,
+  type BookingOwnership,
+  type CrmOwnership,
+  type FormMapping,
+  type JourneyRegistryEntry,
   type LocalRoleValue,
+  type PilotWritePath,
   type SessionRecord,
+  type SourceBinding,
 } from "@worksocial/domain";
 import {
   createFileAuthorityStore,
+  createFileProductionMappingStore,
   ensureBootstrapOwner,
   verifyPassword,
   type AuthorityStore,
   type PolicyDecisionRecord,
+  type ProductionMappingStore,
 } from "@worksocial/persistence";
 import {
   createActionGateway,
@@ -26,9 +53,11 @@ import {
   type GatewayIntent,
 } from "@worksocial/action-gateway";
 import { createCredentialBroker, type CredentialBroker } from "@worksocial/credential-broker";
+import { listAdapters } from "@worksocial/provider-adapters";
 
 export type ApiRuntime = {
   store: AuthorityStore;
+  mappingStore: ProductionMappingStore;
   gateway: ActionGateway;
   broker: CredentialBroker;
   apiOrigin: string;
@@ -43,6 +72,7 @@ export function createApiRuntime(options: {
   ownerPassword?: string;
 }): ApiRuntime {
   const store = createFileAuthorityStore(options.stateDir);
+  const mappingStore = createFileProductionMappingStore(options.stateDir);
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
@@ -51,6 +81,7 @@ export function createApiRuntime(options: {
   );
   return {
     store,
+    mappingStore,
     gateway: createActionGateway(),
     broker: createCredentialBroker(),
     apiOrigin: `http://127.0.0.1:${options.apiPort}`,
@@ -182,8 +213,9 @@ export async function handleApiRequest(
         serviceId: "api",
         status: "running",
         productionActivated: false,
-        identity: "R1-02 local session auth",
-        message: "API identity/authority surface (no live providers).",
+        identity: "R1-02 local session auth + R1-03 production mapping",
+        message:
+          "API identity/authority/mapping surface. No live Zoho/CMS mutations.",
       },
       cors,
     );
@@ -321,7 +353,7 @@ export async function handleApiRequest(
         providerStatuses: state.providerStatuses,
         recentDecisions: state.policyDecisions.slice(-20),
         honestLabelsNote:
-          "connected ≠ authorized ≠ verified. No live providers are connected in R1-02.",
+          "connected ≠ authorized ≠ verified. Provider adapters remain NOT_WIRED/FIXTURE in R1-03.",
       },
       cors,
     );
@@ -457,12 +489,14 @@ export async function handleApiRequest(
       return;
     }
     const state = runtime.store.read();
+    const mapping = runtime.mappingStore.read();
     const submitted = runtime.gateway.submitIntent(intent, {
       outboundStopped: state.ownerControls.outboundStopped,
       operatingMode: state.ownerControls.operatingMode,
       policies: state.standingPolicies,
       grants: state.capabilityGrants,
       nowIso: new Date().toISOString(),
+      productionMapping: mapping,
     });
     const decision: PolicyDecisionRecord = {
       decisionId: submitted.decision.decisionId,
@@ -480,12 +514,49 @@ export async function handleApiRequest(
       policyDecisions: [...s.policyDecisions, decision],
       updatedAt: decision.decidedAtIso,
     }));
+
+    // Durable labeled outcome hook for a later learning-worker (no ML here).
+    if (submitted.decision.writePathId) {
+      const matchedPath = mapping.writePaths.find(
+        (p) => p.writePathId === submitted.decision.writePathId,
+      );
+      const fixtureOnly = matchedPath
+        ? writePathIsFixtureOnly(mapping, matchedPath)
+        : true;
+      const label = submitted.decision.allowed
+        ? OutcomeLabel.UNKNOWN
+        : OutcomeLabel.FAILURE;
+      const source =
+        submitted.decision.code === "OUTBOUND_STOPPED"
+          ? OutcomeEvidenceSource.STOP_SWITCH
+          : fixtureOnly
+            ? OutcomeEvidenceSource.FIXTURE
+            : OutcomeEvidenceSource.GATEWAY_RECEIPT;
+      runtime.mappingStore.addWritePathOutcome(
+        recordWritePathOutcome({
+          outcomeId: `out-${submitted.decision.decisionId}`,
+          writePathId: submitted.decision.writePathId,
+          operationId: submitted.decision.operationId,
+          label,
+          source,
+          summary: submitted.decision.reason,
+          fixtureOnly,
+          recordedAtIso: submitted.decision.decidedAtIso,
+          featureHints: {
+            allowed: submitted.decision.allowed,
+            code: submitted.decision.code,
+            outcome: submitted.decision.outcome,
+          },
+        }),
+      );
+    }
+
     json(
       res,
       submitted.decision.allowed ? 200 : 403,
       {
         decision: submitted.decision,
-        note: "Acceptance is not verification. Live providers are not connected.",
+        note: "Acceptance is not verification. Live Zoho/CMS mutations are not performed in R1-03.",
       },
       cors,
     );
@@ -507,6 +578,703 @@ export async function handleApiRequest(
       },
       cors,
     );
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/mapping/state") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const mapping = runtime.mappingStore.read();
+    json(
+      res,
+      200,
+      {
+        mapping,
+        bindingStatuses: mapping.bindings.map(bindingStatusView),
+        adapters: listAdapters(),
+        learningHook: {
+          labeledOutcomes: listWritePathOutcomesForLearning(mapping, {
+            includeFixture: true,
+          }).length,
+          note: "SUCCESS/FAILURE labels stored for a future local multi-model learning-worker; no ML training in R1-03.",
+        },
+        honestLabelsNote:
+          "connected ≠ authorized ≠ verified. Fixture/NOT_WIRED ≠ live.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/mapping/seed-fixture-pilot") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    const upserted = upsertFixturePilotMapping(
+      runtime.mappingStore.read(),
+      nowIso,
+    );
+    runtime.mappingStore.write(upserted.state);
+    json(
+      res,
+      200,
+      {
+        writePathId: upserted.writePathId,
+        seeded: upserted.created,
+        ownershipProven: false,
+        readEvidencePresent: false,
+        note: upserted.created
+          ? "Fixture pilot upserted without wiping existing mappings. Ownership and read evidence still required before writes."
+          : "Fixture pilot already present; existing mappings preserved.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/mapping/prove-fixture-pilot") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: { writePathId?: string };
+    try {
+      body = JSON.parse(raw) as { writePathId?: string };
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    const writePathId = body.writePathId;
+    if (!writePathId) {
+      json(res, 400, { error: "WRITE_PATH_REQUIRED" }, cors);
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    try {
+      const proven = proveFixturePilotWritePath(
+        runtime.mappingStore.read(),
+        writePathId,
+        nowIso,
+      );
+      runtime.mappingStore.write(proven);
+      json(
+        res,
+        200,
+        {
+          writePathId,
+          ownershipProven: true,
+          readEvidenceCount: proven.readEvidence.filter(
+            (e) => e.writePathId === writePathId,
+          ).length,
+          note: "Fixture read evidence recorded. Still not a live Zoho/CMS mutation.",
+        },
+        cors,
+      );
+    } catch (err) {
+      json(
+        res,
+        400,
+        {
+          error: "PROVE_FAILED",
+          message: err instanceof Error ? err.message : String(err),
+        },
+        cors,
+      );
+    }
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/mapping/bindings") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: Partial<SourceBinding>;
+    try {
+      body = JSON.parse(raw) as Partial<SourceBinding>;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.bindingId || !body.siteId || !body.kind || !body.resourceRef) {
+      json(res, 400, { error: "BINDING_FIELDS_REQUIRED" }, cors);
+      return;
+    }
+    if (body.adapterWiring === AdapterWiring.LIVE) {
+      json(
+        res,
+        400,
+        { error: "LIVE_REFUSED", message: "R1-03 refuses LIVE adapter wiring" },
+        cors,
+      );
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    const binding: SourceBinding = {
+      bindingId: body.bindingId,
+      siteId: body.siteId,
+      kind: body.kind,
+      resourceRef: body.resourceRef,
+      displayName: body.displayName ?? body.bindingId,
+      identityLabel: body.identityLabel ?? null,
+      connectionState: body.connectionState ?? ConnectionState.NOT_CONFIGURED,
+      writeReadiness: body.writeReadiness ?? WriteReadiness.NOT_AUTHORIZED,
+      verificationState: body.verificationState ?? VerificationState.NOT_VERIFIED,
+      ownershipProven: false,
+      observedRevision: body.observedRevision ?? null,
+      adapterWiring: body.adapterWiring ?? AdapterWiring.NOT_WIRED,
+      createdAtIso: body.createdAtIso ?? nowIso,
+      updatedAtIso: nowIso,
+    };
+    // Validate kind enum without importing unused BindingKind if invalid
+    if (
+      binding.kind !== BindingKind.WEBSITE &&
+      binding.kind !== BindingKind.CMS &&
+      binding.kind !== BindingKind.REPO
+    ) {
+      json(res, 400, { error: "INVALID_BINDING_KIND" }, cors);
+      return;
+    }
+    runtime.mappingStore.upsertBinding(binding);
+    json(
+      res,
+      200,
+      {
+        binding,
+        status: bindingStatusView(binding),
+        note: "Registered binding only — not connected/authorized/verified.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/mapping/forms") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: Partial<FormMapping>;
+    try {
+      body = JSON.parse(raw) as Partial<FormMapping>;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (
+      !body.formId ||
+      !body.siteId ||
+      !body.pageAssetId ||
+      !body.bindingId ||
+      !body.handlerEndpoint
+    ) {
+      json(res, 400, { error: "FORM_FIELDS_REQUIRED" }, cors);
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    const form: FormMapping = {
+      formId: body.formId,
+      siteId: body.siteId,
+      pageAssetId: body.pageAssetId,
+      bindingId: body.bindingId,
+      handlerEndpoint: body.handlerEndpoint,
+      crmModuleId: body.crmModuleId ?? null,
+      fieldMap: body.fieldMap ?? {},
+      ownershipOwner: body.ownershipOwner ?? ResourceOwnerSystem.WEBSITE,
+      createdAtIso: nowIso,
+      updatedAtIso: nowIso,
+    };
+    runtime.mappingStore.upsertForm(form);
+    json(res, 200, { form }, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/mapping/booking-ownership") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: Partial<BookingOwnership>;
+    try {
+      body = JSON.parse(raw) as Partial<BookingOwnership>;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (
+      !body.bookingOwnershipId ||
+      !body.siteId ||
+      !body.providerId ||
+      !body.resourceId
+    ) {
+      json(res, 400, { error: "BOOKING_FIELDS_REQUIRED" }, cors);
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    const record: BookingOwnership = {
+      bookingOwnershipId: body.bookingOwnershipId,
+      siteId: body.siteId,
+      providerId: body.providerId,
+      resourceId: body.resourceId,
+      environment: body.environment ?? "fixture",
+      ownerSystem: body.ownerSystem ?? ResourceOwnerSystem.BOOKING,
+      ownershipProven: false,
+      adapterWiring: body.adapterWiring ?? AdapterWiring.NOT_WIRED,
+      createdAtIso: nowIso,
+      updatedAtIso: nowIso,
+    };
+    runtime.mappingStore.upsertBookingOwnership(record);
+    json(res, 200, { bookingOwnership: record }, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/mapping/crm-ownership") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: Partial<CrmOwnership>;
+    try {
+      body = JSON.parse(raw) as Partial<CrmOwnership>;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.crmOwnershipId || !body.organizationId || !body.moduleId) {
+      json(res, 400, { error: "CRM_FIELDS_REQUIRED" }, cors);
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    const record: CrmOwnership = {
+      crmOwnershipId: body.crmOwnershipId,
+      organizationId: body.organizationId,
+      environment: body.environment ?? "fixture",
+      moduleId: body.moduleId,
+      fieldOwnership: body.fieldOwnership ?? [],
+      testDataPolicy:
+        body.testDataPolicy ?? "fixture-only; exclude from revenue reporting",
+      ownershipProven: false,
+      adapterWiring: body.adapterWiring ?? AdapterWiring.FIXTURE,
+      createdAtIso: nowIso,
+      updatedAtIso: nowIso,
+    };
+    runtime.mappingStore.upsertCrmOwnership(record);
+    json(res, 200, { crmOwnership: record }, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/mapping/write-paths") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: Partial<PilotWritePath>;
+    try {
+      body = JSON.parse(raw) as Partial<PilotWritePath>;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (
+      !body.writePathId ||
+      !body.channelId ||
+      !body.assetId ||
+      !body.operation ||
+      !body.siteId
+    ) {
+      json(res, 400, { error: "WRITE_PATH_FIELDS_REQUIRED" }, cors);
+      return;
+    }
+    let requiredEvidenceKinds;
+    try {
+      requiredEvidenceKinds = assertNonEmptyEvidenceKinds(
+        body.requiredEvidenceKinds ?? [
+          EvidenceKind.IDENTITY,
+          EvidenceKind.RESOURCE,
+          EvidenceKind.SCOPE,
+          EvidenceKind.CAPABILITY_TEST,
+          EvidenceKind.READ_BACK,
+        ],
+      );
+    } catch (err) {
+      json(
+        res,
+        400,
+        {
+          error: "EMPTY_EVIDENCE_KINDS",
+          message: err instanceof Error ? err.message : String(err),
+        },
+        cors,
+      );
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    const path: PilotWritePath = {
+      writePathId: body.writePathId,
+      channelId: body.channelId,
+      assetId: body.assetId,
+      operation: body.operation,
+      siteId: body.siteId,
+      bindingId: body.bindingId ?? null,
+      formId: body.formId ?? null,
+      bookingOwnershipId: body.bookingOwnershipId ?? null,
+      crmOwnershipId: body.crmOwnershipId ?? null,
+      requiredEvidenceKinds,
+      createdAtIso: nowIso,
+    };
+    runtime.mappingStore.upsertWritePath(path);
+    json(res, 200, { writePath: path }, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/mapping/journeys") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: Partial<JourneyRegistryEntry>;
+    try {
+      body = JSON.parse(raw) as Partial<JourneyRegistryEntry>;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.journeyId || !body.siteId || !body.displayName) {
+      json(res, 400, { error: "JOURNEY_FIELDS_REQUIRED" }, cors);
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    const journey: JourneyRegistryEntry = {
+      journeyId: body.journeyId,
+      siteId: body.siteId,
+      displayName: body.displayName,
+      stages: body.stages ?? [],
+      writePathIds: body.writePathIds ?? [],
+      createdAtIso: nowIso,
+    };
+    runtime.mappingStore.upsertJourney(journey);
+    json(res, 200, { journey }, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/mapping/read-evidence") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      evidenceId?: string;
+      writePathId?: string;
+      evidenceKind?: string;
+      resourceType?: "binding" | "form" | "booking" | "crm" | "journey";
+      resourceId?: string;
+      operation?: string;
+      summary?: string;
+      proveBindingOwnership?: boolean;
+      identityLabel?: string;
+      observedRevision?: string | null;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (
+      !body.evidenceId ||
+      !body.writePathId ||
+      !body.evidenceKind ||
+      !body.resourceType ||
+      !body.resourceId ||
+      !body.operation ||
+      !body.summary
+    ) {
+      json(res, 400, { error: "EVIDENCE_FIELDS_REQUIRED" }, cors);
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    try {
+      const evidence = createReadEvidence({
+        evidenceId: body.evidenceId,
+        writePathId: body.writePathId,
+        evidenceKind: body.evidenceKind as (typeof EvidenceKind)[keyof typeof EvidenceKind],
+        resourceType: body.resourceType,
+        resourceId: body.resourceId,
+        operation: body.operation,
+        summary: body.summary,
+        fixtureOnly: true,
+        observedAtIso: nowIso,
+        adapterWiring: AdapterWiring.FIXTURE,
+      });
+      runtime.mappingStore.addReadEvidence(evidence);
+      if (
+        body.proveBindingOwnership &&
+        body.resourceType === "binding" &&
+        body.identityLabel
+      ) {
+        const current = runtime.mappingStore.read();
+        const binding = current.bindings.find(
+          (b) => b.bindingId === body.resourceId,
+        );
+        if (binding) {
+          runtime.mappingStore.upsertBinding(
+            applyBindingReadEvidence(binding, {
+              identityLabel: body.identityLabel,
+              observedRevision: body.observedRevision ?? null,
+              ownershipProven: true,
+              nowIso,
+            }),
+          );
+        }
+      }
+      json(
+        res,
+        200,
+        {
+          evidence,
+          note: "Fixture read evidence only — does not authorize live provider writes by itself.",
+        },
+        cors,
+      );
+    } catch (err) {
+      json(
+        res,
+        400,
+        {
+          error: "EVIDENCE_REJECTED",
+          message: err instanceof Error ? err.message : String(err),
+        },
+        cors,
+      );
+    }
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/mapping/outcomes") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      outcomeId?: string;
+      writePathId?: string;
+      operationId?: string;
+      label?: string;
+      source?: string;
+      summary?: string;
+      fixtureOnly?: boolean;
+      featureHints?: Record<string, string | number | boolean | null>;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (
+      !body.outcomeId ||
+      !body.writePathId ||
+      !body.operationId ||
+      !body.label ||
+      !body.source ||
+      !body.summary
+    ) {
+      json(res, 400, { error: "OUTCOME_FIELDS_REQUIRED" }, cors);
+      return;
+    }
+    if (
+      body.label !== OutcomeLabel.SUCCESS &&
+      body.label !== OutcomeLabel.FAILURE &&
+      body.label !== OutcomeLabel.UNKNOWN
+    ) {
+      json(res, 400, { error: "INVALID_OUTCOME_LABEL" }, cors);
+      return;
+    }
+    if (!isOutcomeEvidenceSource(body.source)) {
+      json(res, 400, { error: "INVALID_OUTCOME_SOURCE" }, cors);
+      return;
+    }
+    const mapping = runtime.mappingStore.read();
+    const path = mapping.writePaths.find((p) => p.writePathId === body.writePathId);
+    if (!path) {
+      json(res, 400, { error: "UNKNOWN_WRITE_PATH" }, cors);
+      return;
+    }
+    const knownOperation =
+      runtime.gateway.getDecision(body.operationId) !== undefined ||
+      runtime.store
+        .read()
+        .policyDecisions.some((d) => d.operationId === body.operationId);
+    // Owner/fixture labels may introduce a synthetic operation id; others need a ledger hit.
+    if (
+      !knownOperation &&
+      body.source !== OutcomeEvidenceSource.OWNER_DECISION &&
+      body.source !== OutcomeEvidenceSource.FIXTURE
+    ) {
+      json(res, 400, { error: "UNKNOWN_OPERATION" }, cors);
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    try {
+      const outcome = recordWritePathOutcome({
+        outcomeId: body.outcomeId,
+        writePathId: body.writePathId,
+        operationId: body.operationId,
+        label: body.label,
+        source: body.source,
+        summary: body.summary,
+        fixtureOnly:
+          body.fixtureOnly ?? writePathIsFixtureOnly(mapping, path),
+        recordedAtIso: nowIso,
+        ...(body.featureHints !== undefined
+          ? { featureHints: body.featureHints }
+          : {}),
+      });
+      runtime.mappingStore.addWritePathOutcome(outcome);
+      json(
+        res,
+        200,
+        {
+          outcome,
+          note: "Labeled outcome stored for a future learning-worker. No ML training in R1-03.",
+        },
+        cors,
+      );
+    } catch (err) {
+      json(
+        res,
+        400,
+        {
+          error: "OUTCOME_REJECTED",
+          message: err instanceof Error ? err.message : String(err),
+        },
+        cors,
+      );
+    }
     return;
   }
 
