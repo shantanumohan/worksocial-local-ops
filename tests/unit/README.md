@@ -1,13 +1,15 @@
 # unit
 
-Offline unit tests for R1-01 → R1-03:
+Offline unit tests for R1-01 → R1-04:
 
-- `packages/domain` — reference-core + roles, standing authority, session, connection status, production mapping gates + learning outcome hooks
-- `packages/persistence` — storage/lease + authority store + production mapping store
+- `packages/domain` — reference-core + roles, standing authority, session, connection status, production mapping, **agent role contracts + review/recursion/outcome hooks**
+- `packages/persistence` — storage/lease + authority store + production mapping store + **role-runtime store**
 - `services/supervisor` — lifecycle restart + selected-folder policy
 - `services/action-gateway` — unauthorized-write + stop-switch + acceptance≠verified + read-evidence gates
 - `services/credential-broker` — Claude-runner isolation
-- `apps/api` — login-protected authority + mapping + stop-switch HTTP
+- `services/claude-runner` — fixture evaluations, queue bounds, bypass denial
+- `services/workflow-worker` — Temporal NOT_WIRED mission enqueue
+- `apps/api` — login-protected authority + mapping + roles HTTP
 
 Run: `pnpm test:unit`
 
