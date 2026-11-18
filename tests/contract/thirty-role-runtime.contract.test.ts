@@ -8,12 +8,14 @@ import {
   AGENT_ROLE_IDS,
   assertThirtyRolesRegistered,
   evaluateIndependentReviewGate,
+  validateRoleStructuredOutput,
   validateTypedDelegation,
   MAX_DELEGATION_DEPTH,
 } from "@worksocial/domain";
 import {
   createClaudeRunner,
   FORBIDDEN_CLI_FLAGS,
+  isRegisteredAgentName,
   validateCliArgs,
 } from "@worksocial/claude-runner";
 
@@ -98,7 +100,6 @@ describe("contract: thirty-role-runtime", () => {
         inputArtifactIds: [],
         capabilityGrantId: "g",
         sourceRevision: "r",
-        maxAttempts: 1,
         deadlineSeconds: 30,
         idempotencyKey: `contract/${uuid()}`,
         expectedOutcome: "denied",
@@ -107,5 +108,34 @@ describe("contract: thirty-role-runtime", () => {
     });
     expect(result.status).toBe("denied");
     expect(result.permissionBypassUsed).toBe(false);
+  });
+
+  it("forces fixture evaluate-all; binds identities; rejects path agents", async () => {
+    expect(isRegisteredAgentName("A01")).toBe(true);
+    expect(isRegisteredAgentName("/abs/A01.md")).toBe(false);
+
+    const runner = createClaudeRunner({
+      workspaceRoot: process.cwd(),
+      forceFixture: false,
+    });
+    const results = await runner.evaluateAllRolesFixture();
+    expect(results.every((r) => r.executionMode === "fixture")).toBe(true);
+
+    const jobId = "22222222-2222-4222-8222-222222222222";
+    const spoof = validateRoleStructuredOutput(
+      {
+        type: "result",
+        result: JSON.stringify({
+          roleId: "A15",
+          jobId,
+          status: "ok",
+          summary: "nope",
+          proposedEffects: [],
+          taskRequests: [],
+        }),
+      },
+      { expectedRoleId: "A01", expectedJobId: jobId },
+    );
+    expect(spoof.ok).toBe(false);
   });
 });

@@ -400,20 +400,179 @@ export type RoleStructuredOutput = {
   modelConfidence: number | null;
 };
 
+export type ValidateRoleOutputOptions = {
+  /** When set, output.roleId must equal this envelope role. */
+  expectedRoleId?: AgentRoleId;
+  /** When set, output.jobId must equal this envelope job. */
+  expectedJobId?: string;
+};
+
+function parseEffectProposal(
+  value: unknown,
+  expectedAuthorRoleId: AgentRoleId,
+):
+  | { ok: true; proposal: EffectProposal }
+  | { ok: false; code: string; reason: string } {
+  if (!value || typeof value !== "object") {
+    return { ok: false, code: "INVALID_PROPOSAL", reason: "proposedEffect must be an object" };
+  }
+  const p = value as Record<string, unknown>;
+  if (typeof p.proposalId !== "string" || p.proposalId.length < 1) {
+    return { ok: false, code: "INVALID_PROPOSAL", reason: "proposalId required" };
+  }
+  if (typeof p.authorRoleId !== "string" || !isAgentRoleId(p.authorRoleId)) {
+    return { ok: false, code: "INVALID_PROPOSAL", reason: "authorRoleId must be A01–A30" };
+  }
+  if (p.authorRoleId !== expectedAuthorRoleId) {
+    return {
+      ok: false,
+      code: "AUTHOR_MISMATCH",
+      reason: `proposal authorRoleId ${p.authorRoleId} must equal job role ${expectedAuthorRoleId}`,
+    };
+  }
+  if (typeof p.actionClass !== "string" || p.actionClass.length < 1) {
+    return { ok: false, code: "INVALID_PROPOSAL", reason: "actionClass required" };
+  }
+  if (typeof p.operation !== "string" || p.operation.length < 1) {
+    return { ok: false, code: "INVALID_PROPOSAL", reason: "operation required" };
+  }
+  if (typeof p.assetId !== "string" || p.assetId.length < 1) {
+    return { ok: false, code: "INVALID_PROPOSAL", reason: "assetId required" };
+  }
+  if (typeof p.channelId !== "string" || p.channelId.length < 1) {
+    return { ok: false, code: "INVALID_PROPOSAL", reason: "channelId required" };
+  }
+  if (typeof p.payloadDigest !== "string") {
+    return { ok: false, code: "INVALID_PROPOSAL", reason: "payloadDigest required" };
+  }
+  const evidenceArtifactIds = Array.isArray(p.evidenceArtifactIds)
+    ? p.evidenceArtifactIds.filter((x): x is string => typeof x === "string")
+    : [];
+  const proposal: EffectProposal = {
+    proposalId: p.proposalId,
+    authorRoleId: p.authorRoleId,
+    actionClass: p.actionClass,
+    operation: p.operation,
+    assetId: p.assetId,
+    channelId: p.channelId,
+    payloadDigest: p.payloadDigest,
+    evidenceArtifactIds,
+  };
+  if (p.selfApprovalAttempted === true) {
+    proposal.selfApprovalAttempted = true;
+  }
+  return { ok: true, proposal };
+}
+
+function parseTypedTaskRequest(
+  value: unknown,
+  expectedFromRoleId: AgentRoleId,
+):
+  | { ok: true; request: TypedTaskRequest }
+  | { ok: false; code: string; reason: string } {
+  if (!value || typeof value !== "object") {
+    return { ok: false, code: "INVALID_TASK", reason: "taskRequest must be an object" };
+  }
+  const t = value as Record<string, unknown>;
+  if (typeof t.requestId !== "string" || t.requestId.length < 1) {
+    return { ok: false, code: "INVALID_TASK", reason: "requestId required" };
+  }
+  if (typeof t.fromRoleId !== "string" || !isAgentRoleId(t.fromRoleId)) {
+    return { ok: false, code: "INVALID_TASK", reason: "fromRoleId must be A01–A30" };
+  }
+  if (t.fromRoleId !== expectedFromRoleId) {
+    return {
+      ok: false,
+      code: "FROM_ROLE_MISMATCH",
+      reason: `task fromRoleId ${t.fromRoleId} must equal job role ${expectedFromRoleId}`,
+    };
+  }
+  if (typeof t.toRoleId !== "string" || !isAgentRoleId(t.toRoleId)) {
+    return { ok: false, code: "INVALID_TASK", reason: "toRoleId must be A01–A30" };
+  }
+  if (typeof t.objective !== "string" || t.objective.length < 1) {
+    return { ok: false, code: "INVALID_TASK", reason: "objective required" };
+  }
+  if (typeof t.parentDepth !== "number" || !Number.isInteger(t.parentDepth) || t.parentDepth < 0) {
+    return { ok: false, code: "INVALID_TASK", reason: "parentDepth must be a non-negative integer" };
+  }
+  const inputArtifactIds = Array.isArray(t.inputArtifactIds)
+    ? t.inputArtifactIds.filter((x): x is string => typeof x === "string")
+    : [];
+  return {
+    ok: true,
+    request: {
+      requestId: t.requestId,
+      fromRoleId: t.fromRoleId,
+      toRoleId: t.toRoleId,
+      objective: t.objective,
+      inputArtifactIds,
+      parentDepth: t.parentDepth,
+    },
+  };
+}
+
+/**
+ * Unwrap Claude Code `--output-format json` envelope when present.
+ * Live CLI returns `{ result: "<json-or-text>", ... }` rather than the model object alone.
+ */
+export function unwrapClaudeJsonPayload(value: unknown): unknown {
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+  const envelope = value as Record<string, unknown>;
+  if (!("result" in envelope)) {
+    return value;
+  }
+  const result = envelope.result;
+  if (typeof result === "string") {
+    const trimmed = result.trim();
+    if (!trimmed) {
+      return value;
+    }
+    try {
+      return JSON.parse(trimmed) as unknown;
+    } catch {
+      // Model returned plain text inside result — leave as string for validator to reject.
+      return result;
+    }
+  }
+  if (result && typeof result === "object") {
+    return result;
+  }
+  return value;
+}
+
 export function validateRoleStructuredOutput(
   value: unknown,
+  options?: ValidateRoleOutputOptions,
 ):
   | { ok: true; output: RoleStructuredOutput }
   | { ok: false; code: string; reason: string } {
-  if (!value || typeof value !== "object") {
+  const unwrapped = unwrapClaudeJsonPayload(value);
+  if (!unwrapped || typeof unwrapped !== "object") {
     return { ok: false, code: "INVALID_OUTPUT", reason: "Output must be an object" };
   }
-  const v = value as Record<string, unknown>;
+  const v = unwrapped as Record<string, unknown>;
   if (typeof v.roleId !== "string" || !isAgentRoleId(v.roleId)) {
     return { ok: false, code: "INVALID_ROLE", reason: "roleId must be A01–A30" };
   }
+  if (options?.expectedRoleId !== undefined && v.roleId !== options.expectedRoleId) {
+    return {
+      ok: false,
+      code: "ROLE_MISMATCH",
+      reason: `output roleId ${v.roleId} does not match job role ${options.expectedRoleId}`,
+    };
+  }
   if (typeof v.jobId !== "string" || v.jobId.length < 1) {
     return { ok: false, code: "INVALID_JOB", reason: "jobId required" };
+  }
+  if (options?.expectedJobId !== undefined && v.jobId !== options.expectedJobId) {
+    return {
+      ok: false,
+      code: "JOB_MISMATCH",
+      reason: `output jobId does not match envelope jobId`,
+    };
   }
   if (v.status !== "ok" && v.status !== "error" && v.status !== "needs_review") {
     return { ok: false, code: "INVALID_STATUS", reason: "status must be ok|error|needs_review" };
@@ -424,12 +583,43 @@ export function validateRoleStructuredOutput(
   const artifactIds = Array.isArray(v.artifactIds)
     ? v.artifactIds.filter((x): x is string => typeof x === "string")
     : [];
-  const proposedEffects = Array.isArray(v.proposedEffects)
-    ? (v.proposedEffects as EffectProposal[])
-    : [];
-  const taskRequests = Array.isArray(v.taskRequests)
-    ? (v.taskRequests as TypedTaskRequest[])
-    : [];
+
+  const proposedEffects: EffectProposal[] = [];
+  if (v.proposedEffects !== undefined) {
+    if (!Array.isArray(v.proposedEffects)) {
+      return {
+        ok: false,
+        code: "INVALID_PROPOSALS",
+        reason: "proposedEffects must be an array",
+      };
+    }
+    for (const raw of v.proposedEffects) {
+      const parsed = parseEffectProposal(raw, v.roleId);
+      if (!parsed.ok) {
+        return parsed;
+      }
+      proposedEffects.push(parsed.proposal);
+    }
+  }
+
+  const taskRequests: TypedTaskRequest[] = [];
+  if (v.taskRequests !== undefined) {
+    if (!Array.isArray(v.taskRequests)) {
+      return {
+        ok: false,
+        code: "INVALID_TASKS",
+        reason: "taskRequests must be an array",
+      };
+    }
+    for (const raw of v.taskRequests) {
+      const parsed = parseTypedTaskRequest(raw, v.roleId);
+      if (!parsed.ok) {
+        return parsed;
+      }
+      taskRequests.push(parsed.request);
+    }
+  }
+
   const modelConfidence =
     typeof v.modelConfidence === "number" ? v.modelConfidence : null;
 

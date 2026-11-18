@@ -3,8 +3,10 @@
 export {
   FORBIDDEN_CLI_FLAGS,
   ALLOWED_CLI_FLAGS,
+  DEFAULT_LIVE_CLI_TOOLS,
   defaultClaudeExecutableCandidates,
   validateCliArgs,
+  isRegisteredAgentName,
   detectClaudeCli,
   invokeClaudeCli,
   type ClaudeCliDetection,
@@ -19,7 +21,12 @@ export {
   type FixtureRunResult,
 } from "./fixture-runner.js";
 
-export { BoundedQueue, type QueueJob, type QueueResult } from "./queue.js";
+export {
+  BoundedQueue,
+  type QueueJob,
+  type QueueResult,
+  type BoundedQueueOptions,
+} from "./queue.js";
 
 export {
   createClaudeRunner,

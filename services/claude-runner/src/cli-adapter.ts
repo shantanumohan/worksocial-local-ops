@@ -17,14 +17,22 @@ export const FORBIDDEN_CLI_FLAGS = [
   "--permission-mode=dontAsk",
 ] as const;
 
-/** Conservative allow-list for pinned CLI invocations. */
+/**
+ * Conservative allow-list for pinned CLI invocations.
+ * `--tools` restricts available tools; empty string = no built-in tools.
+ */
 export const ALLOWED_CLI_FLAGS = [
   "--print",
   "--output-format",
   "--model",
   "--max-turns",
   "--agent",
+  "--tools",
+  "--setting-sources",
 ] as const;
+
+/** Default live tools: none — reasoning proposes; gateway authorizes effects. */
+export const DEFAULT_LIVE_CLI_TOOLS = "" as const;
 
 export type ClaudeCliDetection = {
   available: boolean;
@@ -35,13 +43,23 @@ export type ClaudeCliDetection = {
 
 export type ClaudeCliInvokeRequest = {
   executablePath: string;
-  /** Absolute path to role definition; passed as a discrete argv element. */
-  agentDefinitionPath: string;
+  /**
+   * Registered Claude Code agent name (e.g. A01), discovered from
+   * `.claude/agents` under `cwd` — never a filesystem path.
+   */
+  agentName: string;
+  /** Working directory that contains `.claude/agents` for agent discovery. */
+  cwd: string;
   modelId: string;
   /** Prompt content passed via stdin — never interpolated into the shell. */
   prompt: string;
   timeoutMs: number;
   maxOutputBytes: number;
+  /**
+   * Comma-separated tool allow-list for `--tools`.
+   * Empty string disables built-in tools (Bash/Edit/etc.).
+   */
+  tools?: string;
   /** Extra flags — validated against allow/deny lists. */
   extraArgs?: readonly string[];
 };
@@ -63,7 +81,8 @@ export type ClaudeCliInvokeResult =
         | "TIMEOUT"
         | "OUTPUT_TOO_LARGE"
         | "SPAWN_FAILED"
-        | "NONZERO_EXIT";
+        | "NONZERO_EXIT"
+        | "INVALID_AGENT";
       reason: string;
       stdout?: string;
       stderr?: string;
@@ -88,7 +107,10 @@ export function validateCliArgs(args: readonly string[]): {
   for (const arg of args) {
     const lower = arg.toLowerCase();
     for (const forbidden of FORBIDDEN_CLI_FLAGS) {
-      if (lower === forbidden.toLowerCase() || lower.startsWith(`${forbidden.toLowerCase()}=`)) {
+      if (
+        lower === forbidden.toLowerCase() ||
+        lower.startsWith(`${forbidden.toLowerCase()}=`)
+      ) {
         return {
           ok: false,
           reason: `Forbidden CLI flag refused: ${arg}`,
@@ -111,12 +133,16 @@ export function validateCliArgs(args: readonly string[]): {
   return { ok: true };
 }
 
+/** Registered agent names are A01–A30 only — never paths. */
+export function isRegisteredAgentName(name: string): boolean {
+  return /^A(0[1-9]|[12][0-9]|30)$/.test(name);
+}
+
 function tryExecutable(path: string): boolean {
   try {
     accessSync(path, fsConstants.X_OK);
     return true;
   } catch {
-    // PATH binaries may not be absolute; still attempt later via spawn.
     if (!path.includes("/") && !path.includes("\\")) {
       return true;
     }
@@ -165,7 +191,10 @@ export async function detectClaudeCli(options?: {
   };
 }
 
-function readCliVersion(executablePath: string, timeoutMs: number): Promise<string | null> {
+function readCliVersion(
+  executablePath: string,
+  timeoutMs: number,
+): Promise<string | null> {
   return new Promise((resolve) => {
     const child = spawn(executablePath, ["--version"], {
       stdio: ["ignore", "pipe", "pipe"],
@@ -204,10 +233,29 @@ function readCliVersion(executablePath: string, timeoutMs: number): Promise<stri
 /**
  * Invoke Claude Code non-interactively. Prompt is written to stdin.
  * Never enables unrestricted permission bypass.
+ * Tools default to empty (no Bash/Edit) unless explicitly overridden.
  */
 export function invokeClaudeCli(
   request: ClaudeCliInvokeRequest,
 ): Promise<ClaudeCliInvokeResult> {
+  if (!isRegisteredAgentName(request.agentName)) {
+    return Promise.resolve({
+      ok: false,
+      code: "INVALID_AGENT",
+      reason: `Agent name must be a registered role A01–A30, got '${request.agentName}'`,
+    });
+  }
+
+  const tools = request.tools ?? DEFAULT_LIVE_CLI_TOOLS;
+  // Refuse any tools string that would re-enable shell/edit by default.
+  if (/\b(Bash|Edit|Write|MultiEdit|NotebookEdit)\b/i.test(tools)) {
+    return Promise.resolve({
+      ok: false,
+      code: "FLAG_DENIED",
+      reason: "Bash/Edit/Write tools are not permitted on the live CLI path",
+    });
+  }
+
   const args = [
     "--print",
     "--output-format",
@@ -217,7 +265,12 @@ export function invokeClaudeCli(
     "--max-turns",
     "4",
     "--agent",
-    request.agentDefinitionPath,
+    request.agentName,
+    "--tools",
+    tools,
+    // Do not load user/project settings that may widen tool permissions.
+    "--setting-sources",
+    "",
     ...(request.extraArgs ?? []),
   ];
 
@@ -230,7 +283,6 @@ export function invokeClaudeCli(
     });
   }
 
-  // Double-check no bypass slipped in via extraArgs
   const joined = args.join(" ").toLowerCase();
   if (
     joined.includes("dangerously-skip-permissions") ||
@@ -260,9 +312,9 @@ export function invokeClaudeCli(
       child = spawn(request.executablePath, args, {
         stdio: ["pipe", "pipe", "pipe"],
         shell: false,
+        cwd: request.cwd,
         env: {
           ...process.env,
-          // Never inject bypass env vars.
           CLAUDE_CODE_PERMISSION_BYPASS: undefined,
         },
       });

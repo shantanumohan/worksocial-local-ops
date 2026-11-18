@@ -9,6 +9,7 @@ import {
   evaluateIndependentReviewGate,
   listRoleOutcomesForLearning,
   proposeEffect,
+  unwrapClaudeJsonPayload,
   validateRoleStructuredOutput,
   validateTypedDelegation,
   type EffectProposal,
@@ -201,5 +202,77 @@ describe("role-runtime gates (R1-04)", () => {
 
     const bad = validateRoleStructuredOutput({ roleId: "Z99" });
     expect(bad.ok).toBe(false);
+  });
+
+  it("unwraps Claude JSON result envelope and binds role/job identities", () => {
+    const inner = {
+      roleId: "A01",
+      jobId: "11111111-1111-4111-8111-111111111111",
+      status: "ok",
+      summary: "plan",
+      artifactIds: [],
+      proposedEffects: [],
+      taskRequests: [],
+    };
+    const unwrapped = unwrapClaudeJsonPayload({
+      type: "result",
+      result: JSON.stringify(inner),
+    });
+    expect(unwrapped).toEqual(inner);
+
+    const bound = validateRoleStructuredOutput(
+      { type: "result", result: JSON.stringify(inner) },
+      {
+        expectedRoleId: "A01",
+        expectedJobId: "11111111-1111-4111-8111-111111111111",
+      },
+    );
+    expect(bound.ok).toBe(true);
+
+    const mismatch = validateRoleStructuredOutput(inner, {
+      expectedRoleId: "A15",
+      expectedJobId: inner.jobId,
+    });
+    expect(mismatch.ok).toBe(false);
+    if (!mismatch.ok) {
+      expect(mismatch.code).toBe("ROLE_MISMATCH");
+    }
+  });
+
+  it("rejects malformed nested proposals instead of throwing later", () => {
+    const bad = validateRoleStructuredOutput({
+      roleId: "A13",
+      jobId: "11111111-1111-4111-8111-111111111111",
+      status: "ok",
+      summary: "x",
+      proposedEffects: [{}],
+    });
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) {
+      expect(bad.code).toBe("INVALID_PROPOSAL");
+    }
+
+    const authorMismatch = validateRoleStructuredOutput({
+      roleId: "A13",
+      jobId: "11111111-1111-4111-8111-111111111111",
+      status: "ok",
+      summary: "x",
+      proposedEffects: [
+        {
+          proposalId: "p1",
+          authorRoleId: "A15",
+          actionClass: "create",
+          operation: "stage",
+          assetId: "a",
+          channelId: "c",
+          payloadDigest: "d",
+          evidenceArtifactIds: [],
+        },
+      ],
+    });
+    expect(authorMismatch.ok).toBe(false);
+    if (!authorMismatch.ok) {
+      expect(authorMismatch.code).toBe("AUTHOR_MISMATCH");
+    }
   });
 });

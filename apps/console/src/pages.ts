@@ -392,15 +392,34 @@ export function rolesPage(apiOrigin: string): string {
     const byId = {};
     for (const c of state.contracts || []) byId[c.roleId] = c;
     const tbody = document.getElementById('roles');
-    tbody.innerHTML = '';
+    tbody.replaceChildren();
     for (const r of state.roles || []) {
       const c = byId[r.roleId] || {};
       const tr = document.createElement('tr');
-      tr.innerHTML = '<td><span class="pill">' + r.roleId + '</span> ' + (c.name || '') + '</td>' +
-        '<td>' + (c.group || '') + '</td>' +
-        '<td><span class="pill">' + r.lastStatus + '</span></td>' +
-        '<td>' + (r.lastExecutionMode || '—') + '</td>' +
-        '<td class="muted">' + (r.lastSummary || 'never run') + '</td>';
+      const tdRole = document.createElement('td');
+      const pill = document.createElement('span');
+      pill.className = 'pill';
+      pill.textContent = String(r.roleId || '');
+      tdRole.appendChild(pill);
+      tdRole.appendChild(document.createTextNode(' ' + String(c.name || '')));
+      const tdGroup = document.createElement('td');
+      tdGroup.textContent = String(c.group || '');
+      const tdStatus = document.createElement('td');
+      const statusPill = document.createElement('span');
+      statusPill.className = 'pill';
+      statusPill.textContent = String(r.lastStatus || '');
+      tdStatus.appendChild(statusPill);
+      const tdMode = document.createElement('td');
+      tdMode.textContent = String(r.lastExecutionMode || '—');
+      const tdSummary = document.createElement('td');
+      tdSummary.className = 'muted';
+      // Model-controlled summaries must never enter innerHTML (XSS).
+      tdSummary.textContent = String(r.lastSummary || 'never run');
+      tr.appendChild(tdRole);
+      tr.appendChild(tdGroup);
+      tr.appendChild(tdStatus);
+      tr.appendChild(tdMode);
+      tr.appendChild(tdSummary);
       tbody.appendChild(tr);
     }
     document.getElementById('evidence').textContent = JSON.stringify({

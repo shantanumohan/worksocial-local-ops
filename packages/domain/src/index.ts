@@ -148,6 +148,7 @@ export {
   createRoleRunOutcome,
   listRoleOutcomesForLearning,
   validateRoleStructuredOutput,
+  unwrapClaudeJsonPayload,
   type TypedTaskRequest,
   type EffectProposal,
   type ReviewVerdict,
@@ -158,4 +159,5 @@ export {
   type RoleRunStatusValue,
   type RoleExecutionModeValue,
   type RoleStructuredOutput,
+  type ValidateRoleOutputOptions,
 } from "./role-runtime.js";

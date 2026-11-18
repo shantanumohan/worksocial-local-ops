@@ -3,11 +3,8 @@
  */
 
 import { randomBytes } from "node:crypto";
-import { join } from "node:path";
 import type { JobEnvelope } from "@worksocial/contracts";
-import {
-  JobEnvelopeSchema,
-} from "@worksocial/contracts";
+import { JobEnvelopeSchema } from "@worksocial/contracts";
 import {
   AGENT_ROLE_IDS,
   OutcomeLabel,
@@ -58,6 +55,8 @@ export type RoleJobRequest = {
   attemptUncontrolledRecursion?: boolean | undefined;
   /** Never pass true — present only so tests prove denial. */
   requestPermissionBypass?: boolean | undefined;
+  /** Force fixture for this job regardless of runner live settings. */
+  forceFixture?: boolean | undefined;
 };
 
 export type RoleJobResult = {
@@ -75,10 +74,15 @@ export type RoleJobResult = {
   permissionBypassUsed: false;
   budgetReservationId: string | null;
   costMinor: number;
+  modelId: string | null;
+  startedAtIso: string;
+  finishedAtIso: string;
   temporalEnqueue: {
     status: "NOT_WIRED" | "ACCEPTED_LOCAL";
     detail: string;
   };
+  /** True when this result was returned from idempotency coalesce. */
+  idempotentReplay?: boolean;
 };
 
 export type ClaudeRunner = {
@@ -86,13 +90,20 @@ export type ClaudeRunner = {
   getBudgetAccount(): BudgetAccount;
   detectCli(): Promise<ClaudeCliDetection>;
   enqueue(request: RoleJobRequest): Promise<RoleJobResult>;
-  evaluateAllRolesFixture(
-    siteId?: string,
-  ): Promise<RoleJobResult[]>;
+  /** Always fixture/offline — never follows live CLI configuration. */
+  evaluateAllRolesFixture(siteId?: string): Promise<RoleJobResult[]>;
 };
 
 function newId(prefix: string): string {
   return `${prefix}-${randomBytes(8).toString("hex")}`;
+}
+
+function cryptoRandomUuid(): string {
+  const bytes = randomBytes(16);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = bytes.toString("hex");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 function priorityForTrigger(trigger: string): number {
@@ -103,24 +114,45 @@ function priorityForTrigger(trigger: string): number {
   return 4;
 }
 
+function utcDayKey(now = new Date()): string {
+  return now.toISOString().slice(0, 10);
+}
+
 export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
   let budget =
     options.budgetAccount ??
     createBudgetAccount({
-      dayKey: new Date().toISOString().slice(0, 10),
+      dayKey: utcDayKey(),
       currency: "USD",
       limitMinor: 5_000,
     });
 
-  const queue = new BoundedQueue<RoleJobRequest, RoleJobResult>(
-    options.concurrency ?? 4,
-  );
-  const agentsDir =
-    options.agentsDir ?? join(options.workspaceRoot, ".claude", "agents");
+  const queue = new BoundedQueue<RoleJobRequest, RoleJobResult>({
+    concurrency: options.concurrency ?? 4,
+    reservedUrgentSlots: 1,
+    urgentMaxPriority: 1,
+  });
   const modelId = options.defaultModelId ?? "claude-sonnet-4-5";
+  const workspaceRoot = options.workspaceRoot;
+
+  /** Completed results keyed by idempotencyKey for coalesce. */
+  const completedByIdempotency = new Map<string, RoleJobResult>();
+  /** In-flight promises for the same idempotencyKey. */
+  const inflightByIdempotency = new Map<string, Promise<RoleJobResult>>();
 
   const detectCli = () =>
     detectClaudeCli({ forceFixture: options.forceFixture === true });
+
+  const rotateBudgetIfNeeded = (): void => {
+    const today = utcDayKey();
+    if (budget.dayKey !== today) {
+      budget = createBudgetAccount({
+        dayKey: today,
+        currency: budget.currency,
+        limitMinor: budget.limitMinor,
+      });
+    }
+  };
 
   const execute = async (request: RoleJobRequest): Promise<RoleJobResult> => {
     const parsed = JobEnvelopeSchema.safeParse(request.envelope);
@@ -134,10 +166,17 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
     const roleId = envelope.roleId;
     const contract = getAgentRoleContract(roleId);
     const runId = newId("run");
-    const startedAt = new Date().toISOString();
+    const startedAtIso = new Date().toISOString();
+
+    const baseTemporal = {
+      status: "NOT_WIRED" as const,
+      detail:
+        "Temporal self-host not bound locally; durable mission enqueue remains NOT_WIRED — executed in-process with file-backed evidence",
+    };
 
     if (request.requestPermissionBypass) {
       const flagCheck = validateCliArgs(["--dangerously-skip-permissions"]);
+      const finishedAtIso = new Date().toISOString();
       const outcome = createRoleRunOutcome({
         outcomeId: newId("out"),
         roleId,
@@ -147,7 +186,7 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
         status: RoleRunStatus.DENIED,
         executionMode: RoleExecutionMode.FIXTURE,
         reason: flagCheck.reason ?? "Permission bypass refused",
-        recordedAtIso: new Date().toISOString(),
+        recordedAtIso: finishedAtIso,
         featureHints: { denied: "permission_bypass" },
       });
       return {
@@ -165,13 +204,14 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
         permissionBypassUsed: false,
         budgetReservationId: null,
         costMinor: 0,
-        temporalEnqueue: {
-          status: "NOT_WIRED",
-          detail:
-            "Temporal self-host not bound locally; job executed in-process only",
-        },
+        modelId: null,
+        startedAtIso,
+        finishedAtIso,
+        temporalEnqueue: baseTemporal,
       };
     }
+
+    rotateBudgetIfNeeded();
 
     const reservationId = newId("res");
     const reserve = reserveBudget(
@@ -180,6 +220,7 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
       Math.min(contract.resourceLimits.maxBudgetMinor, 100),
     );
     if (!reserve.ok) {
+      const finishedAtIso = new Date().toISOString();
       const outcome = createRoleRunOutcome({
         outcomeId: newId("out"),
         roleId,
@@ -189,7 +230,7 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
         status: RoleRunStatus.BUDGET_EXHAUSTED,
         executionMode: RoleExecutionMode.FIXTURE,
         reason: `Budget exhausted; available ${reserve.availableMinor}`,
-        recordedAtIso: new Date().toISOString(),
+        recordedAtIso: finishedAtIso,
       });
       return {
         runId,
@@ -206,18 +247,18 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
         permissionBypassUsed: false,
         budgetReservationId: null,
         costMinor: 0,
-        temporalEnqueue: {
-          status: "NOT_WIRED",
-          detail:
-            "Temporal self-host not bound locally; job executed in-process only",
-        },
+        modelId: null,
+        startedAtIso,
+        finishedAtIso,
+        temporalEnqueue: baseTemporal,
       };
     }
     budget = reserve.account;
 
+    const forceFixtureThisJob =
+      request.forceFixture === true || options.forceFixture === true;
     const cliDetection = await detectCli();
-    const useFixture =
-      options.forceFixture === true || !cliDetection.available;
+    const useFixture = forceFixtureThisJob || !cliDetection.available;
 
     let output: RoleStructuredOutput | null = null;
     let deniedEffects: Array<{ code: string; reason: string }> = [];
@@ -226,6 +267,15 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
     let summary = "";
     let executionMode: RoleExecutionModeValue = RoleExecutionMode.FIXTURE;
     let costMinor = 25;
+    let usedModelId: string | null = null;
+    let acceptedReviewableCount = 0;
+
+    const settleAndFinish = (cost: number): void => {
+      const settled = settleBudget(budget, reservationId, cost);
+      if (settled.ok) {
+        budget = settled.account;
+      }
+    };
 
     if (useFixture) {
       executionMode = RoleExecutionMode.FIXTURE;
@@ -239,35 +289,46 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
       deniedEffects = fixture.deniedEffects;
       deniedDelegations = fixture.deniedDelegations;
       summary = fixture.output.summary;
+      acceptedReviewableCount = fixture.output.proposedEffects.length;
       if (
         fixture.output.status === "error" ||
         (request.attemptUnauthorizedEffect && deniedEffects.length > 0) ||
         (request.attemptSelfApproval && deniedEffects.length > 0)
       ) {
-        status =
-          deniedEffects.some((d) => d.code.includes("FORBIDDEN") || d.code.includes("SELF"))
-            ? RoleRunStatus.DENIED
-            : RoleRunStatus.FAILED;
-      } else if (fixture.output.status === "needs_review") {
+        status = deniedEffects.some(
+          (d) => d.code.includes("FORBIDDEN") || d.code.includes("SELF"),
+        )
+          ? RoleRunStatus.DENIED
+          : RoleRunStatus.FAILED;
+      } else if (
+        acceptedReviewableCount > 0 ||
+        fixture.output.status === "needs_review"
+      ) {
         status = RoleRunStatus.AWAITING_REVIEW;
       } else {
         status = RoleRunStatus.SUCCEEDED;
       }
       costMinor = 10;
+      settleAndFinish(costMinor);
     } else {
       executionMode = RoleExecutionMode.LIVE_CLI;
-      const agentPath = join(agentsDir, `${roleId}.md`);
+      usedModelId = modelId;
+      const deadlineSeconds = Math.min(
+        envelope.deadlineSeconds,
+        contract.resourceLimits.maxDeadlineSeconds,
+      );
       const invoke = await invokeClaudeCli({
         executablePath: cliDetection.executablePath!,
-        agentDefinitionPath: agentPath,
+        agentName: roleId,
+        cwd: workspaceRoot,
         modelId,
         prompt: JSON.stringify({
           envelope,
           contractVersion: contract.version,
           instruction:
-            "Return a single JSON object matching RoleStructuredOutput. Do not claim authorization. Do not enable permission bypass.",
+            "Return a single JSON object matching RoleStructuredOutput with roleId and jobId bound to this envelope. Do not claim authorization. Do not enable permission bypass.",
         }),
-        timeoutMs: contract.resourceLimits.maxDeadlineSeconds * 1000,
+        timeoutMs: deadlineSeconds * 1000,
         maxOutputBytes: contract.resourceLimits.maxOutputBytes,
       });
       if (!invoke.ok) {
@@ -277,6 +338,8 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
             : RoleRunStatus.FAILED;
         summary = invoke.reason;
         output = null;
+        costMinor = 25;
+        settleAndFinish(costMinor);
       } else {
         let parsedOut: unknown;
         try {
@@ -284,14 +347,20 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
         } catch {
           parsedOut = null;
         }
-        const validated = validateRoleStructuredOutput(parsedOut);
+        const validated = validateRoleStructuredOutput(parsedOut, {
+          expectedRoleId: roleId,
+          expectedJobId: envelope.jobId,
+        });
         if (!validated.ok) {
           status = RoleRunStatus.FAILED;
           summary = validated.reason;
           output = null;
+          costMinor = 50;
+          settleAndFinish(costMinor);
         } else {
           output = validated.output;
           summary = validated.output.summary;
+
           for (const effect of validated.output.proposedEffects) {
             const decision = proposeEffect(effect);
             if (!decision.ok) {
@@ -299,36 +368,48 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
                 code: decision.code,
                 reason: decision.reason,
               });
+            } else if (
+              decision.review.ok &&
+              decision.review.requiresReview === true
+            ) {
+              acceptedReviewableCount += 1;
             }
           }
+
+          let acceptedFanout = 0;
           for (const task of validated.output.taskRequests) {
-            const decision = validateTypedDelegation(task);
+            const decision = validateTypedDelegation(task, {
+              currentFanout: acceptedFanout,
+            });
             if (!decision.ok) {
               deniedDelegations.push({
                 code: decision.code,
                 reason: decision.reason,
               });
+            } else {
+              acceptedFanout += 1;
             }
           }
+
           if (deniedEffects.length > 0) {
             status = RoleRunStatus.DENIED;
-          } else if (validated.output.status === "needs_review") {
+          } else if (acceptedReviewableCount > 0) {
+            // Independent review required — model self-ok is ignored.
             status = RoleRunStatus.AWAITING_REVIEW;
           } else if (validated.output.status === "error") {
             status = RoleRunStatus.FAILED;
+          } else if (validated.output.status === "needs_review") {
+            status = RoleRunStatus.AWAITING_REVIEW;
           } else {
             status = RoleRunStatus.SUCCEEDED;
           }
+          costMinor = 75;
+          settleAndFinish(costMinor);
         }
       }
-      costMinor = 75;
     }
 
-    const settled = settleBudget(budget, reservationId, costMinor);
-    if (settled.ok) {
-      budget = settled.account;
-    }
-
+    const finishedAtIso = new Date().toISOString();
     const label =
       status === RoleRunStatus.SUCCEEDED ||
       status === RoleRunStatus.AWAITING_REVIEW
@@ -346,12 +427,13 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
       reason: summary || status,
       artifactIds: output?.artifactIds ?? [],
       costMinor,
-      recordedAtIso: new Date().toISOString(),
+      recordedAtIso: finishedAtIso,
       featureHints: {
         suite: contract.evaluationSuiteId,
-        startedAt,
+        startedAt: startedAtIso,
         deniedEffectCount: deniedEffects.length,
         deniedDelegationCount: deniedDelegations.length,
+        acceptedReviewableCount,
       },
     });
 
@@ -370,37 +452,65 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
       permissionBypassUsed: false,
       budgetReservationId: reservationId,
       costMinor,
-      temporalEnqueue: {
-        status: "NOT_WIRED",
-        detail:
-          "Temporal self-host not bound locally; durable mission enqueue remains NOT_WIRED — executed in-process with file-backed evidence",
-      },
+      modelId: usedModelId,
+      startedAtIso,
+      finishedAtIso,
+      temporalEnqueue: baseTemporal,
     };
+  };
+
+  const enqueue = (request: RoleJobRequest): Promise<RoleJobResult> => {
+    const key = request.envelope.idempotencyKey;
+    const prior = completedByIdempotency.get(key);
+    if (prior) {
+      return Promise.resolve({ ...prior, idempotentReplay: true });
+    }
+    const inflight = inflightByIdempotency.get(key);
+    if (inflight) {
+      return inflight.then((r) => ({ ...r, idempotentReplay: true }));
+    }
+
+    const priority =
+      request.priority ?? priorityForTrigger(request.envelope.trigger);
+    const promise = queue
+      .run(
+        {
+          id: request.envelope.jobId,
+          priority,
+          payload: request,
+        },
+        execute,
+      )
+      .then((qr) => {
+        if (!qr.ok || !qr.result) {
+          throw new Error(qr.error ?? "queue job failed");
+        }
+        completedByIdempotency.set(key, qr.result);
+        // Bound memory for long-lived API processes.
+        if (completedByIdempotency.size > 1000) {
+          const first = completedByIdempotency.keys().next().value;
+          if (first !== undefined) {
+            completedByIdempotency.delete(first);
+          }
+        }
+        return qr.result;
+      })
+      .finally(() => {
+        inflightByIdempotency.delete(key);
+      });
+
+    inflightByIdempotency.set(key, promise);
+    return promise;
   };
 
   return {
     queue,
-    getBudgetAccount: () => budget,
-    detectCli,
-    enqueue(request) {
-      const priority =
-        request.priority ?? priorityForTrigger(request.envelope.trigger);
-      return queue
-        .run(
-          {
-            id: request.envelope.jobId,
-            priority,
-            payload: request,
-          },
-          execute,
-        )
-        .then((qr) => {
-          if (!qr.ok || !qr.result) {
-            throw new Error(qr.error ?? "queue job failed");
-          }
-          return qr.result;
-        });
+    getBudgetAccount: () => {
+      rotateBudgetIfNeeded();
+      return budget;
     },
+    detectCli,
+    enqueue,
     async evaluateAllRolesFixture(siteId = "worksocial") {
       const results: RoleJobResult[] = [];
       for (const roleId of AGENT_ROLE_IDS) {
@@ -418,25 +528,18 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
           maxAttempts: 1,
           deadlineSeconds: getAgentRoleContract(roleId).resourceLimits
             .maxDeadlineSeconds,
-          idempotencyKey: `fixture/${roleId}/${siteId}`,
+          idempotencyKey: `fixture/${roleId}/${siteId}/${cryptoRandomUuid()}`,
           expectedOutcome: "typed-result-or-denied-effect",
         };
+        // Always fixture — independent of live CLI / WORKSOCIAL_CLAUDE_FIXTURE=0.
         results.push(
           await execute({
             envelope,
+            forceFixture: true,
           }),
         );
       }
       return results;
     },
   };
-}
-
-function cryptoRandomUuid(): string {
-  // Node 20+ 
-  const bytes = randomBytes(16);
-  bytes[6] = (bytes[6] & 0x0f) | 0x40;
-  bytes[8] = (bytes[8] & 0x3f) | 0x80;
-  const hex = bytes.toString("hex");
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
