@@ -11,6 +11,8 @@
     { "path": "../../packages/persistence" },
     { "path": "../../packages/provider-adapters" },
     { "path": "../../services/action-gateway" },
-    { "path": "../../services/credential-broker" }
+    { "path": "../../services/credential-broker" },
+    { "path": "../../services/claude-runner" },
+    { "path": "../../services/workflow-worker" }
   ]
 }

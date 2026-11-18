@@ -1,4 +1,4 @@
-/** Minimal honest login + authority + production mapping console HTML (R1-02/R1-03). No React routes yet. */
+/** Minimal honest login + authority + mapping + roles console HTML (R1-02–R1-04). No React routes yet. */
 
 export function loginPage(apiOrigin: string): string {
   return `<!doctype html>
@@ -54,7 +54,7 @@ export function loginPage(apiOrigin: string): string {
     }
     const data = await res.json();
     sessionStorage.setItem('ws_csrf', data.csrfToken);
-    location.href = '/mapping';
+    location.href = '/roles';
   });
 </script>
 </body>
@@ -89,7 +89,7 @@ export function authorityPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/mapping">Production mapping</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -199,7 +199,7 @@ export function mappingPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/mapping">Production mapping</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -310,3 +310,127 @@ export function mappingPage(apiOrigin: string): string {
 </body>
 </html>`;
 }
+
+export function rolesPage(apiOrigin: string): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WorkSocial — Roles</title>
+  <style>
+    :root { --ink:#1b2a22; --panel:#fff; --accent:#2f6b4f; --warn:#8a5a00; }
+    body { margin:0; font-family:"IBM Plex Sans","Segoe UI",sans-serif; background:
+      linear-gradient(180deg,#e7efe9,#f6f3ec); color:var(--ink); }
+    header { padding:1.25rem 1.5rem; border-bottom:1px solid #c9d6cc; background:rgba(255,255,255,.7); }
+    h1 { font-family:"IBM Plex Serif",Georgia,serif; margin:0; font-size:1.45rem; }
+    main { max-width:1100px; margin:0 auto; padding:1.5rem; display:grid; gap:1rem; }
+    section { background:var(--panel); border:1px solid #c9d6cc; padding:1rem 1.1rem; }
+    h2 { margin:.2rem 0 .6rem; font-size:1.05rem; }
+    .row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; }
+    button { background:var(--accent); color:#fff; border:0; padding:.5rem .85rem; cursor:pointer; }
+    table { width:100%; border-collapse:collapse; font-size:.85rem; }
+    th, td { text-align:left; padding:.35rem .25rem; border-bottom:1px solid #e0e7e2; vertical-align:top; }
+    .muted { color:#516258; font-size:.85rem; }
+    .pill { display:inline-block; padding:.15rem .45rem; border:1px solid #b7c5bb; font-size:.75rem; margin:.1rem; }
+    .warn { color:var(--warn); }
+    pre { white-space:pre-wrap; font-size:.8rem; max-height:280px; overflow:auto; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>WorkSocial</h1>
+  <p class="muted" id="who">Checking session…</p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/authority">Authority</a></p>
+</header>
+<main>
+  <section>
+    <h2>Thirty-role Claude runtime (R1-04)</h2>
+    <p class="muted">A01–A30 role contracts with bounded fixture evaluations. Reasoning proposes; gateway authorizes.</p>
+    <p class="warn">Default execution is fixture/offline. Temporal mission enqueue is <strong>NOT_WIRED</strong>. No blanket permission bypass.</p>
+    <div class="row">
+      <button id="btn-eval" type="button">Evaluate all 30 (fixture)</button>
+      <button id="btn-run-a01" type="button">Run A01</button>
+      <button id="btn-refresh" type="button">Refresh</button>
+    </div>
+    <p class="muted" id="note"></p>
+    <p class="muted">CLI: <span id="cli">—</span> · Temporal: <span id="temporal">—</span></p>
+  </section>
+  <section>
+    <h2>Role status / last run</h2>
+    <table>
+      <thead><tr><th>Role</th><th>Group</th><th>Last status</th><th>Mode</th><th>Summary</th></tr></thead>
+      <tbody id="roles"><tr><td colspan="5" class="muted">Loading…</td></tr></tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Last run evidence / learning hooks</h2>
+    <p class="muted">SUCCESS/FAILURE outcomes stored for a future learning-worker. No ML training here.</p>
+    <pre id="evidence">Loading…</pre>
+  </section>
+</main>
+<script>
+  const API = ${JSON.stringify(apiOrigin)};
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ origin: window.location.origin }, opts.headers || {});
+    const csrf = sessionStorage.getItem('ws_csrf');
+    if (opts.method && opts.method !== 'GET' && csrf) headers['x-csrf-token'] = csrf;
+    return fetch(API + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+  }
+  async function refresh() {
+    const session = await api('/auth/session');
+    if (!session.ok) { location.href = '/login'; return; }
+    const s = await session.json();
+    sessionStorage.setItem('ws_csrf', s.csrfToken);
+    document.getElementById('who').textContent = s.username + ' · ' + s.role + ' · local session';
+    const stateRes = await api('/roles/state');
+    if (!stateRes.ok) { location.href = '/login'; return; }
+    const state = await stateRes.json();
+    document.getElementById('cli').textContent = state.cli && state.cli.available
+      ? (state.cli.version || 'detected')
+      : (state.cli && state.cli.reason) || 'fixture';
+    document.getElementById('temporal').textContent = state.temporalWiring || 'NOT_WIRED';
+    const byId = {};
+    for (const c of state.contracts || []) byId[c.roleId] = c;
+    const tbody = document.getElementById('roles');
+    tbody.innerHTML = '';
+    for (const r of state.roles || []) {
+      const c = byId[r.roleId] || {};
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td><span class="pill">' + r.roleId + '</span> ' + (c.name || '') + '</td>' +
+        '<td>' + (c.group || '') + '</td>' +
+        '<td><span class="pill">' + r.lastStatus + '</span></td>' +
+        '<td>' + (r.lastExecutionMode || '—') + '</td>' +
+        '<td class="muted">' + (r.lastSummary || 'never run') + '</td>';
+      tbody.appendChild(tr);
+    }
+    document.getElementById('evidence').textContent = JSON.stringify({
+      recentRuns: state.recentRuns,
+      learningOutcomes: state.learningOutcomes,
+      budget: state.budget,
+      note: state.honestLabelsNote
+    }, null, 2);
+  }
+  document.getElementById('btn-eval').onclick = async () => {
+    document.getElementById('note').textContent = 'Running fixture evaluations…';
+    const res = await api('/roles/evaluate-fixture', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.note || ('Evaluated ' + (body.evaluated || 0) + ' roles');
+    refresh();
+  };
+  document.getElementById('btn-run-a01').onclick = async () => {
+    const res = await api('/roles/run', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ roleId: 'A01', trigger: 'console_manual' })
+    });
+    const body = await res.json();
+    document.getElementById('note').textContent = (body.run && body.run.summary) || (body.mission && body.mission.detail) || '';
+    refresh();
+  };
+  document.getElementById('btn-refresh').onclick = () => refresh();
+  refresh();
+</script>
+</body>
+</html>`;
+}
+

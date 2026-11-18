@@ -21,7 +21,9 @@ import {
   assertNonEmptyEvidenceKinds,
   createReadEvidence,
   findActiveUser,
+  isAgentRoleId,
   isOutcomeEvidenceSource,
+  listAgentRoleContracts,
   listWritePathOutcomesForLearning,
   proveFixturePilotWritePath,
   recordWritePathOutcome,
@@ -41,11 +43,13 @@ import {
 import {
   createFileAuthorityStore,
   createFileProductionMappingStore,
+  createFileRoleRuntimeStore,
   ensureBootstrapOwner,
   verifyPassword,
   type AuthorityStore,
   type PolicyDecisionRecord,
   type ProductionMappingStore,
+  type RoleRuntimeStore,
 } from "@worksocial/persistence";
 import {
   createActionGateway,
@@ -54,10 +58,21 @@ import {
 } from "@worksocial/action-gateway";
 import { createCredentialBroker, type CredentialBroker } from "@worksocial/credential-broker";
 import { listAdapters } from "@worksocial/provider-adapters";
+import {
+  createClaudeRunner,
+  type ClaudeRunner,
+} from "@worksocial/claude-runner";
+import {
+  createMissionEnqueueService,
+  type MissionEnqueueService,
+} from "@worksocial/workflow-worker";
 
 export type ApiRuntime = {
   store: AuthorityStore;
   mappingStore: ProductionMappingStore;
+  roleRuntimeStore: RoleRuntimeStore;
+  runner: ClaudeRunner;
+  missions: MissionEnqueueService;
   gateway: ActionGateway;
   broker: CredentialBroker;
   apiOrigin: string;
@@ -70,18 +85,29 @@ export function createApiRuntime(options: {
   apiPort: number;
   consolePort: number;
   ownerPassword?: string;
+  workspaceRoot?: string;
 }): ApiRuntime {
   const store = createFileAuthorityStore(options.stateDir);
   const mappingStore = createFileProductionMappingStore(options.stateDir);
+  const roleRuntimeStore = createFileRoleRuntimeStore(options.stateDir);
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
     store,
     ownerPassword !== undefined ? { password: ownerPassword } : {},
   );
+  const workspaceRoot = options.workspaceRoot ?? process.cwd();
+  const runner = createClaudeRunner({
+    workspaceRoot,
+    forceFixture: process.env.WORKSOCIAL_CLAUDE_FIXTURE !== "0",
+  });
+  const missions = createMissionEnqueueService({ runner });
   return {
     store,
     mappingStore,
+    roleRuntimeStore,
+    runner,
+    missions,
     gateway: createActionGateway(),
     broker: createCredentialBroker(),
     apiOrigin: `http://127.0.0.1:${options.apiPort}`,
@@ -213,9 +239,10 @@ export async function handleApiRequest(
         serviceId: "api",
         status: "running",
         productionActivated: false,
-        identity: "R1-02 local session auth + R1-03 production mapping",
+        identity:
+          "R1-02 auth + R1-03 mapping + R1-04 thirty-role Claude runner",
         message:
-          "API identity/authority/mapping surface. No live Zoho/CMS mutations.",
+          "API identity/authority/mapping/roles surface. No live Zoho/CMS mutations. Claude fixture mode default.",
       },
       cors,
     );
@@ -1159,6 +1186,244 @@ export async function handleApiRequest(
         cors,
       );
     }
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/roles/state") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const state = runtime.roleRuntimeStore.read();
+    const cli = await runtime.runner.detectCli();
+    json(
+      res,
+      200,
+      {
+        contracts: listAgentRoleContracts().map((c) => ({
+          roleId: c.roleId,
+          name: c.name,
+          group: c.group,
+          version: c.version,
+          evaluationSuiteId: c.evaluationSuiteId,
+          mayIssueReviewVerdicts: c.mayIssueReviewVerdicts,
+          independentReviewerRoleId: c.independentReviewerRoleId,
+        })),
+        roles: state.roles,
+        recentRuns: state.runs.slice(0, 20),
+        learningOutcomes: state.outcomes.slice(0, 20),
+        temporalWiring: state.temporalWiring,
+        cli,
+        budget: runtime.runner.getBudgetAccount(),
+        honestLabelsNote:
+          "Fixture / NOT_WIRED ≠ live Claude fleet. permissionBypassUsed is always false. Outcome labels are hooks for a later learning-worker — no ML training in R1-04.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/roles/evaluate-fixture") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const results = await runtime.runner.evaluateAllRolesFixture();
+    for (const run of results) {
+      runtime.roleRuntimeStore.recordRun(
+        {
+          runId: run.runId,
+          jobId: run.jobId,
+          roleId: run.roleId,
+          workflowId: `fixture-wf-${run.roleId}`,
+          status: run.status,
+          executionMode: run.executionMode,
+          summary: run.summary,
+          artifactIds: run.output?.artifactIds ?? [],
+          cliVersion: run.cliDetection.version,
+          modelId: null,
+          permissionBypassUsed: false,
+          startedAtIso: run.outcome.recordedAtIso,
+          finishedAtIso: run.outcome.recordedAtIso,
+          costMinor: run.costMinor,
+          budgetReservationId: run.budgetReservationId,
+        },
+        run.outcome,
+      );
+    }
+    json(
+      res,
+      200,
+      {
+        evaluated: results.length,
+        temporalStatus: "NOT_WIRED",
+        results: results.map((r) => ({
+          roleId: r.roleId,
+          status: r.status,
+          executionMode: r.executionMode,
+          summary: r.summary,
+          outcomeLabel: r.outcome.label,
+        })),
+        note: "Offline fixture evaluation for all 30 roles. Temporal remains NOT_WIRED.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/roles/run") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      roleId?: string;
+      trigger?: string;
+      assetId?: string;
+      attemptSelfApproval?: boolean;
+      attemptUnauthorizedEffect?: boolean;
+      attemptUncontrolledRecursion?: boolean;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.roleId || !isAgentRoleId(body.roleId)) {
+      json(res, 400, { error: "INVALID_ROLE_ID" }, cors);
+      return;
+    }
+    const jobId = `job-${randomBytes(8).toString("hex")}`;
+    // JobEnvelope requires UUID — mint one.
+    const uuid = (() => {
+      const bytes = randomBytes(16);
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      const hex = bytes.toString("hex");
+      return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    })();
+    const mission = await runtime.missions.enqueue({
+      envelope: {
+        jobId: uuid,
+        roleId: body.roleId,
+        workflowId: `api-${jobId}`,
+        siteId: "worksocial",
+        assetId: body.assetId ?? `asset-${body.roleId}`,
+        trigger: body.trigger ?? "api_manual_run",
+        policyVersion: "r1-04",
+        inputArtifactIds: [],
+        capabilityGrantId: "api-fixture-grant",
+        sourceRevision: "api",
+        maxAttempts: 1,
+        deadlineSeconds: 120,
+        idempotencyKey: `api/${body.roleId}/${uuid}`,
+        expectedOutcome: "typed-result",
+      },
+    });
+    // Optional denial probes (contract/demo only) — re-run through runner when requested.
+    let run = mission.run;
+    if (
+      run &&
+      (body.attemptSelfApproval ||
+        body.attemptUnauthorizedEffect ||
+        body.attemptUncontrolledRecursion)
+    ) {
+      const probeEnvelope = {
+        jobId: uuid,
+        roleId: body.roleId,
+        workflowId: `api-${jobId}`,
+        siteId: "worksocial",
+        assetId: body.assetId ?? `asset-${body.roleId}`,
+        trigger: body.trigger ?? "api_manual_run",
+        policyVersion: "r1-04",
+        inputArtifactIds: [] as string[],
+        capabilityGrantId: "api-fixture-grant",
+        sourceRevision: "api",
+        maxAttempts: 1,
+        deadlineSeconds: 120,
+        idempotencyKey: `api/${body.roleId}/${uuid}-probe`,
+        expectedOutcome: "typed-result",
+      };
+      run = await runtime.runner.enqueue({
+        envelope: probeEnvelope,
+        ...(body.attemptSelfApproval !== undefined
+          ? { attemptSelfApproval: body.attemptSelfApproval }
+          : {}),
+        ...(body.attemptUnauthorizedEffect !== undefined
+          ? { attemptUnauthorizedEffect: body.attemptUnauthorizedEffect }
+          : {}),
+        ...(body.attemptUncontrolledRecursion !== undefined
+          ? {
+              attemptUncontrolledRecursion: body.attemptUncontrolledRecursion,
+            }
+          : {}),
+      });
+    }
+    if (run) {
+      runtime.roleRuntimeStore.recordRun(
+        {
+          runId: run.runId,
+          jobId: run.jobId,
+          roleId: run.roleId,
+          workflowId: mission.workflowId,
+          status: run.status,
+          executionMode: run.executionMode,
+          summary: run.summary,
+          artifactIds: run.output?.artifactIds ?? [],
+          cliVersion: run.cliDetection.version,
+          modelId: null,
+          permissionBypassUsed: false,
+          startedAtIso: run.outcome.recordedAtIso,
+          finishedAtIso: run.outcome.recordedAtIso,
+          costMinor: run.costMinor,
+          budgetReservationId: run.budgetReservationId,
+        },
+        run.outcome,
+      );
+    }
+    json(
+      res,
+      200,
+      {
+        mission: {
+          accepted: mission.accepted,
+          temporalStatus: mission.temporalStatus,
+          detail: mission.detail,
+          workflowId: mission.workflowId,
+        },
+        run: run
+          ? {
+              runId: run.runId,
+              roleId: run.roleId,
+              status: run.status,
+              executionMode: run.executionMode,
+              summary: run.summary,
+              deniedEffects: run.deniedEffects,
+              deniedDelegations: run.deniedDelegations,
+              outcomeLabel: run.outcome.label,
+              permissionBypassUsed: run.permissionBypassUsed,
+            }
+          : null,
+      },
+      cors,
+    );
     return;
   }
 

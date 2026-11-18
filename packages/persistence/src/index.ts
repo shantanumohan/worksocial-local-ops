@@ -92,3 +92,13 @@ export {
   defaultProductionMappingStateDir,
   type ProductionMappingStore,
 } from "./production-mapping-store.js";
+
+export {
+  createFileRoleRuntimeStore,
+  defaultRoleRuntimeStateDir,
+  emptyRoleRuntimeState,
+  type RoleRuntimeStore,
+  type RoleRuntimeState,
+  type RoleStatusRecord,
+  type RoleRunEvidence,
+} from "./role-runtime-store.js";

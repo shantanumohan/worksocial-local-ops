@@ -4,7 +4,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 
 **Not production-activated.** No live providers, credentials, schedules, website changes, CRM writes, or customer replies. External effects: none.
 
-## What is real (R1-01 → R1-03)
+## What is real (R1-01 → R1-04)
 
 ### R1-01 local execution
 - **Supervisor-owned local lifecycle** — `pnpm local:start|stop|doctor|health` and VS Code tasks call `services/supervisor`.
@@ -28,16 +28,26 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - **Console `/mapping`** — honest binding/adapter status; fixture seed + prove-read helpers.
 - **Learning hooks only** — `writePathOutcomes` + `listWritePathOutcomesForLearning` store SUCCESS/FAILURE labels for a later local multi-model learning-worker. **No ML frameworks or training in this PR.**
 
+### R1-04 thirty-role Claude Code runtime
+- **`.claude/agents/A01–A30`** — real role contracts (capabilities, inputs, forbidden effects, limits).
+- **`services/claude-runner`** — pinned CLI adapter, output validation, timeouts/budgets, bounded queue, **fixture/offline mode** when CLI absent; **no permission bypass**.
+- **Independent review gate** — author cannot self-approve; A25 issues verdicts; effects still go through gateway + grants.
+- **Delegation bounds** — typed task requests only; uncontrolled recursion denied (`MAX_DELEGATION_DEPTH`).
+- **`services/workflow-worker`** — mission enqueue with honest **`NOT_WIRED`** Temporal status; in-process runner execution.
+- **Console `/roles` + API `/roles/*`** — role status, last-run evidence, fixture evaluate-all.
+- **Learning hooks** — role-run SUCCESS/FAILURE outcomes for a later learning-worker (no ML training here).
+- SQL `005_role_runtime.sql` companion schema (file-backed store until Postgres is bound).
+
 ## What is still stub / NOT_WIRED
 
 | Area | Status |
 |------|--------|
-| Temporal runtime / durable workflows | **stub** — `NOT_WIRED` |
-| Full console React routes (v5 25 screens) | minimal login + authority + mapping only |
+| Temporal runtime / durable workflows | **stub** — `NOT_WIRED` (in-process enqueue only) |
+| Live Claude Code CLI fleet | optional; default **fixture** (`WORKSOCIAL_CLAUDE_FIXTURE` unset/`1`) |
+| Full console React routes (v5 25 screens) | minimal login + authority + mapping + roles |
 | Live OAuth / provider connections | **excluded** — fixture/NOT_WIRED scaffolds only |
 | Live Zoho / CMS / booking mutations | **excluded** |
 | Postgres bound as live control plane | schema ready; runtime state is **file-backed** |
-| Full Temporal Claude runner fleet | out of scope (R1-04) |
 | Multi-model learning-worker | **hooks only** (outcome labels); training deferred |
 | After-hours / publishing pipelines | excluded |
 
@@ -51,7 +61,7 @@ services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-bro
 packages/{contracts,domain,persistence,provider-adapters,observability,ui}
 database/migrations
 tests/{unit,integration,contract,workflow,e2e,security,eval,soak}
-.claude/agents          # A01–A30 placeholders
+.claude/agents          # A01–A30 role contracts
 .vscode/tasks.json
 docs/{adrs,runbooks,product,contracts,v5}
 ```
@@ -62,13 +72,15 @@ docs/{adrs,runbooks,product,contracts,v5}
 pnpm install
 pnpm local:doctor | local:start | local:stop | local:health
 pnpm check
-pnpm test:unit          # domain + persistence + supervisor + gateway + broker + api
-pnpm test:contract      # unauthorized-write + stop-switch + read-evidence-required
+pnpm test:unit          # domain + persistence + supervisor + gateway + broker + claude-runner + workflow-worker + api
+pnpm test:contract      # unauthorized-write + stop-switch + read-evidence + thirty-role-runtime
 pnpm test:database | test:workflow | test:e2e | test:security | test:eval
 pnpm recovery:rehearse | release:evidence
 ```
 
 VS Code tasks: **WorkSocial: Start / Stop / Diagnostics / Test Local Operations** → supervisor CLI.
+
+Optional env: `WORKSOCIAL_SYNC_DENY`, `WORKSOCIAL_STATE_DIR`, `WORKSOCIAL_HOST_ID`, `WORKSOCIAL_API_PORT`, `WORKSOCIAL_CONSOLE_PORT`, `WORKSOCIAL_OWNER_PASSWORD`, `WORKSOCIAL_CLAUDE_CLI`, `WORKSOCIAL_CLAUDE_FIXTURE` (`0` to allow live CLI when present).
 
 ## Workspace vs database (OneDrive note)
 
@@ -82,16 +94,14 @@ That path is a **workspace / artifact root example**, not a database root. **Do 
 | `source`, `working`, `content`, `reports`, `encrypted_backup` | yes (owner-selected) |
 | `database`, `temporal`, `secrets` | **no** — keep off sync volumes |
 
-Optional env: `WORKSOCIAL_SYNC_DENY`, `WORKSOCIAL_STATE_DIR`, `WORKSOCIAL_HOST_ID`, `WORKSOCIAL_API_PORT`, `WORKSOCIAL_CONSOLE_PORT`, `WORKSOCIAL_OWNER_PASSWORD`.
-
 ## Acceptance vs reference-core
 
 - `tests/acceptance-matrix-v6.json` — **159** product acceptance cases (bootstrap statuses unchanged unless a later WP updates them).
-- Domain / persistence / gateway / broker / API unit tests prove R1-03 offline; they are **not** production acceptance (see `docs/product/reference-core-vs-acceptance.md`).
+- Domain / persistence / gateway / broker / runner / API unit tests prove R1-04 offline; they are **not** production acceptance (see `docs/product/reference-core-vs-acceptance.md`).
 
 ## Specs in-repo
 
 - `docs/product/WorkSocial_Operations_v6_implementation_baseline.md`
 - `docs/WorkSocial_Local_30_Agent_Operating_System_v3.md`
 - `docs/v5/*`
-- `docs/product/ml-learning-from-outcomes.md` — owner requirement; R1-03 leaves labeled outcome hooks only
+- `docs/product/ml-learning-from-outcomes.md` — owner requirement; R1-03/R1-04 leave labeled outcome hooks only

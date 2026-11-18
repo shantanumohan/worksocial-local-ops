@@ -13,4 +13,8 @@ In-repo pointer for the owner requirement. Full project-store text may be richer
 
 Production mapping stores labeled write-path outcomes (`core.write_path_outcomes` / `writePathOutcomes`) and exposes `listWritePathOutcomesForLearning`.
 
-**Not in R1-03:** ML frameworks, `services/learning-worker`, training jobs, or authority expansion from scores.
+## R1-04 scope
+
+Role runtime stores labeled role-run outcomes (`measure.role_run_outcomes` / file-backed `role-runtime.json` outcomes) via `createRoleRunOutcome` / `listRoleOutcomesForLearning`.
+
+**Not in R1-03/R1-04:** ML frameworks, `services/learning-worker`, training jobs, or authority expansion from scores.
