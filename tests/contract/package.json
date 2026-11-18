@@ -1,0 +1,17 @@
+{
+  "name": "@worksocial/contract-tests",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@worksocial/action-gateway": "workspace:*",
+    "@worksocial/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.7.2",
+    "vitest": "2.1.8"
+  }
+}

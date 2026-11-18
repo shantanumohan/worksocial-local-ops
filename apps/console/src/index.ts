@@ -1,2 +1,3 @@
-/** Scaffold placeholder for @worksocial/console — WP01–WP02. Not production-activated. */
+export { startConsoleServer } from "./server.js";
+export { loginPage, authorityPage } from "./pages.js";
 export const packageName = "@worksocial/console" as const;
