@@ -22,6 +22,8 @@
     "@worksocial/claude-runner": "workspace:*",
     "@worksocial/credential-broker": "workspace:*",
     "@worksocial/domain": "workspace:*",
+    "@worksocial/learning-worker": "workspace:*",
+    "@worksocial/ml": "workspace:*",
     "@worksocial/persistence": "workspace:*",
     "@worksocial/provider-adapters": "workspace:*",
     "@worksocial/workflow-worker": "workspace:*"

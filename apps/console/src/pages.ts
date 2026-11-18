@@ -89,7 +89,7 @@ export function authorityPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -199,7 +199,7 @@ export function mappingPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -229,7 +229,7 @@ export function mappingPage(apiOrigin: string): string {
   </section>
   <section>
     <h2>Write paths / journeys / outcomes</h2>
-    <p class="muted">Outcome labels (SUCCESS/FAILURE) are stored for a future local multi-model learning-worker. No ML training here.</p>
+    <p class="muted">Outcome labels (SUCCESS/FAILURE) feed <a href="/learning">learning-worker</a> proposals under review.</p>
     <pre id="detail">Loading…</pre>
   </section>
 </main>
@@ -340,7 +340,7 @@ export function rolesPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -364,7 +364,7 @@ export function rolesPage(apiOrigin: string): string {
   </section>
   <section>
     <h2>Last run evidence / learning hooks</h2>
-    <p class="muted">SUCCESS/FAILURE outcomes stored for a future learning-worker. No ML training here.</p>
+    <p class="muted">SUCCESS/FAILURE outcomes feed <a href="/learning">learning-worker</a> proposals under review.</p>
     <pre id="evidence">Loading…</pre>
   </section>
 </main>
@@ -453,3 +453,132 @@ export function rolesPage(apiOrigin: string): string {
 </html>`;
 }
 
+export function learningPage(apiOrigin: string): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WorkSocial — Learning</title>
+  <style>
+    :root { --ink:#1b2a22; --panel:#fff; --accent:#2f6b4f; --warn:#8a5a00; }
+    body { margin:0; font-family:"IBM Plex Sans","Segoe UI",sans-serif; background:
+      linear-gradient(180deg,#e7efe9,#f6f3ec); color:var(--ink); }
+    header { padding:1.25rem 1.5rem; border-bottom:1px solid #c9d6cc; background:rgba(255,255,255,.7); }
+    h1 { font-family:"IBM Plex Serif",Georgia,serif; margin:0; font-size:1.45rem; }
+    main { max-width:960px; margin:0 auto; padding:1.5rem; display:grid; gap:1rem; }
+    section { background:var(--panel); border:1px solid #c9d6cc; padding:1rem 1.1rem; }
+    h2 { margin:.2rem 0 .6rem; font-size:1.05rem; }
+    .row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; }
+    button { background:var(--accent); color:#fff; border:0; padding:.5rem .85rem; cursor:pointer; }
+    table { width:100%; border-collapse:collapse; font-size:.9rem; }
+    th, td { text-align:left; padding:.35rem .25rem; border-bottom:1px solid #e0e7e2; }
+    .muted { color:#516258; font-size:.85rem; }
+    .warn { color:var(--warn); font-size:.85rem; }
+    .pill { display:inline-block; padding:.15rem .45rem; border:1px solid #b7c5bb; font-size:.75rem; }
+    pre { white-space:pre-wrap; font-size:.8rem; background:#f4f7f5; padding:.75rem; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>WorkSocial</h1>
+  <p class="muted" id="who">Checking session…</p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+</header>
+<main>
+  <section>
+    <h2>Multi-model learning (local OSS)</h2>
+    <p class="muted">Learns from verified SUCCESS/FAILURE outcomes. Proposals only — cannot expand grants, spend, CRM write, or publish authority.</p>
+    <p class="warn">Offline/fixture metrics ≠ production-canary-verified. No action-gateway write principal; no production effect credentials.</p>
+    <div class="row">
+      <button id="btn-train" type="button">Run offline train</button>
+      <button id="btn-refresh" type="button">Refresh</button>
+    </div>
+    <p class="muted" id="note"></p>
+  </section>
+  <section>
+    <h2>Model registry</h2>
+    <table>
+      <thead><tr><th>Model</th><th>Algorithm</th><th>License</th><th>Mode</th></tr></thead>
+      <tbody id="models"><tr><td colspan="4" class="muted">Loading…</td></tr></tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Last training run metrics</h2>
+    <pre id="metrics">Loading…</pre>
+  </section>
+  <section>
+    <h2>Proposed updates awaiting review</h2>
+    <pre id="proposals">Loading…</pre>
+  </section>
+</main>
+<script>
+  const API = ${JSON.stringify(apiOrigin)};
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ origin: window.location.origin }, opts.headers || {});
+    const csrf = sessionStorage.getItem('ws_csrf');
+    if (opts.method && opts.method !== 'GET' && csrf) headers['x-csrf-token'] = csrf;
+    return fetch(API + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+  }
+  async function refresh() {
+    const session = await api('/auth/session');
+    if (!session.ok) { location.href = '/login'; return; }
+    const s = await session.json();
+    sessionStorage.setItem('ws_csrf', s.csrfToken);
+    document.getElementById('who').textContent = s.username + ' · ' + s.role + ' · local session';
+    const [statusRes, modelsRes, runsRes, proposalsRes] = await Promise.all([
+      api('/learning/status'),
+      api('/learning/models'),
+      api('/learning/runs'),
+      api('/learning/proposals'),
+    ]);
+    if (!statusRes.ok) { location.href = '/login'; return; }
+    const status = await statusRes.json();
+    const modelsBody = await modelsRes.json();
+    const runsBody = await runsRes.json();
+    const proposalsBody = await proposalsRes.json();
+    const tbody = document.getElementById('models');
+    tbody.replaceChildren();
+    for (const m of modelsBody.models || status.models || []) {
+      const tr = document.createElement('tr');
+      const tdName = document.createElement('td');
+      const pill = document.createElement('span');
+      pill.className = 'pill';
+      pill.textContent = String(m.modelId || '');
+      tdName.appendChild(pill);
+      tdName.appendChild(document.createTextNode(' ' + String(m.displayName || '')));
+      const tdAlgo = document.createElement('td');
+      tdAlgo.textContent = String(m.algorithm || '');
+      const tdLic = document.createElement('td');
+      tdLic.textContent = String(m.license || '');
+      const tdMode = document.createElement('td');
+      tdMode.textContent = String(m.defaultRuntimeMode || '');
+      tr.appendChild(tdName);
+      tr.appendChild(tdAlgo);
+      tr.appendChild(tdLic);
+      tr.appendChild(tdMode);
+      tbody.appendChild(tr);
+    }
+    document.getElementById('metrics').textContent = JSON.stringify({
+      isolation: status.isolation,
+      lastRun: status.lastRun,
+      lastTrainingRunMetrics: runsBody.lastTrainingRunMetrics,
+      honestNote: status.honestNote,
+    }, null, 2);
+    document.getElementById('proposals').textContent = JSON.stringify({
+      awaitingReview: proposalsBody.awaitingReview || status.awaitingReview,
+      note: proposalsBody.note,
+    }, null, 2);
+  }
+  document.getElementById('btn-train').onclick = async () => {
+    document.getElementById('note').textContent = 'Training from verified outcome ledgers…';
+    const res = await api('/learning/train', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.honestNote || body.run?.note || (res.ok ? 'Train complete' : (body.reason || body.error || 'Train failed'));
+    refresh();
+  };
+  document.getElementById('btn-refresh').onclick = () => refresh();
+  refresh();
+</script>
+</body>
+</html>`;
+}

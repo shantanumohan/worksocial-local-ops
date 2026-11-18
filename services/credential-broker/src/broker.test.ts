@@ -70,4 +70,37 @@ describe("credential-broker isolation", () => {
     });
     expect(mint).toMatchObject({ ok: false, code: "PRINCIPAL_DENIED" });
   });
+
+  it("denies learning-worker production effect credential mint and reveal", () => {
+    const broker = createCredentialBroker();
+    const ref = broker.putReference(
+      "publish",
+      ["publish"],
+      "publish-secret",
+      "2026-11-18T12:00:00.000Z",
+    );
+    const mint = broker.mintScopedHandle({
+      principal: "learning-worker",
+      referenceId: ref.referenceId,
+      requestedScopes: ["publish"],
+      nowIso: "2026-11-18T12:00:00.000Z",
+    });
+    expect(mint).toMatchObject({ ok: false, code: "PRINCIPAL_DENIED" });
+
+    const gatewayMint = broker.mintScopedHandle({
+      principal: "action-gateway",
+      referenceId: ref.referenceId,
+      requestedScopes: ["publish"],
+      nowIso: "2026-11-18T12:00:00.000Z",
+    });
+    expect(gatewayMint.ok).toBe(true);
+    if (!gatewayMint.ok) {
+      throw new Error("expected gateway mint");
+    }
+    const reveal = broker.revealForPrincipal(
+      gatewayMint.handle.handleId,
+      "learning-worker",
+    );
+    expect(reveal.ok).toBe(false);
+  });
 });

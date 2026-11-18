@@ -8,11 +8,13 @@
   "exclude": ["dist", "src/**/*.test.ts", "src/cli.ts"],
   "references": [
     { "path": "../../packages/domain" },
+    { "path": "../../packages/ml" },
     { "path": "../../packages/persistence" },
     { "path": "../../packages/provider-adapters" },
     { "path": "../../services/action-gateway" },
     { "path": "../../services/credential-broker" },
     { "path": "../../services/claude-runner" },
-    { "path": "../../services/workflow-worker" }
+    { "path": "../../services/workflow-worker" },
+    { "path": "../../services/learning-worker" }
   ]
 }

@@ -9,7 +9,11 @@
   "dependencies": {
     "@worksocial/action-gateway": "workspace:*",
     "@worksocial/claude-runner": "workspace:*",
-    "@worksocial/domain": "workspace:*"
+    "@worksocial/credential-broker": "workspace:*",
+    "@worksocial/domain": "workspace:*",
+    "@worksocial/learning-worker": "workspace:*",
+    "@worksocial/ml": "workspace:*",
+    "@worksocial/persistence": "workspace:*"
   },
   "devDependencies": {
     "typescript": "5.7.2",

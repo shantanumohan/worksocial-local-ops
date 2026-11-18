@@ -42,11 +42,13 @@ import {
 } from "@worksocial/domain";
 import {
   createFileAuthorityStore,
+  createFileLearningStore,
   createFileProductionMappingStore,
   createFileRoleRuntimeStore,
   ensureBootstrapOwner,
   verifyPassword,
   type AuthorityStore,
+  type LearningStore,
   type PolicyDecisionRecord,
   type ProductionMappingStore,
   type RoleRuntimeStore,
@@ -66,11 +68,18 @@ import {
   createMissionEnqueueService,
   type MissionEnqueueService,
 } from "@worksocial/workflow-worker";
+import {
+  createLearningWorker,
+  type LearningWorker,
+} from "@worksocial/learning-worker";
+import { listPinnedModels } from "@worksocial/ml";
 
 export type ApiRuntime = {
   store: AuthorityStore;
   mappingStore: ProductionMappingStore;
   roleRuntimeStore: RoleRuntimeStore;
+  learningStore: LearningStore;
+  learningWorker: LearningWorker;
   runner: ClaudeRunner;
   missions: MissionEnqueueService;
   gateway: ActionGateway;
@@ -90,6 +99,8 @@ export function createApiRuntime(options: {
   const store = createFileAuthorityStore(options.stateDir);
   const mappingStore = createFileProductionMappingStore(options.stateDir);
   const roleRuntimeStore = createFileRoleRuntimeStore(options.stateDir);
+  const learningStore = createFileLearningStore(options.stateDir);
+  const learningWorker = createLearningWorker(learningStore);
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
@@ -106,6 +117,8 @@ export function createApiRuntime(options: {
     store,
     mappingStore,
     roleRuntimeStore,
+    learningStore,
+    learningWorker,
     runner,
     missions,
     gateway: createActionGateway(),
@@ -626,7 +639,7 @@ export async function handleApiRequest(
           labeledOutcomes: listWritePathOutcomesForLearning(mapping, {
             includeFixture: true,
           }).length,
-          note: "SUCCESS/FAILURE labels stored for a future local multi-model learning-worker; no ML training in R1-03.",
+          note: "SUCCESS/FAILURE labels feed services/learning-worker (proposals under review).",
         },
         honestLabelsNote:
           "connected ≠ authorized ≠ verified. Fixture/NOT_WIRED ≠ live.",
@@ -1217,7 +1230,7 @@ export async function handleApiRequest(
         cli,
         budget: runtime.runner.getBudgetAccount(),
         honestLabelsNote:
-          "Fixture / NOT_WIRED ≠ live Claude fleet. permissionBypassUsed is always false. Outcome labels are hooks for a later learning-worker — no ML training in R1-04.",
+          "Fixture / NOT_WIRED ≠ live Claude fleet. permissionBypassUsed is always false. Outcome labels feed learning-worker proposals under review.",
       },
       cors,
     );
@@ -1525,7 +1538,7 @@ export async function handleApiRequest(
         200,
         {
           outcome,
-          note: "Labeled outcome stored for a future learning-worker. No ML training in R1-03.",
+          note: "Labeled outcome stored for learning-worker consumption. Training is proposals-only under review.",
         },
         cors,
       );
@@ -1540,6 +1553,148 @@ export async function handleApiRequest(
         cors,
       );
     }
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/learning/status") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const status = runtime.learningWorker.status();
+    json(
+      res,
+      200,
+      {
+        ...status,
+        principal: runtime.learningWorker.principal,
+        hasActionGatewayWritePrincipal:
+          runtime.learningWorker.hasActionGatewayWritePrincipal,
+        hasProductionEffectCredentials:
+          runtime.learningWorker.hasProductionEffectCredentials,
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/learning/models") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(
+      res,
+      200,
+      {
+        models: listPinnedModels(),
+        note: "Pinned open-source local models (BSD-3-Clause sklearn-compatible). Offline fixture mode — no weight download required in CI.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/learning/runs") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const state = runtime.learningStore.read();
+    json(
+      res,
+      200,
+      {
+        runs: state.runs.slice(0, 20).map((run) => ({
+          runId: run.runId,
+          startedAtIso: run.startedAtIso,
+          finishedAtIso: run.finishedAtIso,
+          runtimeMode: run.runtimeMode,
+          metrics: run.metrics,
+          proposalIds: run.proposalIds,
+          note: run.note,
+        })),
+        lastTrainingRunMetrics: state.runs[0]?.metrics ?? null,
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/learning/proposals") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const status = runtime.learningWorker.status();
+    json(
+      res,
+      200,
+      {
+        awaitingReview: status.awaitingReview,
+        note: "Proposals only. Cannot expand grants/spend/CRM/publish authority.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/learning/train") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason: "Training requires administrator manage_standing_policies",
+        },
+        cors,
+      );
+      return;
+    }
+    const trained = runtime.learningWorker.trainFromLedgers({
+      mapping: runtime.mappingStore.read(),
+      roleOutcomes: runtime.roleRuntimeStore.listOutcomesForLearning(),
+    });
+    json(
+      res,
+      200,
+      {
+        run: {
+          runId: trained.run.runId,
+          runtimeMode: trained.run.runtimeMode,
+          metrics: trained.run.metrics,
+          note: trained.run.note,
+        },
+        proposals: trained.proposals.map((p) => ({
+          proposalId: p.proposalId,
+          artifactVersion: p.artifactVersion,
+          kind: p.kind,
+          status: p.status,
+          authorityImpact: p.authorityImpact,
+          summary: p.summary,
+        })),
+        exampleCount: trained.examples.length,
+        honestNote:
+          "Offline metrics only. Not production-canary-verified. Proposals await review.",
+      },
+      cors,
+    );
     return;
   }
 
