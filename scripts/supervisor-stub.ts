@@ -1,18 +1,7 @@
-import { runSupervisor, type SupervisorCommand } from "../services/supervisor/src/index.ts";
-
-const allowed: SupervisorCommand[] = [
-  "start",
-  "stop",
-  "doctor",
-  "diagnostics",
-  "test-local",
-];
-
-const arg = (process.argv[2] ?? "doctor") as SupervisorCommand;
-if (!allowed.includes(arg)) {
-  console.error(`Unknown supervisor command: ${arg}`);
-  process.exit(1);
-}
-
-const result = runSupervisor(arg);
-console.log(JSON.stringify(result, null, 2));
+/**
+ * @deprecated Use services/supervisor/src/cli.ts — kept as a redirect so old docs/scripts fail loudly with guidance.
+ */
+console.error(
+  "supervisor-stub.ts is retired. Use: pnpm local:start|local:stop|local:doctor or tsx services/supervisor/src/cli.ts <command>",
+);
+process.exit(1);

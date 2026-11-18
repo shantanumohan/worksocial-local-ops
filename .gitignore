@@ -17,3 +17,4 @@ playwright-report/
 *.key
 .turbo/
 .pnpm-store/
+.worksocial/

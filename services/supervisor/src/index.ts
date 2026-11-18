@@ -1,26 +1,12 @@
-/** Local supervisor scaffold — owns startup/health stubs for VS Code tasks. */
+/** Local supervisor — owns startup, host lease, doctor/health for VS Code tasks. */
 
-export type SupervisorCommand = "start" | "stop" | "doctor" | "diagnostics" | "test-local";
-
-export type SupervisorResult = {
-  ok: true;
-  command: SupervisorCommand;
-  message: string;
-  productionActivated: false;
-};
-
-export function runSupervisor(command: SupervisorCommand): SupervisorResult {
-  const messages: Record<SupervisorCommand, string> = {
-    start: "Supervisor stub: local services not started (scaffold only).",
-    stop: "Supervisor stub: local services not stopped (scaffold only).",
-    doctor: "Supervisor stub: doctor checks not implemented (scaffold only).",
-    diagnostics: "Supervisor stub: diagnostics not implemented (scaffold only).",
-    "test-local": "Supervisor stub: local ops tests not implemented (scaffold only).",
-  };
-  return {
-    ok: true,
-    command,
-    message: messages[command],
-    productionActivated: false,
-  };
-}
+export type { SupervisorCommand, SupervisorResult, DoctorReport, DoctorCheck } from "./types.js";
+export { loadSupervisorConfig, defaultDurableRootSuggestions } from "./config.js";
+export { runSupervisorCommand } from "./lifecycle.js";
+export { runDoctor } from "./doctor.js";
+export { collectHealth } from "./health.js";
+export {
+  createChildProcessSpawner,
+  createInMemorySpawner,
+  type ProcessSpawner,
+} from "./process-manager.js";
