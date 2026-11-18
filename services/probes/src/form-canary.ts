@@ -47,6 +47,18 @@ export type FormCanaryResult = {
   gatewayAllowed: boolean;
   gatewayDecisionId: string | null;
   gatewayCode: string | null;
+  /** Gateway decision fields for authority ledger persistence (API). */
+  gatewayDecision: {
+    decisionId: string;
+    operationId: string;
+    payloadDigest: string;
+    allowed: boolean;
+    code: string | null;
+    reason: string;
+    grantId: string | null;
+    policyId: string | null;
+    decidedAtIso: string;
+  } | null;
   details: string[];
 };
 
@@ -126,13 +138,38 @@ export function runFormToCrmCanary(input: {
       gatewayAllowed: false,
       gatewayDecisionId: null,
       gatewayCode: "WRITE_PATH_MISSING",
+      gatewayDecision: null,
       details: run.evidence.facts.detail
         ? [String(run.evidence.facts.detail)]
         : ["No form-to-CRM write path mapped"],
     };
   }
 
-  const path = mapping.writePaths.find((p) => p.writePathId === writePathId)!;
+  const path = mapping.writePaths.find((p) => p.writePathId === writePathId);
+  if (!path) {
+    const run = baseRun({
+      runId,
+      mode,
+      targetId: writePathId,
+      verdict: ProbeVerdict.FAILURE,
+      startedAtIso,
+      finishedAtIso: input.nowIso,
+      details: [`Unknown write path id: ${writePathId}`],
+      operationId,
+      writePathId,
+    });
+    return {
+      run,
+      intent: null,
+      receipt: null,
+      outcome: null,
+      gatewayAllowed: false,
+      gatewayDecisionId: null,
+      gatewayCode: "WRITE_PATH_MISSING",
+      gatewayDecision: null,
+      details: [`Unknown write path id: ${writePathId}`],
+    };
+  }
   const form = path.formId
     ? mapping.forms.find((f) => f.formId === path.formId)
     : undefined;
@@ -176,6 +213,7 @@ export function runFormToCrmCanary(input: {
       gatewayAllowed: false,
       gatewayDecisionId: null,
       gatewayCode: "NOT_WIRED",
+      gatewayDecision: null,
       details: recon.details,
     };
   }
@@ -215,6 +253,18 @@ export function runFormToCrmCanary(input: {
     snapshot,
   );
 
+  const gatewayDecision = {
+    decisionId: submitted.decision.decisionId,
+    operationId: submitted.decision.operationId,
+    payloadDigest: submitted.decision.payloadDigest,
+    allowed: submitted.decision.allowed,
+    code: submitted.decision.code,
+    reason: submitted.decision.reason,
+    grantId: submitted.decision.grantId,
+    policyId: submitted.decision.policyId,
+    decidedAtIso: submitted.decision.decidedAtIso,
+  };
+
   if (!submitted.decision.allowed) {
     details.push(submitted.decision.reason);
     const run = baseRun({
@@ -250,6 +300,7 @@ export function runFormToCrmCanary(input: {
       gatewayAllowed: false,
       gatewayDecisionId: submitted.decision.decisionId,
       gatewayCode: submitted.decision.code,
+      gatewayDecision,
       details,
     };
   }
@@ -329,6 +380,10 @@ export function runFormToCrmCanary(input: {
     gatewayAllowed: true,
     gatewayDecisionId,
     gatewayCode: null,
+    gatewayDecision: {
+      ...gatewayDecision,
+      decisionId: gatewayDecisionId,
+    },
     details,
   };
 }

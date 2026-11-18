@@ -60,6 +60,39 @@ describe("monitoring domain", () => {
     expect(result.blocksRetry).toBe(false);
   });
 
+  it("rejects receipts whose email lacks this canary correlation", () => {
+    const intent = {
+      operationId: "op-email",
+      writePathId: "wp-form-to-crm",
+      formId: "form-contact",
+      correlationId: "corr-a",
+      payloadDigest: "abc",
+      synthetic: true as const,
+      submittedAtIso: now,
+    };
+    const result = reconcileCanaryIntent({
+      intent,
+      receipts: [
+        {
+          receiptId: "rcpt-wrong-email",
+          correlationId: "corr-a",
+          moduleId: "Leads",
+          recordId: "fixture-lead-x",
+          synthetic: true,
+          observedAtIso: now,
+          source: "fixture_crm",
+          fieldSnapshot: {
+            Email: "canary+corr-other@worksocial.test.local",
+            ws_correlation_id: "corr-a",
+          },
+        },
+      ],
+      expectedModuleId: "Leads",
+    });
+    expect(result.status).toBe(ReconciliationStatus.FIELD_MISMATCH);
+    expect(result.verdict).toBe(ProbeVerdict.FAILURE);
+  });
+
   it("fails closed on ambiguous writes (no recordId)", () => {
     const intent = {
       operationId: "op-amb",

@@ -102,7 +102,7 @@ pnpm recovery:rehearse | release:evidence
 
 VS Code tasks: **WorkSocial: Start / Stop / Diagnostics / Test Local Operations** → supervisor CLI.
 
-Optional env: `WORKSOCIAL_SYNC_DENY`, `WORKSOCIAL_STATE_DIR`, `WORKSOCIAL_HOST_ID`, `WORKSOCIAL_API_PORT`, `WORKSOCIAL_CONSOLE_PORT`, `WORKSOCIAL_OWNER_PASSWORD`, `WORKSOCIAL_CLAUDE_CLI`, `WORKSOCIAL_CLAUDE_FIXTURE` (`0` to allow live CLI when present), `WORKSOCIAL_PLAYWRIGHT` (`1` to acknowledge optional Playwright install — still unbound/`NOT_WIRED` without URL).
+Optional env: `WORKSOCIAL_SYNC_DENY`, `WORKSOCIAL_STATE_DIR`, `WORKSOCIAL_HOST_ID`, `WORKSOCIAL_API_PORT`, `WORKSOCIAL_CONSOLE_PORT`, `WORKSOCIAL_OWNER_PASSWORD`, `WORKSOCIAL_CLAUDE_CLI`, `WORKSOCIAL_CLAUDE_FIXTURE` (`0` to allow live CLI when present), `WORKSOCIAL_PLAYWRIGHT` (`1` to acknowledge optional Playwright install — still unbound/`NOT_WIRED` without URL), `WORKSOCIAL_PROBE_ALLOWED_HOSTS` (comma-separated public hostnames required for live HTTP probes; loopback/private rejected).
 
 ## Workspace vs database (OneDrive note)
 

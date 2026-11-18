@@ -26,7 +26,7 @@ import {
   listAgentRoleContracts,
   listWritePathOutcomesForLearning,
   ProbeMode,
-  createFixturePilotMapping,
+  ProbeVerdict,
   proveFixturePilotWritePath,
   recordWritePathOutcome,
   roleMayPerform,
@@ -1853,6 +1853,7 @@ export async function handleApiRequest(
       writePathId?: string;
       liveZoho?: boolean;
       ensureFixturePilot?: boolean;
+      clearUnresolvedBlock?: boolean;
     } = {};
     try {
       body = raw ? (JSON.parse(raw) as typeof body) : {};
@@ -1863,30 +1864,23 @@ export async function handleApiRequest(
 
     const nowIso = new Date().toISOString();
     // Ensure fixture pilot + canary grant exist for offline demos.
+    // Merge via upsert — never wipe existing mapping records.
     if (body.ensureFixturePilot !== false) {
       let mapping = runtime.mappingStore.read();
-      if (mapping.writePaths.length === 0) {
-        const seeded = createFixturePilotMapping(nowIso);
-        mapping = proveFixturePilotWritePath(
-          seeded.state,
-          seeded.writePathId,
-          nowIso,
-        );
-        runtime.mappingStore.write(mapping);
-      } else {
-        const pathId = body.writePathId ?? mapping.writePaths[0]?.writePathId;
-        if (
-          pathId &&
-          !mapping.readEvidence.some((e) => e.writePathId === pathId)
-        ) {
-          try {
-            mapping = proveFixturePilotWritePath(mapping, pathId, nowIso);
-            runtime.mappingStore.write(mapping);
-          } catch {
-            // leave mapping as-is; canary will fail closed
-          }
+      const upserted = upsertFixturePilotMapping(mapping, nowIso);
+      mapping = upserted.state;
+      const pathId = body.writePathId ?? upserted.writePathId;
+      if (
+        pathId &&
+        !mapping.readEvidence.some((e) => e.writePathId === pathId)
+      ) {
+        try {
+          mapping = proveFixturePilotWritePath(mapping, pathId, nowIso);
+        } catch {
+          // leave mapping as-is; canary will fail closed
         }
       }
+      runtime.mappingStore.write(mapping);
 
       const auth = runtime.store.read();
       if (
@@ -1928,10 +1922,43 @@ export async function handleApiRequest(
         ? { writePathId: body.writePathId }
         : {}),
       ...(body.liveZoho === true ? { liveZoho: true } : {}),
+      ...(body.clearUnresolvedBlock === true
+        ? { clearUnresolvedBlock: true }
+        : {}),
       gateway: runtime.gateway,
       nowIso,
       targetAccountId: "acct-fixture-canary",
     });
+
+    if (canary.gatewayDecision) {
+      const decision: PolicyDecisionRecord = {
+        decisionId: canary.gatewayDecision.decisionId,
+        operationId: canary.gatewayDecision.operationId,
+        payloadDigest: canary.gatewayDecision.payloadDigest,
+        allowed: canary.gatewayDecision.allowed,
+        code: canary.gatewayDecision.code,
+        reason: canary.gatewayDecision.reason,
+        grantId: canary.gatewayDecision.grantId,
+        policyId: canary.gatewayDecision.policyId,
+        decidedAtIso: canary.gatewayDecision.decidedAtIso,
+      };
+      runtime.store.update((s) => ({
+        ...s,
+        policyDecisions: [...s.policyDecisions, decision],
+        updatedAt: decision.decidedAtIso,
+      }));
+    }
+
+    const note =
+      body.liveZoho === true || canary.run.verdict === ProbeVerdict.NOT_WIRED
+        ? "Live Zoho is NOT_WIRED without owner credentials."
+        : canary.gatewayCode === "BLOCKS_RETRY"
+          ? `Canary blocked: prior unresolved reconciliation (blocksRetry). Pass clearUnresolvedBlock=true after investigating.`
+          : canary.gatewayCode === "WRITE_PATH_MISSING"
+            ? `Canary ${canary.run.verdict}: write path missing or unknown.`
+            : canary.receipt && canary.run.verdict === ProbeVerdict.SUCCESS
+              ? "Fixture canary matched correlated receipt. Synthetic leads excluded from commercial totals. Outcome labeled fixtureOnly for learning."
+              : `Canary ${canary.run.verdict}${canary.receipt ? " with receipt" : " without receipt"}. ${canary.details[0] ?? ""}`.trim();
 
     json(
       res,
@@ -1944,10 +1971,7 @@ export async function handleApiRequest(
         gatewayAllowed: canary.gatewayAllowed,
         gatewayCode: canary.gatewayCode,
         details: canary.details,
-        note:
-          body.liveZoho === true
-            ? "Live Zoho is NOT_WIRED without owner credentials."
-            : "Fixture canary with correlated receipt. Synthetic leads excluded from commercial totals. Outcome labeled fixtureOnly for learning.",
+        note,
       },
       cors,
     );

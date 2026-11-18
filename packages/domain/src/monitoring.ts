@@ -332,10 +332,22 @@ export function reconcileCanaryIntent(input: {
       blocksRetry: true,
     };
   }
-  const emailLooksSynthetic =
-    expectedEmail.includes(intent.correlationId) ||
-    expectedEmail.endsWith("@worksocial.test.local");
-  if (!emailLooksSynthetic) {
+  // Email must embed this canary's correlation ID — domain alone is not enough
+  // (another canary's address at @worksocial.test.local must not MATCH).
+  if (!expectedEmail.includes(intent.correlationId)) {
+    return {
+      status: ReconciliationStatus.FIELD_MISMATCH,
+      verdict: ProbeVerdict.FAILURE,
+      intentOperationId: intent.operationId,
+      correlationId: intent.correlationId,
+      matchedReceiptIds: [receipt.receiptId],
+      details: [
+        "Receipt email does not embed this canary correlation ID — refuse stale/mismatched synthetic identity",
+      ],
+      blocksRetry: true,
+    };
+  }
+  if (!expectedEmail.endsWith("@worksocial.test.local")) {
     return {
       status: ReconciliationStatus.FIELD_MISMATCH,
       verdict: ProbeVerdict.FAILURE,

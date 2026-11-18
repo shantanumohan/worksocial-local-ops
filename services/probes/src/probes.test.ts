@@ -137,7 +137,7 @@ describe("probes service", () => {
     expect(service.lastEvidence()?.kind).toBe(ProbeKind.FORM_TO_CRM_CANARY);
   });
 
-  it("fails closed on ambiguous fixture receipts and does not invent Zoho success", () => {
+  it("fails closed on ambiguous fixture receipts and blocks retry until cleared", () => {
     const dir = mkdtempSync(join(tmpdir(), "ws-canary-amb-"));
     dirs.push(dir);
     const probeStore = createFileProbeStore(dir);
@@ -160,14 +160,65 @@ describe("probes service", () => {
     expect(ambiguous.run.verdict).toBe(ProbeVerdict.UNKNOWN);
     expect(ambiguous.run.reconciliation?.blocksRetry).toBe(true);
     expect(ambiguous.outcome).toBeNull();
+    expect(service.hasUnresolvedCanaryBlock(seeded.writePathId)).toBe(true);
+
+    const blocked = service.runFormCanary({
+      authority: canaryAuthority(proven),
+      writePathId: seeded.writePathId,
+      nowIso: now,
+    });
+    expect(blocked.gatewayCode).toBe("BLOCKS_RETRY");
+    expect(blocked.gatewayAllowed).toBe(false);
+
+    const cleared = service.runFormCanary({
+      authority: canaryAuthority(proven),
+      writePathId: seeded.writePathId,
+      nowIso: now,
+      clearUnresolvedBlock: true,
+    });
+    expect(cleared.run.verdict).toBe(ProbeVerdict.SUCCESS);
+    expect(cleared.receipt?.correlationId).toBe(cleared.intent?.correlationId);
 
     const live = service.runFormCanary({
       authority: canaryAuthority(proven),
       writePathId: seeded.writePathId,
       nowIso: now,
       liveZoho: true,
+      clearUnresolvedBlock: true,
     });
     expect(live.run.verdict).toBe(ProbeVerdict.NOT_WIRED);
+  });
+
+  it("returns WRITE_PATH_MISSING for unknown writePathId without throwing", () => {
+    const dir = mkdtempSync(join(tmpdir(), "ws-canary-missing-"));
+    dirs.push(dir);
+    const probeStore = createFileProbeStore(dir);
+    const mappingStore = createFileProductionMappingStore(dir);
+    const seeded = createFixturePilotMapping(now);
+    const proven = proveFixturePilotWritePath(
+      seeded.state,
+      seeded.writePathId,
+      now,
+    );
+    mappingStore.write(proven);
+    const service = createProbeService({ store: probeStore, mappingStore });
+    const missing = service.runFormCanary({
+      authority: canaryAuthority(proven),
+      writePathId: "wp-does-not-exist",
+      nowIso: now,
+    });
+    expect(missing.gatewayCode).toBe("WRITE_PATH_MISSING");
+    expect(missing.run.verdict).toBe(ProbeVerdict.FAILURE);
+  });
+
+  it("rejects unknown fixture DOM targets", async () => {
+    const dom = await runDomJourneyProbe({
+      targetId: "fixture-typo",
+      mode: ProbeMode.FIXTURE,
+      nowIso: now,
+    });
+    expect(dom.verdict).toBe(ProbeVerdict.FAILURE);
+    expect(dom.details[0]).toMatch(/Unknown fixture DOM target/);
   });
 
   it("denies canary without grant/read evidence", () => {

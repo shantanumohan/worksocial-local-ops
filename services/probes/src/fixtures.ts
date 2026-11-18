@@ -75,3 +75,25 @@ export const FIXTURE_DOM_JOURNEY_STEPS: DomJourneyStep[] = [
     expected: null,
   },
 ];
+
+export const FIXTURE_DOM_TARGETS: Record<
+  string,
+  {
+    html: string;
+    steps: DomJourneyStep[];
+  }
+> = {
+  "fixture-contact": {
+    html: FIXTURE_CONTACT_HTML,
+    steps: FIXTURE_DOM_JOURNEY_STEPS,
+  },
+};
+
+/** Approved live HTTP probe hosts (hostname only). Empty = live probes not bound. */
+export function approvedLiveProbeHosts(): readonly string[] {
+  const raw = process.env.WORKSOCIAL_PROBE_ALLOWED_HOSTS ?? "";
+  return raw
+    .split(",")
+    .map((h) => h.trim().toLowerCase())
+    .filter(Boolean);
+}

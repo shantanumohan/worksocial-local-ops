@@ -1,6 +1,6 @@
 /**
  * DOM / journey probes.
- * Default: fixture HTML evaluation (CI-safe).
+ * Default: fixture HTML evaluation (CI-safe) against a named fixture catalog.
  * Optional Playwright live path — NOT_WIRED when unbound / not installed.
  */
 
@@ -14,10 +14,7 @@ import {
   type ProbeModeValue,
   type ProbeVerdictValue,
 } from "@worksocial/domain";
-import {
-  FIXTURE_CONTACT_HTML,
-  FIXTURE_DOM_JOURNEY_STEPS,
-} from "./fixtures.js";
+import { FIXTURE_DOM_TARGETS } from "./fixtures.js";
 
 export type DomJourneyResult = {
   targetId: string;
@@ -89,8 +86,78 @@ export async function runDomJourneyProbe(input: {
     };
   }
 
-  const html = input.html ?? FIXTURE_CONTACT_HTML;
-  const steps = input.steps ?? FIXTURE_DOM_JOURNEY_STEPS;
+  // Fixture mode: custom html/steps allowed for unit tests; otherwise require catalog target.
+  if (!input.html && !input.steps) {
+    const fixture = FIXTURE_DOM_TARGETS[input.targetId];
+    if (!fixture) {
+      return {
+        targetId: input.targetId,
+        mode,
+        verdict: ProbeVerdict.FAILURE,
+        details: [`Unknown fixture DOM target: ${input.targetId}`],
+        passedStepIds: [],
+        playwrightAvailable,
+        evidence: {
+          evidenceId,
+          kind: ProbeKind.DOM_JOURNEY,
+          mode,
+          summary: `Unknown fixture DOM target ${input.targetId}`,
+          facts: { targetId: input.targetId },
+          recordedAtIso: input.nowIso,
+        },
+      };
+    }
+    const evaluated = evaluateDomJourneyFixture({
+      html: fixture.html,
+      steps: fixture.steps,
+    });
+    return {
+      targetId: input.targetId,
+      mode,
+      verdict: evaluated.verdict,
+      details: evaluated.details,
+      passedStepIds: evaluated.passedStepIds,
+      playwrightAvailable,
+      evidence: {
+        evidenceId,
+        kind: ProbeKind.DOM_JOURNEY,
+        mode,
+        summary:
+          evaluated.verdict === ProbeVerdict.SUCCESS
+            ? `Fixture DOM journey ok (${evaluated.passedStepIds.length} steps)`
+            : `Fixture DOM journey failed`,
+        facts: {
+          passed: evaluated.passedStepIds.length,
+          failed: evaluated.details.length,
+          stepCount: fixture.steps.length,
+        },
+        recordedAtIso: input.nowIso,
+      },
+    };
+  }
+
+  const fixture = FIXTURE_DOM_TARGETS[input.targetId];
+  const html = input.html ?? fixture?.html;
+  const steps = input.steps ?? fixture?.steps;
+  if (!html || !steps) {
+    return {
+      targetId: input.targetId,
+      mode,
+      verdict: ProbeVerdict.FAILURE,
+      details: [`Unknown fixture DOM target: ${input.targetId}`],
+      passedStepIds: [],
+      playwrightAvailable,
+      evidence: {
+        evidenceId,
+        kind: ProbeKind.DOM_JOURNEY,
+        mode,
+        summary: `Unknown fixture DOM target ${input.targetId}`,
+        facts: { targetId: input.targetId },
+        recordedAtIso: input.nowIso,
+      },
+    };
+  }
+
   const evaluated = evaluateDomJourneyFixture({ html, steps });
 
   return {

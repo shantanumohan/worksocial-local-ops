@@ -15,6 +15,7 @@ R1-05 monitoring: deterministic HTTP/DOM probes, form-to-CRM canaries, and integ
 | Learning ledger hooks (`fixtureOnly`) | **real** |
 | Live Zoho CRM | **NOT_WIRED** |
 | Live Playwright browser sessions | **NOT_WIRED** unless `WORKSOCIAL_PLAYWRIGHT=1` + URL binding |
+| Live HTTP probes | Allowlisted https only (`WORKSOCIAL_PROBE_ALLOWED_HOSTS`); SSRF/timeout guarded |
 
 ## Acceptance case IDs (catalog references — not VERIFIED)
 
