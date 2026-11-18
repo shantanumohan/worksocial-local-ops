@@ -40,13 +40,42 @@ describe("knowledge support labeling", () => {
     ).toBe(SupportLabel.HYPOTHESIS);
   });
 
-  it("labels measured-but-missing as UNKNOWN", () => {
+  it("labels measured-but-missing as UNKNOWN even with omission evidence", () => {
     expect(
       deriveSupportLabel({
         collectionMethod: CollectionMethod.PLATFORM_EXPORT,
         modelGenerated: false,
-        evidenceLinks: [],
+        evidenceLinks: [
+          {
+            evidenceId: "ev-omit",
+            sourceRef: "fixture://gsc-omission",
+            collectionMethod: CollectionMethod.PLATFORM_EXPORT,
+            summary: "Export documents omitted query",
+            observedAtIso: now,
+            fixtureOnly: true,
+          },
+        ],
         measuredButMissing: true,
+      }),
+    ).toBe(SupportLabel.UNKNOWN);
+  });
+
+  it("rejects empty sourceRef evidence as unusable", () => {
+    expect(
+      deriveSupportLabel({
+        requestedLabel: SupportLabel.SUPPORTED,
+        collectionMethod: CollectionMethod.OWNER_DECLARED,
+        modelGenerated: false,
+        evidenceLinks: [
+          {
+            evidenceId: "ev-empty",
+            sourceRef: "   ",
+            collectionMethod: CollectionMethod.OWNER_DECLARED,
+            summary: "Empty ref",
+            observedAtIso: now,
+            fixtureOnly: true,
+          },
+        ],
       }),
     ).toBe(SupportLabel.UNKNOWN);
   });
@@ -302,6 +331,46 @@ describe("fact verification learning hooks", () => {
       includeFixture: false,
     });
     expect(excluded).toHaveLength(0);
+  });
+
+  it("upgrades model hypothesis to SUPPORTED when verification evidence replaces provenance", () => {
+    let state = emptyKnowledgeState(now);
+    const registered = ingestClaimAsHypothesis({
+      factId: "fact-upgrade",
+      statement: "Rooftop AV is available on request",
+      sourceSystem: "claude",
+      modelGenerated: true,
+      createdAtIso: now,
+    });
+    expect(registered.ok).toBe(true);
+    if (!registered.ok) return;
+    expect(registered.fact.supportLabel).toBe(SupportLabel.HYPOTHESIS);
+    state = { ...state, facts: [registered.fact], updatedAtIso: now };
+
+    const verified = applyFactVerification(state, {
+      factId: "fact-upgrade",
+      decision: FactVerificationDecision.CONFIRMED,
+      source: OutcomeEvidenceSource.OWNER_DECISION,
+      fixtureOnly: false,
+      summary: "Owner confirmed AV availability with evidence",
+      outcomeId: "out-upgrade",
+      evidenceLink: {
+        evidenceId: "ev-av",
+        sourceRef: "owner://inventory-sheet",
+        collectionMethod: CollectionMethod.OWNER_DECLARED,
+        summary: "Owner inventory",
+        observedAtIso: now,
+        fixtureOnly: false,
+      },
+      nowIso: now,
+    });
+
+    expect(verified.fact?.supportLabel).toBe(SupportLabel.SUPPORTED);
+    expect(verified.fact?.provenance.modelGenerated).toBe(false);
+    expect(verified.fact?.provenance.collectionMethod).toBe(
+      CollectionMethod.OWNER_DECLARED,
+    );
+    expect(verified.outcome?.fixtureOnly).toBe(false);
   });
 
   it("emits FAILURE and UNKNOWN on refutation", () => {

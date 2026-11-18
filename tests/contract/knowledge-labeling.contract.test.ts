@@ -65,12 +65,59 @@ describe("contract: knowledge labeling and provenance", () => {
       sourceSystem: "search_console",
       missingDataState: "omitted",
       requestedLabel: SupportLabel.SUPPORTED,
+      evidenceLinks: [
+        {
+          evidenceId: "c-omit-ev",
+          sourceRef: "fixture://gsc-export",
+          collectionMethod: CollectionMethod.PLATFORM_EXPORT,
+          summary: "Export row documenting omission",
+          observedAtIso: now,
+          fixtureOnly: true,
+        },
+      ],
       observedAtIso: now,
       createdAtIso: now,
       fixtureOnly: true,
     });
     expect(obs.supportLabel).toBe(SupportLabel.UNKNOWN);
     expect(obs.rawValue).toBeNull();
+  });
+
+  it("upgrades model hypothesis when verification evidence replaces provenance", () => {
+    const dir = mkdtempSync(join(tmpdir(), "ws-know-upgrade-"));
+    try {
+      const store = createFileKnowledgeStore(dir);
+      const svc = createKnowledgeService(store);
+      const claim = svc.ingestUnsourcedClaim({
+        statement: "Model claim about weekend parking",
+        modelGenerated: true,
+        nowIso: now,
+      });
+      expect(claim.fact?.supportLabel).toBe(SupportLabel.HYPOTHESIS);
+      const verified = svc.verifyFact({
+        factId: claim.fact!.factId,
+        decision: FactVerificationDecision.CONFIRMED,
+        summary: "Owner confirmed with evidence",
+        fixtureOnly: false,
+        source: "owner_decision",
+        evidenceLink: {
+          evidenceId: "c-upgrade-ev",
+          sourceRef: "owner://policy",
+          collectionMethod: CollectionMethod.OWNER_DECLARED,
+          summary: "Owner policy",
+          observedAtIso: now,
+          fixtureOnly: false,
+        },
+        nowIso: now,
+      });
+      expect(verified.fact?.supportLabel).toBe(SupportLabel.SUPPORTED);
+      expect(verified.fact?.provenance.modelGenerated).toBe(false);
+      expect(verified.outcome?.fixtureOnly).toBe(false);
+      expect(svc.listLearningOutcomes()).toHaveLength(1);
+      expect(svc.listLearningOutcomes(false)).toHaveLength(1);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it("keeps instruction ingestion non-executable and wires fixture learning hooks", () => {

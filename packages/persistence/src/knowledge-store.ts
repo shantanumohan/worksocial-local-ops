@@ -22,6 +22,7 @@ export type KnowledgeStore = {
   upsertFact(fact: FactRecord): KnowledgeState;
   addIngestion(record: InstructionIngestionRecord): KnowledgeState;
   addDemandSignal(obs: DemandObservation): KnowledgeState;
+  upsertDemandSignal(obs: DemandObservation): KnowledgeState;
   addFactOutcome(outcome: WritePathOutcomeEvidence): KnowledgeState;
   listFacts(limit?: number): FactRecord[];
   listDemandSignals(limit?: number): DemandObservation[];
@@ -116,6 +117,17 @@ export function createFileKnowledgeStore(stateDir: string): KnowledgeStore {
         demandSignals: [...state.demandSignals, obs].slice(-500),
         updatedAtIso: obs.createdAtIso,
       })),
+    upsertDemandSignal: (obs) =>
+      update((state) => {
+        const others = state.demandSignals.filter(
+          (row) => row.observationId !== obs.observationId,
+        );
+        return {
+          ...state,
+          demandSignals: [...others, obs].slice(-500),
+          updatedAtIso: obs.createdAtIso,
+        };
+      }),
     addFactOutcome: (outcome) =>
       update((state) => ({
         ...state,

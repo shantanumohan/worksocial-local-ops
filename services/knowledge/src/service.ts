@@ -78,7 +78,9 @@ export type KnowledgeService = {
     checksum?: string;
     fixtureOnly?: boolean;
     nowIso?: string;
-  }): InstructionIngestionRecord;
+  }):
+    | { ok: true; record: InstructionIngestionRecord }
+    | { ok: false; code: string; reasons: string[] };
   registerDemand(input: {
     observationId?: string;
     kind: DemandSignalKindValue;
@@ -134,7 +136,7 @@ export function createKnowledgeService(store: KnowledgeStore): KnowledgeService 
         store.upsertFact(fact);
       }
       for (const obs of seed.demandSignals) {
-        store.addDemandSignal(obs);
+        store.upsertDemandSignal(obs);
       }
       return seed;
     },
@@ -194,17 +196,28 @@ export function createKnowledgeService(store: KnowledgeStore): KnowledgeService 
 
     ingestInstruction(input) {
       const nowIso = input.nowIso ?? new Date().toISOString();
-      const checksum =
-        input.checksum ??
-        createHash("sha256")
-          .update(input.content ?? input.sourcePath)
-          .digest("hex");
+      const hasContent =
+        typeof input.content === "string" && input.content.length > 0;
+      const hasChecksum =
+        typeof input.checksum === "string" && input.checksum.trim().length > 0;
+      if (!hasContent && !hasChecksum) {
+        return {
+          ok: false as const,
+          code: "CONTENT_OR_CHECKSUM_REQUIRED",
+          reasons: [
+            "Instruction ingestion requires document content or a verified caller checksum — path string alone is not hashed",
+          ],
+        };
+      }
+      const checksum = hasChecksum
+        ? input.checksum!.trim()
+        : createHash("sha256").update(input.content!).digest("hex");
       // Deduplicate by checksum — copying the same file twice must not duplicate.
       const existing = store
         .listIngestions(500)
         .find((row) => row.checksum === checksum);
       if (existing) {
-        return existing;
+        return { ok: true as const, record: existing };
       }
       const record = createInstructionIngestion({
         ingestionId: `ing-${randomUUID()}`,
@@ -219,7 +232,7 @@ export function createKnowledgeService(store: KnowledgeStore): KnowledgeService 
         ],
       });
       store.addIngestion(record);
-      return record;
+      return { ok: true as const, record };
     },
 
     registerDemand(input) {
@@ -272,7 +285,7 @@ export function createKnowledgeService(store: KnowledgeStore): KnowledgeService 
       };
     },
 
-    listLearningOutcomes(includeFixture = true) {
+    listLearningOutcomes(includeFixture = false) {
       return listFactOutcomesForLearning(store.read(), { includeFixture });
     },
   };

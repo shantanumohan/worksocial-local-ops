@@ -67,8 +67,16 @@ export type EvidenceLink = {
   fixtureOnly: boolean;
 };
 
+export type FactRegisteredBy =
+  | "owner"
+  | "operator"
+  | "ingestion"
+  | "fixture"
+  | "agent_proposal";
+
 export type FactProvenance = {
-  registeredBy: "owner" | "ingestion" | "fixture" | "agent_proposal";
+  /** Authenticated actor or system path that registered the claim. */
+  registeredBy: FactRegisteredBy;
   collectionMethod: CollectionMethodValue;
   /** Free-text source system label — never a secret. */
   sourceSystem: string;
@@ -202,11 +210,21 @@ export function collectionMethodCanSupport(
   );
 }
 
+/** Evidence is usable only with a non-empty source descriptor and support-capable method. */
+export function isUsableEvidenceLink(link: EvidenceLink): boolean {
+  return (
+    link.sourceRef.trim().length > 0 &&
+    collectionMethodCanSupport(link.collectionMethod)
+  );
+}
+
 /**
  * Derive the only honest support label allowed for a claim given provenance
- * and evidence. Unsourced / model-generated claims are forced to HYPOTHESIS.
+ * and evidence. Unsourced / model-generated claims are forced to HYPOTHESIS
+ * unless later verification supplies usable evidence (see applyFactVerification).
  * Empty evidence → cannot be SUPPORTED (UNKNOWN if measured-but-missing,
- * otherwise HYPOTHESIS).
+ * otherwise HYPOTHESIS). Omitted/partial measured rows stay UNKNOWN even when
+ * an evidence link documents the omission itself.
  */
 export function deriveSupportLabel(input: {
   requestedLabel?: SupportLabelValue | null;
@@ -216,6 +234,11 @@ export function deriveSupportLabel(input: {
   /** When true, missing measured data is UNKNOWN rather than HYPOTHESIS. */
   measuredButMissing?: boolean;
 }): SupportLabelValue {
+  // Omitted/partial observations are UNKNOWN even if an export evidence link exists.
+  if (input.measuredButMissing) {
+    return SupportLabel.UNKNOWN;
+  }
+
   if (
     input.modelGenerated ||
     input.collectionMethod === CollectionMethod.MODEL_GENERATED ||
@@ -224,14 +247,9 @@ export function deriveSupportLabel(input: {
     return SupportLabel.HYPOTHESIS;
   }
 
-  const usableEvidence = input.evidenceLinks.filter((e) =>
-    collectionMethodCanSupport(e.collectionMethod),
-  );
+  const usableEvidence = input.evidenceLinks.filter(isUsableEvidenceLink);
 
   if (usableEvidence.length === 0) {
-    if (input.measuredButMissing) {
-      return SupportLabel.UNKNOWN;
-    }
     // Manual samples without evidence stay hypotheses.
     if (input.collectionMethod === CollectionMethod.MANUAL_SAMPLE) {
       return SupportLabel.HYPOTHESIS;
@@ -285,7 +303,12 @@ export function registerFact(
     };
   }
 
-  const evidenceLinks = input.evidenceLinks ?? [];
+  const evidenceLinks = (input.evidenceLinks ?? []).filter(
+    (e) => e.sourceRef.trim().length > 0,
+  );
+  if ((input.evidenceLinks?.length ?? 0) > evidenceLinks.length) {
+    // Drop empty sourceRef entries rather than treating them as support.
+  }
   const reasons: string[] = [];
   const derived = deriveSupportLabel({
     requestedLabel: input.requestedLabel ?? null,
@@ -556,8 +579,9 @@ export function buildFactVerificationOutcome(input: {
 
 /**
  * Apply confirmation/refutation to a fact: updates support label and appends
- * a learning outcome. Confirmed → SUPPORTED (when evidence exists) or stays
- * HYPOTHESIS if still unsourced; Refuted → UNKNOWN with conflict note.
+ * a learning outcome. Confirmed → SUPPORTED when verification evidence is
+ * usable (verification provenance replaces original UNSOURCED/MODEL_GENERATED
+ * origin). Refuted → UNKNOWN with conflict note.
  */
 export function applyFactVerification(
   state: KnowledgeState,
@@ -589,18 +613,42 @@ export function applyFactVerification(
 
   const existing = state.facts[idx]!;
   const reasons: string[] = [];
-  const evidenceLinks = input.evidenceLink
-    ? [...existing.evidenceLinks, input.evidenceLink]
+  const nextEvidence =
+    input.evidenceLink && input.evidenceLink.sourceRef.trim().length > 0
+      ? input.evidenceLink
+      : null;
+  const evidenceLinks = nextEvidence
+    ? [...existing.evidenceLinks, nextEvidence]
     : [...existing.evidenceLinks];
 
   let supportLabel = existing.supportLabel;
   const conflictNotes = [...existing.conflictNotes];
+  let provenance = existing.provenance;
 
   if (input.decision === FactVerificationDecision.CONFIRMED) {
+    // Verification evidence replaces untrusted claim origin for labeling.
+    const verificationMethod = nextEvidence
+      ? nextEvidence.collectionMethod
+      : existing.provenance.collectionMethod;
+    const usable = evidenceLinks.some(isUsableEvidenceLink);
+    if (usable && collectionMethodCanSupport(verificationMethod)) {
+      provenance = {
+        registeredBy: existing.provenance.registeredBy,
+        collectionMethod: verificationMethod,
+        sourceSystem:
+          nextEvidence?.sourceRef ?? existing.provenance.sourceSystem,
+        observedAtIso: input.nowIso,
+        modelGenerated: false,
+      };
+      reasons.push(
+        "Verification evidence replaced untrusted claim provenance for support labeling",
+      );
+    }
+
     supportLabel = deriveSupportLabel({
       requestedLabel: SupportLabel.SUPPORTED,
-      collectionMethod: existing.provenance.collectionMethod,
-      modelGenerated: existing.provenance.modelGenerated,
+      collectionMethod: provenance.collectionMethod,
+      modelGenerated: provenance.modelGenerated,
       evidenceLinks,
     });
     if (supportLabel !== SupportLabel.SUPPORTED) {
@@ -618,6 +666,7 @@ export function applyFactVerification(
     ...existing,
     supportLabel,
     evidenceLinks,
+    provenance,
     conflictNotes,
     updatedAtIso: input.nowIso,
   };

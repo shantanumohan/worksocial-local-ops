@@ -176,6 +176,29 @@ export function readBody(req: IncomingMessage): Promise<string> {
   });
 }
 
+/** Parse JSON body as a plain non-null object; reject null/array/primitives. */
+export function parseJsonObjectBody(
+  raw: string,
+): { ok: true; value: Record<string, unknown> } | { ok: false; error: string } {
+  if (!raw.trim()) {
+    return { ok: true, value: {} };
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw) as unknown;
+  } catch {
+    return { ok: false, error: "INVALID_JSON" };
+  }
+  if (
+    parsed === null ||
+    typeof parsed !== "object" ||
+    Array.isArray(parsed)
+  ) {
+    return { ok: false, error: "INVALID_BODY" };
+  }
+  return { ok: true, value: parsed as Record<string, unknown> };
+}
+
 export function parseCookies(header: string | undefined): Record<string, string> {
   const out: Record<string, string> = {};
   if (!header) {
@@ -2108,66 +2131,99 @@ export async function handleApiRequest(
       return;
     }
     const raw = await readBody(req);
-    let body: {
-      statement?: string;
-      requestedLabel?: string;
-      collectionMethod?: string;
-      sourceSystem?: string;
-      modelGenerated?: boolean;
-      strictSupported?: boolean;
-      evidenceLinks?: Array<{
-        evidenceId?: string;
-        sourceRef?: string;
-        collectionMethod?: string;
-        summary?: string;
-        observedAtIso?: string;
-        fixtureOnly?: boolean;
-      }>;
-    } = {};
-    try {
-      body = raw ? (JSON.parse(raw) as typeof body) : {};
-    } catch {
-      json(res, 400, { error: "INVALID_JSON" }, cors);
+    const parsed = parseJsonObjectBody(raw);
+    if (!parsed.ok) {
+      json(res, 400, { error: parsed.error }, cors);
       return;
     }
-    if (!body.statement?.trim()) {
+    const body = parsed.value;
+    const statement =
+      typeof body.statement === "string" ? body.statement : "";
+    if (!statement.trim()) {
       json(res, 400, { error: "STATEMENT_REQUIRED" }, cors);
       return;
     }
-    if (!body.collectionMethod || !isCollectionMethod(body.collectionMethod)) {
+    const collectionMethod =
+      typeof body.collectionMethod === "string" ? body.collectionMethod : "";
+    if (!isCollectionMethod(collectionMethod)) {
       json(res, 400, { error: "INVALID_COLLECTION_METHOD" }, cors);
       return;
     }
-    const requestedLabel =
-      body.requestedLabel && isSupportLabel(body.requestedLabel)
-        ? (body.requestedLabel as SupportLabelValue)
-        : null;
+    let requestedLabel: SupportLabelValue | null = null;
+    if (body.requestedLabel !== undefined && body.requestedLabel !== null) {
+      if (
+        typeof body.requestedLabel !== "string" ||
+        !isSupportLabel(body.requestedLabel)
+      ) {
+        json(res, 400, { error: "INVALID_REQUESTED_LABEL" }, cors);
+        return;
+      }
+      requestedLabel = body.requestedLabel;
+    }
     const nowIso = new Date().toISOString();
-    const evidenceLinks = (body.evidenceLinks ?? [])
-      .filter(
-        (e) =>
-          e &&
-          typeof e.sourceRef === "string" &&
-          e.collectionMethod &&
-          isCollectionMethod(e.collectionMethod),
-      )
-      .map((e) => ({
-        evidenceId: e.evidenceId?.trim() || `ev-${randomBytes(4).toString("hex")}`,
-        sourceRef: e.sourceRef!,
-        collectionMethod: e.collectionMethod as CollectionMethodValue,
-        summary: e.summary?.trim() || "Evidence link",
-        observedAtIso: e.observedAtIso ?? nowIso,
+    const rawEvidence = Array.isArray(body.evidenceLinks)
+      ? body.evidenceLinks
+      : [];
+    const evidenceLinks: Array<{
+      evidenceId: string;
+      sourceRef: string;
+      collectionMethod: CollectionMethodValue;
+      summary: string;
+      observedAtIso: string;
+      fixtureOnly: boolean;
+    }> = [];
+    for (const entry of rawEvidence) {
+      if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+        json(res, 400, { error: "INVALID_EVIDENCE_LINK" }, cors);
+        return;
+      }
+      const e = entry as Record<string, unknown>;
+      const sourceRef =
+        typeof e.sourceRef === "string" ? e.sourceRef.trim() : "";
+      if (!sourceRef) {
+        json(res, 400, { error: "EMPTY_EVIDENCE_SOURCE_REF" }, cors);
+        return;
+      }
+      if (
+        typeof e.collectionMethod !== "string" ||
+        !isCollectionMethod(e.collectionMethod)
+      ) {
+        json(res, 400, { error: "INVALID_EVIDENCE_COLLECTION_METHOD" }, cors);
+        return;
+      }
+      evidenceLinks.push({
+        evidenceId:
+          typeof e.evidenceId === "string" && e.evidenceId.trim()
+            ? e.evidenceId.trim()
+            : `ev-${randomBytes(4).toString("hex")}`,
+        sourceRef,
+        collectionMethod: e.collectionMethod,
+        summary:
+          typeof e.summary === "string" && e.summary.trim()
+            ? e.summary.trim()
+            : "Evidence link",
+        observedAtIso:
+          typeof e.observedAtIso === "string" ? e.observedAtIso : nowIso,
         fixtureOnly: e.fixtureOnly !== false,
-      }));
+      });
+    }
+
+    const registeredBy =
+      result.session.role === LocalRole.OPERATOR ? "operator" : "owner";
+    const sourceSystem =
+      typeof body.sourceSystem === "string" && body.sourceSystem.trim()
+        ? body.sourceSystem.trim()
+        : result.session.username;
 
     const registered = runtime.knowledge.registerFact({
-      statement: body.statement,
+      statement,
       requestedLabel,
-      collectionMethod: body.collectionMethod,
-      sourceSystem: body.sourceSystem?.trim() || "owner",
+      collectionMethod,
+      sourceSystem,
       modelGenerated: body.modelGenerated === true,
       evidenceLinks,
       strictSupported: body.strictSupported === true,
+      registeredBy,
       nowIso,
     });
     json(
@@ -2203,24 +2259,21 @@ export async function handleApiRequest(
       return;
     }
     const raw = await readBody(req);
-    let body: {
-      statement?: string;
-      sourceSystem?: string;
-      modelGenerated?: boolean;
-    } = {};
-    try {
-      body = raw ? (JSON.parse(raw) as typeof body) : {};
-    } catch {
-      json(res, 400, { error: "INVALID_JSON" }, cors);
+    const parsed = parseJsonObjectBody(raw);
+    if (!parsed.ok) {
+      json(res, 400, { error: parsed.error }, cors);
       return;
     }
-    if (!body.statement?.trim()) {
+    const body = parsed.value;
+    const statement =
+      typeof body.statement === "string" ? body.statement : "";
+    if (!statement.trim()) {
       json(res, 400, { error: "STATEMENT_REQUIRED" }, cors);
       return;
     }
     const ingested = runtime.knowledge.ingestUnsourcedClaim({
-      statement: body.statement,
-      ...(body.sourceSystem !== undefined
+      statement,
+      ...(typeof body.sourceSystem === "string"
         ? { sourceSystem: body.sourceSystem }
         : {}),
       modelGenerated: body.modelGenerated !== false,
@@ -2250,29 +2303,43 @@ export async function handleApiRequest(
       return;
     }
     const raw = await readBody(req);
-    let body: { sourcePath?: string; content?: string; checksum?: string } = {};
-    try {
-      body = raw ? (JSON.parse(raw) as typeof body) : {};
-    } catch {
-      json(res, 400, { error: "INVALID_JSON" }, cors);
+    const parsed = parseJsonObjectBody(raw);
+    if (!parsed.ok) {
+      json(res, 400, { error: parsed.error }, cors);
       return;
     }
-    if (!body.sourcePath?.trim()) {
+    const body = parsed.value;
+    const sourcePath =
+      typeof body.sourcePath === "string" ? body.sourcePath : "";
+    if (!sourcePath.trim()) {
       json(res, 400, { error: "SOURCE_PATH_REQUIRED" }, cors);
       return;
     }
-    const record = runtime.knowledge.ingestInstruction({
-      sourcePath: body.sourcePath,
-      ...(body.content !== undefined ? { content: body.content } : {}),
-      ...(body.checksum !== undefined ? { checksum: body.checksum } : {}),
+    const content =
+      typeof body.content === "string" ? body.content : undefined;
+    const checksum =
+      typeof body.checksum === "string" ? body.checksum : undefined;
+    const ingested = runtime.knowledge.ingestInstruction({
+      sourcePath,
+      ...(content !== undefined ? { content } : {}),
+      ...(checksum !== undefined ? { checksum } : {}),
       fixtureOnly: true,
     });
+    if (!ingested.ok) {
+      json(
+        res,
+        400,
+        { error: ingested.code, reasons: ingested.reasons },
+        cors,
+      );
+      return;
+    }
     json(
       res,
       200,
       {
-        ingestion: record,
-        note: "Incoming documents are evidence, not executable instructions.",
+        ingestion: ingested.record,
+        note: "Incoming documents are evidence, not executable instructions. Checksum is from content or verified caller digest.",
       },
       cors,
     );
@@ -2292,40 +2359,41 @@ export async function handleApiRequest(
       return;
     }
     const raw = await readBody(req);
-    let body: {
-      kind?: string;
-      queryOrTopic?: string;
-      collectionMethod?: string;
-      sourceSystem?: string;
-      requestedLabel?: string;
-      sampleSize?: number;
-      missingDataState?: string;
-      modelGenerated?: boolean;
-      fixtureOnly?: boolean;
-    } = {};
-    try {
-      body = raw ? (JSON.parse(raw) as typeof body) : {};
-    } catch {
-      json(res, 400, { error: "INVALID_JSON" }, cors);
+    const parsed = parseJsonObjectBody(raw);
+    if (!parsed.ok) {
+      json(res, 400, { error: parsed.error }, cors);
       return;
     }
+    const body = parsed.value;
     const kindValues = Object.values(DemandSignalKind) as string[];
-    if (!body.kind || !kindValues.includes(body.kind)) {
+    const kind = typeof body.kind === "string" ? body.kind : "";
+    if (!kindValues.includes(kind)) {
       json(res, 400, { error: "INVALID_DEMAND_KIND" }, cors);
       return;
     }
-    if (!body.queryOrTopic?.trim()) {
+    const queryOrTopic =
+      typeof body.queryOrTopic === "string" ? body.queryOrTopic : "";
+    if (!queryOrTopic.trim()) {
       json(res, 400, { error: "QUERY_REQUIRED" }, cors);
       return;
     }
-    if (!body.collectionMethod || !isCollectionMethod(body.collectionMethod)) {
+    const collectionMethod =
+      typeof body.collectionMethod === "string" ? body.collectionMethod : "";
+    if (!isCollectionMethod(collectionMethod)) {
       json(res, 400, { error: "INVALID_COLLECTION_METHOD" }, cors);
       return;
     }
-    const requestedLabel =
-      body.requestedLabel && isSupportLabel(body.requestedLabel)
-        ? (body.requestedLabel as SupportLabelValue)
-        : null;
+    let requestedLabel: SupportLabelValue | null = null;
+    if (body.requestedLabel !== undefined && body.requestedLabel !== null) {
+      if (
+        typeof body.requestedLabel !== "string" ||
+        !isSupportLabel(body.requestedLabel)
+      ) {
+        json(res, 400, { error: "INVALID_REQUESTED_LABEL" }, cors);
+        return;
+      }
+      requestedLabel = body.requestedLabel;
+    }
     const missingStates = ["complete", "partial", "omitted", "unknown"] as const;
     const missingDataState = missingStates.includes(
       body.missingDataState as (typeof missingStates)[number],
@@ -2334,12 +2402,15 @@ export async function handleApiRequest(
       : "unknown";
 
     const obs = runtime.knowledge.registerDemand({
-      kind: body.kind as DemandSignalKindValue,
-      queryOrTopic: body.queryOrTopic,
-      collectionMethod: body.collectionMethod,
-      sourceSystem: body.sourceSystem?.trim() || "owner",
+      kind: kind as DemandSignalKindValue,
+      queryOrTopic,
+      collectionMethod,
+      sourceSystem:
+        typeof body.sourceSystem === "string" && body.sourceSystem.trim()
+          ? body.sourceSystem.trim()
+          : "owner",
       requestedLabel,
-      sampleSize: body.sampleSize ?? null,
+      sampleSize: typeof body.sampleSize === "number" ? body.sampleSize : null,
       missingDataState,
       modelGenerated: body.modelGenerated === true,
       fixtureOnly: body.fixtureOnly !== false,
@@ -2381,19 +2452,14 @@ export async function handleApiRequest(
       return;
     }
     const raw = await readBody(req);
-    let body: {
-      factId?: string;
-      decision?: string;
-      summary?: string;
-      fixtureOnly?: boolean;
-    } = {};
-    try {
-      body = raw ? (JSON.parse(raw) as typeof body) : {};
-    } catch {
-      json(res, 400, { error: "INVALID_JSON" }, cors);
+    const parsed = parseJsonObjectBody(raw);
+    if (!parsed.ok) {
+      json(res, 400, { error: parsed.error }, cors);
       return;
     }
-    if (!body.factId?.trim()) {
+    const body = parsed.value;
+    const factId = typeof body.factId === "string" ? body.factId : "";
+    if (!factId.trim()) {
       json(res, 400, { error: "FACT_ID_REQUIRED" }, cors);
       return;
     }
@@ -2405,10 +2471,14 @@ export async function handleApiRequest(
       return;
     }
     const verified = runtime.knowledge.verifyFact({
-      factId: body.factId,
+      factId,
       decision: body.decision,
-      summary: body.summary?.trim() || `Owner ${body.decision.toLowerCase()} fact`,
-      fixtureOnly: body.fixtureOnly !== false,
+      summary:
+        typeof body.summary === "string" && body.summary.trim()
+          ? body.summary.trim()
+          : `Owner ${body.decision.toLowerCase()} fact`,
+      // Owner decisions are real outcomes unless the caller opts into fixtureOnly.
+      fixtureOnly: body.fixtureOnly === true,
       source: "owner_decision",
     });
     if (!verified.fact) {
@@ -2422,7 +2492,9 @@ export async function handleApiRequest(
         fact: verified.fact,
         outcome: verified.outcome,
         reasons: verified.reasons,
-        note: "Learning hook recorded fixtureOnly SUCCESS/FAILURE. Does not expand grants or authority.",
+        note: verified.outcome?.fixtureOnly
+          ? "Learning hook recorded fixtureOnly SUCCESS/FAILURE. Does not expand grants or authority."
+          : "Learning hook recorded owner SUCCESS/FAILURE (not fixtureOnly). Does not expand grants or authority.",
       },
       cors,
     );

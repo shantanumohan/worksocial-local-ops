@@ -65,11 +65,20 @@ describe("knowledge service", () => {
     }
   });
 
-  it("deduplicates instruction ingestion by checksum", () => {
+  it("deduplicates instruction ingestion by content checksum and rejects path-only", () => {
     const dir = mkdtempSync(join(tmpdir(), "ws-know-svc-"));
     try {
       const store = createFileKnowledgeStore(dir);
       const svc = createKnowledgeService(store);
+      const denied = svc.ingestInstruction({
+        sourcePath: "incoming/a.md",
+        nowIso: now,
+      });
+      expect(denied.ok).toBe(false);
+      if (!denied.ok) {
+        expect(denied.code).toBe("CONTENT_OR_CHECKSUM_REQUIRED");
+      }
+
       const first = svc.ingestInstruction({
         sourcePath: "incoming/a.md",
         content: "same-bytes",
@@ -80,8 +89,26 @@ describe("knowledge service", () => {
         content: "same-bytes",
         nowIso: now,
       });
-      expect(second.ingestionId).toBe(first.ingestionId);
+      expect(first.ok && second.ok).toBe(true);
+      if (first.ok && second.ok) {
+        expect(second.record.ingestionId).toBe(first.record.ingestionId);
+      }
       expect(svc.listIngestions()).toHaveLength(1);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("reseeds fixture demand observations idempotently", () => {
+    const dir = mkdtempSync(join(tmpdir(), "ws-know-svc-"));
+    try {
+      const store = createFileKnowledgeStore(dir);
+      const svc = createKnowledgeService(store);
+      svc.seedFixtures(now);
+      const firstCount = svc.listDemandSignals().length;
+      svc.seedFixtures(now);
+      expect(svc.listDemandSignals()).toHaveLength(firstCount);
+      expect(svc.listLearningOutcomes()).toHaveLength(0);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
