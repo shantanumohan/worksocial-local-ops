@@ -25,6 +25,7 @@
     "@worksocial/learning-worker": "workspace:*",
     "@worksocial/ml": "workspace:*",
     "@worksocial/persistence": "workspace:*",
+    "@worksocial/knowledge": "workspace:*",
     "@worksocial/probes": "workspace:*",
     "@worksocial/provider-adapters": "workspace:*",
     "@worksocial/workflow-worker": "workspace:*"

@@ -33,25 +33,35 @@ import {
   upsertFixturePilotMapping,
   validateSession,
   writePathIsFixtureOnly,
+  isCollectionMethod,
+  isSupportLabel,
+  DemandSignalKind,
+  FactVerificationDecision,
+  SupportLabel,
   type BookingOwnership,
+  type CollectionMethodValue,
   type CrmOwnership,
+  type DemandSignalKindValue,
   type FormMapping,
   type JourneyRegistryEntry,
   type LocalRoleValue,
   type PilotWritePath,
   type SessionRecord,
   type SourceBinding,
+  type SupportLabelValue,
 } from "@worksocial/domain";
 import {
   createDemoCanaryGrant,
   createFileAuthorityStore,
   createFileLearningStore,
+  createFileKnowledgeStore,
   createFileProbeStore,
   createFileProductionMappingStore,
   createFileRoleRuntimeStore,
   ensureBootstrapOwner,
   verifyPassword,
   type AuthorityStore,
+  type KnowledgeStore,
   type LearningStore,
   type PolicyDecisionRecord,
   type ProbeStore,
@@ -81,6 +91,10 @@ import {
   createProbeService,
   type ProbeService,
 } from "@worksocial/probes";
+import {
+  createKnowledgeService,
+  type KnowledgeService,
+} from "@worksocial/knowledge";
 import { listPinnedModels } from "@worksocial/ml";
 
 export type ApiRuntime = {
@@ -91,6 +105,8 @@ export type ApiRuntime = {
   learningWorker: LearningWorker;
   probeStore: ProbeStore;
   probes: ProbeService;
+  knowledgeStore: KnowledgeStore;
+  knowledge: KnowledgeService;
   runner: ClaudeRunner;
   missions: MissionEnqueueService;
   gateway: ActionGateway;
@@ -117,6 +133,8 @@ export function createApiRuntime(options: {
     store: probeStore,
     mappingStore,
   });
+  const knowledgeStore = createFileKnowledgeStore(options.stateDir);
+  const knowledge = createKnowledgeService(knowledgeStore);
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
@@ -137,6 +155,8 @@ export function createApiRuntime(options: {
     learningWorker,
     probeStore,
     probes,
+    knowledgeStore,
+    knowledge,
     runner,
     missions,
     gateway: createActionGateway(),
@@ -154,6 +174,29 @@ export function readBody(req: IncomingMessage): Promise<string> {
     req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
     req.on("error", reject);
   });
+}
+
+/** Parse JSON body as a plain non-null object; reject null/array/primitives. */
+export function parseJsonObjectBody(
+  raw: string,
+): { ok: true; value: Record<string, unknown> } | { ok: false; error: string } {
+  if (!raw.trim()) {
+    return { ok: true, value: {} };
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw) as unknown;
+  } catch {
+    return { ok: false, error: "INVALID_JSON" };
+  }
+  if (
+    parsed === null ||
+    typeof parsed !== "object" ||
+    Array.isArray(parsed)
+  ) {
+    return { ok: false, error: "INVALID_BODY" };
+  }
+  return { ok: true, value: parsed as Record<string, unknown> };
 }
 
 export function parseCookies(header: string | undefined): Record<string, string> {
@@ -271,9 +314,9 @@ export async function handleApiRequest(
         status: "running",
         productionActivated: false,
         identity:
-          "R1-02–R1-05 auth + mapping + roles + learning + probes/canaries",
+          "R1-02–R1-06 auth + mapping + roles + learning + probes + knowledge/demand",
         message:
-          "API surface includes monitoring probes. No live Zoho mutations. Fixture canaries + Claude fixture mode default.",
+          "API surface includes monitoring probes and knowledge/demand registry. No live SERP/Trends/Zoho. Fixture adapters + Claude fixture mode default.",
       },
       cors,
     );
@@ -1972,6 +2015,486 @@ export async function handleApiRequest(
         gatewayCode: canary.gatewayCode,
         details: canary.details,
         note,
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/knowledge/status") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const status = runtime.knowledge.status();
+    json(
+      res,
+      200,
+      {
+        ...status,
+        note: status.honestNote,
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/knowledge/facts") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(
+      res,
+      200,
+      {
+        facts: runtime.knowledge.listFacts(100),
+        labels: Object.values(SupportLabel),
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/knowledge/demand") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(
+      res,
+      200,
+      {
+        demandSignals: runtime.knowledge.listDemandSignals(100),
+        kinds: Object.values(DemandSignalKind),
+        labels: Object.values(SupportLabel),
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/knowledge/ingestions") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(
+      res,
+      200,
+      { ingestions: runtime.knowledge.listIngestions(100) },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/knowledge/seed-fixtures") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const seed = runtime.knowledge.seedFixtures();
+    json(
+      res,
+      200,
+      {
+        facts: seed.facts,
+        demandSignals: seed.demandSignals,
+        note: "Fixture corpus only. Live SERP/Trends remain NOT_WIRED. Model claims stay HYPOTHESIS.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/knowledge/facts") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    const parsed = parseJsonObjectBody(raw);
+    if (!parsed.ok) {
+      json(res, 400, { error: parsed.error }, cors);
+      return;
+    }
+    const body = parsed.value;
+    const statement =
+      typeof body.statement === "string" ? body.statement : "";
+    if (!statement.trim()) {
+      json(res, 400, { error: "STATEMENT_REQUIRED" }, cors);
+      return;
+    }
+    const collectionMethod =
+      typeof body.collectionMethod === "string" ? body.collectionMethod : "";
+    if (!isCollectionMethod(collectionMethod)) {
+      json(res, 400, { error: "INVALID_COLLECTION_METHOD" }, cors);
+      return;
+    }
+    let requestedLabel: SupportLabelValue | null = null;
+    if (body.requestedLabel !== undefined && body.requestedLabel !== null) {
+      if (
+        typeof body.requestedLabel !== "string" ||
+        !isSupportLabel(body.requestedLabel)
+      ) {
+        json(res, 400, { error: "INVALID_REQUESTED_LABEL" }, cors);
+        return;
+      }
+      requestedLabel = body.requestedLabel;
+    }
+    const nowIso = new Date().toISOString();
+    const rawEvidence = Array.isArray(body.evidenceLinks)
+      ? body.evidenceLinks
+      : [];
+    const evidenceLinks: Array<{
+      evidenceId: string;
+      sourceRef: string;
+      collectionMethod: CollectionMethodValue;
+      summary: string;
+      observedAtIso: string;
+      fixtureOnly: boolean;
+    }> = [];
+    for (const entry of rawEvidence) {
+      if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+        json(res, 400, { error: "INVALID_EVIDENCE_LINK" }, cors);
+        return;
+      }
+      const e = entry as Record<string, unknown>;
+      const sourceRef =
+        typeof e.sourceRef === "string" ? e.sourceRef.trim() : "";
+      if (!sourceRef) {
+        json(res, 400, { error: "EMPTY_EVIDENCE_SOURCE_REF" }, cors);
+        return;
+      }
+      if (
+        typeof e.collectionMethod !== "string" ||
+        !isCollectionMethod(e.collectionMethod)
+      ) {
+        json(res, 400, { error: "INVALID_EVIDENCE_COLLECTION_METHOD" }, cors);
+        return;
+      }
+      evidenceLinks.push({
+        evidenceId:
+          typeof e.evidenceId === "string" && e.evidenceId.trim()
+            ? e.evidenceId.trim()
+            : `ev-${randomBytes(4).toString("hex")}`,
+        sourceRef,
+        collectionMethod: e.collectionMethod,
+        summary:
+          typeof e.summary === "string" && e.summary.trim()
+            ? e.summary.trim()
+            : "Evidence link",
+        observedAtIso:
+          typeof e.observedAtIso === "string" ? e.observedAtIso : nowIso,
+        fixtureOnly: e.fixtureOnly !== false,
+      });
+    }
+
+    const registeredBy =
+      result.session.role === LocalRole.OPERATOR ? "operator" : "owner";
+    const sourceSystem =
+      typeof body.sourceSystem === "string" && body.sourceSystem.trim()
+        ? body.sourceSystem.trim()
+        : result.session.username;
+
+    const registered = runtime.knowledge.registerFact({
+      statement,
+      requestedLabel,
+      collectionMethod,
+      sourceSystem,
+      modelGenerated: body.modelGenerated === true,
+      evidenceLinks,
+      strictSupported: body.strictSupported === true,
+      registeredBy,
+      nowIso,
+    });
+    json(
+      res,
+      registered.ok ? 200 : 400,
+      {
+        ok: registered.ok,
+        fact: registered.fact,
+        code: registered.code,
+        downgraded: registered.downgraded,
+        reasons: registered.reasons,
+        note: registered.ok
+          ? registered.fact?.supportLabel === SupportLabel.HYPOTHESIS
+            ? "Registered as HYPOTHESIS — model/unsourced claims are never facts."
+            : `Registered as ${registered.fact?.supportLabel}.`
+          : "Rejected — cannot treat unsourced claim as SUPPORTED fact.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/knowledge/ingest-claim") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    const parsed = parseJsonObjectBody(raw);
+    if (!parsed.ok) {
+      json(res, 400, { error: parsed.error }, cors);
+      return;
+    }
+    const body = parsed.value;
+    const statement =
+      typeof body.statement === "string" ? body.statement : "";
+    if (!statement.trim()) {
+      json(res, 400, { error: "STATEMENT_REQUIRED" }, cors);
+      return;
+    }
+    const ingested = runtime.knowledge.ingestUnsourcedClaim({
+      statement,
+      ...(typeof body.sourceSystem === "string"
+        ? { sourceSystem: body.sourceSystem }
+        : {}),
+      modelGenerated: body.modelGenerated !== false,
+    });
+    json(
+      res,
+      200,
+      {
+        ...ingested,
+        note: "Unsourced/model claims enter as HYPOTHESIS only until evidence exists.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/knowledge/ingest-instruction") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    const parsed = parseJsonObjectBody(raw);
+    if (!parsed.ok) {
+      json(res, 400, { error: parsed.error }, cors);
+      return;
+    }
+    const body = parsed.value;
+    const sourcePath =
+      typeof body.sourcePath === "string" ? body.sourcePath : "";
+    if (!sourcePath.trim()) {
+      json(res, 400, { error: "SOURCE_PATH_REQUIRED" }, cors);
+      return;
+    }
+    const content =
+      typeof body.content === "string" ? body.content : undefined;
+    const checksum =
+      typeof body.checksum === "string" ? body.checksum : undefined;
+    const ingested = runtime.knowledge.ingestInstruction({
+      sourcePath,
+      ...(content !== undefined ? { content } : {}),
+      ...(checksum !== undefined ? { checksum } : {}),
+      fixtureOnly: true,
+    });
+    if (!ingested.ok) {
+      json(
+        res,
+        400,
+        { error: ingested.code, reasons: ingested.reasons },
+        cors,
+      );
+      return;
+    }
+    json(
+      res,
+      200,
+      {
+        ingestion: ingested.record,
+        note: "Incoming documents are evidence, not executable instructions. Checksum is from content or verified caller digest.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/knowledge/demand") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    const parsed = parseJsonObjectBody(raw);
+    if (!parsed.ok) {
+      json(res, 400, { error: parsed.error }, cors);
+      return;
+    }
+    const body = parsed.value;
+    const kindValues = Object.values(DemandSignalKind) as string[];
+    const kind = typeof body.kind === "string" ? body.kind : "";
+    if (!kindValues.includes(kind)) {
+      json(res, 400, { error: "INVALID_DEMAND_KIND" }, cors);
+      return;
+    }
+    const queryOrTopic =
+      typeof body.queryOrTopic === "string" ? body.queryOrTopic : "";
+    if (!queryOrTopic.trim()) {
+      json(res, 400, { error: "QUERY_REQUIRED" }, cors);
+      return;
+    }
+    const collectionMethod =
+      typeof body.collectionMethod === "string" ? body.collectionMethod : "";
+    if (!isCollectionMethod(collectionMethod)) {
+      json(res, 400, { error: "INVALID_COLLECTION_METHOD" }, cors);
+      return;
+    }
+    let requestedLabel: SupportLabelValue | null = null;
+    if (body.requestedLabel !== undefined && body.requestedLabel !== null) {
+      if (
+        typeof body.requestedLabel !== "string" ||
+        !isSupportLabel(body.requestedLabel)
+      ) {
+        json(res, 400, { error: "INVALID_REQUESTED_LABEL" }, cors);
+        return;
+      }
+      requestedLabel = body.requestedLabel;
+    }
+    const missingStates = ["complete", "partial", "omitted", "unknown"] as const;
+    const missingDataState = missingStates.includes(
+      body.missingDataState as (typeof missingStates)[number],
+    )
+      ? (body.missingDataState as (typeof missingStates)[number])
+      : "unknown";
+
+    const obs = runtime.knowledge.registerDemand({
+      kind: kind as DemandSignalKindValue,
+      queryOrTopic,
+      collectionMethod,
+      sourceSystem:
+        typeof body.sourceSystem === "string" && body.sourceSystem.trim()
+          ? body.sourceSystem.trim()
+          : "owner",
+      requestedLabel,
+      sampleSize: typeof body.sampleSize === "number" ? body.sampleSize : null,
+      missingDataState,
+      modelGenerated: body.modelGenerated === true,
+      fixtureOnly: body.fixtureOnly !== false,
+    });
+    json(
+      res,
+      200,
+      {
+        demandSignal: obs,
+        note: `Labeled ${obs.supportLabel}. Live SERP/Trends NOT_WIRED.`,
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/knowledge/verify-fact") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason: "Fact verification requires administrator manage_standing_policies",
+        },
+        cors,
+      );
+      return;
+    }
+    const raw = await readBody(req);
+    const parsed = parseJsonObjectBody(raw);
+    if (!parsed.ok) {
+      json(res, 400, { error: parsed.error }, cors);
+      return;
+    }
+    const body = parsed.value;
+    const factId = typeof body.factId === "string" ? body.factId : "";
+    if (!factId.trim()) {
+      json(res, 400, { error: "FACT_ID_REQUIRED" }, cors);
+      return;
+    }
+    if (
+      body.decision !== FactVerificationDecision.CONFIRMED &&
+      body.decision !== FactVerificationDecision.REFUTED
+    ) {
+      json(res, 400, { error: "INVALID_DECISION" }, cors);
+      return;
+    }
+    const verified = runtime.knowledge.verifyFact({
+      factId,
+      decision: body.decision,
+      summary:
+        typeof body.summary === "string" && body.summary.trim()
+          ? body.summary.trim()
+          : `Owner ${body.decision.toLowerCase()} fact`,
+      // Owner decisions are real outcomes unless the caller opts into fixtureOnly.
+      fixtureOnly: body.fixtureOnly === true,
+      source: "owner_decision",
+    });
+    if (!verified.fact) {
+      json(res, 404, { error: "FACT_NOT_FOUND", reasons: verified.reasons }, cors);
+      return;
+    }
+    json(
+      res,
+      200,
+      {
+        fact: verified.fact,
+        outcome: verified.outcome,
+        reasons: verified.reasons,
+        note: verified.outcome?.fixtureOnly
+          ? "Learning hook recorded fixtureOnly SUCCESS/FAILURE. Does not expand grants or authority."
+          : "Learning hook recorded owner SUCCESS/FAILURE (not fixtureOnly). Does not expand grants or authority.",
       },
       cors,
     );

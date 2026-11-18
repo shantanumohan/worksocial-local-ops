@@ -117,3 +117,9 @@ export {
   defaultProbeStateDir,
   type ProbeStore,
 } from "./probe-store.js";
+
+export {
+  createFileKnowledgeStore,
+  defaultKnowledgeStateDir,
+  type KnowledgeStore,
+} from "./knowledge-store.js";
