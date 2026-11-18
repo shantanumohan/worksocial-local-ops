@@ -17,6 +17,7 @@
     { "path": "services/credential-broker" },
     { "path": "services/learning-worker" },
     { "path": "services/probes" },
+    { "path": "services/knowledge" },
     { "path": "services/evaluation-worker" }
   ]
 }

@@ -4,7 +4,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 
 **Not production-activated.** No live providers, credentials, schedules, website changes, CRM writes, or customer replies. External effects: none.
 
-## What is real (R1-01 → R1-05 + learning)
+## What is real (R1-01 → R1-06 + learning)
 
 ### R1-01 local execution
 - **Supervisor-owned local lifecycle** — `pnpm local:start|stop|doctor|health` and VS Code tasks call `services/supervisor`.
@@ -57,20 +57,31 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - SQL `007_monitoring.sql` companion schema; **live Zoho remains `NOT_WIRED`** without owner credentials.
 - Catalog refs `T-F11`, `T-F12`, `T-US-032`, `T-X040` exercised offline — product cases stay `NOT_RUN`.
 
+### R1-06 knowledge and research / demand intelligence
+- **Fact registry** with honest **SUPPORTED / UNKNOWN / HYPOTHESIS** labels, evidence links, and provenance.
+- **Instruction/playbook ingestion** records — incoming docs are evidence, never auto-promoted to executable agent instructions.
+- **Demand/trend/FAQ/rank** observation schema (source, method, intent, geography, sample size, missing-data, comparability).
+- **Ingestion path** rejects unsourced/model claims as facts — hypothesis only until evidence exists.
+- **Learning hooks** — fact confirm/refute emits SUCCESS/FAILURE outcomes (`fixtureOnly` when fixture); does not auto-apply authority.
+- Console `/knowledge` + API `/knowledge/*` — browse/register facts, demand signals, ingest claims/instructions, seed fixtures.
+- SQL `008_knowledge.sql` companion schema; **live SERP / Google Trends remain `NOT_WIRED`**.
+- Fixture demand adapters only — no live search API required.
+
 ## What is still stub / NOT_WIRED
 
 | Area | Status |
 |------|--------|
 | Temporal runtime / durable workflows | **stub** — `NOT_WIRED` (in-process enqueue only) |
 | Live Claude Code CLI fleet | optional; default **fixture** (`WORKSOCIAL_CLAUDE_FIXTURE` unset/`1`) |
-| Full console React routes (v5 25 screens) | minimal login + authority + mapping + roles + monitoring + learning |
+| Full console React routes (v5 25 screens) | minimal login + authority + mapping + roles + monitoring + knowledge + learning |
 | Live OAuth / provider connections | **excluded** — fixture/NOT_WIRED scaffolds only |
 | Live Zoho / CMS / booking mutations | **excluded** — fixture canary only |
+| Live SERP / Google Trends | **NOT_WIRED** — fixture demand adapters only (R1-06) |
 | Live Playwright browser sessions | **NOT_WIRED** unless optional install + URL binding |
 | Postgres bound as live control plane | schema ready; runtime state is **file-backed** |
 | Hugging Face / ONNX weight downloads | **not used** — pure-TS offline trainers + fixture baselines |
 | Production-canary-verified learning | **not claimed** — offline metrics only |
-| After-hours / publishing pipelines | excluded |
+| SEO publishing / after-hours | excluded (R1-07–R1-09) |
 
 Status labels stay honest: fixture / stub / `NOT_RUN` ≠ sandbox-verified or production-canary-verified.
 
@@ -78,7 +89,7 @@ Status labels stay honest: fixture / stub / `NOT_RUN` ≠ sandbox-verified or pr
 
 ```
 apps/console, apps/api
-services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-broker,learning-worker,probes,evaluation-worker}
+services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-broker,learning-worker,probes,knowledge,evaluation-worker}
 packages/{contracts,domain,ml,persistence,provider-adapters,observability,ui}
 database/migrations
 tests/{unit,integration,contract,workflow,e2e,security,eval,soak}
@@ -93,8 +104,8 @@ docs/{adrs,runbooks,product,contracts,v5}
 pnpm install
 pnpm local:doctor | local:start | local:stop | local:health
 pnpm check
-pnpm test:unit          # domain + ml + persistence + supervisor + gateway + broker + runners + learning-worker + probes + api
-pnpm test:contract      # unauthorized-write + stop-switch + read-evidence + thirty-role-runtime + learning-worker + form-crm-canary
+pnpm test:unit          # domain + ml + persistence + supervisor + gateway + broker + runners + learning-worker + probes + knowledge + api
+pnpm test:contract      # unauthorized-write + stop-switch + read-evidence + thirty-role-runtime + learning-worker + form-crm-canary + knowledge-labeling
 pnpm test:e2e           # offline e2e-lite HTTP→DOM→canary journey
 pnpm test:database | test:workflow | test:security | test:eval
 pnpm recovery:rehearse | release:evidence

@@ -72,6 +72,32 @@ export const R1_03_ADAPTERS: readonly AdapterDescriptor[] = [
     capabilities: [],
     notes: "Booking ownership mapping only; provider API not wired.",
   },
+  {
+    adapterId: "demand-fixture",
+    providerId: "demand",
+    status: AdapterStatus.FIXTURE,
+    capabilities: [
+      "fixture_trend_observations",
+      "fixture_faq_clusters",
+      "fixture_rank_samples",
+    ],
+    notes:
+      "R1-06 fixture demand/trend/FAQ/rank observations with honest support labels. No live SERP.",
+  },
+  {
+    adapterId: "serp-live",
+    providerId: "demand",
+    status: AdapterStatus.NOT_WIRED,
+    capabilities: [],
+    notes: "Live SERP / search-result research — NOT_WIRED (R1-06).",
+  },
+  {
+    adapterId: "google-trends-live",
+    providerId: "demand",
+    status: AdapterStatus.NOT_WIRED,
+    capabilities: [],
+    notes: "Live Google Trends API — NOT_WIRED; access-controlled and not assumed (R1-06).",
+  },
 ] as const;
 
 export function listAdapters(): AdapterDescriptor[] {

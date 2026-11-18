@@ -89,7 +89,7 @@ export function authorityPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -199,7 +199,7 @@ export function mappingPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -340,7 +340,7 @@ export function rolesPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -482,7 +482,7 @@ export function monitoringPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -615,7 +615,7 @@ export function learningPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -707,6 +707,192 @@ export function learningPage(apiOrigin: string): string {
     const res = await api('/learning/train', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
     const body = await res.json();
     document.getElementById('note').textContent = body.honestNote || body.run?.note || (res.ok ? 'Train complete' : (body.reason || body.error || 'Train failed'));
+    refresh();
+  };
+  document.getElementById('btn-refresh').onclick = () => refresh();
+  refresh();
+</script>
+</body>
+</html>`;
+}
+
+export function knowledgePage(apiOrigin: string): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WorkSocial — Knowledge</title>
+  <style>
+    :root { --ink:#1b2a22; --panel:#fff; --accent:#2f6b4f; --warn:#8a5a00; }
+    body { margin:0; font-family:"IBM Plex Sans","Segoe UI",sans-serif; background:
+      linear-gradient(180deg,#e7efe9,#f6f3ec); color:var(--ink); }
+    header { padding:1.25rem 1.5rem; border-bottom:1px solid #c9d6cc; background:rgba(255,255,255,.7); }
+    h1 { font-family:"IBM Plex Serif",Georgia,serif; margin:0; font-size:1.45rem; }
+    main { max-width:980px; margin:0 auto; padding:1.5rem; display:grid; gap:1rem; }
+    section { background:var(--panel); border:1px solid #c9d6cc; padding:1rem 1.1rem; }
+    h2 { margin:.2rem 0 .6rem; font-size:1.05rem; }
+    .row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; }
+    button { background:var(--accent); color:#fff; border:0; padding:.5rem .85rem; cursor:pointer; }
+    table { width:100%; border-collapse:collapse; font-size:.9rem; }
+    th, td { text-align:left; padding:.35rem .25rem; border-bottom:1px solid #e0e7e2; vertical-align:top; }
+    .muted { color:#516258; font-size:.85rem; }
+    .warn { color:var(--warn); }
+    .pill { display:inline-block; padding:.15rem .45rem; border:1px solid #b7c5bb; font-size:.75rem; }
+    pre { white-space:pre-wrap; font-size:.8rem; max-height:280px; overflow:auto; }
+    input, select, textarea { width:100%; box-sizing:border-box; padding:.45rem .55rem; border:1px solid #b7c5bb; margin:.25rem 0 .6rem; }
+    label { font-size:.85rem; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>WorkSocial</h1>
+  <p class="muted" id="who">Checking session…</p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+</header>
+<main>
+  <section>
+    <h2>Knowledge and demand (R1-06)</h2>
+    <p class="muted">Fact registry, instruction ingestion, trends/FAQ/rank signals with honest <strong>SUPPORTED / UNKNOWN / HYPOTHESIS</strong> labels.</p>
+    <p class="warn">Model claims are never facts. Live SERP and Google Trends stay <strong>NOT_WIRED</strong>. Fixture adapters only.</p>
+    <div class="row">
+      <button id="btn-seed" type="button">Seed fixtures</button>
+      <button id="btn-refresh" type="button">Refresh</button>
+    </div>
+    <p class="muted" id="note"></p>
+  </section>
+  <section>
+    <h2>Status</h2>
+    <table>
+      <thead><tr><th>Signal</th><th>Value</th></tr></thead>
+      <tbody id="status-rows"><tr><td colspan="2" class="muted">Loading…</td></tr></tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Register fact</h2>
+    <label for="fact-statement">Statement</label>
+    <textarea id="fact-statement" rows="2" placeholder="Business fact statement"></textarea>
+    <div class="row">
+      <div style="flex:1;min-width:160px">
+        <label for="fact-method">Collection method</label>
+        <select id="fact-method">
+          <option value="owner_declared">owner_declared</option>
+          <option value="fixture">fixture</option>
+          <option value="unsourced">unsourced</option>
+          <option value="model_generated">model_generated</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:160px">
+        <label for="fact-label">Requested label</label>
+        <select id="fact-label">
+          <option value="SUPPORTED">SUPPORTED</option>
+          <option value="UNKNOWN">UNKNOWN</option>
+          <option value="HYPOTHESIS">HYPOTHESIS</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <button id="btn-fact" type="button">Register fact</button>
+      <button id="btn-ingest-claim" type="button">Ingest as model claim</button>
+    </div>
+  </section>
+  <section>
+    <h2>Facts</h2>
+    <pre id="facts">Loading…</pre>
+  </section>
+  <section>
+    <h2>Demand signals</h2>
+    <pre id="demand">Loading…</pre>
+  </section>
+  <section>
+    <h2>Instruction ingestions</h2>
+    <pre id="ingestions">Loading…</pre>
+  </section>
+</main>
+<script>
+  const API = ${JSON.stringify(apiOrigin)};
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ origin: window.location.origin }, opts.headers || {});
+    const csrf = sessionStorage.getItem('ws_csrf');
+    if (opts.method && opts.method !== 'GET' && csrf) headers['x-csrf-token'] = csrf;
+    return fetch(API + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+  }
+  async function refresh() {
+    const session = await api('/auth/session');
+    if (!session.ok) { location.href = '/login'; return; }
+    const s = await session.json();
+    sessionStorage.setItem('ws_csrf', s.csrfToken);
+    document.getElementById('who').textContent = s.username + ' · ' + s.role + ' · local session';
+    const [statusRes, factsRes, demandRes, ingRes] = await Promise.all([
+      api('/knowledge/status'),
+      api('/knowledge/facts'),
+      api('/knowledge/demand'),
+      api('/knowledge/ingestions'),
+    ]);
+    if (!statusRes.ok) { location.href = '/login'; return; }
+    const status = await statusRes.json();
+    const factsBody = await factsRes.json();
+    const demandBody = await demandRes.json();
+    const ingBody = await ingRes.json();
+    const tbody = document.getElementById('status-rows');
+    tbody.replaceChildren();
+    const rows = [
+      ['Live SERP wiring', status.liveSerpWiring],
+      ['Live Trends wiring', status.liveTrendsWiring],
+      ['Facts', String(status.factCount ?? 0)],
+      ['Demand signals', String(status.demandSignalCount ?? 0)],
+      ['SUPPORTED / UNKNOWN / HYPOTHESIS', [status.supportedCount, status.unknownCount, status.hypothesisCount].join(' / ')],
+      ['Ingestions', String(status.ingestionCount ?? 0)],
+    ];
+    for (const [k, v] of rows) {
+      const tr = document.createElement('tr');
+      const tdK = document.createElement('td');
+      tdK.textContent = k;
+      const tdV = document.createElement('td');
+      const pill = document.createElement('span');
+      pill.className = 'pill';
+      pill.textContent = String(v);
+      tdV.appendChild(pill);
+      tr.appendChild(tdK);
+      tr.appendChild(tdV);
+      tbody.appendChild(tr);
+    }
+    document.getElementById('facts').textContent = JSON.stringify(factsBody.facts || [], null, 2);
+    document.getElementById('demand').textContent = JSON.stringify(demandBody.demandSignals || [], null, 2);
+    document.getElementById('ingestions').textContent = JSON.stringify(ingBody.ingestions || [], null, 2);
+    document.getElementById('note').textContent = status.note || status.honestNote || '';
+  }
+  document.getElementById('btn-seed').onclick = async () => {
+    document.getElementById('note').textContent = 'Seeding fixture knowledge corpus…';
+    const res = await api('/knowledge/seed-fixtures', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.note || (res.ok ? 'Seeded' : (body.error || 'failed'));
+    refresh();
+  };
+  document.getElementById('btn-fact').onclick = async () => {
+    const statement = document.getElementById('fact-statement').value;
+    const collectionMethod = document.getElementById('fact-method').value;
+    const requestedLabel = document.getElementById('fact-label').value;
+    const evidenceLinks = (collectionMethod === 'owner_declared' || collectionMethod === 'fixture')
+      ? [{ sourceRef: 'console://manual', collectionMethod, summary: 'Console registration evidence', fixtureOnly: true }]
+      : [];
+    const res = await api('/knowledge/facts', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ statement, collectionMethod, requestedLabel, sourceSystem: 'console', evidenceLinks })
+    });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.note || body.reasons?.join('; ') || (res.ok ? 'Registered' : (body.error || 'failed'));
+    refresh();
+  };
+  document.getElementById('btn-ingest-claim').onclick = async () => {
+    const statement = document.getElementById('fact-statement').value;
+    const res = await api('/knowledge/ingest-claim', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ statement, modelGenerated: true, sourceSystem: 'console_model' })
+    });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.note || (body.fact ? ('HYPOTHESIS ' + body.fact.factId) : (body.error || 'failed'));
     refresh();
   };
   document.getElementById('btn-refresh').onclick = () => refresh();
