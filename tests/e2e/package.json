@@ -1,0 +1,20 @@
+{
+  "name": "@worksocial/e2e-lite-tests",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@worksocial/action-gateway": "workspace:*",
+    "@worksocial/domain": "workspace:*",
+    "@worksocial/persistence": "workspace:*",
+    "@worksocial/probes": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "typescript": "5.7.2",
+    "vitest": "2.1.8"
+  }
+}

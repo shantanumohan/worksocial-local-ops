@@ -4,7 +4,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 
 **Not production-activated.** No live providers, credentials, schedules, website changes, CRM writes, or customer replies. External effects: none.
 
-## What is real (R1-01 → learning slice)
+## What is real (R1-01 → R1-05 + learning)
 
 ### R1-01 local execution
 - **Supervisor-owned local lifecycle** — `pnpm local:start|stop|doctor|health` and VS Code tasks call `services/supervisor`.
@@ -48,19 +48,28 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - Console `/learning` + API `/learning/*` — status, model registry, last-run metrics, proposals.
 - SQL `006_learning.sql` companion schema; CI uses offline fixture baseline weights (no weight download).
 
+### R1-05 monitoring and tests
+- **`services/probes`** — deterministic HTTP + DOM/journey checks (fixture mode for CI; Playwright live optional/`NOT_WIRED`).
+- **Form-to-CRM canary** — controlled synthetic lead + action-gateway grant + correlated fixture CRM receipt; never enters commercial totals.
+- **Reconciliation** — intent vs remote/fixture outcome; ambiguous writes fail closed (`blocksRetry`).
+- **Learning hooks** — SUCCESS/FAILURE canary outcomes recorded as `fixtureOnly` write-path evidence.
+- Console `/monitoring` + API `/probes/*` — status, runs, last evidence, run-http / run-dom / run-form-canary.
+- SQL `007_monitoring.sql` companion schema; **live Zoho remains `NOT_WIRED`** without owner credentials.
+- Catalog refs `T-F11`, `T-F12`, `T-US-032`, `T-X040` exercised offline — product cases stay `NOT_RUN`.
+
 ## What is still stub / NOT_WIRED
 
 | Area | Status |
 |------|--------|
 | Temporal runtime / durable workflows | **stub** — `NOT_WIRED` (in-process enqueue only) |
 | Live Claude Code CLI fleet | optional; default **fixture** (`WORKSOCIAL_CLAUDE_FIXTURE` unset/`1`) |
-| Full console React routes (v5 25 screens) | minimal login + authority + mapping + roles + learning |
+| Full console React routes (v5 25 screens) | minimal login + authority + mapping + roles + monitoring + learning |
 | Live OAuth / provider connections | **excluded** — fixture/NOT_WIRED scaffolds only |
-| Live Zoho / CMS / booking mutations | **excluded** |
+| Live Zoho / CMS / booking mutations | **excluded** — fixture canary only |
+| Live Playwright browser sessions | **NOT_WIRED** unless optional install + URL binding |
 | Postgres bound as live control plane | schema ready; runtime state is **file-backed** |
 | Hugging Face / ONNX weight downloads | **not used** — pure-TS offline trainers + fixture baselines |
 | Production-canary-verified learning | **not claimed** — offline metrics only |
-| Probe/CRM canary labels (R1-05) | **stub** |
 | After-hours / publishing pipelines | excluded |
 
 Status labels stay honest: fixture / stub / `NOT_RUN` ≠ sandbox-verified or production-canary-verified.
@@ -84,15 +93,16 @@ docs/{adrs,runbooks,product,contracts,v5}
 pnpm install
 pnpm local:doctor | local:start | local:stop | local:health
 pnpm check
-pnpm test:unit          # domain + ml + persistence + supervisor + gateway + broker + runners + learning-worker + api
-pnpm test:contract      # unauthorized-write + stop-switch + read-evidence + thirty-role-runtime + learning-worker
-pnpm test:database | test:workflow | test:e2e | test:security | test:eval
+pnpm test:unit          # domain + ml + persistence + supervisor + gateway + broker + runners + learning-worker + probes + api
+pnpm test:contract      # unauthorized-write + stop-switch + read-evidence + thirty-role-runtime + learning-worker + form-crm-canary
+pnpm test:e2e           # offline e2e-lite HTTP→DOM→canary journey
+pnpm test:database | test:workflow | test:security | test:eval
 pnpm recovery:rehearse | release:evidence
 ```
 
 VS Code tasks: **WorkSocial: Start / Stop / Diagnostics / Test Local Operations** → supervisor CLI.
 
-Optional env: `WORKSOCIAL_SYNC_DENY`, `WORKSOCIAL_STATE_DIR`, `WORKSOCIAL_HOST_ID`, `WORKSOCIAL_API_PORT`, `WORKSOCIAL_CONSOLE_PORT`, `WORKSOCIAL_OWNER_PASSWORD`, `WORKSOCIAL_CLAUDE_CLI`, `WORKSOCIAL_CLAUDE_FIXTURE` (`0` to allow live CLI when present).
+Optional env: `WORKSOCIAL_SYNC_DENY`, `WORKSOCIAL_STATE_DIR`, `WORKSOCIAL_HOST_ID`, `WORKSOCIAL_API_PORT`, `WORKSOCIAL_CONSOLE_PORT`, `WORKSOCIAL_OWNER_PASSWORD`, `WORKSOCIAL_CLAUDE_CLI`, `WORKSOCIAL_CLAUDE_FIXTURE` (`0` to allow live CLI when present), `WORKSOCIAL_PLAYWRIGHT` (`1` to acknowledge optional Playwright install — still unbound/`NOT_WIRED` without URL), `WORKSOCIAL_PROBE_ALLOWED_HOSTS` (comma-separated public hostnames required for live HTTP probes; loopback/private rejected).
 
 ## Workspace vs database (OneDrive note)
 

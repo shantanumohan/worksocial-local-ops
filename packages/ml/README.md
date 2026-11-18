@@ -15,5 +15,5 @@ Local multi-model open-source learning layer for verified SUCCESS/FAILURE outcom
 
 - No Hugging Face / ONNX weight download pipeline in this slice.
 - No production-canary-verified learning; offline metrics only.
-- Probe/CRM canary labels may be stubbed until R1-05.
+- Probe/CRM canary labels are wired from R1-05 as `fixtureOnly` until live credentials exist.
 - Proposals never auto-apply authority or spend changes.
