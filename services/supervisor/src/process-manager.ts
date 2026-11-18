@@ -36,8 +36,26 @@ export type ProcessSpawner = {
   isAlive(pid: number): boolean;
 };
 
-function slotScript(repoRoot: string): string {
+function heartbeatSlotScript(repoRoot: string): string {
   return join(repoRoot, "services/supervisor/src/slots/heartbeat-slot.ts");
+}
+
+function apiCliScript(repoRoot: string): string {
+  return join(repoRoot, "apps/api/src/cli.ts");
+}
+
+function consoleCliScript(repoRoot: string): string {
+  return join(repoRoot, "apps/console/src/cli.ts");
+}
+
+function slotEntrypoint(repoRoot: string, serviceId: ServiceSlotId): string {
+  if (serviceId === "api") {
+    return apiCliScript(repoRoot);
+  }
+  if (serviceId === "console") {
+    return consoleCliScript(repoRoot);
+  }
+  return heartbeatSlotScript(repoRoot);
 }
 
 function resolveTsx(repoRoot: string): string {
@@ -50,8 +68,42 @@ function resolveTsx(repoRoot: string): string {
 
 function buildArgs(request: SpawnRequest): string[] {
   const { serviceId, config, generationId, hostId, leaseTtlMs } = request;
-  const args = [
-    slotScript(config.repoRoot),
+  const entry = slotEntrypoint(config.repoRoot, serviceId);
+
+  if (serviceId === "api") {
+    return [
+      entry,
+      "--state-dir",
+      config.stateDir,
+      "--generation",
+      generationId,
+      "--host-id",
+      hostId,
+      "--lease-ttl-ms",
+      String(leaseTtlMs),
+      "--port",
+      String(config.apiPort),
+    ];
+  }
+
+  if (serviceId === "console") {
+    return [
+      entry,
+      "--state-dir",
+      config.stateDir,
+      "--generation",
+      generationId,
+      "--host-id",
+      hostId,
+      "--lease-ttl-ms",
+      String(leaseTtlMs),
+      "--port",
+      String(config.consolePort),
+    ];
+  }
+
+  return [
+    entry,
     "--service",
     serviceId,
     "--state-dir",
@@ -62,17 +114,9 @@ function buildArgs(request: SpawnRequest): string[] {
     hostId,
     "--lease-ttl-ms",
     String(leaseTtlMs),
+    "--mode",
+    "stub",
   ];
-
-  if (serviceId === "api") {
-    args.push("--port", String(config.apiPort), "--mode", "http-health");
-  } else if (serviceId === "console") {
-    args.push("--port", String(config.consolePort), "--mode", "http-health");
-  } else {
-    args.push("--mode", "stub");
-  }
-
-  return args;
 }
 
 function isProcessAlive(pid: number): boolean {
@@ -113,8 +157,9 @@ export function createChildProcessSpawner(
 ): ProcessSpawner {
   return {
     start(request) {
-      if (!existsSync(slotScript(request.config.repoRoot))) {
-        throw new Error(`Missing slot runner script for ${request.serviceId}`);
+      const entry = slotEntrypoint(request.config.repoRoot, request.serviceId);
+      if (!existsSync(entry)) {
+        throw new Error(`Missing slot runner script for ${request.serviceId}: ${entry}`);
       }
       const tsxPath = resolveTsx(request.config.repoRoot);
       const args = buildArgs(request);
@@ -127,6 +172,8 @@ export function createChildProcessSpawner(
           WORKSOCIAL_GENERATION: request.generationId,
           WORKSOCIAL_HOST_ID: request.hostId,
           WORKSOCIAL_LEASE_TTL_MS: String(request.leaseTtlMs),
+          WORKSOCIAL_API_PORT: String(request.config.apiPort),
+          WORKSOCIAL_CONSOLE_PORT: String(request.config.consolePort),
         },
         stdio: "ignore",
         detached: true,

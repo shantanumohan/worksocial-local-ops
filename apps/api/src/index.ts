@@ -1,2 +1,3 @@
-/** Scaffold placeholder for @worksocial/api — WP01–WP02. Not production-activated. */
+export { createApiRuntime, handleApiRequest, describeDefaultOwner } from "./auth-http.js";
+export { startApiServer } from "./server.js";
 export const packageName = "@worksocial/api" as const;

@@ -22,13 +22,35 @@ importers:
         version: 2.1.8(@types/node@22.10.2)
 
   apps/api:
+    dependencies:
+      '@worksocial/action-gateway':
+        specifier: workspace:*
+        version: link:../../services/action-gateway
+      '@worksocial/credential-broker':
+        specifier: workspace:*
+        version: link:../../services/credential-broker
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@worksocial/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
     devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
       typescript:
         specifier: 5.7.2
         version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)
 
   apps/console:
     devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
       typescript:
         specifier: 5.7.2
         version: 5.7.2
@@ -63,6 +85,10 @@ importers:
         version: 5.7.2
 
   packages/persistence:
+    dependencies:
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../domain
     devDependencies:
       '@types/node':
         specifier: 22.10.2
@@ -87,10 +113,20 @@ importers:
         version: 5.7.2
 
   services/action-gateway:
+    dependencies:
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
     devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
       typescript:
         specifier: 5.7.2
         version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)
 
   services/claude-runner:
     devDependencies:
@@ -100,9 +136,15 @@ importers:
 
   services/credential-broker:
     devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
       typescript:
         specifier: 5.7.2
         version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)
 
   services/evaluation-worker:
     devDependencies:
@@ -140,6 +182,22 @@ importers:
       typescript:
         specifier: 5.7.2
         version: 5.7.2
+
+  tests/contract:
+    dependencies:
+      '@worksocial/action-gateway':
+        specifier: workspace:*
+        version: link:../../services/action-gateway
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+    devDependencies:
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)
 
 packages:
 

@@ -34,3 +34,48 @@ export {
   type MetricObservation,
   type MetricClassification,
 } from "./metric-missingness.js";
+export {
+  LocalRole,
+  LOCAL_ROLES,
+  isLocalRole,
+  roleMayPerform,
+  roleMayViewAuthority,
+  type LocalRoleValue,
+  type PrivilegedAction,
+} from "./roles.js";
+export {
+  ConnectionState,
+  WriteReadiness,
+  VerificationState,
+  buildProviderStatusView,
+  isConnected,
+  isAuthorized,
+  isVerified,
+  type ConnectionStateValue,
+  type WriteReadinessValue,
+  type VerificationStateValue,
+  type ProviderStatusView,
+  type ProviderStatusInput,
+} from "./connection-status.js";
+export {
+  ActionClass,
+  OperatingMode,
+  evaluateStandingAuthority,
+  findMatchingGrant,
+  type ActionClassValue,
+  type OperatingModeValue,
+  type StandingPolicy,
+  type CapabilityGrant,
+  type AuthorityRequest,
+  type AuthorityMatch,
+  type AuthorityEvaluation,
+} from "./standing-authority.js";
+export {
+  validateSession,
+  findActiveUser,
+  type SessionRecord,
+  type SessionValidationInput,
+  type SessionValidationResult,
+  type LoginCredentials,
+  type LocalUserRecord,
+} from "./session-auth.js";

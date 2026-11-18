@@ -1,10 +1,15 @@
 # `@worksocial/persistence`
 
-Local control-plane persistence helpers for R1-01:
+Local control-plane persistence helpers:
 
-- Storage-root registry (source / working / content / reports / encrypted_backup + durable database / temporal / secrets)
-- Sync-path policy (refuse durable roots under OneDrive-style paths)
-- Host lease + service heartbeat record types
-- File-backed local state store (honest interim until Postgres is bound)
+- Storage-root registry + sync-path policy (R1-01)
+- Host lease + service heartbeat record types (R1-01)
+- File-backed supervisor state (R1-01)
+- File-backed **authority store** — users, sessions, standing policies, grants, stop switch, audit (R1-02)
 
-SQL schema: `database/migrations/002_local_execution.sql`.
+SQL schemas:
+
+- `database/migrations/002_local_execution.sql`
+- `database/migrations/003_identity_authority.sql`
+
+Honest interim: file-backed until Postgres is bound. No live providers.

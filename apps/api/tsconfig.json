@@ -5,5 +5,11 @@
     "rootDir": "src"
   },
   "include": ["src/**/*"],
-  "exclude": ["dist"]
+  "exclude": ["dist", "src/**/*.test.ts", "src/cli.ts"],
+  "references": [
+    { "path": "../../packages/domain" },
+    { "path": "../../packages/persistence" },
+    { "path": "../../services/action-gateway" },
+    { "path": "../../services/credential-broker" }
+  ]
 }

@@ -69,3 +69,20 @@ export {
   type ProcessOwnershipClaim,
   type ProcessOwnershipProbe,
 } from "./process-ownership.js";
+
+export {
+  createFileAuthorityStore,
+  ensureBootstrapOwner,
+  emptyAuthorityState,
+  defaultProviderStatuses,
+  createDemoPublishGrant,
+  defaultAuthorityStateDir,
+  hashPassword,
+  verifyPassword,
+  type AuthorityState,
+  type AuthorityStore,
+  type AuthorityAuditEvent,
+  type OwnerControls,
+  type PolicyDecisionRecord,
+  type BootstrapOwnerOptions,
+} from "./authority-store.js";

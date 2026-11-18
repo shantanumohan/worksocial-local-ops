@@ -7,6 +7,7 @@ export type ServiceSlotId = "api" | "console" | "temporal-worker";
 
 export type ServiceWiringStatus =
   | "process-managed"
+  | "identity-wired"
   | "stub"
   | "NOT_WIRED";
 
