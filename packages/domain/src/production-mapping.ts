@@ -48,6 +48,15 @@ export const EvidenceKind = {
 
 export type EvidenceKindValue = (typeof EvidenceKind)[keyof typeof EvidenceKind];
 
+/** Default required evidence for a pilot publish / form-to-CRM write path. */
+export const DEFAULT_PILOT_EVIDENCE_KINDS: EvidenceKindValue[] = [
+  EvidenceKind.IDENTITY,
+  EvidenceKind.RESOURCE,
+  EvidenceKind.SCOPE,
+  EvidenceKind.CAPABILITY_TEST,
+  EvidenceKind.READ_BACK,
+];
+
 export const ResourceOwnerSystem = {
   WEBSITE: "website",
   CMS: "cms",
@@ -254,6 +263,16 @@ export function emptyProductionMappingState(
  * Append a labeled write-path outcome. Does not train models or change grants.
  * Learning-worker may later consume `listWritePathOutcomesForLearning`.
  */
+const OUTCOME_EVIDENCE_SOURCES: ReadonlySet<string> = new Set(
+  Object.values(OutcomeEvidenceSource),
+);
+
+export function isOutcomeEvidenceSource(
+  value: string,
+): value is OutcomeEvidenceSourceValue {
+  return OUTCOME_EVIDENCE_SOURCES.has(value);
+}
+
 export function recordWritePathOutcome(input: {
   outcomeId: string;
   writePathId: string;
@@ -265,6 +284,9 @@ export function recordWritePathOutcome(input: {
   fixtureOnly: boolean;
   recordedAtIso: string;
 }): WritePathOutcomeEvidence {
+  if (!isOutcomeEvidenceSource(input.source)) {
+    throw new Error(`Unrecognized outcome evidence source: ${String(input.source)}`);
+  }
   if (input.source === OutcomeEvidenceSource.FIXTURE && !input.fixtureOnly) {
     throw new Error("FIXTURE outcome source must set fixtureOnly=true");
   }
@@ -279,6 +301,111 @@ export function recordWritePathOutcome(input: {
     fixtureOnly: input.fixtureOnly,
     recordedAtIso: input.recordedAtIso,
   };
+}
+
+/** True when every referenced binding/CRM/booking for a path is fixture-wired. */
+export function writePathIsFixtureOnly(
+  mapping: ProductionMappingState,
+  path: PilotWritePath,
+): boolean {
+  if (path.bindingId) {
+    const binding = mapping.bindings.find((b) => b.bindingId === path.bindingId);
+    if (!binding || binding.adapterWiring !== AdapterWiring.FIXTURE) {
+      return false;
+    }
+  }
+  if (path.crmOwnershipId) {
+    const crm = mapping.crmOwnership.find(
+      (c) => c.crmOwnershipId === path.crmOwnershipId,
+    );
+    if (
+      !crm ||
+      crm.adapterWiring !== AdapterWiring.FIXTURE ||
+      crm.environment !== "fixture"
+    ) {
+      return false;
+    }
+  }
+  if (path.bookingOwnershipId) {
+    const booking = mapping.bookingOwnership.find(
+      (b) => b.bookingOwnershipId === path.bookingOwnershipId,
+    );
+    // Fixture pilots may leave booking NOT_WIRED; still require fixture environment.
+    if (
+      !booking ||
+      booking.environment !== "fixture" ||
+      booking.adapterWiring === AdapterWiring.LIVE
+    ) {
+      return false;
+    }
+  }
+  if (path.formId) {
+    const form = mapping.forms.find((f) => f.formId === path.formId);
+    if (!form) {
+      return false;
+    }
+    const formBinding = mapping.bindings.find((b) => b.bindingId === form.bindingId);
+    if (!formBinding || formBinding.adapterWiring !== AdapterWiring.FIXTURE) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function assertNonEmptyEvidenceKinds(
+  kinds: EvidenceKindValue[],
+): EvidenceKindValue[] {
+  if (kinds.length === 0) {
+    throw new Error("requiredEvidenceKinds must be non-empty for pilot write paths");
+  }
+  return kinds;
+}
+
+/** Allowed resource ids for evidence against a write path. */
+export function allowedEvidenceResources(
+  mapping: ProductionMappingState,
+  path: PilotWritePath,
+): Array<{ resourceType: ReadEvidenceRecord["resourceType"]; resourceId: string }> {
+  const allowed: Array<{
+    resourceType: ReadEvidenceRecord["resourceType"];
+    resourceId: string;
+  }> = [];
+  if (path.bindingId) {
+    allowed.push({ resourceType: "binding", resourceId: path.bindingId });
+  }
+  if (path.formId) {
+    allowed.push({ resourceType: "form", resourceId: path.formId });
+  }
+  if (path.bookingOwnershipId) {
+    allowed.push({
+      resourceType: "booking",
+      resourceId: path.bookingOwnershipId,
+    });
+  }
+  if (path.crmOwnershipId) {
+    allowed.push({ resourceType: "crm", resourceId: path.crmOwnershipId });
+  }
+  for (const journey of mapping.journeys) {
+    if (journey.writePathIds.includes(path.writePathId)) {
+      allowed.push({ resourceType: "journey", resourceId: journey.journeyId });
+    }
+  }
+  return allowed;
+}
+
+function evidenceAppliesToPath(
+  mapping: ProductionMappingState,
+  path: PilotWritePath,
+  evidence: ReadEvidenceRecord,
+): boolean {
+  if (evidence.writePathId !== path.writePathId) {
+    return false;
+  }
+  return allowedEvidenceResources(mapping, path).some(
+    (r) =>
+      r.resourceType === evidence.resourceType &&
+      r.resourceId === evidence.resourceId,
+  );
 }
 
 /**
@@ -397,10 +524,21 @@ function findWritePath(
   },
 ): PilotWritePath | null {
   if (input.writePathId) {
-    return (
-      mapping.writePaths.find((p) => p.writePathId === input.writePathId) ??
-      null
+    const byId = mapping.writePaths.find(
+      (p) => p.writePathId === input.writePathId,
     );
+    if (!byId) {
+      return null;
+    }
+    // Explicit id must still match the submitted intent fields (fail closed).
+    if (
+      byId.channelId !== input.channelId ||
+      byId.assetId !== input.assetId ||
+      byId.operation !== input.operation
+    ) {
+      return null;
+    }
+    return byId;
   }
   return (
     mapping.writePaths.find(
@@ -435,6 +573,11 @@ function ownershipForWritePath(
     if (!form) {
       proven = false;
       details.push(`Missing form mapping ${path.formId}`);
+    } else if (form.siteId !== path.siteId || form.pageAssetId !== path.assetId) {
+      proven = false;
+      details.push(
+        `Form ${path.formId} does not belong to write target ${path.siteId}/${path.assetId}`,
+      );
     } else {
       const formBinding = mapping.bindings.find(
         (b) => b.bindingId === form.bindingId,
@@ -457,6 +600,11 @@ function ownershipForWritePath(
           proven = false;
           details.push(
             `Form ${path.formId} CRM module ownership not proven`,
+          );
+        } else if (crm.moduleId !== form.crmModuleId) {
+          proven = false;
+          details.push(
+            `CRM ownership module ${crm.moduleId} does not match form module ${form.crmModuleId}`,
           );
         }
       }
@@ -482,6 +630,14 @@ function ownershipForWritePath(
     if (!crm?.ownershipProven) {
       proven = false;
       details.push(`CRM ownership ${path.crmOwnershipId} not proven by read`);
+    } else if (path.formId) {
+      const form = mapping.forms.find((f) => f.formId === path.formId);
+      if (form?.crmModuleId && crm.moduleId !== form.crmModuleId) {
+        proven = false;
+        details.push(
+          `CRM ownership module ${crm.moduleId} does not match form module ${form.crmModuleId}`,
+        );
+      }
     }
   }
 
@@ -502,8 +658,17 @@ function evidencePresentForPath(
   mapping: ProductionMappingState,
   path: PilotWritePath,
 ): { present: boolean; missing: EvidenceKindValue[]; details: string[] } {
-  const related = mapping.readEvidence.filter(
-    (e) => e.writePathId === path.writePathId,
+  if (path.requiredEvidenceKinds.length === 0) {
+    return {
+      present: false,
+      missing: [...DEFAULT_PILOT_EVIDENCE_KINDS],
+      details: [
+        `Write path ${path.writePathId} has empty requiredEvidenceKinds (fail closed)`,
+      ],
+    };
+  }
+  const related = mapping.readEvidence.filter((e) =>
+    evidenceAppliesToPath(mapping, path, e),
   );
   const presentKinds = new Set(related.map((e) => e.evidenceKind));
   const missing = path.requiredEvidenceKinds.filter((k) => !presentKinds.has(k));
@@ -511,7 +676,7 @@ function evidencePresentForPath(
     missing.length === 0
       ? []
       : [
-          `Write path ${path.writePathId} missing read evidence kinds: ${missing.join(", ")}`,
+          `Write path ${path.writePathId} missing read evidence kinds on mapped resources: ${missing.join(", ")}`,
         ];
   return { present: missing.length === 0, missing, details };
 }
@@ -572,15 +737,6 @@ export function resolvePilotWriteGates(input: {
     missingEvidenceKinds: evidence.missing,
   };
 }
-
-/** Default required evidence for a pilot publish / form-to-CRM write path. */
-export const DEFAULT_PILOT_EVIDENCE_KINDS: EvidenceKindValue[] = [
-  EvidenceKind.IDENTITY,
-  EvidenceKind.RESOURCE,
-  EvidenceKind.SCOPE,
-  EvidenceKind.CAPABILITY_TEST,
-  EvidenceKind.READ_BACK,
-];
 
 /**
  * Fixture pilot mapping for offline tests — NOT live Zoho/CMS.
@@ -700,6 +856,7 @@ export function createFixturePilotMapping(nowIso: string): {
 
 /**
  * Apply a complete fixture read-evidence set and prove ownership for the pilot path.
+ * Only fixture-wired / fixture-environment resources may be proven this way.
  */
 export function proveFixturePilotWritePath(
   state: ProductionMappingState,
@@ -709,6 +866,74 @@ export function proveFixturePilotWritePath(
   const path = state.writePaths.find((p) => p.writePathId === writePathId);
   if (!path) {
     throw new Error(`Unknown write path ${writePathId}`);
+  }
+  if (path.requiredEvidenceKinds.length === 0) {
+    throw new Error(
+      `Write path ${writePathId} has empty requiredEvidenceKinds`,
+    );
+  }
+
+  if (path.bindingId) {
+    const binding = state.bindings.find((b) => b.bindingId === path.bindingId);
+    if (!binding) {
+      throw new Error(`Missing binding ${path.bindingId} for fixture proof`);
+    }
+    if (binding.adapterWiring !== AdapterWiring.FIXTURE) {
+      throw new Error(
+        `Fixture proof refused: binding ${path.bindingId} is ${binding.adapterWiring}, not FIXTURE`,
+      );
+    }
+  }
+
+  if (path.crmOwnershipId) {
+    const crm = state.crmOwnership.find(
+      (c) => c.crmOwnershipId === path.crmOwnershipId,
+    );
+    if (!crm) {
+      throw new Error(`Missing CRM ownership ${path.crmOwnershipId}`);
+    }
+    if (crm.adapterWiring !== AdapterWiring.FIXTURE || crm.environment !== "fixture") {
+      throw new Error(
+        `Fixture proof refused: CRM ${path.crmOwnershipId} is not fixture-wired`,
+      );
+    }
+  }
+
+  if (path.bookingOwnershipId) {
+    const booking = state.bookingOwnership.find(
+      (b) => b.bookingOwnershipId === path.bookingOwnershipId,
+    );
+    if (!booking) {
+      throw new Error(`Missing booking ownership ${path.bookingOwnershipId}`);
+    }
+    if (booking.environment !== "fixture") {
+      throw new Error(
+        `Fixture proof refused: booking ${path.bookingOwnershipId} environment is ${booking.environment}`,
+      );
+    }
+    if (booking.adapterWiring === AdapterWiring.LIVE) {
+      throw new Error(
+        `Fixture proof refused: booking ${path.bookingOwnershipId} is LIVE`,
+      );
+    }
+  }
+
+  if (path.formId) {
+    const form = state.forms.find((f) => f.formId === path.formId);
+    if (!form) {
+      throw new Error(`Missing form ${path.formId}`);
+    }
+    if (form.siteId !== path.siteId || form.pageAssetId !== path.assetId) {
+      throw new Error(
+        `Fixture proof refused: form ${path.formId} does not match write target`,
+      );
+    }
+    const formBinding = state.bindings.find((b) => b.bindingId === form.bindingId);
+    if (!formBinding || formBinding.adapterWiring !== AdapterWiring.FIXTURE) {
+      throw new Error(
+        `Fixture proof refused: form binding ${form.bindingId} is not FIXTURE`,
+      );
+    }
   }
 
   let bindings = state.bindings;
@@ -737,14 +962,27 @@ export function proveFixturePilotWritePath(
       : b,
   );
 
+  const primaryResource = path.formId
+    ? ({ resourceType: "form" as const, resourceId: path.formId })
+    : path.bindingId
+      ? ({ resourceType: "binding" as const, resourceId: path.bindingId })
+      : path.crmOwnershipId
+        ? ({ resourceType: "crm" as const, resourceId: path.crmOwnershipId })
+        : null;
+  if (!primaryResource) {
+    throw new Error(
+      `Write path ${writePathId} has no mapped resource for fixture evidence`,
+    );
+  }
+
   const evidence: ReadEvidenceRecord[] = path.requiredEvidenceKinds.map(
     (kind, index) =>
       createReadEvidence({
         evidenceId: `ev-${writePathId}-${index + 1}`,
         writePathId,
         evidenceKind: kind,
-        resourceType: path.formId ? "form" : "binding",
-        resourceId: path.formId ?? path.bindingId ?? writePathId,
+        resourceType: primaryResource.resourceType,
+        resourceId: primaryResource.resourceId,
         operation: `fixture_read_${kind}`,
         summary: `Fixture ${kind} evidence for ${writePathId}`,
         fixtureOnly: true,
@@ -763,5 +1001,67 @@ export function proveFixturePilotWritePath(
       ...evidence,
     ],
     updatedAt: nowIso,
+  };
+}
+
+/**
+ * Merge fixture pilot records into an existing mapping without wiping other data.
+ * Refuses if fixture ids already exist with conflicting non-fixture content.
+ */
+export function upsertFixturePilotMapping(
+  current: ProductionMappingState,
+  nowIso: string,
+): { state: ProductionMappingState; writePathId: string; created: boolean } {
+  const { state: fixture, writePathId } = createFixturePilotMapping(nowIso);
+  const existingPath = current.writePaths.find((p) => p.writePathId === writePathId);
+  if (existingPath) {
+    return { state: current, writePathId, created: false };
+  }
+
+  return {
+    writePathId,
+    created: true,
+    state: {
+      ...current,
+      sites: [...new Set([...current.sites, ...fixture.sites])],
+      bindings: [
+        ...current.bindings.filter(
+          (b) => !fixture.bindings.some((fb) => fb.bindingId === b.bindingId),
+        ),
+        ...fixture.bindings,
+      ],
+      forms: [
+        ...current.forms.filter(
+          (f) => !fixture.forms.some((ff) => ff.formId === f.formId),
+        ),
+        ...fixture.forms,
+      ],
+      bookingOwnership: [
+        ...current.bookingOwnership.filter(
+          (b) =>
+            !fixture.bookingOwnership.some(
+              (fb) => fb.bookingOwnershipId === b.bookingOwnershipId,
+            ),
+        ),
+        ...fixture.bookingOwnership,
+      ],
+      crmOwnership: [
+        ...current.crmOwnership.filter(
+          (c) =>
+            !fixture.crmOwnership.some(
+              (fc) => fc.crmOwnershipId === c.crmOwnershipId,
+            ),
+        ),
+        ...fixture.crmOwnership,
+      ],
+      writePaths: [...current.writePaths, ...fixture.writePaths],
+      journeys: [
+        ...current.journeys.filter(
+          (j) => !fixture.journeys.some((fj) => fj.journeyId === j.journeyId),
+        ),
+        ...fixture.journeys,
+      ],
+      updatedAt: nowIso,
+    },
   };
 }

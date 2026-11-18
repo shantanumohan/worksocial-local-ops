@@ -216,14 +216,18 @@ export function createActionGateway(): ActionGateway {
     ledger.settle(intent.operationId, "ACCEPTED_PENDING");
     effectState = transition(effectState, EffectState.VERIFYING);
 
+    const requiresGates = actionClassRequiresPilotWriteGates(intent.actionClass);
+    const acceptedReason = requiresGates
+      ? "Authorized by standing grant with proven ownership and read evidence; stub apply accepted pending verification"
+      : "Authorized by standing grant; observe/create skipped pilot ownership/read-evidence gates; stub apply accepted pending verification";
+
     const accepted: GatewayDecisionRecord = {
       decisionId: `dec-${randomBytes(6).toString("hex")}`,
       operationId: intent.operationId,
       payloadDigest,
       allowed: true,
       code: null,
-      reason:
-        "Authorized by standing grant with proven ownership and read evidence; stub apply accepted pending verification",
+      reason: acceptedReason,
       grantId: evaluation.match?.grant.grantId ?? null,
       policyId: evaluation.match?.policy.policyId ?? null,
       decidedAtIso: authority.nowIso,

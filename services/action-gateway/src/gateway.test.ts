@@ -169,6 +169,45 @@ describe("action-gateway", () => {
     expect(result.decision.code).toBe("OWNERSHIP_UNPROVEN");
   });
 
+  it("uses honest accept reason when observe skips pilot write gates", () => {
+    const gateway = createActionGateway();
+    const observePolicy: StandingPolicy = {
+      ...policy,
+      policyId: "pol-observe",
+      actionClass: ActionClass.OBSERVE,
+      allowedAssetScope: ["*"],
+    };
+    const observeGrant: CapabilityGrant = {
+      ...grant,
+      grantId: "grant-observe",
+      policyId: "pol-observe",
+      allowedOperations: ["*"],
+      allowedAssetScope: ["*"],
+      contentRevisionBound: null,
+    };
+    const result = gateway.submitIntent(
+      {
+        operationId: "op-observe",
+        actionClass: ActionClass.OBSERVE,
+        channelId: "owned-site",
+        targetAccountId: "acct-1",
+        operation: "fetch_page",
+        assetId: "page-home",
+        contentRevision: null,
+        payload: {},
+      },
+      {
+        outboundStopped: false,
+        operatingMode: OperatingMode.OPERATE,
+        policies: [observePolicy],
+        grants: [observeGrant],
+        nowIso: now,
+      },
+    );
+    expect(result.decision.allowed).toBe(true);
+    expect(result.decision.reason).toMatch(/skipped pilot ownership\/read-evidence gates/);
+  });
+
   it("allows mapped write after ownership and read evidence are recorded", () => {
     const { state, writePathId } = createFixturePilotMapping(now);
     const proven = proveFixturePilotWritePath(state, writePathId, now);

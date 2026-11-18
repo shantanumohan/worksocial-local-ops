@@ -93,4 +93,57 @@ describe("contract: read-evidence-required", () => {
     expect(allowed.decision.allowed).toBe(true);
     expect(allowed.decision.outcome).toBe("ACCEPTED_PENDING");
   });
+
+  it("fails closed when writePathId is reused for a different intent", () => {
+    const { state, writePathId } = createFixturePilotMapping(now);
+    const proven = proveFixturePilotWritePath(state, writePathId, now);
+    const policy: StandingPolicy = {
+      policyId: "pol-publish",
+      version: 1,
+      actorRole: LocalRole.ADMINISTRATOR,
+      channelId: "owned-site",
+      actionClass: ActionClass.ROUTINE_PUBLISH,
+      allowedAssetScope: ["*"],
+      enabled: true,
+      emergencyStopApplies: true,
+      expiresAtIso: null,
+      createdAtIso: now,
+    };
+    const grant: CapabilityGrant = {
+      grantId: "grant-publish",
+      policyId: "pol-publish",
+      targetAccountId: "*",
+      allowedOperations: ["*"],
+      allowedAssetScope: ["*"],
+      contentRevisionBound: null,
+      rateLimitPerHour: null,
+      expiresAtIso: null,
+      revoked: false,
+      createdAtIso: now,
+    };
+    const gateway = createActionGateway();
+    const result = gateway.submitIntent(
+      {
+        operationId: "contract-reuse-path",
+        actionClass: ActionClass.ROUTINE_PUBLISH,
+        channelId: "owned-site",
+        targetAccountId: "acct-1",
+        operation: "publish_page",
+        assetId: "page-home",
+        contentRevision: null,
+        writePathId,
+        payload: { title: "nope" },
+      },
+      {
+        outboundStopped: false,
+        operatingMode: OperatingMode.OPERATE,
+        policies: [policy],
+        grants: [grant],
+        nowIso: now,
+        productionMapping: proven,
+      },
+    );
+    expect(result.decision.allowed).toBe(false);
+    expect(result.decision.code).toBe("OWNERSHIP_UNPROVEN");
+  });
 });

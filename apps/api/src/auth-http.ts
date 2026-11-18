@@ -18,14 +18,17 @@ import {
   WriteReadiness,
   applyBindingReadEvidence,
   bindingStatusView,
-  createFixturePilotMapping,
+  assertNonEmptyEvidenceKinds,
   createReadEvidence,
   findActiveUser,
+  isOutcomeEvidenceSource,
   listWritePathOutcomesForLearning,
   proveFixturePilotWritePath,
   recordWritePathOutcome,
   roleMayPerform,
+  upsertFixturePilotMapping,
   validateSession,
+  writePathIsFixtureOnly,
   type BookingOwnership,
   type CrmOwnership,
   type FormMapping,
@@ -514,13 +517,21 @@ export async function handleApiRequest(
 
     // Durable labeled outcome hook for a later learning-worker (no ML here).
     if (submitted.decision.writePathId) {
+      const matchedPath = mapping.writePaths.find(
+        (p) => p.writePathId === submitted.decision.writePathId,
+      );
+      const fixtureOnly = matchedPath
+        ? writePathIsFixtureOnly(mapping, matchedPath)
+        : true;
       const label = submitted.decision.allowed
         ? OutcomeLabel.UNKNOWN
         : OutcomeLabel.FAILURE;
       const source =
         submitted.decision.code === "OUTBOUND_STOPPED"
           ? OutcomeEvidenceSource.STOP_SWITCH
-          : OutcomeEvidenceSource.GATEWAY_RECEIPT;
+          : fixtureOnly
+            ? OutcomeEvidenceSource.FIXTURE
+            : OutcomeEvidenceSource.GATEWAY_RECEIPT;
       runtime.mappingStore.addWritePathOutcome(
         recordWritePathOutcome({
           outcomeId: `out-${submitted.decision.decisionId}`,
@@ -529,7 +540,7 @@ export async function handleApiRequest(
           label,
           source,
           summary: submitted.decision.reason,
-          fixtureOnly: false,
+          fixtureOnly,
           recordedAtIso: submitted.decision.decidedAtIso,
           featureHints: {
             allowed: submitted.decision.allowed,
@@ -615,17 +626,22 @@ export async function handleApiRequest(
       return;
     }
     const nowIso = new Date().toISOString();
-    const { state, writePathId } = createFixturePilotMapping(nowIso);
-    runtime.mappingStore.write(state);
+    const upserted = upsertFixturePilotMapping(
+      runtime.mappingStore.read(),
+      nowIso,
+    );
+    runtime.mappingStore.write(upserted.state);
     json(
       res,
       200,
       {
-        writePathId,
-        seeded: true,
+        writePathId: upserted.writePathId,
+        seeded: upserted.created,
         ownershipProven: false,
         readEvidencePresent: false,
-        note: "Fixture pilot mapping only. Ownership and read evidence still required before writes.",
+        note: upserted.created
+          ? "Fixture pilot upserted without wiping existing mappings. Ownership and read evidence still required before writes."
+          : "Fixture pilot already present; existing mappings preserved.",
       },
       cors,
     );
@@ -785,6 +801,10 @@ export async function handleApiRequest(
       json(res, 401, { error: result.code, reason: result.reason }, cors);
       return;
     }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
+      return;
+    }
     const raw = await readBody(req);
     let body: Partial<FormMapping>;
     try {
@@ -831,6 +851,10 @@ export async function handleApiRequest(
     });
     if (!result.ok) {
       json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
       return;
     }
     const raw = await readBody(req);
@@ -880,6 +904,10 @@ export async function handleApiRequest(
       json(res, 401, { error: result.code, reason: result.reason }, cors);
       return;
     }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
+      return;
+    }
     const raw = await readBody(req);
     let body: Partial<CrmOwnership>;
     try {
@@ -923,6 +951,10 @@ export async function handleApiRequest(
       json(res, 401, { error: result.code, reason: result.reason }, cors);
       return;
     }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
+      return;
+    }
     const raw = await readBody(req);
     let body: Partial<PilotWritePath>;
     try {
@@ -941,6 +973,29 @@ export async function handleApiRequest(
       json(res, 400, { error: "WRITE_PATH_FIELDS_REQUIRED" }, cors);
       return;
     }
+    let requiredEvidenceKinds;
+    try {
+      requiredEvidenceKinds = assertNonEmptyEvidenceKinds(
+        body.requiredEvidenceKinds ?? [
+          EvidenceKind.IDENTITY,
+          EvidenceKind.RESOURCE,
+          EvidenceKind.SCOPE,
+          EvidenceKind.CAPABILITY_TEST,
+          EvidenceKind.READ_BACK,
+        ],
+      );
+    } catch (err) {
+      json(
+        res,
+        400,
+        {
+          error: "EMPTY_EVIDENCE_KINDS",
+          message: err instanceof Error ? err.message : String(err),
+        },
+        cors,
+      );
+      return;
+    }
     const nowIso = new Date().toISOString();
     const path: PilotWritePath = {
       writePathId: body.writePathId,
@@ -952,13 +1007,7 @@ export async function handleApiRequest(
       formId: body.formId ?? null,
       bookingOwnershipId: body.bookingOwnershipId ?? null,
       crmOwnershipId: body.crmOwnershipId ?? null,
-      requiredEvidenceKinds: body.requiredEvidenceKinds ?? [
-        EvidenceKind.IDENTITY,
-        EvidenceKind.RESOURCE,
-        EvidenceKind.SCOPE,
-        EvidenceKind.CAPABILITY_TEST,
-        EvidenceKind.READ_BACK,
-      ],
+      requiredEvidenceKinds,
       createdAtIso: nowIso,
     };
     runtime.mappingStore.upsertWritePath(path);
@@ -976,6 +1025,10 @@ export async function handleApiRequest(
     });
     if (!result.ok) {
       json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
       return;
     }
     const raw = await readBody(req);
@@ -1014,6 +1067,10 @@ export async function handleApiRequest(
     });
     if (!result.ok) {
       json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
       return;
     }
     const raw = await readBody(req);
@@ -1117,6 +1174,10 @@ export async function handleApiRequest(
       json(res, 401, { error: result.code, reason: result.reason }, cors);
       return;
     }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(res, 403, { error: "FORBIDDEN" }, cors);
+      return;
+    }
     const raw = await readBody(req);
     let body: {
       outcomeId?: string;
@@ -1153,6 +1214,30 @@ export async function handleApiRequest(
       json(res, 400, { error: "INVALID_OUTCOME_LABEL" }, cors);
       return;
     }
+    if (!isOutcomeEvidenceSource(body.source)) {
+      json(res, 400, { error: "INVALID_OUTCOME_SOURCE" }, cors);
+      return;
+    }
+    const mapping = runtime.mappingStore.read();
+    const path = mapping.writePaths.find((p) => p.writePathId === body.writePathId);
+    if (!path) {
+      json(res, 400, { error: "UNKNOWN_WRITE_PATH" }, cors);
+      return;
+    }
+    const knownOperation =
+      runtime.gateway.getDecision(body.operationId) !== undefined ||
+      runtime.store
+        .read()
+        .policyDecisions.some((d) => d.operationId === body.operationId);
+    // Owner/fixture labels may introduce a synthetic operation id; others need a ledger hit.
+    if (
+      !knownOperation &&
+      body.source !== OutcomeEvidenceSource.OWNER_DECISION &&
+      body.source !== OutcomeEvidenceSource.FIXTURE
+    ) {
+      json(res, 400, { error: "UNKNOWN_OPERATION" }, cors);
+      return;
+    }
     const nowIso = new Date().toISOString();
     try {
       const outcome = recordWritePathOutcome({
@@ -1160,9 +1245,10 @@ export async function handleApiRequest(
         writePathId: body.writePathId,
         operationId: body.operationId,
         label: body.label,
-        source: body.source as (typeof OutcomeEvidenceSource)[keyof typeof OutcomeEvidenceSource],
+        source: body.source,
         summary: body.summary,
-        fixtureOnly: body.fixtureOnly ?? false,
+        fixtureOnly:
+          body.fixtureOnly ?? writePathIsFixtureOnly(mapping, path),
         recordedAtIso: nowIso,
         ...(body.featureHints !== undefined
           ? { featureHints: body.featureHints }
