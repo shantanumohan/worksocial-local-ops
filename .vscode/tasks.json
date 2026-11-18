@@ -1,0 +1,33 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "WorkSocial: Start Local Operations",
+      "type": "shell",
+      "command": "pnpm local:start",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "WorkSocial: Stop Local Operations",
+      "type": "shell",
+      "command": "pnpm local:stop",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "WorkSocial: Diagnostics",
+      "type": "shell",
+      "command": "pnpm exec tsx scripts/supervisor-stub.ts diagnostics",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "WorkSocial: Test Local Operations",
+      "type": "shell",
+      "command": "pnpm exec tsx scripts/supervisor-stub.ts test-local",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared" }
+    }
+  ]
+}

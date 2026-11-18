@@ -1,0 +1,31 @@
+{
+  "name": "worksocial-operations",
+  "private": true,
+  "version": "0.1.0",
+  "description": "WorkSocial local operations monorepo — Release 1 scaffold (WP01–WP02). Not production-activated.",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "local:doctor": "tsx scripts/local-doctor.ts",
+    "local:start": "tsx scripts/supervisor-stub.ts start",
+    "local:stop": "tsx scripts/supervisor-stub.ts stop",
+    "check": "tsc -b --pretty false",
+    "test:unit": "pnpm --filter @worksocial/domain test",
+    "test:database": "tsx scripts/stub-test.ts test:database",
+    "test:workflow": "tsx scripts/stub-test.ts test:workflow",
+    "test:contract": "tsx scripts/stub-test.ts test:contract",
+    "test:e2e": "tsx scripts/stub-test.ts test:e2e",
+    "test:security": "tsx scripts/stub-test.ts test:security",
+    "test:eval": "tsx scripts/stub-test.ts test:eval",
+    "recovery:rehearse": "tsx scripts/stub-test.ts recovery:rehearse",
+    "release:evidence": "tsx scripts/stub-test.ts release:evidence"
+  },
+  "devDependencies": {
+    "typescript": "5.7.2",
+    "tsx": "4.19.2",
+    "vitest": "2.1.8",
+    "@types/node": "22.10.2"
+  }
+}
