@@ -12,10 +12,11 @@ import {
   SeoChangeKind,
   SeoProposalStatus,
   SeoReleaseDecision,
-  SupportLabel,
   applySeoReleaseVerification,
   createPageAudit,
   createSeoProposal,
+  digestSchemaNodes,
+  evaluateFixtureReadBack,
   evaluateProposalGate,
   listSeoOutcomesForLearning,
   runSemanticSearch,
@@ -33,7 +34,6 @@ import {
   type SeoChangeKindValue,
   type SeoState,
   type StandingPolicy,
-  type SupportLabelValue,
   type WritePathOutcomeEvidence,
 } from "@worksocial/domain";
 import type { SeoStore } from "@worksocial/persistence";
@@ -52,6 +52,19 @@ import {
   proveFixtureSeoWritePath,
 } from "./fixtures.js";
 
+const TERMINAL_OR_PROGRESSED: ReadonlySet<string> = new Set([
+  SeoProposalStatus.APPROVED,
+  SeoProposalStatus.REJECTED,
+  SeoProposalStatus.RELEASED_PENDING,
+  SeoProposalStatus.VERIFIED,
+  SeoProposalStatus.FAILED,
+]);
+
+export type SeoServiceOptions = {
+  /** Shared action gateway — required for durable API control plane. */
+  gateway?: ActionGateway;
+};
+
 export type SeoService = {
   status(): ReturnType<SeoStore["status"]> & {
     acceptanceCaseIds: readonly string[];
@@ -64,6 +77,7 @@ export type SeoService = {
     audits: PageAuditRecord[];
     proposals: SeoChangeProposal[];
     searchIndexVersion: number;
+    skippedProgressedProposalIds: string[];
   };
   createAudit(input: {
     pageAuditId?: string;
@@ -86,7 +100,6 @@ export type SeoService = {
     citedFactIds?: string[];
     hypothesisFactIds?: string[];
     fixtureOnly?: boolean;
-    status?: SeoChangeProposal["status"];
     nowIso?: string;
   }): SeoChangeProposal;
   validateSchema(input: {
@@ -95,13 +108,15 @@ export type SeoService = {
     proposalId?: string | null;
     nodes: SchemaOrgNode[];
     visibleContent?: string;
-    factLabels?: Record<string, SupportLabelValue> | FactSupportLookup;
+    factLabels?: FactSupportLookup;
     fixtureOnly?: boolean;
     nowIso?: string;
-  }): SchemaValidationResult;
+  }):
+    | { ok: true; validation: SchemaValidationResult }
+    | { ok: false; code: string; reasons: string[] };
   reviewProposal(input: {
     proposalId: string;
-    factLabels?: Record<string, SupportLabelValue> | FactSupportLookup;
+    factLabels: FactSupportLookup;
     schemaValidationId?: string | null;
   }): {
     allowed: boolean;
@@ -111,7 +126,7 @@ export type SeoService = {
   };
   approveProposal(input: {
     proposalId: string;
-    factLabels?: Record<string, SupportLabelValue> | FactSupportLookup;
+    factLabels: FactSupportLookup;
     nowIso?: string;
   }): {
     ok: boolean;
@@ -126,9 +141,9 @@ export type SeoService = {
     | { ok: true; result: SemanticSearchResult }
     | { ok: false; code: string; reasons: string[] };
   /**
-   * Pilot page release through the action gateway.
-   * Requires mapping ownership + read evidence + standing grant.
-   * Acceptance ≠ verified; live CMS stays NOT_WIRED (fixture read-back only).
+   * Pilot page release through the shared action gateway.
+   * Requires persisted productionMapping with ownership + read evidence.
+   * Leaves RELEASED_PENDING / ACCEPTED_PENDING — call verifyPilotRelease with read-back.
    */
   releasePilotPage(input: {
     proposalId: string;
@@ -138,14 +153,11 @@ export type SeoService = {
       policies: StandingPolicy[];
       grants: CapabilityGrant[];
     };
-    productionMapping?: ProductionMappingState;
-    factLabels?: Record<string, SupportLabelValue> | FactSupportLookup;
+    /** Required — must come from persisted mapping store, not ephemeral prove. */
+    productionMapping: ProductionMappingState;
+    factLabels: FactSupportLookup;
     targetAccountId?: string;
     contentRevision?: string | null;
-    /** When true, skip markVerified (leaves ACCEPTED_PENDING). */
-    skipVerification?: boolean;
-    /** Force FAILURE path after gateway accept (fixture negative test). */
-    forceFailure?: boolean;
     nowIso?: string;
   }): {
     proposal: SeoChangeProposal | null;
@@ -153,6 +165,22 @@ export type SeoService = {
     outcome: WritePathOutcomeEvidence | null;
     liveCmsPublishWiring: "NOT_WIRED";
     acceptanceEqualsVerified: false;
+    details: string[];
+  };
+  /**
+   * Verify a RELEASED_PENDING proposal with explicit fixture read-back fields.
+   * Gateway acceptance alone never promotes to VERIFIED.
+   */
+  verifyPilotRelease(input: {
+    proposalId: string;
+    observedFields: Record<string, string>;
+    /** Force FAILURE after read-back comparison (negative tests). */
+    forceFailure?: boolean;
+    nowIso?: string;
+  }): {
+    proposal: SeoChangeProposal | null;
+    gatewayDecision: GatewayDecisionRecord | null;
+    outcome: WritePathOutcomeEvidence | null;
     details: string[];
   };
   seedAndProveSeoMapping(nowIso?: string): {
@@ -164,21 +192,11 @@ export type SeoService = {
   readonly gateway: ActionGateway;
 };
 
-function toFactLookup(
-  input?: Record<string, SupportLabelValue> | FactSupportLookup,
-): FactSupportLookup {
-  if (!input) {
-    return new Map([
-      ["fixture-fact-hours", SupportLabel.SUPPORTED],
-      ["fixture-fact-hypothesis", SupportLabel.HYPOTHESIS],
-    ]);
-  }
-  if (input instanceof Map) return input;
-  return new Map(Object.entries(input));
-}
-
-export function createSeoService(store: SeoStore): SeoService {
-  const gateway = createActionGateway();
+export function createSeoService(
+  store: SeoStore,
+  options: SeoServiceOptions = {},
+): SeoService {
+  const gateway = options.gateway ?? createActionGateway();
 
   return {
     gateway,
@@ -189,7 +207,7 @@ export function createSeoService(store: SeoStore): SeoService {
         ...base,
         acceptanceCaseIds: SEO_RELATED_CASE_IDS,
         learningHookNote:
-          "Verified SEO release SUCCESS/FAILURE emits outcomes with fixtureOnly when fixture. Learning-worker may consume them later; no authority auto-apply. ACCEPTED_PENDING ≠ VERIFIED.",
+          "Verified SEO release SUCCESS/FAILURE emits outcomes with fixtureOnly when fixture after explicit read-back. ACCEPTED_PENDING ≠ VERIFIED. Learning-worker may consume outcomes later; no authority auto-apply.",
       };
     },
 
@@ -206,13 +224,30 @@ export function createSeoService(store: SeoStore): SeoService {
     seedFixtures(nowIso) {
       const ts = nowIso ?? new Date().toISOString();
       const seed = buildFixtureSeoSeed(ts);
+      const existing = store.read();
+      const skippedProgressedProposalIds: string[] = [];
+
       for (const audit of seed.audits) store.upsertAudit(audit);
-      for (const proposal of seed.proposals) store.upsertProposal(proposal);
+
+      for (const proposal of seed.proposals) {
+        const prior = existing.proposals.find(
+          (p) => p.proposalId === proposal.proposalId,
+        );
+        if (prior && TERMINAL_OR_PROGRESSED.has(prior.status)) {
+          skippedProgressedProposalIds.push(prior.proposalId);
+          continue;
+        }
+        store.upsertProposal(proposal);
+      }
+
       store.setSearchIndex(seed.searchIndex);
       return {
         audits: seed.audits,
-        proposals: seed.proposals,
+        proposals: seed.proposals.filter(
+          (p) => !skippedProgressedProposalIds.includes(p.proposalId),
+        ),
         searchIndexVersion: seed.searchIndex.version,
+        skippedProgressedProposalIds,
       };
     },
 
@@ -234,6 +269,7 @@ export function createSeoService(store: SeoStore): SeoService {
 
     createProposal(input) {
       const nowIso = input.nowIso ?? new Date().toISOString();
+      // Client creation is always DRAFT — never verified/approved via create.
       const proposal = createSeoProposal({
         proposalId: input.proposalId ?? `prop-${randomUUID()}`,
         pageAssetId: input.pageAssetId,
@@ -250,7 +286,7 @@ export function createSeoService(store: SeoStore): SeoService {
           : {}),
         fixtureOnly: input.fixtureOnly !== false,
         createdAtIso: nowIso,
-        ...(input.status !== undefined ? { status: input.status } : {}),
+        status: SeoProposalStatus.DRAFT,
       });
       store.upsertProposal(proposal);
       return proposal;
@@ -258,18 +294,59 @@ export function createSeoService(store: SeoStore): SeoService {
 
     validateSchema(input) {
       const nowIso = input.nowIso ?? new Date().toISOString();
-      const result = validateSchemaOrg({
+      const state = store.read();
+      const reasons: string[] = [];
+
+      let proposal: SeoChangeProposal | null = null;
+      if (input.proposalId) {
+        proposal =
+          state.proposals.find((p) => p.proposalId === input.proposalId) ??
+          null;
+        if (!proposal) {
+          return {
+            ok: false,
+            code: "PROPOSAL_NOT_FOUND",
+            reasons: [`Unknown proposal ${input.proposalId}`],
+          };
+        }
+        if (input.pageAssetId !== proposal.pageAssetId) {
+          reasons.push(
+            `pageAssetId ${input.pageAssetId} ≠ proposal ${proposal.pageAssetId}`,
+          );
+        }
+        const nodeDigest = digestSchemaNodes(input.pageAssetId, input.nodes);
+        if (nodeDigest !== proposal.schemaPayloadDigest) {
+          reasons.push(
+            "Schema nodes digest does not match proposal schemaPayloadDigest",
+          );
+        }
+        if (reasons.length > 0) {
+          return { ok: false, code: "SCHEMA_PROPOSAL_MISMATCH", reasons };
+        }
+      }
+
+      if (!input.factLabels) {
+        return {
+          ok: false,
+          code: "FACT_LABELS_REQUIRED",
+          reasons: [
+            "Fact labels must be derived from the knowledge registry by the caller",
+          ],
+        };
+      }
+
+      const validation = validateSchemaOrg({
         validationId: input.validationId ?? `val-${randomUUID()}`,
         pageAssetId: input.pageAssetId,
         proposalId: input.proposalId ?? null,
         nodes: input.nodes,
         visibleContent: input.visibleContent ?? SEO_GOLDEN_VISIBLE_CONTENT,
-        factLabels: toFactLookup(input.factLabels),
+        factLabels: input.factLabels,
         fixtureOnly: input.fixtureOnly !== false,
         createdAtIso: nowIso,
       });
-      store.addSchemaValidation(result);
-      return result;
+      store.addSchemaValidation(validation);
+      return { ok: true, validation };
     },
 
     reviewProposal(input) {
@@ -295,7 +372,7 @@ export function createSeoService(store: SeoStore): SeoService {
       return {
         ...evaluateProposalGate({
           proposal,
-          factLabels: toFactLookup(input.factLabels),
+          factLabels: input.factLabels,
           schemaValidation,
         }),
         proposal,
@@ -315,6 +392,19 @@ export function createSeoService(store: SeoStore): SeoService {
         };
       }
 
+      if (
+        proposal.status !== SeoProposalStatus.DRAFT &&
+        proposal.status !== SeoProposalStatus.READY_FOR_REVIEW
+      ) {
+        return {
+          ok: false,
+          proposal,
+          reasons: [
+            `Cannot approve proposal in status ${proposal.status}`,
+          ],
+        };
+      }
+
       const schemaValidation =
         proposal.changeKind === SeoChangeKind.SCHEMA
           ? state.schemaValidations
@@ -327,7 +417,7 @@ export function createSeoService(store: SeoStore): SeoService {
           ...proposal,
           status: SeoProposalStatus.READY_FOR_REVIEW,
         },
-        factLabels: toFactLookup(input.factLabels),
+        factLabels: input.factLabels,
         schemaValidation,
       });
       if (!gate.allowed) {
@@ -413,7 +503,7 @@ export function createSeoService(store: SeoStore): SeoService {
 
       const gate = evaluateProposalGate({
         proposal,
-        factLabels: toFactLookup(input.factLabels),
+        factLabels: input.factLabels,
         schemaValidation,
       });
       if (!gate.allowed) {
@@ -428,13 +518,7 @@ export function createSeoService(store: SeoStore): SeoService {
         };
       }
 
-      const mapping =
-        input.productionMapping ??
-        proveFixtureSeoWritePath(
-          createFixtureSeoPilotMapping(nowIso).state,
-          nowIso,
-        );
-
+      const mapping = input.productionMapping;
       const operationId = `seo-release-${randomUUID()}`;
       const snapshot: GatewayAuthoritySnapshot = {
         outboundStopped: input.authority.outboundStopped,
@@ -471,15 +555,6 @@ export function createSeoService(store: SeoStore): SeoService {
       );
 
       if (!submitted.decision.allowed) {
-        const failedPending: SeoChangeProposal = {
-          ...proposal,
-          status: SeoProposalStatus.FAILED,
-          gatewayOperationId: operationId,
-          writePathId: SEO_PILOT_WRITE_PATH_ID,
-          updatedAtIso: nowIso,
-        };
-        store.upsertProposal(failedPending);
-
         const applied = applySeoReleaseVerification(store.read(), {
           proposalId: proposal.proposalId,
           decision: SeoReleaseDecision.FAILURE,
@@ -491,11 +566,19 @@ export function createSeoService(store: SeoStore): SeoService {
           writePathId: SEO_PILOT_WRITE_PATH_ID,
           nowIso,
         });
+        // Ensure gateway op id recorded even if apply overwrites status.
+        const failed: SeoChangeProposal = {
+          ...(applied.proposal ?? proposal),
+          status: SeoProposalStatus.FAILED,
+          gatewayOperationId: operationId,
+          writePathId: SEO_PILOT_WRITE_PATH_ID,
+          updatedAtIso: nowIso,
+        };
+        store.upsertProposal(failed);
         if (applied.outcome) store.addReleaseOutcome(applied.outcome);
-        if (applied.proposal) store.upsertProposal(applied.proposal);
 
         return {
-          proposal: applied.proposal ?? failedPending,
+          proposal: failed,
           gatewayDecision: submitted.decision,
           outcome: applied.outcome,
           liveCmsPublishWiring: "NOT_WIRED",
@@ -504,7 +587,7 @@ export function createSeoService(store: SeoStore): SeoService {
         };
       }
 
-      // Stub apply accepted — not verified yet.
+      // Acceptance only — verification requires explicit fixture read-back.
       const pending: SeoChangeProposal = {
         ...proposal,
         status: SeoProposalStatus.RELEASED_PENDING,
@@ -513,48 +596,92 @@ export function createSeoService(store: SeoStore): SeoService {
         updatedAtIso: nowIso,
       };
       store.upsertProposal(pending);
+      details.push(
+        "Left ACCEPTED_PENDING / RELEASED_PENDING — supply fixture read-back via verifyPilotRelease",
+      );
 
-      if (input.skipVerification) {
-        details.push(
-          "Left ACCEPTED_PENDING / RELEASED_PENDING — verification skipped",
-        );
+      return {
+        proposal: pending,
+        gatewayDecision: submitted.decision,
+        outcome: null,
+        liveCmsPublishWiring: "NOT_WIRED",
+        acceptanceEqualsVerified: false,
+        details,
+      };
+    },
+
+    verifyPilotRelease(input) {
+      const nowIso = input.nowIso ?? new Date().toISOString();
+      const details: string[] = [];
+      const state = store.read();
+      const proposal =
+        state.proposals.find((p) => p.proposalId === input.proposalId) ?? null;
+
+      if (!proposal) {
         return {
-          proposal: pending,
-          gatewayDecision: submitted.decision,
+          proposal: null,
+          gatewayDecision: null,
           outcome: null,
-          liveCmsPublishWiring: "NOT_WIRED",
-          acceptanceEqualsVerified: false,
-          details,
+          details: [`Unknown proposal ${input.proposalId}`],
         };
       }
 
-      if (input.forceFailure) {
-        details.push("Forced fixture FAILURE after gateway accept");
+      if (proposal.status !== SeoProposalStatus.RELEASED_PENDING) {
+        return {
+          proposal,
+          gatewayDecision: null,
+          outcome: null,
+          details: [
+            `Proposal status is ${proposal.status}; verify requires RELEASED_PENDING`,
+          ],
+        };
+      }
+
+      if (!proposal.gatewayOperationId) {
+        return {
+          proposal,
+          gatewayDecision: null,
+          outcome: null,
+          details: ["Missing gatewayOperationId on RELEASED_PENDING proposal"],
+        };
+      }
+
+      const readBack = evaluateFixtureReadBack({
+        proposedFields: proposal.proposedFields,
+        observedFields: input.observedFields,
+      });
+      details.push(...readBack.details);
+
+      const failed =
+        input.forceFailure === true || readBack.matched === false;
+
+      if (failed) {
         const applied = applySeoReleaseVerification(store.read(), {
           proposalId: proposal.proposalId,
           decision: SeoReleaseDecision.FAILURE,
           source: OutcomeEvidenceSource.FIXTURE,
           fixtureOnly: true,
-          summary: "Fixture read-back did not match proposed fields",
+          summary: details.join("; ") || "Fixture read-back failed",
           outcomeId: `out-${randomUUID()}`,
-          operationId,
-          writePathId: SEO_PILOT_WRITE_PATH_ID,
+          operationId: proposal.gatewayOperationId,
+          writePathId: proposal.writePathId ?? SEO_PILOT_WRITE_PATH_ID,
           nowIso,
         });
         if (applied.outcome) store.addReleaseOutcome(applied.outcome);
         if (applied.proposal) store.upsertProposal(applied.proposal);
         return {
           proposal: applied.proposal,
-          gatewayDecision: submitted.decision,
+          gatewayDecision:
+            gateway.getDecision(proposal.gatewayOperationId) ?? null,
           outcome: applied.outcome,
-          liveCmsPublishWiring: "NOT_WIRED",
-          acceptanceEqualsVerified: false,
           details,
         };
       }
 
-      // Fixture read-back verification — never a live CMS mutation.
-      const verified = gateway.markVerified(operationId, nowIso);
+      const verified = gateway.markVerified(
+        proposal.gatewayOperationId,
+        nowIso,
+      );
       details.push("Fixture read-back verified; live CMS still NOT_WIRED");
 
       const applied = applySeoReleaseVerification(store.read(), {
@@ -564,8 +691,8 @@ export function createSeoService(store: SeoStore): SeoService {
         fixtureOnly: true,
         summary: "Fixture SEO page release verified via read-back",
         outcomeId: `out-${randomUUID()}`,
-        operationId,
-        writePathId: SEO_PILOT_WRITE_PATH_ID,
+        operationId: proposal.gatewayOperationId,
+        writePathId: proposal.writePathId ?? SEO_PILOT_WRITE_PATH_ID,
         nowIso,
       });
       if (applied.outcome) store.addReleaseOutcome(applied.outcome);
@@ -575,8 +702,6 @@ export function createSeoService(store: SeoStore): SeoService {
         proposal: applied.proposal,
         gatewayDecision: verified,
         outcome: applied.outcome,
-        liveCmsPublishWiring: "NOT_WIRED",
-        acceptanceEqualsVerified: false,
         details,
       };
     },

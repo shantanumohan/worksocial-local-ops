@@ -7,6 +7,7 @@
  * Acceptance ≠ verified. Live CMS publish remains NOT_WIRED.
  */
 
+import { createHash } from "node:crypto";
 import {
   AdapterWiring,
   OutcomeEvidenceSource,
@@ -117,6 +118,11 @@ export type SeoChangeProposal = {
   summary: string;
   /** Exact field diffs (title, description, schema nodes, links…). */
   proposedFields: Record<string, string>;
+  /**
+   * Digest of pageAssetId + proposedFields — schema validations must match.
+   * Always set at creation from proposedFields.
+   */
+  schemaPayloadDigest: string;
   /** Fact ids backing claims — schema/content truth requires SUPPORTED. */
   citedFactIds: string[];
   /** Research/hypothesis fact ids — never used as schema truth. */
@@ -128,6 +134,25 @@ export type SeoChangeProposal = {
   createdAtIso: string;
   updatedAtIso: string;
 };
+
+/** Client/fixture creation may only start in draft or ready-for-review. */
+export const SEO_CREATABLE_STATUSES: ReadonlySet<SeoProposalStatusValue> =
+  new Set([SeoProposalStatus.DRAFT, SeoProposalStatus.READY_FOR_REVIEW]);
+
+/** Canonical digest binding a schema proposal to its validated payload. */
+export function digestSeoSchemaPayload(
+  pageAssetId: string,
+  fields: Record<string, string>,
+): string {
+  const keys = Object.keys(fields).sort();
+  const canonical: Record<string, string> = { pageAssetId };
+  for (const key of keys) {
+    canonical[key] = fields[key]!;
+  }
+  return createHash("sha256")
+    .update(JSON.stringify(canonical))
+    .digest("hex");
+}
 
 export const SchemaValidationVerdict = {
   PASS: "pass",
@@ -146,6 +171,28 @@ export type SchemaOrgNode = {
   citedFactIds: string[];
 };
 
+/** Flatten schema.org nodes into comparable field map for digest binding. */
+export function schemaNodesToFields(
+  nodes: readonly SchemaOrgNode[],
+): Record<string, string> {
+  const fields: Record<string, string> = {};
+  for (const node of nodes) {
+    fields["@type"] = node.schemaType;
+    for (const [key, value] of Object.entries(node.properties)) {
+      if (value === null || value === undefined) continue;
+      fields[key] = String(value);
+    }
+  }
+  return fields;
+}
+
+export function digestSchemaNodes(
+  pageAssetId: string,
+  nodes: readonly SchemaOrgNode[],
+): string {
+  return digestSeoSchemaPayload(pageAssetId, schemaNodesToFields(nodes));
+}
+
 export type SchemaValidationIssue = {
   code: string;
   message: string;
@@ -158,6 +205,8 @@ export type SchemaValidationResult = {
   pageAssetId: string;
   proposalId: string | null;
   nodes: SchemaOrgNode[];
+  /** Digest of page + flattened node fields — must match proposal digest. */
+  payloadDigest: string;
   verdict: SchemaValidationVerdictValue;
   issues: SchemaValidationIssue[];
   /** Visible-content agreement check passed. */
@@ -374,17 +423,20 @@ export function validateSchemaOrg(input: {
 
     for (const [key, value] of Object.entries(node.properties)) {
       if (value === null || value === undefined) continue;
+      if (key === "@type") continue;
       const text = String(value).toLowerCase();
-      if (text.length >= 3 && !visible.includes(text) && key !== "@type") {
-        // Soft agreement: flag when a concrete string claim is absent from visible copy.
-        if (typeof value === "string" && value.trim().length > 0) {
-          issues.push({
-            code: "SCHEMA_VISIBLE_MISMATCH",
-            message: `Property ${key} value is not reflected in visible content`,
-            propertyPath: `${node.nodeId}.${key}`,
-            relatedFactId: null,
-          });
-        }
+      // Concrete string / number / boolean claims must appear in visible copy.
+      const concrete =
+        (typeof value === "string" && value.trim().length > 0) ||
+        typeof value === "number" ||
+        typeof value === "boolean";
+      if (concrete && text.length > 0 && !visible.includes(text)) {
+        issues.push({
+          code: "SCHEMA_VISIBLE_MISMATCH",
+          message: `Property ${key} value is not reflected in visible content`,
+          propertyPath: `${node.nodeId}.${key}`,
+          relatedFactId: null,
+        });
       }
     }
   }
@@ -416,6 +468,7 @@ export function validateSchemaOrg(input: {
     pageAssetId: input.pageAssetId,
     proposalId: input.proposalId ?? null,
     nodes: input.nodes,
+    payloadDigest: digestSchemaNodes(input.pageAssetId, input.nodes),
     verdict,
     issues,
     agreesWithVisibleContent,
@@ -468,16 +521,31 @@ export function evaluateProposalGate(input: {
   if (input.proposal.changeKind === SeoChangeKind.SCHEMA) {
     if (!input.schemaValidation) {
       reasons.push("Schema change requires a schema validation result");
-    } else if (
-      input.schemaValidation.verdict === SchemaValidationVerdict.FAIL
-    ) {
-      reasons.push("Schema validation FAILED — proposal blocked");
-    } else if (
-      input.schemaValidation.verdict === SchemaValidationVerdict.PARTIAL
-    ) {
-      reasons.push(
-        "Schema validation PARTIAL — resolve UNKNOWN facts / visible mismatches before release",
-      );
+    } else {
+      if (
+        input.schemaValidation.pageAssetId !== input.proposal.pageAssetId
+      ) {
+        reasons.push(
+          `Schema validation pageAssetId ${input.schemaValidation.pageAssetId} ≠ proposal ${input.proposal.pageAssetId}`,
+        );
+      }
+      if (
+        input.schemaValidation.payloadDigest !==
+        input.proposal.schemaPayloadDigest
+      ) {
+        reasons.push(
+          "Schema validation payload digest does not match proposal schema payload",
+        );
+      }
+      if (input.schemaValidation.verdict === SchemaValidationVerdict.FAIL) {
+        reasons.push("Schema validation FAILED — proposal blocked");
+      } else if (
+        input.schemaValidation.verdict === SchemaValidationVerdict.PARTIAL
+      ) {
+        reasons.push(
+          "Schema validation PARTIAL — resolve UNKNOWN facts / visible mismatches before release",
+        );
+      }
     }
   }
 
@@ -506,6 +574,11 @@ export function createSeoProposal(input: {
   createdAtIso: string;
   status?: SeoProposalStatusValue;
 }): SeoChangeProposal {
+  const requested = input.status ?? SeoProposalStatus.DRAFT;
+  const status = SEO_CREATABLE_STATUSES.has(requested)
+    ? requested
+    : SeoProposalStatus.DRAFT;
+  const proposedFields = { ...input.proposedFields };
   return {
     proposalId: input.proposalId,
     pageAssetId: input.pageAssetId,
@@ -513,10 +586,14 @@ export function createSeoProposal(input: {
     changeKind: input.changeKind,
     title: input.title.trim(),
     summary: input.summary.trim(),
-    proposedFields: { ...input.proposedFields },
+    proposedFields,
+    schemaPayloadDigest: digestSeoSchemaPayload(
+      input.pageAssetId,
+      proposedFields,
+    ),
     citedFactIds: [...(input.citedFactIds ?? [])],
     hypothesisFactIds: [...(input.hypothesisFactIds ?? [])],
-    status: input.status ?? SeoProposalStatus.DRAFT,
+    status,
     fixtureOnly: input.fixtureOnly,
     gatewayOperationId: null,
     writePathId: null,
@@ -525,11 +602,54 @@ export function createSeoProposal(input: {
   };
 }
 
+/**
+ * Compare fixture read-back fields to the proposed release payload.
+ * Verification requires an explicit matching read-back — never gateway accept alone.
+ */
+export function evaluateFixtureReadBack(input: {
+  proposedFields: Record<string, string>;
+  observedFields: Record<string, string>;
+}): { matched: boolean; details: string[] } {
+  const details: string[] = [];
+  const proposedKeys = Object.keys(input.proposedFields).sort();
+  if (proposedKeys.length === 0) {
+    return { matched: false, details: ["Proposed fields empty — nothing to verify"] };
+  }
+  for (const key of proposedKeys) {
+    const expected = input.proposedFields[key]!;
+    const observed = input.observedFields[key];
+    if (observed === undefined) {
+      details.push(`Missing read-back field ${key}`);
+      continue;
+    }
+    if (observed !== expected) {
+      details.push(`Read-back mismatch on ${key}`);
+    }
+  }
+  if (details.length === 0) {
+    details.push("Fixture read-back matched proposed fields");
+    return { matched: true, details };
+  }
+  return { matched: false, details };
+}
+
 /** Parse natural-language space/service queries into hard constraints. */
 export function parseSearchConstraints(rawQuery: string): ParsedSearchConstraints {
   const q = rawQuery.toLowerCase();
-  const n = q.match(/\b(\d{1,3})\b/);
-  const people = n ? Number(n[1]) : null;
+
+  // Capacity only from person-count phrases — not hours, years, or prices.
+  const peopleMatch =
+    q.match(
+      /\b(\d{1,3})\s*(?:people|persons|person|attendees|guests|pax)\b/,
+    ) ??
+    q.match(
+      /\b(?:people|persons|person|attendees|guests|pax)\s*(?:of|:)?\s*(\d{1,3})\b/,
+    ) ??
+    // "meeting for 8" / "room for 20" — reject time/money units after the number.
+    q.match(
+      /\b(?:for|of)\s+(\d{1,3})(?!\s*(?:hours?|hrs?|mins?|minutes?|days?|weeks?|years?|usd|dollars?|\$))\b/,
+    );
+  const people = peopleMatch ? Number(peopleMatch[1]) : null;
 
   let category: ParsedSearchConstraints["category"] = null;
   if (/train|classroom|workshop/.test(q)) category = "Training";
@@ -539,7 +659,7 @@ export function parseSearchConstraints(rawQuery: string): ParsedSearchConstraint
 
   let location: string | null = null;
   if (/new york|manhattan|nyc/.test(q)) location = "New York";
-  else if (/los angeles|la\b/.test(q)) location = "Los Angeles";
+  else if (/los angeles|\bla\b/.test(q)) location = "Los Angeles";
   else if (/jersey/.test(q)) location = "Jersey City";
 
   const requiredAmenities: string[] = [];

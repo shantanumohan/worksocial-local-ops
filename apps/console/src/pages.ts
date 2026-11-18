@@ -939,7 +939,7 @@ export function seoPage(apiOrigin: string): string {
   <section>
     <h2>SEO and search (R1-07)</h2>
     <p class="muted">Page audits, SEO proposals, schema validation, fixture semantic search, gateway-gated pilot page release.</p>
-    <p class="warn">Live CMS publish is <strong>NOT_WIRED</strong>. Gateway acceptance ≠ verified. Schema truth requires <strong>SUPPORTED</strong> facts — never HYPOTHESIS. Set Authority mode to <strong>operate</strong> before release.</p>
+    <p class="warn">Live CMS publish is <strong>NOT_WIRED</strong>. Gateway acceptance ≠ verified. Schema truth requires <strong>SUPPORTED</strong> facts — never HYPOTHESIS. Set Authority mode to <strong>operate</strong>. Ensure fixture mapping, approve, release, then verify with read-back. Administrators only for release/verify.</p>
     <div class="row">
       <button id="btn-seed" type="button">Seed fixtures</button>
       <button id="btn-refresh" type="button">Refresh</button>
@@ -967,9 +967,10 @@ export function seoPage(apiOrigin: string): string {
     <label for="prop-id">Proposal id</label>
     <input id="prop-id" placeholder="golden-prop-title" />
     <div class="row">
+      <button id="btn-ensure-map" type="button">Ensure fixture mapping</button>
       <button id="btn-approve" type="button">Approve proposal</button>
       <button id="btn-release" type="button">Release pilot (gateway)</button>
-      <button id="btn-release-pending" type="button">Release leave pending</button>
+      <button id="btn-verify" type="button">Verify with read-back</button>
     </div>
   </section>
   <section>
@@ -1052,23 +1053,28 @@ export function seoPage(apiOrigin: string): string {
     const body = await res.json();
     document.getElementById('search-out').textContent = JSON.stringify(body, null, 2);
   };
+  document.getElementById('btn-ensure-map').onclick = async () => {
+    const res = await api('/seo/ensure-fixture-mapping', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.note || body.reason || body.error || (res.ok ? 'Mapping ready' : 'failed');
+  };
   document.getElementById('btn-approve').onclick = async () => {
     const proposalId = document.getElementById('prop-id').value;
     const res = await api('/seo/approve-proposal', {
       method:'POST',
       headers:{'content-type':'application/json'},
-      body: JSON.stringify({ proposalId, factLabels: { 'fixture-fact-hours': 'SUPPORTED' } })
+      body: JSON.stringify({ proposalId })
     });
     const body = await res.json();
     document.getElementById('note').textContent = body.reasons?.join('; ') || body.error || (res.ok ? 'Approved' : 'failed');
     refresh();
   };
-  async function release(skipVerification) {
+  document.getElementById('btn-release').onclick = async () => {
     const proposalId = document.getElementById('prop-id').value;
     const res = await api('/seo/release-pilot', {
       method:'POST',
       headers:{'content-type':'application/json'},
-      body: JSON.stringify({ proposalId, skipVerification: !!skipVerification })
+      body: JSON.stringify({ proposalId })
     });
     const body = await res.json();
     document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
@@ -1080,9 +1086,22 @@ export function seoPage(apiOrigin: string): string {
       acceptanceEqualsVerified: body.acceptanceEqualsVerified,
     }, null, 2);
     refresh();
-  }
-  document.getElementById('btn-release').onclick = () => release(false);
-  document.getElementById('btn-release-pending').onclick = () => release(true);
+  };
+  document.getElementById('btn-verify').onclick = async () => {
+    const proposalId = document.getElementById('prop-id').value;
+    const props = JSON.parse(document.getElementById('proposals').textContent || '[]');
+    const row = props.find(p => p.proposalId === proposalId);
+    const observedFields = row?.proposedFields || {};
+    const res = await api('/seo/verify-pilot', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ proposalId, observedFields })
+    });
+    const body = await res.json();
+    document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
+    document.getElementById('search-out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
   document.getElementById('btn-refresh').onclick = () => refresh();
   refresh();
 </script>

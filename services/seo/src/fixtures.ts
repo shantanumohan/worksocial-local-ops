@@ -261,6 +261,46 @@ export function proveFixtureSeoWritePath(
   return proveFixturePilotWritePath(state, SEO_PILOT_WRITE_PATH_ID, nowIso);
 }
 
+/**
+ * Merge SEO pilot write path into a persisted production mapping state.
+ * Does not prove ownership — caller must prove separately and write the store.
+ */
+export function upsertFixtureSeoMapping(
+  current: ProductionMappingState,
+  nowIso: string,
+): { state: ProductionMappingState; writePathId: string; created: boolean } {
+  const { state: fixture, writePathId } = createFixtureSeoPilotMapping(nowIso);
+  const existingPath = current.writePaths.find(
+    (p) => p.writePathId === writePathId,
+  );
+  if (existingPath) {
+    return { state: current, writePathId, created: false };
+  }
+
+  return {
+    writePathId,
+    created: true,
+    state: {
+      ...current,
+      sites: [...new Set([...current.sites, ...fixture.sites])],
+      bindings: [
+        ...current.bindings.filter(
+          (b) => !fixture.bindings.some((fb) => fb.bindingId === b.bindingId),
+        ),
+        ...fixture.bindings,
+      ],
+      writePaths: [...current.writePaths, ...fixture.writePaths],
+      journeys: [
+        ...current.journeys.filter(
+          (j) => !fixture.journeys.some((fj) => fj.journeyId === j.journeyId),
+        ),
+        ...fixture.journeys,
+      ],
+      updatedAt: nowIso,
+    },
+  };
+}
+
 export function buildFixtureSeoSeed(nowIso: string): {
   audits: PageAuditRecord[];
   proposals: SeoChangeProposal[];

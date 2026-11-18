@@ -1,8 +1,8 @@
 /**
  * Contract: R1-07 SEO and search — schema validation rejects HYPOTHESIS as
  * truth; proposal gates enforce SUPPORTED citations; pilot page release goes
- * through the gateway with ownership + read evidence; acceptance ≠ verified;
- * live CMS publish stays NOT_WIRED.
+ * through the shared gateway with persisted ownership + read evidence;
+ * acceptance ≠ verified until fixture read-back.
  */
 import { describe, expect, it } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -14,6 +14,8 @@ import {
   SeoChangeKind,
   SeoProposalStatus,
   SupportLabel,
+  createSeoProposal,
+  digestSeoSchemaPayload,
   evaluateProposalGate,
   validateSchemaOrg,
 } from "@worksocial/domain";
@@ -21,6 +23,7 @@ import {
   createDemoPublishGrant,
   createFileSeoStore,
 } from "@worksocial/persistence";
+import { createActionGateway } from "@worksocial/action-gateway";
 import {
   SEO_GOLDEN_VISIBLE_CONTENT,
   SEO_PILOT_PAGE_ASSET_ID,
@@ -30,6 +33,10 @@ import {
 } from "@worksocial/seo";
 
 const now = "2026-11-18T17:00:00.000Z";
+const labels = new Map([
+  ["fixture-fact-hours", SupportLabel.SUPPORTED],
+  ["fixture-fact-hypothesis", SupportLabel.HYPOTHESIS],
+]);
 
 describe("contract: SEO schema validation and proposal gates", () => {
   it("never treats HYPOTHESIS facts as schema truth", () => {
@@ -56,42 +63,109 @@ describe("contract: SEO schema validation and proposal gates", () => {
   });
 
   it("blocks proposal release when cited facts are not SUPPORTED", () => {
+    const base = createSeoProposal({
+      proposalId: "c-prop",
+      pageAssetId: SEO_PILOT_PAGE_ASSET_ID,
+      changeKind: SeoChangeKind.CONTENT,
+      title: "Bad cite",
+      summary: "Uses hypothesis as truth",
+      proposedFields: { body: "claim" },
+      citedFactIds: ["hyp-1"],
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
     const gate = evaluateProposalGate({
-      proposal: {
-        proposalId: "c-prop",
-        pageAssetId: SEO_PILOT_PAGE_ASSET_ID,
-        pageAuditId: null,
-        changeKind: SeoChangeKind.CONTENT,
-        title: "Bad cite",
-        summary: "Uses hypothesis as truth",
-        proposedFields: { body: "claim" },
-        citedFactIds: ["hyp-1"],
-        hypothesisFactIds: [],
-        status: SeoProposalStatus.APPROVED,
-        fixtureOnly: true,
-        gatewayOperationId: null,
-        writePathId: null,
-        createdAtIso: now,
-        updatedAtIso: now,
-      },
+      proposal: { ...base, status: SeoProposalStatus.APPROVED },
       factLabels: new Map([["hyp-1", SupportLabel.HYPOTHESIS]]),
     });
     expect(gate.allowed).toBe(false);
     expect(gate.code).toBe("PROPOSAL_GATE_FAILED");
   });
+
+  it("binds schema validation to proposal page + payload digest", () => {
+    const proposal = {
+      ...createSeoProposal({
+        proposalId: "c-schema",
+        pageAssetId: SEO_PILOT_PAGE_ASSET_ID,
+        changeKind: SeoChangeKind.SCHEMA,
+        title: "Schema",
+        summary: "LocalBusiness",
+        proposedFields: { "@type": "LocalBusiness", name: "WorkSocial" },
+        citedFactIds: ["fixture-fact-hours"],
+        fixtureOnly: true,
+        createdAtIso: now,
+      }),
+      status: SeoProposalStatus.APPROVED,
+    };
+    const wrongPage = validateSchemaOrg({
+      validationId: "c-val-wrong",
+      pageAssetId: "page-other",
+      proposalId: proposal.proposalId,
+      nodes: [
+        {
+          nodeId: "n1",
+          schemaType: "LocalBusiness",
+          properties: { name: "WorkSocial" },
+          citedFactIds: ["fixture-fact-hours"],
+        },
+      ],
+      visibleContent: SEO_GOLDEN_VISIBLE_CONTENT,
+      factLabels: labels,
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    const blocked = evaluateProposalGate({
+      proposal,
+      factLabels: labels,
+      schemaValidation: wrongPage,
+    });
+    expect(blocked.allowed).toBe(false);
+
+    const matched = validateSchemaOrg({
+      validationId: "c-val-ok",
+      pageAssetId: SEO_PILOT_PAGE_ASSET_ID,
+      proposalId: proposal.proposalId,
+      nodes: [
+        {
+          nodeId: "n1",
+          schemaType: "LocalBusiness",
+          properties: { name: "WorkSocial" },
+          citedFactIds: ["fixture-fact-hours"],
+        },
+      ],
+      visibleContent: SEO_GOLDEN_VISIBLE_CONTENT,
+      factLabels: labels,
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    expect(matched.payloadDigest).toBe(proposal.schemaPayloadDigest);
+    expect(matched.payloadDigest).toBe(
+      digestSeoSchemaPayload(SEO_PILOT_PAGE_ASSET_ID, {
+        "@type": "LocalBusiness",
+        name: "WorkSocial",
+      }),
+    );
+    const ok = evaluateProposalGate({
+      proposal,
+      factLabels: labels,
+      schemaValidation: matched,
+    });
+    expect(ok.allowed).toBe(true);
+  });
 });
 
 describe("contract: verified pilot page release path", () => {
-  it("requires mapping ownership + read evidence; acceptance ≠ verified; CMS NOT_WIRED", () => {
+  it("requires mapping ownership + read evidence; acceptance ≠ verified until read-back; CMS NOT_WIRED", () => {
     const dir = mkdtempSync(join(tmpdir(), "ws-seo-contract-"));
     try {
-      const svc = createSeoService(createFileSeoStore(dir));
+      const gateway = createActionGateway();
+      const svc = createSeoService(createFileSeoStore(dir), { gateway });
       const demo = createDemoPublishGrant(now);
 
       const unproven = createFixtureSeoPilotMapping(now).state;
       const proven = proveFixtureSeoWritePath(unproven, now);
 
-      const proposal = svc.createProposal({
+      const draft = svc.createProposal({
         proposalId: "c-release",
         pageAssetId: SEO_PILOT_PAGE_ASSET_ID,
         changeKind: SeoChangeKind.METADATA,
@@ -101,12 +175,18 @@ describe("contract: verified pilot page release path", () => {
           title: "WorkSocial Jersey City | Day pass coworking & meeting rooms",
         },
         citedFactIds: ["fixture-fact-hours"],
-        status: SeoProposalStatus.APPROVED,
         nowIso: now,
       });
+      expect(
+        svc.approveProposal({
+          proposalId: draft.proposalId,
+          factLabels: labels,
+          nowIso: now,
+        }).ok,
+      ).toBe(true);
 
       const denied = svc.releasePilotPage({
-        proposalId: proposal.proposalId,
+        proposalId: draft.proposalId,
         authority: {
           outboundStopped: false,
           operatingMode: OperatingMode.OPERATE,
@@ -114,14 +194,14 @@ describe("contract: verified pilot page release path", () => {
           grants: [demo.grant],
         },
         productionMapping: unproven,
+        factLabels: labels,
         nowIso: now,
       });
       expect(denied.gatewayDecision?.allowed).toBe(false);
       expect(denied.liveCmsPublishWiring).toBe("NOT_WIRED");
       expect(denied.acceptanceEqualsVerified).toBe(false);
 
-      // Re-create approved proposal after failure
-      const proposal2 = svc.createProposal({
+      const draft2 = svc.createProposal({
         proposalId: "c-release-2",
         pageAssetId: SEO_PILOT_PAGE_ASSET_ID,
         changeKind: SeoChangeKind.METADATA,
@@ -131,12 +211,18 @@ describe("contract: verified pilot page release path", () => {
           title: "WorkSocial Jersey City | Day pass coworking & meeting rooms",
         },
         citedFactIds: ["fixture-fact-hours"],
-        status: SeoProposalStatus.APPROVED,
         nowIso: now,
       });
+      expect(
+        svc.approveProposal({
+          proposalId: draft2.proposalId,
+          factLabels: labels,
+          nowIso: now,
+        }).ok,
+      ).toBe(true);
 
       const pending = svc.releasePilotPage({
-        proposalId: proposal2.proposalId,
+        proposalId: draft2.proposalId,
         authority: {
           outboundStopped: false,
           operatingMode: OperatingMode.OPERATE,
@@ -144,7 +230,7 @@ describe("contract: verified pilot page release path", () => {
           grants: [demo.grant],
         },
         productionMapping: proven,
-        skipVerification: true,
+        factLabels: labels,
         nowIso: now,
       });
       expect(pending.gatewayDecision?.allowed).toBe(true);
@@ -152,37 +238,17 @@ describe("contract: verified pilot page release path", () => {
       expect(pending.proposal?.status).toBe(SeoProposalStatus.RELEASED_PENDING);
       expect(pending.outcome).toBeNull();
 
-      const proposal3 = svc.createProposal({
-        proposalId: "c-release-3",
-        pageAssetId: SEO_PILOT_PAGE_ASSET_ID,
-        changeKind: SeoChangeKind.METADATA,
-        title: "Pilot title full verify",
-        summary: "Verified fixture release",
-        proposedFields: {
+      const verified = svc.verifyPilotRelease({
+        proposalId: draft2.proposalId,
+        observedFields: {
           title: "WorkSocial Jersey City | Day pass coworking & meeting rooms",
         },
-        citedFactIds: ["fixture-fact-hours"],
-        status: SeoProposalStatus.APPROVED,
-        nowIso: now,
-      });
-
-      const verified = svc.releasePilotPage({
-        proposalId: proposal3.proposalId,
-        authority: {
-          outboundStopped: false,
-          operatingMode: OperatingMode.OPERATE,
-          policies: [demo.policy],
-          grants: [demo.grant],
-        },
-        productionMapping: proven,
         nowIso: now,
       });
       expect(verified.gatewayDecision?.outcome).toBe("VERIFIED");
       expect(verified.proposal?.status).toBe(SeoProposalStatus.VERIFIED);
       expect(verified.outcome?.label).toBe("SUCCESS");
       expect(verified.outcome?.fixtureOnly).toBe(true);
-      expect(verified.liveCmsPublishWiring).toBe("NOT_WIRED");
-      expect(verified.acceptanceEqualsVerified).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

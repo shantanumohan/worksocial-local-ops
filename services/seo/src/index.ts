@@ -10,4 +10,5 @@ export {
   buildFixtureSeoSeed,
   createFixtureSeoPilotMapping,
   proveFixtureSeoWritePath,
+  upsertFixtureSeoMapping,
 } from "./fixtures.js";

@@ -39,7 +39,6 @@ import {
   FactVerificationDecision,
   SupportLabel,
   SeoChangeKind,
-  SeoProposalStatus,
   type BookingOwnership,
   type CollectionMethodValue,
   type CrmOwnership,
@@ -102,11 +101,85 @@ import {
   type KnowledgeService,
 } from "@worksocial/knowledge";
 import {
-  createFixtureSeoPilotMapping,
   createSeoService,
+  proveFixtureSeoWritePath,
+  upsertFixtureSeoMapping,
   type SeoService,
 } from "@worksocial/seo";
 import { listPinnedModels } from "@worksocial/ml";
+
+function factLabelsFromKnowledge(
+  knowledge: KnowledgeService,
+): Map<string, SupportLabelValue> {
+  const labels = new Map<string, SupportLabelValue>();
+  for (const fact of knowledge.listFacts(500)) {
+    labels.set(fact.factId, fact.supportLabel);
+  }
+  return labels;
+}
+
+function parseSchemaNodes(
+  raw: unknown,
+):
+  | { ok: true; nodes: import("@worksocial/domain").SchemaOrgNode[] }
+  | { ok: false; reasons: string[] } {
+  if (!Array.isArray(raw)) {
+    return { ok: false, reasons: ["nodes must be an array"] };
+  }
+  const nodes: import("@worksocial/domain").SchemaOrgNode[] = [];
+  const reasons: string[] = [];
+  for (let i = 0; i < raw.length; i += 1) {
+    const row = raw[i];
+    if (!row || typeof row !== "object" || Array.isArray(row)) {
+      reasons.push(`nodes[${i}] must be an object`);
+      continue;
+    }
+    const rec = row as Record<string, unknown>;
+    const nodeId = typeof rec.nodeId === "string" ? rec.nodeId : "";
+    const schemaType = typeof rec.schemaType === "string" ? rec.schemaType : "";
+    if (!nodeId.trim()) reasons.push(`nodes[${i}].nodeId is required`);
+    if (!schemaType.trim()) reasons.push(`nodes[${i}].schemaType is required`);
+    if (
+      rec.properties === undefined ||
+      typeof rec.properties !== "object" ||
+      rec.properties === null ||
+      Array.isArray(rec.properties)
+    ) {
+      reasons.push(`nodes[${i}].properties must be an object`);
+      continue;
+    }
+    if (!Array.isArray(rec.citedFactIds)) {
+      reasons.push(`nodes[${i}].citedFactIds must be an array`);
+      continue;
+    }
+    const citedFactIds = rec.citedFactIds.filter(
+      (id): id is string => typeof id === "string",
+    );
+    if (citedFactIds.length !== rec.citedFactIds.length) {
+      reasons.push(`nodes[${i}].citedFactIds must be string[]`);
+    }
+    const properties: Record<string, string | number | boolean | null> = {};
+    for (const [k, v] of Object.entries(
+      rec.properties as Record<string, unknown>,
+    )) {
+      if (
+        v === null ||
+        typeof v === "string" ||
+        typeof v === "number" ||
+        typeof v === "boolean"
+      ) {
+        properties[k] = v;
+      } else {
+        reasons.push(`nodes[${i}].properties.${k} has unsupported type`);
+      }
+    }
+    if (nodeId.trim() && schemaType.trim()) {
+      nodes.push({ nodeId, schemaType, properties, citedFactIds });
+    }
+  }
+  if (reasons.length > 0) return { ok: false, reasons };
+  return { ok: true, nodes };
+}
 
 export type ApiRuntime = {
   store: AuthorityStore;
@@ -149,7 +222,8 @@ export function createApiRuntime(options: {
   const knowledgeStore = createFileKnowledgeStore(options.stateDir);
   const knowledge = createKnowledgeService(knowledgeStore);
   const seoStore = createFileSeoStore(options.stateDir);
-  const seo = createSeoService(seoStore);
+  const gateway = createActionGateway();
+  const seo = createSeoService(seoStore, { gateway });
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
@@ -176,7 +250,7 @@ export function createApiRuntime(options: {
     seo,
     runner,
     missions,
-    gateway: createActionGateway(),
+    gateway,
     broker: createCredentialBroker(),
     apiOrigin: `http://127.0.0.1:${options.apiPort}`,
     consoleOrigin: `http://127.0.0.1:${options.consolePort}`,
@@ -2578,13 +2652,62 @@ export async function handleApiRequest(
       json(res, 401, { error: result.code, reason: result.reason }, cors);
       return;
     }
+    // Ensure knowledge fixtures exist so fact labels are registry-backed.
+    runtime.knowledge.seedFixtures();
     const seed = runtime.seo.seedFixtures();
     json(
       res,
       200,
       {
         ...seed,
-        note: "Seeded golden page audits, SEO proposals, and fixture semantic catalog. Live CMS still NOT_WIRED.",
+        note: "Seeded golden page audits/proposals/catalog without clobbering progressed proposals. Live CMS still NOT_WIRED.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/seo/ensure-fixture-mapping") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason:
+            "SEO fixture mapping requires administrator manage_standing_policies",
+        },
+        cors,
+      );
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    let mapping = runtime.mappingStore.read();
+    const upserted = upsertFixtureSeoMapping(mapping, nowIso);
+    mapping = upserted.state;
+    const pathId = upserted.writePathId;
+    if (!mapping.readEvidence.some((e) => e.writePathId === pathId)) {
+      mapping = proveFixtureSeoWritePath(mapping, nowIso);
+    }
+    runtime.mappingStore.write(mapping);
+    json(
+      res,
+      200,
+      {
+        writePathId: pathId,
+        created: upserted.created,
+        note: "Persisted SEO pilot write path + fixture read evidence in mappingStore.",
       },
       cors,
     );
@@ -2654,7 +2777,6 @@ export async function handleApiRequest(
       proposedFields?: Record<string, string>;
       citedFactIds?: string[];
       hypothesisFactIds?: string[];
-      status?: string;
     };
     try {
       body = JSON.parse(raw) as typeof body;
@@ -2673,13 +2795,6 @@ export async function handleApiRequest(
       json(res, 400, { error: "MISSING_OR_INVALID_FIELDS" }, cors);
       return;
     }
-    const statusValue =
-      body.status &&
-      Object.values(SeoProposalStatus).includes(
-        body.status as (typeof SeoProposalStatus)[keyof typeof SeoProposalStatus],
-      )
-        ? (body.status as (typeof SeoProposalStatus)[keyof typeof SeoProposalStatus])
-        : undefined;
     const proposal = runtime.seo.createProposal({
       pageAssetId: body.pageAssetId,
       pageAuditId: body.pageAuditId ?? null,
@@ -2693,9 +2808,16 @@ export async function handleApiRequest(
       ...(body.hypothesisFactIds !== undefined
         ? { hypothesisFactIds: body.hypothesisFactIds }
         : {}),
-      ...(statusValue !== undefined ? { status: statusValue } : {}),
     });
-    json(res, 200, { proposal }, cors);
+    json(
+      res,
+      200,
+      {
+        proposal,
+        note: "Client-created proposals are always draft; approval/release/verify are controlled transitions.",
+      },
+      cors,
+    );
     return;
   }
 
@@ -2717,7 +2839,6 @@ export async function handleApiRequest(
       proposalId?: string;
       nodes?: unknown;
       visibleContent?: string;
-      factLabels?: Record<string, string>;
     };
     try {
       body = JSON.parse(raw) as typeof body;
@@ -2725,26 +2846,29 @@ export async function handleApiRequest(
       json(res, 400, { error: "INVALID_JSON" }, cors);
       return;
     }
-    if (!body.pageAssetId || !Array.isArray(body.nodes)) {
+    if (!body.pageAssetId) {
       json(res, 400, { error: "MISSING_FIELDS" }, cors);
       return;
     }
-    const factLabels: Record<string, SupportLabelValue> = {};
-    if (body.factLabels) {
-      for (const [k, v] of Object.entries(body.factLabels)) {
-        if (isSupportLabel(v)) factLabels[k] = v;
-      }
+    const parsed = parseSchemaNodes(body.nodes);
+    if (!parsed.ok) {
+      json(res, 400, { error: "INVALID_NODES", reasons: parsed.reasons }, cors);
+      return;
     }
-    const validation = runtime.seo.validateSchema({
+    const validated = runtime.seo.validateSchema({
       pageAssetId: body.pageAssetId,
       proposalId: body.proposalId ?? null,
-      nodes: body.nodes as never[],
+      nodes: parsed.nodes,
       ...(body.visibleContent !== undefined
         ? { visibleContent: body.visibleContent }
         : {}),
-      factLabels,
+      factLabels: factLabelsFromKnowledge(runtime.knowledge),
     });
-    json(res, 200, { validation }, cors);
+    if (!validated.ok) {
+      json(res, 400, validated, cors);
+      return;
+    }
+    json(res, 200, { validation: validated.validation }, cors);
     return;
   }
 
@@ -2761,11 +2885,7 @@ export async function handleApiRequest(
       return;
     }
     const raw = await readBody(req);
-    let body: {
-      proposalId?: string;
-      factLabels?: Record<string, string>;
-      schemaValidationId?: string;
-    };
+    let body: { proposalId?: string; schemaValidationId?: string };
     try {
       body = JSON.parse(raw) as typeof body;
     } catch {
@@ -2776,15 +2896,9 @@ export async function handleApiRequest(
       json(res, 400, { error: "MISSING_PROPOSAL_ID" }, cors);
       return;
     }
-    const factLabels: Record<string, SupportLabelValue> = {};
-    if (body.factLabels) {
-      for (const [k, v] of Object.entries(body.factLabels)) {
-        if (isSupportLabel(v)) factLabels[k] = v;
-      }
-    }
     const reviewed = runtime.seo.reviewProposal({
       proposalId: body.proposalId,
-      factLabels,
+      factLabels: factLabelsFromKnowledge(runtime.knowledge),
       schemaValidationId: body.schemaValidationId ?? null,
     });
     json(res, 200, reviewed, cors);
@@ -2804,10 +2918,7 @@ export async function handleApiRequest(
       return;
     }
     const raw = await readBody(req);
-    let body: {
-      proposalId?: string;
-      factLabels?: Record<string, string>;
-    };
+    let body: { proposalId?: string };
     try {
       body = JSON.parse(raw) as typeof body;
     } catch {
@@ -2818,15 +2929,9 @@ export async function handleApiRequest(
       json(res, 400, { error: "MISSING_PROPOSAL_ID" }, cors);
       return;
     }
-    const factLabels: Record<string, SupportLabelValue> = {};
-    if (body.factLabels) {
-      for (const [k, v] of Object.entries(body.factLabels)) {
-        if (isSupportLabel(v)) factLabels[k] = v;
-      }
-    }
     const approved = runtime.seo.approveProposal({
       proposalId: body.proposalId,
-      factLabels,
+      factLabels: factLabelsFromKnowledge(runtime.knowledge),
     });
     json(res, approved.ok ? 200 : 400, approved, cors);
     return;
@@ -2878,14 +2983,21 @@ export async function handleApiRequest(
       json(res, 401, { error: result.code, reason: result.reason }, cors);
       return;
     }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason:
+            "SEO pilot release requires administrator manage_standing_policies (and capability grant management)",
+        },
+        cors,
+      );
+      return;
+    }
     const raw = await readBody(req);
-    let body: {
-      proposalId?: string;
-      skipVerification?: boolean;
-      forceFailure?: boolean;
-      proveMapping?: boolean;
-      factLabels?: Record<string, string>;
-    };
+    let body: { proposalId?: string };
     try {
       body = JSON.parse(raw) as typeof body;
     } catch {
@@ -2901,6 +3013,7 @@ export async function handleApiRequest(
     const demo = createDemoPublishGrant(nowIso);
     const auth = runtime.store.read();
     if (!auth.capabilityGrants.some((g) => g.grantId === demo.grant.grantId)) {
+      // Administrator already gated above — may mint fixture publish grant.
       runtime.store.update((state) => ({
         ...state,
         standingPolicies: [
@@ -2920,20 +3033,7 @@ export async function handleApiRequest(
     }
 
     const authorityState = runtime.store.read();
-    const productionMapping =
-      body.proveMapping === false
-        ? createFixtureSeoPilotMapping(nowIso).state
-        : runtime.seo.seedAndProveSeoMapping(nowIso).mapping;
-
-    const factLabels: Record<string, SupportLabelValue> = {
-      "fixture-fact-hours": SupportLabel.SUPPORTED,
-      "fixture-fact-hypothesis": SupportLabel.HYPOTHESIS,
-    };
-    if (body.factLabels) {
-      for (const [k, v] of Object.entries(body.factLabels)) {
-        if (isSupportLabel(v)) factLabels[k] = v;
-      }
-    }
+    const productionMapping = runtime.mappingStore.read();
 
     const released = runtime.seo.releasePilotPage({
       proposalId: body.proposalId,
@@ -2944,10 +3044,27 @@ export async function handleApiRequest(
         grants: authorityState.capabilityGrants,
       },
       productionMapping,
-      factLabels,
-      skipVerification: body.skipVerification === true,
-      forceFailure: body.forceFailure === true,
+      factLabels: factLabelsFromKnowledge(runtime.knowledge),
     });
+
+    if (released.gatewayDecision) {
+      const decision: PolicyDecisionRecord = {
+        decisionId: released.gatewayDecision.decisionId,
+        operationId: released.gatewayDecision.operationId,
+        payloadDigest: released.gatewayDecision.payloadDigest,
+        allowed: released.gatewayDecision.allowed,
+        code: released.gatewayDecision.code,
+        reason: released.gatewayDecision.reason,
+        grantId: released.gatewayDecision.grantId,
+        policyId: released.gatewayDecision.policyId,
+        decidedAtIso: released.gatewayDecision.decidedAtIso,
+      };
+      runtime.store.update((s) => ({
+        ...s,
+        policyDecisions: [...s.policyDecisions, decision],
+        updatedAt: decision.decidedAtIso,
+      }));
+    }
 
     json(
       res,
@@ -2955,12 +3072,90 @@ export async function handleApiRequest(
       {
         ...released,
         note:
-          "Pilot page release via action gateway. ACCEPTED_PENDING ≠ VERIFIED. Live CMS publish remains NOT_WIRED — fixture read-back only.",
+          "Pilot page release via shared action gateway using persisted mappingStore evidence. ACCEPTED_PENDING ≠ VERIFIED — call /seo/verify-pilot with fixture read-back. Live CMS publish remains NOT_WIRED.",
       },
       cors,
     );
     return;
   }
+
+  if (method === "POST" && url.pathname === "/seo/verify-pilot") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason: "SEO verify requires administrator manage_standing_policies",
+        },
+        cors,
+      );
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      proposalId?: string;
+      observedFields?: Record<string, string>;
+      forceFailure?: boolean;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.proposalId || !body.observedFields || typeof body.observedFields !== "object") {
+      json(res, 400, { error: "MISSING_READ_BACK" }, cors);
+      return;
+    }
+    const verified = runtime.seo.verifyPilotRelease({
+      proposalId: body.proposalId,
+      observedFields: body.observedFields,
+      forceFailure: body.forceFailure === true,
+    });
+
+    if (verified.gatewayDecision) {
+      const decision: PolicyDecisionRecord = {
+        decisionId: verified.gatewayDecision.decisionId,
+        operationId: verified.gatewayDecision.operationId,
+        payloadDigest: verified.gatewayDecision.payloadDigest,
+        allowed: verified.gatewayDecision.allowed,
+        code: verified.gatewayDecision.code,
+        reason: verified.gatewayDecision.reason,
+        grantId: verified.gatewayDecision.grantId,
+        policyId: verified.gatewayDecision.policyId,
+        decidedAtIso: verified.gatewayDecision.decidedAtIso,
+      };
+      runtime.store.update((s) => ({
+        ...s,
+        policyDecisions: [...s.policyDecisions, decision],
+        updatedAt: decision.decidedAtIso,
+      }));
+    }
+
+    json(
+      res,
+      200,
+      {
+        ...verified,
+        note: "Verification requires matching fixture read-back. Gateway acceptance alone never implies VERIFIED.",
+      },
+      cors,
+    );
+    return;
+  }
+
 
   json(res, 404, { error: "NOT_FOUND" }, cors);
 }

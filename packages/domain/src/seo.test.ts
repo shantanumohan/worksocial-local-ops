@@ -95,18 +95,20 @@ describe("seo domain — schema validation", () => {
 
 describe("seo domain — proposal gates", () => {
   it("blocks release when cited facts are not SUPPORTED", () => {
-    const proposal = createSeoProposal({
-      proposalId: "prop-1",
-      pageAssetId: "page-home",
-      changeKind: SeoChangeKind.CONTENT,
-      title: "Improve FAQ",
-      summary: "Add parking answer",
-      proposedFields: { faq: "Parking is available nearby" },
-      citedFactIds: ["fact-hyp"],
-      fixtureOnly: true,
-      createdAtIso: now,
+    const proposal = {
+      ...createSeoProposal({
+        proposalId: "prop-1",
+        pageAssetId: "page-home",
+        changeKind: SeoChangeKind.CONTENT,
+        title: "Improve FAQ",
+        summary: "Add parking answer",
+        proposedFields: { faq: "Parking is available nearby" },
+        citedFactIds: ["fact-hyp"],
+        fixtureOnly: true,
+        createdAtIso: now,
+      }),
       status: SeoProposalStatus.APPROVED,
-    });
+    };
     const gate = evaluateProposalGate({
       proposal,
       factLabels: new Map([["fact-hyp", SupportLabel.HYPOTHESIS]]),
@@ -115,19 +117,36 @@ describe("seo domain — proposal gates", () => {
     expect(gate.code).toBe("PROPOSAL_GATE_FAILED");
   });
 
-  it("requires schema validation for schema changes", () => {
+  it("forces client creation away from verified/approved statuses", () => {
     const proposal = createSeoProposal({
-      proposalId: "prop-2",
+      proposalId: "prop-draft-force",
       pageAssetId: "page-home",
-      changeKind: SeoChangeKind.SCHEMA,
-      title: "Add LocalBusiness",
-      summary: "Emit schema",
-      proposedFields: { "@type": "LocalBusiness" },
-      citedFactIds: ["fact-ok"],
+      changeKind: SeoChangeKind.METADATA,
+      title: "x",
+      summary: "y",
+      proposedFields: { title: "T" },
       fixtureOnly: true,
       createdAtIso: now,
-      status: SeoProposalStatus.APPROVED,
+      status: SeoProposalStatus.VERIFIED,
     });
+    expect(proposal.status).toBe(SeoProposalStatus.DRAFT);
+  });
+
+  it("requires schema validation bound to proposal page + payload digest", () => {
+    const proposal = {
+      ...createSeoProposal({
+        proposalId: "prop-2",
+        pageAssetId: "page-home",
+        changeKind: SeoChangeKind.SCHEMA,
+        title: "Add LocalBusiness",
+        summary: "Emit schema",
+        proposedFields: { "@type": "LocalBusiness", name: "WorkSocial" },
+        citedFactIds: ["fact-ok"],
+        fixtureOnly: true,
+        createdAtIso: now,
+      }),
+      status: SeoProposalStatus.APPROVED,
+    };
     const missing = evaluateProposalGate({
       proposal,
       factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
@@ -151,12 +170,36 @@ describe("seo domain — proposal gates", () => {
       fixtureOnly: true,
       createdAtIso: now,
     });
+    expect(validation.payloadDigest).toBe(proposal.schemaPayloadDigest);
     const ok = evaluateProposalGate({
       proposal,
       factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
       schemaValidation: validation,
     });
     expect(ok.allowed).toBe(true);
+  });
+
+  it("flags numeric schema properties missing from visible content", () => {
+    const result = validateSchemaOrg({
+      validationId: "val-num",
+      pageAssetId: "page-home",
+      nodes: [
+        {
+          nodeId: "n1",
+          schemaType: "MeetingRoom",
+          properties: { name: "Hudson", capacity: 100 },
+          citedFactIds: ["fact-ok"],
+        },
+      ],
+      visibleContent: "Hudson boardroom",
+      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    expect(result.agreesWithVisibleContent).toBe(false);
+    expect(result.issues.some((i) => i.code === "SCHEMA_VISIBLE_MISMATCH")).toBe(
+      true,
+    );
   });
 });
 
@@ -208,6 +251,19 @@ describe("seo domain — semantic search", () => {
     expect(c.requiredAmenities).toContain("display");
   });
 
+  it("ignores hour counts and words ending in la for location/capacity", () => {
+    const hours = parseSearchConstraints(
+      "room for 2 hours for 10 people in Jersey City",
+    );
+    expect(hours.people).toBe(10);
+    expect(hours.location).toBe("Jersey City");
+    const gala = parseSearchConstraints(
+      "gala event for 40 in Jersey City",
+    );
+    expect(gala.location).toBe("Jersey City");
+    expect(gala.people).toBe(40);
+  });
+
   it("returns honest no-match for unknown constraints", () => {
     const result = runSemanticSearch({
       queryId: "q1",
@@ -234,18 +290,20 @@ describe("seo domain — semantic search", () => {
 describe("seo domain — release learning hooks", () => {
   it("records SUCCESS with fixtureOnly and does not imply acceptance=verified", () => {
     let state = emptySeoState(now);
-    const proposal = createSeoProposal({
-      proposalId: "prop-rel",
-      pageAssetId: "page-home",
-      changeKind: SeoChangeKind.METADATA,
-      title: "Title fix",
-      summary: "Improve title",
-      proposedFields: { title: "WorkSocial | Jersey City coworking" },
-      citedFactIds: ["fact-ok"],
-      fixtureOnly: true,
-      createdAtIso: now,
+    const proposal = {
+      ...createSeoProposal({
+        proposalId: "prop-rel",
+        pageAssetId: "page-home",
+        changeKind: SeoChangeKind.METADATA,
+        title: "Title fix",
+        summary: "Improve title",
+        proposedFields: { title: "WorkSocial | Jersey City coworking" },
+        citedFactIds: ["fact-ok"],
+        fixtureOnly: true,
+        createdAtIso: now,
+      }),
       status: SeoProposalStatus.RELEASED_PENDING,
-    });
+    };
     state = {
       ...state,
       proposals: [proposal],
