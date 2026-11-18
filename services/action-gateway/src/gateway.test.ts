@@ -3,6 +3,8 @@ import {
   ActionClass,
   LocalRole,
   OperatingMode,
+  createFixturePilotMapping,
+  proveFixturePilotWritePath,
   type CapabilityGrant,
   type StandingPolicy,
 } from "@worksocial/domain";
@@ -45,6 +47,8 @@ const allowedIntent = {
   assetId: "page-home",
   contentRevision: "rev-1",
   payload: { title: "Home" },
+  ownershipProven: true,
+  readEvidencePresent: true,
 };
 
 describe("action-gateway", () => {
@@ -96,5 +100,116 @@ describe("action-gateway", () => {
     const verified = gateway.markVerified("op-1", "2026-11-18T12:05:00.000Z");
     expect(verified.outcome).toBe("VERIFIED");
     expect(gateway.ledger.hasVerified("op-1")).toBe(true);
+  });
+
+  it("defaults write-class gates to deny when ownership/evidence unset", () => {
+    const gateway = createActionGateway();
+    const result = gateway.submitIntent(
+      {
+        operationId: "op-no-gates",
+        actionClass: ActionClass.ROUTINE_PUBLISH,
+        channelId: "owned-site",
+        targetAccountId: "acct-1",
+        operation: "publish_page",
+        assetId: "page-home",
+        contentRevision: "rev-1",
+        payload: { title: "Home" },
+      },
+      {
+        outboundStopped: false,
+        operatingMode: OperatingMode.OPERATE,
+        policies: [policy],
+        grants: [grant],
+        nowIso: now,
+      },
+    );
+    expect(result.decision.allowed).toBe(false);
+    expect(result.decision.code).toBe("OWNERSHIP_UNPROVEN");
+  });
+
+  it("denies mapped write without read evidence even with a grant", () => {
+    const { state, writePathId } = createFixturePilotMapping(now);
+    const formPolicy: StandingPolicy = {
+      ...policy,
+      policyId: "pol-form",
+      actionClass: ActionClass.ROUTINE_CUSTOMER_SERVICE,
+      allowedAssetScope: ["page-contact"],
+    };
+    const formGrant: CapabilityGrant = {
+      ...grant,
+      grantId: "grant-form",
+      policyId: "pol-form",
+      allowedOperations: ["submit_form_canary"],
+      allowedAssetScope: ["page-contact"],
+      contentRevisionBound: null,
+    };
+    const gateway = createActionGateway();
+    const result = gateway.submitIntent(
+      {
+        operationId: "op-no-evidence",
+        actionClass: ActionClass.ROUTINE_CUSTOMER_SERVICE,
+        channelId: "owned-site",
+        targetAccountId: "acct-1",
+        operation: "submit_form_canary",
+        assetId: "page-contact",
+        contentRevision: null,
+        writePathId,
+        payload: { email: "test@example.com" },
+      },
+      {
+        outboundStopped: false,
+        operatingMode: OperatingMode.OPERATE,
+        policies: [formPolicy],
+        grants: [formGrant],
+        nowIso: now,
+        productionMapping: state,
+      },
+    );
+    expect(result.decision.allowed).toBe(false);
+    expect(result.decision.code).toBe("OWNERSHIP_UNPROVEN");
+  });
+
+  it("allows mapped write after ownership and read evidence are recorded", () => {
+    const { state, writePathId } = createFixturePilotMapping(now);
+    const proven = proveFixturePilotWritePath(state, writePathId, now);
+    const formPolicy: StandingPolicy = {
+      ...policy,
+      policyId: "pol-form",
+      actionClass: ActionClass.ROUTINE_CUSTOMER_SERVICE,
+      allowedAssetScope: ["page-contact"],
+    };
+    const formGrant: CapabilityGrant = {
+      ...grant,
+      grantId: "grant-form",
+      policyId: "pol-form",
+      allowedOperations: ["submit_form_canary"],
+      allowedAssetScope: ["page-contact"],
+      contentRevisionBound: null,
+    };
+    const gateway = createActionGateway();
+    const result = gateway.submitIntent(
+      {
+        operationId: "op-with-evidence",
+        actionClass: ActionClass.ROUTINE_CUSTOMER_SERVICE,
+        channelId: "owned-site",
+        targetAccountId: "acct-1",
+        operation: "submit_form_canary",
+        assetId: "page-contact",
+        contentRevision: null,
+        writePathId,
+        payload: { email: "test@example.com" },
+      },
+      {
+        outboundStopped: false,
+        operatingMode: OperatingMode.OPERATE,
+        policies: [formPolicy],
+        grants: [formGrant],
+        nowIso: now,
+        productionMapping: proven,
+      },
+    );
+    expect(result.decision.allowed).toBe(true);
+    expect(result.decision.outcome).toBe("ACCEPTED_PENDING");
+    expect(result.decision.writePathId).toBe(writePathId);
   });
 });

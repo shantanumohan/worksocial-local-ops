@@ -119,4 +119,119 @@ describe("api identity HTTP", () => {
       expect(denied.decision.outcome).toBe("DENIED");
     });
   });
+
+  it("requires fixture ownership + read evidence before a mapped pilot write", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "ws-api-map-"));
+    dirs.push(dir);
+
+    await withServer(dir, async (base) => {
+      const login = await fetch(`${base}/auth/login`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: base,
+        },
+        body: JSON.stringify({ username: "owner", password: "test-password" }),
+      });
+      expect(login.status).toBe(200);
+      const loginBody = (await login.json()) as { csrfToken: string };
+      const cookieHeader = (
+        login.headers.getSetCookie?.()[0] ?? login.headers.get("set-cookie")!
+      ).split(";")[0]!;
+
+      const seed = await fetch(`${base}/mapping/seed-fixture-pilot`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: base,
+          cookie: cookieHeader,
+          "x-csrf-token": loginBody.csrfToken,
+        },
+        body: "{}",
+      });
+      expect(seed.status).toBe(200);
+      const seeded = (await seed.json()) as { writePathId: string };
+
+      const before = await fetch(`${base}/gateway/intents`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: base,
+          cookie: cookieHeader,
+          "x-csrf-token": loginBody.csrfToken,
+        },
+        body: JSON.stringify({
+          operationId: "op-map-before",
+          actionClass: ActionClass.ROUTINE_CUSTOMER_SERVICE,
+          channelId: "owned-site",
+          targetAccountId: "acct-demo",
+          operation: "submit_form_canary",
+          assetId: "page-contact",
+          contentRevision: null,
+          writePathId: seeded.writePathId,
+          payload: { email: "canary@example.com" },
+        }),
+      });
+      expect(before.status).toBe(403);
+      const beforeBody = (await before.json()) as {
+        decision: { code: string };
+      };
+      expect(beforeBody.decision.code).toBe("OWNERSHIP_UNPROVEN");
+
+      const prove = await fetch(`${base}/mapping/prove-fixture-pilot`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: base,
+          cookie: cookieHeader,
+          "x-csrf-token": loginBody.csrfToken,
+        },
+        body: JSON.stringify({ writePathId: seeded.writePathId }),
+      });
+      expect(prove.status).toBe(200);
+
+      const mapping = await fetch(`${base}/mapping/state`, {
+        headers: { origin: base, cookie: cookieHeader },
+      });
+      expect(mapping.status).toBe(200);
+      const mappingBody = (await mapping.json()) as {
+        mapping: {
+          bindings: Array<{ ownershipProven: boolean }>;
+          readEvidence: unknown[];
+        };
+        learningHook: { note: string };
+      };
+      expect(mappingBody.mapping.bindings.some((b) => b.ownershipProven)).toBe(
+        true,
+      );
+      expect(mappingBody.mapping.readEvidence.length).toBeGreaterThan(0);
+      expect(mappingBody.learningHook.note).toMatch(/learning-worker/i);
+
+      // Still denied: demo grant is publish_page, not submit_form_canary — proves
+      // ownership/evidence cleared and grant check is reached.
+      const after = await fetch(`${base}/gateway/intents`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: base,
+          cookie: cookieHeader,
+          "x-csrf-token": loginBody.csrfToken,
+        },
+        body: JSON.stringify({
+          operationId: "op-map-after",
+          actionClass: ActionClass.ROUTINE_CUSTOMER_SERVICE,
+          channelId: "owned-site",
+          targetAccountId: "acct-demo",
+          operation: "submit_form_canary",
+          assetId: "page-contact",
+          contentRevision: null,
+          writePathId: seeded.writePathId,
+          payload: { email: "canary@example.com" },
+        }),
+      });
+      expect(after.status).toBe(403);
+      const afterBody = (await after.json()) as { decision: { code: string } };
+      expect(afterBody.decision.code).toBe("GRANT_MISSING");
+    });
+  });
 });

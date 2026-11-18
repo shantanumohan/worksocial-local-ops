@@ -86,3 +86,9 @@ export {
   type PolicyDecisionRecord,
   type BootstrapOwnerOptions,
 } from "./authority-store.js";
+
+export {
+  createFileProductionMappingStore,
+  defaultProductionMappingStateDir,
+  type ProductionMappingStore,
+} from "./production-mapping-store.js";

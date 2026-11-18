@@ -51,6 +51,9 @@ describe("contract: unauthorized-write", () => {
         assetId: "page-other",
         contentRevision: "rev-1",
         payload: { body: "nope" },
+        // Ownership/evidence satisfied so this contract isolates grant scope.
+        ownershipProven: true,
+        readEvidencePresent: true,
       },
       {
         outboundStopped: false,

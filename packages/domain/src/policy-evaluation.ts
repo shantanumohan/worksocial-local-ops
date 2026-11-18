@@ -9,6 +9,8 @@ export type PolicyInput = {
   grantPresent: boolean;
   grantExpired: boolean;
   ownershipProven: boolean;
+  /** Prior successful read/capability-test evidence for the pilot write path. */
+  readEvidencePresent: boolean;
   prerequisiteMissing: boolean;
   prerequisiteConflict: boolean;
   revisionMatches: boolean;
@@ -24,6 +26,7 @@ export type PolicyDecision =
         | "GRANT_MISSING"
         | "GRANT_EXPIRED"
         | "OWNERSHIP_UNPROVEN"
+        | "READ_EVIDENCE_MISSING"
         | "PREREQUISITE_MISSING"
         | "PREREQUISITE_CONFLICT"
         | "REVISION_MISMATCH"
@@ -44,6 +47,13 @@ export function evaluatePolicy(input: PolicyInput): PolicyDecision {
       allowed: false,
       code: "OWNERSHIP_UNPROVEN",
       reason: "Source ownership is unproven",
+    };
+  }
+  if (!input.readEvidencePresent) {
+    return {
+      allowed: false,
+      code: "READ_EVIDENCE_MISSING",
+      reason: "Pilot write path lacks required prior read evidence",
     };
   }
   if (!input.grantPresent) {

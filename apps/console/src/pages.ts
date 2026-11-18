@@ -1,4 +1,4 @@
-/** Minimal honest login + authority console HTML (R1-02). No React routes yet. */
+/** Minimal honest login + authority + production mapping console HTML (R1-02/R1-03). No React routes yet. */
 
 export function loginPage(apiOrigin: string): string {
   return `<!doctype html>
@@ -54,7 +54,7 @@ export function loginPage(apiOrigin: string): string {
     }
     const data = await res.json();
     sessionStorage.setItem('ws_csrf', data.csrfToken);
-    location.href = '/authority';
+    location.href = '/mapping';
   });
 </script>
 </body>
@@ -89,6 +89,7 @@ export function authorityPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
+  <p class="muted"><a href="/mapping">Production mapping</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -104,7 +105,7 @@ export function authorityPage(apiOrigin: string): string {
   </section>
   <section>
     <h2>Provider status (honest labels)</h2>
-    <p class="muted">connected ≠ authorized ≠ verified. R1-02 has no live providers — expect Not connected.</p>
+    <p class="muted">connected ≠ authorized ≠ verified. Adapters are NOT_WIRED/FIXTURE in R1-03 — expect Not connected unless fixture-bound.</p>
     <table>
       <thead><tr><th>Provider</th><th>Connected</th><th>Authorized</th><th>Verified</th></tr></thead>
       <tbody id="providers"></tbody>
@@ -163,6 +164,147 @@ export function authorityPage(apiOrigin: string): string {
     await api('/auth/logout', { method:'POST' });
     location.href = '/login';
   };
+  refresh();
+</script>
+</body>
+</html>`;
+}
+
+export function mappingPage(apiOrigin: string): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WorkSocial — Production mapping</title>
+  <style>
+    :root { --ink:#1b2a22; --panel:#fff; --accent:#2f6b4f; --warn:#8a5a00; }
+    body { margin:0; font-family:"IBM Plex Sans","Segoe UI",sans-serif; background:
+      linear-gradient(180deg,#e7efe9,#f6f3ec); color:var(--ink); }
+    header { padding:1.25rem 1.5rem; border-bottom:1px solid #c9d6cc; background:rgba(255,255,255,.7); }
+    h1 { font-family:"IBM Plex Serif",Georgia,serif; margin:0; font-size:1.45rem; }
+    main { max-width:980px; margin:0 auto; padding:1.5rem; display:grid; gap:1rem; }
+    section { background:var(--panel); border:1px solid #c9d6cc; padding:1rem 1.1rem; }
+    h2 { margin:.2rem 0 .6rem; font-size:1.05rem; }
+    .row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; }
+    button { background:var(--accent); color:#fff; border:0; padding:.5rem .85rem; cursor:pointer; }
+    table { width:100%; border-collapse:collapse; font-size:.9rem; }
+    th, td { text-align:left; padding:.35rem .25rem; border-bottom:1px solid #e0e7e2; vertical-align:top; }
+    .muted { color:#516258; font-size:.85rem; }
+    .pill { display:inline-block; padding:.15rem .45rem; border:1px solid #b7c5bb; font-size:.75rem; margin:.1rem; }
+    .warn { color:var(--warn); }
+    pre { white-space:pre-wrap; font-size:.8rem; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>WorkSocial</h1>
+  <p class="muted" id="who">Checking session…</p>
+  <p class="muted"><a href="/mapping">Production mapping</a> · <a href="/authority">Authority</a></p>
+</header>
+<main>
+  <section>
+    <h2>Production mapping (R1-03)</h2>
+    <p class="muted">Site/CMS/repo bindings, forms, booking and CRM ownership. Pilot writes need mapped ownership <em>and</em> prior read evidence.</p>
+    <p class="warn">No live Zoho/CMS mutations in this build. Fixture / NOT_WIRED ≠ connected.</p>
+    <div class="row">
+      <button id="btn-seed" type="button">Seed fixture pilot</button>
+      <button id="btn-prove" type="button">Record fixture read evidence</button>
+      <button id="btn-refresh" type="button">Refresh</button>
+    </div>
+    <p class="muted" id="seed-note"></p>
+  </section>
+  <section>
+    <h2>Binding / connection status</h2>
+    <table>
+      <thead><tr><th>Binding</th><th>Connected</th><th>Authorized</th><th>Verified</th><th>Ownership</th></tr></thead>
+      <tbody id="bindings"><tr><td colspan="5" class="muted">Loading…</td></tr></tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Adapters</h2>
+    <table>
+      <thead><tr><th>Adapter</th><th>Provider</th><th>Status</th><th>Notes</th></tr></thead>
+      <tbody id="adapters"></tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Write paths / journeys / outcomes</h2>
+    <p class="muted">Outcome labels (SUCCESS/FAILURE) are stored for a future local multi-model learning-worker. No ML training here.</p>
+    <pre id="detail">Loading…</pre>
+  </section>
+</main>
+<script>
+  const API = ${JSON.stringify(apiOrigin)};
+  let lastWritePathId = null;
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ origin: window.location.origin }, opts.headers || {});
+    const csrf = sessionStorage.getItem('ws_csrf');
+    if (opts.method && opts.method !== 'GET' && csrf) headers['x-csrf-token'] = csrf;
+    return fetch(API + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+  }
+  async function refresh() {
+    const session = await api('/auth/session');
+    if (!session.ok) { location.href = '/login'; return; }
+    const s = await session.json();
+    sessionStorage.setItem('ws_csrf', s.csrfToken);
+    document.getElementById('who').textContent = s.username + ' · ' + s.role + ' · local session';
+    const stateRes = await api('/mapping/state');
+    if (!stateRes.ok) { location.href = '/login'; return; }
+    const state = await stateRes.json();
+    const tbody = document.getElementById('bindings');
+    tbody.innerHTML = '';
+    const bindings = state.mapping.bindings || [];
+    if (!bindings.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="muted">No bindings yet. Seed the fixture pilot to start.</td></tr>';
+    }
+    for (const b of bindings) {
+      const status = (state.bindingStatuses || []).find(x => x.providerId.endsWith(':' + b.bindingId)) || {};
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + b.displayName + ' <span class="pill">' + b.kind + '</span><br><span class="muted">' + b.resourceRef + '</span></td>' +
+        '<td><span class="pill">' + (status.labels ? status.labels.connected : b.connectionState) + '</span></td>' +
+        '<td><span class="pill">' + (status.labels ? status.labels.authorized : b.writeReadiness) + '</span></td>' +
+        '<td><span class="pill">' + (status.labels ? status.labels.verified : b.verificationState) + '</span></td>' +
+        '<td>' + (b.ownershipProven ? 'proven (read)' : 'unproven') + '</td>';
+      tbody.appendChild(tr);
+    }
+    const adapters = document.getElementById('adapters');
+    adapters.innerHTML = '';
+    for (const a of state.adapters || []) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + a.adapterId + '</td><td>' + a.providerId + '</td><td><span class="pill">' + a.status + '</span></td><td class="muted">' + a.notes + '</td>';
+      adapters.appendChild(tr);
+    }
+    if ((state.mapping.writePaths || []).length) {
+      lastWritePathId = state.mapping.writePaths[0].writePathId;
+    }
+    document.getElementById('detail').textContent = JSON.stringify({
+      writePaths: state.mapping.writePaths,
+      journeys: state.mapping.journeys,
+      readEvidence: state.mapping.readEvidence,
+      writePathOutcomes: state.mapping.writePathOutcomes,
+      learningHook: state.learningHook,
+      note: state.honestLabelsNote
+    }, null, 2);
+  }
+  document.getElementById('btn-seed').onclick = async () => {
+    const res = await api('/mapping/seed-fixture-pilot', { method:'POST', headers:{'content-type':'application/json'}, body: '{}' });
+    const body = await res.json();
+    lastWritePathId = body.writePathId || lastWritePathId;
+    document.getElementById('seed-note').textContent = body.note || '';
+    refresh();
+  };
+  document.getElementById('btn-prove').onclick = async () => {
+    if (!lastWritePathId) { document.getElementById('seed-note').textContent = 'Seed a fixture pilot first.'; return; }
+    const res = await api('/mapping/prove-fixture-pilot', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ writePathId: lastWritePathId })
+    });
+    const body = await res.json();
+    document.getElementById('seed-note').textContent = body.note || body.message || '';
+    refresh();
+  };
+  document.getElementById('btn-refresh').onclick = () => refresh();
   refresh();
 </script>
 </body>
