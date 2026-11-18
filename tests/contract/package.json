@@ -15,6 +15,7 @@
     "@worksocial/ml": "workspace:*",
     "@worksocial/persistence": "workspace:*",
     "@worksocial/knowledge": "workspace:*",
+    "@worksocial/seo": "workspace:*",
     "@worksocial/probes": "workspace:*"
   },
   "devDependencies": {

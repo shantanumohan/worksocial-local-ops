@@ -17,6 +17,7 @@
     { "path": "../../services/workflow-worker" },
     { "path": "../../services/learning-worker" },
     { "path": "../../services/probes" },
-    { "path": "../../services/knowledge" }
+    { "path": "../../services/knowledge" },
+    { "path": "../../services/seo" }
   ]
 }

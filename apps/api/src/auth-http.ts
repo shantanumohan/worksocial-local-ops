@@ -38,6 +38,8 @@ import {
   DemandSignalKind,
   FactVerificationDecision,
   SupportLabel,
+  SeoChangeKind,
+  SeoProposalStatus,
   type BookingOwnership,
   type CollectionMethodValue,
   type CrmOwnership,
@@ -46,18 +48,21 @@ import {
   type JourneyRegistryEntry,
   type LocalRoleValue,
   type PilotWritePath,
+  type SeoChangeKindValue,
   type SessionRecord,
   type SourceBinding,
   type SupportLabelValue,
 } from "@worksocial/domain";
 import {
   createDemoCanaryGrant,
+  createDemoPublishGrant,
   createFileAuthorityStore,
   createFileLearningStore,
   createFileKnowledgeStore,
   createFileProbeStore,
   createFileProductionMappingStore,
   createFileRoleRuntimeStore,
+  createFileSeoStore,
   ensureBootstrapOwner,
   verifyPassword,
   type AuthorityStore,
@@ -67,6 +72,7 @@ import {
   type ProbeStore,
   type ProductionMappingStore,
   type RoleRuntimeStore,
+  type SeoStore,
 } from "@worksocial/persistence";
 import {
   createActionGateway,
@@ -95,6 +101,11 @@ import {
   createKnowledgeService,
   type KnowledgeService,
 } from "@worksocial/knowledge";
+import {
+  createFixtureSeoPilotMapping,
+  createSeoService,
+  type SeoService,
+} from "@worksocial/seo";
 import { listPinnedModels } from "@worksocial/ml";
 
 export type ApiRuntime = {
@@ -107,6 +118,8 @@ export type ApiRuntime = {
   probes: ProbeService;
   knowledgeStore: KnowledgeStore;
   knowledge: KnowledgeService;
+  seoStore: SeoStore;
+  seo: SeoService;
   runner: ClaudeRunner;
   missions: MissionEnqueueService;
   gateway: ActionGateway;
@@ -135,6 +148,8 @@ export function createApiRuntime(options: {
   });
   const knowledgeStore = createFileKnowledgeStore(options.stateDir);
   const knowledge = createKnowledgeService(knowledgeStore);
+  const seoStore = createFileSeoStore(options.stateDir);
+  const seo = createSeoService(seoStore);
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
@@ -157,6 +172,8 @@ export function createApiRuntime(options: {
     probes,
     knowledgeStore,
     knowledge,
+    seoStore,
+    seo,
     runner,
     missions,
     gateway: createActionGateway(),
@@ -314,9 +331,9 @@ export async function handleApiRequest(
         status: "running",
         productionActivated: false,
         identity:
-          "R1-02–R1-06 auth + mapping + roles + learning + probes + knowledge/demand",
+          "R1-02–R1-07 auth + mapping + roles + learning + probes + knowledge + SEO/search",
         message:
-          "API surface includes monitoring probes and knowledge/demand registry. No live SERP/Trends/Zoho. Fixture adapters + Claude fixture mode default.",
+          "API surface includes SEO audits, proposals, schema validation, semantic search, and gateway-gated fixture page release. Live CMS publish NOT_WIRED. No live SERP/Trends/Zoho.",
       },
       cors,
     );
@@ -2495,6 +2512,450 @@ export async function handleApiRequest(
         note: verified.outcome?.fixtureOnly
           ? "Learning hook recorded fixtureOnly SUCCESS/FAILURE. Does not expand grants or authority."
           : "Learning hook recorded owner SUCCESS/FAILURE (not fixtureOnly). Does not expand grants or authority.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  // --- R1-07 SEO and search ---
+
+  if (method === "GET" && url.pathname === "/seo/status") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const status = runtime.seo.status();
+    json(res, 200, { ...status, note: status.honestNote }, cors);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/seo/audits") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(res, 200, { audits: runtime.seo.listAudits(100) }, cors);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/seo/proposals") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(res, 200, { proposals: runtime.seo.listProposals(100) }, cors);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/seo/schema-validations") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(
+      res,
+      200,
+      { validations: runtime.seo.listSchemaValidations(100) },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/seo/seed-fixtures") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const seed = runtime.seo.seedFixtures();
+    json(
+      res,
+      200,
+      {
+        ...seed,
+        note: "Seeded golden page audits, SEO proposals, and fixture semantic catalog. Live CMS still NOT_WIRED.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/seo/audits") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      pageAssetId?: string;
+      siteId?: string;
+      pagePath?: string;
+      displayName?: string;
+      findings?: unknown;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.pageAssetId || !body.siteId || !body.pagePath || !body.displayName) {
+      json(res, 400, { error: "MISSING_FIELDS" }, cors);
+      return;
+    }
+    const audit = runtime.seo.createAudit({
+      pageAssetId: body.pageAssetId,
+      siteId: body.siteId,
+      pagePath: body.pagePath,
+      displayName: body.displayName,
+      findings: Array.isArray(body.findings) ? (body.findings as never[]) : [],
+    });
+    json(res, 200, { audit }, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/seo/proposals") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      pageAssetId?: string;
+      pageAuditId?: string;
+      changeKind?: string;
+      title?: string;
+      summary?: string;
+      proposedFields?: Record<string, string>;
+      citedFactIds?: string[];
+      hypothesisFactIds?: string[];
+      status?: string;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    const kinds = Object.values(SeoChangeKind) as string[];
+    if (
+      !body.pageAssetId ||
+      !body.title ||
+      !body.summary ||
+      !body.changeKind ||
+      !kinds.includes(body.changeKind)
+    ) {
+      json(res, 400, { error: "MISSING_OR_INVALID_FIELDS" }, cors);
+      return;
+    }
+    const statusValue =
+      body.status &&
+      Object.values(SeoProposalStatus).includes(
+        body.status as (typeof SeoProposalStatus)[keyof typeof SeoProposalStatus],
+      )
+        ? (body.status as (typeof SeoProposalStatus)[keyof typeof SeoProposalStatus])
+        : undefined;
+    const proposal = runtime.seo.createProposal({
+      pageAssetId: body.pageAssetId,
+      pageAuditId: body.pageAuditId ?? null,
+      changeKind: body.changeKind as SeoChangeKindValue,
+      title: body.title,
+      summary: body.summary,
+      proposedFields: body.proposedFields ?? {},
+      ...(body.citedFactIds !== undefined
+        ? { citedFactIds: body.citedFactIds }
+        : {}),
+      ...(body.hypothesisFactIds !== undefined
+        ? { hypothesisFactIds: body.hypothesisFactIds }
+        : {}),
+      ...(statusValue !== undefined ? { status: statusValue } : {}),
+    });
+    json(res, 200, { proposal }, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/seo/validate-schema") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      pageAssetId?: string;
+      proposalId?: string;
+      nodes?: unknown;
+      visibleContent?: string;
+      factLabels?: Record<string, string>;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.pageAssetId || !Array.isArray(body.nodes)) {
+      json(res, 400, { error: "MISSING_FIELDS" }, cors);
+      return;
+    }
+    const factLabels: Record<string, SupportLabelValue> = {};
+    if (body.factLabels) {
+      for (const [k, v] of Object.entries(body.factLabels)) {
+        if (isSupportLabel(v)) factLabels[k] = v;
+      }
+    }
+    const validation = runtime.seo.validateSchema({
+      pageAssetId: body.pageAssetId,
+      proposalId: body.proposalId ?? null,
+      nodes: body.nodes as never[],
+      ...(body.visibleContent !== undefined
+        ? { visibleContent: body.visibleContent }
+        : {}),
+      factLabels,
+    });
+    json(res, 200, { validation }, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/seo/review-proposal") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      proposalId?: string;
+      factLabels?: Record<string, string>;
+      schemaValidationId?: string;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.proposalId) {
+      json(res, 400, { error: "MISSING_PROPOSAL_ID" }, cors);
+      return;
+    }
+    const factLabels: Record<string, SupportLabelValue> = {};
+    if (body.factLabels) {
+      for (const [k, v] of Object.entries(body.factLabels)) {
+        if (isSupportLabel(v)) factLabels[k] = v;
+      }
+    }
+    const reviewed = runtime.seo.reviewProposal({
+      proposalId: body.proposalId,
+      factLabels,
+      schemaValidationId: body.schemaValidationId ?? null,
+    });
+    json(res, 200, reviewed, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/seo/approve-proposal") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      proposalId?: string;
+      factLabels?: Record<string, string>;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.proposalId) {
+      json(res, 400, { error: "MISSING_PROPOSAL_ID" }, cors);
+      return;
+    }
+    const factLabels: Record<string, SupportLabelValue> = {};
+    if (body.factLabels) {
+      for (const [k, v] of Object.entries(body.factLabels)) {
+        if (isSupportLabel(v)) factLabels[k] = v;
+      }
+    }
+    const approved = runtime.seo.approveProposal({
+      proposalId: body.proposalId,
+      factLabels,
+    });
+    json(res, approved.ok ? 200 : 400, approved, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/seo/search") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: { rawQuery?: string; query?: string };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    const rawQuery = (body.rawQuery ?? body.query ?? "").trim();
+    if (!rawQuery) {
+      json(res, 400, { error: "MISSING_QUERY" }, cors);
+      return;
+    }
+    const search = runtime.seo.semanticSearch({ rawQuery });
+    if (!search.ok) {
+      json(res, 400, search, cors);
+      return;
+    }
+    json(res, 200, search, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/seo/release-pilot") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      proposalId?: string;
+      skipVerification?: boolean;
+      forceFailure?: boolean;
+      proveMapping?: boolean;
+      factLabels?: Record<string, string>;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.proposalId) {
+      json(res, 400, { error: "MISSING_PROPOSAL_ID" }, cors);
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    const demo = createDemoPublishGrant(nowIso);
+    const auth = runtime.store.read();
+    if (!auth.capabilityGrants.some((g) => g.grantId === demo.grant.grantId)) {
+      runtime.store.update((state) => ({
+        ...state,
+        standingPolicies: [
+          ...state.standingPolicies.filter(
+            (p) => p.policyId !== demo.policy.policyId,
+          ),
+          demo.policy,
+        ],
+        capabilityGrants: [
+          ...state.capabilityGrants.filter(
+            (g) => g.grantId !== demo.grant.grantId,
+          ),
+          demo.grant,
+        ],
+        updatedAt: nowIso,
+      }));
+    }
+
+    const authorityState = runtime.store.read();
+    const productionMapping =
+      body.proveMapping === false
+        ? createFixtureSeoPilotMapping(nowIso).state
+        : runtime.seo.seedAndProveSeoMapping(nowIso).mapping;
+
+    const factLabels: Record<string, SupportLabelValue> = {
+      "fixture-fact-hours": SupportLabel.SUPPORTED,
+      "fixture-fact-hypothesis": SupportLabel.HYPOTHESIS,
+    };
+    if (body.factLabels) {
+      for (const [k, v] of Object.entries(body.factLabels)) {
+        if (isSupportLabel(v)) factLabels[k] = v;
+      }
+    }
+
+    const released = runtime.seo.releasePilotPage({
+      proposalId: body.proposalId,
+      authority: {
+        outboundStopped: authorityState.ownerControls.outboundStopped,
+        operatingMode: authorityState.ownerControls.operatingMode,
+        policies: authorityState.standingPolicies,
+        grants: authorityState.capabilityGrants,
+      },
+      productionMapping,
+      factLabels,
+      skipVerification: body.skipVerification === true,
+      forceFailure: body.forceFailure === true,
+    });
+
+    json(
+      res,
+      200,
+      {
+        ...released,
+        note:
+          "Pilot page release via action gateway. ACCEPTED_PENDING ≠ VERIFIED. Live CMS publish remains NOT_WIRED — fixture read-back only.",
       },
       cors,
     );

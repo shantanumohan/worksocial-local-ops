@@ -7,4 +7,7 @@ export {
   monitoringPage,
   knowledgePage,
   learningPage,
-} from "./pages.js";export const packageName = "@worksocial/console" as const;
+  seoPage,
+} from "./pages.js";
+export const packageName = "@worksocial/console" as const;
+
