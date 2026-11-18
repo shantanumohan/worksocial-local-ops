@@ -1,11 +1,13 @@
 /**
- * Singleton host lease — one supervisor owns local lifecycle at a time.
- * Closing the editor must not silently destroy job state; lease is process-backed.
+ * Singleton host lease — one supervisor generation owns local lifecycle at a time.
+ * Closing the editor must not silently destroy job state; slots renew the lease.
  */
 
 export type HostLeaseRecord = {
   leaseId: string;
   hostId: string;
+  /** Generation token shared by all managed slots for this start. */
+  generationId: string;
   holderPid: number;
   acquiredAt: string;
   renewedAt: string;
@@ -39,64 +41,73 @@ export function isLeaseExpired(lease: HostLeaseRecord, nowMs: number): boolean {
   return Date.parse(lease.expiresAt) <= nowMs;
 }
 
-export function isLeaseHeldBy(
+export function isLeaseHeldByGeneration(
   lease: HostLeaseRecord | null | undefined,
   hostId: string,
-  holderPid: number,
+  generationId: string,
   nowMs: number,
 ): boolean {
   if (!lease || isLeaseExpired(lease, nowMs)) {
     return false;
   }
-  return lease.hostId === hostId && lease.holderPid === holderPid;
+  return lease.hostId === hostId && lease.generationId === generationId;
 }
 
 /**
  * Acquire or reclaim the singleton host lease.
- * Same hostId+pid renews; expired leases are reclaimable; live foreign leases deny.
+ * Same hostId+generation renews; expired leases are reclaimable; live foreign leases deny.
  */
 export function acquireHostLease(
   current: HostLeaseRecord | null | undefined,
   input: {
     hostId: string;
     holderPid: number;
+    generationId: string;
     leaseId?: string;
     ttlMs?: number;
   },
   clock: HostLeaseClock = systemClock,
 ): HostLeaseAcquireResult {
   const hostId = input.hostId.trim();
-  if (!hostId || !Number.isFinite(input.holderPid) || input.holderPid <= 0) {
+  const generationId = input.generationId.trim();
+  if (
+    !hostId ||
+    !generationId ||
+    !Number.isFinite(input.holderPid) ||
+    input.holderPid <= 0
+  ) {
     return {
       ok: false,
       reason: "INVALID_INPUT",
-      message: "hostId and positive holderPid are required to acquire a host lease.",
+      message: "hostId, generationId, and positive holderPid are required to acquire a host lease.",
     };
   }
 
   const now = clock.nowMs();
   const ttlMs = input.ttlMs ?? 60_000;
   const expired = !current || isLeaseExpired(current, now);
-  const sameHolder =
+  const sameGeneration =
     current !== null &&
     current !== undefined &&
     current.hostId === hostId &&
-    current.holderPid === input.holderPid;
+    current.generationId === generationId;
 
-  if (!expired && !sameHolder && current) {
+  if (!expired && !sameGeneration && current) {
     return {
       ok: false,
       reason: "LEASE_HELD",
-      message: `Host lease held by host=${current.hostId} pid=${current.holderPid} until ${current.expiresAt}.`,
+      message: `Host lease held by host=${current.hostId} generation=${current.generationId} until ${current.expiresAt}.`,
       holder: current,
     };
   }
 
-  const reclaimed = Boolean(current && expired && !sameHolder);
-  const acquiredAt = sameHolder && current ? current.acquiredAt : toIso(now);
+  const reclaimed = Boolean(current && expired && !sameGeneration);
+  const acquiredAt = sameGeneration && current ? current.acquiredAt : toIso(now);
   const lease: HostLeaseRecord = {
-    leaseId: input.leaseId ?? (sameHolder && current ? current.leaseId : `lease-${now}`),
+    leaseId:
+      input.leaseId ?? (sameGeneration && current ? current.leaseId : `lease-${now}`),
     hostId,
+    generationId,
     holderPid: input.holderPid,
     acquiredAt,
     renewedAt: toIso(now),
@@ -107,16 +118,26 @@ export function acquireHostLease(
   return { ok: true, lease, reclaimed };
 }
 
+/**
+ * Renew by generation so detached slots can keep the lease after the CLI exits.
+ */
 export function renewHostLease(
   current: HostLeaseRecord,
-  input: { hostId: string; holderPid: number; ttlMs?: number },
+  input: {
+    hostId: string;
+    holderPid: number;
+    generationId: string;
+    ttlMs?: number;
+  },
   clock: HostLeaseClock = systemClock,
 ): HostLeaseAcquireResult {
-  if (!isLeaseHeldBy(current, input.hostId, input.holderPid, clock.nowMs())) {
+  if (
+    !isLeaseHeldByGeneration(current, input.hostId, input.generationId, clock.nowMs())
+  ) {
     return {
       ok: false,
       reason: "LEASE_HELD",
-      message: "Cannot renew a lease not held by this host/pid.",
+      message: "Cannot renew a lease not held by this host/generation.",
       holder: current,
     };
   }
@@ -128,7 +149,8 @@ export function releaseHostLease(
   input: {
     hostId: string;
     holderPid: number;
-    /** When true, release even if holderPid differs (CLI stop after start process exited). */
+    generationId?: string;
+    /** When true, release even if holder differs (CLI stop after start process exited). */
     force?: boolean;
     /** Optional liveness probe for the recorded holder pid. */
     isHolderAlive?: (pid: number) => boolean;
@@ -142,7 +164,13 @@ export function releaseHostLease(
   if (isLeaseExpired(current, now)) {
     return { ok: true, released: true };
   }
-  if (isLeaseHeldBy(current, input.hostId, input.holderPid, now)) {
+  if (
+    input.generationId !== undefined &&
+    isLeaseHeldByGeneration(current, input.hostId, input.generationId, now)
+  ) {
+    return { ok: true, released: true };
+  }
+  if (current.hostId === input.hostId && current.holderPid === input.holderPid) {
     return { ok: true, released: true };
   }
   const holderDead =

@@ -23,6 +23,8 @@ export type ServiceHeartbeatRecord = {
   status: ServiceHealthStatus;
   wiringStatus: ServiceWiringStatus;
   pid: number | null;
+  /** Start-generation token; used to verify PID ownership before kill. */
+  generationId: string | null;
   lastHeartbeatAt: string | null;
   detail: string;
   productionActivated: false;
@@ -43,6 +45,9 @@ export const DEFAULT_SERVICE_SLOTS: readonly ServiceSlotId[] = [
   "temporal-worker",
 ] as const;
 
+/** Heartbeats older than this are treated as unhealthy (hung event loop). */
+export const DEFAULT_HEARTBEAT_STALE_MS = 10_000;
+
 export function defaultHeartbeat(
   serviceId: ServiceSlotId,
   nowIso: string | null = null,
@@ -56,6 +61,7 @@ export function defaultHeartbeat(
     status,
     wiringStatus,
     pid: null,
+    generationId: null,
     lastHeartbeatAt: nowIso,
     detail:
       serviceId === "temporal-worker"
@@ -63,6 +69,21 @@ export function defaultHeartbeat(
         : `${serviceId} process slot is stopped.`,
     productionActivated: false,
   };
+}
+
+export function isHeartbeatStale(
+  lastHeartbeatAt: string | null,
+  nowMs: number,
+  staleMs: number = DEFAULT_HEARTBEAT_STALE_MS,
+): boolean {
+  if (!lastHeartbeatAt) {
+    return true;
+  }
+  const then = Date.parse(lastHeartbeatAt);
+  if (!Number.isFinite(then)) {
+    return true;
+  }
+  return nowMs - then > staleMs;
 }
 
 export function summarizeHostHealth(

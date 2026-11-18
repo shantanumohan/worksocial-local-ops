@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import {
@@ -19,15 +20,21 @@ import type { ProcessSpawner } from "./process-manager.js";
 import type { SupervisorCommand, SupervisorResult } from "./types.js";
 
 const MANAGED_SLOTS: ServiceSlotId[] = ["api", "console", "temporal-worker"];
+const REQUIRED_READY: ServiceSlotId[] = ["api", "console"];
 
-function readHeartbeatPid(stateDir: string, serviceId: ServiceSlotId): number | null {
+type HeartbeatFile = {
+  pid?: number | null;
+  generationId?: string | null;
+  status?: string;
+};
+
+function readHeartbeatFile(stateDir: string, serviceId: ServiceSlotId): HeartbeatFile | null {
   const path = join(stateDir, `heartbeat-${serviceId}.json`);
   if (!existsSync(path)) {
     return null;
   }
   try {
-    const parsed = JSON.parse(readFileSync(path, "utf8")) as { pid?: number | null };
-    return typeof parsed.pid === "number" ? parsed.pid : null;
+    return JSON.parse(readFileSync(path, "utf8")) as HeartbeatFile;
   } catch {
     return null;
   }
@@ -103,37 +110,60 @@ function seedExampleRootsIfRequested(
   });
 }
 
-async function stopAll(
+async function stopGeneration(
   store: LocalStateStore,
   config: SupervisorConfig,
   spawner: ProcessSpawner,
+  generationId: string | null,
 ): Promise<void> {
   const state = store.read();
-  const pids = new Set<number>();
+  const targets = new Map<number, { serviceId: ServiceSlotId; generationId: string }>();
+
   for (const hb of state.heartbeats) {
-    if (hb.pid !== null) {
-      pids.add(hb.pid);
+    if (hb.pid !== null && hb.generationId) {
+      if (generationId === null || hb.generationId === generationId) {
+        targets.set(hb.pid, { serviceId: hb.serviceId, generationId: hb.generationId });
+      }
     }
   }
   for (const serviceId of MANAGED_SLOTS) {
-    const filePid = readHeartbeatPid(config.stateDir, serviceId);
-    if (filePid !== null) {
-      pids.add(filePid);
+    const file = readHeartbeatFile(config.stateDir, serviceId);
+    if (
+      file?.pid != null &&
+      typeof file.generationId === "string" &&
+      (generationId === null || file.generationId === generationId)
+    ) {
+      targets.set(file.pid, { serviceId, generationId: file.generationId });
     }
   }
-  for (const pid of pids) {
-    if (spawner.isAlive(pid)) {
-      await spawner.stop(pid);
-    }
+
+  for (const [pid, meta] of targets) {
+    await spawner.stopOwned({
+      pid,
+      serviceId: meta.serviceId,
+      generationId: meta.generationId,
+    });
   }
+
   clearHeartbeatFiles(config.stateDir);
   store.update((current) => {
-    const released = releaseHostLease(current.hostLease, {
+    const releaseInput: {
+      hostId: string;
+      holderPid: number;
+      force: true;
+      isHolderAlive: (pid: number) => boolean;
+      generationId?: string;
+    } = {
       hostId: config.hostId,
       holderPid: process.pid,
       force: true,
       isHolderAlive: (pid) => spawner.isAlive(pid),
-    });
+    };
+    const gen = generationId ?? current.hostLease?.generationId;
+    if (gen !== undefined) {
+      releaseInput.generationId = gen;
+    }
+    const released = releaseHostLease(current.hostLease, releaseInput);
     return {
       ...current,
       hostLease: released.released ? null : current.hostLease,
@@ -154,6 +184,21 @@ async function stopAll(
       }),
       updatedAt: new Date().toISOString(),
     };
+  });
+}
+
+async function stopAll(
+  store: LocalStateStore,
+  config: SupervisorConfig,
+  spawner: ProcessSpawner,
+): Promise<void> {
+  await stopGeneration(store, config, spawner, null);
+}
+
+function managedSlotsReady(health: ReturnType<typeof collectHealth>): boolean {
+  return REQUIRED_READY.every((id) => {
+    const svc = health.services.find((s) => s.serviceId === id);
+    return svc?.status === "running" && svc.pid !== null;
   });
 }
 
@@ -181,9 +226,11 @@ async function startAll(
   // Restart semantics: stop existing managed pids, then acquire lease and start.
   await stopAll(store, config, spawner);
 
+  const generationId = randomUUID();
   const leaseResult = acquireHostLease(store.read().hostLease, {
     hostId: config.hostId,
     holderPid: process.pid,
+    generationId,
     ttlMs: config.leaseTtlMs,
   });
 
@@ -206,14 +253,19 @@ async function startAll(
   let heartbeats = store.read().heartbeats;
 
   for (const serviceId of MANAGED_SLOTS) {
-    const spawned = spawner.start(serviceId, config);
-    // Slot runners may be behind a tsx shim; prefer the pid the slot itself records.
+    const spawned = spawner.start({
+      serviceId,
+      config,
+      generationId,
+      hostId: config.hostId,
+      leaseTtlMs: config.leaseTtlMs,
+    });
     let livePid = spawned.info.pid;
     if (spawned.info.command !== "memory") {
       for (let attempt = 0; attempt < 40; attempt += 1) {
-        const filePid = readHeartbeatPid(config.stateDir, serviceId);
-        if (filePid !== null) {
-          livePid = filePid;
+        const file = readHeartbeatFile(config.stateDir, serviceId);
+        if (file?.pid != null && file.generationId === generationId) {
+          livePid = file.pid;
           break;
         }
         await new Promise((r) => setTimeout(r, 25));
@@ -228,7 +280,8 @@ async function startAll(
       status: serviceId === "temporal-worker" ? "stub" : "running",
       wiringStatus: serviceId === "temporal-worker" ? "stub" : "process-managed",
       pid: livePid,
-      lastHeartbeatAt: spawned.info.startedAt,
+      generationId,
+      lastHeartbeatAt: new Date().toISOString(),
       detail,
       productionActivated: false,
     };
@@ -242,16 +295,41 @@ async function startAll(
     updatedAt: new Date().toISOString(),
   }));
 
-  const health = collectHealth(store, config, spawner);
+  let health = collectHealth(store, config, spawner);
+  for (let attempt = 0; attempt < 40 && !managedSlotsReady(health); attempt += 1) {
+    const hardFail = REQUIRED_READY.some((id) => {
+      const svc = health.services.find((s) => s.serviceId === id);
+      return svc?.status === "unhealthy";
+    });
+    if (hardFail) {
+      break;
+    }
+    await new Promise((r) => setTimeout(r, 50));
+    health = collectHealth(store, config, spawner);
+  }
+
+  if (!managedSlotsReady(health)) {
+    await stopGeneration(store, config, spawner, generationId);
+    return {
+      ok: false,
+      command: "start",
+      message:
+        "Start failed: required api/console slots unhealthy or not ready; partial children cleaned up.",
+      productionActivated: false,
+      health: collectHealth(store, config, spawner),
+      heartbeats: store.read().heartbeats,
+      stubs: stubsNote(),
+    };
+  }
 
   return {
     ok: true,
     command: "start",
-    message: `Local operations started under host lease ${leaseResult.lease.leaseId}${leaseResult.reclaimed ? " (reclaimed)" : ""}.`,
+    message: `Local operations started under host lease ${leaseResult.lease.leaseId}${leaseResult.reclaimed ? " (reclaimed)" : ""} generation=${generationId}.`,
     productionActivated: false,
-    lease: leaseResult.lease,
+    lease: store.read().hostLease ?? leaseResult.lease,
     health,
-    heartbeats,
+    heartbeats: store.read().heartbeats,
     stubs: stubsNote(),
   };
 }
@@ -313,7 +391,6 @@ export async function runSupervisorCommand(
     }
 
     case "test-local": {
-      // Restart round-trip: start → stop → start, then doctor.
       const first = await startAll(store, config, spawner);
       if (!first.ok) {
         return { ...first, command: "test-local" };

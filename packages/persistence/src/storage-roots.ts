@@ -15,6 +15,7 @@ export type StorageRootRecord = {
   id: string;
   kind: StorageRootKind;
   path: string;
+  canonicalPath: string;
   /** True when path matched a sync deny pattern at registration time. */
   syncPath: boolean;
   registeredAt: string;
@@ -44,7 +45,8 @@ export function isStorageRootKind(value: string): value is StorageRootKind {
 }
 
 /**
- * Validate a candidate storage root without touching the filesystem.
+ * Validate a candidate storage root.
+ * Sync policy uses logical + canonical paths (symlinks/junctions) unless disabled.
  * Path existence / permission checks belong to the supervisor doctor.
  */
 export function validateStorageRootCandidate(
@@ -93,7 +95,7 @@ export function validateStorageRootCandidate(
     errors.push({
       code: "DURABLE_ON_SYNC_PATH",
       kind,
-      path: syncVerdict.path,
+      path: syncVerdict.canonicalPath,
       message: syncVerdict.message,
     });
   }
@@ -105,6 +107,7 @@ export function validateStorageRootCandidate(
   const root: Omit<StorageRootRecord, "id" | "registeredAt"> = {
     kind,
     path: syncVerdict.path,
+    canonicalPath: syncVerdict.canonicalPath,
     syncPath: syncVerdict.syncPath,
   };
 
@@ -135,6 +138,9 @@ export function registerStorageRoot(
   if (options.denyPatterns !== undefined) {
     candidateOptions.denyPatterns = options.denyPatterns;
   }
+  if (options.resolveCanonical !== undefined) {
+    candidateOptions.resolveCanonical = options.resolveCanonical;
+  }
   const validated = validateStorageRootCandidate(kind, pathInput, candidateOptions);
 
   if (!validated.ok) {
@@ -146,6 +152,7 @@ export function registerStorageRoot(
     id: options.id ?? `${kind}-${nowIso}`,
     kind: validated.root.kind,
     path: validated.root.path,
+    canonicalPath: validated.root.canonicalPath,
     syncPath: validated.root.syncPath,
     registeredAt: nowIso,
     ...(options.notes !== undefined ? { notes: options.notes } : {}),
@@ -196,7 +203,7 @@ export function assertDurableRootsOffSync(
       errors.push({
         code: "DURABLE_ON_SYNC_PATH",
         kind: root.kind,
-        path: verdict.path,
+        path: verdict.canonicalPath,
         message: verdict.message,
       });
     }

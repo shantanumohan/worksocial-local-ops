@@ -91,6 +91,8 @@ describe("supervisor lifecycle", () => {
                 id: "database",
                 kind: "database" as const,
                 path: "C:/Users/ShantanuMohan/OneDrive - myworksocial.com/Documents/AgenticArmyWS/db",
+                canonicalPath:
+                  "C:/Users/ShantanuMohan/OneDrive - myworksocial.com/Documents/AgenticArmyWS/db",
                 syncPath: true,
                 registeredAt: new Date().toISOString(),
               },
@@ -106,6 +108,8 @@ describe("supervisor lifecycle", () => {
                   id: "database",
                   kind: "database" as const,
                   path: "C:/Users/ShantanuMohan/OneDrive - myworksocial.com/Documents/AgenticArmyWS/db",
+                  canonicalPath:
+                    "C:/Users/ShantanuMohan/OneDrive - myworksocial.com/Documents/AgenticArmyWS/db",
                   syncPath: true,
                   registeredAt: new Date().toISOString(),
                 },
@@ -131,5 +135,51 @@ describe("supervisor lifecycle", () => {
       true,
     );
     expect(doctor.productionActivated).toBe(false);
+  });
+
+  it("fails start and cleans up when a required slot becomes unhealthy", async () => {
+    const { store, spawner, config } = setup();
+    const originalStart = spawner.start.bind(spawner);
+    spawner.start = (request) => {
+      const spawned = originalStart(request);
+      if (request.serviceId === "api") {
+        // Simulate immediate crash of the api slot after spawn.
+        void spawner.stopOwned({
+          pid: spawned.info.pid,
+          serviceId: "api",
+          generationId: request.generationId,
+        });
+      }
+      return spawned;
+    };
+
+    const started = await runSupervisorCommand("start", store, config, spawner);
+    expect(started.ok).toBe(false);
+    expect(started.message).toMatch(/unhealthy|not ready/i);
+    expect(spawner.running.size).toBe(0);
+  });
+
+  it("does not kill a PID that fails ownership verification", async () => {
+    const { store, spawner, config } = setup();
+    const started = await runSupervisorCommand("start", store, config, spawner);
+    expect(started.ok).toBe(true);
+    const api = store.read().heartbeats.find((h) => h.serviceId === "api");
+    expect(api?.pid).toBeTruthy();
+    const foreignPid = api!.pid!;
+    const realGeneration = api!.generationId!;
+    const result = await spawner.stopOwned({
+      pid: foreignPid,
+      serviceId: "api",
+      generationId: "other-gen",
+    });
+    expect(result).toBe("skipped");
+    expect(spawner.isAlive(foreignPid)).toBe(true);
+    // Clean up with the real generation.
+    await spawner.stopOwned({
+      pid: foreignPid,
+      serviceId: "api",
+      generationId: realGeneration,
+    });
+    await runSupervisorCommand("stop", store, config, spawner);
   });
 });

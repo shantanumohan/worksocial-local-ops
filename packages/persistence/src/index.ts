@@ -8,6 +8,7 @@ export {
   isConsumerSyncPath,
   isDurableStorageKind,
   normalizePathForPolicy,
+  resolveCanonicalPath,
   type ArtifactStorageKind,
   type DurableStorageKind,
   type StorageRootKind,
@@ -33,7 +34,7 @@ export {
 export {
   acquireHostLease,
   isLeaseExpired,
-  isLeaseHeldBy,
+  isLeaseHeldByGeneration,
   releaseHostLease,
   renewHostLease,
   systemClock,
@@ -43,8 +44,10 @@ export {
 } from "./host-lease.js";
 
 export {
+  DEFAULT_HEARTBEAT_STALE_MS,
   DEFAULT_SERVICE_SLOTS,
   defaultHeartbeat,
+  isHeartbeatStale,
   summarizeHostHealth,
   type HostHealthSnapshot,
   type ServiceHealthStatus,
@@ -59,3 +62,10 @@ export {
   type LocalStateStore,
   type SupervisorRuntimeState,
 } from "./local-state-store.js";
+
+export {
+  defaultOwnershipProbe,
+  verifyProcessOwnership,
+  type ProcessOwnershipClaim,
+  type ProcessOwnershipProbe,
+} from "./process-ownership.js";

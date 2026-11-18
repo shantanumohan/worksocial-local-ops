@@ -7,8 +7,9 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 ## What is real (R1-01)
 
 - **Supervisor-owned local lifecycle** — `pnpm local:start|stop|doctor|health` and VS Code tasks call `services/supervisor` (not stubs-only).
-- **Process slots** for `api` and `console` with loopback `/health` HTTP; restart round-trip covered by tests / `test-local`.
-- **Storage-root registry + sync-path policy** — refuses durable `database` / `temporal` / `secrets` under OneDrive-style (or configurable) sync paths.
+- **Detached process slots** for `api` and `console` with loopback `/health` HTTP (survive editor/terminal close); PID kill requires generation ownership; restart round-trip covered by tests / `test-local`.
+- **Host lease renewed by running slots** (generation-scoped) so the CLI can exit after start.
+- **Storage-root registry + sync-path policy** — refuses durable `database` / `temporal` / `secrets` under OneDrive-style paths on logical **and canonical** (symlink/junction) paths.
 - **Host lease + heartbeat records** (file-backed under `.worksocial/local-state`) and SQL migration `database/migrations/002_local_execution.sql`.
 - Offline **unit tests** for domain + persistence policy + supervisor lifecycle.
 

@@ -1,8 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  DEFAULT_HEARTBEAT_STALE_MS,
   DEFAULT_SERVICE_SLOTS,
   defaultHeartbeat,
+  isHeartbeatStale,
   isLeaseExpired,
   summarizeHostHealth,
   type LocalStateStore,
@@ -32,18 +34,19 @@ export function collectHealth(
   config: SupervisorConfig,
   spawner: ProcessSpawner,
   nowIso: string = new Date().toISOString(),
+  staleMs: number = DEFAULT_HEARTBEAT_STALE_MS,
 ): ReturnType<typeof summarizeHostHealth> {
   const state = store.read();
   const nowMs = Date.parse(nowIso);
+  const effectiveNow = Number.isFinite(nowMs) ? nowMs : Date.now();
   const leaseHeld = Boolean(
-    state.hostLease && !isLeaseExpired(state.hostLease, Number.isFinite(nowMs) ? nowMs : Date.now()),
+    state.hostLease && !isLeaseExpired(state.hostLease, effectiveNow),
   );
 
   const services: ServiceHeartbeatRecord[] = DEFAULT_SERVICE_SLOTS.map((serviceId) => {
     const fromState =
       state.heartbeats.find((h) => h.serviceId === serviceId) ?? defaultHeartbeat(serviceId);
 
-    // Prefer supervisor state when it already records a clean stop.
     if (fromState.status === "stopped" && fromState.pid === null) {
       return { ...fromState, productionActivated: false as const };
     }
@@ -59,6 +62,20 @@ export function collectHealth(
         detail: `${serviceId} pid ${base.pid} is not alive.`,
         productionActivated: false as const,
       };
+    }
+
+    const active =
+      base.status === "running" || base.status === "stub" || base.status === "starting";
+    if (active && isHeartbeatStale(base.lastHeartbeatAt, effectiveNow, staleMs)) {
+      // In-memory tests do not refresh heartbeat files; skip stale if no file exists.
+      if (fromFile || existsSync(join(config.stateDir, `heartbeat-${serviceId}.json`))) {
+        return {
+          ...base,
+          status: serviceId === "temporal-worker" ? "stub" : "unhealthy",
+          detail: `${serviceId} heartbeat stale (last=${base.lastHeartbeatAt}).`,
+          productionActivated: false as const,
+        };
+      }
     }
 
     return {

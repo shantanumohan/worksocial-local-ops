@@ -1,18 +1,38 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import type { ServiceSlotId } from "@worksocial/persistence";
+import {
+  defaultOwnershipProbe,
+  verifyProcessOwnership,
+  type ProcessOwnershipProbe,
+  type ServiceSlotId,
+} from "@worksocial/persistence";
 import type { ManagedProcessInfo } from "./types.js";
 import type { SupervisorConfig } from "./config.js";
+
+export type SpawnRequest = {
+  serviceId: ServiceSlotId;
+  config: SupervisorConfig;
+  generationId: string;
+  hostId: string;
+  leaseTtlMs: number;
+};
 
 export type SpawnedSlot = {
   info: ManagedProcessInfo;
   child: ChildProcess;
 };
 
+export type StopTarget = {
+  pid: number;
+  serviceId: ServiceSlotId;
+  generationId: string;
+};
+
 export type ProcessSpawner = {
-  start(serviceId: ServiceSlotId, config: SupervisorConfig): SpawnedSlot;
-  stop(pid: number, signal?: NodeJS.Signals): Promise<void>;
+  start(request: SpawnRequest): SpawnedSlot;
+  /** Stop only when ownership of the PID is verified (or in-memory map confirms). */
+  stopOwned(target: StopTarget, signal?: NodeJS.Signals): Promise<"stopped" | "skipped">;
   isAlive(pid: number): boolean;
 };
 
@@ -28,13 +48,20 @@ function resolveTsx(repoRoot: string): string {
   return "tsx";
 }
 
-function buildArgs(serviceId: ServiceSlotId, config: SupervisorConfig): string[] {
+function buildArgs(request: SpawnRequest): string[] {
+  const { serviceId, config, generationId, hostId, leaseTtlMs } = request;
   const args = [
     slotScript(config.repoRoot),
     "--service",
     serviceId,
     "--state-dir",
     config.stateDir,
+    "--generation",
+    generationId,
+    "--host-id",
+    hostId,
+    "--lease-ttl-ms",
+    String(leaseTtlMs),
   ];
 
   if (serviceId === "api") {
@@ -57,35 +84,63 @@ function isProcessAlive(pid: number): boolean {
   }
 }
 
+async function signalAndWait(pid: number, signal: NodeJS.Signals): Promise<void> {
+  try {
+    process.kill(pid, signal);
+  } catch {
+    return;
+  }
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    if (!isProcessAlive(pid)) {
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  try {
+    process.kill(pid, "SIGKILL");
+  } catch {
+    /* already gone */
+  }
+}
+
 /**
- * Default spawner: real child processes via tsx slot runners.
+ * Default spawner: detached child processes (survive VS Code/terminal close).
  * API/console expose loopback health HTTP; temporal-worker is an honest stub slot.
  */
-export function createChildProcessSpawner(): ProcessSpawner {
+export function createChildProcessSpawner(
+  ownershipProbe: ProcessOwnershipProbe = defaultOwnershipProbe(),
+): ProcessSpawner {
   return {
-    start(serviceId, config) {
-      if (!existsSync(slotScript(config.repoRoot))) {
-        throw new Error(`Missing slot runner script for ${serviceId}`);
+    start(request) {
+      if (!existsSync(slotScript(request.config.repoRoot))) {
+        throw new Error(`Missing slot runner script for ${request.serviceId}`);
       }
-      const tsxPath = resolveTsx(config.repoRoot);
-      const args = buildArgs(serviceId, config);
+      const tsxPath = resolveTsx(request.config.repoRoot);
+      const args = buildArgs(request);
       const child = spawn(tsxPath, args, {
-        cwd: config.repoRoot,
+        cwd: request.config.repoRoot,
         env: {
           ...process.env,
-          WORKSOCIAL_SERVICE_ID: serviceId,
-          WORKSOCIAL_STATE_DIR: config.stateDir,
+          WORKSOCIAL_SERVICE_ID: request.serviceId,
+          WORKSOCIAL_STATE_DIR: request.config.stateDir,
+          WORKSOCIAL_GENERATION: request.generationId,
+          WORKSOCIAL_HOST_ID: request.hostId,
+          WORKSOCIAL_LEASE_TTL_MS: String(request.leaseTtlMs),
         },
-        stdio: ["ignore", "pipe", "pipe"],
-        detached: false,
+        stdio: "ignore",
+        detached: true,
       });
 
       if (child.pid === undefined) {
-        throw new Error(`Failed to spawn ${serviceId}`);
+        throw new Error(`Failed to spawn ${request.serviceId}`);
       }
 
+      // Allow the parent CLI/task to exit without waiting on slots.
+      child.unref();
+
       const info: ManagedProcessInfo = {
-        serviceId,
+        serviceId: request.serviceId,
         pid: child.pid,
         startedAt: new Date().toISOString(),
         command: tsxPath,
@@ -95,24 +150,23 @@ export function createChildProcessSpawner(): ProcessSpawner {
       return { info, child };
     },
 
-    async stop(pid, signal = "SIGTERM") {
-      try {
-        process.kill(pid, signal);
-      } catch {
-        return;
+    async stopOwned(target, signal = "SIGTERM") {
+      if (!isProcessAlive(target.pid)) {
+        return "skipped";
       }
-      const deadline = Date.now() + 5_000;
-      while (Date.now() < deadline) {
-        if (!isProcessAlive(pid)) {
-          return;
-        }
-        await new Promise((r) => setTimeout(r, 50));
+      const owned = verifyProcessOwnership(
+        {
+          pid: target.pid,
+          serviceId: target.serviceId,
+          generationId: target.generationId,
+        },
+        ownershipProbe,
+      );
+      if (!owned) {
+        return "skipped";
       }
-      try {
-        process.kill(pid, "SIGKILL");
-      } catch {
-        /* already gone */
-      }
+      await signalAndWait(target.pid, signal);
+      return "stopped";
     },
 
     isAlive(pid) {
@@ -125,32 +179,36 @@ export function createChildProcessSpawner(): ProcessSpawner {
  * In-memory spawner for unit tests (no real OS processes).
  */
 export function createInMemorySpawner(): ProcessSpawner & {
-  running: Map<number, ServiceSlotId>;
+  running: Map<number, { serviceId: ServiceSlotId; generationId: string }>;
   nextPid: number;
 } {
-  const running = new Map<number, ServiceSlotId>();
+  const running = new Map<number, { serviceId: ServiceSlotId; generationId: string }>();
   let nextPid = 10_000;
 
   const spawner: ProcessSpawner & {
-    running: Map<number, ServiceSlotId>;
+    running: Map<number, { serviceId: ServiceSlotId; generationId: string }>;
     nextPid: number;
   } = {
     running,
     nextPid,
-    start(serviceId, _config) {
+    start(request) {
       const pid = nextPid++;
       spawner.nextPid = nextPid;
-      running.set(pid, serviceId);
+      running.set(pid, {
+        serviceId: request.serviceId,
+        generationId: request.generationId,
+      });
       const info: ManagedProcessInfo = {
-        serviceId,
+        serviceId: request.serviceId,
         pid,
         startedAt: new Date().toISOString(),
         command: "memory",
-        args: [serviceId],
+        args: [request.serviceId, request.generationId],
       };
       const child = {
         pid,
         killed: false,
+        unref: () => undefined,
         kill: () => {
           running.delete(pid);
           return true;
@@ -158,8 +216,19 @@ export function createInMemorySpawner(): ProcessSpawner & {
       } as unknown as ChildProcess;
       return { info, child };
     },
-    async stop(pid) {
-      running.delete(pid);
+    async stopOwned(target) {
+      const entry = running.get(target.pid);
+      if (!entry) {
+        return "skipped";
+      }
+      if (
+        entry.serviceId !== target.serviceId ||
+        entry.generationId !== target.generationId
+      ) {
+        return "skipped";
+      }
+      running.delete(target.pid);
+      return "stopped";
     },
     isAlive(pid) {
       return running.has(pid);

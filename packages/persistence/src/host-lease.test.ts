@@ -13,24 +13,33 @@ function clockAt(ms: number): HostLeaseClock {
 }
 
 describe("host-lease", () => {
-  it("acquires a singleton lease", () => {
-    const result = acquireHostLease(null, { hostId: "host-a", holderPid: 100 }, clockAt(1_000));
+  it("acquires a singleton lease with generation", () => {
+    const result = acquireHostLease(
+      null,
+      { hostId: "host-a", holderPid: 100, generationId: "gen-1" },
+      clockAt(1_000),
+    );
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.lease.scope).toBe("local-singleton");
+      expect(result.lease.generationId).toBe("gen-1");
       expect(result.reclaimed).toBe(false);
     }
   });
 
-  it("denies a second live holder", () => {
-    const first = acquireHostLease(null, { hostId: "host-a", holderPid: 100 }, clockAt(1_000));
+  it("denies a second live generation", () => {
+    const first = acquireHostLease(
+      null,
+      { hostId: "host-a", holderPid: 100, generationId: "gen-1" },
+      clockAt(1_000),
+    );
     expect(first.ok).toBe(true);
     if (!first.ok) {
       return;
     }
     const second = acquireHostLease(
       first.lease,
-      { hostId: "host-b", holderPid: 200 },
+      { hostId: "host-a", holderPid: 200, generationId: "gen-2" },
       clockAt(2_000),
     );
     expect(second.ok).toBe(false);
@@ -42,7 +51,7 @@ describe("host-lease", () => {
   it("reclaims an expired lease (restart)", () => {
     const first = acquireHostLease(
       null,
-      { hostId: "host-a", holderPid: 100, ttlMs: 1_000 },
+      { hostId: "host-a", holderPid: 100, generationId: "gen-1", ttlMs: 1_000 },
       clockAt(1_000),
     );
     expect(first.ok).toBe(true);
@@ -52,20 +61,20 @@ describe("host-lease", () => {
     expect(isLeaseExpired(first.lease, 3_000)).toBe(true);
     const reclaimed = acquireHostLease(
       first.lease,
-      { hostId: "host-a", holderPid: 101, ttlMs: 5_000 },
+      { hostId: "host-a", holderPid: 101, generationId: "gen-2", ttlMs: 5_000 },
       clockAt(3_000),
     );
     expect(reclaimed.ok).toBe(true);
     if (reclaimed.ok) {
       expect(reclaimed.reclaimed).toBe(true);
-      expect(reclaimed.lease.holderPid).toBe(101);
+      expect(reclaimed.lease.generationId).toBe("gen-2");
     }
   });
 
-  it("renews and releases for the same holder", () => {
+  it("renews by generation with a different holder pid (detached slot)", () => {
     const acquired = acquireHostLease(
       null,
-      { hostId: "host-a", holderPid: 42, ttlMs: 10_000 },
+      { hostId: "host-a", holderPid: 42, generationId: "gen-1", ttlMs: 10_000 },
       clockAt(1_000),
     );
     expect(acquired.ok).toBe(true);
@@ -74,20 +83,27 @@ describe("host-lease", () => {
     }
     const renewed = renewHostLease(
       acquired.lease,
-      { hostId: "host-a", holderPid: 42, ttlMs: 10_000 },
+      { hostId: "host-a", holderPid: 99, generationId: "gen-1", ttlMs: 10_000 },
       clockAt(2_000),
     );
     expect(renewed.ok).toBe(true);
+    if (renewed.ok) {
+      expect(renewed.lease.holderPid).toBe(99);
+    }
 
     const lease: HostLeaseRecord = renewed.ok ? renewed.lease : acquired.lease;
-    const released = releaseHostLease(lease, { hostId: "host-a", holderPid: 42 }, clockAt(2_500));
+    const released = releaseHostLease(
+      lease,
+      { hostId: "host-a", holderPid: 1, generationId: "gen-1" },
+      clockAt(2_500),
+    );
     expect(released.released).toBe(true);
   });
 
-  it("force-releases when the original CLI holder pid is gone", () => {
+  it("force-releases when needed", () => {
     const acquired = acquireHostLease(
       null,
-      { hostId: "host-a", holderPid: 42, ttlMs: 10_000 },
+      { hostId: "host-a", holderPid: 42, generationId: "gen-1", ttlMs: 10_000 },
       clockAt(1_000),
     );
     expect(acquired.ok).toBe(true);

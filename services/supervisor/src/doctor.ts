@@ -1,14 +1,29 @@
-import { existsSync } from "node:fs";
+import { accessSync, constants, existsSync } from "node:fs";
 import {
   assertDurableRootsOffSync,
   listMissingArtifactRoots,
   listMissingDurableRoots,
+  resolveCanonicalPath,
   type LocalStateStore,
 } from "@worksocial/persistence";
 import type { SupervisorConfig } from "./config.js";
 import type { DoctorCheck, DoctorReport } from "./types.js";
 import { collectHealth } from "./health.js";
 import type { ProcessSpawner } from "./process-manager.js";
+
+function checkRootAccess(path: string, needWrite: boolean): string | null {
+  if (!existsSync(path)) {
+    return `Path does not exist: ${path}`;
+  }
+  try {
+    accessSync(path, needWrite ? constants.R_OK | constants.W_OK : constants.R_OK);
+    return null;
+  } catch {
+    return needWrite
+      ? `Path not readable/writable: ${path}`
+      : `Path not readable: ${path}`;
+  }
+}
 
 export function runDoctor(
   store: LocalStateStore,
@@ -54,9 +69,29 @@ export function runDoctor(
     status: syncErrors.length === 0 ? "pass" : "fail",
     message:
       syncErrors.length === 0
-        ? "No durable DB/Temporal/secrets roots under consumer sync paths."
+        ? "No durable DB/Temporal/secrets roots under consumer sync paths (logical + canonical)."
         : syncErrors.map((e) => e.message).join(" "),
   });
+
+  for (const root of state.storageRoots.roots) {
+    const needWrite =
+      root.kind === "working" ||
+      root.kind === "content" ||
+      root.kind === "reports" ||
+      root.kind === "encrypted_backup" ||
+      root.kind === "database" ||
+      root.kind === "temporal" ||
+      root.kind === "secrets";
+    const canonical = root.canonicalPath || resolveCanonicalPath(root.path);
+    const accessError = checkRootAccess(canonical, needWrite);
+    checks.push({
+      id: `root-access-${root.kind}`,
+      status: accessError ? "fail" : "pass",
+      message: accessError
+        ? `${root.kind}: ${accessError}`
+        : `${root.kind} root OK at ${canonical}`,
+    });
+  }
 
   const health = collectHealth(store, config, spawner, nowIso);
 
@@ -81,7 +116,7 @@ export function runDoctor(
     id: "host-lease",
     status: health.leaseHeld ? "pass" : "warn",
     message: health.leaseHeld
-      ? `Host lease held for ${config.hostId}.`
+      ? `Host lease held for ${config.hostId} (generation=${state.hostLease?.generationId ?? "n/a"}).`
       : "No active host lease (services may be stopped).",
   });
 
