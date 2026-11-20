@@ -795,6 +795,12 @@ export function evaluateVariantReleaseGate(input: {
       );
     } else if (verdict.variantId !== input.variant.variantId) {
       reasons.push("Variant QA verdict variantId mismatch");
+    } else if (verdict.articleId !== input.article.articleId) {
+      reasons.push("Variant QA verdict articleId does not match the article");
+    } else if (verdict.authorId !== input.article.authorId) {
+      reasons.push(
+        "Variant QA authorId must match the article's authoritative authorId",
+      );
     } else if (verdict.contentDigest !== input.variant.contentDigest) {
       reasons.push(
         "Variant QA verdict contentDigest is stale — re-review after variant edits",

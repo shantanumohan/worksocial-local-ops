@@ -688,7 +688,7 @@ export function parseSearchConstraints(rawQuery: string): ParsedSearchConstraint
   } else {
     // Preserve unrecognized location phrases rather than silently dropping them.
     const locMatch = q.match(
-      /\b(?:in|near|around)\s+([a-z][a-z\s-]{1,40}?)(?=\s+(?:with|without|under|before|after|for|on|,|\.|$))/,
+      /\b(?:in|near|around)\s+([a-z][a-z\s-]{1,40}?)(?=\s+(?:with|without|under|before|after|for|on|,|\.)|$)/,
     );
     if (locMatch?.[1]) {
       const rawLoc = locMatch[1].trim();
@@ -729,9 +729,11 @@ export function parseSearchConstraints(rawQuery: string): ParsedSearchConstraint
     unresolvedConstraints.push(`price:${priceRaw}`);
   }
 
-  // Date / timing — preserve; do not silently drop.
+  // Date / timing — preserve; do not silently drop (incl. ISO dates).
   let dateRaw: string | null = null;
   const dateMatch =
+    q.match(/\b(?:on|before|after|by)\s+(\d{4}-\d{2}-\d{2})\b/) ??
+    q.match(/\b(\d{4}-\d{2}-\d{2})\b/) ??
     q.match(
       /\b(?:on|before|after|by|this|next)\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|today|weekend|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)\b/,
     ) ??

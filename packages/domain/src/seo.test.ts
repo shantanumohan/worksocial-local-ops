@@ -346,6 +346,10 @@ describe("seo domain — semantic search", () => {
     expect(c.unresolvedConstraints.some((x) => x.startsWith("location:"))).toBe(
       true,
     );
+    const terminal = parseSearchConstraints("meeting room for 6 in Hoboken");
+    expect(
+      terminal.unresolvedConstraints.some((x) => x.startsWith("location:")),
+    ).toBe(true);
     const result = runSemanticSearch({
       queryId: "q-loc",
       rawQuery: "meeting room for 6 in Hoboken with display",
@@ -354,6 +358,24 @@ describe("seo domain — semantic search", () => {
     });
     expect(result.hits).toHaveLength(0);
     expect(result.constraints.unresolvedConstraints.join(" ")).toMatch(/hoboken/i);
+  });
+
+  it("preserves ISO date constraints as unresolved", () => {
+    const c = parseSearchConstraints(
+      "meeting room in Jersey City on 2026-12-01",
+    );
+    expect(c.dateRaw).toMatch(/2026-12-01/);
+    expect(c.unresolvedConstraints.some((x) => x.startsWith("date:"))).toBe(
+      true,
+    );
+    const result = runSemanticSearch({
+      queryId: "q-iso",
+      rawQuery: "meeting room in Jersey City on 2026-12-01",
+      index,
+      createdAtIso: now,
+    });
+    expect(result.hits).toHaveLength(0);
+    expect(result.noMatchReason).toMatch(/unresolved|Clarify|abstain/i);
   });
 });
 

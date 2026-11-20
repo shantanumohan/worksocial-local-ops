@@ -113,7 +113,9 @@ describe("feature extraction", () => {
     expect(coeffs[hashToken("label=FAILURE", FEATURE_DIM)]).toBe(0);
     expect(coeffs[hashToken("status=failed", FEATURE_DIM)]).toBe(0);
     // Pre-action priors remain present.
-    expect(coeffs[hashToken("hint.code=DENIED", FEATURE_DIM)]).toBeGreaterThan(0);
+    expect(
+      coeffs[hashToken("hint.channelId=owned-site", FEATURE_DIM)],
+    ).toBeGreaterThan(0);
   });
 
   it("does not leak SUCCESS/FAILURE labels or post-outcome fields into features (F08)", () => {
@@ -124,7 +126,9 @@ describe("feature extraction", () => {
         source: OutcomeEvidenceSource.GATEWAY_RECEIPT,
         fixtureOnly: false,
         featureHints: {
+          channelId: "owned-site",
           code: "ACCEPTED",
+          releaseDecision: "SUCCESS",
           label: "SUCCESS",
           deniedEffectCount: 2,
           costMinor: 75,
@@ -136,7 +140,9 @@ describe("feature extraction", () => {
     const tokens = examples[0]!.features.tokens.join(" ");
     expect(tokens).not.toMatch(/label=SUCCESS/);
     expect(tokens).not.toMatch(/label=FAILURE/);
-    expect(tokens).toContain("hint.code=ACCEPTED");
+    expect(tokens).not.toMatch(/releaseDecision=/);
+    expect(tokens).not.toMatch(/hint\.code=/);
+    expect(tokens).toContain("hint.channelId=owned-site");
     expect(examples[0]!.features.numerics.deniedEffectCount).toBeUndefined();
     expect(examples[0]!.features.numerics.costMinor).toBeUndefined();
   });

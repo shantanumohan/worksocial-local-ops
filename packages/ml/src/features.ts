@@ -80,28 +80,30 @@ function pushToken(tokens: string[], key: string, value: string | number | boole
   tokens.push(`${key}=${String(value)}`);
 }
 
-/** Hint keys that encode the outcome label or post-outcome measurements. */
-const POST_OUTCOME_HINT_KEYS: ReadonlySet<string> = new Set([
-  "label",
-  "outcomeLabel",
-  "status",
-  "costMinor",
-  "costKind",
-  "artifactCount",
-  "deniedEffectCount",
-  "deniedDelegationCount",
-  "acceptedReviewableCount",
-  "finishedAt",
-  "durationMs",
+/**
+ * Explicit allowlist of hint keys known before execution / settlement (F08).
+ * Everything else — including releaseDecision, gateway codes, costs — is excluded.
+ */
+const PRE_ACTION_HINT_ALLOWLIST: ReadonlySet<string> = new Set([
+  "suite",
+  "startedAt",
+  "registeredAgentName",
+  "writePathId",
+  "channelId",
+  "destinationId",
+  "operation",
+  "actionClass",
+  "siteId",
+  "assetId",
+  "fixtureOnly",
+  "labelSource",
 ]);
 
 function isPreActionHintKey(key: string): boolean {
-  const lower = key.toLowerCase();
-  if (POST_OUTCOME_HINT_KEYS.has(key)) return false;
-  if (lower === "label" || lower.endsWith("label")) return false;
-  if (lower.includes("success") || lower.includes("failure")) return false;
-  if (lower.startsWith("post.") || lower.startsWith("outcome.")) return false;
-  return true;
+  if (PRE_ACTION_HINT_ALLOWLIST.has(key)) return true;
+  // Nested pre-action namespaces only (never outcome./post./decision.).
+  if (key.startsWith("pre.") || key.startsWith("hint.pre.")) return true;
+  return false;
 }
 
 /**

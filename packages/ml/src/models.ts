@@ -38,11 +38,11 @@ export function fixtureBaselineWeights(modelId: string, nowIso: string): Trained
     throw new Error(`Unknown modelId: ${modelId}`);
   }
   const weights = new Array<number>(FEATURE_DIM).fill(0);
-  // Pre-action priors only (F08) — never label=SUCCESS/FAILURE or post-outcome status=.
-  weights[hashToken("hint.code=DENIED", FEATURE_DIM)] = 1.2;
+  // Pre-action priors only (F08) — never label=/status=/releaseDecision=/code=.
   weights[hashToken("source=stop_switch", FEATURE_DIM)] = 0.8;
   weights[hashToken("writePathId=wp-a", FEATURE_DIM)] = 0.3;
   weights[hashToken("kind=write_path", FEATURE_DIM)] = 0.1;
+  weights[hashToken("hint.channelId=owned-site", FEATURE_DIM)] = 0.2;
 
   if (pinned.algorithm === "BernoulliNB") {
     return {

@@ -132,6 +132,7 @@ describe("contract: gateway content distribution", () => {
       variantId: "golden-var-gbp",
       authority,
       productionMapping: mapping,
+      factLabels: labels,
       nowIso: now,
     });
     expect(blockedGbp.receipt?.outcome).toBe(PublicationOutcome.FAILED);
@@ -166,6 +167,7 @@ describe("contract: gateway content distribution", () => {
       variantId: "golden-var-gbp",
       authority,
       productionMapping: mapping,
+      factLabels: labels,
       nowIso: now,
     });
     expect(gbp.gatewayDecision?.allowed).toBe(true);
@@ -186,6 +188,7 @@ describe("contract: gateway content distribution", () => {
       variantId: "golden-var-linkedin",
       authority,
       productionMapping: mapping,
+      factLabels: labels,
       preferLive: true,
       nowIso: now,
     });

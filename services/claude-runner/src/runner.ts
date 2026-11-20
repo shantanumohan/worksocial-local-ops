@@ -528,9 +528,28 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
   };
 
   const enqueue = (request: RoleJobRequest): Promise<RoleJobResult> => {
-    const key = request.envelope.idempotencyKey;
+    // Include execution requirements so fixture vs requireLive cannot silently coalesce.
+    const key = [
+      request.envelope.idempotencyKey,
+      request.requireLive === true ? "live" : "any",
+      request.forceFixture === true || options.forceFixture === true
+        ? "fixture"
+        : "prefer-live-or-fixture",
+    ].join("|");
     const prior = completedByIdempotency.get(key);
     if (prior) {
+      if (
+        request.requireLive === true &&
+        prior.executionMode === RoleExecutionMode.FIXTURE &&
+        (prior.status === RoleRunStatus.SUCCEEDED ||
+          prior.status === RoleRunStatus.AWAITING_REVIEW)
+      ) {
+        // Never replay a fixture success as a requireLive result.
+        return execute({ ...request, requireLive: true }).then((r) => ({
+          ...r,
+          idempotentReplay: false,
+        }));
+      }
       return Promise.resolve({ ...prior, idempotentReplay: true });
     }
     const inflight = inflightByIdempotency.get(key);

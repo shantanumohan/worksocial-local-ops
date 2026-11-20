@@ -15,7 +15,6 @@ import {
   DestinationKind,
   OutcomeEvidenceSource,
   PublicationOutcome,
-  SupportLabel,
   VariantStatus,
   applyCanonicalReleaseVerification,
   applyVariantReleaseVerification,
@@ -25,6 +24,7 @@ import {
   createContentCampaign,
   createDestinationVariant,
   createPublicationReceipt,
+  createVariantQaVerdict,
   defaultDestinationRegistry,
   evaluateArticleApprovalGate,
   evaluateContentReadBack,
@@ -120,6 +120,18 @@ export type ContentService = {
     nowIso?: string;
   }):
     | { ok: true; verdict: ArticleQaVerdict }
+    | { ok: false; code: string; reasons: string[] };
+  /** Digest-bound per-variant QA — required before releaseVariant. */
+  recordVariantQaVerdict(input: {
+    verdictId?: string;
+    variantId: string;
+    authorId: string;
+    reviewerId: string;
+    approved: boolean;
+    summary?: string;
+    nowIso?: string;
+  }):
+    | { ok: true; verdict: VariantQaVerdict }
     | { ok: false; code: string; reasons: string[] };
   createCampaign(input: {
     campaignId?: string;
@@ -220,7 +232,8 @@ export type ContentService = {
       grants: CapabilityGrant[];
     };
     productionMapping: ProductionMappingState;
-    factLabels?: FactSupportLookup;
+    /** Current knowledge support labels — required; missing fails closed. */
+    factLabels: FactSupportLookup;
     preferLive?: boolean;
     targetAccountId?: string;
     contentRevision?: string | null;
@@ -542,6 +555,59 @@ export function createContentService(
         });
       }
 
+      return { ok: true as const, verdict: created.verdict };
+    },
+
+    recordVariantQaVerdict(input) {
+      const nowIso = input.nowIso ?? new Date().toISOString();
+      const state = store.read();
+      const variant =
+        state.variants.find((v) => v.variantId === input.variantId) ?? null;
+      if (!variant) {
+        return {
+          ok: false as const,
+          code: "VARIANT_NOT_FOUND",
+          reasons: [`Unknown variant ${input.variantId}`],
+        };
+      }
+      const article =
+        state.articles.find((a) => a.articleId === variant.articleId) ?? null;
+      if (!article) {
+        return {
+          ok: false as const,
+          code: "ARTICLE_NOT_FOUND",
+          reasons: [`Unknown article ${variant.articleId}`],
+        };
+      }
+      if (input.authorId !== article.authorId) {
+        return {
+          ok: false as const,
+          code: "VARIANT_QA_AUTHOR_MISMATCH",
+          reasons: [
+            "Variant QA authorId must match the article's authoritative authorId",
+          ],
+        };
+      }
+      const created = createVariantQaVerdict({
+        verdictId: input.verdictId ?? `vqa-${randomUUID()}`,
+        variantId: variant.variantId,
+        articleId: article.articleId,
+        authorId: article.authorId,
+        reviewerId: input.reviewerId,
+        approved: input.approved,
+        contentDigest: variant.contentDigest,
+        citedFactIds: variant.citedFactIds,
+        summary: input.summary ?? "Independent per-variant QA verdict",
+        decidedAtIso: nowIso,
+      });
+      if (!created.ok) {
+        return {
+          ok: false as const,
+          code: created.code,
+          reasons: created.reasons,
+        };
+      }
+      store.addVariantQaVerdict(created.verdict);
       return { ok: true as const, verdict: created.verdict };
     },
 
@@ -1024,24 +1090,41 @@ export function createContentService(
           .filter((v) => v.contentDigest === variant.contentDigest)
           .sort((a, b) => b.decidedAtIso.localeCompare(a.decidedAtIso))[0] ??
         null;
-      // Prefer caller labels; otherwise use variant citations from seed knowledge.
-      // Never invent SUPPORTED for unknown ids — missing labels fail the gate.
-      const factLabels: FactSupportLookup =
-        input.factLabels ??
-        new Map(
-          variant.citedFactIds.map((id) => {
-            if (article.citedFactIds.includes(id)) {
-              return [id, SupportLabel.SUPPORTED] as const;
-            }
-            return [id, SupportLabel.HYPOTHESIS] as const;
-          }),
+      // Current knowledge labels are required — never synthesize SUPPORTED from citation membership.
+      if (!input.factLabels) {
+        details.push(
+          "factLabels required for variant release — missing labels fail closed (do not infer SUPPORTED)",
         );
+        const receipt = createPublicationReceipt({
+          receiptId: `rcpt-${randomUUID()}`,
+          campaignId: variant.campaignId,
+          articleId: variant.articleId,
+          variantId: variant.variantId,
+          destinationId: variant.destinationId,
+          kind: variant.kind,
+          outcome: PublicationOutcome.FAILED,
+          summary: "factLabels required; missing labels fail closed",
+          fixtureOnly: !preferLive,
+          liveWiring: AdapterLiveStatus.NOT_WIRED,
+          recordedAtIso: nowIso,
+        });
+        store.addReceipt(receipt);
+        return {
+          variant,
+          gatewayDecision: null,
+          receipt,
+          outcome: null,
+          liveWiring: "NOT_WIRED",
+          acceptanceEqualsVerified: false,
+          details,
+        };
+      }
       const gate = evaluateVariantReleaseGate({
         variant,
         article,
         destination,
         preferLive,
-        factLabels,
+        factLabels: input.factLabels,
         variantQaVerdict,
         requireVariantQa: true,
       });

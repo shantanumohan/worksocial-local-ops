@@ -313,6 +313,7 @@ describe("content service", () => {
       variantId: "golden-var-gbp",
       authority,
       productionMapping: mapping,
+      factLabels: labels,
       nowIso: now,
     });
     expect(blocked.gatewayDecision).toBeNull();
@@ -364,6 +365,7 @@ describe("content service", () => {
       variantId: "test-var-cms",
       authority,
       productionMapping: mapping,
+      factLabels: labels,
       nowIso: now,
     });
     expect(cmsBlocked.gatewayDecision).toBeNull();
@@ -375,6 +377,7 @@ describe("content service", () => {
       variantId: "golden-var-gbp",
       authority,
       productionMapping: mapping,
+      factLabels: labels,
       nowIso: now,
     });
     expect(gbp.gatewayDecision?.allowed).toBe(true);
@@ -395,6 +398,7 @@ describe("content service", () => {
       variantId: "golden-var-facebook",
       authority,
       productionMapping: mapping,
+      factLabels: labels,
       nowIso: now,
     });
     expect(facebook.gatewayDecision?.allowed).toBe(true);
@@ -404,6 +408,7 @@ describe("content service", () => {
       variantId: "golden-var-linkedin",
       authority,
       productionMapping: mapping,
+      factLabels: labels,
       preferLive: true,
       nowIso: now,
     });
