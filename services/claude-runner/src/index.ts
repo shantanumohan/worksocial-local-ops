@@ -36,4 +36,20 @@ export {
   type RoleJobResult,
 } from "./runner.js";
 
+export {
+  simulateWriterOutput,
+  simulateReviewerOutput,
+  type OfflineFakeWriterInput,
+  type OfflineFakeReviewerInput,
+} from "./offline-fake-adapter.js";
+
+export {
+  runEvidenceCycle,
+  invalidateBindingAfterEdit,
+  type ProposalArtifactRecord,
+  type EvidenceCycleUsage,
+  type EvidenceCycleRequest,
+  type EvidenceCycleResult,
+} from "./evidence-cycle.js";
+
 export const packageName = "@worksocial/claude-runner" as const;

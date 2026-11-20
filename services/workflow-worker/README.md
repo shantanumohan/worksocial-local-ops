@@ -1,6 +1,6 @@
 # workflow-worker
 
-Mission enqueue + durable local mission runtime (M2 / NEXT-10).
+Mission enqueue + durable local mission runtime (M2 / NEXT-10) + M3 evidence missions.
 
 ## Temporal status
 
@@ -23,4 +23,14 @@ Probe: `probeTemporalBinding()`. Docs: `docs/product/temporal-binding.md`.
 5. Independent verify — **no second apply**
 6. `resumeAfterRestart` after process death at effect boundaries
 
-Not production-activated. External effects: none.
+## Evidence mission (M3 / NEXT-12)
+
+`createEvidenceMissionRuntime` / `createMemoryEvidenceMissionRuntime`:
+
+1. Compile trust-labeled input package (fail-closed on stale/unauthorized/oversized)
+2. Writer role job (offline fake/fixture by default; live fail-closed)
+3. Persist proposal + A25 review artifacts
+4. Separate A25 review bound to exact proposal revision + evidence digest
+5. LOCAL_DURABLE enqueue → accept → review → verify; restart preserves history
+
+Not production-activated. External effects: none. Does not claim R1 complete.

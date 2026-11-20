@@ -401,6 +401,9 @@ importers:
       '@worksocial/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@worksocial/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence

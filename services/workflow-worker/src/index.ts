@@ -21,4 +21,12 @@ export {
   type DurableMissionRuntime,
 } from "./durable-mission.js";
 
+export {
+  createEvidenceMissionRuntime,
+  createMemoryEvidenceMissionRuntime,
+  type EvidenceMissionSnapshot,
+  type EvidenceMissionResult,
+  type EvidenceMissionRuntime,
+} from "./evidence-mission.js";
+
 export const packageName = "@worksocial/workflow-worker" as const;

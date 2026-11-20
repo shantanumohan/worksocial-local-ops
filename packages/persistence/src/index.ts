@@ -254,3 +254,15 @@ export {
   type MissionRetryCategory,
   type MissionTemporalWiring,
 } from "./mission-workflow-store.js";
+
+export {
+  createMemoryArtifactStore,
+  createFileArtifactStore,
+  defaultArtifactStateDir,
+  putMeasuredEvidence,
+  ArtifactStoreError,
+  type StoredArtifactRevision,
+  type ArtifactPutInput,
+  type ArtifactStore,
+  type ArtifactStoreState,
+} from "./artifact-store.js";
