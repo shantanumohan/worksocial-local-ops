@@ -19,6 +19,7 @@
     { "path": "services/probes" },
     { "path": "services/knowledge" },
     { "path": "services/seo" },
+    { "path": "services/content" },
     { "path": "services/evaluation-worker" }
   ]
 }

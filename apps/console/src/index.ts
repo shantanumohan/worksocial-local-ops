@@ -8,6 +8,7 @@ export {
   knowledgePage,
   learningPage,
   seoPage,
+  contentPage,
 } from "./pages.js";
 export const packageName = "@worksocial/console" as const;
 

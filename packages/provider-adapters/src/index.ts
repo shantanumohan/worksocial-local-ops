@@ -117,7 +117,45 @@ export const R1_03_ADAPTERS: readonly AdapterDescriptor[] = [
     status: AdapterStatus.NOT_WIRED,
     capabilities: [],
     notes:
-      "Live CMS publish — NOT_WIRED (R1-07). Acceptance ≠ verified; no silent live site mutation.",
+      "Live CMS publish — NOT_WIRED (R1-07/R1-08). Acceptance ≠ verified; no silent live site mutation.",
+  },
+  {
+    adapterId: "content-fixture-distribution",
+    providerId: "content",
+    status: AdapterStatus.FIXTURE,
+    capabilities: [
+      "fixture_article_pipeline",
+      "fixture_destination_variants",
+      "fixture_cms_release",
+      "fixture_gbp_release",
+      "fixture_social_release",
+    ],
+    notes:
+      "R1-08 fixture article pipeline + gateway-gated CMS/GBP/social receipts. Canonical-first distribution. Acceptance ≠ verified.",
+  },
+  {
+    adapterId: "gbp-publish-live",
+    providerId: "gbp",
+    status: AdapterStatus.NOT_WIRED,
+    capabilities: [],
+    notes:
+      "Live Google Business Profile publish — NOT_WIRED (R1-08) without ownership verification and credentials.",
+  },
+  {
+    adapterId: "linkedin-publish-live",
+    providerId: "linkedin",
+    status: AdapterStatus.NOT_WIRED,
+    capabilities: [],
+    notes:
+      "Live LinkedIn organization posts — NOT_WIRED (R1-08) without org role and credentials.",
+  },
+  {
+    adapterId: "facebook-publish-live",
+    providerId: "facebook",
+    status: AdapterStatus.NOT_WIRED,
+    capabilities: [],
+    notes:
+      "Live Facebook/Instagram posts — NOT_WIRED (R1-08) without app review/scopes.",
   },
 ] as const;
 

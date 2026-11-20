@@ -258,6 +258,101 @@ export function createDemoPublishGrant(nowIso: string): {
   return { policy, grant };
 }
 
+/**
+ * Standing policies+grants for R1-08 content distribution fixtures.
+ * Separate channels for CMS, GBP, and LinkedIn — live adapters remain NOT_WIRED.
+ */
+export function createDemoContentDistributionGrants(nowIso: string): {
+  policy: StandingPolicy;
+  grant: CapabilityGrant;
+  gbpPolicy: StandingPolicy;
+  gbpGrant: CapabilityGrant;
+  linkedinPolicy: StandingPolicy;
+  linkedinGrant: CapabilityGrant;
+} {
+  const assetScope = ["article-training-brief"];
+  const policy: StandingPolicy = {
+    policyId: "pol-demo-content-cms",
+    version: 1,
+    actorRole: LocalRole.ADMINISTRATOR,
+    channelId: "owned-site",
+    actionClass: ActionClass.ROUTINE_PUBLISH,
+    allowedAssetScope: assetScope,
+    enabled: true,
+    emergencyStopApplies: true,
+    expiresAtIso: null,
+    createdAtIso: nowIso,
+  };
+  const grant: CapabilityGrant = {
+    grantId: "grant-demo-content-cms",
+    policyId: policy.policyId,
+    targetAccountId: "acct-demo",
+    allowedOperations: ["publish_article"],
+    allowedAssetScope: assetScope,
+    contentRevisionBound: "rev-content-demo",
+    rateLimitPerHour: 5,
+    expiresAtIso: null,
+    revoked: false,
+    createdAtIso: nowIso,
+  };
+  const gbpPolicy: StandingPolicy = {
+    policyId: "pol-demo-content-gbp",
+    version: 1,
+    actorRole: LocalRole.ADMINISTRATOR,
+    channelId: "gbp",
+    actionClass: ActionClass.ROUTINE_PUBLISH,
+    allowedAssetScope: assetScope,
+    enabled: true,
+    emergencyStopApplies: true,
+    expiresAtIso: null,
+    createdAtIso: nowIso,
+  };
+  const gbpGrant: CapabilityGrant = {
+    grantId: "grant-demo-content-gbp",
+    policyId: gbpPolicy.policyId,
+    targetAccountId: "acct-demo",
+    allowedOperations: ["publish_gbp_update"],
+    allowedAssetScope: assetScope,
+    contentRevisionBound: "rev-content-demo",
+    rateLimitPerHour: 5,
+    expiresAtIso: null,
+    revoked: false,
+    createdAtIso: nowIso,
+  };
+  const linkedinPolicy: StandingPolicy = {
+    policyId: "pol-demo-content-linkedin",
+    version: 1,
+    actorRole: LocalRole.ADMINISTRATOR,
+    channelId: "linkedin",
+    actionClass: ActionClass.ROUTINE_PUBLISH,
+    allowedAssetScope: assetScope,
+    enabled: true,
+    emergencyStopApplies: true,
+    expiresAtIso: null,
+    createdAtIso: nowIso,
+  };
+  const linkedinGrant: CapabilityGrant = {
+    grantId: "grant-demo-content-linkedin",
+    policyId: linkedinPolicy.policyId,
+    targetAccountId: "acct-demo",
+    allowedOperations: ["publish_social_post"],
+    allowedAssetScope: assetScope,
+    contentRevisionBound: "rev-content-demo",
+    rateLimitPerHour: 5,
+    expiresAtIso: null,
+    revoked: false,
+    createdAtIso: nowIso,
+  };
+  return {
+    policy,
+    grant,
+    gbpPolicy,
+    gbpGrant,
+    linkedinPolicy,
+    linkedinGrant,
+  };
+}
+
 /** Standing policy+grant for fixture form-to-CRM canaries (R1-05). */
 export function createDemoCanaryGrant(nowIso: string): {
   policy: StandingPolicy;

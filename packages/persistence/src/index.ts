@@ -76,6 +76,7 @@ export {
   emptyAuthorityState,
   defaultProviderStatuses,
   createDemoPublishGrant,
+  createDemoContentDistributionGrants,
   createDemoCanaryGrant,
   defaultAuthorityStateDir,
   hashPassword,
@@ -129,3 +130,9 @@ export {
   defaultSeoStateDir,
   type SeoStore,
 } from "./seo-store.js";
+
+export {
+  createFileContentStore,
+  defaultContentStateDir,
+  type ContentStore,
+} from "./content-store.js";

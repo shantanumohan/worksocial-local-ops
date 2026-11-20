@@ -89,7 +89,7 @@ export function authorityPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -199,7 +199,7 @@ export function mappingPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -340,7 +340,7 @@ export function rolesPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -482,7 +482,7 @@ export function monitoringPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -615,7 +615,7 @@ export function learningPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -747,7 +747,7 @@ export function knowledgePage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -933,7 +933,7 @@ export function seoPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -1100,6 +1100,237 @@ export function seoPage(apiOrigin: string): string {
     const body = await res.json();
     document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
     document.getElementById('search-out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-refresh').onclick = () => refresh();
+  refresh();
+</script>
+</body>
+</html>`;
+}
+
+export function contentPage(apiOrigin: string): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WorkSocial — Content &amp; distribution</title>
+  <style>
+    :root { --ink:#1b2a22; --panel:#fff; --accent:#2f6b4f; --warn:#8a5a00; }
+    body { margin:0; font-family:"IBM Plex Sans","Segoe UI",sans-serif; background:
+      linear-gradient(180deg,#e7efe9,#f6f3ec); color:var(--ink); }
+    header { padding:1.25rem 1.5rem; border-bottom:1px solid #c9d6cc; background:rgba(255,255,255,.7); }
+    h1 { font-family:"IBM Plex Serif",Georgia,serif; margin:0; font-size:1.45rem; }
+    main { max-width:980px; margin:0 auto; padding:1.5rem; display:grid; gap:1rem; }
+    section { background:var(--panel); border:1px solid #c9d6cc; padding:1rem 1.1rem; }
+    h2 { margin:.2rem 0 .6rem; font-size:1.05rem; }
+    .row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; }
+    button { background:var(--accent); color:#fff; border:0; padding:.5rem .85rem; cursor:pointer; }
+    table { width:100%; border-collapse:collapse; font-size:.9rem; }
+    th, td { text-align:left; padding:.35rem .25rem; border-bottom:1px solid #e0e7e2; vertical-align:top; }
+    .muted { color:#516258; font-size:.85rem; }
+    .warn { color:var(--warn); }
+    .pill { display:inline-block; padding:.15rem .45rem; border:1px solid #b7c5bb; font-size:.75rem; }
+    pre { white-space:pre-wrap; font-size:.8rem; max-height:280px; overflow:auto; }
+    input { width:100%; box-sizing:border-box; padding:.45rem .55rem; border:1px solid #b7c5bb; margin:.25rem 0 .6rem; }
+    label { font-size:.85rem; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>WorkSocial</h1>
+  <p class="muted" id="who">Checking session…</p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+</header>
+<main>
+  <section>
+    <h2>Content and distribution (R1-08)</h2>
+    <p class="muted">Article pipeline, destination variants, gateway-gated CMS/GBP/social receipts.</p>
+    <p class="warn">Live CMS / GBP / social are <strong>NOT_WIRED</strong>. Gateway acceptance ≠ verified. Released claims require <strong>SUPPORTED</strong> facts. Canonical owned-site first; dependents wait for verified URL. Set Authority mode to <strong>operate</strong>.</p>
+    <div class="row">
+      <button id="btn-seed" type="button">Seed fixtures</button>
+      <button id="btn-refresh" type="button">Refresh</button>
+    </div>
+    <p class="muted" id="note"></p>
+  </section>
+  <section>
+    <h2>Status</h2>
+    <table>
+      <thead><tr><th>Signal</th><th>Value</th></tr></thead>
+      <tbody id="status-rows"><tr><td colspan="2" class="muted">Loading…</td></tr></tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Release controls</h2>
+    <label for="art-id">Article id</label>
+    <input id="art-id" placeholder="golden-art-training" />
+    <label for="var-id">Variant id</label>
+    <input id="var-id" placeholder="golden-var-gbp" />
+    <div class="row">
+      <button id="btn-ensure-map" type="button">Ensure fixture mapping</button>
+      <button id="btn-approve" type="button">Approve article</button>
+      <button id="btn-release-cms" type="button">Release canonical (gateway)</button>
+      <button id="btn-verify-cms" type="button">Verify canonical</button>
+      <button id="btn-release-var" type="button">Release variant</button>
+      <button id="btn-verify-var" type="button">Verify variant</button>
+      <button id="btn-live-var" type="button">Try live variant (NOT_WIRED)</button>
+    </div>
+    <pre id="out">—</pre>
+  </section>
+  <section>
+    <h2>Campaigns / articles / variants / receipts</h2>
+    <pre id="ledger">Loading…</pre>
+  </section>
+</main>
+<script>
+  const API = ${JSON.stringify(apiOrigin)};
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ origin: window.location.origin }, opts.headers || {});
+    const csrf = sessionStorage.getItem('ws_csrf');
+    if (opts.method && opts.method !== 'GET' && csrf) headers['x-csrf-token'] = csrf;
+    return fetch(API + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+  }
+  async function refresh() {
+    const session = await api('/auth/session');
+    if (!session.ok) { location.href = '/login'; return; }
+    const s = await session.json();
+    sessionStorage.setItem('ws_csrf', s.csrfToken);
+    document.getElementById('who').textContent = s.username + ' · ' + s.role + ' · local session';
+    const [statusRes, campsRes, artsRes, varsRes, rcptsRes] = await Promise.all([
+      api('/content/status'),
+      api('/content/campaigns'),
+      api('/content/articles'),
+      api('/content/variants'),
+      api('/content/receipts'),
+    ]);
+    if (!statusRes.ok) { location.href = '/login'; return; }
+    const status = await statusRes.json();
+    const camps = await campsRes.json();
+    const arts = await artsRes.json();
+    const vars = await varsRes.json();
+    const rcpts = await rcptsRes.json();
+    const tbody = document.getElementById('status-rows');
+    tbody.replaceChildren();
+    const rows = [
+      ['Live CMS', status.liveCmsPublishWiring],
+      ['Live GBP', status.liveGbpWiring],
+      ['Live social', status.liveSocialWiring],
+      ['Campaigns', String(status.campaignCount ?? 0)],
+      ['Articles', String(status.articleCount ?? 0)],
+      ['Variants', String(status.variantCount ?? 0)],
+      ['Receipts', String(status.receiptCount ?? 0)],
+      ['Release outcomes', String(status.releaseOutcomeCount ?? 0)],
+    ];
+    for (const [k, v] of rows) {
+      const tr = document.createElement('tr');
+      const tdK = document.createElement('td');
+      tdK.textContent = k;
+      const tdV = document.createElement('td');
+      const pill = document.createElement('span');
+      pill.className = 'pill';
+      pill.textContent = String(v);
+      tdV.appendChild(pill);
+      tr.appendChild(tdK);
+      tr.appendChild(tdV);
+      tbody.appendChild(tr);
+    }
+    document.getElementById('ledger').textContent = JSON.stringify({
+      campaigns: camps.campaigns || [],
+      articles: arts.articles || [],
+      variants: vars.variants || [],
+      receipts: rcpts.receipts || [],
+    }, null, 2);
+    document.getElementById('note').textContent = status.note || status.honestNote || '';
+    const firstArt = (arts.articles || [])[0];
+    if (firstArt && !document.getElementById('art-id').value) {
+      document.getElementById('art-id').value = firstArt.articleId;
+    }
+    const firstVar = (vars.variants || [])[0];
+    if (firstVar && !document.getElementById('var-id').value) {
+      document.getElementById('var-id').value = firstVar.variantId;
+    }
+  }
+  document.getElementById('btn-seed').onclick = async () => {
+    document.getElementById('note').textContent = 'Seeding golden content fixtures…';
+    const res = await api('/content/seed-fixtures', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.note || (res.ok ? 'Seeded' : (body.error || 'failed'));
+    refresh();
+  };
+  document.getElementById('btn-ensure-map').onclick = async () => {
+    const res = await api('/content/ensure-fixture-mapping', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.note || body.reason || body.error || (res.ok ? 'Mapping ready' : 'failed');
+  };
+  document.getElementById('btn-approve').onclick = async () => {
+    const articleId = document.getElementById('art-id').value;
+    const res = await api('/content/approve-article', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ articleId })
+    });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.reasons?.join('; ') || body.error || (res.ok ? 'Approved' : 'failed');
+    refresh();
+  };
+  document.getElementById('btn-release-cms').onclick = async () => {
+    const articleId = document.getElementById('art-id').value;
+    const res = await api('/content/release-canonical', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ articleId })
+    });
+    const body = await res.json();
+    document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-verify-cms').onclick = async () => {
+    const articleId = document.getElementById('art-id').value;
+    const ledger = JSON.parse(document.getElementById('ledger').textContent || '{}');
+    const row = (ledger.articles || []).find(a => a.articleId === articleId);
+    const observedFields = row ? { title: row.title, body: row.body, contentDigest: row.contentDigest } : {};
+    const res = await api('/content/verify-canonical', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ articleId, observedFields })
+    });
+    const body = await res.json();
+    document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-release-var').onclick = async () => {
+    const variantId = document.getElementById('var-id').value;
+    const res = await api('/content/release-variant', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ variantId })
+    });
+    const body = await res.json();
+    document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-verify-var').onclick = async () => {
+    const variantId = document.getElementById('var-id').value;
+    const ledger = JSON.parse(document.getElementById('ledger').textContent || '{}');
+    const row = (ledger.variants || []).find(v => v.variantId === variantId);
+    const observedFields = row ? { title: row.title, body: row.body } : {};
+    const res = await api('/content/verify-variant', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ variantId, observedFields })
+    });
+    const body = await res.json();
+    document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-live-var').onclick = async () => {
+    const variantId = document.getElementById('var-id').value;
+    const res = await api('/content/release-variant', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ variantId, preferLive: true })
+    });
+    const body = await res.json();
+    document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
     refresh();
   };
   document.getElementById('btn-refresh').onclick = () => refresh();
