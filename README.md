@@ -96,16 +96,17 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - Console `/content` + API `/content/*` — campaigns, articles, variants, receipts, release/verify.
 - SQL `010_content.sql` companion schema; **live CMS / GBP / social remain `NOT_WIRED`**.
 
-### R1-09 Customer response / after-hours
-- **Unified inbox domain** — conversations, messages, leases, response policy, handoffs, qualified leads, booking evidence.
-- **Concierge drafts** grounded in **SUPPORTED** facts only; identifies as virtual assistant; no invented prices/availability.
-- **Human takeover** increments conversation version and cancels queued agent sends; gateway re-checks version before send.
-- **Fixture Zoho lead logging** via action gateway + mapping gates; synthetic leads excluded from commercial totals.
+### R1-09 / M7 (NEXT-18) Customer response / after-hours
+- **Unified inbox domain** — conversations, messages, leases, response policy, handoffs, qualified leads, booking evidence, webhook events, ownership ledger.
+- **Fixture webhook simulator** (`POST /inbox/ingest-fixture`) with durable `providerEventId` coalesce — no duplicate inbound rows.
+- **Concierge drafts** grounded in **SUPPORTED** facts only; states **draft → queued → sent → delivered** (acceptance ≠ delivery).
+- **Human takeover** increments conversation version and cancels **every unsent** agent response (queued + draft rows + unqueued drafts); gateway re-checks version before send.
+- **Fixture Zoho lead logging** with inbound/event coalesce (no duplicate leads on webhook replay); synthetic leads excluded from commercial totals.
 - **Morning handoff** with acknowledgement; pause-replies control distinct from takeover.
 - **No reservation without booking evidence** — recommendation / tour request / booking link ≠ confirmation.
 - **Learning hooks** — SUCCESS/FAILURE send/lead outcomes (`fixtureOnly` when fixture).
-- Console `/inbox` + API `/inbox/*` — seed, draft, queue, send, takeover, log-lead, handoff.
-- SQL `011_inbox.sql` companion schema; **live inbox providers and live Zoho remain `NOT_WIRED`**.
+- Console `/inbox` — conversation list, chronological timeline, ownership badge, takeover control.
+- SQL `011_inbox.sql` + `018_inbox_m7.sql` companions; **live inbox / Zoho remain `NOT_WIRED`**. **Temporal NOT_WIRED**. Not an R1-complete claim.
 
 ### M4 Owner staging workflow (NEXT-13–15)
 - **Console** — `/activation`, `/connections`, `/sites`, `/missions`, `/review`, `/evidence` wired to typed `/owner/*` APIs; safe text rendering (no raw ID/JSON as primary UI).
@@ -169,7 +170,7 @@ pnpm local:doctor | local:start | local:stop | local:health
 pnpm check
 pnpm test:acceptance-matrix   # 159-case catalog ↔ matrix alignment (all NOT_RUN)
 pnpm test:unit                # domain + ml + persistence + supervisor + gateway + broker + runners + learning-worker + probes + knowledge + seo + content + inbox + repair + api
-pnpm test:contract            # unauthorized-write + stop-switch + read-evidence + thirty-role-runtime + learning-worker + form-crm-canary + knowledge-labeling + seo-search + content-distribution + inbox-after-hours + bounded-repair + lead-capture-m5
+pnpm test:contract            # … + inbox-after-hours + inbox-m7 + lead-capture-m5 + …
 pnpm test:e2e                 # offline e2e-lite HTTP→DOM→canary + M5 lead journey (not browser product acceptance)
 pnpm test:database | test:workflow | test:security | test:eval   # stubs — exit 1 / INCOMPLETE
 pnpm recovery:rehearse | release:evidence                        # stubs — exit 1 / INCOMPLETE

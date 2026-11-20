@@ -1442,27 +1442,41 @@ export function inboxPage(apiOrigin: string): string {
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>WorkSocial — Inbox &amp; concierge</title>
+  <title>WorkSocial — Inbox &amp; after-hours (M7)</title>
   <style>
-    :root { --ink:#1b2a22; --panel:#fff; --accent:#2f6b4f; --warn:#8a5a00; --stop:#8b1e1e; }
+    :root { --ink:#1b2a22; --panel:#fff; --accent:#2f6b4f; --warn:#8a5a00; --stop:#8b1e1e; --line:#c9d6cc; }
     body { margin:0; font-family:"IBM Plex Sans","Segoe UI",sans-serif; background:
       linear-gradient(180deg,#e7efe9,#f6f3ec); color:var(--ink); }
-    header { padding:1.25rem 1.5rem; border-bottom:1px solid #c9d6cc; background:rgba(255,255,255,.7); }
+    header { padding:1.25rem 1.5rem; border-bottom:1px solid var(--line); background:rgba(255,255,255,.7); }
     h1 { font-family:"IBM Plex Serif",Georgia,serif; margin:0; font-size:1.45rem; }
-    main { max-width:980px; margin:0 auto; padding:1.5rem; display:grid; gap:1rem; }
-    section { background:var(--panel); border:1px solid #c9d6cc; padding:1rem 1.1rem; }
+    main { max-width:1100px; margin:0 auto; padding:1.5rem; display:grid; gap:1rem; }
+    section { background:var(--panel); border:1px solid var(--line); padding:1rem 1.1rem; }
     h2 { margin:.2rem 0 .6rem; font-size:1.05rem; }
     .row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; }
+    .split { display:grid; grid-template-columns:minmax(220px,280px) 1fr; gap:1rem; }
+    @media (max-width:820px) { .split { grid-template-columns:1fr; } }
     button { background:var(--accent); color:#fff; border:0; padding:.5rem .85rem; cursor:pointer; }
     button.danger { background:var(--stop); }
+    button.ghost { background:#eef3ef; color:var(--ink); border:1px solid var(--line); }
     table { width:100%; border-collapse:collapse; font-size:.9rem; }
     th, td { text-align:left; padding:.35rem .25rem; border-bottom:1px solid #e0e7e2; vertical-align:top; }
     .muted { color:#516258; font-size:.85rem; }
     .warn { color:var(--warn); }
-    .pill { display:inline-block; padding:.15rem .45rem; border:1px solid #b7c5bb; font-size:.75rem; }
-    pre { white-space:pre-wrap; font-size:.8rem; max-height:280px; overflow:auto; }
+    .pill { display:inline-block; padding:.15rem .45rem; border:1px solid #b7c5bb; font-size:.75rem; margin-right:.25rem; }
+    .pill.human { border-color:#8b1e1e; color:#8b1e1e; }
+    .pill.agent { border-color:#2f6b4f; color:#2f6b4f; }
+    pre { white-space:pre-wrap; font-size:.8rem; max-height:220px; overflow:auto; }
     input { width:100%; box-sizing:border-box; padding:.45rem .55rem; border:1px solid #b7c5bb; margin:.25rem 0 .6rem; }
     label { font-size:.85rem; }
+    .thread { list-style:none; margin:0; padding:0; display:grid; gap:.35rem; max-height:320px; overflow:auto; }
+    .thread button { width:100%; text-align:left; background:#f4f8f5; color:var(--ink); border:1px solid var(--line); }
+    .thread button.active { outline:2px solid var(--accent); }
+    .timeline { list-style:none; margin:0; padding:0; display:grid; gap:.55rem; }
+    .timeline li { border-left:3px solid var(--line); padding:.35rem .6rem .35rem .75rem; background:#f7faf8; }
+    .timeline li.inbound { border-left-color:#3a6ea5; }
+    .timeline li.outbound { border-left-color:#2f6b4f; }
+    .timeline li.ownership_takeover, .timeline li.draft_invalidated { border-left-color:#8b1e1e; }
+    .timeline .kind { font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:#516258; }
   </style>
 </head>
 <body>
@@ -1473,12 +1487,14 @@ export function inboxPage(apiOrigin: string): string {
 </header>
 <main>
   <section>
-    <h2>Inbox and after-hours concierge (R1-09)</h2>
-    <p class="muted">Fixture inbox, supported-fact replies, Zoho lead logging, human takeover, morning handoff.</p>
-    <p class="warn">Live inbox providers and live Zoho are <strong>NOT_WIRED</strong>. Takeover increments conversation version and cancels queued agent sends. No reservation without booking evidence. Set Authority mode to <strong>operate</strong>.</p>
+    <h2>Inbox and after-hours (M7 / NEXT-18)</h2>
+    <p class="muted">Fixture webhook intake, SUPPORTED-fact replies (draft → queued → sent → delivered), CRM lead coalesce, ownership versioning, human takeover.</p>
+    <p class="warn">Live inbox providers and live Zoho are <strong>NOT_WIRED</strong>. Temporal stays <strong>NOT_WIRED</strong>. Takeover cancels every unsent agent response. Duplicate webhooks coalesce. External effects: none.</p>
     <div class="row">
       <button id="btn-seed" type="button">Seed fixtures</button>
       <button id="btn-ensure-map" type="button">Ensure fixture mapping</button>
+      <button id="btn-ingest" type="button">Simulate inbound webhook</button>
+      <button id="btn-dup" type="button" class="ghost">Replay duplicate webhook</button>
       <button id="btn-refresh" type="button">Refresh</button>
     </div>
     <p class="muted" id="note"></p>
@@ -1490,37 +1506,96 @@ export function inboxPage(apiOrigin: string): string {
       <tbody id="status-rows"><tr><td colspan="2" class="muted">Loading…</td></tr></tbody>
     </table>
   </section>
+  <section class="split">
+    <div>
+      <h2>Conversations</h2>
+      <ul class="thread" id="thread-list"><li class="muted">Loading…</li></ul>
+      <label for="conv-id">Conversation id</label>
+      <input id="conv-id" placeholder="golden-conv-after-hours" />
+      <div id="ownership" class="muted">Ownership —</div>
+    </div>
+    <div>
+      <h2>Timeline</h2>
+      <ul class="timeline" id="timeline"><li class="muted">Select a conversation</li></ul>
+    </div>
+  </section>
   <section>
-    <h2>Conversation controls</h2>
-    <label for="conv-id">Conversation id</label>
-    <input id="conv-id" placeholder="golden-conv-after-hours" />
+    <h2>Response / takeover controls</h2>
     <label for="draft-id">Draft id</label>
     <input id="draft-id" placeholder="filled after draft" />
-    <label for="msg-id">Queued message id</label>
+    <label for="msg-id">Queued / sent message id</label>
     <input id="msg-id" placeholder="filled after queue" />
+    <label for="event-id">Last webhook providerEventId</label>
+    <input id="event-id" placeholder="filled after ingest" />
     <div class="row">
       <button id="btn-draft" type="button">Draft reply</button>
       <button id="btn-queue" type="button">Queue reply</button>
       <button id="btn-send" type="button">Send via gateway</button>
+      <button id="btn-deliver" type="button">Confirm delivery</button>
       <button id="btn-takeover" type="button" class="danger">Take over</button>
+      <button id="btn-pause" type="button" class="ghost">Pause replies</button>
       <button id="btn-lead" type="button">Log fixture lead</button>
       <button id="btn-handoff" type="button">Create handoff</button>
-      <button id="btn-live" type="button">Try live send (NOT_WIRED)</button>
+      <button id="btn-live" type="button" class="ghost">Try live send (NOT_WIRED)</button>
     </div>
     <pre id="out">—</pre>
-  </section>
-  <section>
-    <h2>Conversations / messages / leads / handoffs</h2>
-    <pre id="ledger">Loading…</pre>
   </section>
 </main>
 <script>
   const API = ${JSON.stringify(apiOrigin)};
+  let lastWebhook = null;
   async function api(path, opts = {}) {
     const headers = Object.assign({ origin: window.location.origin }, opts.headers || {});
     const csrf = sessionStorage.getItem('ws_csrf');
     if (opts.method && opts.method !== 'GET' && csrf) headers['x-csrf-token'] = csrf;
     return fetch(API + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+  }
+  function setNote(text) { document.getElementById('note').textContent = text || ''; }
+  function setOut(body) { document.getElementById('out').textContent = JSON.stringify(body, null, 2); }
+  async function loadTimeline(conversationId) {
+    if (!conversationId) return;
+    const res = await api('/inbox/timeline?conversationId=' + encodeURIComponent(conversationId));
+    const body = await res.json();
+    const ul = document.getElementById('timeline');
+    ul.replaceChildren();
+    if (!body.ok) {
+      const li = document.createElement('li');
+      li.className = 'muted';
+      li.textContent = body.reasons?.join('; ') || 'No timeline';
+      ul.appendChild(li);
+      return;
+    }
+    const conv = body.conversation;
+    const own = document.getElementById('ownership');
+    own.replaceChildren();
+    const v = document.createElement('span');
+    v.className = 'pill';
+    v.textContent = 'v' + conv.version;
+    const owner = document.createElement('span');
+    owner.className = 'pill ' + (conv.humanOwned ? 'human' : 'agent');
+    owner.textContent = conv.humanOwned ? 'human owned' : 'agent allowed';
+    const st = document.createElement('span');
+    st.className = 'pill';
+    st.textContent = conv.status;
+    own.appendChild(v); own.appendChild(owner); own.appendChild(st);
+    for (const row of body.timeline || []) {
+      const li = document.createElement('li');
+      li.className = row.kind;
+      const kind = document.createElement('div');
+      kind.className = 'kind';
+      kind.textContent = row.kind + ' · ' + row.atIso;
+      const summary = document.createElement('div');
+      summary.textContent = row.summary;
+      li.appendChild(kind);
+      li.appendChild(summary);
+      if (row.meta && row.meta.sendStatus) {
+        const meta = document.createElement('div');
+        meta.className = 'muted';
+        meta.textContent = 'status=' + row.meta.sendStatus;
+        li.appendChild(meta);
+      }
+      ul.appendChild(li);
+    }
   }
   async function refresh() {
     const session = await api('/auth/session');
@@ -1528,19 +1603,13 @@ export function inboxPage(apiOrigin: string): string {
     const s = await session.json();
     sessionStorage.setItem('ws_csrf', s.csrfToken);
     document.getElementById('who').textContent = s.username + ' · ' + s.role + ' · local session';
-    const [statusRes, convRes, msgRes, leadRes, hoRes] = await Promise.all([
+    const [statusRes, convRes] = await Promise.all([
       api('/inbox/status'),
       api('/inbox/conversations'),
-      api('/inbox/messages'),
-      api('/inbox/leads'),
-      api('/inbox/handoffs'),
     ]);
     if (!statusRes.ok) { location.href = '/login'; return; }
     const status = await statusRes.json();
     const convs = await convRes.json();
-    const msgs = await msgRes.json();
-    const leads = await leadRes.json();
-    const hos = await hoRes.json();
     const tbody = document.getElementById('status-rows');
     tbody.replaceChildren();
     const rows = [
@@ -1549,60 +1618,91 @@ export function inboxPage(apiOrigin: string): string {
       ['Conversations', String(status.conversationCount ?? 0)],
       ['Messages', String(status.messageCount ?? 0)],
       ['Queued', String(status.queuedCount ?? 0)],
+      ['Webhook events', String(status.webhookEventCount ?? 0)],
       ['Leads', String(status.leadCount ?? 0)],
       ['Handoffs', String(status.handoffCount ?? 0)],
       ['Replies paused', String(status.repliesPaused ?? false)],
     ];
     for (const [k, v] of rows) {
       const tr = document.createElement('tr');
-      const tdK = document.createElement('td');
-      tdK.textContent = k;
+      const tdK = document.createElement('td'); tdK.textContent = k;
       const tdV = document.createElement('td');
-      const pill = document.createElement('span');
-      pill.className = 'pill';
-      pill.textContent = String(v);
-      tdV.appendChild(pill);
-      tr.appendChild(tdK);
-      tr.appendChild(tdV);
-      tbody.appendChild(tr);
+      const pill = document.createElement('span'); pill.className = 'pill'; pill.textContent = String(v);
+      tdV.appendChild(pill); tr.appendChild(tdK); tr.appendChild(tdV); tbody.appendChild(tr);
     }
-    document.getElementById('ledger').textContent = JSON.stringify({
-      conversations: convs.conversations || [],
-      messages: msgs.messages || [],
-      leads: leads.leads || [],
-      handoffs: hos.handoffs || [],
-    }, null, 2);
-    document.getElementById('note').textContent = status.note || status.honestNote || '';
-    const first = (convs.conversations || [])[0];
-    if (first && !document.getElementById('conv-id').value) {
-      document.getElementById('conv-id').value = first.conversationId;
+    setNote(status.honestNote || status.note || '');
+    const list = document.getElementById('thread-list');
+    list.replaceChildren();
+    const conversations = convs.conversations || [];
+    if (!conversations.length) {
+      const li = document.createElement('li'); li.className = 'muted'; li.textContent = 'No conversations'; list.appendChild(li);
     }
-    const queued = (msgs.messages || []).find(m => m.sendStatus === 'queued');
-    if (queued && !document.getElementById('msg-id').value) {
-      document.getElementById('msg-id').value = queued.messageId;
+    const selected = document.getElementById('conv-id').value;
+    for (const c of conversations) {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = c.customerDisplayName + ' · ' + c.conversationId;
+      if (c.conversationId === selected) btn.classList.add('active');
+      btn.onclick = () => {
+        document.getElementById('conv-id').value = c.conversationId;
+        loadTimeline(c.conversationId);
+        refresh();
+      };
+      li.appendChild(btn); list.appendChild(li);
     }
+    if (!selected && conversations[0]) {
+      document.getElementById('conv-id').value = conversations[0].conversationId;
+    }
+    const convId = document.getElementById('conv-id').value;
+    if (convId) await loadTimeline(convId);
   }
   document.getElementById('btn-seed').onclick = async () => {
     const res = await api('/inbox/seed-fixtures', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
-    const body = await res.json();
-    document.getElementById('note').textContent = body.note || (res.ok ? 'Seeded' : (body.error || 'failed'));
-    refresh();
+    const body = await res.json(); setNote(body.note || (res.ok ? 'Seeded' : (body.error || 'failed'))); refresh();
   };
   document.getElementById('btn-ensure-map').onclick = async () => {
     const res = await api('/inbox/ensure-fixture-mapping', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
-    const body = await res.json();
-    document.getElementById('note').textContent = body.note || body.reason || body.error || (res.ok ? 'Mapping ready' : 'failed');
+    const body = await res.json(); setNote(body.note || body.reason || body.error || (res.ok ? 'Mapping ready' : 'failed'));
   };
+  async function ingest(replay) {
+    const providerEventId = replay && lastWebhook
+      ? lastWebhook.providerEventId
+      : ('wh-' + Date.now());
+    const payload = replay && lastWebhook ? lastWebhook : {
+      providerEventId,
+      providerThreadId: 'fixture-thread-m7-' + Date.now(),
+      providerMessageId: 'pm-' + providerEventId,
+      body: 'Hi — training room Friday for 12 in Jersey City? Please send a booking link.',
+      customerDisplayName: 'Jordan Lee',
+      customerEmail: 'jordan.lee@example.com'
+    };
+    lastWebhook = payload;
+    document.getElementById('event-id').value = payload.providerEventId;
+    const res = await api('/inbox/ingest-fixture', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const body = await res.json();
+    setOut(body);
+    if (body.conversation?.conversationId) {
+      document.getElementById('conv-id').value = body.conversation.conversationId;
+    }
+    setNote(body.note || (body.duplicate ? 'Coalesced duplicate' : 'Ingested'));
+    refresh();
+  }
+  document.getElementById('btn-ingest').onclick = () => ingest(false);
+  document.getElementById('btn-dup').onclick = () => ingest(true);
   document.getElementById('btn-draft').onclick = async () => {
     const conversationId = document.getElementById('conv-id').value;
     const res = await api('/inbox/draft-reply', {
       method:'POST', headers:{'content-type':'application/json'},
       body: JSON.stringify({ conversationId })
     });
-    const body = await res.json();
-    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    const body = await res.json(); setOut(body);
     if (body.draft?.draftId) document.getElementById('draft-id').value = body.draft.draftId;
-    document.getElementById('note').textContent = body.reasons?.join('; ') || body.error || (res.ok ? 'Drafted' : 'failed');
+    setNote(body.reasons?.join('; ') || body.error || (res.ok ? 'Drafted' : 'failed'));
+    refresh();
   };
   document.getElementById('btn-queue').onclick = async () => {
     const conversationId = document.getElementById('conv-id').value;
@@ -1611,10 +1711,9 @@ export function inboxPage(apiOrigin: string): string {
       method:'POST', headers:{'content-type':'application/json'},
       body: JSON.stringify({ conversationId, draftId })
     });
-    const body = await res.json();
-    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    const body = await res.json(); setOut(body);
     if (body.message?.messageId) document.getElementById('msg-id').value = body.message.messageId;
-    document.getElementById('note').textContent = body.reasons?.join('; ') || body.error || (res.ok ? 'Queued' : 'failed');
+    setNote(body.reasons?.join('; ') || body.error || (res.ok ? 'Queued' : 'failed'));
     refresh();
   };
   document.getElementById('btn-send').onclick = async () => {
@@ -1623,9 +1722,18 @@ export function inboxPage(apiOrigin: string): string {
       method:'POST', headers:{'content-type':'application/json'},
       body: JSON.stringify({ messageId })
     });
-    const body = await res.json();
-    document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
-    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    const body = await res.json(); setOut(body);
+    setNote((body.note || '') + ' · ' + (body.details || []).join('; '));
+    refresh();
+  };
+  document.getElementById('btn-deliver').onclick = async () => {
+    const messageId = document.getElementById('msg-id').value;
+    const res = await api('/inbox/confirm-delivery', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ messageId })
+    });
+    const body = await res.json(); setOut(body);
+    setNote(body.note || body.reasons?.join('; ') || (res.ok ? 'Delivered' : 'failed'));
     refresh();
   };
   document.getElementById('btn-takeover').onclick = async () => {
@@ -1634,20 +1742,32 @@ export function inboxPage(apiOrigin: string): string {
       method:'POST', headers:{'content-type':'application/json'},
       body: JSON.stringify({ conversationId })
     });
-    const body = await res.json();
-    document.getElementById('note').textContent = body.note || body.reasons?.join('; ') || body.error || (res.ok ? 'Taken over' : 'failed');
-    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    const body = await res.json(); setOut(body);
+    setNote(body.note || body.reasons?.join('; ') || body.error || (res.ok ? 'Taken over' : 'failed'));
+    refresh();
+  };
+  document.getElementById('btn-pause').onclick = async () => {
+    const res = await api('/inbox/pause-replies', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ paused: true })
+    });
+    const body = await res.json(); setOut(body);
+    setNote(res.ok ? 'Replies paused' : (body.reason || body.error || 'failed'));
     refresh();
   };
   document.getElementById('btn-lead').onclick = async () => {
     const conversationId = document.getElementById('conv-id').value;
     const res = await api('/inbox/log-lead', {
       method:'POST', headers:{'content-type':'application/json'},
-      body: JSON.stringify({ conversationId, locationNeed: 'Jersey City', sizeNeed: '12' })
+      body: JSON.stringify({
+        conversationId,
+        locationNeed: 'Jersey City',
+        sizeNeed: '12',
+        providerEventId: document.getElementById('event-id').value || undefined
+      })
     });
-    const body = await res.json();
-    document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
-    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    const body = await res.json(); setOut(body);
+    setNote((body.note || '') + ' · ' + (body.details || []).join('; '));
     refresh();
   };
   document.getElementById('btn-handoff').onclick = async () => {
@@ -1662,9 +1782,8 @@ export function inboxPage(apiOrigin: string): string {
         requestedAction: 'Call back'
       })
     });
-    const body = await res.json();
-    document.getElementById('note').textContent = body.error || (res.ok ? 'Handoff created' : 'failed');
-    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    const body = await res.json(); setOut(body);
+    setNote(body.error || (res.ok ? 'Handoff created' : 'failed'));
     refresh();
   };
   document.getElementById('btn-live').onclick = async () => {
@@ -1673,9 +1792,8 @@ export function inboxPage(apiOrigin: string): string {
       method:'POST', headers:{'content-type':'application/json'},
       body: JSON.stringify({ messageId, preferLive: true })
     });
-    const body = await res.json();
-    document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
-    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    const body = await res.json(); setOut(body);
+    setNote((body.note || '') + ' · ' + (body.details || []).join('; '));
     refresh();
   };
   document.getElementById('btn-refresh').onclick = () => refresh();

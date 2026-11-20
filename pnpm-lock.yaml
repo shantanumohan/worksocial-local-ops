@@ -541,6 +541,9 @@ importers:
       '@worksocial/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@worksocial/inbox':
+        specifier: workspace:*
+        version: link:../../services/inbox
       '@worksocial/lead-capture':
         specifier: workspace:*
         version: link:../../services/lead-capture

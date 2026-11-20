@@ -1,6 +1,6 @@
 # Database migrations
 
-Ordered SQL under `migrations/` (`001_…` … `017_…`).
+Ordered SQL under `migrations/` (`001_…` … `018_…`).
 
 ```bash
 export DATABASE_URL=postgres://worksocial:worksocial@127.0.0.1:5432/worksocial
@@ -17,5 +17,7 @@ revisions and A25 review bindings (file-backed store until Postgres cutover).
 missions, and staging CMS read-back (file-backed until Postgres cutover).
 `017_lead_capture.sql` is the M5 companion for lead-capture journeys, synthetic
 cleanup events, and commerce projection checks (file-backed until Postgres cutover).
+`018_inbox_m7.sql` is the M7 companion for delivered status, webhook coalesce
+events, ownership versioning, and lead coalesce keys (file-backed until Postgres cutover).
 Runner: `pnpm db:migrate` (`packages/persistence` `runMigrations`).
 External effects: none (simulator only).
