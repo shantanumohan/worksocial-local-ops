@@ -182,6 +182,7 @@ export {
   InputPackageErrorCode,
   DEFAULT_MAX_INPUT_BYTES_FALLBACK,
   utf8ByteLength,
+  sha256HexUtf8,
   digestInputPackageEntries,
   buildRoleOutputSchema,
   compileInputPackage,

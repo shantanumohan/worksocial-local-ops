@@ -88,15 +88,12 @@ function operationDigest(snapshot: {
 
 export function createEvidenceMissionRuntime(options: {
   runner: ClaudeRunner;
-  missions?: MissionWorkflowStore;
-  execution?: DurableExecutionService;
-  artifacts?: ArtifactStore;
+  /** Required — callers must supply durable stores; use createMemoryEvidenceMissionRuntime for in-memory tests. */
+  missions: MissionWorkflowStore;
+  execution: DurableExecutionService;
+  artifacts: ArtifactStore;
 }): EvidenceMissionRuntime {
-  const missions = options.missions ?? createMemoryMissionWorkflowStore();
-  const execution =
-    options.execution ??
-    createDurableExecutionService(createMemoryDurableStores());
-  const artifacts = options.artifacts ?? createMemoryArtifactStore();
+  const { missions, execution, artifacts } = options;
   const durable = createDurableMissionRuntime({ missions, execution });
 
   return {
@@ -105,7 +102,8 @@ export function createEvidenceMissionRuntime(options: {
 
     async run(request) {
       const workflowId =
-        request.workflowId ?? `evidence-mission-${request.nowIso}`;
+        request.workflowId ??
+        `evidence-mission-${randomBytes(8).toString("hex")}`;
 
       // 1) Enqueue durable mission BEFORE writer/review work completes.
       const enqueued = await durable.enqueueBeforeAck({
@@ -150,6 +148,30 @@ export function createEvidenceMissionRuntime(options: {
           ok: false,
           code: cycle.code,
           reason: cycle.reason,
+          cycle,
+          workflow: (await missions.get(workflowId)) ?? enqueued,
+        };
+      }
+
+      if (
+        !cycle.reviewVerdict.approved ||
+        cycle.reviewBinding.status !== "accepted"
+      ) {
+        await missions.fail({
+          workflowId,
+          retryCategory: "policy",
+          lastError: `A25 rejected or did not accept proposal: ${cycle.reviewVerdict.reason}`,
+          nowIso: request.nowIso,
+        });
+        await execution.stores.jobs.updateStatus(
+          enqueued.jobId,
+          "failed",
+          request.nowIso,
+        );
+        return {
+          ok: false,
+          code: "REVIEW_REJECTED",
+          reason: cycle.reviewVerdict.reason,
           cycle,
           workflow: (await missions.get(workflowId)) ?? enqueued,
         };
@@ -279,7 +301,12 @@ export function createEvidenceMissionRuntime(options: {
 export function createMemoryEvidenceMissionRuntime(
   runner: ClaudeRunner,
 ): EvidenceMissionRuntime {
-  return createEvidenceMissionRuntime({ runner });
+  return createEvidenceMissionRuntime({
+    runner,
+    missions: createMemoryMissionWorkflowStore(),
+    execution: createDurableExecutionService(createMemoryDurableStores()),
+    artifacts: createMemoryArtifactStore(),
+  });
 }
 
 function cryptoRandomUuid(): string {

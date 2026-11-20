@@ -8,7 +8,10 @@ import {
   createMemoryDurableStores,
   createMemoryMissionWorkflowStore,
 } from "@worksocial/persistence";
-import { createEvidenceMissionRuntime } from "./evidence-mission.js";
+import {
+  createEvidenceMissionRuntime,
+  createMemoryEvidenceMissionRuntime,
+} from "./evidence-mission.js";
 
 function sha256(text: string): string {
   return createHash("sha256").update(text, "utf8").digest("hex");
@@ -132,7 +135,7 @@ describe("evidence mission on LOCAL_DURABLE (M3)", () => {
       workspaceRoot: process.cwd(),
       forceFixture: true,
     });
-    const runtime = createEvidenceMissionRuntime({ runner });
+    const runtime = createMemoryEvidenceMissionRuntime(runner);
     const nowIso = "2026-11-20T12:00:00.000Z";
     const result = await runtime.run({
       writerRoleId: "A13",

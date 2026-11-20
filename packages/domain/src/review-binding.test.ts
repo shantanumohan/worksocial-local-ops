@@ -129,4 +129,89 @@ describe("A25 review binding (M3/NEXT-12)", () => {
     });
     expect(afterEdit.ok).toBe(false);
   });
+
+  it("rejects a second verdict on a terminal ACCEPTED binding", () => {
+    const created = createReviewBinding({
+      bindingId: "bind-4",
+      proposal: proposal(),
+      proposalArtifactId: "art-draft-1",
+      proposalRevision: "rev-a",
+      proposalChecksum: "ee".repeat(32),
+      evidencePackageDigest: "pkg:term:1",
+      createdAtIso: "2026-11-20T03:00:00.000Z",
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    const current = {
+      proposalArtifactId: "art-draft-1",
+      proposalRevision: "rev-a",
+      proposalChecksum: "ee".repeat(32),
+      evidencePackageDigest: "pkg:term:1",
+    };
+    const first = acceptBoundReviewVerdict({
+      binding: created.binding,
+      proposal: proposal(),
+      current,
+      verdict: {
+        verdictId: "v-term-1",
+        proposalId: "prop-writer-1",
+        reviewerRoleId: "A25",
+        authorRoleId: "A13",
+        approved: true,
+        reason: "first",
+        decidedAtIso: "2026-11-20T03:05:00.000Z",
+      },
+    });
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const second = acceptBoundReviewVerdict({
+      binding: first.binding,
+      proposal: proposal(),
+      current,
+      verdict: {
+        verdictId: "v-term-2",
+        proposalId: "prop-writer-1",
+        reviewerRoleId: "A25",
+        authorRoleId: "A13",
+        approved: false,
+        reason: "flip",
+        decidedAtIso: "2026-11-20T03:06:00.000Z",
+      },
+    });
+    expect(second.ok).toBe(false);
+  });
+
+  it("rejects proposal author mismatch against binding", () => {
+    const created = createReviewBinding({
+      bindingId: "bind-5",
+      proposal: proposal(),
+      proposalArtifactId: "art-draft-1",
+      proposalRevision: "rev-a",
+      proposalChecksum: "ff".repeat(32),
+      evidencePackageDigest: "pkg:auth:1",
+      createdAtIso: "2026-11-20T03:00:00.000Z",
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    const spoofed = acceptBoundReviewVerdict({
+      binding: created.binding,
+      proposal: { ...proposal(), authorRoleId: "A14" },
+      current: {
+        proposalArtifactId: "art-draft-1",
+        proposalRevision: "rev-a",
+        proposalChecksum: "ff".repeat(32),
+        evidencePackageDigest: "pkg:auth:1",
+      },
+      verdict: {
+        verdictId: "v-spoof",
+        proposalId: "prop-writer-1",
+        reviewerRoleId: "A25",
+        authorRoleId: "A14",
+        approved: true,
+        reason: "spoof",
+        decidedAtIso: "2026-11-20T03:05:00.000Z",
+      },
+    });
+    expect(spoofed.ok).toBe(false);
+  });
 });

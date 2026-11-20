@@ -4,6 +4,7 @@
  *
  * Default path uses the offline fake/fixture adapter (no spend).
  * Live CLI only when requireLive=true and CLI is available (fail-closed otherwise).
+ * forceFixture=false prefers live without requiring it.
  */
 
 import { createHash, randomBytes } from "node:crypto";
@@ -11,6 +12,7 @@ import type { JobEnvelope } from "@worksocial/contracts";
 import {
   ArtifactTrustLabel,
   CostRecordingKind,
+  ReviewBindingStatus,
   RoleExecutionMode,
   RoleRunStatus,
   acceptBoundReviewVerdict,
@@ -25,12 +27,11 @@ import {
   type ReviewBinding,
   type ReviewVerdict,
 } from "@worksocial/domain";
-import type { ClaudeRunner, RoleJobRequest, RoleJobResult } from "./runner.js";
+import type { ClaudeRunner, RoleJobResult } from "./runner.js";
 import {
   simulateReviewerOutput,
   simulateWriterOutput,
 } from "./offline-fake-adapter.js";
-import { runRoleFixture } from "./fixture-runner.js";
 
 export type ProposalArtifactRecord = {
   artifactId: string;
@@ -61,7 +62,10 @@ export type EvidenceCycleRequest = {
   nowIso: string;
   artifacts: readonly ArtifactRevisionRef[];
   workflowId?: string;
-  /** Force offline fake/fixture (default true — no production spend). */
+  /**
+   * Force offline fake/fixture. Default true (no production spend).
+   * Set false to prefer live when available without requireLive fail-closed.
+   */
   forceFixture?: boolean;
   /**
    * Require live Claude CLI. When true and CLI missing, fail closed —
@@ -129,6 +133,49 @@ function envelopeFor(
   };
 }
 
+function isRunnerFailure(status: string): boolean {
+  return (
+    status === RoleRunStatus.FAILED ||
+    status === RoleRunStatus.TIMED_OUT ||
+    status === RoleRunStatus.DENIED ||
+    status === RoleRunStatus.BUDGET_EXHAUSTED
+  );
+}
+
+/**
+ * Explicit A25 decision from structured output — never synthesize approval
+ * from BUDGET_EXHAUSTED / AWAITING_REVIEW / missing output.
+ */
+function explicitA25Decision(run: RoleJobResult):
+  | { ok: true; approved: boolean; reason: string }
+  | { ok: false; reason: string } {
+  if (isRunnerFailure(run.status)) {
+    return {
+      ok: false,
+      reason: `A25 run did not complete a review decision (status=${run.status})`,
+    };
+  }
+  if (run.status === RoleRunStatus.AWAITING_REVIEW) {
+    return {
+      ok: false,
+      reason: "A25 cannot leave its own review in awaiting_review — no decision",
+    };
+  }
+  if (!run.output) {
+    return { ok: false, reason: "A25 produced no structured output — no decision" };
+  }
+  if (run.output.status === "ok") {
+    return { ok: true, approved: true, reason: run.output.summary };
+  }
+  if (run.output.status === "error") {
+    return { ok: true, approved: false, reason: run.output.summary };
+  }
+  return {
+    ok: false,
+    reason: `A25 status '${run.output.status}' is not an explicit approve/reject decision`,
+  };
+}
+
 /**
  * Run writer + A25 review against a compiled evidence package.
  * Prefer offline fake adapter; live path is optional and fail-closed.
@@ -137,8 +184,10 @@ export async function runEvidenceCycle(
   runner: ClaudeRunner,
   request: EvidenceCycleRequest,
 ): Promise<EvidenceCycleResult> {
-  const forceFixture = request.forceFixture !== false && !request.requireLive;
   const requireLive = request.requireLive === true;
+  // Default forceFixture=true for no-spend safety; explicit false prefers live.
+  const preferLive = !requireLive && request.forceFixture === false;
+  const useForcedFixture = !requireLive && !preferLive;
   const workflowId = request.workflowId ?? `evcycle-${uuid()}`;
 
   const compiled = compileInputPackage({
@@ -167,18 +216,16 @@ export async function runEvidenceCycle(
   );
 
   let writerRun: RoleJobResult;
+  let usedOfflineFake = false;
 
-  if (requireLive) {
+  if (requireLive || preferLive) {
     writerRun = await runner.enqueue({
       envelope: writerEnvelope,
-      requireLive: true,
+      requireLive: requireLive || undefined,
       forceFixture: false,
+      compiledPackage: inputPackage,
     });
-    if (
-      writerRun.status === RoleRunStatus.FAILED ||
-      writerRun.status === RoleRunStatus.TIMED_OUT ||
-      writerRun.status === RoleRunStatus.DENIED
-    ) {
+    if (requireLive && isRunnerFailure(writerRun.status)) {
       return {
         ok: false,
         code: "WRITER_LIVE_FAILED",
@@ -187,24 +234,53 @@ export async function runEvidenceCycle(
         writerRun,
       };
     }
+    if (isRunnerFailure(writerRun.status)) {
+      return {
+        ok: false,
+        code: "WRITER_FAILED",
+        reason: writerRun.summary,
+        inputPackage,
+        writerRun,
+      };
+    }
+    // preferLive fell back to fixture — overlay evidence-aware fake only then.
+    if (
+      !requireLive &&
+      writerRun.executionMode === RoleExecutionMode.FIXTURE
+    ) {
+      usedOfflineFake = true;
+    }
+  } else if (useForcedFixture) {
+    // Explicit offline fake path (default).
+    writerRun = await runner.enqueue({
+      envelope: writerEnvelope,
+      forceFixture: true,
+      compiledPackage: inputPackage,
+    });
+    if (isRunnerFailure(writerRun.status)) {
+      return {
+        ok: false,
+        code: "WRITER_RUNNER_FAILED",
+        reason: `Runner gate failed before offline fake overlay: ${writerRun.summary}`,
+        inputPackage,
+        writerRun,
+      };
+    }
+    usedOfflineFake = true;
   } else {
-    // Explicit offline fake adapter — fixture class, labeled zero cost.
+    return {
+      ok: false,
+      code: "INVALID_MODE",
+      reason: "Unable to resolve writer execution mode",
+      inputPackage,
+    };
+  }
+
+  if (usedOfflineFake) {
     const fakeOutput = simulateWriterOutput({
       envelope: writerEnvelope,
       package: inputPackage,
     });
-    // Still exercise runner gates for unauthorized paths via fixture when needed;
-    // for happy path, synthesize a RoleJobResult from fake + runner budget bookkeeping.
-    const fixtureProbe = runRoleFixture({ envelope: writerEnvelope });
-    void fixtureProbe;
-
-    writerRun = await runner.enqueue({
-      envelope: writerEnvelope,
-      forceFixture: true,
-    });
-
-    // Replace fixture generic summary/citations with evidence-aware fake output.
-    // Keep runner status/budget/cost honesty from fixture path.
     const citations = validateEvidenceCitations({
       package: inputPackage,
       citedArtifactIds: [
@@ -224,7 +300,6 @@ export async function runEvidenceCycle(
         writerRun,
       };
     }
-
     writerRun = {
       ...writerRun,
       summary: fakeOutput.summary,
@@ -255,32 +330,6 @@ export async function runEvidenceCycle(
     };
   }
 
-  if (!writerRun.output || writerRun.output.proposedEffects.length < 1) {
-    // Live path may produce proposals; fixture fake always should for A13.
-    if (forceFixture || !requireLive) {
-      return {
-        ok: false,
-        code: "WRITER_NO_PROPOSAL",
-        reason: "Writer produced no reviewable proposal",
-        inputPackage,
-        writerRun,
-      };
-    }
-  }
-
-  const proposal =
-    writerRun.output?.proposedEffects[0] ??
-    ({
-      proposalId: `missing-${writerEnvelope.jobId}`,
-      authorRoleId: request.writerRoleId,
-      actionClass: "create",
-      operation: "stage_artifact",
-      assetId: request.assetId,
-      channelId: "local-artifact",
-      payloadDigest: "missing",
-      evidenceArtifactIds: inputIds,
-    } satisfies EffectProposal);
-
   if (!writerRun.output?.proposedEffects[0]) {
     return {
       ok: false,
@@ -291,27 +340,26 @@ export async function runEvidenceCycle(
     };
   }
 
-  // Live outputs must also cite evidence when package requires it.
-  if (writerRun.output) {
-    const citeCheck = validateEvidenceCitations({
-      package: inputPackage,
-      citedArtifactIds: [
-        ...writerRun.output.artifactIds,
-        ...writerRun.output.proposedEffects.flatMap((p) => [
-          ...p.evidenceArtifactIds,
-        ]),
-      ],
-      summary: writerRun.output.summary,
-    });
-    if (!citeCheck.ok) {
-      return {
-        ok: false,
-        code: citeCheck.code,
-        reason: citeCheck.reason,
-        inputPackage,
-        writerRun,
-      };
-    }
+  const proposal = writerRun.output.proposedEffects[0];
+
+  const citeCheck = validateEvidenceCitations({
+    package: inputPackage,
+    citedArtifactIds: [
+      ...writerRun.output.artifactIds,
+      ...writerRun.output.proposedEffects.flatMap((p) => [
+        ...p.evidenceArtifactIds,
+      ]),
+    ],
+    summary: writerRun.output.summary,
+  });
+  if (!citeCheck.ok) {
+    return {
+      ok: false,
+      code: citeCheck.code,
+      reason: citeCheck.reason,
+      inputPackage,
+      writerRun,
+    };
   }
 
   const draftContent = JSON.stringify(
@@ -359,26 +407,32 @@ export async function runEvidenceCycle(
   const reviewerEnvelope = envelopeFor(
     "A25",
     request,
-    [
-      proposalArtifact.artifactId,
-      ...proposal.evidenceArtifactIds,
-    ],
+    [proposalArtifact.artifactId, ...proposal.evidenceArtifactIds],
     `${workflowId}-review`,
   );
 
-  let reviewerRun: RoleJobResult;
-  let reviewVerdict: ReviewVerdict;
+  const reviewContext = {
+    bindingId: reviewBinding.bindingId,
+    proposalId: reviewBinding.proposalId,
+    proposalArtifactId: reviewBinding.proposalArtifactId,
+    proposalRevision: reviewBinding.proposalRevision,
+    proposalChecksum: reviewBinding.proposalChecksum,
+    evidencePackageDigest: reviewBinding.evidencePackageDigest,
+    authorRoleId: reviewBinding.authorRoleId,
+  };
 
-  if (requireLive) {
+  let reviewerRun: RoleJobResult;
+  let usedOfflineReviewFake = false;
+
+  if (requireLive || preferLive) {
     reviewerRun = await runner.enqueue({
       envelope: reviewerEnvelope,
-      requireLive: true,
+      requireLive: requireLive || undefined,
       forceFixture: false,
-    } satisfies RoleJobRequest);
-    if (
-      reviewerRun.status === RoleRunStatus.FAILED ||
-      reviewerRun.status === RoleRunStatus.TIMED_OUT
-    ) {
+      compiledPackage: inputPackage,
+      reviewContext,
+    });
+    if (requireLive && isRunnerFailure(reviewerRun.status)) {
       return {
         ok: false,
         code: "REVIEWER_LIVE_FAILED",
@@ -389,25 +443,39 @@ export async function runEvidenceCycle(
         reviewerRun,
       };
     }
-    reviewVerdict = {
-      verdictId: `verdict-${reviewerEnvelope.jobId}`,
-      proposalId: proposal.proposalId,
-      reviewerRoleId: "A25",
-      authorRoleId: proposal.authorRoleId,
-      approved: reviewerRun.status !== RoleRunStatus.DENIED,
-      reason: reviewerRun.summary,
-      decidedAtIso: new Date().toISOString(),
-    };
+    if (
+      !requireLive &&
+      reviewerRun.executionMode === RoleExecutionMode.FIXTURE
+    ) {
+      usedOfflineReviewFake = true;
+    }
   } else {
+    reviewerRun = await runner.enqueue({
+      envelope: reviewerEnvelope,
+      forceFixture: true,
+      compiledPackage: inputPackage,
+      reviewContext,
+    });
+    if (isRunnerFailure(reviewerRun.status)) {
+      return {
+        ok: false,
+        code: "REVIEWER_RUNNER_FAILED",
+        reason: `Runner gate failed before offline fake overlay: ${reviewerRun.summary}`,
+        inputPackage,
+        writerRun,
+        reviewBinding,
+        reviewerRun,
+      };
+    }
+    usedOfflineReviewFake = true;
+  }
+
+  if (usedOfflineReviewFake) {
     const fakeReview = simulateReviewerOutput({
       envelope: reviewerEnvelope,
       binding: reviewBinding,
       proposal,
       draftSummary: writerRun.summary,
-    });
-    reviewerRun = await runner.enqueue({
-      envelope: reviewerEnvelope,
-      forceFixture: true,
     });
     reviewerRun = {
       ...reviewerRun,
@@ -437,16 +505,30 @@ export async function runEvidenceCycle(
         },
       },
     };
-    reviewVerdict = {
-      verdictId: `verdict-${reviewerEnvelope.jobId}`,
-      proposalId: proposal.proposalId,
-      reviewerRoleId: "A25",
-      authorRoleId: proposal.authorRoleId,
-      approved: fakeReview.status === "ok",
-      reason: fakeReview.summary,
-      decidedAtIso: new Date().toISOString(),
+  }
+
+  const decision = explicitA25Decision(reviewerRun);
+  if (!decision.ok) {
+    return {
+      ok: false,
+      code: "REVIEW_DECISION_MISSING",
+      reason: decision.reason,
+      inputPackage,
+      writerRun,
+      reviewBinding,
+      reviewerRun,
     };
   }
+
+  const reviewVerdict: ReviewVerdict = {
+    verdictId: `verdict-${reviewerEnvelope.jobId}`,
+    proposalId: proposal.proposalId,
+    reviewerRoleId: "A25",
+    authorRoleId: proposal.authorRoleId,
+    approved: decision.approved,
+    reason: decision.reason,
+    decidedAtIso: new Date().toISOString(),
+  };
 
   const current = {
     proposalArtifactId: proposalArtifact.artifactId,
@@ -485,6 +567,21 @@ export async function runEvidenceCycle(
     };
   }
 
+  if (
+    !reviewVerdict.approved ||
+    accepted.binding.status !== ReviewBindingStatus.ACCEPTED
+  ) {
+    return {
+      ok: false,
+      code: "REVIEW_REJECTED",
+      reason: reviewVerdict.reason,
+      inputPackage,
+      writerRun,
+      reviewBinding: accepted.binding,
+      reviewerRun,
+    };
+  }
+
   return {
     ok: true,
     inputPackage,
@@ -499,12 +596,14 @@ export async function runEvidenceCycle(
       writerCostKind: writerRun.costKind,
       reviewerCostMinor: reviewerRun.costMinor,
       reviewerCostKind: reviewerRun.costKind,
-      // Fixture/estimate/unknown are labeled; only ACTUAL is observed spend.
       estimatesLabeled:
         writerRun.costKind !== CostRecordingKind.ACTUAL ||
         reviewerRun.costKind !== CostRecordingKind.ACTUAL,
     },
-    executionMode: requireLive ? "live_cli" : "fixture",
+    executionMode:
+      requireLive || writerRun.executionMode === RoleExecutionMode.LIVE_CLI
+        ? "live_cli"
+        : "fixture",
   };
 }
 

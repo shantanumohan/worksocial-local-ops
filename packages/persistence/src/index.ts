@@ -260,6 +260,7 @@ export {
   createFileArtifactStore,
   defaultArtifactStateDir,
   putMeasuredEvidence,
+  ArtifactStoreError,
   type StoredArtifactRevision,
   type ArtifactPutInput,
   type ArtifactStore,

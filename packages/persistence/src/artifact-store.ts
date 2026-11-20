@@ -89,20 +89,68 @@ function latestOf(
     .sort((a, b) => b.createdAtIso.localeCompare(a.createdAtIso))[0];
 }
 
+function metadataEqual(
+  a: Readonly<Record<string, string>>,
+  b: Readonly<Record<string, string>>,
+): boolean {
+  const aKeys = Object.keys(a).sort();
+  const bKeys = Object.keys(b).sort();
+  if (aKeys.length !== bKeys.length) return false;
+  return aKeys.every((k, i) => k === bKeys[i] && a[k] === b[k]);
+}
+
+export class ArtifactStoreError extends Error {
+  readonly code: "REVISION_IMMUTABLE" | "REVISION_COLLISION";
+  constructor(code: ArtifactStoreError["code"], message: string) {
+    super(message);
+    this.code = code;
+    this.name = "ArtifactStoreError";
+  }
+}
+
 function putInto(
   revisions: StoredArtifactRevision[],
   input: ArtifactPutInput,
 ): { revision: StoredArtifactRevision; revisions: StoredArtifactRevision[] } {
   const artifactId = input.artifactId ?? newId("art");
   const checksum = sha256Hex(input.content);
+  const metadata = input.metadata ?? {};
   const existingLatest = latestOf(revisions, artifactId);
+
+  if (input.revision) {
+    const sameRev = revisions.find(
+      (r) => r.artifactId === artifactId && r.revision === input.revision,
+    );
+    if (sameRev) {
+      if (
+        sameRev.checksum === checksum &&
+        sameRev.content === input.content &&
+        sameRev.trustLabel === input.trustLabel &&
+        sameRev.kind === input.kind &&
+        metadataEqual(sameRev.metadata, metadata)
+      ) {
+        return { revision: sameRev, revisions };
+      }
+      throw new ArtifactStoreError(
+        "REVISION_IMMUTABLE",
+        `Artifact ${artifactId}@${input.revision} already exists with different content or trust metadata`,
+      );
+    }
+  }
+
+  // Deduplicate only when content AND trust/kind/metadata are identical.
   if (
     existingLatest &&
     existingLatest.checksum === checksum &&
-    existingLatest.content === input.content
+    existingLatest.content === input.content &&
+    existingLatest.trustLabel === input.trustLabel &&
+    existingLatest.kind === input.kind &&
+    metadataEqual(existingLatest.metadata, metadata) &&
+    input.revision === undefined
   ) {
     return { revision: existingLatest, revisions };
   }
+
   const revision: StoredArtifactRevision = {
     artifactId,
     revision: input.revision ?? newRevision(),
@@ -113,7 +161,7 @@ function putInto(
     content: input.content,
     createdAtIso: input.createdAtIso,
     previousRevision: existingLatest?.revision ?? null,
-    metadata: input.metadata ?? {},
+    metadata,
   };
   return { revision, revisions: [revision, ...revisions] };
 }

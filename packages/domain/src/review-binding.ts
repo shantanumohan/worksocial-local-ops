@@ -179,6 +179,17 @@ export function validateReviewBinding(
       binding,
     };
   }
+  if (
+    binding.status === ReviewBindingStatus.ACCEPTED ||
+    binding.status === ReviewBindingStatus.REJECTED
+  ) {
+    return {
+      ok: false,
+      code: ReviewBindingErrorCode.BINDING_INVALIDATED,
+      reason: `Review binding is terminal (${binding.status}) — issue a new binding for a new auditable review`,
+      binding,
+    };
+  }
 
   const mismatches: string[] = [];
   if (binding.proposalArtifactId !== current.proposalArtifactId) {
@@ -246,6 +257,42 @@ export function acceptBoundReviewVerdict(input: {
       ok: false,
       code: ReviewBindingErrorCode.BINDING_MISMATCH,
       reason: "Verdict proposalId does not match bound proposal",
+      binding: input.binding,
+    };
+  }
+  if (input.proposal.proposalId !== input.binding.proposalId) {
+    return {
+      ok: false,
+      code: ReviewBindingErrorCode.BINDING_MISMATCH,
+      reason: "Supplied proposal.proposalId does not match bound proposal",
+      binding: input.binding,
+    };
+  }
+  if (input.proposal.authorRoleId !== input.binding.authorRoleId) {
+    return {
+      ok: false,
+      code: ReviewBindingErrorCode.BINDING_MISMATCH,
+      reason: "Supplied proposal.authorRoleId does not match bound author",
+      binding: input.binding,
+    };
+  }
+  if (input.verdict.authorRoleId !== input.binding.authorRoleId) {
+    return {
+      ok: false,
+      code: ReviewBindingErrorCode.BINDING_MISMATCH,
+      reason: "Verdict authorRoleId does not match bound author",
+      binding: input.binding,
+    };
+  }
+  const boundEvidence = [...input.binding.evidenceArtifactIds].sort().join(",");
+  const proposalEvidence = [...input.proposal.evidenceArtifactIds]
+    .sort()
+    .join(",");
+  if (boundEvidence !== proposalEvidence) {
+    return {
+      ok: false,
+      code: ReviewBindingErrorCode.BINDING_MISMATCH,
+      reason: "Supplied proposal evidenceArtifactIds do not match binding",
       binding: input.binding,
     };
   }

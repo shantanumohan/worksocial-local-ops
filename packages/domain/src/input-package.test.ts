@@ -171,6 +171,92 @@ describe("input-package compiler (M3/NEXT-12)", () => {
     }
   });
 
+  it("changes package digest when trustLabel is reclassified", () => {
+    const content = "same body";
+    const base = {
+      artifactId: "doc-1",
+      revision: "r1",
+      checksum: sha256(content),
+      byteLength: utf8ByteLength(content),
+      capturedAtIso: "2026-11-20T01:00:00.000Z",
+      maxAgeSeconds: 0,
+      allowedGrantIds: ["grant-m3"],
+      kind: "content_brief",
+      content,
+    } as const;
+    const a = compileInputPackage({
+      packageId: "p1",
+      roleId: "A13",
+      capabilityGrantId: "grant-m3",
+      sourceRevision: "src",
+      nowIso: "2026-11-20T02:00:00.000Z",
+      artifacts: [
+        { ...base, trustLabel: ArtifactTrustLabel.TRUSTED_INSTRUCTION },
+      ],
+    });
+    const b = compileInputPackage({
+      packageId: "p2",
+      roleId: "A13",
+      capabilityGrantId: "grant-m3",
+      sourceRevision: "src",
+      nowIso: "2026-11-20T02:00:00.000Z",
+      artifacts: [
+        { ...base, trustLabel: ArtifactTrustLabel.UNTRUSTED_SOURCE },
+      ],
+    });
+    expect(a.ok && b.ok).toBe(true);
+    if (a.ok && b.ok) {
+      expect(a.package.packageDigest).not.toBe(b.package.packageDigest);
+    }
+  });
+
+  it("rejects checksum that does not match inline content", () => {
+    const content = "real body";
+    const bad = compileInputPackage({
+      packageId: "bad-hash",
+      roleId: "A13",
+      capabilityGrantId: "grant-m3",
+      sourceRevision: "src",
+      nowIso: "2026-11-20T02:00:00.000Z",
+      artifacts: [
+        factArtifact({
+          content,
+          checksum: sha256("different body of same?"),
+          byteLength: utf8ByteLength(content),
+        }),
+      ],
+    });
+    // Different content hash but we forced same byteLength — still mismatch.
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) {
+      expect(bad.code).toBe(InputPackageErrorCode.CHECKSUM_MISMATCH);
+    }
+  });
+
+  it("rejects future captures and negative maxAgeSeconds", () => {
+    const future = compileInputPackage({
+      packageId: "future",
+      roleId: "A13",
+      capabilityGrantId: "grant-m3",
+      sourceRevision: "src",
+      nowIso: "2026-11-20T02:00:00.000Z",
+      artifacts: [
+        factArtifact({ capturedAtIso: "2026-11-21T02:00:00.000Z" }),
+      ],
+    });
+    expect(future.ok).toBe(false);
+
+    const neg = compileInputPackage({
+      packageId: "neg",
+      roleId: "A13",
+      capabilityGrantId: "grant-m3",
+      sourceRevision: "src",
+      nowIso: "2026-11-20T02:00:00.000Z",
+      artifacts: [factArtifact({ maxAgeSeconds: -1 })],
+    });
+    expect(neg.ok).toBe(false);
+  });
+
   it("requires writer citations against supplied evidence", () => {
     const compiled = compileInputPackage({
       packageId: "cite",
