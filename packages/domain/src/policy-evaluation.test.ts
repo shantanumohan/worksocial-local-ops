@@ -11,6 +11,7 @@ const base: PolicyInput = {
   prerequisiteMissing: false,
   prerequisiteConflict: false,
   revisionMatches: true,
+  rateLimitExceeded: false,
 };
 
 describe("evaluatePolicy", () => {
@@ -36,6 +37,13 @@ describe("evaluatePolicy", () => {
     expect(evaluatePolicy({ ...base, grantPresent: false })).toMatchObject({
       allowed: false,
       code: "GRANT_MISSING",
+    });
+  });
+
+  it("denies when rate limit is exceeded", () => {
+    expect(evaluatePolicy({ ...base, rateLimitExceeded: true })).toMatchObject({
+      allowed: false,
+      code: "RATE_LIMIT_EXCEEDED",
     });
   });
 

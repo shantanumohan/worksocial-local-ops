@@ -60,6 +60,11 @@ export type AuthorityRequest = {
   nowIso: string;
   operatingMode: OperatingModeValue;
   outboundStopped: boolean;
+  /**
+   * Authenticated caller role from server session/context — never from client body.
+   * Must match StandingPolicy.actorRole for a grant to apply.
+   */
+  actorRole: string;
   actionClass: ActionClassValue;
   channelId: string;
   targetAccountId: string;
@@ -74,6 +79,11 @@ export type AuthorityRequest = {
   prerequisiteConflict: boolean;
   policies: StandingPolicy[];
   grants: CapabilityGrant[];
+  /**
+   * Count of allowed gateway decisions for the matched grant in the trailing hour.
+   * Supplied by the gateway; unused grants pass 0.
+   */
+  grantUsesInLastHour?: number;
 };
 
 export type AuthorityMatch = {
@@ -136,6 +146,9 @@ export function findMatchingGrant(
     if (!policy.enabled) {
       continue;
     }
+    if (policy.actorRole !== request.actorRole && policy.actorRole !== "*") {
+      continue;
+    }
     if (policy.channelId !== request.channelId && policy.channelId !== "*") {
       continue;
     }
@@ -196,6 +209,11 @@ export function evaluateStandingAuthority(
     revisionMatches = match.grant.contentRevisionBound === request.contentRevision;
   }
 
+  const rateLimitExceeded =
+    match !== null &&
+    match.grant.rateLimitPerHour !== null &&
+    (request.grantUsesInLastHour ?? 0) >= match.grant.rateLimitPerHour;
+
   const policyInput: PolicyInput = {
     outboundStopped: request.outboundStopped,
     sourceStale: request.sourceStale,
@@ -206,6 +224,7 @@ export function evaluateStandingAuthority(
     prerequisiteMissing: request.prerequisiteMissing,
     prerequisiteConflict: request.prerequisiteConflict,
     revisionMatches,
+    rateLimitExceeded,
   };
 
   const decision = evaluatePolicy(policyInput);

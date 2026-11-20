@@ -7,6 +7,7 @@ import { randomUUID } from "node:crypto";
 import {
   ActionClass,
   IncidentStatus,
+  LocalRole,
   OutcomeEvidenceSource,
   REPAIR_RELATED_CASE_IDS,
   RepairAttemptOutcome,
@@ -68,6 +69,8 @@ export type RepairAuthorityInput = {
   operatingMode: OperatingModeValue;
   policies: StandingPolicy[];
   grants: CapabilityGrant[];
+  /** Authenticated role; defaults to administrator for admin-gated callers. */
+  actorRole?: string;
 };
 
 export type RepairService = {
@@ -521,6 +524,7 @@ export function createRepairService(
       const snapshot: GatewayAuthoritySnapshot = {
         outboundStopped: input.authority.outboundStopped,
         operatingMode: input.authority.operatingMode,
+        actorRole: input.authority.actorRole ?? LocalRole.ADMINISTRATOR,
         policies: input.authority.policies,
         grants: input.authority.grants,
         nowIso,

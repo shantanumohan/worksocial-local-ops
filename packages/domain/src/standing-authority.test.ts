@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { LocalRole } from "./roles.js";
 import {
   ActionClass,
   OperatingMode,
@@ -12,7 +13,7 @@ const now = "2026-11-18T12:00:00.000Z";
 const policy: StandingPolicy = {
   policyId: "pol-1",
   version: 1,
-  actorRole: "administrator",
+  actorRole: LocalRole.ADMINISTRATOR,
   channelId: "owned-site",
   actionClass: ActionClass.ROUTINE_PUBLISH,
   allowedAssetScope: ["page-home"],
@@ -42,6 +43,7 @@ function baseRequest(
     nowIso: now,
     operatingMode: OperatingMode.OPERATE,
     outboundStopped: false,
+    actorRole: LocalRole.ADMINISTRATOR,
     actionClass: ActionClass.ROUTINE_PUBLISH,
     channelId: "owned-site",
     targetAccountId: "acct-1",
@@ -106,5 +108,29 @@ describe("evaluateStandingAuthority", () => {
       }),
     );
     expect(result.decision.allowed).toBe(false);
+  });
+
+  it("denies operator against administrator-only policy (F05)", () => {
+    const result = evaluateStandingAuthority(
+      baseRequest({ actorRole: LocalRole.OPERATOR }),
+    );
+    expect(result.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(result.match).toBeNull();
+  });
+
+  it("denies when grant hourly rate limit is exhausted (F05)", () => {
+    const result = evaluateStandingAuthority(
+      baseRequest({
+        grants: [{ ...grant, rateLimitPerHour: 1 }],
+        grantUsesInLastHour: 1,
+      }),
+    );
+    expect(result.decision).toMatchObject({
+      allowed: false,
+      code: "RATE_LIMIT_EXCEEDED",
+    });
   });
 });

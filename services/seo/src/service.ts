@@ -7,6 +7,7 @@
 import { randomUUID } from "node:crypto";
 import {
   ActionClass,
+  LocalRole,
   OutcomeEvidenceSource,
   SEO_RELATED_CASE_IDS,
   SeoChangeKind,
@@ -152,6 +153,8 @@ export type SeoService = {
       operatingMode: OperatingModeValue;
       policies: StandingPolicy[];
       grants: CapabilityGrant[];
+      /** Authenticated role; defaults to administrator for admin-gated callers. */
+      actorRole?: string;
     };
     /** Required — must come from persisted mapping store, not ephemeral prove. */
     productionMapping: ProductionMappingState;
@@ -523,6 +526,7 @@ export function createSeoService(
       const snapshot: GatewayAuthoritySnapshot = {
         outboundStopped: input.authority.outboundStopped,
         operatingMode: input.authority.operatingMode,
+        actorRole: input.authority.actorRole ?? LocalRole.ADMINISTRATOR,
         policies: input.authority.policies,
         grants: input.authority.grants,
         nowIso,

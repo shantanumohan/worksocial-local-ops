@@ -36,12 +36,14 @@ describe("credential-broker isolation", () => {
     const runnerReveal = broker.revealForPrincipal(
       gatewayMint.handle.handleId,
       "claude-runner",
+      "2026-11-18T12:00:00.000Z",
     );
     expect(runnerReveal.ok).toBe(false);
 
     const gatewayReveal = broker.revealForPrincipal(
       gatewayMint.handle.handleId,
       "action-gateway",
+      "2026-11-18T12:00:00.000Z",
     );
     expect(gatewayReveal.ok).toBe(true);
     if (gatewayReveal.ok) {
@@ -100,7 +102,37 @@ describe("credential-broker isolation", () => {
     const reveal = broker.revealForPrincipal(
       gatewayMint.handle.handleId,
       "learning-worker",
+      "2026-11-18T12:00:00.000Z",
     );
     expect(reveal.ok).toBe(false);
+  });
+
+  it("rejects reveal of an expired handle (F06)", () => {
+    const broker = createCredentialBroker();
+    const ref = broker.putReference(
+      "cms",
+      ["publish"],
+      "expired-secret",
+      "2000-01-01T00:00:00.000Z",
+    );
+    const mint = broker.mintScopedHandle({
+      principal: "action-gateway",
+      referenceId: ref.referenceId,
+      requestedScopes: ["publish"],
+      nowIso: "2000-01-01T00:00:00.000Z",
+      ttlMs: 1,
+    });
+    expect(mint.ok).toBe(true);
+    if (!mint.ok) {
+      throw new Error("expected mint");
+    }
+    expect(mint.handle.expiresAtIso <= "2000-01-01T00:00:01.000Z").toBe(true);
+
+    const reveal = broker.revealForPrincipal(
+      mint.handle.handleId,
+      "action-gateway",
+      "2026-11-18T12:00:00.000Z",
+    );
+    expect(reveal).toMatchObject({ ok: false, code: "HANDLE_EXPIRED" });
   });
 });

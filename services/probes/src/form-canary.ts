@@ -6,6 +6,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import {
   ActionClass,
+  LocalRole,
   MONITORING_RELATED_CASE_IDS,
   ProbeKind,
   ProbeMode,
@@ -37,6 +38,8 @@ export type FormCanaryAuthority = {
   policies: StandingPolicy[];
   grants: CapabilityGrant[];
   productionMapping: ProductionMappingState;
+  /** Authenticated role; defaults to administrator for admin-gated callers. */
+  actorRole?: string;
 };
 
 export type FormCanaryResult = {
@@ -232,6 +235,7 @@ export function runFormToCrmCanary(input: {
   const snapshot: GatewayAuthoritySnapshot = {
     outboundStopped: input.authority.outboundStopped,
     operatingMode: input.authority.operatingMode,
+    actorRole: input.authority.actorRole ?? LocalRole.ADMINISTRATOR,
     policies: input.authority.policies,
     grants: input.authority.grants,
     nowIso: input.nowIso,

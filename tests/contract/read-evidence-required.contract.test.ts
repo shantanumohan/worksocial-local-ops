@@ -59,6 +59,7 @@ describe("contract: read-evidence-required", () => {
       {
         outboundStopped: false,
         operatingMode: OperatingMode.OPERATE,
+        actorRole: LocalRole.ADMINISTRATOR,
         policies: [policy],
         grants: [grant],
         nowIso: now,
@@ -84,6 +85,7 @@ describe("contract: read-evidence-required", () => {
       {
         outboundStopped: false,
         operatingMode: OperatingMode.OPERATE,
+        actorRole: LocalRole.ADMINISTRATOR,
         policies: [policy],
         grants: [grant],
         nowIso: now,
@@ -137,6 +139,7 @@ describe("contract: read-evidence-required", () => {
       {
         outboundStopped: false,
         operatingMode: OperatingMode.OPERATE,
+        actorRole: LocalRole.ADMINISTRATOR,
         policies: [policy],
         grants: [grant],
         nowIso: now,

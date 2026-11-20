@@ -14,6 +14,8 @@ export type PolicyInput = {
   prerequisiteMissing: boolean;
   prerequisiteConflict: boolean;
   revisionMatches: boolean;
+  /** True when the matched grant's rateLimitPerHour is already exhausted. */
+  rateLimitExceeded: boolean;
 };
 
 export type PolicyDecision =
@@ -30,6 +32,7 @@ export type PolicyDecision =
         | "PREREQUISITE_MISSING"
         | "PREREQUISITE_CONFLICT"
         | "REVISION_MISMATCH"
+        | "RATE_LIMIT_EXCEEDED"
         | "POLICY_DENIED";
       reason: string;
     };
@@ -68,6 +71,13 @@ export function evaluatePolicy(input: PolicyInput): PolicyDecision {
       allowed: false,
       code: "GRANT_EXPIRED",
       reason: "Capability grant has expired",
+    };
+  }
+  if (input.rateLimitExceeded) {
+    return {
+      allowed: false,
+      code: "RATE_LIMIT_EXCEEDED",
+      reason: "Capability grant hourly rate limit exceeded",
     };
   }
   if (input.sourceStale) {

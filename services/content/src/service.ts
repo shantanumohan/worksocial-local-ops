@@ -13,6 +13,7 @@ import {
   CampaignStatus,
   ContentReleaseDecision,
   DestinationKind,
+  LocalRole,
   OutcomeEvidenceSource,
   PublicationOutcome,
   VariantStatus,
@@ -176,6 +177,8 @@ export type ContentService = {
       operatingMode: OperatingModeValue;
       policies: StandingPolicy[];
       grants: CapabilityGrant[];
+      /** Authenticated role; defaults to administrator for admin-gated callers. */
+      actorRole?: string;
     };
     productionMapping: ProductionMappingState;
     factLabels: FactSupportLookup;
@@ -215,6 +218,8 @@ export type ContentService = {
       operatingMode: OperatingModeValue;
       policies: StandingPolicy[];
       grants: CapabilityGrant[];
+      /** Authenticated role; defaults to administrator for admin-gated callers. */
+      actorRole?: string;
     };
     productionMapping: ProductionMappingState;
     preferLive?: boolean;
@@ -698,6 +703,7 @@ export function createContentService(
       const snapshot: GatewayAuthoritySnapshot = {
         outboundStopped: input.authority.outboundStopped,
         operatingMode: input.authority.operatingMode,
+        actorRole: input.authority.actorRole ?? LocalRole.ADMINISTRATOR,
         policies: input.authority.policies,
         grants: input.authority.grants,
         nowIso,
@@ -1071,6 +1077,7 @@ export function createContentService(
       const snapshot: GatewayAuthoritySnapshot = {
         outboundStopped: input.authority.outboundStopped,
         operatingMode: input.authority.operatingMode,
+        actorRole: input.authority.actorRole ?? LocalRole.ADMINISTRATOR,
         policies: input.authority.policies,
         grants: input.authority.grants,
         nowIso,

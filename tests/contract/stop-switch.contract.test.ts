@@ -55,6 +55,7 @@ describe("contract: stop-switch", () => {
       {
         outboundStopped: true,
         operatingMode: OperatingMode.OPERATE,
+        actorRole: LocalRole.ADMINISTRATOR,
         policies: [policy],
         grants: [grant],
         nowIso: now,

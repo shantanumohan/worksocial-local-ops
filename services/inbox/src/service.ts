@@ -9,6 +9,7 @@ import {
   ActionClass,
   BookingClaimKind,
   InboxAdapterStatus,
+  LocalRole,
   InboxOutcomeDecision,
   INBOX_RELATED_CASE_IDS,
   MessageSendStatus,
@@ -72,6 +73,8 @@ export type InboxAuthorityInput = {
   operatingMode: OperatingModeValue;
   policies: StandingPolicy[];
   grants: CapabilityGrant[];
+  /** Authenticated role; defaults to administrator for admin-gated callers. */
+  actorRole?: string;
 };
 
 export type InboxService = {
@@ -612,6 +615,7 @@ export function createInboxService(
       const snapshot: GatewayAuthoritySnapshot = {
         outboundStopped: input.authority.outboundStopped,
         operatingMode: input.authority.operatingMode,
+        actorRole: input.authority.actorRole ?? LocalRole.ADMINISTRATOR,
         policies: input.authority.policies,
         grants: input.authority.grants,
         nowIso,
@@ -850,6 +854,7 @@ export function createInboxService(
       const snapshot: GatewayAuthoritySnapshot = {
         outboundStopped: input.authority.outboundStopped,
         operatingMode: input.authority.operatingMode,
+        actorRole: input.authority.actorRole ?? LocalRole.ADMINISTRATOR,
         policies: input.authority.policies,
         grants: input.authority.grants,
         nowIso,

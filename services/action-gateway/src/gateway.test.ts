@@ -8,7 +8,7 @@ import {
   type CapabilityGrant,
   type StandingPolicy,
 } from "@worksocial/domain";
-import { createActionGateway } from "./gateway.js";
+import { createActionGateway, digestPayload } from "./gateway.js";
 
 const now = "2026-11-18T12:00:00.000Z";
 
@@ -51,18 +51,39 @@ const allowedIntent = {
   readEvidencePresent: true,
 };
 
+const adminAuthority = {
+  outboundStopped: false,
+  operatingMode: OperatingMode.OPERATE,
+  actorRole: LocalRole.ADMINISTRATOR,
+  policies: [policy],
+  grants: [grant],
+  nowIso: now,
+};
+
 describe("action-gateway", () => {
+  it("nested payload title/price changes alter digest (F04)", () => {
+    const a = digestPayload({
+      meta: { title: "Home", price: 10 },
+      channel: "owned-site",
+    });
+    const b = digestPayload({
+      meta: { title: "Home", price: 11 },
+      channel: "owned-site",
+    });
+    const c = digestPayload({
+      meta: { title: "About", price: 10 },
+      channel: "owned-site",
+    });
+    expect(a).not.toBe(b);
+    expect(a).not.toBe(c);
+    expect(b).not.toBe(c);
+  });
+
   it("denies unauthorized writes without a matching grant", () => {
     const gateway = createActionGateway();
     const result = gateway.submitIntent(
       { ...allowedIntent, operation: "wipe_site", operationId: "op-unauth" },
-      {
-        outboundStopped: false,
-        operatingMode: OperatingMode.OPERATE,
-        policies: [policy],
-        grants: [grant],
-        nowIso: now,
-      },
+      adminAuthority,
     );
     expect(result.decision.allowed).toBe(false);
     expect(result.decision.code).toBe("GRANT_MISSING");
@@ -73,15 +94,42 @@ describe("action-gateway", () => {
   it("enforces stop switch before every external effect", () => {
     const gateway = createActionGateway();
     const result = gateway.submitIntent(allowedIntent, {
+      ...adminAuthority,
       outboundStopped: true,
-      operatingMode: OperatingMode.OPERATE,
-      policies: [policy],
-      grants: [grant],
-      nowIso: now,
     });
     expect(result.decision.allowed).toBe(false);
     expect(result.decision.code).toBe("OUTBOUND_STOPPED");
     expect(result.decision.outcome).toBe("DENIED");
+  });
+
+  it("denies operator using administrator-only policy (F05)", () => {
+    const gateway = createActionGateway();
+    const result = gateway.submitIntent(allowedIntent, {
+      ...adminAuthority,
+      actorRole: LocalRole.OPERATOR,
+    });
+    expect(result.decision.allowed).toBe(false);
+    expect(result.decision.code).toBe("GRANT_MISSING");
+    expect(result.decision.outcome).toBe("DENIED");
+  });
+
+  it("rejects a second request when rateLimitPerHour is one (F05)", () => {
+    const gateway = createActionGateway();
+    const limited = {
+      ...adminAuthority,
+      grants: [{ ...grant, rateLimitPerHour: 1 }],
+    };
+    const first = gateway.submitIntent(
+      { ...allowedIntent, operationId: "op-rate-1" },
+      limited,
+    );
+    expect(first.decision.allowed).toBe(true);
+    const second = gateway.submitIntent(
+      { ...allowedIntent, operationId: "op-rate-2" },
+      limited,
+    );
+    expect(second.decision.allowed).toBe(false);
+    expect(second.decision.code).toBe("RATE_LIMIT_EXCEEDED");
   });
 
   it("rehydrates pending decisions and settles FAILED on markFailed", () => {
@@ -105,13 +153,7 @@ describe("action-gateway", () => {
 
   it("records acceptance without implying verified", () => {
     const gateway = createActionGateway();
-    const result = gateway.submitIntent(allowedIntent, {
-      outboundStopped: false,
-      operatingMode: OperatingMode.OPERATE,
-      policies: [policy],
-      grants: [grant],
-      nowIso: now,
-    });
+    const result = gateway.submitIntent(allowedIntent, adminAuthority);
     expect(result.decision.allowed).toBe(true);
     expect(result.decision.outcome).toBe("ACCEPTED_PENDING");
     expect(gateway.ledger.hasVerified("op-1")).toBe(false);
@@ -134,13 +176,7 @@ describe("action-gateway", () => {
         contentRevision: "rev-1",
         payload: { title: "Home" },
       },
-      {
-        outboundStopped: false,
-        operatingMode: OperatingMode.OPERATE,
-        policies: [policy],
-        grants: [grant],
-        nowIso: now,
-      },
+      adminAuthority,
     );
     expect(result.decision.allowed).toBe(false);
     expect(result.decision.code).toBe("OWNERSHIP_UNPROVEN");
@@ -176,11 +212,9 @@ describe("action-gateway", () => {
         payload: { email: "test@example.com" },
       },
       {
-        outboundStopped: false,
-        operatingMode: OperatingMode.OPERATE,
+        ...adminAuthority,
         policies: [formPolicy],
         grants: [formGrant],
-        nowIso: now,
         productionMapping: state,
       },
     );
@@ -216,11 +250,9 @@ describe("action-gateway", () => {
         payload: {},
       },
       {
-        outboundStopped: false,
-        operatingMode: OperatingMode.OPERATE,
+        ...adminAuthority,
         policies: [observePolicy],
         grants: [observeGrant],
-        nowIso: now,
       },
     );
     expect(result.decision.allowed).toBe(true);
@@ -258,11 +290,9 @@ describe("action-gateway", () => {
         payload: { email: "test@example.com" },
       },
       {
-        outboundStopped: false,
-        operatingMode: OperatingMode.OPERATE,
+        ...adminAuthority,
         policies: [formPolicy],
         grants: [formGrant],
-        nowIso: now,
         productionMapping: proven,
       },
     );

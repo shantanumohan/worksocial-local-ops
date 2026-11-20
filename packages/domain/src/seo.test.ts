@@ -11,10 +11,12 @@ import {
   applySeoReleaseVerification,
   createPageAudit,
   createSeoProposal,
+  digestSchemaNodes,
   emptySeoState,
   evaluateProposalGate,
   parseSearchConstraints,
   runSemanticSearch,
+  schemaNodesToFields,
   validateSchemaOrg,
   type SemanticSearchIndex,
 } from "./seo.js";
@@ -44,6 +46,42 @@ describe("seo domain — page audits", () => {
     });
     expect(audit.status).toBe("blocked");
     expect(audit.score).toBeLessThan(70);
+  });
+});
+
+describe("seo domain — schema digests", () => {
+  it("includes all schema graph nodes without overwriting earlier ones (F04)", () => {
+    const nodes = [
+      {
+        nodeId: "n-business",
+        schemaType: "LocalBusiness",
+        properties: { name: "WorkSocial", price: "100" },
+        citedFactIds: [],
+      },
+      {
+        nodeId: "n-offer",
+        schemaType: "Offer",
+        properties: { name: "Day Pass", price: "45" },
+        citedFactIds: [],
+      },
+    ] as const;
+    const fields = schemaNodesToFields(nodes);
+    expect(fields["n-business.@type"]).toBe("LocalBusiness");
+    expect(fields["n-business.name"]).toBe("WorkSocial");
+    expect(fields["n-business.price"]).toBe("100");
+    expect(fields["n-offer.@type"]).toBe("Offer");
+    expect(fields["n-offer.name"]).toBe("Day Pass");
+    expect(fields["n-offer.price"]).toBe("45");
+
+    const digestBoth = digestSchemaNodes("page-home", nodes);
+    const digestMutated = digestSchemaNodes("page-home", [
+      nodes[0],
+      {
+        ...nodes[1],
+        properties: { ...nodes[1].properties, price: "50" },
+      },
+    ]);
+    expect(digestBoth).not.toBe(digestMutated);
   });
 });
 

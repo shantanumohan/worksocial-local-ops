@@ -12,6 +12,7 @@ import {
   SimulatedEffectLedger,
   actionClassRequiresPilotWriteGates,
   evaluateStandingAuthority,
+  findMatchingGrant,
   resolvePilotWriteGates,
   transition,
   type ActionClassValue,
@@ -48,6 +49,11 @@ export type GatewayIntent = {
 export type GatewayAuthoritySnapshot = {
   outboundStopped: boolean;
   operatingMode: OperatingModeValue;
+  /**
+   * Authenticated principal role from server context only.
+   * Must not be taken from the client intent body.
+   */
+  actorRole: string;
   policies: StandingPolicy[];
   grants: CapabilityGrant[];
   nowIso: string;
@@ -82,9 +88,46 @@ export type GatewaySubmitResult = {
   evaluation: AuthorityEvaluation;
 };
 
+/** Recursively sort object keys so nested title/price changes alter the digest. */
+export function canonicalizeForDigest(value: unknown): unknown {
+  if (value === null || typeof value !== "object") {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.map(canonicalizeForDigest);
+  }
+  const obj = value as Record<string, unknown>;
+  const sorted: Record<string, unknown> = {};
+  for (const key of Object.keys(obj).sort()) {
+    sorted[key] = canonicalizeForDigest(obj[key]);
+  }
+  return sorted;
+}
+
 export function digestPayload(payload: Record<string, unknown>): string {
-  const canonical = JSON.stringify(payload, Object.keys(payload).sort());
+  const canonical = JSON.stringify(canonicalizeForDigest(payload));
   return createHash("sha256").update(canonical).digest("hex");
+}
+
+const ONE_HOUR_MS = 60 * 60 * 1000;
+
+function countGrantUsesInLastHour(
+  decisions: Iterable<GatewayDecisionRecord>,
+  grantId: string,
+  nowIso: string,
+): number {
+  const windowStart = Date.parse(nowIso) - ONE_HOUR_MS;
+  let count = 0;
+  for (const decision of decisions) {
+    if (
+      decision.allowed &&
+      decision.grantId === grantId &&
+      Date.parse(decision.decidedAtIso) > windowStart
+    ) {
+      count += 1;
+    }
+  }
+  return count;
 }
 
 function resolveIntentGates(
@@ -184,10 +227,11 @@ export function createActionGateway(): ActionGateway {
 
     const gates = resolveIntentGates(intent, authority);
 
-    const evaluation = evaluateStandingAuthority({
+    const provisionalRequest = {
       nowIso: authority.nowIso,
       operatingMode: authority.operatingMode,
       outboundStopped: authority.outboundStopped,
+      actorRole: authority.actorRole,
       actionClass: intent.actionClass,
       channelId: intent.channelId,
       targetAccountId: intent.targetAccountId,
@@ -201,6 +245,19 @@ export function createActionGateway(): ActionGateway {
       prerequisiteConflict: intent.prerequisiteConflict ?? false,
       policies: authority.policies,
       grants: authority.grants,
+    };
+    const provisionalMatch = findMatchingGrant(provisionalRequest);
+    const grantUsesInLastHour = provisionalMatch
+      ? countGrantUsesInLastHour(
+          decisions.values(),
+          provisionalMatch.grant.grantId,
+          authority.nowIso,
+        )
+      : 0;
+
+    const evaluation = evaluateStandingAuthority({
+      ...provisionalRequest,
+      grantUsesInLastHour,
     });
 
     if (!evaluation.decision.allowed) {

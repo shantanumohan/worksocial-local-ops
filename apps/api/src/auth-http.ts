@@ -883,9 +883,11 @@ export async function handleApiRequest(
     }
     const state = runtime.store.read();
     const mapping = runtime.mappingStore.read();
+    // Actor role comes only from the authenticated session — never from intent body.
     const submitted = runtime.gateway.submitIntent(intent, {
       outboundStopped: state.ownerControls.outboundStopped,
       operatingMode: state.ownerControls.operatingMode,
+      actorRole: result.session.role,
       policies: state.standingPolicies,
       grants: state.capabilityGrants,
       nowIso: new Date().toISOString(),
@@ -2256,6 +2258,7 @@ export async function handleApiRequest(
       authority: {
         outboundStopped: authState.ownerControls.outboundStopped,
         operatingMode: authState.ownerControls.operatingMode,
+        actorRole: result.session.role,
         policies: authState.standingPolicies,
         grants: authState.capabilityGrants,
         productionMapping: mapping,
@@ -3248,6 +3251,7 @@ export async function handleApiRequest(
       authority: {
         outboundStopped: authorityState.ownerControls.outboundStopped,
         operatingMode: authorityState.ownerControls.operatingMode,
+        actorRole: result.session.role,
         policies: authorityState.standingPolicies,
         grants: authorityState.capabilityGrants,
       },
@@ -3666,6 +3670,7 @@ export async function handleApiRequest(
       authority: {
         outboundStopped: authorityState.ownerControls.outboundStopped,
         operatingMode: authorityState.ownerControls.operatingMode,
+        actorRole: result.session.role,
         policies: authorityState.standingPolicies,
         grants: authorityState.capabilityGrants,
       },
@@ -3808,6 +3813,7 @@ export async function handleApiRequest(
       authority: {
         outboundStopped: authorityState.ownerControls.outboundStopped,
         operatingMode: authorityState.ownerControls.operatingMode,
+        actorRole: result.session.role,
         policies: authorityState.standingPolicies,
         grants: authorityState.capabilityGrants,
       },
@@ -4215,6 +4221,7 @@ export async function handleApiRequest(
       authority: {
         outboundStopped: authorityState.ownerControls.outboundStopped,
         operatingMode: authorityState.ownerControls.operatingMode,
+        actorRole: result.session.role,
         policies: authorityState.standingPolicies,
         grants: authorityState.capabilityGrants,
       },
@@ -4389,6 +4396,7 @@ export async function handleApiRequest(
       authority: {
         outboundStopped: authorityState.ownerControls.outboundStopped,
         operatingMode: authorityState.ownerControls.operatingMode,
+        actorRole: result.session.role,
         policies: authorityState.standingPolicies,
         grants: authorityState.capabilityGrants,
       },
@@ -4850,6 +4858,7 @@ export async function handleApiRequest(
       authority: {
         outboundStopped: authorityState.ownerControls.outboundStopped,
         operatingMode: authorityState.ownerControls.operatingMode,
+        actorRole: result.session.role,
         policies: authorityState.standingPolicies,
         grants: authorityState.capabilityGrants,
       },
