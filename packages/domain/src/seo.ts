@@ -171,16 +171,29 @@ export type SchemaOrgNode = {
   citedFactIds: string[];
 };
 
-/** Flatten schema.org nodes into comparable field map for digest binding. */
+/**
+ * Flatten schema.org nodes into comparable field map for digest binding.
+ * Single-node graphs stay flat so proposal.schemaPayloadDigest still binds.
+ * Multi-node graphs prefix keys by nodeId so earlier nodes are not overwritten.
+ */
 export function schemaNodesToFields(
   nodes: readonly SchemaOrgNode[],
 ): Record<string, string> {
   const fields: Record<string, string> = {};
-  for (const node of nodes) {
+  if (nodes.length === 1) {
+    const node = nodes[0]!;
     fields["@type"] = node.schemaType;
     for (const [key, value] of Object.entries(node.properties)) {
       if (value === null || value === undefined) continue;
       fields[key] = String(value);
+    }
+    return fields;
+  }
+  for (const node of nodes) {
+    fields[`${node.nodeId}.@type`] = node.schemaType;
+    for (const [key, value] of Object.entries(node.properties)) {
+      if (value === null || value === undefined) continue;
+      fields[`${node.nodeId}.${key}`] = String(value);
     }
   }
   return fields;

@@ -58,6 +58,7 @@ describe("contract: unauthorized-write", () => {
       {
         outboundStopped: false,
         operatingMode: OperatingMode.OPERATE,
+        actorRole: LocalRole.ADMINISTRATOR,
         policies: [policy],
         grants: [grant],
         nowIso: now,

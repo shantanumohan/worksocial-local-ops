@@ -74,6 +74,7 @@ export type CredentialBroker = {
   revealForPrincipal(
     handleId: string,
     principal: BrokerPrincipal,
+    nowIso: string,
   ): { ok: true; secret: string } | { ok: false; code: string; reason: string };
   listReferences(): CredentialReference[];
 };
@@ -158,6 +159,7 @@ export function createCredentialBroker(): CredentialBroker {
   const revealForPrincipal = (
     handleId: string,
     principal: BrokerPrincipal,
+    nowIso: string,
   ): { ok: true; secret: string } | { ok: false; code: string; reason: string } => {
     if (REASONING_PRINCIPALS.has(principal)) {
       return {
@@ -176,6 +178,13 @@ export function createCredentialBroker(): CredentialBroker {
         ok: false,
         code: "PRINCIPAL_MISMATCH",
         reason: "Handle was minted for a different principal",
+      };
+    }
+    if (Date.parse(handle.expiresAtIso) <= Date.parse(nowIso)) {
+      return {
+        ok: false,
+        code: "HANDLE_EXPIRED",
+        reason: "Credential handle has expired",
       };
     }
     if (!EFFECT_PRINCIPALS.has(principal)) {
