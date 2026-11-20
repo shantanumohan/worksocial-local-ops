@@ -1,6 +1,6 @@
 /**
- * Provider adapter scaffolds for R1-03.
- * NOT_WIRED / FIXTURE only — no live Zoho, CMS, booking, or OAuth mutations.
+ * Provider adapter scaffolds for R1-03 + M4 collectors / staging CMS.
+ * NOT_WIRED / FIXTURE / SIMULATOR — no live Zoho/CMS/booking mutations by default.
  */
 
 export const packageName = "@worksocial/provider-adapters" as const;
@@ -9,6 +9,7 @@ export const AdapterStatus = {
   NOT_WIRED: "NOT_WIRED",
   FIXTURE: "FIXTURE",
   LIVE: "LIVE",
+  SIMULATOR: "SIMULATOR",
 } as const;
 
 export type AdapterStatusValue =
@@ -28,8 +29,9 @@ export const R1_03_ADAPTERS: readonly AdapterDescriptor[] = [
     adapterId: "owned-site-http",
     providerId: "owned-site",
     status: AdapterStatus.FIXTURE,
-    capabilities: ["fixture_read_page", "fixture_read_form"],
-    notes: "Fixture page/form reads only; no live CMS publish.",
+    capabilities: ["fixture_read_page", "fixture_read_form", "page_snapshot"],
+    notes:
+      "Fixture page/form reads + M4 page snapshot collector. Live crawl optional and labeled.",
   },
   {
     adapterId: "cms-source",
@@ -37,6 +39,18 @@ export const R1_03_ADAPTERS: readonly AdapterDescriptor[] = [
     status: AdapterStatus.NOT_WIRED,
     capabilities: [],
     notes: "CMS adapter scaffold — OAuth/live edits out of scope for R1-03.",
+  },
+  {
+    adapterId: "staging-cms-simulator",
+    providerId: "cms",
+    status: AdapterStatus.SIMULATOR,
+    capabilities: [
+      "staging_apply",
+      "independent_read_back",
+      "unknown_remote_recovery",
+    ],
+    notes:
+      "M4 / NEXT-15 staging CMS simulator. Apply ≠ verified. Independent read-back required. Live CMS remains NOT_WIRED without credentials.",
   },
   {
     adapterId: "repo-source",
@@ -97,6 +111,22 @@ export const R1_03_ADAPTERS: readonly AdapterDescriptor[] = [
     status: AdapterStatus.NOT_WIRED,
     capabilities: [],
     notes: "Live Google Trends API — NOT_WIRED; access-controlled and not assumed (R1-06).",
+  },
+  {
+    adapterId: "gsc-collector",
+    providerId: "gsc",
+    status: AdapterStatus.FIXTURE,
+    capabilities: ["fixture_search_analytics", "live_if_credentials"],
+    notes:
+      "M4 / NEXT-14 GSC collector. FIXTURE by default; LIVE only when WORKSOCIAL_GSC_* credentials exist. Preserves measurement provenance.",
+  },
+  {
+    adapterId: "ga4-collector",
+    providerId: "ga4",
+    status: AdapterStatus.FIXTURE,
+    capabilities: ["fixture_analytics", "live_if_credentials"],
+    notes:
+      "M4 / NEXT-14 GA4 collector. FIXTURE by default; LIVE only when WORKSOCIAL_GA4_* credentials exist. Preserves measurement provenance.",
   },
   {
     adapterId: "seo-fixture-pages",
@@ -203,3 +233,28 @@ export function listAdapters(): AdapterDescriptor[] {
 export function getAdapter(adapterId: string): AdapterDescriptor | undefined {
   return R1_03_ADAPTERS.find((a) => a.adapterId === adapterId);
 }
+
+export {
+  FIXTURE_PILOT_HTML,
+  capturePageSnapshot,
+  htmlFromStagingFields,
+  readGscObservations,
+  readGa4Observations,
+  collectorCredentialHints,
+  type PageSnapshotCollectorInput,
+  type PageSnapshotCollectorResult,
+  type MeasurementCollectorResult,
+} from "./collectors.js";
+
+export {
+  validateLiveCollectorUrl,
+  validateCollectorRedirectTarget,
+  type CollectorUrlPolicyVerdict,
+} from "./url-policy.js";
+
+export {
+  createStagingCmsSimulator,
+  createStagingCmsAdapter,
+  stagingCmsLiveAvailable,
+  type StagingCmsSimulator,
+} from "./staging-cms.js";

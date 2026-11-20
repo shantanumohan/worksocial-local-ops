@@ -54,7 +54,7 @@ export function loginPage(apiOrigin: string): string {
     }
     const data = await res.json();
     sessionStorage.setItem('ws_csrf', data.csrfToken);
-    location.href = '/roles';
+    location.href = '/activation';
   });
 </script>
 </body>
@@ -1089,17 +1089,27 @@ export function seoPage(apiOrigin: string): string {
   };
   document.getElementById('btn-verify').onclick = async () => {
     const proposalId = document.getElementById('prop-id').value;
-    const props = JSON.parse(document.getElementById('proposals').textContent || '[]');
-    const row = props.find(p => p.proposalId === proposalId);
-    const observedFields = row?.proposedFields || {};
+    // F12 fix: never copy desired/proposed → observed in the browser.
+    // Ask the API for an independent fixture read-back, then verify with those fields.
+    const readRes = await api('/seo/independent-read-back', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ proposalId })
+    });
+    const readBody = await readRes.json();
+    if (!readRes.ok) {
+      document.getElementById('note').textContent = readBody.reason || readBody.error || 'independent read failed';
+      document.getElementById('search-out').textContent = JSON.stringify(readBody, null, 2);
+      return;
+    }
     const res = await api('/seo/verify-pilot', {
       method:'POST',
       headers:{'content-type':'application/json'},
-      body: JSON.stringify({ proposalId, observedFields })
+      body: JSON.stringify({ proposalId, observedFields: readBody.observedFields })
     });
     const body = await res.json();
     document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
-    document.getElementById('search-out').textContent = JSON.stringify(body, null, 2);
+    document.getElementById('search-out').textContent = JSON.stringify({ independentRead: readBody, verify: body }, null, 2);
     refresh();
   };
   document.getElementById('btn-refresh').onclick = () => refresh();
@@ -1285,16 +1295,24 @@ export function contentPage(apiOrigin: string): string {
   };
   document.getElementById('btn-verify-cms').onclick = async () => {
     const articleId = document.getElementById('art-id').value;
-    const ledger = JSON.parse(document.getElementById('ledger').textContent || '{}');
-    const row = (ledger.articles || []).find(a => a.articleId === articleId);
-    const observedFields = row ? { title: row.title, body: row.body, contentDigest: row.contentDigest } : {};
+    // F12 fix: independent fixture read-back — never copy desired fields from the browser ledger.
+    const readRes = await api('/content/independent-read-back', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ kind: 'canonical', articleId })
+    });
+    const readBody = await readRes.json();
+    if (!readRes.ok) {
+      document.getElementById('note').textContent = readBody.reason || readBody.error || 'independent read failed';
+      document.getElementById('out').textContent = JSON.stringify(readBody, null, 2);
+      return;
+    }
     const res = await api('/content/verify-canonical', {
       method:'POST', headers:{'content-type':'application/json'},
-      body: JSON.stringify({ articleId, observedFields })
+      body: JSON.stringify({ articleId, observedFields: readBody.observedFields })
     });
     const body = await res.json();
     document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
-    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    document.getElementById('out').textContent = JSON.stringify({ independentRead: readBody, verify: body }, null, 2);
     refresh();
   };
   document.getElementById('btn-release-var').onclick = async () => {
@@ -1310,16 +1328,23 @@ export function contentPage(apiOrigin: string): string {
   };
   document.getElementById('btn-verify-var').onclick = async () => {
     const variantId = document.getElementById('var-id').value;
-    const ledger = JSON.parse(document.getElementById('ledger').textContent || '{}');
-    const row = (ledger.variants || []).find(v => v.variantId === variantId);
-    const observedFields = row ? { title: row.title, body: row.body } : {};
+    const readRes = await api('/content/independent-read-back', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ kind: 'variant', variantId })
+    });
+    const readBody = await readRes.json();
+    if (!readRes.ok) {
+      document.getElementById('note').textContent = readBody.reason || readBody.error || 'independent read failed';
+      document.getElementById('out').textContent = JSON.stringify(readBody, null, 2);
+      return;
+    }
     const res = await api('/content/verify-variant', {
       method:'POST', headers:{'content-type':'application/json'},
-      body: JSON.stringify({ variantId, observedFields })
+      body: JSON.stringify({ variantId, observedFields: readBody.observedFields })
     });
     const body = await res.json();
     document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
-    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    document.getElementById('out').textContent = JSON.stringify({ independentRead: readBody, verify: body }, null, 2);
     refresh();
   };
   document.getElementById('btn-live-var').onclick = async () => {

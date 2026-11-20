@@ -222,6 +222,13 @@ export type ContentService = {
     outcome: WritePathOutcomeEvidence | null;
     details: string[];
   };
+  independentCanonicalReadBack(input: { articleId: string }): {
+    ok: boolean;
+    articleId: string;
+    observedFields: Record<string, string> | null;
+    source: "fixture_remote_ledger";
+    reason: string;
+  };
   /**
    * Release a destination variant (GBP / social) after verified canonical URL.
    * Live preferLive path returns honest NOT_WIRED without fabricating success.
@@ -264,6 +271,13 @@ export type ContentService = {
     outcome: WritePathOutcomeEvidence | null;
     details: string[];
   };
+  independentVariantReadBack(input: { variantId: string }): {
+    ok: boolean;
+    variantId: string;
+    observedFields: Record<string, string> | null;
+    source: "fixture_remote_ledger";
+    reason: string;
+  };
   seedAndProveContentMapping(nowIso?: string): {
     mapping: ProductionMappingState;
     writePathIds: { cms: string; gbp: string; linkedin: string; facebook: string };
@@ -278,6 +292,36 @@ export function createContentService(
   options: ContentServiceOptions = {},
 ): ContentService {
   const gateway = options.gateway ?? createActionGateway();
+
+  const putCanonicalLedger = (
+    articleId: string,
+    fields: Record<string, string>,
+    nowIso: string,
+  ) => {
+    store.update((state) => ({
+      ...state,
+      fixtureCanonicalLedger: {
+        ...state.fixtureCanonicalLedger,
+        [articleId]: { ...fields },
+      },
+      updatedAtIso: nowIso,
+    }));
+  };
+
+  const putVariantLedger = (
+    variantId: string,
+    fields: Record<string, string>,
+    nowIso: string,
+  ) => {
+    store.update((state) => ({
+      ...state,
+      fixtureVariantLedger: {
+        ...state.fixtureVariantLedger,
+        [variantId]: { ...fields },
+      },
+      updatedAtIso: nowIso,
+    }));
+  };
 
   return {
     gateway,
@@ -887,8 +931,17 @@ export function createContentService(
         recordedAtIso: nowIso,
       });
       store.addReceipt(receipt);
+      putCanonicalLedger(
+        article.articleId,
+        {
+          title: article.title,
+          body: article.body,
+          contentDigest: article.contentDigest,
+        },
+        nowIso,
+      );
       details.push(
-        "Left ACCEPTED_PENDING / RELEASED_PENDING — supply fixture read-back via verifyCanonicalRelease",
+        "Left ACCEPTED_PENDING / RELEASED_PENDING — call independentCanonicalReadBack then verify",
       );
 
       return {
@@ -899,6 +952,48 @@ export function createContentService(
         liveCmsPublishWiring: "NOT_WIRED",
         acceptanceEqualsVerified: false,
         details,
+      };
+    },
+
+    independentCanonicalReadBack(input) {
+      const article =
+        store.read().articles.find((a) => a.articleId === input.articleId) ??
+        null;
+      if (!article) {
+        return {
+          ok: false,
+          articleId: input.articleId,
+          observedFields: null,
+          source: "fixture_remote_ledger" as const,
+          reason: "Unknown article",
+        };
+      }
+      if (article.status !== ArticleStatus.RELEASED_PENDING) {
+        return {
+          ok: false,
+          articleId: input.articleId,
+          observedFields: null,
+          source: "fixture_remote_ledger" as const,
+          reason: `Article status is ${article.status}; independent read requires RELEASED_PENDING`,
+        };
+      }
+      const observed =
+        store.read().fixtureCanonicalLedger[input.articleId] ?? null;
+      if (!observed) {
+        return {
+          ok: false,
+          articleId: input.articleId,
+          observedFields: null,
+          source: "fixture_remote_ledger" as const,
+          reason: "Fixture remote ledger empty for article",
+        };
+      }
+      return {
+        ok: true,
+        articleId: input.articleId,
+        observedFields: { ...observed },
+        source: "fixture_remote_ledger" as const,
+        reason: "Independent fixture remote read-back",
       };
     },
 
@@ -1310,8 +1405,16 @@ export function createContentService(
         recordedAtIso: nowIso,
       });
       store.addReceipt(receipt);
+      putVariantLedger(
+        variant.variantId,
+        {
+          title: variant.title,
+          body: variant.body,
+        },
+        nowIso,
+      );
       details.push(
-        "Left ACCEPTED_PENDING / RELEASED_PENDING — supply fixture read-back via verifyVariantRelease",
+        "Left ACCEPTED_PENDING / RELEASED_PENDING — call independentVariantReadBack then verify",
       );
 
       return {
@@ -1322,6 +1425,48 @@ export function createContentService(
         liveWiring: "FIXTURE",
         acceptanceEqualsVerified: false,
         details,
+      };
+    },
+
+    independentVariantReadBack(input) {
+      const variant =
+        store.read().variants.find((v) => v.variantId === input.variantId) ??
+        null;
+      if (!variant) {
+        return {
+          ok: false,
+          variantId: input.variantId,
+          observedFields: null,
+          source: "fixture_remote_ledger" as const,
+          reason: "Unknown variant",
+        };
+      }
+      if (variant.status !== VariantStatus.RELEASED_PENDING) {
+        return {
+          ok: false,
+          variantId: input.variantId,
+          observedFields: null,
+          source: "fixture_remote_ledger" as const,
+          reason: `Variant status is ${variant.status}; independent read requires RELEASED_PENDING`,
+        };
+      }
+      const observed =
+        store.read().fixtureVariantLedger[input.variantId] ?? null;
+      if (!observed) {
+        return {
+          ok: false,
+          variantId: input.variantId,
+          observedFields: null,
+          source: "fixture_remote_ledger" as const,
+          reason: "Fixture remote ledger empty for variant",
+        };
+      }
+      return {
+        ok: true,
+        variantId: input.variantId,
+        observedFields: { ...observed },
+        source: "fixture_remote_ledger" as const,
+        reason: "Independent fixture remote read-back",
       };
     },
 

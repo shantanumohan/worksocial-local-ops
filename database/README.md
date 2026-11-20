@@ -1,6 +1,6 @@
 # Database migrations
 
-Ordered SQL under `migrations/` (`001_…` … `015_…`).
+Ordered SQL under `migrations/` (`001_…` … `016_…`).
 
 ```bash
 export DATABASE_URL=postgres://worksocial:worksocial@127.0.0.1:5432/worksocial
@@ -13,5 +13,7 @@ gateway decisions, execution receipts, budget accounts/reservations, outbox,
 and the independent fake-provider ledger. `014_mission_workflows.sql` adds LOCAL_DURABLE
 mission rows. `015_artifacts.sql` is the M3 schema companion for immutable artifact
 revisions and A25 review bindings (file-backed store until Postgres cutover).
+`016_owner_staging.sql` is the M4 companion for owner activation, collectors,
+missions, and staging CMS read-back (file-backed until Postgres cutover).
 Runner: `pnpm db:migrate` (`packages/persistence` `runMigrations`).
 External effects: none (simulator only).

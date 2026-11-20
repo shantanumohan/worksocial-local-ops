@@ -67,6 +67,7 @@ import {
   createFileInboxStore,
   createFileLearningStore,
   createFileKnowledgeStore,
+  createFileOwnerStagingStore,
   createFileProbeStore,
   createFileProductionMappingStore,
   createFileRepairStore,
@@ -77,6 +78,7 @@ import {
   type AuthorityStore,
   type KnowledgeStore,
   type LearningStore,
+  type OwnerStagingStore,
   type PolicyDecisionRecord,
   type ContentStore,
   type InboxStore,
@@ -92,7 +94,10 @@ import {
   type GatewayIntent,
 } from "@worksocial/action-gateway";
 import { createCredentialBroker, type CredentialBroker } from "@worksocial/credential-broker";
-import { listAdapters } from "@worksocial/provider-adapters";
+import {
+  createStagingCmsSimulator,
+  listAdapters,
+} from "@worksocial/provider-adapters";
 import {
   createClaudeRunner,
   type ClaudeRunner,
@@ -139,7 +144,12 @@ import {
   REPAIR_PROPOSAL_ID,
   type RepairService,
 } from "@worksocial/repair";
+import {
+  createOwnerStagingService,
+  type OwnerStagingService,
+} from "@worksocial/owner-staging";
 import { listPinnedModels } from "@worksocial/ml";
+import { handleOwnerStagingRequest } from "./owner-staging-http.js";
 
 function factLabelsFromKnowledge(
   knowledge: KnowledgeService,
@@ -232,6 +242,8 @@ export type ApiRuntime = {
   inbox: InboxService;
   repairStore: RepairStore;
   repair: RepairService;
+  ownerStagingStore: OwnerStagingStore;
+  ownerStaging: OwnerStagingService;
   runner: ClaudeRunner;
   missions: MissionEnqueueService;
   gateway: ActionGateway;
@@ -413,12 +425,18 @@ export function createApiRuntime(options: {
   const contentStore = createFileContentStore(options.stateDir);
   const inboxStore = createFileInboxStore(options.stateDir);
   const repairStore = createFileRepairStore(options.stateDir);
+  const ownerStagingStore = createFileOwnerStagingStore(options.stateDir);
   const gateway = createActionGateway();
   rehydratePendingContentGatewayDecisions(gateway, contentStore, store);
   const seo = createSeoService(seoStore, { gateway });
   const content = createContentService(contentStore, { gateway });
   const inbox = createInboxService(inboxStore, { gateway });
   const repair = createRepairService(repairStore, { gateway });
+  const stagingCms = createStagingCmsSimulator();
+  for (const page of ownerStagingStore.read().cmsPages) {
+    stagingCms.seedPage(page);
+  }
+  const ownerStaging = createOwnerStagingService(ownerStagingStore, stagingCms);
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
@@ -449,6 +467,8 @@ export function createApiRuntime(options: {
     inbox,
     repairStore,
     repair,
+    ownerStagingStore,
+    ownerStaging,
     runner,
     missions,
     gateway,
@@ -3295,6 +3315,46 @@ export async function handleApiRequest(
     return;
   }
 
+  if (method === "POST" && url.pathname === "/seo/independent-read-back") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason: "SEO independent read requires administrator",
+        },
+        cors,
+      );
+      return;
+    }
+    const raw = await readBody(req);
+    const parsed = parseJsonObjectBody(raw);
+    if (!parsed.ok) {
+      json(res, 400, { error: parsed.error }, cors);
+      return;
+    }
+    const proposalId = parsed.value.proposalId;
+    if (typeof proposalId !== "string" || !proposalId.trim()) {
+      json(res, 400, { error: "MISSING_PROPOSAL_ID" }, cors);
+      return;
+    }
+    const readBack = runtime.seo.independentReadBack({ proposalId });
+    json(res, readBack.ok ? 200 : 400, readBack, cors);
+    return;
+  }
+
   if (method === "POST" && url.pathname === "/seo/verify-pilot") {
     const result = requireSession(runtime, req, {
       requireCsrf: true,
@@ -3331,13 +3391,36 @@ export async function handleApiRequest(
       json(res, 400, { error: "INVALID_JSON" }, cors);
       return;
     }
-    if (!body.proposalId || !body.observedFields || typeof body.observedFields !== "object") {
+    // Prefer server-side independent read when client omits observedFields (F12).
+    let observedFields = body.observedFields;
+    if (
+      body.proposalId &&
+      (!observedFields || typeof observedFields !== "object")
+    ) {
+      const independent = runtime.seo.independentReadBack({
+        proposalId: body.proposalId,
+      });
+      if (!independent.ok || !independent.observedFields) {
+        json(
+          res,
+          400,
+          {
+            error: "MISSING_READ_BACK",
+            reason: independent.reason,
+          },
+          cors,
+        );
+        return;
+      }
+      observedFields = independent.observedFields;
+    }
+    if (!body.proposalId || !observedFields || typeof observedFields !== "object") {
       json(res, 400, { error: "MISSING_READ_BACK" }, cors);
       return;
     }
     const verified = runtime.seo.verifyPilotRelease({
       proposalId: body.proposalId,
-      observedFields: body.observedFields,
+      observedFields,
       forceFailure: body.forceFailure === true,
     });
 
@@ -3771,6 +3854,65 @@ export async function handleApiRequest(
       },
       cors,
     );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/content/independent-read-back") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason: "Content independent read requires administrator",
+        },
+        cors,
+      );
+      return;
+    }
+    const raw = await readBody(req);
+    const parsed = parseJsonObjectBody(raw);
+    if (!parsed.ok) {
+      json(res, 400, { error: parsed.error }, cors);
+      return;
+    }
+    const kind = parsed.value.kind;
+    if (kind === "canonical") {
+      const articleId = parsed.value.articleId;
+      if (typeof articleId !== "string") {
+        json(res, 400, { error: "MISSING_ARTICLE_ID" }, cors);
+        return;
+      }
+      const readBack = runtime.content.independentCanonicalReadBack({
+        articleId,
+      });
+      json(res, readBack.ok ? 200 : 400, readBack, cors);
+      return;
+    }
+    if (kind === "variant") {
+      const variantId = parsed.value.variantId;
+      if (typeof variantId !== "string") {
+        json(res, 400, { error: "MISSING_VARIANT_ID" }, cors);
+        return;
+      }
+      const readBack = runtime.content.independentVariantReadBack({
+        variantId,
+      });
+      json(res, readBack.ok ? 200 : 400, readBack, cors);
+      return;
+    }
+    json(res, 400, { error: "INVALID_KIND" }, cors);
     return;
   }
 
@@ -4995,6 +5137,23 @@ export async function handleApiRequest(
       }
     }
     json(res, 200, verified, cors);
+    return;
+  }
+
+  // --- M4 / NEXT-13–15 owner staging workflow ---
+  const ownerHandled = await handleOwnerStagingRequest({
+    ownerStaging: runtime.ownerStaging,
+    req,
+    res,
+    url,
+    method,
+    cors,
+    json,
+    readBody,
+    parseJsonObjectBody,
+    requireSession: (incoming, opts) => requireSession(runtime, incoming, opts),
+  });
+  if (ownerHandled) {
     return;
   }
 

@@ -99,6 +99,12 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - Console `/inbox` + API `/inbox/*` — seed, draft, queue, send, takeover, log-lead, handoff.
 - SQL `011_inbox.sql` companion schema; **live inbox providers and live Zoho remain `NOT_WIRED`**.
 
+### M4 Owner staging workflow (NEXT-13–15)
+- **Console** — `/activation`, `/connections`, `/sites`, `/missions`, `/review`, `/evidence` wired to typed `/owner/*` APIs; safe text rendering (no raw ID/JSON as primary UI).
+- **Collectors** — page snapshot + deterministic checks; GSC/GA4 adapters labeled **FIXTURE** (or LIVE capability when credentials exist). Provenance preserved.
+- **Staging CMS simulator** — apply → independent read-back → UNKNOWN_REMOTE_OUTCOME recovery. Acceptance ≠ verified. F12 verify cheat removed (no desired→observed copy in the browser).
+- SQL `016_owner_staging.sql` companion schema; **Temporal remains NOT_WIRED**. Not an R1-complete claim.
+
 ### R1-10 Bounded repair and release
 - **Incidents / tickets / proposals / attempts / test evidence** with isolated worktree + asset lease.
 - **Fail-closed gates** — cannot weaken tests, mutate baselines, touch protected policy/gateway paths, exceed two attempts, or self-approve (A24 ≠ A25).
@@ -114,11 +120,11 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 |------|--------|
 | Temporal runtime / durable workflows | **stub** — `NOT_WIRED` (in-process enqueue only) |
 | Live Claude Code CLI fleet | optional; default **fixture** (`WORKSOCIAL_CLAUDE_FIXTURE` unset/`1`) |
-| Full console React routes (v5 25 screens) | minimal login + authority + mapping + roles + monitoring + knowledge + SEO + content + inbox + repair + learning |
-| Live OAuth / provider connections | **excluded** — fixture/NOT_WIRED scaffolds only |
-| Live Zoho / CMS / booking mutations | **excluded** — fixture canary / fixture SEO/content/inbox lead / fixture repair only |
+| Full console React routes (v5 25 screens) | progressive HTML: activation → connections → sites → missions → review → evidence (+ prior diagnostic pages). Not full React. |
+| Live OAuth / provider connections | **excluded** — fixture/NOT_WIRED scaffolds; GSC/GA4 LIVE only with credentials |
+| Live Zoho / CMS / booking mutations | **excluded** — fixture canary / fixture SEO/content/inbox lead / fixture repair / staging CMS **simulator** only |
 | Live SERP / Google Trends | **NOT_WIRED** — fixture demand adapters only (R1-06) |
-| Live CMS page / article publish | **NOT_WIRED** — fixture read-back release only (R1-07/R1-08) |
+| Live CMS page / article publish | **NOT_WIRED** — fixture/simulator read-back only (R1-07/R1-08/M4) |
 | Live GBP / LinkedIn / Facebook publish | **NOT_WIRED** — fixture receipts only (R1-08) |
 | Live Playwright browser sessions | **NOT_WIRED** unless optional install + URL binding |
 | Postgres bound as live control plane | schema ready; runtime state is **file-backed** |
@@ -134,7 +140,7 @@ Status labels stay honest: fixture / stub / `NOT_RUN` ≠ sandbox-verified or pr
 
 ```
 apps/console, apps/api
-services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-broker,learning-worker,probes,knowledge,seo,content,inbox,repair,evaluation-worker}
+services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-broker,learning-worker,probes,knowledge,seo,content,inbox,repair,owner-staging,evaluation-worker}
 packages/{contracts,domain,ml,persistence,provider-adapters,observability,ui}
 database/migrations
 tests/{unit,integration,contract,workflow,e2e,security,eval,soak}

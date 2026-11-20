@@ -305,6 +305,11 @@ export type SeoState = {
   searchResults: SemanticSearchResult[];
   /** Verified SEO release SUCCESS/FAILURE outcomes for learning-worker. */
   releaseOutcomes: WritePathOutcomeEvidence[];
+  /**
+   * Durable fixture remote ledger for independent read-back after release.
+   * Survives API restart — keyed by proposalId.
+   */
+  fixtureRemoteLedger: Record<string, Record<string, string>>;
   /** Live CMS publish adapter — honest NOT_WIRED until wired. */
   liveCmsPublishWiring: "NOT_WIRED";
 };
@@ -319,6 +324,7 @@ export function emptySeoState(nowIso: string): SeoState {
     searchIndex: null,
     searchResults: [],
     releaseOutcomes: [],
+    fixtureRemoteLedger: {},
     liveCmsPublishWiring: "NOT_WIRED",
   };
 }

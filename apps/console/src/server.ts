@@ -12,6 +12,14 @@ import {
   inboxPage,
   repairPage,
 } from "./pages.js";
+import {
+  activationPage,
+  connectionsPage,
+  evidencePage,
+  missionsPage,
+  reviewDeskPage,
+  sitesPage,
+} from "./owner-pages.js";
 
 export type ConsoleServerOptions = {
   port: number;
@@ -28,8 +36,9 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
         status: "running",
         productionActivated: false,
         identity:
-          "R1-02–R1-10 login + authority + mapping + roles + monitoring + knowledge + SEO + content + inbox + repair + learning",
-        message: "Minimal console surface; not full React routes.",
+          "M4 owner staging + R1-02–R1-10 login/authority/mapping/roles/monitoring/knowledge/SEO/content/inbox/repair/learning",
+        message:
+          "Progressive console: activation → connections → sites → missions → review → evidence. Not full React routes. Not R1-complete.",
       });
       res.writeHead(200, { "content-type": "application/json" });
       res.end(body);
@@ -39,6 +48,42 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
     if (url.pathname === "/" || url.pathname === "/login") {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       res.end(loginPage(options.apiOrigin));
+      return;
+    }
+
+    if (url.pathname === "/activation") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(activationPage(options.apiOrigin));
+      return;
+    }
+
+    if (url.pathname === "/connections") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(connectionsPage(options.apiOrigin));
+      return;
+    }
+
+    if (url.pathname === "/sites") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(sitesPage(options.apiOrigin));
+      return;
+    }
+
+    if (url.pathname === "/missions") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(missionsPage(options.apiOrigin));
+      return;
+    }
+
+    if (url.pathname === "/review") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(reviewDeskPage(options.apiOrigin));
+      return;
+    }
+
+    if (url.pathname === "/evidence") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(evidencePage(options.apiOrigin));
       return;
     }
 

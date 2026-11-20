@@ -77,6 +77,7 @@ export function createFileSeoStore(stateDir: string): SeoStore {
       searchIndex: existing.searchIndex ?? null,
       searchResults: existing.searchResults ?? [],
       releaseOutcomes: existing.releaseOutcomes ?? [],
+      fixtureRemoteLedger: existing.fixtureRemoteLedger ?? {},
       liveCmsPublishWiring: "NOT_WIRED",
     };
   };
