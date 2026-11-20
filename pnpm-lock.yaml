@@ -44,6 +44,9 @@ importers:
       '@worksocial/knowledge':
         specifier: workspace:*
         version: link:../../services/knowledge
+      '@worksocial/lead-capture':
+        specifier: workspace:*
+        version: link:../../services/lead-capture
       '@worksocial/learning-worker':
         specifier: workspace:*
         version: link:../../services/learning-worker
@@ -299,6 +302,31 @@ importers:
         specifier: 2.1.8
         version: 2.1.8(@types/node@22.10.2)
 
+  services/lead-capture:
+    dependencies:
+      '@worksocial/action-gateway':
+        specifier: workspace:*
+        version: link:../action-gateway
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@worksocial/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
+      '@worksocial/provider-adapters':
+        specifier: workspace:*
+        version: link:../../packages/provider-adapters
+    devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)
+
   services/learning-worker:
     dependencies:
       '@worksocial/domain':
@@ -476,6 +504,9 @@ importers:
       '@worksocial/knowledge':
         specifier: workspace:*
         version: link:../../services/knowledge
+      '@worksocial/lead-capture':
+        specifier: workspace:*
+        version: link:../../services/lead-capture
       '@worksocial/learning-worker':
         specifier: workspace:*
         version: link:../../services/learning-worker
@@ -510,6 +541,9 @@ importers:
       '@worksocial/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@worksocial/lead-capture':
+        specifier: workspace:*
+        version: link:../../services/lead-capture
       '@worksocial/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence

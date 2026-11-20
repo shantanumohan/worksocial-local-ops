@@ -272,3 +272,9 @@ export {
   defaultOwnerStagingStateDir,
   type OwnerStagingStore,
 } from "./owner-staging-store.js";
+
+export {
+  createFileLeadCaptureStore,
+  defaultLeadCaptureStateDir,
+  type LeadCaptureStore,
+} from "./lead-capture-store.js";

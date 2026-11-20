@@ -486,59 +486,51 @@ export function monitoringPage(apiOrigin: string): string {
 </header>
 <main>
   <section>
-    <h2>Monitoring and tests (R1-05)</h2>
-    <p class="muted">HTTP/DOM probes and form-to-CRM canaries with correlated receipts. Synthetic leads never enter commercial totals.</p>
-    <p class="warn">Fixture mode is real offline evidence. Live Zoho is <strong>NOT_WIRED</strong> without owner credentials. Catalog cases stay NOT_RUN.</p>
+    <h2>Monitoring and lead capture (R1-05 + M5)</h2>
+    <p class="muted">HTTP/DOM probes, form→CRM canaries, and M5 journeys: browser → verify → cleanup. Synthetic leads never enter commercial totals.</p>
+    <p class="warn">Fixture mode is real offline evidence. Live Zoho is <strong>NOT_WIRED</strong>. Temporal <strong>NOT_WIRED</strong>. Catalog cases stay NOT_RUN. Not R1-complete.</p>
     <div class="row">
       <button id="btn-http" type="button">Run fixture HTTP</button>
       <button id="btn-dom" type="button">Run fixture DOM</button>
       <button id="btn-canary" type="button">Run form→CRM canary</button>
+      <button id="btn-journey" type="button">Run M5 lead journey</button>
+      <button id="btn-fail" type="button">Inject delivery failure</button>
+      <button id="btn-repair" type="button">Incident→repair→verify</button>
       <button id="btn-refresh" type="button">Refresh</button>
     </div>
     <p class="muted" id="note"></p>
   </section>
   <section>
-    <h2>Status</h2>
+    <h2>Lead-capture status</h2>
+    <table>
+      <thead><tr><th>Signal</th><th>Value</th></tr></thead>
+      <tbody id="lead-status-rows"><tr><td colspan="2" class="muted">Loading…</td></tr></tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Probe status</h2>
     <table>
       <thead><tr><th>Signal</th><th>Value</th></tr></thead>
       <tbody id="status-rows"><tr><td colspan="2" class="muted">Loading…</td></tr></tbody>
     </table>
   </section>
   <section>
-    <h2>Last evidence / recent runs</h2>
+    <h2>Correlated submission ↔ CRM / artifacts / repair</h2>
     <pre id="detail">Loading…</pre>
   </section>
 </main>
 <script>
   const API = ${JSON.stringify(apiOrigin)};
+  let lastFailedJourneyId = null;
   async function api(path, opts = {}) {
     const headers = Object.assign({ origin: window.location.origin }, opts.headers || {});
     const csrf = sessionStorage.getItem('ws_csrf');
     if (opts.method && opts.method !== 'GET' && csrf) headers['x-csrf-token'] = csrf;
     return fetch(API + path, Object.assign({}, opts, { headers, credentials: 'include' }));
   }
-  async function refresh() {
-    const session = await api('/auth/session');
-    if (!session.ok) { location.href = '/login'; return; }
-    const s = await session.json();
-    sessionStorage.setItem('ws_csrf', s.csrfToken);
-    document.getElementById('who').textContent = s.username + ' · ' + s.role + ' · local session';
-    const [statusRes, runsRes] = await Promise.all([
-      api('/probes/status'),
-      api('/probes/runs'),
-    ]);
-    if (!statusRes.ok) { location.href = '/login'; return; }
-    const status = await statusRes.json();
-    const runsBody = await runsRes.json();
-    const tbody = document.getElementById('status-rows');
+  function fillRows(tbodyId, rows) {
+    const tbody = document.getElementById(tbodyId);
     tbody.replaceChildren();
-    const rows = [
-      ['Live Zoho wiring', status.liveZohoWiring],
-      ['Playwright wiring', status.playwrightWiring],
-      ['Run count', String(status.runCount ?? 0)],
-      ['Fixture receipts', String(status.fixtureReceiptCount ?? 0)],
-      ['Catalog case IDs', (status.acceptanceCaseIds || []).join(', ')],
-    ];
     for (const [k, v] of rows) {
       const tr = document.createElement('tr');
       const tdK = document.createElement('td');
@@ -552,10 +544,63 @@ export function monitoringPage(apiOrigin: string): string {
       tr.appendChild(tdV);
       tbody.appendChild(tr);
     }
+  }
+  async function refresh() {
+    const session = await api('/auth/session');
+    if (!session.ok) { location.href = '/login'; return; }
+    const s = await session.json();
+    sessionStorage.setItem('ws_csrf', s.csrfToken);
+    document.getElementById('who').textContent = s.username + ' · ' + s.role + ' · local session';
+    const [statusRes, runsRes, leadRes, journeysRes] = await Promise.all([
+      api('/probes/status'),
+      api('/probes/runs'),
+      api('/lead-capture/status'),
+      api('/lead-capture/journeys?limit=5'),
+    ]);
+    if (!statusRes.ok) { location.href = '/login'; return; }
+    const status = await statusRes.json();
+    const runsBody = await runsRes.json();
+    const lead = leadRes.ok ? await leadRes.json() : {};
+    const journeysBody = journeysRes.ok ? await journeysRes.json() : { journeys: [] };
+    if (lead.currentFailure && lead.currentFailure.journeyId) {
+      lastFailedJourneyId = lead.currentFailure.journeyId;
+    }
+    fillRows('lead-status-rows', [
+      ['Last SUCCESS', lead.lastSuccess ? (lead.lastSuccess.atIso + ' · ' + lead.lastSuccess.correlationId) : 'none'],
+      ['Current FAILURE', lead.currentFailure ? (lead.currentFailure.stage + ': ' + (lead.currentFailure.details || []).join('; ')) : 'none'],
+      ['Open repairs', String(lead.openRepairCount ?? 0)],
+      ['Commerce lead count (excl. synthetic)', String((lead.commerce && lead.commerce.leadCount) || 0)],
+      ['Synthetic excluded', String((lead.commerce && lead.commerce.syntheticExcludedCount) || 0)],
+      ['Live Zoho', lead.liveZohoWiring || 'NOT_WIRED'],
+      ['Playwright', lead.playwrightWiring || 'FIXTURE'],
+      ['Temporal', lead.temporalWiring || 'NOT_WIRED'],
+      ['R1-complete claim', String(lead.r1CompleteClaim === true)],
+    ]);
+    fillRows('status-rows', [
+      ['Live Zoho wiring', status.liveZohoWiring],
+      ['Playwright wiring', status.playwrightWiring],
+      ['Run count', String(status.runCount ?? 0)],
+      ['Fixture receipts', String(status.fixtureReceiptCount ?? 0)],
+      ['Catalog case IDs', (status.acceptanceCaseIds || []).join(', ')],
+    ]);
+    const latest = (journeysBody.journeys || [])[0] || null;
     document.getElementById('detail').textContent = JSON.stringify({
-      lastEvidence: status.lastEvidence || runsBody.lastEvidence,
-      recentRuns: (runsBody.runs || []).slice(-10).reverse(),
-      note: status.note || status.honestNote,
+      lastSuccess: lead.lastSuccess || null,
+      currentFailure: lead.currentFailure || null,
+      latestJourney: latest ? {
+        journeyId: latest.journeyId,
+        correlationId: latest.correlationId,
+        status: latest.status,
+        submission: latest.submission,
+        crmReceipt: latest.crmReceipt,
+        artifactRefs: latest.artifactRefs,
+        repair: latest.repair,
+        cleanup: latest.cleanup,
+        durableOperationId: latest.durableOperationId,
+        fieldVerifyPassed: latest.fieldVerifyPassed,
+      } : null,
+      recentProbeRuns: (runsBody.runs || []).slice(-5).reverse(),
+      honestNote: lead.honestNote || status.note || status.honestNote,
     }, null, 2);
   }
   document.getElementById('btn-http').onclick = async () => {
@@ -577,6 +622,33 @@ export function monitoringPage(apiOrigin: string): string {
     const res = await api('/probes/run-form-canary', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ ensureFixturePilot: true }) });
     const body = await res.json();
     document.getElementById('note').textContent = body.note || ((body.run && body.run.verdict) ? ('Canary ' + body.run.verdict) : (body.error || 'failed'));
+    refresh();
+  };
+  document.getElementById('btn-journey').onclick = async () => {
+    document.getElementById('note').textContent = 'Running M5 lead journey (browser→CRM→verify→cleanup)…';
+    const res = await api('/lead-capture/run-journey', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.note || (body.journey ? ('Journey ' + body.journey.status) : (body.error || 'failed'));
+    refresh();
+  };
+  document.getElementById('btn-fail').onclick = async () => {
+    document.getElementById('note').textContent = 'Injecting CRM delivery failure…';
+    const res = await api('/lead-capture/run-journey', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ failDelivery: true }) });
+    const body = await res.json();
+    if (body.journey) lastFailedJourneyId = body.journey.journeyId;
+    document.getElementById('note').textContent = body.journey ? ('Failed at ' + (body.journey.currentFailure && body.journey.currentFailure.stage) + ' · ' + body.journey.journeyId) : (body.error || 'failed');
+    refresh();
+  };
+  document.getElementById('btn-repair').onclick = async () => {
+    if (!lastFailedJourneyId) {
+      document.getElementById('note').textContent = 'No failed journey id — inject a delivery failure first.';
+      return;
+    }
+    document.getElementById('note').textContent = 'Running incident→repair→verify (weaken-test must fail closed)…';
+    const res = await api('/lead-capture/run-bounded-repair', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ journeyId: lastFailedJourneyId, attemptWeakenTest: true }) });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.ok ? ('Recovered · weaken blocked=' + body.weakenTestBlocked) : (body.details || [body.error || 'failed']).join('; ');
+    if (body.ok) lastFailedJourneyId = null;
     refresh();
   };
   document.getElementById('btn-refresh').onclick = () => refresh();

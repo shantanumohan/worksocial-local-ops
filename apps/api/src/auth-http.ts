@@ -68,6 +68,7 @@ import {
   createFileLearningStore,
   createFileKnowledgeStore,
   createFileOwnerStagingStore,
+  createFileLeadCaptureStore,
   createFileProbeStore,
   createFileProductionMappingStore,
   createFileRepairStore,
@@ -79,6 +80,7 @@ import {
   type KnowledgeStore,
   type LearningStore,
   type OwnerStagingStore,
+  type LeadCaptureStore,
   type PolicyDecisionRecord,
   type ContentStore,
   type InboxStore,
@@ -148,8 +150,13 @@ import {
   createOwnerStagingService,
   type OwnerStagingService,
 } from "@worksocial/owner-staging";
+import {
+  createLeadCaptureService,
+  type LeadCaptureService,
+} from "@worksocial/lead-capture";
 import { listPinnedModels } from "@worksocial/ml";
 import { handleOwnerStagingRequest } from "./owner-staging-http.js";
+import { handleLeadCaptureRequest } from "./lead-capture-http.js";
 
 function factLabelsFromKnowledge(
   knowledge: KnowledgeService,
@@ -244,6 +251,8 @@ export type ApiRuntime = {
   repair: RepairService;
   ownerStagingStore: OwnerStagingStore;
   ownerStaging: OwnerStagingService;
+  leadCaptureStore: LeadCaptureStore;
+  leadCapture: LeadCaptureService;
   runner: ClaudeRunner;
   missions: MissionEnqueueService;
   gateway: ActionGateway;
@@ -437,6 +446,11 @@ export function createApiRuntime(options: {
     stagingCms.seedPage(page);
   }
   const ownerStaging = createOwnerStagingService(ownerStagingStore, stagingCms);
+  const leadCaptureStore = createFileLeadCaptureStore(options.stateDir);
+  const leadCapture = createLeadCaptureService(leadCaptureStore, {
+    gateway,
+    repairStore,
+  });
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
@@ -469,6 +483,8 @@ export function createApiRuntime(options: {
     repair,
     ownerStagingStore,
     ownerStaging,
+    leadCaptureStore,
+    leadCapture,
     runner,
     missions,
     gateway,
@@ -626,7 +642,7 @@ export async function handleApiRequest(
         status: "running",
         productionActivated: false,
         identity:
-          "R1-02–R1-10 auth + mapping + roles + learning + probes + knowledge + SEO/search + content/distribution + inbox/after-hours + bounded-repair",
+          "M5 lead-capture + R1-02–R1-10 auth + mapping + roles + learning + probes + knowledge + SEO/search + content/distribution + inbox/after-hours + bounded-repair",
         message:
           "API surface includes bounded repair, after-hours inbox/takeover, content pipeline, SEO/search. Live CMS/GBP/social/inbox/Zoho NOT_WIRED. No live SERP/Trends.",
       },
@@ -5154,6 +5170,25 @@ export async function handleApiRequest(
     requireSession: (incoming, opts) => requireSession(runtime, incoming, opts),
   });
   if (ownerHandled) {
+    return;
+  }
+
+  // --- M5 / NEXT-16 lead capture + bounded repair ---
+  const leadHandled = await handleLeadCaptureRequest({
+    leadCapture: runtime.leadCapture,
+    authorityStore: runtime.store,
+    mappingStore: runtime.mappingStore,
+    req,
+    res,
+    url,
+    method,
+    cors,
+    json,
+    readBody,
+    parseJsonObjectBody,
+    requireSession: (incoming, opts) => requireSession(runtime, incoming, opts),
+  });
+  if (leadHandled) {
     return;
   }
 

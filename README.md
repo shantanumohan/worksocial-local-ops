@@ -57,6 +57,14 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - SQL `007_monitoring.sql` companion schema; **live Zoho remains `NOT_WIRED`** without owner credentials.
 - Catalog refs `T-F20`, `T-US-039`, `T-US-040`, `T-X049` exercised offline — product cases stay `NOT_RUN`.
 
+### M5 / NEXT-16 lead capture + bounded repair
+- **`services/lead-capture`** — browser/form harness → fixture Zoho CRM → field verify → cleanup; synthetic excluded from commerce totals.
+- **Delivery failure → incident → bounded repair → re-verify**; weaken-test / protected-path proposals fail closed.
+- **M1 gateway** authorize + **M2 durable** accept/verify (`LOCAL_DURABLE`); **Temporal stays `NOT_WIRED`**.
+- Console `/monitoring` surfaces last SUCCESS, current FAILURE, artifact refs, correlated submission↔CRM, repair state.
+- API `/lead-capture/*` — status, journeys, run-journey, cleanup, open-incident-from-failure, run-bounded-repair.
+- SQL `017_lead_capture.sql` companion schema; **live Zoho NOT_WIRED**; **R1-complete not claimed**.
+
 ### R1-06 knowledge and research / demand intelligence
 - **Fact registry** with honest **SUPPORTED / UNKNOWN / HYPOTHESIS** labels, evidence links, and provenance.
 - **Instruction/playbook ingestion** records — incoming docs are evidence, never auto-promoted to executable agent instructions.
@@ -161,8 +169,8 @@ pnpm local:doctor | local:start | local:stop | local:health
 pnpm check
 pnpm test:acceptance-matrix   # 159-case catalog ↔ matrix alignment (all NOT_RUN)
 pnpm test:unit                # domain + ml + persistence + supervisor + gateway + broker + runners + learning-worker + probes + knowledge + seo + content + inbox + repair + api
-pnpm test:contract            # unauthorized-write + stop-switch + read-evidence + thirty-role-runtime + learning-worker + form-crm-canary + knowledge-labeling + seo-search + content-distribution + inbox-after-hours + bounded-repair
-pnpm test:e2e                 # offline e2e-lite HTTP→DOM→canary journey (not browser product acceptance)
+pnpm test:contract            # unauthorized-write + stop-switch + read-evidence + thirty-role-runtime + learning-worker + form-crm-canary + knowledge-labeling + seo-search + content-distribution + inbox-after-hours + bounded-repair + lead-capture-m5
+pnpm test:e2e                 # offline e2e-lite HTTP→DOM→canary + M5 lead journey (not browser product acceptance)
 pnpm test:database | test:workflow | test:security | test:eval   # stubs — exit 1 / INCOMPLETE
 pnpm recovery:rehearse | release:evidence                        # stubs — exit 1 / INCOMPLETE
 ```

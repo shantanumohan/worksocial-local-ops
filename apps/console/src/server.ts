@@ -36,9 +36,9 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
         status: "running",
         productionActivated: false,
         identity:
-          "M4 owner staging + R1-02–R1-10 login/authority/mapping/roles/monitoring/knowledge/SEO/content/inbox/repair/learning",
+          "M5 lead-capture + M4 owner staging + R1-02–R1-10 login/authority/mapping/roles/monitoring/knowledge/SEO/content/inbox/repair/learning",
         message:
-          "Progressive console: activation → connections → sites → missions → review → evidence. Not full React routes. Not R1-complete.",
+          "Progressive console: activation → connections → sites → missions → review → evidence + M5 lead journeys. Not full React routes. Not R1-complete.",
       });
       res.writeHead(200, { "content-type": "application/json" });
       res.end(body);
