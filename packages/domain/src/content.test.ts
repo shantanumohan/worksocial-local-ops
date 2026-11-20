@@ -19,6 +19,7 @@ import {
   digestArticleContent,
   emptyContentState,
   createArticleQaVerdict,
+  createVariantQaVerdict,
   evaluateArticleApprovalGate,
   evaluateArticleGate,
   evaluateContentReadBack,
@@ -201,12 +202,116 @@ describe("content domain — canonical-first distribution", () => {
     });
     expect(created.ok).toBe(true);
     if (!created.ok) return;
+    expect(created.variant.contentDigest).toBe(
+      digestArticleContent(created.variant.title, created.variant.body),
+    );
+    expect(created.variant.citedFactIds).toContain("fixture-fact-hours");
     const gate = evaluateVariantReleaseGate({
       variant: { ...created.variant, status: VariantStatus.READY },
       article,
       destination: gbp,
     });
     expect(gate.allowed).toBe(true);
+  });
+
+  it("blocks unsupported per-variant claims and requires digest-bound QA", () => {
+    const article = {
+      ...createCanonicalArticle({
+        articleId: "art-var-qa",
+        campaignId: "camp-var-qa",
+        authorId: "author-test",
+        title: "Title",
+        body: "Body",
+        citedFactIds: ["fixture-fact-hours"],
+        fixtureOnly: true,
+        createdAtIso: now,
+      }),
+      verifiedCanonicalUrl: "https://fixture.worksocial.local/articles/art-var-qa",
+      status: ArticleStatus.VERIFIED,
+    };
+    const created = createDestinationVariant({
+      variantId: "var-bad-claim",
+      campaignId: "camp-var-qa",
+      article,
+      destination: gbp,
+      format: ContentFormat.SHORT_UPDATE,
+      citedFactIds: ["fixture-fact-hypothesis"],
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    const blockedClaims = evaluateVariantReleaseGate({
+      variant: { ...created.variant, status: VariantStatus.READY },
+      article,
+      destination: gbp,
+      factLabels: labels,
+      requireVariantQa: true,
+    });
+    expect(blockedClaims.allowed).toBe(false);
+    expect(blockedClaims.reasons.join(" ")).toMatch(/unsupported|QA/i);
+
+    const qa = createVariantQaVerdict({
+      verdictId: "vq-1",
+      variantId: created.variant.variantId,
+      articleId: article.articleId,
+      authorId: article.authorId,
+      reviewerId: "reviewer-2",
+      approved: true,
+      contentDigest: created.variant.contentDigest,
+      citedFactIds: ["fixture-fact-hours"],
+      summary: "ok",
+      decidedAtIso: now,
+    });
+    expect(qa.ok).toBe(true);
+    if (!qa.ok) return;
+
+    const stillBlocked = evaluateVariantReleaseGate({
+      variant: { ...created.variant, status: VariantStatus.READY },
+      article,
+      destination: gbp,
+      factLabels: labels,
+      variantQaVerdict: qa.verdict,
+      requireVariantQa: true,
+    });
+    expect(stillBlocked.allowed).toBe(false);
+    expect(stillBlocked.reasons.join(" ")).toMatch(/hypothesis|unsupported/i);
+
+    const good = createDestinationVariant({
+      variantId: "var-good-claim",
+      campaignId: "camp-var-qa",
+      article,
+      destination: gbp,
+      format: ContentFormat.SHORT_UPDATE,
+      citedFactIds: ["fixture-fact-hours"],
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    expect(good.ok).toBe(true);
+    if (!good.ok) return;
+    const goodQa = createVariantQaVerdict({
+      verdictId: "vq-2",
+      variantId: good.variant.variantId,
+      articleId: article.articleId,
+      authorId: article.authorId,
+      reviewerId: "reviewer-2",
+      approved: true,
+      contentDigest: good.variant.contentDigest,
+      citedFactIds: good.variant.citedFactIds,
+      summary: "ok",
+      decidedAtIso: now,
+    });
+    expect(goodQa.ok).toBe(true);
+    if (!goodQa.ok) return;
+    const allowed = evaluateVariantReleaseGate({
+      variant: { ...good.variant, status: VariantStatus.READY },
+      article,
+      destination: gbp,
+      factLabels: labels,
+      variantQaVerdict: goodQa.verdict,
+      requireVariantQa: true,
+    });
+    expect(allowed.allowed).toBe(true);
   });
 
   it("invalidates variant when article digest changes", () => {

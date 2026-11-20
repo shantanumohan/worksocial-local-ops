@@ -138,9 +138,22 @@ export {
   type RoleResourceLimits,
 } from "./agent-roles.js";
 export {
+  registeredAgentName,
+  roleIdFromRegisteredAgentName,
+  agentFrontmatterDescription,
+  parseAgentMarkdown,
+  validateAgentMarkdownForRole,
+  validateAllAgentRoleMarkdown,
+  renderAgentRoleMarkdown,
+  type AgentFrontmatter,
+  type ParsedAgentMarkdown,
+  type AgentDocsValidationResult,
+} from "./agent-frontmatter.js";
+export {
   MAX_DELEGATION_DEPTH,
   RoleRunStatus,
   RoleExecutionMode,
+  CostRecordingKind,
   validateTypedDelegation,
   evaluateIndependentReviewGate,
   proposeEffect,
@@ -149,6 +162,7 @@ export {
   listRoleOutcomesForLearning,
   validateRoleStructuredOutput,
   unwrapClaudeJsonPayload,
+  parseClaudeUsageCost,
   type TypedTaskRequest,
   type EffectProposal,
   type ReviewVerdict,
@@ -160,6 +174,8 @@ export {
   type RoleExecutionModeValue,
   type RoleStructuredOutput,
   type ValidateRoleOutputOptions,
+  type CostRecordingKindValue,
+  type ParsedUsageCost,
 } from "./role-runtime.js";
 export {
   ProbeKind,
@@ -294,6 +310,7 @@ export {
   createArticleQaVerdict,
   evaluateArticleApprovalGate,
   createDestinationVariant,
+  createVariantQaVerdict,
   evaluateVariantReleaseGate,
   evaluateContentReadBack,
   buildContentReleaseOutcome,
@@ -316,6 +333,7 @@ export {
   type DestinationVariant,
   type PublicationReceipt,
   type ArticleQaVerdict,
+  type VariantQaVerdict,
   type ContentState,
   type ContentReleaseDecisionValue,
   type FactSupportLookup as ContentFactSupportLookup,

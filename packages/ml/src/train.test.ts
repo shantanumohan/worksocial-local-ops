@@ -119,6 +119,8 @@ describe("offline train/predict + authority non-bypass", () => {
           meanScore: null,
           fixtureExcludedCount: 0,
           modelIds: [],
+          dataAdequacy: "INSUFFICIENT_DATA",
+          dataAdequacyReason: "empty",
         },
         payload: { spendLimit: 999 },
         createdAtIso: "2026-11-18T07:00:00.000Z",
@@ -168,5 +170,21 @@ describe("offline train/predict + authority non-bypass", () => {
       "ranking",
       "risk",
     ]);
+  });
+
+  it("labels INSUFFICIENT_DATA instead of reusing train as holdout (F08)", () => {
+    const result = runTrainLoop({
+      writePathOutcomes: outcomes(),
+      roleOutcomes: [],
+      nowIso: "2026-11-18T10:00:00.000Z",
+      runId: "run-small",
+      isolation,
+    });
+    // 3 non-fixture examples < MIN_HOLDOUT_SPLIT_SAMPLES
+    expect(result.examples).toHaveLength(3);
+    expect(result.run.metrics.dataAdequacy).toBe("INSUFFICIENT_DATA");
+    expect(result.run.metrics.heldOutCount).toBe(0);
+    expect(result.run.metrics.accuracy).toBeNull();
+    expect(result.run.note).toMatch(/INSUFFICIENT_DATA/);
   });
 });

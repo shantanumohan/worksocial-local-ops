@@ -247,6 +247,19 @@ export type ParsedSearchConstraints = {
   category: SemanticCatalogEntry["category"] | null;
   location: string | null;
   requiredAmenities: string[];
+  /** Max price in minor currency units when parsed; null if absent. */
+  priceMaxMinor: number | null;
+  /** Raw price phrase retained for clarify/abstain when not enforceable. */
+  priceRaw: string | null;
+  /** Date / timing phrase when present (not silently dropped). */
+  dateRaw: string | null;
+  /** Negated amenities / attributes ("without X", "no parking", "not downtown"). */
+  negatedTerms: string[];
+  /**
+   * Constraints recognized but not safely enforceable against the index —
+   * prefer clarify/abstain rather than dropping or inverting them.
+   */
+  unresolvedConstraints: string[];
   /** Constraints the index cannot verify — honest unknown, not false. */
   unknownConstraints: string[];
 };
@@ -636,6 +649,7 @@ export function evaluateFixtureReadBack(input: {
 /** Parse natural-language space/service queries into hard constraints. */
 export function parseSearchConstraints(rawQuery: string): ParsedSearchConstraints {
   const q = rawQuery.toLowerCase();
+  const unresolvedConstraints: string[] = [];
 
   // Capacity only from person-count phrases — not hours, years, or prices.
   const peopleMatch =
@@ -661,22 +675,109 @@ export function parseSearchConstraints(rawQuery: string): ParsedSearchConstraint
   if (/new york|manhattan|nyc/.test(q)) location = "New York";
   else if (/los angeles|\bla\b/.test(q)) location = "Los Angeles";
   else if (/jersey/.test(q)) location = "Jersey City";
+  else {
+    // Preserve unrecognized location phrases rather than silently dropping them.
+    const locMatch = q.match(
+      /\b(?:in|near|around)\s+([a-z][a-z\s-]{1,40}?)(?=\s+(?:with|without|under|before|after|for|on|,|\.|$))/,
+    );
+    if (locMatch?.[1]) {
+      const rawLoc = locMatch[1].trim();
+      if (rawLoc && !/^(a|an|the|room|space|office)$/.test(rawLoc)) {
+        unresolvedConstraints.push(`location:${rawLoc}`);
+      }
+    }
+  }
 
   const requiredAmenities: string[] = [];
   if (/display|screen|projector/.test(q)) requiredAmenities.push("display");
   if (/video|zoom|teams/.test(q)) requiredAmenities.push("video");
   if (/whiteboard/.test(q)) requiredAmenities.push("whiteboard");
 
+  // Price — preserve; do not invent "free" or drop the bound.
+  let priceMaxMinor: number | null = null;
+  let priceRaw: string | null = null;
+  const priceMatch =
+    q.match(
+      /\b(?:under|below|less than|at most|max(?:imum)?)\s*\$?\s*(\d{1,6})(?:\s*(?:usd|dollars?))?\b/,
+    ) ?? q.match(/\$\s*(\d{1,6})\s*(?:or less|max|maximum)?\b/);
+  if (priceMatch) {
+    priceRaw = priceMatch[0]!.trim();
+    priceMaxMinor = Number(priceMatch[1]) * 100;
+    // Catalog often lacks comparable numeric prices — keep unresolved for clarify.
+    unresolvedConstraints.push(`price:${priceRaw}`);
+  } else if (/\b(?:cheap|inexpensive|budget|affordable|free)\b/.test(q)) {
+    priceRaw = (q.match(/\b(?:cheap|inexpensive|budget|affordable|free)\b/) ?? [
+      "price",
+    ])[0]!;
+    unresolvedConstraints.push(`price:${priceRaw}`);
+  }
+
+  // Date / timing — preserve; do not silently drop.
+  let dateRaw: string | null = null;
+  const dateMatch =
+    q.match(
+      /\b(?:on|before|after|by|this|next)\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|today|weekend|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)\b/,
+    ) ??
+    q.match(/\b(?:tomorrow|today|tonight|this weekend|next week)\b/) ??
+    q.match(/\b(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}\b/);
+  if (dateMatch) {
+    dateRaw = dateMatch[0]!.trim();
+    unresolvedConstraints.push(`date:${dateRaw}`);
+  }
+
+  // Negations — preserve; never invert into required amenities.
+  const negatedTerms: string[] = [];
+  const negationPatterns: Array<[RegExp, string]> = [
+    [/\b(?:without|no)\s+parking\b/, "parking"],
+    [/\b(?:without|no)\s+video\b/, "video"],
+    [/\b(?:without|no)\s+(?:display|screen|projector)\b/, "display"],
+    [/\b(?:without|no)\s+whiteboard\b/, "whiteboard"],
+    [/\b(?:without|no)\s+cater(?:ing)?\b/, "catering"],
+    [/\bnot\s+(?:in\s+)?(?:downtown|manhattan|brooklyn)\b/, "downtown"],
+    [/\b(?:without|no)\s+([a-z]{3,20})\b/, "generic"],
+  ];
+  for (const [re, label] of negationPatterns) {
+    const m = q.match(re);
+    if (!m) continue;
+    if (label === "generic") {
+      const term = m[1]!;
+      if (
+        ["people", "persons", "person", "meeting", "room", "space"].includes(term)
+      ) {
+        continue;
+      }
+      if (
+        requiredAmenities.includes(term) ||
+        ["parking", "video", "display", "whiteboard", "catering"].includes(term)
+      ) {
+        continue;
+      }
+      negatedTerms.push(term);
+      unresolvedConstraints.push(`negation:${term}`);
+    } else if (!negatedTerms.includes(label)) {
+      negatedTerms.push(label);
+      // Known amenity negation: enforce by excluding that amenity requirement
+      // and recording unresolved when the index cannot prove absence.
+      unresolvedConstraints.push(`negation:${label}`);
+    }
+  }
+
   const unknownConstraints: string[] = [];
   const unknownPatterns: Array<[RegExp, string]> = [
     [/accessib|wheelchair/, "accessibility"],
-    [/parking/, "parking"],
+    // parking as a positive requirement (negation handled above)
+    [/\bparking\b/, "parking"],
     [/cater/, "catering"],
     [/pool|beach|hotel|bed/, "lodging"],
     [/recording|podcast/, "recording"],
   ];
   for (const [re, label] of unknownPatterns) {
-    if (re.test(q)) unknownConstraints.push(label);
+    if (!re.test(q)) continue;
+    if (negatedTerms.includes(label)) {
+      // Already preserved as negation — do not also invent a positive unknown.
+      continue;
+    }
+    unknownConstraints.push(label);
   }
 
   return {
@@ -684,13 +785,19 @@ export function parseSearchConstraints(rawQuery: string): ParsedSearchConstraint
     category,
     location,
     requiredAmenities,
+    priceMaxMinor,
+    priceRaw,
+    dateRaw,
+    negatedTerms,
+    unresolvedConstraints,
     unknownConstraints,
   };
 }
 
 /**
- * Deterministic structured filters before any ranking. Unknown constraints
- * force honest no-match rather than inventing eligibility.
+ * Deterministic structured filters before any ranking. Unknown / unresolved
+ * constraints force honest clarify/abstain rather than inventing eligibility
+ * or silently dropping location/price/date/negation.
  */
 export function runSemanticSearch(input: {
   queryId: string;
@@ -707,6 +814,18 @@ export function runSemanticSearch(input: {
       constraints,
       hits: [],
       noMatchReason: `Unsupported or unverified constraints: ${constraints.unknownConstraints.join(", ")}`,
+      indexVersion: input.index.version,
+      createdAtIso: input.createdAtIso,
+    };
+  }
+
+  if (constraints.unresolvedConstraints.length > 0) {
+    return {
+      queryId: input.queryId,
+      rawQuery: input.rawQuery,
+      constraints,
+      hits: [],
+      noMatchReason: `Clarify or abstain — unresolved constraints preserved (not dropped): ${constraints.unresolvedConstraints.join(", ")}`,
       indexVersion: input.index.version,
       createdAtIso: input.createdAtIso,
     };

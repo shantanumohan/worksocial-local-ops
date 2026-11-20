@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { OutcomeLabel } from "./production-mapping.js";
 import {
+  CostRecordingKind,
   MAX_DELEGATION_DEPTH,
   RoleExecutionMode,
   RoleRunStatus,
@@ -8,6 +9,7 @@ import {
   createRoleRunOutcome,
   evaluateIndependentReviewGate,
   listRoleOutcomesForLearning,
+  parseClaudeUsageCost,
   proposeEffect,
   unwrapClaudeJsonPayload,
   validateRoleStructuredOutput,
@@ -185,6 +187,37 @@ describe("role-runtime gates (R1-04)", () => {
       OutcomeLabel.SUCCESS,
       OutcomeLabel.FAILURE,
     ]);
+    expect(success.costKind).toBe(CostRecordingKind.FIXTURE);
+  });
+
+  it("parses CLI usage when present and never invents 25/50/75 as ACTUAL (F07)", () => {
+    const actual = parseClaudeUsageCost({
+      stdout: JSON.stringify({ total_cost_usd: 0.42, usage: { input_tokens: 10 } }),
+      executionMode: RoleExecutionMode.LIVE_CLI,
+    });
+    expect(actual.costKind).toBe(CostRecordingKind.ACTUAL);
+    expect(actual.costMinor).toBe(42);
+
+    const unknown = parseClaudeUsageCost({
+      stdout: JSON.stringify({ summary: "no usage" }),
+      executionMode: RoleExecutionMode.LIVE_CLI,
+    });
+    expect(unknown.costKind).toBe(CostRecordingKind.UNKNOWN);
+    expect(unknown.costMinor).toBe(0);
+
+    const estimate = parseClaudeUsageCost({
+      executionMode: RoleExecutionMode.LIVE_CLI,
+      estimateMinor: 75,
+    });
+    expect(estimate.costKind).toBe(CostRecordingKind.ESTIMATE);
+    expect(estimate.costMinor).toBe(75);
+    expect(estimate.detail).toMatch(/ESTIMATE/);
+
+    const fixture = parseClaudeUsageCost({
+      executionMode: RoleExecutionMode.FIXTURE,
+    });
+    expect(fixture.costKind).toBe(CostRecordingKind.FIXTURE);
+    expect(fixture.costMinor).toBe(0);
   });
 
   it("validates structured role output", () => {

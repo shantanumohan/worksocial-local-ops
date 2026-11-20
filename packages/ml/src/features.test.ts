@@ -77,6 +77,7 @@ describe("feature extraction", () => {
         reason: "ok",
         artifactIds: [],
         costMinor: 1,
+        costKind: "unknown",
         recordedAtIso: "2026-11-18T00:00:00.000Z",
         featureHints: {},
       },
@@ -91,11 +92,37 @@ describe("feature extraction", () => {
         reason: "fixture",
         artifactIds: [],
         costMinor: 0,
+        costKind: "fixture",
         recordedAtIso: "2026-11-18T00:00:00.000Z",
         featureHints: {},
       },
     ];
     const examples = extractLearningExamples({ roleOutcomes: roles });
     expect(examples.map((e) => e.exampleId)).toEqual(["role-live"]);
+  });
+
+  it("does not leak SUCCESS/FAILURE labels or post-outcome fields into features (F08)", () => {
+    const rows = [
+      writeOutcome({
+        outcomeId: "real",
+        label: OutcomeLabel.SUCCESS,
+        source: OutcomeEvidenceSource.GATEWAY_RECEIPT,
+        fixtureOnly: false,
+        featureHints: {
+          code: "ACCEPTED",
+          label: "SUCCESS",
+          deniedEffectCount: 2,
+          costMinor: 75,
+        },
+      }),
+    ];
+    const examples = extractWritePathExamples(rows);
+    expect(examples).toHaveLength(1);
+    const tokens = examples[0]!.features.tokens.join(" ");
+    expect(tokens).not.toMatch(/label=SUCCESS/);
+    expect(tokens).not.toMatch(/label=FAILURE/);
+    expect(tokens).toContain("hint.code=ACCEPTED");
+    expect(examples[0]!.features.numerics.deniedEffectCount).toBeUndefined();
+    expect(examples[0]!.features.numerics.costMinor).toBeUndefined();
   });
 });

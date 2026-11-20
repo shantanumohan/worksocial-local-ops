@@ -2,6 +2,9 @@
  * Feature extraction from durable outcome ledgers.
  * Excludes fixtureOnly / fixture execution by default.
  * Rejects unverified model self-report as training labels.
+ *
+ * F08: predictors use pre-action features only — never SUCCESS/FAILURE labels
+ * or post-outcome fields (status, cost, artifacts, denied counts).
  */
 
 import {
@@ -77,15 +80,45 @@ function pushToken(tokens: string[], key: string, value: string | number | boole
   tokens.push(`${key}=${String(value)}`);
 }
 
+/** Hint keys that encode the outcome label or post-outcome measurements. */
+const POST_OUTCOME_HINT_KEYS: ReadonlySet<string> = new Set([
+  "label",
+  "outcomeLabel",
+  "status",
+  "costMinor",
+  "costKind",
+  "artifactCount",
+  "deniedEffectCount",
+  "deniedDelegationCount",
+  "acceptedReviewableCount",
+  "finishedAt",
+  "durationMs",
+]);
+
+function isPreActionHintKey(key: string): boolean {
+  const lower = key.toLowerCase();
+  if (POST_OUTCOME_HINT_KEYS.has(key)) return false;
+  if (lower === "label" || lower.endsWith("label")) return false;
+  if (lower.includes("success") || lower.includes("failure")) return false;
+  if (lower.startsWith("post.") || lower.startsWith("outcome.")) return false;
+  return true;
+}
+
+/**
+ * Pre-action write-path features: path identity + source class + pre-action hints.
+ * Never includes the SUCCESS/FAILURE label.
+ */
 function writePathFeatures(row: WritePathOutcomeEvidence): LearningFeatureVector {
   const tokens: string[] = [
     `kind=${LearningExampleKind.WRITE_PATH}`,
     `writePathId=${row.writePathId}`,
     `source=${row.source}`,
-    `label=${row.label}`,
   ];
   const numerics: Record<string, number> = {};
   for (const [key, value] of Object.entries(row.featureHints)) {
+    if (!isPreActionHintKey(key)) {
+      continue;
+    }
     if (typeof value === "number" && Number.isFinite(value)) {
       numerics[key] = value;
     } else {
@@ -95,19 +128,21 @@ function writePathFeatures(row: WritePathOutcomeEvidence): LearningFeatureVector
   return { tokens, numerics };
 }
 
+/**
+ * Pre-action role-run features: role + execution mode + pre-action hints.
+ * Excludes status, cost, artifact counts, and the outcome label.
+ */
 function roleRunFeatures(row: RoleRunOutcomeEvidence): LearningFeatureVector {
   const tokens: string[] = [
     `kind=${LearningExampleKind.ROLE_RUN}`,
     `roleId=${row.roleId}`,
-    `status=${row.status}`,
     `executionMode=${row.executionMode}`,
-    `label=${row.label}`,
   ];
-  const numerics: Record<string, number> = {
-    costMinor: row.costMinor,
-    artifactCount: row.artifactIds.length,
-  };
+  const numerics: Record<string, number> = {};
   for (const [key, value] of Object.entries(row.featureHints)) {
+    if (!isPreActionHintKey(key)) {
+      continue;
+    }
     if (typeof value === "number" && Number.isFinite(value)) {
       numerics[key] = value;
     } else {

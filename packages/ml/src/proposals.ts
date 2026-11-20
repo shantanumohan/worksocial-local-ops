@@ -36,6 +36,12 @@ export type LearningRunMetrics = {
   meanScore: number | null;
   fixtureExcludedCount: number;
   modelIds: readonly string[];
+  /**
+   * When train/holdout reuse would be required (samples too small), metrics are
+   * labeled INSUFFICIENT_DATA rather than silently reused as holdout scores.
+   */
+  dataAdequacy: "OK" | "INSUFFICIENT_DATA";
+  dataAdequacyReason: string | null;
 };
 
 export type LearningProposal = {

@@ -187,6 +187,10 @@ export type DestinationVariant = {
   format: ContentFormatValue;
   title: string;
   body: string;
+  /** Digest of this variant's title+body — independent of the article digest. */
+  contentDigest: string;
+  /** Claims cited by this variant — must be SUPPORTED before pending release. */
+  citedFactIds: string[];
   /** Bound to the article contentDigest at creation — stale if article changes. */
   articleContentDigest: string;
   status: VariantStatusValue;
@@ -231,6 +235,23 @@ export type ArticleQaVerdict = {
   decidedAtIso: string;
 };
 
+/**
+ * Per-variant independent review — binds to the variant contentDigest so
+ * unsupported claims cannot reach pending release on article approval alone.
+ */
+export type VariantQaVerdict = {
+  verdictId: string;
+  variantId: string;
+  articleId: string;
+  authorId: string;
+  reviewerId: string;
+  approved: boolean;
+  contentDigest: string;
+  citedFactIds: string[];
+  summary: string;
+  decidedAtIso: string;
+};
+
 export type ContentState = {
   version: 1;
   updatedAtIso: string;
@@ -240,6 +261,7 @@ export type ContentState = {
   variants: DestinationVariant[];
   receipts: PublicationReceipt[];
   qaVerdicts: ArticleQaVerdict[];
+  variantQaVerdicts: VariantQaVerdict[];
   /** Verified distribution SUCCESS/FAILURE outcomes for learning-worker. */
   releaseOutcomes: WritePathOutcomeEvidence[];
   liveCmsPublishWiring: "NOT_WIRED";
@@ -257,6 +279,7 @@ export function emptyContentState(nowIso: string): ContentState {
     variants: [],
     receipts: [],
     qaVerdicts: [],
+    variantQaVerdicts: [],
     releaseOutcomes: [],
     liveCmsPublishWiring: "NOT_WIRED",
     liveGbpWiring: "NOT_WIRED",
@@ -592,6 +615,7 @@ export function createDestinationVariant(input: {
   format: ContentFormatValue;
   title?: string;
   body?: string;
+  citedFactIds?: string[];
   fixtureOnly: boolean;
   createdAtIso: string;
 }):
@@ -630,6 +654,10 @@ export function createDestinationVariant(input: {
     return { ok: false, code: "VARIANT_FORMAT_REJECTED", reasons };
   }
 
+  const citedFactIds = [
+    ...(input.citedFactIds ?? input.article.citedFactIds),
+  ];
+
   return {
     ok: true,
     variant: {
@@ -641,6 +669,8 @@ export function createDestinationVariant(input: {
       format: input.format,
       title,
       body,
+      contentDigest: digestArticleContent(title, body),
+      citedFactIds,
       articleContentDigest: input.article.contentDigest,
       status: VariantStatus.DRAFT,
       fixtureOnly: input.fixtureOnly,
@@ -653,17 +683,66 @@ export function createDestinationVariant(input: {
   };
 }
 
+export function createVariantQaVerdict(input: {
+  verdictId: string;
+  variantId: string;
+  articleId: string;
+  authorId: string;
+  reviewerId: string;
+  approved: boolean;
+  contentDigest: string;
+  citedFactIds?: string[];
+  summary: string;
+  decidedAtIso: string;
+}):
+  | { ok: true; verdict: VariantQaVerdict }
+  | { ok: false; code: string; reasons: string[] } {
+  if (!input.authorId.trim() || !input.reviewerId.trim()) {
+    return {
+      ok: false,
+      code: "VARIANT_QA_IDENTITY_REQUIRED",
+      reasons: ["authorId and reviewerId are required"],
+    };
+  }
+  if (input.authorId === input.reviewerId) {
+    return {
+      ok: false,
+      code: "VARIANT_QA_SELF_REVIEW_FORBIDDEN",
+      reasons: ["Independent variant QA reviewer must differ from the author"],
+    };
+  }
+  return {
+    ok: true,
+    verdict: {
+      verdictId: input.verdictId,
+      variantId: input.variantId,
+      articleId: input.articleId,
+      authorId: input.authorId.trim(),
+      reviewerId: input.reviewerId.trim(),
+      approved: input.approved,
+      contentDigest: input.contentDigest,
+      citedFactIds: [...(input.citedFactIds ?? [])],
+      summary: input.summary.trim(),
+      decidedAtIso: input.decidedAtIso,
+    },
+  };
+}
+
 /**
  * Evaluate whether a variant may be released.
  * CMS is canonical-only — never via the destination variant path.
  * Dependent destinations require a verified canonical URL first.
  * Article digest must still match (approval invalidated on edit).
+ * Per-variant claims must be SUPPORTED; optional QA binds to variant digest.
  */
 export function evaluateVariantReleaseGate(input: {
   variant: DestinationVariant;
   article: CanonicalArticle;
   destination: DestinationRegistryEntry;
   preferLive?: boolean;
+  factLabels?: FactSupportLookup;
+  variantQaVerdict?: VariantQaVerdict | null;
+  requireVariantQa?: boolean;
 }): { allowed: boolean; code: string | null; reasons: string[] } {
   const reasons: string[] = [];
 
@@ -681,6 +760,48 @@ export function evaluateVariantReleaseGate(input: {
     reasons.push(
       "Article changed after variant was prepared — approval invalidated; recreate variant",
     );
+  }
+
+  const expectedDigest = digestArticleContent(
+    input.variant.title,
+    input.variant.body,
+  );
+  if (input.variant.contentDigest !== expectedDigest) {
+    reasons.push(
+      "Variant contentDigest does not match title/body — recreate or re-digest before release",
+    );
+  }
+
+  if (input.factLabels) {
+    for (const factId of input.variant.citedFactIds) {
+      const label = input.factLabels.get(factId);
+      if (!label) {
+        reasons.push(`Variant cited fact ${factId} missing from registry`);
+      } else if (label !== SupportLabel.SUPPORTED) {
+        reasons.push(
+          `Variant cited fact ${factId} is ${label} — unsupported claims cannot reach pending release`,
+        );
+      }
+    }
+  }
+
+  if (input.requireVariantQa === true || input.variantQaVerdict) {
+    const verdict = input.variantQaVerdict ?? null;
+    if (!verdict) {
+      reasons.push(
+        "Per-variant QA verdict required before release — article approval alone is insufficient",
+      );
+    } else if (verdict.variantId !== input.variant.variantId) {
+      reasons.push("Variant QA verdict variantId mismatch");
+    } else if (verdict.contentDigest !== input.variant.contentDigest) {
+      reasons.push(
+        "Variant QA verdict contentDigest is stale — re-review after variant edits",
+      );
+    } else if (verdict.authorId === verdict.reviewerId) {
+      reasons.push("Variant QA reviewer must differ from author");
+    } else if (!verdict.approved) {
+      reasons.push("Variant QA rejected this revision");
+    }
   }
 
   if (

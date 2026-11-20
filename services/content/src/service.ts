@@ -15,6 +15,7 @@ import {
   DestinationKind,
   OutcomeEvidenceSource,
   PublicationOutcome,
+  SupportLabel,
   VariantStatus,
   applyCanonicalReleaseVerification,
   applyVariantReleaseVerification,
@@ -42,6 +43,7 @@ import {
   type CapabilityGrant,
   type PublicationReceipt,
   type StandingPolicy,
+  type VariantQaVerdict,
   type WritePathOutcomeEvidence,
 } from "@worksocial/domain";
 import type { ContentStore } from "@worksocial/persistence";
@@ -104,6 +106,7 @@ export type ContentService = {
     variants: DestinationVariant[];
     destinations: DestinationRegistryEntry[];
     qaVerdicts: ArticleQaVerdict[];
+    variantQaVerdicts: VariantQaVerdict[];
     skippedProgressedArticleIds: string[];
     skippedProgressedCampaignIds: string[];
   };
@@ -217,6 +220,7 @@ export type ContentService = {
       grants: CapabilityGrant[];
     };
     productionMapping: ProductionMappingState;
+    factLabels?: FactSupportLookup;
     preferLive?: boolean;
     targetAccountId?: string;
     contentRevision?: string | null;
@@ -346,6 +350,14 @@ export function createContentService(
         store.addQaVerdict(verdict);
       }
 
+      for (const verdict of seed.variantQaVerdicts) {
+        const prior = existing.variantQaVerdicts.find(
+          (v) => v.verdictId === verdict.verdictId,
+        );
+        if (prior) continue;
+        store.addVariantQaVerdict(verdict);
+      }
+
       return {
         campaigns: seed.campaigns.filter(
           (c) => !skippedProgressedCampaignIds.includes(c.campaignId),
@@ -356,6 +368,7 @@ export function createContentService(
         variants: seed.variants,
         destinations: seed.destinations,
         qaVerdicts: seed.qaVerdicts,
+        variantQaVerdicts: seed.variantQaVerdicts,
         skippedProgressedArticleIds,
         skippedProgressedCampaignIds,
       };
@@ -998,11 +1011,32 @@ export function createContentService(
       }
 
       const preferLive = input.preferLive === true;
+      const variantQaVerdict =
+        state.variantQaVerdicts
+          .filter((v) => v.variantId === variant.variantId)
+          .filter((v) => v.contentDigest === variant.contentDigest)
+          .sort((a, b) => b.decidedAtIso.localeCompare(a.decidedAtIso))[0] ??
+        null;
+      // Prefer caller labels; otherwise use variant citations from seed knowledge.
+      // Never invent SUPPORTED for unknown ids — missing labels fail the gate.
+      const factLabels: FactSupportLookup =
+        input.factLabels ??
+        new Map(
+          variant.citedFactIds.map((id) => {
+            if (article.citedFactIds.includes(id)) {
+              return [id, SupportLabel.SUPPORTED] as const;
+            }
+            return [id, SupportLabel.HYPOTHESIS] as const;
+          }),
+        );
       const gate = evaluateVariantReleaseGate({
         variant,
         article,
         destination,
         preferLive,
+        factLabels,
+        variantQaVerdict,
+        requireVariantQa: true,
       });
       if (!gate.allowed) {
         details.push(...gate.reasons);

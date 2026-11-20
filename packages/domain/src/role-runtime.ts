@@ -40,6 +40,128 @@ export const RoleExecutionMode = {
 export type RoleExecutionModeValue =
   (typeof RoleExecutionMode)[keyof typeof RoleExecutionMode];
 
+/**
+ * How costMinor was obtained (F07). Invented placeholders must never look like ACTUAL.
+ */
+export const CostRecordingKind = {
+  /** Parsed from provider/CLI usage fields. */
+  ACTUAL: "actual",
+  /** Explicitly labeled estimate — not observed usage. */
+  ESTIMATE: "estimate",
+  /** No usable usage; costMinor is 0 / unset and must not be treated as spend. */
+  UNKNOWN: "unknown",
+  /** Deterministic fixture accounting — never production spend. */
+  FIXTURE: "fixture",
+} as const;
+
+export type CostRecordingKindValue =
+  (typeof CostRecordingKind)[keyof typeof CostRecordingKind];
+
+export type ParsedUsageCost = {
+  costMinor: number;
+  costKind: CostRecordingKindValue;
+  /** Present when usage tokens/cost fields were found. */
+  usageSource: "cli_json" | "none" | "fixture" | "estimate_labeled";
+  detail: string;
+};
+
+/**
+ * Parse usage/cost from Claude CLI JSON stdout when present.
+ * Never invents 25/50/75 as actual spend.
+ */
+export function parseClaudeUsageCost(input: {
+  stdout?: string | null;
+  executionMode: RoleExecutionModeValue;
+  /** Optional explicit estimate when live usage is absent — must be labeled. */
+  estimateMinor?: number;
+}): ParsedUsageCost {
+  if (input.executionMode === RoleExecutionMode.FIXTURE) {
+    return {
+      costMinor: 0,
+      costKind: CostRecordingKind.FIXTURE,
+      usageSource: "fixture",
+      detail: "Fixture mode — no provider usage; costMinor=0 (not production spend)",
+    };
+  }
+
+  const raw = input.stdout?.trim() ?? "";
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const usage =
+        (parsed.usage as Record<string, unknown> | undefined) ??
+        (parsed.result &&
+        typeof parsed.result === "object" &&
+        parsed.result !== null
+          ? ((parsed.result as Record<string, unknown>).usage as
+              | Record<string, unknown>
+              | undefined)
+          : undefined);
+
+      const totalCostUsd =
+        typeof parsed.total_cost_usd === "number"
+          ? parsed.total_cost_usd
+          : typeof usage?.total_cost_usd === "number"
+            ? usage.total_cost_usd
+            : typeof parsed.cost_usd === "number"
+              ? parsed.cost_usd
+              : null;
+
+      if (totalCostUsd !== null && Number.isFinite(totalCostUsd)) {
+        return {
+          costMinor: Math.max(0, Math.round(totalCostUsd * 100)),
+          costKind: CostRecordingKind.ACTUAL,
+          usageSource: "cli_json",
+          detail: `Parsed total_cost_usd=${totalCostUsd}`,
+        };
+      }
+
+      const inputTokens =
+        typeof usage?.input_tokens === "number"
+          ? usage.input_tokens
+          : typeof usage?.inputTokens === "number"
+            ? usage.inputTokens
+            : null;
+      const outputTokens =
+        typeof usage?.output_tokens === "number"
+          ? usage.output_tokens
+          : typeof usage?.outputTokens === "number"
+            ? usage.outputTokens
+            : null;
+      if (inputTokens !== null || outputTokens !== null) {
+        return {
+          costMinor: 0,
+          costKind: CostRecordingKind.UNKNOWN,
+          usageSource: "cli_json",
+          detail: `Usage tokens present (in=${inputTokens ?? "n/a"}, out=${outputTokens ?? "n/a"}) but no cost_usd — recorded unknown, not an invented amount`,
+        };
+      }
+    } catch {
+      // fall through to unknown / estimate
+    }
+  }
+
+  if (
+    typeof input.estimateMinor === "number" &&
+    Number.isFinite(input.estimateMinor) &&
+    input.estimateMinor >= 0
+  ) {
+    return {
+      costMinor: Math.round(input.estimateMinor),
+      costKind: CostRecordingKind.ESTIMATE,
+      usageSource: "estimate_labeled",
+      detail: "No parseable usage; estimateMinor recorded as labeled ESTIMATE (not ACTUAL)",
+    };
+  }
+
+  return {
+    costMinor: 0,
+    costKind: CostRecordingKind.UNKNOWN,
+    usageSource: "none",
+    detail: "No usage fields and no labeled estimate — cost unknown",
+  };
+}
+
 export type TypedTaskRequest = {
   requestId: string;
   fromRoleId: AgentRoleId;
@@ -84,6 +206,8 @@ export type RoleRunOutcomeEvidence = {
   reason: string;
   artifactIds: readonly string[];
   costMinor: number;
+  /** How costMinor was obtained — ACTUAL only when usage was parsed. */
+  costKind: CostRecordingKindValue;
   recordedAtIso: string;
   /** Compatible with later learning-worker feature extraction. */
   featureHints: Readonly<Record<string, string | number | boolean>>;
@@ -356,11 +480,24 @@ export function createRoleRunOutcome(input: {
   reason: string;
   artifactIds?: readonly string[];
   costMinor?: number;
+  costKind?: CostRecordingKindValue;
   recordedAtIso: string;
   featureHints?: Readonly<Record<string, string | number | boolean>>;
 }): RoleRunOutcomeEvidence {
   if (input.label !== OutcomeLabel.SUCCESS && input.label !== OutcomeLabel.FAILURE) {
     throw new Error("Role outcomes must be SUCCESS or FAILURE labels");
+  }
+  const costKind =
+    input.costKind ??
+    (input.executionMode === RoleExecutionMode.FIXTURE
+      ? CostRecordingKind.FIXTURE
+      : CostRecordingKind.UNKNOWN);
+  const costMinor = input.costMinor ?? 0;
+  if (
+    costKind === CostRecordingKind.ACTUAL &&
+    !(Number.isFinite(costMinor) && costMinor >= 0)
+  ) {
+    throw new Error("ACTUAL cost requires a finite non-negative costMinor");
   }
   return {
     outcomeId: input.outcomeId,
@@ -372,9 +509,13 @@ export function createRoleRunOutcome(input: {
     executionMode: input.executionMode,
     reason: input.reason,
     artifactIds: input.artifactIds ?? [],
-    costMinor: input.costMinor ?? 0,
+    costMinor,
+    costKind,
     recordedAtIso: input.recordedAtIso,
-    featureHints: input.featureHints ?? {},
+    featureHints: {
+      ...(input.featureHints ?? {}),
+      costKind,
+    },
   };
 }
 

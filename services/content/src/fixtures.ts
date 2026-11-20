@@ -21,6 +21,7 @@ import {
   createContentBrief,
   createContentCampaign,
   createDestinationVariant,
+  createVariantQaVerdict,
   defaultDestinationRegistry,
   digestArticleContent,
   proveFixturePilotWritePath,
@@ -32,6 +33,7 @@ import {
   type ProductionMappingState,
   type SourceBinding,
   type PilotWritePath,
+  type VariantQaVerdict,
 } from "@worksocial/domain";
 
 /** Asset id equals the canonical article id — grants bind to the reviewed article. */
@@ -299,23 +301,52 @@ export function buildGoldenVariants(
   return variants;
 }
 
+function buildGoldenVariantQaVerdicts(
+  nowIso: string,
+  article: CanonicalArticle,
+  variants: DestinationVariant[],
+): VariantQaVerdict[] {
+  const verdicts: VariantQaVerdict[] = [];
+  for (const variant of variants) {
+    const created = createVariantQaVerdict({
+      verdictId: `golden-var-qa-${variant.variantId}`,
+      variantId: variant.variantId,
+      articleId: article.articleId,
+      authorId: article.authorId,
+      reviewerId: "fixture-variant-reviewer",
+      approved: true,
+      contentDigest: variant.contentDigest,
+      citedFactIds: variant.citedFactIds,
+      summary: `Fixture per-variant QA for ${variant.destinationId}`,
+      decidedAtIso: nowIso,
+    });
+    if (created.ok) {
+      verdicts.push(created.verdict);
+    }
+  }
+  return verdicts;
+}
+
 export function buildFixtureContentSeed(nowIso: string): {
   destinations: DestinationRegistryEntry[];
   campaigns: ContentCampaign[];
   articles: CanonicalArticle[];
   variants: DestinationVariant[];
   qaVerdicts: ArticleQaVerdict[];
+  variantQaVerdicts: VariantQaVerdict[];
   factLabels: Map<string, (typeof SupportLabel)[keyof typeof SupportLabel]>;
 } {
   const destinations = defaultDestinationRegistry();
   const campaign = buildGoldenCampaign(nowIso);
   const article = buildGoldenArticle(nowIso);
+  const variants = buildGoldenVariants(nowIso, article, destinations);
   return {
     destinations,
     campaigns: [{ ...campaign, canonicalArticleId: article.articleId }],
     articles: [article],
-    variants: buildGoldenVariants(nowIso, article, destinations),
+    variants,
     qaVerdicts: [buildGoldenQaVerdict(nowIso, article)],
+    variantQaVerdicts: buildGoldenVariantQaVerdicts(nowIso, article, variants),
     factLabels: new Map([
       ["fixture-fact-hours", SupportLabel.SUPPORTED],
       ["fixture-fact-hypothesis", SupportLabel.HYPOTHESIS],

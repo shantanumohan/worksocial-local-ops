@@ -43,44 +43,78 @@ export type TrainLoopResult = {
   examples: LearningExample[];
 };
 
-function splitHoldout(examples: LearningExample[]): {
+/** Minimum examples required before a true train/holdout split is claimed. */
+export const MIN_HOLDOUT_SPLIT_SAMPLES = 4;
+
+export type HoldoutSplit = {
   train: LearningExample[];
   holdout: LearningExample[];
-} {
-  if (examples.length < 4) {
-    return { train: [...examples], holdout: [...examples] };
+  /** True when holdout is not an independent slice (must not score as holdout). */
+  insufficientData: boolean;
+  reason: string | null;
+};
+
+/**
+ * Split train/holdout. When samples are too small, do NOT silently reuse
+ * train as holdout for accuracy claims — label INSUFFICIENT_DATA instead.
+ */
+export function splitHoldout(examples: LearningExample[]): HoldoutSplit {
+  if (examples.length < MIN_HOLDOUT_SPLIT_SAMPLES) {
+    return {
+      train: [...examples],
+      holdout: [],
+      insufficientData: true,
+      reason: `Only ${examples.length} verified examples (< ${MIN_HOLDOUT_SPLIT_SAMPLES}); holdout metrics are INSUFFICIENT_DATA — train was not reused as holdout`,
+    };
   }
   const holdoutCount = Math.max(1, Math.floor(examples.length / 4));
   return {
     train: examples.slice(0, examples.length - holdoutCount),
     holdout: examples.slice(examples.length - holdoutCount),
+    insufficientData: false,
+    reason: null,
   };
 }
 
 function buildMetrics(
   examples: LearningExample[],
-  holdout: LearningExample[],
+  split: HoldoutSplit,
   weights: readonly TrainedModelWeights[],
   fixtureExcludedCount: number,
 ): LearningRunMetrics {
   const primary = weights[0];
-  const evalOn = holdout.length > 0 ? holdout : examples;
+  if (split.insufficientData) {
+    return {
+      sampleCount: examples.length,
+      heldOutCount: 0,
+      accuracy: null,
+      successRate: null,
+      meanScore: null,
+      fixtureExcludedCount,
+      modelIds: weights.map((w) => w.modelId),
+      dataAdequacy: "INSUFFICIENT_DATA",
+      dataAdequacyReason: split.reason,
+    };
+  }
+
   const scored = primary
-    ? evaluateWeights(primary, evalOn)
+    ? evaluateWeights(primary, split.holdout)
     : {
-        sampleCount: evalOn.length,
+        sampleCount: split.holdout.length,
         accuracy: null,
         successRate: null,
         meanScore: null,
       };
   return {
     sampleCount: examples.length,
-    heldOutCount: holdout.length,
+    heldOutCount: split.holdout.length,
     accuracy: scored.accuracy,
     successRate: scored.successRate,
     meanScore: scored.meanScore,
     fixtureExcludedCount,
     modelIds: weights.map((w) => w.modelId),
+    dataAdequacy: "OK",
+    dataAdequacyReason: null,
   };
 }
 
@@ -88,16 +122,10 @@ export function runTrainLoop(input: TrainLoopInput): TrainLoopResult {
   assertLearningWorkerIsolation(input.isolation);
 
   const includeFixture = input.includeFixture ?? false;
-  const allCandidates = [
-    ...input.writePathOutcomes,
-    // role outcomes counted separately for fixture exclusion metric
-  ];
   const fixtureExcludedCount =
     input.fixtureExcludedCount ??
     input.writePathOutcomes.filter((o) => o.fixtureOnly).length +
       input.roleOutcomes.filter((o) => o.executionMode === "fixture").length;
-
-  void allCandidates;
 
   const examples = extractLearningExamples({
     writePathOutcomes: input.writePathOutcomes,
@@ -105,15 +133,15 @@ export function runTrainLoop(input: TrainLoopInput): TrainLoopResult {
     includeFixture,
   });
 
-  const { train, holdout } = splitHoldout(examples);
+  const split = splitHoldout(examples);
   const models = listPinnedModels();
   const weights: TrainedModelWeights[] = models.map((m) =>
-    trainModel(m.modelId, train, input.nowIso),
+    trainModel(m.modelId, split.train, input.nowIso),
   );
 
   const metrics = buildMetrics(
     examples,
-    holdout,
+    split,
     weights,
     fixtureExcludedCount,
   );
@@ -136,15 +164,17 @@ export function runTrainLoop(input: TrainLoopInput): TrainLoopResult {
         modelIds: [nb.modelId],
         trainingRunId: input.runId,
         summary:
-          "Proposed playbook hint weights from BernoulliNB over verified outcomes (review required).",
+          metrics.dataAdequacy === "INSUFFICIENT_DATA"
+            ? "Proposed playbook hints under INSUFFICIENT_DATA — holdout metrics withheld (review required)."
+            : "Proposed playbook hint weights from BernoulliNB over verified outcomes (review required).",
         metrics,
         payload: {
           artifactType: "playbook_hints",
           modelId: nb.modelId,
           sampleCount: nb.sampleCount,
           runtimeMode: nb.runtimeMode,
-          // Ranking of failure-prone feature tokens is advisory only.
           advisoryOnly: true,
+          dataAdequacy: metrics.dataAdequacy,
         },
         createdAtIso: input.nowIso,
       }),
@@ -167,6 +197,7 @@ export function runTrainLoop(input: TrainLoopInput): TrainLoopResult {
           intercept: logreg.params.intercept,
           dim: logreg.dim,
           advisoryOnly: true,
+          dataAdequacy: metrics.dataAdequacy,
         },
         createdAtIso: input.nowIso,
       }),
@@ -185,6 +216,7 @@ export function runTrainLoop(input: TrainLoopInput): TrainLoopResult {
           modelId: logreg.modelId,
           meanScore: metrics.meanScore,
           advisoryOnly: true,
+          dataAdequacy: metrics.dataAdequacy,
         },
         createdAtIso: input.nowIso,
       }),
@@ -202,7 +234,9 @@ export function runTrainLoop(input: TrainLoopInput): TrainLoopResult {
     note:
       examples.length === 0
         ? "No non-fixture verified outcomes available; emitted offline fixture baseline proposals only. Not production-canary-verified."
-        : "Offline metrics from verified SUCCESS/FAILURE outcomes. Proposals await review; no authority expansion.",
+        : metrics.dataAdequacy === "INSUFFICIENT_DATA"
+          ? `INSUFFICIENT_DATA: ${metrics.dataAdequacyReason}. Proposals await review; no authority expansion.`
+          : "Offline metrics from verified SUCCESS/FAILURE outcomes. Proposals await review; no authority expansion.",
   };
 
   return { run, proposals, examples };
