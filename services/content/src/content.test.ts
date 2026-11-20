@@ -112,7 +112,7 @@ describe("content service", () => {
 
     const recorded = service.recordQaVerdict({
       articleId: CONTENT_PILOT_ARTICLE_ID,
-      authorId: "author-fixture",
+      authorId: "author-a13",
       reviewerId: "reviewer-fixture",
       approved: true,
       nowIso: now,
@@ -171,6 +171,42 @@ describe("content service", () => {
     expect(gateway.getDecision(released.article!.gatewayOperationId!)?.outcome).toBe(
       "VERIFIED",
     );
+  });
+
+  it("revokes APPROVED when a later QA reject arrives for the same digest", () => {
+    const { service } = makeService();
+    service.seedFixtures(now);
+    const approved = service.approveArticle({
+      articleId: CONTENT_PILOT_ARTICLE_ID,
+      factLabels: labels,
+      nowIso: now,
+    });
+    expect(approved.ok).toBe(true);
+
+    const rejected = service.recordQaVerdict({
+      articleId: CONTENT_PILOT_ARTICLE_ID,
+      authorId: "author-a13",
+      reviewerId: "reviewer-late",
+      approved: false,
+      summary: "Sources incomplete",
+      nowIso: now,
+    });
+    expect(rejected.ok).toBe(true);
+    const article = service
+      .listArticles()
+      .find((a) => a.articleId === CONTENT_PILOT_ARTICLE_ID);
+    expect(article?.status).toBe(ArticleStatus.READY_FOR_REVIEW);
+
+    const { mapping } = service.seedAndProveContentMapping(now);
+    const blocked = service.releaseCanonical({
+      articleId: CONTENT_PILOT_ARTICLE_ID,
+      authority: demoAuthority(now),
+      productionMapping: mapping,
+      factLabels: labels,
+      nowIso: now,
+    });
+    expect(blocked.gatewayDecision).toBeNull();
+    expect(blocked.article?.status).toBe(ArticleStatus.READY_FOR_REVIEW);
   });
 
   it("keeps APPROVED on gateway denial and settles FAILED on bad read-back", () => {

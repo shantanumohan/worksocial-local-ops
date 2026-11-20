@@ -36,6 +36,7 @@ describe("content domain — article gate", () => {
     const article = createCanonicalArticle({
       articleId: "art-1",
       campaignId: "camp-1",
+      authorId: "author-test",
       title: "Training rooms",
       body: "Plan your next training day.",
       citedFactIds: ["fixture-fact-hypothesis"],
@@ -51,6 +52,7 @@ describe("content domain — article gate", () => {
     const article = createCanonicalArticle({
       articleId: "art-2",
       campaignId: "camp-1",
+      authorId: "author-test",
       title: "Training rooms",
       body: "Plan your next training day with verified capacity.",
       citedFactIds: ["fixture-fact-hours"],
@@ -66,6 +68,7 @@ describe("content domain — article gate", () => {
     const article = createCanonicalArticle({
       articleId: "art-3",
       campaignId: "camp-1",
+      authorId: "author-test",
       title: "T",
       body: "B",
       fixtureOnly: true,
@@ -83,6 +86,7 @@ describe("content domain — destination variants", () => {
   const article = createCanonicalArticle({
     articleId: "art-v",
     campaignId: "camp-v",
+    authorId: "author-test",
     title: "A better brief for your next training day",
     body: "A".repeat(2000),
     citedFactIds: ["fixture-fact-hours"],
@@ -143,6 +147,7 @@ describe("content domain — canonical-first distribution", () => {
     const article = createCanonicalArticle({
       articleId: "art-dep",
       campaignId: "camp-dep",
+      authorId: "author-test",
       title: "Title",
       body: "Body with supported facts.",
       citedFactIds: ["fixture-fact-hours"],
@@ -175,6 +180,7 @@ describe("content domain — canonical-first distribution", () => {
       ...createCanonicalArticle({
         articleId: "art-ok",
         campaignId: "camp-ok",
+        authorId: "author-test",
         title: "Title",
         body: "Body",
         citedFactIds: ["fixture-fact-hours"],
@@ -208,6 +214,7 @@ describe("content domain — canonical-first distribution", () => {
       ...createCanonicalArticle({
         articleId: "art-chg",
         campaignId: "camp-chg",
+        authorId: "author-test",
         title: "Title",
         body: "Body",
         fixtureOnly: true,
@@ -245,6 +252,7 @@ describe("content domain — canonical-first distribution", () => {
       ...createCanonicalArticle({
         articleId: "art-live",
         campaignId: "camp-live",
+        authorId: "author-test",
         title: "Title",
         body: "Body",
         fixtureOnly: true,
@@ -293,6 +301,7 @@ describe("content domain — receipts and learning", () => {
     const article = createCanonicalArticle({
       articleId: "art-r",
       campaignId: campaign.campaignId,
+      authorId: "author-test",
       title: "Title",
       body: "Body",
       citedFactIds: ["fixture-fact-hours"],
@@ -338,6 +347,7 @@ describe("content domain — receipts and learning", () => {
       ...createCanonicalArticle({
         articleId: "art-vr",
         campaignId: "camp-vr",
+        authorId: "author-test",
         title: "Title",
         body: "Body",
         fixtureOnly: true,
@@ -407,6 +417,7 @@ describe("content domain — independent QA + CMS path", () => {
     const article = createCanonicalArticle({
       articleId: "art-qa-2",
       campaignId: "camp-qa",
+      authorId: "author-test",
       title: "Title",
       body: "Body",
       citedFactIds: ["fixture-fact-hours"],
@@ -424,7 +435,7 @@ describe("content domain — independent QA + CMS path", () => {
     const qa = createArticleQaVerdict({
       verdictId: "qa-2",
       articleId: article.articleId,
-      authorId: "author",
+      authorId: article.authorId,
       reviewerId: "reviewer",
       approved: true,
       contentDigest: article.contentDigest,
@@ -449,6 +460,7 @@ describe("content domain — independent QA + CMS path", () => {
       ...createCanonicalArticle({
         articleId: "art-cms",
         campaignId: "camp-cms",
+        authorId: "author-test",
         title: "Title",
         body: "Body",
         fixtureOnly: true,

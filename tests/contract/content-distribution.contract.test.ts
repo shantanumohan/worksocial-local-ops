@@ -52,6 +52,7 @@ describe("contract: content article and destination gates", () => {
     const article = createCanonicalArticle({
       articleId: "c-art",
       campaignId: "c-camp",
+      authorId: "author-test",
       title: "Title",
       body: "Body",
       citedFactIds: ["fixture-fact-hypothesis"],
@@ -70,6 +71,7 @@ describe("contract: content article and destination gates", () => {
     const article = createCanonicalArticle({
       articleId: "c-art-2",
       campaignId: "c-camp",
+      authorId: "author-test",
       title: "Title",
       body: "Long body",
       fixtureOnly: true,

@@ -164,6 +164,8 @@ export type CanonicalArticle = {
   /** Digest of title+body — invalidates approval when content changes. */
   contentDigest: string;
   version: number;
+  /** Authoritative author identity — QA cannot spoof this from the request body. */
+  authorId: string;
   citedFactIds: string[];
   hypothesisFactIds: string[];
   status: ArticleStatusValue;
@@ -388,6 +390,7 @@ export function createCanonicalArticle(input: {
   campaignId: string;
   title: string;
   body: string;
+  authorId: string;
   citedFactIds?: string[];
   hypothesisFactIds?: string[];
   fixtureOnly: boolean;
@@ -397,6 +400,7 @@ export function createCanonicalArticle(input: {
 }): CanonicalArticle {
   const title = input.title.trim();
   const body = input.body.trim();
+  const authorId = input.authorId.trim();
   const requested = input.status ?? ArticleStatus.DRAFT;
   const status = CONTENT_CREATABLE_STATUSES.has(requested)
     ? requested
@@ -408,6 +412,7 @@ export function createCanonicalArticle(input: {
     body,
     contentDigest: digestArticleContent(title, body),
     version: input.version ?? 1,
+    authorId: authorId || "unknown-author",
     citedFactIds: [...(input.citedFactIds ?? [])],
     hypothesisFactIds: [...(input.hypothesisFactIds ?? [])],
     status,
@@ -532,6 +537,16 @@ export function evaluateArticleApprovalGate(input: {
       allowed: false,
       code: "QA_ARTICLE_MISMATCH",
       reasons: [...reasons, "QA verdict articleId does not match article"],
+    };
+  }
+  if (input.qaVerdict.authorId !== input.article.authorId) {
+    return {
+      allowed: false,
+      code: "QA_AUTHOR_MISMATCH",
+      reasons: [
+        ...reasons,
+        "QA verdict authorId must match the article's authoritative authorId",
+      ],
     };
   }
   if (input.qaVerdict.contentDigest !== input.article.contentDigest) {

@@ -197,12 +197,16 @@ export function buildGoldenCampaign(nowIso: string): ContentCampaign {
   });
 }
 
+export const CONTENT_PILOT_AUTHOR_ID = "author-a13" as const;
+export const CONTENT_PILOT_REVIEWER_ID = "reviewer-a25" as const;
+
 export function buildGoldenArticle(nowIso: string): CanonicalArticle {
   return createCanonicalArticle({
     articleId: CONTENT_PILOT_ARTICLE_ID,
     campaignId: CONTENT_PILOT_CAMPAIGN_ID,
     title: CONTENT_GOLDEN_ARTICLE_TITLE,
     body: CONTENT_GOLDEN_ARTICLE_BODY,
+    authorId: CONTENT_PILOT_AUTHOR_ID,
     citedFactIds: ["fixture-fact-hours"],
     hypothesisFactIds: ["fixture-fact-hypothesis"],
     fixtureOnly: true,
@@ -218,8 +222,8 @@ export function buildGoldenQaVerdict(
   const created = createArticleQaVerdict({
     verdictId: "golden-qa-training",
     articleId: article.articleId,
-    authorId: "author-a13",
-    reviewerId: "reviewer-a25",
+    authorId: CONTENT_PILOT_AUTHOR_ID,
+    reviewerId: CONTENT_PILOT_REVIEWER_ID,
     approved: true,
     contentDigest: article.contentDigest,
     summary: "Independent QA passed originality, sources, and accessibility checks",
@@ -531,13 +535,42 @@ export function upsertFixtureContentMapping(
   }
 
   for (const path of fixture.writePaths) {
-    if (!state.writePaths.some((p) => p.writePathId === path.writePathId)) {
+    const existing = state.writePaths.find(
+      (p) => p.writePathId === path.writePathId,
+    );
+    if (!existing) {
       state = {
         ...state,
         writePaths: [...state.writePaths, path],
         updatedAt: nowIso,
       };
       addedWritePathIds.push(path.writePathId);
+      continue;
+    }
+    // Migrate legacy shared-CMS bindingIds to destination-specific bindings.
+    if (
+      existing.bindingId !== path.bindingId ||
+      existing.channelId !== path.channelId ||
+      existing.operation !== path.operation ||
+      existing.siteId !== path.siteId ||
+      existing.assetId !== path.assetId
+    ) {
+      state = {
+        ...state,
+        writePaths: state.writePaths.map((p) =>
+          p.writePathId === path.writePathId
+            ? {
+                ...p,
+                bindingId: path.bindingId,
+                channelId: path.channelId,
+                operation: path.operation,
+                siteId: path.siteId,
+                assetId: path.assetId,
+              }
+            : p,
+        ),
+        updatedAt: nowIso,
+      };
     }
   }
 

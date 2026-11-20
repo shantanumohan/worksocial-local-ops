@@ -26,7 +26,6 @@ import {
   createPublicationReceipt,
   defaultDestinationRegistry,
   evaluateArticleApprovalGate,
-  evaluateArticleGate,
   evaluateContentReadBack,
   evaluateVariantReleaseGate,
   listContentOutcomesForLearning,
@@ -136,6 +135,7 @@ export type ContentService = {
     campaignId: string;
     title: string;
     body: string;
+    authorId: string;
     citedFactIds?: string[];
     hypothesisFactIds?: string[];
     fixtureOnly?: boolean;
@@ -409,6 +409,7 @@ export function createContentService(
         campaignId: input.campaignId,
         title: input.title,
         body: input.body,
+        authorId: input.authorId,
         ...(input.citedFactIds !== undefined
           ? { citedFactIds: input.citedFactIds }
           : {}),
@@ -504,7 +505,30 @@ export function createContentService(
           reasons: created.reasons,
         };
       }
+      if (created.verdict.authorId !== article.authorId) {
+        return {
+          ok: false as const,
+          code: "QA_AUTHOR_MISMATCH",
+          reasons: [
+            "QA authorId must match the article's authoritative authorId",
+          ],
+        };
+      }
       store.addQaVerdict(created.verdict);
+
+      // A later reject for the current digest revokes APPROVED so release cannot proceed.
+      if (
+        !created.verdict.approved &&
+        article.status === ArticleStatus.APPROVED &&
+        created.verdict.contentDigest === article.contentDigest
+      ) {
+        store.upsertArticle({
+          ...article,
+          status: ArticleStatus.READY_FOR_REVIEW,
+          updatedAtIso: nowIso,
+        });
+      }
+
       return { ok: true as const, verdict: created.verdict };
     },
 
@@ -625,12 +649,40 @@ export function createContentService(
         };
       }
 
-      const gate = evaluateArticleGate({
+      const qaVerdict =
+        state.qaVerdicts
+          .filter((v) => v.articleId === article.articleId)
+          .filter((v) => v.contentDigest === article.contentDigest)
+          .at(-1) ?? null;
+      const gate = evaluateArticleApprovalGate({
         article,
         factLabels: input.factLabels,
+        qaVerdict,
       });
       if (!gate.allowed) {
         details.push(...gate.reasons);
+        // Latest QA reject after approval must not publish.
+        if (
+          qaVerdict &&
+          !qaVerdict.approved &&
+          article.status === ArticleStatus.APPROVED
+        ) {
+          const revoked: CanonicalArticle = {
+            ...article,
+            status: ArticleStatus.READY_FOR_REVIEW,
+            updatedAtIso: nowIso,
+          };
+          store.upsertArticle(revoked);
+          return {
+            article: revoked,
+            gatewayDecision: null,
+            receipt: null,
+            outcome: null,
+            liveCmsPublishWiring: "NOT_WIRED",
+            acceptanceEqualsVerified: false,
+            details,
+          };
+        }
         return {
           article,
           gatewayDecision: null,

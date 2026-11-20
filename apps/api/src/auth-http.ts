@@ -257,72 +257,103 @@ function policyDecisionFromGateway(decision: {
 /**
  * Survive API restarts: restore ACCEPTED_PENDING gateway decisions for any
  * content article/variant left RELEASED_PENDING with a durable operation id.
+ * Reuses the persisted authority decision identity when present.
  */
 function rehydratePendingContentGatewayDecisions(
   gateway: ActionGateway,
   contentStore: ContentStore,
+  authorityStore: AuthorityStore,
 ): void {
   const state = contentStore.read();
+  const persisted = authorityStore.read().policyDecisions;
+  const byOp = new Map(persisted.map((d) => [d.operationId, d]));
+
+  const restore = (
+    operationId: string,
+    writePathId: string | null,
+    decidedAtIso: string,
+    reason: string,
+  ) => {
+    if (gateway.getDecision(operationId)) return;
+    const prior = byOp.get(operationId);
+    gateway.rehydratePending({
+      operationId,
+      ...(prior
+        ? {
+            decisionId: prior.decisionId,
+            payloadDigest: prior.payloadDigest,
+            grantId: prior.grantId,
+            policyId: prior.policyId,
+            decidedAtIso: prior.decidedAtIso,
+          }
+        : { decidedAtIso }),
+      writePathId,
+      reason,
+      gateDetails: prior
+        ? ["rehydrated from persisted authority decision"]
+        : ["rehydrated from durable ledger"],
+    });
+  };
+
   for (const article of state.articles) {
     if (
       article.status === ArticleStatus.RELEASED_PENDING &&
-      article.gatewayOperationId &&
-      !gateway.getDecision(article.gatewayOperationId)
+      article.gatewayOperationId
     ) {
-      gateway.rehydratePending({
-        operationId: article.gatewayOperationId,
-        writePathId: article.writePathId,
-        decidedAtIso: article.updatedAtIso,
-        reason: "Boot rehydrate: content canonical RELEASED_PENDING",
-      });
+      restore(
+        article.gatewayOperationId,
+        article.writePathId,
+        article.updatedAtIso,
+        "Boot rehydrate: content canonical RELEASED_PENDING",
+      );
     }
   }
   for (const variant of state.variants) {
     if (
       variant.status === VariantStatus.RELEASED_PENDING &&
-      variant.gatewayOperationId &&
-      !gateway.getDecision(variant.gatewayOperationId)
+      variant.gatewayOperationId
     ) {
-      gateway.rehydratePending({
-        operationId: variant.gatewayOperationId,
-        writePathId: variant.writePathId,
-        decidedAtIso: variant.updatedAtIso,
-        reason: "Boot rehydrate: content variant RELEASED_PENDING",
-      });
+      restore(
+        variant.gatewayOperationId,
+        variant.writePathId,
+        variant.updatedAtIso,
+        "Boot rehydrate: content variant RELEASED_PENDING",
+      );
     }
   }
 }
 
-/** Mint/refresh demo content grants bound to the reviewed article id + digest. */
-function ensureDemoContentDistributionGrants(
+/**
+ * Seed demo content grants only when none of the demo grant IDs exist yet.
+ * Never overwrites or restores a revoked/disabled owner-edited grant.
+ */
+function seedDemoContentDistributionGrantsIfAbsent(
   store: AuthorityStore,
   nowIso: string,
   options?: { assetId?: string; contentRevision?: string },
-): ReturnType<typeof createDemoContentDistributionGrants> {
+): boolean {
   const demo = createDemoContentDistributionGrants(nowIso, options);
+  const auth = store.read();
+  const demoGrantIds = new Set([
+    demo.grant.grantId,
+    demo.gbpGrant.grantId,
+    demo.linkedinGrant.grantId,
+    demo.facebookGrant.grantId,
+  ]);
+  if (auth.capabilityGrants.some((g) => demoGrantIds.has(g.grantId))) {
+    return false;
+  }
   store.update((state) => ({
     ...state,
     standingPolicies: [
-      ...state.standingPolicies.filter(
-        (p) =>
-          p.policyId !== demo.policy.policyId &&
-          p.policyId !== demo.gbpPolicy.policyId &&
-          p.policyId !== demo.linkedinPolicy.policyId &&
-          p.policyId !== demo.facebookPolicy.policyId,
-      ),
+      ...state.standingPolicies,
       demo.policy,
       demo.gbpPolicy,
       demo.linkedinPolicy,
       demo.facebookPolicy,
     ],
     capabilityGrants: [
-      ...state.capabilityGrants.filter(
-        (g) =>
-          g.grantId !== demo.grant.grantId &&
-          g.grantId !== demo.gbpGrant.grantId &&
-          g.grantId !== demo.linkedinGrant.grantId &&
-          g.grantId !== demo.facebookGrant.grantId,
-      ),
+      ...state.capabilityGrants,
       demo.grant,
       demo.gbpGrant,
       demo.linkedinGrant,
@@ -330,7 +361,7 @@ function ensureDemoContentDistributionGrants(
     ],
     updatedAt: nowIso,
   }));
-  return demo;
+  return true;
 }
 
 export function createApiRuntime(options: {
@@ -355,7 +386,7 @@ export function createApiRuntime(options: {
   const seoStore = createFileSeoStore(options.stateDir);
   const contentStore = createFileContentStore(options.stateDir);
   const gateway = createActionGateway();
-  rehydratePendingContentGatewayDecisions(gateway, contentStore);
+  rehydratePendingContentGatewayDecisions(gateway, contentStore, store);
   const seo = createSeoService(seoStore, { gateway });
   const content = createContentService(contentStore, { gateway });
   const ownerPassword =
@@ -1958,11 +1989,12 @@ export async function handleApiRequest(
     const trained = runtime.learningWorker.trainFromLedgers({
       mapping: runtime.mappingStore.read(),
       roleOutcomes: runtime.roleRuntimeStore.listOutcomesForLearning(),
+      // Content/SEO outcomes wire in, but fixtures stay excluded by default.
       extraWritePathOutcomes: [
-        ...runtime.seo.listLearningOutcomes(true),
-        ...runtime.content.listLearningOutcomes(true),
+        ...runtime.seo.listLearningOutcomes(false),
+        ...runtime.content.listLearningOutcomes(false),
       ],
-      includeFixture: true,
+      includeFixture: false,
     });
     json(
       res,
@@ -3422,6 +3454,22 @@ export async function handleApiRequest(
     const upserted = upsertFixtureContentMapping(current, nowIso);
     const proven = proveFixtureContentWritePaths(upserted.state, nowIso);
     runtime.mappingStore.write(proven);
+    // Seed demo grants once if absent — never restores revoked grants on release.
+    const article =
+      runtime.content
+        .listArticles()
+        .find((a) => a.articleId === "golden-art-training") ??
+      runtime.content.listArticles()[0];
+    const grantsSeeded = seedDemoContentDistributionGrantsIfAbsent(
+      runtime.store,
+      nowIso,
+      article
+        ? {
+            assetId: article.articleId,
+            contentRevision: article.contentDigest,
+          }
+        : undefined,
+    );
     json(
       res,
       200,
@@ -3429,7 +3477,8 @@ export async function handleApiRequest(
         writePathIds: upserted.writePathIds,
         created: upserted.created,
         addedWritePathIds: upserted.addedWritePathIds,
-        note: "Merged missing content CMS/GBP/LinkedIn/Facebook write paths + per-destination bindings; fixture read evidence in mappingStore.",
+        grantsSeeded,
+        note: "Merged/migrated content CMS/GBP/LinkedIn/Facebook write paths + per-destination bindings; fixture read evidence in mappingStore. Demo grants seeded only if absent.",
       },
       cors,
     );
@@ -3451,8 +3500,6 @@ export async function handleApiRequest(
     const raw = await readBody(req);
     let body: {
       articleId?: string;
-      authorId?: string;
-      reviewerId?: string;
       approved?: boolean;
       summary?: string;
     };
@@ -3462,19 +3509,33 @@ export async function handleApiRequest(
       json(res, 400, { error: "INVALID_JSON" }, cors);
       return;
     }
-    if (
-      !body.articleId ||
-      !body.authorId ||
-      !body.reviewerId ||
-      typeof body.approved !== "boolean"
-    ) {
+    if (!body.articleId || typeof body.approved !== "boolean") {
       json(
         res,
         400,
         {
           error: "MISSING_QA_FIELDS",
-          reason:
-            "articleId, authorId, reviewerId, and approved (boolean) are required",
+          reason: "articleId and approved (boolean) are required",
+        },
+        cors,
+      );
+      return;
+    }
+    const article = runtime.content
+      .listArticles()
+      .find((a) => a.articleId === body.articleId);
+    if (!article) {
+      json(res, 404, { error: "ARTICLE_NOT_FOUND" }, cors);
+      return;
+    }
+    // Reviewer is the authenticated session user; author is authoritative on the article.
+    if (result.session.userId === article.authorId) {
+      json(
+        res,
+        403,
+        {
+          error: "QA_SELF_REVIEW_FORBIDDEN",
+          reason: "Independent QA reviewer must differ from the article author",
         },
         cors,
       );
@@ -3482,8 +3543,8 @@ export async function handleApiRequest(
     }
     const recorded = runtime.content.recordQaVerdict({
       articleId: body.articleId,
-      authorId: body.authorId,
-      reviewerId: body.reviewerId,
+      authorId: article.authorId,
+      reviewerId: result.session.userId,
       approved: body.approved,
       ...(body.summary !== undefined ? { summary: body.summary } : {}),
     });
@@ -3561,21 +3622,7 @@ export async function handleApiRequest(
       return;
     }
 
-    const nowIso = new Date().toISOString();
-    const article = runtime.content
-      .listArticles()
-      .find((a) => a.articleId === body.articleId);
-    ensureDemoContentDistributionGrants(
-      runtime.store,
-      nowIso,
-      article
-        ? {
-            assetId: article.articleId,
-            contentRevision: article.contentDigest,
-          }
-        : undefined,
-    );
-
+    // Evaluate existing grants only — do not mint/restore revoked authority.
     const authorityState = runtime.store.read();
     const productionMapping = runtime.mappingStore.read();
     const released = runtime.content.releaseCanonical({
@@ -3718,26 +3765,7 @@ export async function handleApiRequest(
       return;
     }
 
-    const nowIso = new Date().toISOString();
-    const variant = runtime.content
-      .listVariants()
-      .find((v) => v.variantId === body.variantId);
-    const article = variant
-      ? runtime.content
-          .listArticles()
-          .find((a) => a.articleId === variant.articleId)
-      : undefined;
-    ensureDemoContentDistributionGrants(
-      runtime.store,
-      nowIso,
-      article
-        ? {
-            assetId: article.articleId,
-            contentRevision: article.contentDigest,
-          }
-        : undefined,
-    );
-
+    // Evaluate existing grants only — do not mint/restore revoked authority.
     const authorityState = runtime.store.read();
     const released = runtime.content.releaseVariant({
       variantId: body.variantId,

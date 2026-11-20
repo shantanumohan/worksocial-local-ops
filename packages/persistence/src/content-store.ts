@@ -80,7 +80,16 @@ export function createFileContentStore(stateDir: string): ContentStore {
       ...existing,
       destinations: existing.destinations ?? [],
       campaigns: existing.campaigns ?? [],
-      articles: existing.articles ?? [],
+      articles: (existing.articles ?? []).map((a) => {
+        const raw = a as CanonicalArticle & { authorId?: string };
+        return {
+          ...a,
+          authorId:
+            typeof raw.authorId === "string" && raw.authorId.trim()
+              ? raw.authorId
+              : "unknown-author",
+        };
+      }),
       variants: existing.variants ?? [],
       receipts: existing.receipts ?? [],
       qaVerdicts: existing.qaVerdicts ?? [],

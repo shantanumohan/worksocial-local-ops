@@ -45,6 +45,7 @@ describe("content-store", () => {
       createCanonicalArticle({
         articleId: "art-1",
         campaignId: "camp-1",
+        authorId: "author-test",
         title: "A better brief",
         body: "Start with the learning outcome.",
         fixtureOnly: true,
