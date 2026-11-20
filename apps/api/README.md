@@ -1,6 +1,6 @@
 # `@worksocial/api`
 
-Local identity, authority, production-mapping, role-runtime, probes, knowledge/demand, SEO/search, content/distribution, after-hours inbox, and learning HTTP surface:
+Local identity, authority, production-mapping, role-runtime, probes, knowledge/demand, SEO/search, content/distribution, after-hours inbox, bounded repair, and learning HTTP surface:
 
 - Session login (`POST /auth/login`) with HttpOnly cookie + CSRF
 - Authority state, stop switch, operating mode
@@ -11,10 +11,11 @@ Local identity, authority, production-mapping, role-runtime, probes, knowledge/d
 - SEO (`/seo/status`, `/seo/audits`, `/seo/proposals`, `/seo/validate-schema`, `/seo/search`, `/seo/release-pilot`, …) — page audits, proposal gates, schema validation, fixture semantic search, gateway-gated pilot page release
 - Content (`/content/status`, `/content/campaigns`, `/content/articles`, `/content/variants`, `/content/receipts`, `/content/release-canonical`, `/content/release-variant`, …) — article pipeline, destination variants, gateway-gated fixture CMS/GBP/social receipts
 - Inbox (`/inbox/status`, `/inbox/conversations`, `/inbox/draft-reply`, `/inbox/queue-reply`, `/inbox/send-reply`, `/inbox/takeover`, `/inbox/log-lead`, `/inbox/handoff`, …) — after-hours concierge, takeover, fixture Zoho lead, handoff
+- Repair (`/repair/status`, `/repair/incidents`, `/repair/seed-fixtures`, `/repair/inject-defect`, `/repair/independent-review`, `/repair/release`, `/repair/verify`, …) — bounded repair with fail-closed test/policy gates
 - Learning (`/learning/status`, `/learning/models`, `/learning/runs`, `/learning/proposals`, `/learning/train`) — multi-model registry, metrics, proposals under review
 - Gateway intent submission resolves mapping gates before authorize → apply/deny stub
 - Credential-broker reference listing (opaque only)
 
-Not production-activated. No live Zoho/CMS/GBP/social/SERP/inbox mutations or cloud IdP. Live CMS/GBP/social/inbox remain NOT_WIRED; ACCEPTED_PENDING ≠ VERIFIED. Claude default is fixture mode. Learning is proposals-only and does not expand authority. Model claims / HYPOTHESIS are never published truth. Takeover increments conversation version and cancels queued agent replies.
+Not production-activated. No live Zoho/CMS/GBP/social/SERP/inbox mutations or cloud IdP. Live CMS/GBP/social/inbox/repair remain NOT_WIRED; ACCEPTED_PENDING ≠ VERIFIED. Claude default is fixture mode. Learning is proposals-only and does not expand authority. Model claims / HYPOTHESIS are never published truth. Takeover increments conversation version and cancels queued agent replies. Bounded repairs that weaken tests or standing policies fail closed.
 
 Default local owner: `owner` / `local-owner-change-me` (override `WORKSOCIAL_OWNER_PASSWORD`).

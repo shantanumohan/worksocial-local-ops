@@ -1,0 +1,28 @@
+export {
+  createRepairService,
+  type RepairService,
+  type RepairAuthorityInput,
+  type RepairServiceOptions,
+} from "./service.js";
+export {
+  REPAIR_PILOT_ASSET_ID,
+  REPAIR_PILOT_WRITE_PATH_ID,
+  REPAIR_PILOT_BINDING_ID,
+  REPAIR_SITE_ID,
+  REPAIR_INCIDENT_ID,
+  REPAIR_TICKET_ID,
+  REPAIR_PROPOSAL_ID,
+  REPAIR_PROBE_ID,
+  REPAIR_HEALTHY_CTA,
+  REPAIR_DEFECT_CTA,
+  REPAIR_CTA_PATH,
+  REPAIR_BASELINE_ASSERTIONS,
+  buildGoldenRepairBundle,
+  buildHealthyFixtureAsset,
+  createFixtureRepairPilotMapping,
+  proveFixtureRepairWritePath,
+  upsertFixtureRepairMapping,
+  invokeRepairAdapter,
+  liveCmsRepairStub,
+  repairTestBaselineDigest,
+} from "./fixtures.js";

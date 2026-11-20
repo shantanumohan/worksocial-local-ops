@@ -10,6 +10,7 @@ export {
   seoPage,
   contentPage,
   inboxPage,
+  repairPage,
 } from "./pages.js";
 export const packageName = "@worksocial/console" as const;
 

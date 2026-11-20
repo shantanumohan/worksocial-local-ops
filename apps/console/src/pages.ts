@@ -89,7 +89,7 @@ export function authorityPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -199,7 +199,7 @@ export function mappingPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -340,7 +340,7 @@ export function rolesPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -482,7 +482,7 @@ export function monitoringPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -615,7 +615,7 @@ export function learningPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -747,7 +747,7 @@ export function knowledgePage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -933,7 +933,7 @@ export function seoPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -1140,7 +1140,7 @@ export function contentPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -1372,7 +1372,7 @@ export function inboxPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -1575,6 +1575,187 @@ export function inboxPage(apiOrigin: string): string {
     const res = await api('/inbox/send-reply', {
       method:'POST', headers:{'content-type':'application/json'},
       body: JSON.stringify({ messageId, preferLive: true })
+    });
+    const body = await res.json();
+    document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-refresh').onclick = () => refresh();
+  refresh();
+</script>
+</body>
+</html>`;
+}
+
+export function repairPage(apiOrigin: string): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WorkSocial — Bounded repair</title>
+  <style>
+    :root { --ink:#1b2a22; --panel:#fff; --accent:#2f6b4f; --warn:#8a5a00; --stop:#8b1e1e; }
+    body { margin:0; font-family:"IBM Plex Sans","Segoe UI",sans-serif; background:
+      linear-gradient(180deg,#e7efe9,#f6f3ec); color:var(--ink); }
+    header { padding:1.25rem 1.5rem; border-bottom:1px solid #c9d6cc; background:rgba(255,255,255,.7); }
+    h1 { font-family:"IBM Plex Serif",Georgia,serif; margin:0; font-size:1.45rem; }
+    main { max-width:980px; margin:0 auto; padding:1.5rem; display:grid; gap:1rem; }
+    section { background:var(--panel); border:1px solid #c9d6cc; padding:1rem 1.1rem; }
+    h2 { margin:.2rem 0 .6rem; font-size:1.05rem; }
+    .row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; }
+    button { background:var(--accent); color:#fff; border:0; padding:.5rem .85rem; cursor:pointer; }
+    button.danger { background:var(--stop); }
+    table { width:100%; border-collapse:collapse; font-size:.9rem; }
+    th, td { text-align:left; padding:.35rem .25rem; border-bottom:1px solid #e0e7e2; vertical-align:top; }
+    .muted { color:#516258; font-size:.85rem; }
+    .warn { color:var(--warn); }
+    pre { white-space:pre-wrap; font-size:.8rem; max-height:280px; overflow:auto; }
+    input { width:100%; box-sizing:border-box; padding:.45rem .55rem; border:1px solid #b7c5bb; margin:.25rem 0 .6rem; }
+    label { font-size:.85rem; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>WorkSocial</h1>
+  <p class="muted" id="who">Checking session…</p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+</header>
+<main>
+  <section>
+    <h2>Bounded repair and release (R1-10)</h2>
+    <p class="muted">Injected fixture defect → proposal → independent review → gateway release → canary verify.</p>
+    <p class="warn">Repairs that weaken tests, touch policies/gateway, exceed two attempts, or self-approve <strong>fail closed</strong>. Live CMS repair is <strong>NOT_WIRED</strong>. Set Authority mode to <strong>operate</strong>.</p>
+    <div class="row">
+      <button id="btn-seed" type="button">Seed fixtures</button>
+      <button id="btn-ensure-map" type="button">Ensure fixture mapping</button>
+      <button id="btn-refresh" type="button">Refresh</button>
+    </div>
+    <p class="muted" id="note"></p>
+  </section>
+  <section>
+    <h2>Status</h2>
+    <table>
+      <thead><tr><th>Signal</th><th>Value</th></tr></thead>
+      <tbody id="status-rows"><tr><td colspan="2" class="muted">Loading…</td></tr></tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Repair controls</h2>
+    <label for="prop-id">Proposal id</label>
+    <input id="prop-id" placeholder="golden-prop-restore-cta" />
+    <div class="row">
+      <button id="btn-inject" type="button" class="danger">Inject defect</button>
+      <button id="btn-review" type="button">A25 independent review</button>
+      <button id="btn-release" type="button">Release via gateway</button>
+      <button id="btn-verify" type="button">Verify canary</button>
+      <button id="btn-live" type="button">Try live CMS (NOT_WIRED)</button>
+    </div>
+    <pre id="out">—</pre>
+  </section>
+  <section>
+    <h2>Incidents / tickets / proposals / asset</h2>
+    <pre id="ledger">Loading…</pre>
+  </section>
+</main>
+<script>
+  const API = ${JSON.stringify(apiOrigin)};
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ origin: window.location.origin }, opts.headers || {});
+    const csrf = sessionStorage.getItem('ws_csrf');
+    if (opts.method && opts.method !== 'GET' && csrf) headers['x-csrf-token'] = csrf;
+    return fetch(API + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+  }
+  async function refresh() {
+    const session = await api('/auth/session');
+    if (!session.ok) { location.href = '/login'; return; }
+    const s = await session.json();
+    sessionStorage.setItem('ws_csrf', s.csrfToken);
+    document.getElementById('who').textContent = s.username + ' · ' + s.role + ' · local session';
+    const [statusRes, incRes, tktRes, propRes, assetRes] = await Promise.all([
+      api('/repair/status'),
+      api('/repair/incidents'),
+      api('/repair/tickets'),
+      api('/repair/proposals'),
+      api('/repair/fixture-asset'),
+    ]);
+    const status = await statusRes.json();
+    const incidents = (await incRes.json()).incidents || [];
+    const tickets = (await tktRes.json()).tickets || [];
+    const proposals = (await propRes.json()).proposals || [];
+    const asset = (await assetRes.json()).asset;
+    const rows = [
+      ['Live CMS repair', status.liveCmsRepairWiring],
+      ['Incidents', status.incidentCount],
+      ['Tickets', status.ticketCount],
+      ['Proposals', status.proposalCount],
+      ['Verified', status.verifiedCount],
+      ['Catalog case IDs', (status.acceptanceCaseIds || []).join(', ')],
+    ];
+    document.getElementById('status-rows').innerHTML = rows.map(([k,v]) =>
+      '<tr><td>'+k+'</td><td>'+v+'</td></tr>').join('');
+    document.getElementById('note').textContent = status.honestNote || '';
+    if (proposals[0]) document.getElementById('prop-id').value = proposals[0].proposalId;
+    document.getElementById('ledger').textContent = JSON.stringify({
+      incidents, tickets, proposals, asset
+    }, null, 2);
+  }
+  document.getElementById('btn-seed').onclick = async () => {
+    const res = await api('/repair/seed-fixtures', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.note || '';
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-ensure-map').onclick = async () => {
+    const res = await api('/repair/ensure-fixture-mapping', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.note || body.reason || '';
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-inject').onclick = async () => {
+    const res = await api('/repair/inject-defect', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    const body = await res.json();
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-review').onclick = async () => {
+    const proposalId = document.getElementById('prop-id').value;
+    const res = await api('/repair/independent-review', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ proposalId, approved: true, reason: 'Console A25 independent review' })
+    });
+    const body = await res.json();
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-release').onclick = async () => {
+    const proposalId = document.getElementById('prop-id').value;
+    const res = await api('/repair/release', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ proposalId })
+    });
+    const body = await res.json();
+    document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-verify').onclick = async () => {
+    const proposalId = document.getElementById('prop-id').value;
+    const res = await api('/repair/verify', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ proposalId })
+    });
+    const body = await res.json();
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-live').onclick = async () => {
+    const proposalId = document.getElementById('prop-id').value;
+    const res = await api('/repair/release', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ proposalId, preferLive: true })
     });
     const body = await res.json();
     document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');

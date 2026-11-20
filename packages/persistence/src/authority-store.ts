@@ -486,6 +486,39 @@ export function createDemoInboxGrants(nowIso: string): {
   return { replyPolicy, replyGrant, leadPolicy, leadGrant };
 }
 
+/** Standing policy+grant for fixture bounded repair release (R1-10). */
+export function createDemoRepairGrant(nowIso: string): {
+  policy: StandingPolicy;
+  grant: CapabilityGrant;
+} {
+  const assetScope = ["page-home-cta"];
+  const policy: StandingPolicy = {
+    policyId: "pol-demo-bounded-repair",
+    version: 1,
+    actorRole: LocalRole.ADMINISTRATOR,
+    channelId: "owned-site",
+    actionClass: ActionClass.BOUNDED_REPAIR,
+    allowedAssetScope: assetScope,
+    enabled: true,
+    emergencyStopApplies: true,
+    expiresAtIso: null,
+    createdAtIso: nowIso,
+  };
+  const grant: CapabilityGrant = {
+    grantId: "grant-demo-bounded-repair",
+    policyId: policy.policyId,
+    targetAccountId: "acct-demo",
+    allowedOperations: ["apply_bounded_repair"],
+    allowedAssetScope: assetScope,
+    contentRevisionBound: "rev-repair-demo",
+    rateLimitPerHour: 10,
+    expiresAtIso: null,
+    revoked: false,
+    createdAtIso: nowIso,
+  };
+  return { policy, grant };
+}
+
 export function defaultAuthorityStateDir(repoRoot: string): string {
   return join(repoRoot, ".worksocial", "local-state");
 }

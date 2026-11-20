@@ -18,6 +18,7 @@
     "@worksocial/seo": "workspace:*",
     "@worksocial/content": "workspace:*",
     "@worksocial/inbox": "workspace:*",
+    "@worksocial/repair": "workspace:*",
     "@worksocial/probes": "workspace:*"
   },
   "devDependencies": {
