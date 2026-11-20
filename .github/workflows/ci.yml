@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  implemented-suites:
+    name: check · unit · contract · e2e-lite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (pinned)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable Corepack / pnpm (packageManager)
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.0 --activate
+          node -v
+          pnpm -v
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate acceptance matrix ↔ catalog
+        run: pnpm test:acceptance-matrix
+
+      - name: Typecheck
+        run: pnpm check
+
+      - name: Unit
+        run: pnpm test:unit
+
+      - name: Contract
+        run: pnpm test:contract
+
+      - name: E2E lite (fixture; not browser acceptance)
+        run: pnpm test:e2e
+
+      - name: Assert placeholder suites cannot pass release gates
+        run: |
+          set +e
+          failed=0
+          for suite in test:database test:workflow test:security test:eval recovery:rehearse release:evidence; do
+            echo "::group::stub $suite (must exit non-zero)"
+            pnpm "$suite"
+            code=$?
+            echo "exit=$code"
+            echo "::endgroup::"
+            if [ "$code" -eq 0 ]; then
+              echo "::error::Stub suite $suite exited 0 — placeholders must not satisfy required checks"
+              failed=1
+            fi
+          done
+          exit $failed
+
+  # Explicit note: stub/incomplete suites are NOT required green checks.
+  # They must fail (see assert step above). Do not add them as required status checks.

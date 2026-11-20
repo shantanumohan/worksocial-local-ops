@@ -1,808 +1,2035 @@
 {
   "catalog": "WorkSocial product acceptance v6",
   "version": "6.0",
-  "note": "159 cases — all NOT_RUN. This matrix is not production acceptance evidence. 130 reference-core unit tests ≠ production acceptance.",
+  "sourceDocument": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
+  "note": "159 cases \u2014 all NOT_RUN. Machine-readable index aligned to full catalog definitions. Fixture, sandbox, and authorized-production results must remain distinguishable. ChatGPT Ads (T-F07 / T-US-013 / T-US-014) stays access-blocked without verified local transport/entitlement. Implemented offline suites are not production acceptance.",
+  "invariants": {
+    "fixtureSandboxAuthorizedProductionDistinct": true,
+    "acceptanceNotVerified": true,
+    "chatgptAdsRequiresTransportEntitlement": true,
+    "placeholderSuitesCannotSatisfyRelease": true
+  },
   "totals": {
     "flows": 26,
     "userStories": 60,
     "experience": 73,
-    "all": 159
+    "all": 159,
+    "notRun": 159
   },
   "cases": [
     {
       "id": "T-F01",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Create a trusted local workspace",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-001",
+        "RQ-003",
+        "RQ-035 | Flows: F01 | Screens: SC-02"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F02",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Choose folders and establish business truth",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-002",
+        "RQ-005",
+        "RQ-033",
+        "RQ-036 | Flows: F02 | Screens: SC-20"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F03",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Map sites, pages and editable sources",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-004",
+        "RQ-020 | Flows: F03 | Screens: SC-06"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F04",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Connect Google Analytics 4",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-013",
+        "RQ-014",
+        "RQ-034 | Flows: F04 | Screens: SC-18"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F05",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Connect Search Console and organic visibility",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-013",
+        "RQ-015 | Flows: F05 | Screens: SC-18"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F06",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Connect Google Ads for controlled analysis",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-013",
+        "RQ-016 | Flows: F06 | Screens: SC-18"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F07",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Connect ChatGPT Ads",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-013",
+        "RQ-017 | Flows: F07 | Screens: SC-18"
+      ],
+      "gates": [
+        "chatgpt_ads_transport_entitlement"
+      ],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F08",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Connect Claude Code and the Claude test API",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-006",
+        "RQ-012",
+        "RQ-013",
+        "RQ-018 | Flows: F08 | Screens: SC-18"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F09",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Connect Gemini for independent testing",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-012",
+        "RQ-013",
+        "RQ-018",
+        "RQ-036 | Flows: F09 | Screens: SC-18"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F10",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Map CRM, forms and booking truth",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-024",
+        "RQ-025 | Flows: F10 | Screens: SC-16"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F11",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Connect local, social and inbox channels",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-013",
+        "RQ-022 | Flows: F11 | Screens: SC-18"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F12",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Grant standing autonomy safely",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-003",
+        "RQ-008",
+        "RQ-030 | Flows: F12 | Screens: SC-19"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F13",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Launch a workstream and recurring schedule",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-006",
+        "RQ-007 | Flows: F13 | Screens: SC-02"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F14",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Turn demand into a page improvement",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-005",
+        "RQ-015",
+        "RQ-019",
+        "RQ-020 | Flows: F14 | Screens: SC-07"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F15",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Create and distribute an original campaign",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-010",
+        "RQ-021",
+        "RQ-022 | Flows: F15 | Screens: SC-08"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F16",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Review Google and ChatGPT paid-media recommendations",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-016",
+        "RQ-017",
+        "RQ-034 | Flows: F16 | Screens: SC-13"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F17",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Run Claude and Gemini evaluation suites",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-012",
+        "RQ-018 | Flows: F17 | Screens: SC-14"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F18",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Review, revise and release a change",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-008",
+        "RQ-009",
+        "RQ-011 | Flows: F18 | Screens: SC-05"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F19",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Analyze performance and test a hypothesis",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-014",
+        "RQ-028",
+        "RQ-034 | Flows: F19 | Screens: SC-12"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F20",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Verify a form-to-CRM journey continuously",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-024",
+        "RQ-025 | Flows: F20 | Screens: SC-15"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F21",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Diagnose and repair a permitted defect",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-011",
+        "RQ-027 | Flows: F21 | Screens: SC-21"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F22",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Handle after-hours messages and take over",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-026",
+        "RQ-035",
+        "RQ-036 | Flows: F22 | Screens: SC-17"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F23",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Test semantic search and improve no-result cases",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-005",
+        "RQ-023",
+        "RQ-035 | Flows: F23 | Screens: SC-11"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F24",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Recover, rotate access and reconcile",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-001",
+        "RQ-007",
+        "RQ-010",
+        "RQ-013",
+        "RQ-030",
+        "RQ-031",
+        "RQ-036 | Flows: F24 | Screens: SC-18"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F25",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Operate the daily owner review",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-028",
+        "RQ-032 | Flows: F25 | Screens: SC-01"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-F26",
       "kind": "flow",
-      "status": "NOT_RUN"
+      "level": "full_stack_e2e | Status: NOT_RUN",
+      "title": "Calibrate the design and release readiness",
+      "status": "NOT_RUN",
+      "environment": "controlled_local_stack_then_authorized_canary_where_required",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "requirements": [
+        "RQ-003",
+        "RQ-029 | Flows: F26"
+      ],
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-001",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-002",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Create a trusted local workspace (F01/SC-02) \u2014 blockers and next actions.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-003",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-004",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Choose folders and establish business truth (F02/SC-20) \u2014 restore evidence; secrets excluded.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-005",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-006",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Map sites, pages and editable sources (F03/SC-06) \u2014 baseline ID and checks.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-007",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-008",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Connect GA4 (F04/SC-18) \u2014 ready-read and next sync.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-009",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-010",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Connect Search Console (F05/SC-18) \u2014 schedule and watermark.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-011",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-012",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Connect Google Ads analyze-only (F06/SC-18) \u2014 write disabled.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-013",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-014",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Connect ChatGPT Ads (F07/SC-18) \u2014 read-ready; write denial; transport/entitlement gate.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [
+        "chatgpt_ads_transport_entitlement"
+      ],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-015",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-016",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Connect Claude Code + test API (F08/SC-18) \u2014 EVAL_ONLY.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-017",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-018",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Connect Gemini evaluation (F09/SC-18) \u2014 EVAL_ONLY.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-019",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-020",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Map CRM/forms/booking (F10/SC-16) \u2014 failure/recovery scenario.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-021",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-022",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Connect local/social/inbox (F11/SC-18) \u2014 test artifact and capability.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-023",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-024",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Grant standing autonomy (F12/SC-19) \u2014 control tests with receipts.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-025",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-026",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Launch workstream and schedule (F13/SC-02) \u2014 mission outcome.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-027",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-028",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Demand \u2192 page improvement (F14/SC-07) \u2014 release receipt and experiment window.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-029",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-030",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Original campaign distribution (F15/SC-08) \u2014 campaign manifest.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-031",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-032",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Paid-media recommendations (F16/SC-13) \u2014 verified mutation or failure.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-033",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-034",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Claude/Gemini eval suites (F17/SC-14) \u2014 adjudication + backlog.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-035",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-036",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Review/revise/release (F18/SC-05) \u2014 release receipt or blocked exception.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-037",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-038",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Analyze and hypothesis (F19/SC-12) \u2014 portable analysis artifact.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-039",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-040",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Form\u2192CRM continuous verify (F20/SC-15) \u2014 cadence/heartbeat.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-041",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-042",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Diagnose/repair defect (F21/SC-21) \u2014 verified resolution or handoff.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-043",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-044",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "After-hours + takeover (F22/SC-17) \u2014 acknowledged handoff.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-045",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-046",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Semantic search / no-result (F23/SC-11) \u2014 evaluation comparison.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-047",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-048",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Recover/rotate/reconcile (F24/SC-18) \u2014 offboarding manifest.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-049",
       "kind": "user_story",
-      "status": "NOT_RUN"
-    },
-    {
-      "id": "T-US-050",
-      "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Daily owner review (F25/SC-01) \u2014 reviewed operating knowledge.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-051",
       "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Design/release readiness (F26/SC-23) \u2014 release acceptance packet.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "happy_path",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-002",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Competing supervisors refused; no duplicate leases.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-004",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Unsafe folders / unresolved facts blocked; safe facts usable.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-006",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Unbound URL: analysis ok, write blocked.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-008",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "GA4 debug validation \u2260 measured receipt.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-010",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Missing GSC rows \u2260 zero demand.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-012",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Google Ads test vs production access separated.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-014",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "ChatGPT Ads key/account identity mismatch refuses bind.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [
+        "chatgpt_ads_transport_entitlement"
+      ],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-016",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Claude runtime vs API eval auth separated.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-018",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Gemini never used for publish/CRM/customer reply.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-020",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Synthetic leads classified; no commerce pollution.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-022",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Unsupported destination capabilities respected.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-024",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Agent cannot widen its own grant.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-026",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Missed schedules coalesce; no burst republish.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-028",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Prefer one useful page update over keyword proliferation.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-030",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Uncertain post: reconcile before retry.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-032",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Exact financial boundaries preserved.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-034",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Provider error \u2260 bad answer or pass.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-036",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Stale approval invalidated on revision change.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-038",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Double-counted attribution avoided in unique outcomes.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-040",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Thank-you without Zoho record fails at CRM.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-042",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Repair cannot weaken protected tests.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-044",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Takeover cancels unsent agent replies.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-046",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Hard search constraints enforced; no invented availability.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-048",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Unknown remote effects reconciled before resume.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
+    },
+    {
+      "id": "T-US-050",
+      "kind": "user_story",
+      "level": "behavior_acceptance",
+      "title": "Owner brief groups root cause; actionable.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-052",
       "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Mocked connector \u2260 production-ready.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "failure_gate",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-053",
       "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Secrets never in browser assets.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "cross_cutting",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-054",
       "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Independent approval enforced (no ordinary self-approval).",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "cross_cutting",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-055",
       "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Complete keyboard journey with reduced motion.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "cross_cutting",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-056",
       "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Honest outage; durable hosted contact path.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "cross_cutting",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-057",
       "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Cross-workspace resource substitution rejected.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "cross_cutting",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-058",
       "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Synthetic excluded from business denominators.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "cross_cutting",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-059",
       "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Shared briefs redacted; private evidence retained.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "cross_cutting",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-US-060",
       "kind": "user_story",
-      "status": "NOT_RUN"
+      "level": "behavior_acceptance",
+      "title": "Emergency stop checked at commit time.",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_sandbox",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "family": "cross_cutting",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X001",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Host sleeps during scheduled monitoring",
+      "focus": "Coverage gap honest; coalesce",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X002",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Two supervisors start together",
+      "focus": "Single host lease",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X003",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Symlink escape after root verification",
+      "focus": "Write denied outside root",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X004",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Disk full during evidence write",
+      "focus": "No partial completed manifest",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X005",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Forged browser role",
+      "focus": "Payload role ignored",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X006",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Cross-workspace object reference",
+      "focus": "Deny without leak",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X007",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Wrong CMS environment",
+      "focus": "No production op",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X008",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Fact changes after review",
+      "focus": "Stale; no publish",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X009",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "CLI error despite exit 0",
+      "focus": "Job fails",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X010",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Malicious prompt interpolation",
+      "focus": "No shell injection",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X011",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Output bomb",
+      "focus": "Bounded/quarantined",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X012",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Orphan worker on deadline",
+      "focus": "Process tree stopped",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X013",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Replay historical workflow",
+      "focus": "No repeated external I/O",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X014",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Approval wait survives restart",
+      "focus": "Resume wait; no slot hold",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X015",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "DST recurring schedule",
+      "focus": "No unintended duplicates",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X016",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Stop before dispatch claim",
+      "focus": "No adapter mutation",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X017",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Stop after provider dispatch starts",
+      "focus": "Reconcile; no fake cancel",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X018",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Self-approval",
+      "focus": "Rejected",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X019",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Approved payload edited",
+      "focus": "Digest conflict",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X020",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Timeout after provider acceptance",
+      "focus": "Unknown \u2192 reconcile; no resend",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X021",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Concurrent idempotent releases",
+      "focus": "One dispatch",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X022",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Idempotency key payload mismatch",
+      "focus": "Conflict",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X023",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Eventual consistency false not-found",
+      "focus": "No unsafe retry",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X024",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Old fence after reassignment",
+      "focus": "Old worker cannot commit",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X025",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "External human edit during staging",
+      "focus": "Conflict retained",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X026",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Concurrent final budget reservation",
+      "focus": "Cap enforced",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X027",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Unknown usage on cancelled request",
+      "focus": "Hold; not zero cost",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X028",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Actual cost exceeds estimate",
+      "focus": "Overrun visible",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X029",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Token rotates to different account",
+      "focus": "Explicit rebind",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X030",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Rate-limit with deadline",
+      "focus": "Bounded backoff",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X031",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Wrong GA4 property kind",
+      "focus": "Validation fails",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X032",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "GA4 debug validation success only",
+      "focus": "No delivered-conversion claim",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X033",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Omitted GSC rows",
+      "focus": "Unknown \u2260 zero",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X034",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Test-only Ads project vs production",
+      "focus": "Blocked",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X035",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Shared ad budget changed externally",
+      "focus": "Proposal invalidated",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X036",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Recent Ads conversion blank",
+      "focus": "Pending; no false zero",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X037",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Gemini tries operational tool",
+      "focus": "No effect",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X038",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Grounding configured but unused",
+      "focus": "No grounded pass",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X039",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Provider error vs answer failure",
+      "focus": "Separate denominators",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X040",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Low-sample trend spike",
+      "focus": "Insufficient evidence",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X041",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Incomparable trend indices",
+      "focus": "Reject/label",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X042",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Schema differs from page",
+      "focus": "Gate fails",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X043",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Optimization breaks CTA",
+      "focus": "Journey regression fails",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X044",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Unlicensed venue media",
+      "focus": "Publish blocked",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X045",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Partial campaign destinations",
+      "focus": "Per-destination states",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X046",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Unsupported blog destination",
+      "focus": "No fake publication",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X047",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Layout-specific capacity mismatch",
+      "focus": "Filter correctly",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X048",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Unknown price or availability",
+      "focus": "No invention",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X049",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Thank-you but no CRM record",
+      "focus": "Fail at delivery",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X050",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Public synthetic flag abuse",
+      "focus": "Server grant required",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X051",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Wrong Zoho organization",
+      "focus": "Identity mismatch blocks",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X052",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Synthetic conversion contamination",
+      "focus": "Excluded from commerce",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X053",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Takeover races queued reply",
+      "focus": "Version invalidates send",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X054",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Reply sent but CRM fails",
+      "focus": "CRM reconciles; no resend",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X055",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Unknown policy question",
+      "focus": "Escalate without promise",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X056",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Automated response loop",
+      "focus": "Bounded; handoff",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X057",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Repair disables failing test",
+      "focus": "Rejected",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X058",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Third automatic repair attempt",
+      "focus": "Escalate",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X059",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Duplicate platform attribution",
+      "focus": "One booking; separate claims",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X060",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Currency/timezone mismatch",
+      "focus": "No silent sum",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X061",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Keyboard review and focus restore",
+      "focus": "A11y",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X062",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "SSE gap after offline UI",
+      "focus": "Full-state resync",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X063",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Indirect prompt-injection exfiltration",
+      "focus": "Boundary denies",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X064",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "SSRF redirect and DNS rebind",
+      "focus": "Blocked every hop",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X065",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Worker reads browser auth state",
+      "focus": "OS deny",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X066",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Backup omits remote receipt",
+      "focus": "Reconcile; no duplicate",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X067",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Incompatible workflow upgrade",
+      "focus": "Blocked or compatible retained",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X068",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Thirty alerts one outage",
+      "focus": "Grouped incident",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X069",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Imported document becomes instructions",
+      "focus": "Quarantined as data",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X070",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Validated payload not collected",
+      "focus": "Separate failure states",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X071",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Local host offline public discovery",
+      "focus": "Honest unavailability",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X072",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Customer data leaks into evaluation",
+      "focus": "Redaction blocks",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     },
     {
       "id": "T-X073",
       "kind": "experience",
-      "status": "NOT_RUN"
+      "level": "platform_security_resilience",
+      "title": "Offboarding retains active token",
+      "focus": "Incomplete until revoked",
+      "status": "NOT_RUN",
+      "environment": "fixture_or_integration",
+      "fixtureClass": "fixture_sandbox_or_authorized_production",
+      "gates": [],
+      "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
     }
   ]
 }

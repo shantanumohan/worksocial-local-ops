@@ -1,1 +1,5 @@
-# soak\n\nScaffold placeholder for worksocial-operations Release 1 (WP01–WP02). Not production-activated.\n
+# soak
+
+Scaffold for future soak / pilot-gate evidence. Not wired to a release-passing script yet.
+
+Not production-activated. External effects: none.

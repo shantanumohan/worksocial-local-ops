@@ -143,17 +143,22 @@ tests/{unit,integration,contract,workflow,e2e,security,eval,soak}
 docs/{adrs,runbooks,product,contracts,v5}
 ```
 
+## Toolchain (pinned)
+
+See `docs/product/toolchain.md`. Node `.nvmrc` (`20.18.1`), pnpm `9.15.0` via `packageManager`, TypeScript `5.7.2`, Vitest `2.1.8`. CI: `.github/workflows/ci.yml` runs implemented suites only; stub suites must exit non-zero.
+
 ## Developer commands
 
 ```bash
-pnpm install
+pnpm install --frozen-lockfile
 pnpm local:doctor | local:start | local:stop | local:health
 pnpm check
-pnpm test:unit          # domain + ml + persistence + supervisor + gateway + broker + runners + learning-worker + probes + knowledge + seo + content + inbox + repair + api
-pnpm test:contract      # unauthorized-write + stop-switch + read-evidence + thirty-role-runtime + learning-worker + form-crm-canary + knowledge-labeling + seo-search + content-distribution + inbox-after-hours + bounded-repair
-pnpm test:e2e           # offline e2e-lite HTTP→DOM→canary journey
-pnpm test:database | test:workflow | test:security | test:eval
-pnpm recovery:rehearse | release:evidence
+pnpm test:acceptance-matrix   # 159-case catalog ↔ matrix alignment (all NOT_RUN)
+pnpm test:unit                # domain + ml + persistence + supervisor + gateway + broker + runners + learning-worker + probes + knowledge + seo + content + inbox + repair + api
+pnpm test:contract            # unauthorized-write + stop-switch + read-evidence + thirty-role-runtime + learning-worker + form-crm-canary + knowledge-labeling + seo-search + content-distribution + inbox-after-hours + bounded-repair
+pnpm test:e2e                 # offline e2e-lite HTTP→DOM→canary journey (not browser product acceptance)
+pnpm test:database | test:workflow | test:security | test:eval   # stubs — exit 1 / INCOMPLETE
+pnpm recovery:rehearse | release:evidence                        # stubs — exit 1 / INCOMPLETE
 ```
 
 VS Code tasks: **WorkSocial: Start / Stop / Diagnostics / Test Local Operations** → supervisor CLI.
@@ -174,9 +179,9 @@ That path is a **workspace / artifact root example**, not a database root. **Do 
 
 ## Acceptance vs reference-core
 
-- `docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md` — product acceptance catalog (159 cases; statuses remain `NOT_RUN` until evidence).
-- `tests/acceptance-matrix-v6.json` — **159** product acceptance cases (bootstrap statuses unchanged unless a later WP updates them).
-- Domain / persistence / gateway / broker / runner / learning / API unit tests prove offline behavior; they are **not** production acceptance (see `docs/product/reference-core-vs-acceptance.md`).
+- `docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md` — **full** 159-case product acceptance catalog (T-F / T-US / T-X); statuses remain `NOT_RUN` until evidence.
+- `tests/acceptance-matrix-v6.json` — machine-readable index aligned to the catalog (every ID resolves; ChatGPT Ads transport/entitlement gate retained).
+- Offline unit/contract/e2e-lite suites prove fixture behavior; they are **not** production acceptance and do **not** claim R1 complete (see `docs/product/reference-core-vs-acceptance.md`).
 
 ## Specs in-repo
 
