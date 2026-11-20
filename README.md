@@ -4,7 +4,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 
 **Not production-activated.** No live providers, credentials, schedules, website changes, CRM writes, or customer replies. External effects: none.
 
-## What is real (R1-01 → R1-09 + learning)
+## What is real (R1-01 → R1-10 + learning)
 
 ### R1-01 local execution
 - **Supervisor-owned local lifecycle** — `pnpm local:start|stop|doctor|health` and VS Code tasks call `services/supervisor`.
@@ -99,15 +99,24 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - Console `/inbox` + API `/inbox/*` — seed, draft, queue, send, takeover, log-lead, handoff.
 - SQL `011_inbox.sql` companion schema; **live inbox providers and live Zoho remain `NOT_WIRED`**.
 
+### R1-10 Bounded repair and release
+- **Incidents / tickets / proposals / attempts / test evidence** with isolated worktree + asset lease.
+- **Fail-closed gates** — cannot weaken tests, mutate baselines, touch protected policy/gateway paths, exceed two attempts, or self-approve (A24 ≠ A25).
+- **Independent review** required before gateway release; high-risk markers (price/credentials/payment/…) blocked.
+- **Fixture inject → repair → canary verify** path; **`ACCEPTED_PENDING` ≠ `VERIFIED`**.
+- **Learning hooks** — SUCCESS/FAILURE release outcomes (`fixtureOnly` when fixture); no authority expansion.
+- Console `/repair` + API `/repair/*` — seed, inject, review, release, verify.
+- SQL `012_repair.sql` companion schema; **live CMS repair remains `NOT_WIRED`**.
+
 ## What is still stub / NOT_WIRED
 
 | Area | Status |
 |------|--------|
 | Temporal runtime / durable workflows | **stub** — `NOT_WIRED` (in-process enqueue only) |
 | Live Claude Code CLI fleet | optional; default **fixture** (`WORKSOCIAL_CLAUDE_FIXTURE` unset/`1`) |
-| Full console React routes (v5 25 screens) | minimal login + authority + mapping + roles + monitoring + knowledge + SEO + content + inbox + learning |
+| Full console React routes (v5 25 screens) | minimal login + authority + mapping + roles + monitoring + knowledge + SEO + content + inbox + repair + learning |
 | Live OAuth / provider connections | **excluded** — fixture/NOT_WIRED scaffolds only |
-| Live Zoho / CMS / booking mutations | **excluded** — fixture canary / fixture SEO/content/inbox lead only |
+| Live Zoho / CMS / booking mutations | **excluded** — fixture canary / fixture SEO/content/inbox lead / fixture repair only |
 | Live SERP / Google Trends | **NOT_WIRED** — fixture demand adapters only (R1-06) |
 | Live CMS page / article publish | **NOT_WIRED** — fixture read-back release only (R1-07/R1-08) |
 | Live GBP / LinkedIn / Facebook publish | **NOT_WIRED** — fixture receipts only (R1-08) |
@@ -117,6 +126,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 | Production-canary-verified learning | **not claimed** — offline metrics only |
 | Live inbox providers (email/webchat/SMS) | **NOT_WIRED** — fixture ingest/send only (R1-09) |
 | Live Zoho after-hours lead write | **NOT_WIRED** — fixture CRM receipt only (R1-09) |
+| Live CMS bounded repair | **NOT_WIRED** — fixture canary apply/verify only (R1-10) |
 
 Status labels stay honest: fixture / stub / `NOT_RUN` ≠ sandbox-verified or production-canary-verified.
 
@@ -124,7 +134,7 @@ Status labels stay honest: fixture / stub / `NOT_RUN` ≠ sandbox-verified or pr
 
 ```
 apps/console, apps/api
-services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-broker,learning-worker,probes,knowledge,seo,content,inbox,evaluation-worker}
+services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-broker,learning-worker,probes,knowledge,seo,content,inbox,repair,evaluation-worker}
 packages/{contracts,domain,ml,persistence,provider-adapters,observability,ui}
 database/migrations
 tests/{unit,integration,contract,workflow,e2e,security,eval,soak}
@@ -139,8 +149,8 @@ docs/{adrs,runbooks,product,contracts,v5}
 pnpm install
 pnpm local:doctor | local:start | local:stop | local:health
 pnpm check
-pnpm test:unit          # domain + ml + persistence + supervisor + gateway + broker + runners + learning-worker + probes + knowledge + seo + content + inbox + api
-pnpm test:contract      # unauthorized-write + stop-switch + read-evidence + thirty-role-runtime + learning-worker + form-crm-canary + knowledge-labeling + seo-search + content-distribution + inbox-after-hours
+pnpm test:unit          # domain + ml + persistence + supervisor + gateway + broker + runners + learning-worker + probes + knowledge + seo + content + inbox + repair + api
+pnpm test:contract      # unauthorized-write + stop-switch + read-evidence + thirty-role-runtime + learning-worker + form-crm-canary + knowledge-labeling + seo-search + content-distribution + inbox-after-hours + bounded-repair
 pnpm test:e2e           # offline e2e-lite HTTP→DOM→canary journey
 pnpm test:database | test:workflow | test:security | test:eval
 pnpm recovery:rehearse | release:evidence

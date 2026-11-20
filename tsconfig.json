@@ -21,6 +21,7 @@
     { "path": "services/seo" },
     { "path": "services/content" },
     { "path": "services/inbox" },
+    { "path": "services/repair" },
     { "path": "services/evaluation-worker" }
   ]
 }

@@ -59,6 +59,9 @@ importers:
       '@worksocial/provider-adapters':
         specifier: workspace:*
         version: link:../../packages/provider-adapters
+      '@worksocial/repair':
+        specifier: workspace:*
+        version: link:../../services/repair
       '@worksocial/seo':
         specifier: workspace:*
         version: link:../../services/seo
@@ -321,6 +324,28 @@ importers:
         specifier: 2.1.8
         version: 2.1.8(@types/node@22.10.2)
 
+  services/repair:
+    dependencies:
+      '@worksocial/action-gateway':
+        specifier: workspace:*
+        version: link:../action-gateway
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@worksocial/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
+    devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)
+
   services/seo:
     dependencies:
       '@worksocial/action-gateway':
@@ -416,6 +441,9 @@ importers:
       '@worksocial/probes':
         specifier: workspace:*
         version: link:../../services/probes
+      '@worksocial/repair':
+        specifier: workspace:*
+        version: link:../../services/repair
       '@worksocial/seo':
         specifier: workspace:*
         version: link:../../services/seo

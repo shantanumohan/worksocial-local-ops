@@ -79,6 +79,7 @@ export {
   createDemoContentDistributionGrants,
   createDemoCanaryGrant,
   createDemoInboxGrants,
+  createDemoRepairGrant,
   defaultAuthorityStateDir,
   hashPassword,
   verifyPassword,
@@ -143,3 +144,9 @@ export {
   defaultInboxStateDir,
   type InboxStore,
 } from "./inbox-store.js";
+
+export {
+  createFileRepairStore,
+  defaultRepairStateDir,
+  type RepairStore,
+} from "./repair-store.js";

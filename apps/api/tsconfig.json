@@ -20,6 +20,7 @@
     { "path": "../../services/knowledge" },
     { "path": "../../services/seo" },
     { "path": "../../services/content" },
-    { "path": "../../services/inbox" }
+    { "path": "../../services/inbox" },
+    { "path": "../../services/repair" }
   ]
 }

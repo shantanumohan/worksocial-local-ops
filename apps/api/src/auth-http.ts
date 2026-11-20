@@ -61,6 +61,7 @@ import {
   createDemoContentDistributionGrants,
   createDemoInboxGrants,
   createDemoPublishGrant,
+  createDemoRepairGrant,
   createFileAuthorityStore,
   createFileContentStore,
   createFileInboxStore,
@@ -68,6 +69,7 @@ import {
   createFileKnowledgeStore,
   createFileProbeStore,
   createFileProductionMappingStore,
+  createFileRepairStore,
   createFileRoleRuntimeStore,
   createFileSeoStore,
   ensureBootstrapOwner,
@@ -80,6 +82,7 @@ import {
   type InboxStore,
   type ProbeStore,
   type ProductionMappingStore,
+  type RepairStore,
   type RoleRuntimeStore,
   type SeoStore,
 } from "@worksocial/persistence";
@@ -129,6 +132,13 @@ import {
   INBOX_SUPPORTED_FACT_ID,
   type InboxService,
 } from "@worksocial/inbox";
+import {
+  createRepairService,
+  proveFixtureRepairWritePath,
+  upsertFixtureRepairMapping,
+  REPAIR_PROPOSAL_ID,
+  type RepairService,
+} from "@worksocial/repair";
 import { listPinnedModels } from "@worksocial/ml";
 
 function factLabelsFromKnowledge(
@@ -220,6 +230,8 @@ export type ApiRuntime = {
   content: ContentService;
   inboxStore: InboxStore;
   inbox: InboxService;
+  repairStore: RepairStore;
+  repair: RepairService;
   runner: ClaudeRunner;
   missions: MissionEnqueueService;
   gateway: ActionGateway;
@@ -400,11 +412,13 @@ export function createApiRuntime(options: {
   const seoStore = createFileSeoStore(options.stateDir);
   const contentStore = createFileContentStore(options.stateDir);
   const inboxStore = createFileInboxStore(options.stateDir);
+  const repairStore = createFileRepairStore(options.stateDir);
   const gateway = createActionGateway();
   rehydratePendingContentGatewayDecisions(gateway, contentStore, store);
   const seo = createSeoService(seoStore, { gateway });
   const content = createContentService(contentStore, { gateway });
   const inbox = createInboxService(inboxStore, { gateway });
+  const repair = createRepairService(repairStore, { gateway });
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
@@ -433,6 +447,8 @@ export function createApiRuntime(options: {
     content,
     inboxStore,
     inbox,
+    repairStore,
+    repair,
     runner,
     missions,
     gateway,
@@ -590,9 +606,9 @@ export async function handleApiRequest(
         status: "running",
         productionActivated: false,
         identity:
-          "R1-02–R1-09 auth + mapping + roles + learning + probes + knowledge + SEO/search + content/distribution + inbox/after-hours",
+          "R1-02–R1-10 auth + mapping + roles + learning + probes + knowledge + SEO/search + content/distribution + inbox/after-hours + bounded-repair",
         message:
-          "API surface includes after-hours inbox/takeover, content pipeline, SEO/search. Live CMS/GBP/social/inbox/Zoho NOT_WIRED. No live SERP/Trends.",
+          "API surface includes bounded repair, after-hours inbox/takeover, content pipeline, SEO/search. Live CMS/GBP/social/inbox/Zoho NOT_WIRED. No live SERP/Trends.",
       },
       cors,
     );
@@ -2011,6 +2027,7 @@ export async function handleApiRequest(
       extraWritePathOutcomes: [
         ...runtime.seo.listLearningOutcomes(false),
         ...runtime.content.listLearningOutcomes(false),
+        ...runtime.repair.listLearningOutcomes(false),
       ],
       includeFixture: false,
     });
@@ -4542,6 +4559,355 @@ export async function handleApiRequest(
     }
     const policy = runtime.inbox.pauseReplies(body.paused === true);
     json(res, 200, { policy }, cors);
+    return;
+  }
+
+  // ── R1-10 Bounded repair ──────────────────────────────────────────────
+
+  if (method === "GET" && url.pathname === "/repair/status") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(res, 200, runtime.repair.status(), cors);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/repair/incidents") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(res, 200, { incidents: runtime.repair.listIncidents(100) }, cors);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/repair/tickets") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(res, 200, { tickets: runtime.repair.listTickets(100) }, cors);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/repair/proposals") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(res, 200, { proposals: runtime.repair.listProposals(100) }, cors);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/repair/attempts") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const ticketId =
+      typeof url.searchParams.get("ticketId") === "string"
+        ? url.searchParams.get("ticketId")!
+        : undefined;
+    json(
+      res,
+      200,
+      { attempts: runtime.repair.listAttempts(ticketId, 200) },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/repair/fixture-asset") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(
+      res,
+      200,
+      { asset: runtime.repair.getFixtureAsset() },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/repair/seed-fixtures") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const seed = runtime.repair.seedFixtures();
+    json(
+      res,
+      200,
+      {
+        ...seed,
+        note: "Seeded golden CTA incident/ticket/proposal. Live CMS repair remains NOT_WIRED.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/repair/ensure-fixture-mapping") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason: "Ensure fixture mapping requires manage_standing_policies",
+        },
+        cors,
+      );
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    const current = runtime.mappingStore.read();
+    const upserted = upsertFixtureRepairMapping(current, nowIso);
+    const proven = proveFixtureRepairWritePath(upserted.state, nowIso);
+    runtime.mappingStore.write(proven);
+
+    const demo = createDemoRepairGrant(nowIso);
+    runtime.store.update((s) => ({
+      ...s,
+      standingPolicies: [
+        ...s.standingPolicies.filter(
+          (p) => p.policyId !== demo.policy.policyId,
+        ),
+        demo.policy,
+      ],
+      capabilityGrants: [
+        ...s.capabilityGrants.filter(
+          (g) => g.grantId !== demo.grant.grantId,
+        ),
+        demo.grant,
+      ],
+      updatedAt: nowIso,
+    }));
+
+    json(
+      res,
+      200,
+      {
+        writePathId: upserted.writePathId,
+        created: upserted.created,
+        mapping: {
+          writePathCount: proven.writePaths.length,
+          bindingCount: proven.bindings.length,
+        },
+        grantId: demo.grant.grantId,
+        note: "Persisted bounded-repair write path, fixture read evidence, and demo grant.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/repair/inject-defect") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const injected = runtime.repair.injectDefect();
+    json(res, injected.ok ? 200 : 400, injected, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/repair/submit-review") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: { proposalId?: string };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    const submitted = runtime.repair.submitForReview({
+      proposalId: body.proposalId ?? REPAIR_PROPOSAL_ID,
+    });
+    json(res, submitted.ok ? 200 : 400, submitted, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/repair/independent-review") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      proposalId?: string;
+      approved?: boolean;
+      reason?: string;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    const reviewed = runtime.repair.recordIndependentReview({
+      proposalId: body.proposalId ?? REPAIR_PROPOSAL_ID,
+      approved: body.approved !== false,
+      reason: body.reason ?? "Independent A25 review via console",
+    });
+    json(res, reviewed.ok ? 200 : 400, reviewed, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/repair/release") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: { proposalId?: string; preferLive?: boolean };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+
+    const authorityState = runtime.store.read();
+    const hasGrant = authorityState.capabilityGrants.some(
+      (g) => g.grantId === "grant-demo-bounded-repair",
+    );
+    if (!hasGrant) {
+      json(
+        res,
+        400,
+        {
+          error: "GRANT_MISSING",
+          reason:
+            "No persisted bounded-repair grant. Call /repair/ensure-fixture-mapping first — will not mint demo authority at release time.",
+        },
+        cors,
+      );
+      return;
+    }
+
+    const released = runtime.repair.releaseRepair({
+      proposalId: body.proposalId ?? REPAIR_PROPOSAL_ID,
+      authority: {
+        outboundStopped: authorityState.ownerControls.outboundStopped,
+        operatingMode: authorityState.ownerControls.operatingMode,
+        policies: authorityState.standingPolicies,
+        grants: authorityState.capabilityGrants,
+      },
+      productionMapping: runtime.mappingStore.read(),
+      preferLive: body.preferLive === true,
+    });
+
+    if (released.gatewayDecision) {
+      upsertPolicyDecision(
+        runtime.store,
+        policyDecisionFromGateway(released.gatewayDecision),
+      );
+    }
+
+    json(
+      res,
+      200,
+      {
+        ...released,
+        note: "Gateway-gated fixture bounded repair. Live CMS remains NOT_WIRED. ACCEPTED_PENDING ≠ VERIFIED — call /repair/verify.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/repair/verify") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: { proposalId?: string };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    const verified = runtime.repair.verifyRepair({
+      proposalId: body.proposalId ?? REPAIR_PROPOSAL_ID,
+    });
+    if (verified.proposal?.gatewayOperationId) {
+      const decision = runtime.gateway.getDecision(
+        verified.proposal.gatewayOperationId,
+      );
+      if (decision) {
+        upsertPolicyDecision(runtime.store, policyDecisionFromGateway(decision));
+      }
+    }
+    json(res, 200, verified, cors);
     return;
   }
 
