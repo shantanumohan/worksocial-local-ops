@@ -226,6 +226,30 @@ export const R1_03_ADAPTERS: readonly AdapterDescriptor[] = [
     notes:
       "R1-09 fixture Zoho qualified-lead logging from after-hours concierge. Synthetic leads excluded from commercial totals.",
   },
+  {
+    adapterId: "gbp-fixture-simulator",
+    providerId: "gbp",
+    status: AdapterStatus.SIMULATOR,
+    capabilities: [
+      "fixture_gbp_short_update",
+      "independent_read_back",
+      "unknown_remote_recovery",
+    ],
+    notes:
+      "M6/NEXT-17 GBP fixture simulator — per-destination format, receipt, independent read-back. Live GBP remains NOT_WIRED.",
+  },
+  {
+    adapterId: "linkedin-fixture-simulator",
+    providerId: "linkedin",
+    status: AdapterStatus.SIMULATOR,
+    capabilities: [
+      "fixture_linkedin_post",
+      "independent_read_back",
+      "unknown_remote_recovery",
+    ],
+    notes:
+      "M6/NEXT-17 LinkedIn social fixture simulator (single social destination). Live LinkedIn remains NOT_WIRED.",
+  },
 ] as const;
 
 export function listAdapters(): AdapterDescriptor[] {
@@ -269,3 +293,16 @@ export {
   type FixtureCrmCleanupResult,
   type FixtureCrmLedgerEntry,
 } from "./zoho-crm-fixture.js";
+
+export {
+  createGbpFixtureSimulator,
+  createLinkedInFixtureSimulator,
+  liveGbpUnavailable,
+  liveLinkedInUnavailable,
+  type GbpFixtureSimulator,
+  type LinkedInFixtureSimulator,
+  type GbpPostRecord,
+  type SocialPostRecord,
+  type DestinationApplyResult,
+  type DestinationReadResult,
+} from "./gbp-social-fixture.js";

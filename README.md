@@ -96,6 +96,14 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - Console `/content` + API `/content/*` — campaigns, articles, variants, receipts, release/verify.
 - SQL `010_content.sql` companion schema; **live CMS / GBP / social remain `NOT_WIRED`**.
 
+### M6 Canonical publish + GBP/social (NEXT-17)
+- **Versioned authoring** — `POST /content/create-campaign`, `/content/create-article`, `/content/edit-article` + console draft form; digest change bumps version and invalidates A25 bindings.
+- **Claim/source QA** — `POST /content/record-claim-qa` requires SUPPORTED facts with source refs before review.
+- **A25 review binding** — `POST /content/bind-review` reuses M3 binding invariants (exact revision + evidence package; edits invalidate).
+- **Multi-destination distribute** — `POST /content/distribute` owned-site (staging CMS simulator + content fixture) → GBP fixture → LinkedIn fixture; per-destination format, claims/QA, receipt, independent read-back, durable accept/verify (LOCAL_DURABLE).
+- **Partial failure recovery** — `POST /content/recover-distribution` re-applies only unfinished destinations; verified destinations are never re-applied. Stable `biz-content:…` operation keys.
+- SQL `019_canonical_publish.sql` companion schema. **External effects NONE.** Temporal remains **NOT_WIRED**. Not an R1-complete claim.
+
 ### R1-09 / M7 (NEXT-18) Customer response / after-hours
 - **Unified inbox domain** — conversations, messages, leases, response policy, handoffs, qualified leads, booking evidence, webhook events, ownership ledger.
 - **Fixture webhook simulator** (`POST /inbox/ingest-fixture`) with durable `providerEventId` coalesce — no duplicate inbound rows.

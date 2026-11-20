@@ -20,7 +20,8 @@
   "dependencies": {
     "@worksocial/action-gateway": "workspace:*",
     "@worksocial/domain": "workspace:*",
-    "@worksocial/persistence": "workspace:*"
+    "@worksocial/persistence": "workspace:*",
+    "@worksocial/provider-adapters": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "22.10.2",

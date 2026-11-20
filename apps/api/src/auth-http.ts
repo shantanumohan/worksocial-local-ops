@@ -152,6 +152,7 @@ import { listPinnedModels } from "@worksocial/ml";
 import { handleOwnerStagingRequest } from "./owner-staging-http.js";
 import { handleLeadCaptureRequest } from "./lead-capture-http.js";
 import { handleInboxRequest } from "./inbox-http.js";
+import { handleCanonicalPublishRequest } from "./content-http.js";
 
 function factLabelsFromKnowledge(
   knowledge: KnowledgeService,
@@ -637,7 +638,7 @@ export async function handleApiRequest(
         status: "running",
         productionActivated: false,
         identity:
-          "M5 lead-capture + R1-02–R1-10 auth + mapping + roles + learning + probes + knowledge + SEO/search + content/distribution + inbox/after-hours + bounded-repair",
+          "M6 canonical publish + M5 lead-capture + R1-02–R1-10 auth + mapping + roles + learning + probes + knowledge + SEO/search + content/distribution + inbox/after-hours + bounded-repair",
         message:
           "API surface includes bounded repair, after-hours inbox/takeover, content pipeline, SEO/search. Live CMS/GBP/social/inbox/Zoho NOT_WIRED. No live SERP/Trends.",
       },
@@ -4507,6 +4508,27 @@ export async function handleApiRequest(
       }
     }
     json(res, 200, verified, cors);
+    return;
+  }
+
+  // --- M6 / NEXT-17 canonical authoring + multi-destination distribute ---
+  const contentM6Handled = await handleCanonicalPublishRequest({
+    content: runtime.content,
+    knowledge: runtime.knowledge,
+    authorityStore: runtime.store,
+    mappingStore: runtime.mappingStore,
+    knowledgeStore: runtime.knowledgeStore,
+    req,
+    res,
+    url,
+    method,
+    cors,
+    json,
+    readBody,
+    parseJsonObjectBody,
+    requireSession: (incoming, opts) => requireSession(runtime, incoming, opts),
+  });
+  if (contentM6Handled) {
     return;
   }
 

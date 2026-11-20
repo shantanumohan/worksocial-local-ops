@@ -36,7 +36,7 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
         status: "running",
         productionActivated: false,
         identity:
-          "M5 lead-capture + M4 owner staging + R1-02–R1-10 login/authority/mapping/roles/monitoring/knowledge/SEO/content/inbox/repair/learning",
+          "M6 canonical publish + M5 lead-capture + M4 owner staging + R1-02–R1-10 login/authority/mapping/roles/monitoring/knowledge/SEO/content/inbox/repair/learning",
         message:
           "Progressive console: activation → connections → sites → missions → review → evidence + M5 lead journeys. Not full React routes. Not R1-complete.",
       });

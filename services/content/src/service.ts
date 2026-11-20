@@ -47,7 +47,7 @@ import {
   type VariantQaVerdict,
   type WritePathOutcomeEvidence,
 } from "@worksocial/domain";
-import type { ContentStore } from "@worksocial/persistence";
+import type { ContentStore, DurableExecutionService } from "@worksocial/persistence";
 import {
   createActionGateway,
   type ActionGateway,
@@ -65,6 +65,10 @@ import {
   invokeDestinationAdapter,
   proveFixtureContentWritePaths,
 } from "./fixtures.js";
+import {
+  createCanonicalPublishOps,
+  type CanonicalPublishOps,
+} from "./canonical-publish-ops.js";
 
 const TERMINAL_ARTICLE: ReadonlySet<string> = new Set([
   ArticleStatus.APPROVED,
@@ -89,13 +93,17 @@ function operationForDestination(kind: string): string {
 
 export type ContentServiceOptions = {
   gateway?: ActionGateway;
+  durable?: DurableExecutionService;
 };
 
 export type ContentService = {
   status(): ReturnType<ContentStore["status"]> & {
     acceptanceCaseIds: readonly string[];
     learningHookNote: string;
+    m6Note: string;
   };
+  /** M6 / NEXT-17 canonical authoring + multi-destination publish. */
+  readonly canonicalPublish: CanonicalPublishOps;
   listCampaigns(limit?: number): ContentCampaign[];
   listArticles(limit?: number): CanonicalArticle[];
   listVariants(limit?: number): DestinationVariant[];
@@ -292,6 +300,10 @@ export function createContentService(
   options: ContentServiceOptions = {},
 ): ContentService {
   const gateway = options.gateway ?? createActionGateway();
+  const canonicalPublish = createCanonicalPublishOps(store, {
+    gateway,
+    ...(options.durable ? { durable: options.durable } : {}),
+  });
 
   const putCanonicalLedger = (
     articleId: string,
@@ -325,14 +337,20 @@ export function createContentService(
 
   return {
     gateway,
+    canonicalPublish,
 
     status() {
       const base = store.status();
       return {
         ...base,
-        acceptanceCaseIds: CONTENT_RELATED_CASE_IDS,
+        acceptanceCaseIds: [
+          ...CONTENT_RELATED_CASE_IDS,
+          ...canonicalPublish.acceptanceCaseIds,
+        ],
         learningHookNote:
           "Verified content distribution SUCCESS/FAILURE emits outcomes with fixtureOnly when fixture after explicit read-back. ACCEPTED_PENDING ≠ VERIFIED. Live CMS/GBP/social NOT_WIRED. Learning-worker may consume outcomes later; no authority auto-apply.",
+        m6Note:
+          "M6/NEXT-17: versioned create/edit, claim/source QA + A25 binding, owned-site+GBP+LinkedIn fixture distribute with durable effects and partial recovery. External effects NONE. Temporal NOT_WIRED. Not R1-complete.",
       };
     },
 
