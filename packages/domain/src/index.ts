@@ -178,6 +178,38 @@ export {
   type ParsedUsageCost,
 } from "./role-runtime.js";
 export {
+  ArtifactTrustLabel,
+  InputPackageErrorCode,
+  DEFAULT_MAX_INPUT_BYTES_FALLBACK,
+  utf8ByteLength,
+  digestInputPackageEntries,
+  buildRoleOutputSchema,
+  compileInputPackage,
+  evidenceCitationIds,
+  validateEvidenceCitations,
+  type ArtifactTrustLabelValue,
+  type InputPackageErrorCodeValue,
+  type ArtifactRevisionRef,
+  type CompiledPackageEntry,
+  type RoleOutputSchemaSpec,
+  type CompiledInputPackage,
+  type CompileInputPackageRequest,
+  type CompileInputPackageResult,
+} from "./input-package.js";
+export {
+  ReviewBindingStatus,
+  ReviewBindingErrorCode,
+  createReviewBinding,
+  validateReviewBinding,
+  acceptBoundReviewVerdict,
+  type ReviewBindingStatusValue,
+  type ReviewBindingErrorCodeValue,
+  type ReviewBinding,
+  type CreateReviewBindingInput,
+  type CreateReviewBindingResult,
+  type CurrentProposalSnapshot,
+} from "./review-binding.js";
+export {
   ProbeKind,
   ProbeMode,
   ProbeVerdict,

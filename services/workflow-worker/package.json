@@ -19,6 +19,7 @@
   "dependencies": {
     "@worksocial/claude-runner": "workspace:*",
     "@worksocial/contracts": "workspace:*",
+    "@worksocial/domain": "workspace:*",
     "@worksocial/persistence": "workspace:*"
   },
   "devDependencies": {
