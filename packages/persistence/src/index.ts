@@ -243,3 +243,14 @@ export {
   type VerifyIndependentInput,
   type VerifyIndependentResult,
 } from "./durable-execution.js";
+
+export {
+  createMemoryMissionWorkflowStore,
+  createPgMissionWorkflowStore,
+  type MissionWorkflowStore,
+  type MissionWorkflowRecord,
+  type MissionWorkflowInsert,
+  type MissionPhase,
+  type MissionRetryCategory,
+  type MissionTemporalWiring,
+} from "./mission-workflow-store.js";

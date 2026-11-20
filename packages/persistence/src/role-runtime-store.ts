@@ -53,7 +53,7 @@ export type RoleRuntimeState = {
   runs: RoleRunEvidence[];
   outcomes: RoleRunOutcomeEvidence[];
   /** Honest Temporal wiring status for mission enqueue. */
-  temporalWiring: "NOT_WIRED" | "FIXTURE";
+  temporalWiring: "NOT_WIRED" | "LOCAL_DURABLE" | "FIXTURE";
 };
 
 export type RoleRuntimeStore = {

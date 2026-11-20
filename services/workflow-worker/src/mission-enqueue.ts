@@ -8,7 +8,7 @@ import type { JobEnvelope } from "@worksocial/contracts";
 import { JobEnvelopeSchema } from "@worksocial/contracts";
 import type { ClaudeRunner, RoleJobResult } from "@worksocial/claude-runner";
 
-export type TemporalWiringStatus = "NOT_WIRED" | "FIXTURE";
+export type TemporalWiringStatus = "NOT_WIRED" | "LOCAL_DURABLE" | "FIXTURE";
 
 export type MissionEnqueueRequest = {
   envelope: JobEnvelope;
