@@ -46,6 +46,7 @@ import {
   type MessageRecord,
   type OperatingModeValue,
   type OwnershipEvent,
+  OwnershipEventKind,
   type ProductionMappingState,
   type QualifiedLead,
   type ResponsePolicy,
@@ -188,7 +189,11 @@ export type InboxService = {
     messageId: string;
     nowIso?: string;
   }):
-    | { ok: true; message: MessageRecord }
+    | {
+        ok: true;
+        message: MessageRecord;
+        outcome: WritePathOutcomeEvidence;
+      }
     | { ok: false; code: string; reasons: string[] };
   takeOver(input: {
     conversationId: string;
@@ -472,9 +477,13 @@ export function createInboxService(
         fixtureOnly: input.fixtureOnly !== false,
         nowIso,
       });
+      if (!result.ok) {
+        throw new Error(`${result.code}: ${result.reasons.join("; ")}`);
+      }
 
-      if (!result.duplicate) {
-        // Lease after durable accept so concurrent workers serialize on thread.
+      // Persist when message is new OR when a new providerEventId was recorded
+      // against an already-seen providerMessageId.
+      if (!result.duplicate || result.eventRecorded) {
         const leaseOwner = `inbox-webhook-${process.pid}`;
         const leaseExpiresAtIso = new Date(
           Date.parse(nowIso) + 5 * 60 * 1000,
@@ -498,7 +507,7 @@ export function createInboxService(
             conversation: leased.conversation,
             message: result.message,
             event: result.event,
-            duplicate: false,
+            duplicate: result.duplicate,
           };
         }
         store.write(result.state);
@@ -897,16 +906,17 @@ export function createInboxService(
         "Adapter accepted send (sent). Delivery requires independent confirmDelivery — acceptance ≠ delivered.",
       );
 
+      // Acceptance ≠ verified delivery — learning SUCCESS waits for confirmDelivery.
       const outcome = buildInboxSendOutcome({
         outcomeId: `out-${randomUUID()}`,
         conversationId: conversation.conversationId,
         messageId: message.messageId,
         writePathId: INBOX_REPLY_WRITE_PATH_ID,
         operationId,
-        decision: InboxOutcomeDecision.SUCCESS,
+        decision: InboxOutcomeDecision.UNKNOWN,
         source: OutcomeEvidenceSource.FIXTURE,
         fixtureOnly: true,
-        summary: adapter.summary,
+        summary: `${adapter.summary} (accepted_pending — delivery not yet confirmed)`,
         recordedAtIso: nowIso,
         featureHints: { remoteId: adapter.remoteId, delivery: "accepted_pending" },
       });
@@ -936,7 +946,23 @@ export function createInboxService(
       const confirmed = confirmOutboundDelivery({ message, nowIso });
       if (!confirmed.ok) return confirmed;
       store.upsertMessage(confirmed.message);
-      return confirmed;
+      const outcome = buildInboxSendOutcome({
+        outcomeId: `out-${randomUUID()}`,
+        conversationId: confirmed.message.conversationId,
+        messageId: confirmed.message.messageId,
+        writePathId: INBOX_REPLY_WRITE_PATH_ID,
+        operationId:
+          confirmed.message.gatewayOperationId ??
+          `inbox-delivered-${randomUUID()}`,
+        decision: InboxOutcomeDecision.SUCCESS,
+        source: OutcomeEvidenceSource.FIXTURE,
+        fixtureOnly: true,
+        summary: "Independent fixture delivery confirmed (sent → delivered)",
+        recordedAtIso: nowIso,
+        featureHints: { delivery: "delivered" },
+      });
+      store.addSendOutcome(outcome);
+      return { ok: true as const, message: confirmed.message, outcome };
     },
 
     takeOver(input) {
@@ -1118,9 +1144,13 @@ export function createInboxService(
           recordedAtIso: nowIso,
         });
         store.addSendOutcome(outcome);
-        store.addLead({ ...lead, gatewayOperationId: operationId });
+        // Do not persist a denied lead — coalesce must only short-circuit
+        // successful CRM writes so retries remain possible after authority restores.
+        details.push(
+          "Denied lead not persisted; retry after authority restore is allowed",
+        );
         return {
-          lead,
+          lead: null,
           gatewayDecision: submitted.decision,
           outcome,
           liveCrmLeadWiring: "NOT_WIRED" as const,
@@ -1196,7 +1226,7 @@ export function createInboxService(
         requestedAction: input.requestedAction ?? "Morning follow-up",
         nowIso,
       });
-      // Increment version so stale agent sends are blocked, but keep handed_off.
+      // Increment version so stale agent sends are blocked; audit as handoff.
       const takeover = applyConversationTakeover({
         state: {
           ...state,
@@ -1206,23 +1236,18 @@ export function createInboxService(
         },
         conversationId: conversation.conversationId,
         nowIso,
+        ownershipEventId: `own-${randomUUID()}`,
+        ownershipKind: OwnershipEventKind.HANDOFF,
+        ownershipDetail: `Morning handoff to ${handoff.nextOwner}: ${handoff.reason}`,
+        preserveStatus: ConversationStatus.HANDED_OFF,
       });
       if (takeover.ok) {
-        const preserved: ConversationRecord = {
-          ...takeover.conversation,
-          status: ConversationStatus.HANDED_OFF,
-        };
-        store.write({
-          ...takeover.state,
-          conversations: takeover.state.conversations.map((c) =>
-            c.conversationId === preserved.conversationId ? preserved : c,
-          ),
-        });
+        store.write(takeover.state);
         store.addHandoff(handoff);
         return {
           ok: true,
           handoff,
-          conversation: preserved,
+          conversation: takeover.conversation,
         };
       }
       store.upsertConversation(handed);

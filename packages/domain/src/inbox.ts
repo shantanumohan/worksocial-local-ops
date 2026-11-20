@@ -821,6 +821,11 @@ export function applyConversationTakeover(input: {
   nowIso: string;
   actorUserId?: string | null;
   ownershipEventId?: string;
+  /** Defaults to takeover; handoff path should pass OwnershipEventKind.HANDOFF. */
+  ownershipKind?: OwnershipEventKindValue;
+  ownershipDetail?: string;
+  /** When set (e.g. handed_off), preserves that status instead of awaiting_human. */
+  preserveStatus?: ConversationStatusValue;
 }):
   | {
       ok: true;
@@ -842,12 +847,13 @@ export function applyConversationTakeover(input: {
   }
   const before = input.state.conversations[idx]!;
   const takeover = applyTakeover(toConversationState(before));
+  const ownershipKind = input.ownershipKind ?? OwnershipEventKind.TAKEOVER;
   const conversation: ConversationRecord = {
     ...before,
     version: takeover.conversation.version,
     humanOwned: takeover.conversation.humanOwned,
     agentSendAllowed: takeover.conversation.agentSendAllowed,
-    status: ConversationStatus.AWAITING_HUMAN,
+    status: input.preserveStatus ?? ConversationStatus.AWAITING_HUMAN,
     updatedAtIso: input.nowIso,
   };
 
@@ -882,14 +888,19 @@ export function applyConversationTakeover(input: {
   const conversations = [...input.state.conversations];
   conversations[idx] = conversation;
 
+  const defaultDetail =
+    ownershipKind === OwnershipEventKind.HANDOFF
+      ? `Handoff cancelled ${cancelledMessageIds.length} unsent message(s); invalidated ${invalidatedDraftIds.length} draft(s)`
+      : `Takeover cancelled ${cancelledMessageIds.length} unsent message(s); invalidated ${invalidatedDraftIds.length} draft(s)`;
+
   const ownershipEvent: OwnershipEvent = {
     eventId: input.ownershipEventId ?? `own-${input.conversationId}-${input.nowIso}`,
     conversationId: input.conversationId,
-    kind: OwnershipEventKind.TAKEOVER,
+    kind: ownershipKind,
     fromVersion: before.version,
     toVersion: conversation.version,
     actorUserId: input.actorUserId ?? null,
-    detail: `Takeover cancelled ${cancelledMessageIds.length} unsent message(s); invalidated ${invalidatedDraftIds.length} draft(s)`,
+    detail: input.ownershipDetail ?? defaultDetail,
     atIso: input.nowIso,
   };
 
@@ -978,8 +989,8 @@ export function createQualifiedLead(input: {
 }
 
 /**
- * Find an existing lead for the same conversation + inbound message / event.
- * Duplicate webhook replays must not create a second CRM lead.
+ * Find an existing *successful* CRM lead for the same conversation + inbound
+ * message / event. Denied attempts (no crmRecordId) must remain retryable.
  */
 export function findCoalescedLead(input: {
   leads: readonly QualifiedLead[];
@@ -988,33 +999,30 @@ export function findCoalescedLead(input: {
   providerEventId?: string | null;
   correlationId?: string | null;
 }): QualifiedLead | null {
+  const successful = input.leads.filter(
+    (l) =>
+      l.conversationId === input.conversationId &&
+      l.crmRecordId != null &&
+      l.crmRecordId !== "",
+  );
+
   const byInbound =
     input.sourceInboundMessageId != null && input.sourceInboundMessageId !== ""
-      ? input.leads.find(
-          (l) =>
-            l.conversationId === input.conversationId &&
-            l.sourceInboundMessageId === input.sourceInboundMessageId,
+      ? successful.find(
+          (l) => l.sourceInboundMessageId === input.sourceInboundMessageId,
         )
       : undefined;
   if (byInbound) return byInbound;
 
   const byEvent =
     input.providerEventId != null && input.providerEventId !== ""
-      ? input.leads.find(
-          (l) =>
-            l.conversationId === input.conversationId &&
-            l.providerEventId === input.providerEventId,
-        )
+      ? successful.find((l) => l.providerEventId === input.providerEventId)
       : undefined;
   if (byEvent) return byEvent;
 
   const byCorr =
     input.correlationId != null && input.correlationId !== ""
-      ? input.leads.find(
-          (l) =>
-            l.conversationId === input.conversationId &&
-            l.correlationId === input.correlationId,
-        )
+      ? successful.find((l) => l.correlationId === input.correlationId)
       : undefined;
   return byCorr ?? null;
 }
@@ -1037,13 +1045,18 @@ export function ingestFixtureWebhook(input: {
   messageId: string;
   fixtureOnly?: boolean;
   nowIso: string;
-}): {
-  conversation: ConversationRecord;
-  message: MessageRecord;
-  event: InboxWebhookEvent;
-  duplicate: boolean;
-  state: InboxState;
-} {
+}):
+  | {
+      ok: true;
+      conversation: ConversationRecord;
+      message: MessageRecord;
+      event: InboxWebhookEvent;
+      duplicate: boolean;
+      /** True when a new providerEventId row was appended (even if message coalesced). */
+      eventRecorded: boolean;
+      state: InboxState;
+    }
+  | { ok: false; code: string; reasons: string[] } {
   const prior = (input.state.webhookEvents ?? []).find(
     (e) => e.providerEventId === input.providerEventId,
   );
@@ -1069,26 +1082,44 @@ export function ingestFixtureWebhook(input: {
         receivedAtIso: prior.receivedAtIso,
       };
       return {
+        ok: true,
         conversation,
         message,
         event: coalesced,
         duplicate: true,
+        eventRecorded: false,
         state: input.state,
       };
     }
   }
 
-  let conversation =
-    (input.conversationId
-      ? input.state.conversations.find(
-          (c) => c.conversationId === input.conversationId,
-        )
-      : undefined) ??
+  const byId = input.conversationId
+    ? (input.state.conversations.find(
+        (c) => c.conversationId === input.conversationId,
+      ) ?? null)
+    : null;
+  const byThread =
     input.state.conversations.find(
       (c) => c.providerThreadId === input.providerThreadId,
-    );
+    ) ?? null;
 
+  if (
+    byId &&
+    byThread &&
+    byId.conversationId !== byThread.conversationId
+  ) {
+    return {
+      ok: false,
+      code: "CONFLICTING_CONVERSATION_IDS",
+      reasons: [
+        `conversationId ${byId.conversationId} != providerThread ${byThread.conversationId}`,
+      ],
+    };
+  }
+
+  let conversation = byId ?? byThread;
   let workingState = input.state;
+
   if (!conversation) {
     conversation = createConversation({
       conversationId: input.conversationId ?? `conv-${input.providerEventId}`,
@@ -1103,6 +1134,33 @@ export function ingestFixtureWebhook(input: {
       ...workingState,
       conversations: [...workingState.conversations, conversation],
     };
+  } else {
+    // Refresh missing customer identity from later durable webhook fields.
+    const nextEmail =
+      conversation.customerEmail ?? input.customerEmail ?? null;
+    const nextName =
+      conversation.customerDisplayName.trim() !== ""
+        ? conversation.customerDisplayName
+        : input.customerDisplayName;
+    if (
+      nextEmail !== conversation.customerEmail ||
+      nextName !== conversation.customerDisplayName
+    ) {
+      conversation = {
+        ...conversation,
+        customerEmail: nextEmail,
+        customerDisplayName: nextName,
+        updatedAtIso: input.nowIso,
+      };
+      workingState = {
+        ...workingState,
+        conversations: workingState.conversations.map((c) =>
+          c.conversationId === conversation!.conversationId
+            ? conversation!
+            : c,
+        ),
+      };
+    }
   }
 
   const ingested = ingestInboundMessage({
@@ -1131,7 +1189,7 @@ export function ingestFixtureWebhook(input: {
     receivedAtIso: input.nowIso,
   };
 
-  // Even when inbound message deduped, record the webhook event once.
+  // Even when inbound message deduped, record the new webhook event id.
   const alreadyLogged = (ingested.state.webhookEvents ?? []).some(
     (e) => e.providerEventId === input.providerEventId,
   );
@@ -1146,10 +1204,12 @@ export function ingestFixtureWebhook(input: {
       };
 
   return {
+    ok: true,
     conversation: ingested.conversation,
     message: ingested.message,
     event,
     duplicate: ingested.duplicate || alreadyLogged,
+    eventRecorded: !alreadyLogged,
     state,
   };
 }
@@ -1425,10 +1485,12 @@ export function detectDuplicateOutbound(input: {
     ) {
       return false;
     }
+    // Prefer delivery/send time so long-queued then-delivered replies stay
+    // inside the suppression window after confirmDelivery.
     const stamp =
-      m.sendStatus === MessageSendStatus.SENT && m.sentAtIso
-        ? m.sentAtIso
-        : m.createdAtIso;
+      m.sendStatus === MessageSendStatus.QUEUED
+        ? m.createdAtIso
+        : (m.deliveredAtIso ?? m.sentAtIso ?? m.createdAtIso);
     const ts = Date.parse(stamp);
     if (Number.isNaN(ts)) return false;
     return nowMs - ts <= input.windowSec * 1000;

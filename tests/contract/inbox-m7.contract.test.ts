@@ -244,6 +244,7 @@ describe("contract: M7 takeover race cancels every unsent response", () => {
     });
     expect(sent.message?.sendStatus).toBe(MessageSendStatus.SENT);
     expect(sent.message?.deliveredAtIso).toBeNull();
+    expect(sent.outcome?.label).toBe("UNKNOWN");
 
     const delivered = svc.confirmDelivery({
       messageId: queued.message.messageId,
@@ -253,5 +254,6 @@ describe("contract: M7 takeover race cancels every unsent response", () => {
     if (!delivered.ok) return;
     expect(delivered.message.sendStatus).toBe(MessageSendStatus.DELIVERED);
     expect(delivered.message.deliveredAtIso).toBe(now);
+    expect(delivered.outcome.label).toBe("SUCCESS");
   });
 });

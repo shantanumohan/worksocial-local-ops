@@ -566,13 +566,16 @@ export async function handleInboxRequest(input: {
       return true;
     }
     const confirmed = inbox.confirmDelivery({ messageId: body.messageId });
+    if (confirmed.ok && confirmed.outcome) {
+      mappingStore.addWritePathOutcome(confirmed.outcome);
+    }
     json(
       res,
       confirmed.ok ? 200 : 400,
       {
         ...confirmed,
         note: confirmed.ok
-          ? "Independent fixture delivery receipt recorded (sent → delivered)."
+          ? "Independent fixture delivery receipt recorded (sent → delivered). Learning SUCCESS recorded only now."
           : undefined,
       },
       cors,

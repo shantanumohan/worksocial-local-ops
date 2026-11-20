@@ -348,6 +348,8 @@ describe("inbox domain", () => {
       messageId: "m-wh-1",
       nowIso: now,
     });
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
     expect(first.duplicate).toBe(false);
     expect(first.state.messages).toHaveLength(1);
     expect(first.state.webhookEvents).toHaveLength(1);
@@ -364,13 +366,51 @@ describe("inbox domain", () => {
       messageId: "m-wh-2",
       nowIso: now,
     });
+    expect(second.ok).toBe(true);
+    if (!second.ok) return;
     expect(second.duplicate).toBe(true);
     expect(second.message.messageId).toBe(first.message.messageId);
     expect(second.state.messages).toHaveLength(1);
     expect(second.state.webhookEvents).toHaveLength(1);
   });
 
-  it("coalesces leads by inbound message / event key", () => {
+  it("records a new providerEventId when providerMessageId already exists", () => {
+    const first = ingestFixtureWebhook({
+      state: emptyInboxState(now),
+      eventId: "e1",
+      providerEventId: "wh-1",
+      providerThreadId: "thr-wh",
+      providerMessageId: "pm-shared",
+      body: "Need a room Friday",
+      customerDisplayName: "Alex",
+      messageId: "m-wh-1",
+      nowIso: now,
+    });
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+
+    const second = ingestFixtureWebhook({
+      state: first.state,
+      eventId: "e2",
+      providerEventId: "wh-2",
+      providerThreadId: "thr-wh",
+      providerMessageId: "pm-shared",
+      body: "Need a room Friday",
+      customerDisplayName: "Alex",
+      customerEmail: "alex@example.com",
+      messageId: "m-wh-2",
+      nowIso: now,
+    });
+    expect(second.ok).toBe(true);
+    if (!second.ok) return;
+    expect(second.duplicate).toBe(true);
+    expect(second.eventRecorded).toBe(true);
+    expect(second.state.messages).toHaveLength(1);
+    expect(second.state.webhookEvents).toHaveLength(2);
+    expect(second.conversation.customerEmail).toBe("alex@example.com");
+  });
+
+  it("coalesces leads by inbound message / event key only after CRM success", () => {
     const conversation = createConversation({
       conversationId: "c1",
       providerThreadId: "thr-1",
@@ -379,16 +419,25 @@ describe("inbox domain", () => {
       customerEmail: "alex@example.com",
       nowIso: now,
     });
-    const lead = createQualifiedLead({
-      leadId: "lead-1",
+    const denied = createQualifiedLead({
+      leadId: "lead-denied",
       conversation,
-      correlationId: "corr-1",
+      correlationId: "corr-denied",
       email: "alex@example.com",
       displayName: "Alex",
       sourceInboundMessageId: "m1",
       providerEventId: "wh-1",
       nowIso: now,
     });
+    expect(
+      findCoalescedLead({
+        leads: [denied],
+        conversationId: "c1",
+        sourceInboundMessageId: "m1",
+      }),
+    ).toBeNull();
+
+    const lead = { ...denied, leadId: "lead-1", crmRecordId: "zoho-fixture-1" };
     expect(
       findCoalescedLead({
         leads: [lead],
@@ -410,6 +459,39 @@ describe("inbox domain", () => {
         sourceInboundMessageId: "other",
       }),
     ).toBeNull();
+  });
+
+  it("rejects conflicting conversationId vs providerThreadId on webhook ingest", () => {
+    let state = emptyInboxState(now);
+    const a = createConversation({
+      conversationId: "conv-a",
+      providerThreadId: "thr-a",
+      channel: InboxChannel.FIXTURE,
+      customerDisplayName: "A",
+      nowIso: now,
+    });
+    const b = createConversation({
+      conversationId: "conv-b",
+      providerThreadId: "thr-b",
+      channel: InboxChannel.FIXTURE,
+      customerDisplayName: "B",
+      nowIso: now,
+    });
+    state = { ...state, conversations: [a, b] };
+    const conflict = ingestFixtureWebhook({
+      state,
+      eventId: "e-conflict",
+      providerEventId: "wh-conflict",
+      providerThreadId: "thr-b",
+      providerMessageId: "pm-conflict",
+      body: "hello",
+      customerDisplayName: "A",
+      conversationId: "conv-a",
+      messageId: "m-conflict",
+      nowIso: now,
+    });
+    expect(conflict.ok).toBe(false);
+    if (!conflict.ok) expect(conflict.code).toBe("CONFLICTING_CONVERSATION_IDS");
   });
 
   it("confirms delivery only after sent", () => {
