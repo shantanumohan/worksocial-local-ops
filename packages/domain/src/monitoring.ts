@@ -525,8 +525,8 @@ export function evaluateDomJourneyFixture(input: {
 
 /** Catalog case ids related to monitoring (do not mark VERIFIED without evidence). */
 export const MONITORING_RELATED_CASE_IDS = [
-  "T-F11", // form-to-CRM canary journey (catalog)
-  "T-F12", // integration reliability / reconciliation
-  "T-US-032", // synthetic journey evidence
-  "T-X040", // ambiguous remote write fail-closed
+  "T-F20", // form-to-CRM continuous canary journey (catalog)
+  "T-US-039", // Form→CRM continuous verify / cadence
+  "T-US-040", // thank-you without Zoho record fails at CRM
+  "T-X049", // thank-you but no CRM record — fail at delivery
 ] as const;

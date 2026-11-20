@@ -55,7 +55,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - **Learning hooks** — SUCCESS/FAILURE canary outcomes recorded as `fixtureOnly` write-path evidence.
 - Console `/monitoring` + API `/probes/*` — status, runs, last evidence, run-http / run-dom / run-form-canary.
 - SQL `007_monitoring.sql` companion schema; **live Zoho remains `NOT_WIRED`** without owner credentials.
-- Catalog refs `T-F11`, `T-F12`, `T-US-032`, `T-X040` exercised offline — product cases stay `NOT_RUN`.
+- Catalog refs `T-F20`, `T-US-039`, `T-US-040`, `T-X049` exercised offline — product cases stay `NOT_RUN`.
 
 ### R1-06 knowledge and research / demand intelligence
 - **Fact registry** with honest **SUPPORTED / UNKNOWN / HYPOTHESIS** labels, evidence links, and provenance.

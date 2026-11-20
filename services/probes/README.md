@@ -19,4 +19,4 @@ R1-05 monitoring: deterministic HTTP/DOM probes, form-to-CRM canaries, and integ
 
 ## Acceptance case IDs (catalog references — not VERIFIED)
 
-`T-F11`, `T-F12`, `T-US-032`, `T-X040` — exercised offline; product catalog stays `NOT_RUN` without live evidence.
+`T-F20`, `T-US-039`, `T-US-040`, `T-X049` — exercised offline; product catalog stays `NOT_RUN` without live evidence.
