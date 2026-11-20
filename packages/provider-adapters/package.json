@@ -13,9 +13,16 @@
     }
   },
   "scripts": {
-    "build": "tsc -b"
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@worksocial/domain": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "5.7.2"
+    "@types/node": "22.10.2",
+    "typescript": "5.7.2",
+    "vitest": "2.1.8"
   }
 }

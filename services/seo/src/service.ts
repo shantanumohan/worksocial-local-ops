@@ -186,6 +186,18 @@ export type SeoService = {
     outcome: WritePathOutcomeEvidence | null;
     details: string[];
   };
+  /**
+   * Independent fixture read-back after release.
+   * Returns fields from the fixture remote ledger written at apply time —
+   * never from a browser copy of proposedFields.
+   */
+  independentReadBack(input: { proposalId: string }): {
+    ok: boolean;
+    proposalId: string;
+    observedFields: Record<string, string> | null;
+    source: "fixture_remote_ledger";
+    reason: string;
+  };
   seedAndProveSeoMapping(nowIso?: string): {
     mapping: ProductionMappingState;
     writePathId: string;
@@ -200,6 +212,8 @@ export function createSeoService(
   options: SeoServiceOptions = {},
 ): SeoService {
   const gateway = options.gateway ?? createActionGateway();
+  /** Fixture CMS remote ledger — written on accepted release, read on verify. */
+  const fixtureRemoteLedger = new Map<string, Record<string, string>>();
 
   return {
     gateway,
@@ -600,8 +614,12 @@ export function createSeoService(
         updatedAtIso: nowIso,
       };
       store.upsertProposal(pending);
+      // Record what the fixture remote would show after apply (independent of browser).
+      fixtureRemoteLedger.set(proposal.proposalId, {
+        ...proposal.proposedFields,
+      });
       details.push(
-        "Left ACCEPTED_PENDING / RELEASED_PENDING — supply fixture read-back via verifyPilotRelease",
+        "Left ACCEPTED_PENDING / RELEASED_PENDING — call independentReadBack then verifyPilotRelease",
       );
 
       return {
@@ -611,6 +629,49 @@ export function createSeoService(
         liveCmsPublishWiring: "NOT_WIRED",
         acceptanceEqualsVerified: false,
         details,
+      };
+    },
+
+    independentReadBack(input) {
+      const proposal =
+        store.read().proposals.find((p) => p.proposalId === input.proposalId) ??
+        null;
+      if (!proposal) {
+        return {
+          ok: false,
+          proposalId: input.proposalId,
+          observedFields: null,
+          source: "fixture_remote_ledger" as const,
+          reason: "Unknown proposal",
+        };
+      }
+      if (proposal.status !== SeoProposalStatus.RELEASED_PENDING) {
+        return {
+          ok: false,
+          proposalId: input.proposalId,
+          observedFields: null,
+          source: "fixture_remote_ledger" as const,
+          reason: `Proposal status is ${proposal.status}; independent read requires RELEASED_PENDING`,
+        };
+      }
+      const observed = fixtureRemoteLedger.get(input.proposalId);
+      if (!observed) {
+        return {
+          ok: false,
+          proposalId: input.proposalId,
+          observedFields: null,
+          source: "fixture_remote_ledger" as const,
+          reason:
+            "Fixture remote ledger empty for proposal — release may not have applied",
+        };
+      }
+      // Return a copy so callers cannot mutate the ledger / alias proposedFields.
+      return {
+        ok: true,
+        proposalId: input.proposalId,
+        observedFields: { ...observed },
+        source: "fixture_remote_ledger" as const,
+        reason: "Independent fixture remote read-back",
       };
     },
 

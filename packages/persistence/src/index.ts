@@ -266,3 +266,9 @@ export {
   type ArtifactStore,
   type ArtifactStoreState,
 } from "./artifact-store.js";
+
+export {
+  createFileOwnerStagingStore,
+  defaultOwnerStagingStateDir,
+  type OwnerStagingStore,
+} from "./owner-staging-store.js";

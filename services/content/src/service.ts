@@ -222,6 +222,13 @@ export type ContentService = {
     outcome: WritePathOutcomeEvidence | null;
     details: string[];
   };
+  independentCanonicalReadBack(input: { articleId: string }): {
+    ok: boolean;
+    articleId: string;
+    observedFields: Record<string, string> | null;
+    source: "fixture_remote_ledger";
+    reason: string;
+  };
   /**
    * Release a destination variant (GBP / social) after verified canonical URL.
    * Live preferLive path returns honest NOT_WIRED without fabricating success.
@@ -264,6 +271,13 @@ export type ContentService = {
     outcome: WritePathOutcomeEvidence | null;
     details: string[];
   };
+  independentVariantReadBack(input: { variantId: string }): {
+    ok: boolean;
+    variantId: string;
+    observedFields: Record<string, string> | null;
+    source: "fixture_remote_ledger";
+    reason: string;
+  };
   seedAndProveContentMapping(nowIso?: string): {
     mapping: ProductionMappingState;
     writePathIds: { cms: string; gbp: string; linkedin: string; facebook: string };
@@ -278,6 +292,8 @@ export function createContentService(
   options: ContentServiceOptions = {},
 ): ContentService {
   const gateway = options.gateway ?? createActionGateway();
+  const fixtureCanonicalLedger = new Map<string, Record<string, string>>();
+  const fixtureVariantLedger = new Map<string, Record<string, string>>();
 
   return {
     gateway,
@@ -887,8 +903,13 @@ export function createContentService(
         recordedAtIso: nowIso,
       });
       store.addReceipt(receipt);
+      fixtureCanonicalLedger.set(article.articleId, {
+        title: article.title,
+        body: article.body,
+        contentDigest: article.contentDigest,
+      });
       details.push(
-        "Left ACCEPTED_PENDING / RELEASED_PENDING — supply fixture read-back via verifyCanonicalRelease",
+        "Left ACCEPTED_PENDING / RELEASED_PENDING — call independentCanonicalReadBack then verify",
       );
 
       return {
@@ -899,6 +920,47 @@ export function createContentService(
         liveCmsPublishWiring: "NOT_WIRED",
         acceptanceEqualsVerified: false,
         details,
+      };
+    },
+
+    independentCanonicalReadBack(input) {
+      const article =
+        store.read().articles.find((a) => a.articleId === input.articleId) ??
+        null;
+      if (!article) {
+        return {
+          ok: false,
+          articleId: input.articleId,
+          observedFields: null,
+          source: "fixture_remote_ledger" as const,
+          reason: "Unknown article",
+        };
+      }
+      if (article.status !== ArticleStatus.RELEASED_PENDING) {
+        return {
+          ok: false,
+          articleId: input.articleId,
+          observedFields: null,
+          source: "fixture_remote_ledger" as const,
+          reason: `Article status is ${article.status}; independent read requires RELEASED_PENDING`,
+        };
+      }
+      const observed = fixtureCanonicalLedger.get(input.articleId);
+      if (!observed) {
+        return {
+          ok: false,
+          articleId: input.articleId,
+          observedFields: null,
+          source: "fixture_remote_ledger" as const,
+          reason: "Fixture remote ledger empty for article",
+        };
+      }
+      return {
+        ok: true,
+        articleId: input.articleId,
+        observedFields: { ...observed },
+        source: "fixture_remote_ledger" as const,
+        reason: "Independent fixture remote read-back",
       };
     },
 
@@ -1310,8 +1372,12 @@ export function createContentService(
         recordedAtIso: nowIso,
       });
       store.addReceipt(receipt);
+      fixtureVariantLedger.set(variant.variantId, {
+        title: variant.title,
+        body: variant.body,
+      });
       details.push(
-        "Left ACCEPTED_PENDING / RELEASED_PENDING — supply fixture read-back via verifyVariantRelease",
+        "Left ACCEPTED_PENDING / RELEASED_PENDING — call independentVariantReadBack then verify",
       );
 
       return {
@@ -1322,6 +1388,47 @@ export function createContentService(
         liveWiring: "FIXTURE",
         acceptanceEqualsVerified: false,
         details,
+      };
+    },
+
+    independentVariantReadBack(input) {
+      const variant =
+        store.read().variants.find((v) => v.variantId === input.variantId) ??
+        null;
+      if (!variant) {
+        return {
+          ok: false,
+          variantId: input.variantId,
+          observedFields: null,
+          source: "fixture_remote_ledger" as const,
+          reason: "Unknown variant",
+        };
+      }
+      if (variant.status !== VariantStatus.RELEASED_PENDING) {
+        return {
+          ok: false,
+          variantId: input.variantId,
+          observedFields: null,
+          source: "fixture_remote_ledger" as const,
+          reason: `Variant status is ${variant.status}; independent read requires RELEASED_PENDING`,
+        };
+      }
+      const observed = fixtureVariantLedger.get(input.variantId);
+      if (!observed) {
+        return {
+          ok: false,
+          variantId: input.variantId,
+          observedFields: null,
+          source: "fixture_remote_ledger" as const,
+          reason: "Fixture remote ledger empty for variant",
+        };
+      }
+      return {
+        ok: true,
+        variantId: input.variantId,
+        observedFields: { ...observed },
+        source: "fixture_remote_ledger" as const,
+        reason: "Independent fixture remote read-back",
       };
     },
 

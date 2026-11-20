@@ -50,6 +50,9 @@ importers:
       '@worksocial/ml':
         specifier: workspace:*
         version: link:../../packages/ml
+      '@worksocial/owner-staging':
+        specifier: workspace:*
+        version: link:../../services/owner-staging
       '@worksocial/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence
@@ -159,10 +162,20 @@ importers:
         version: 2.1.8(@types/node@22.10.2)
 
   packages/provider-adapters:
+    dependencies:
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../domain
     devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
       typescript:
         specifier: 5.7.2
         version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)
 
   packages/ui:
     devDependencies:
@@ -297,6 +310,28 @@ importers:
       '@worksocial/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence
+    devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)
+
+  services/owner-staging:
+    dependencies:
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@worksocial/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
+      '@worksocial/provider-adapters':
+        specifier: workspace:*
+        version: link:../../packages/provider-adapters
     devDependencies:
       '@types/node':
         specifier: 22.10.2
