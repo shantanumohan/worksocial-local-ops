@@ -7,6 +7,7 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from "
 import { dirname, join } from "node:path";
 import {
   emptyContentState,
+  type ArticleQaVerdict,
   type CanonicalArticle,
   type ContentCampaign,
   type ContentState,
@@ -26,17 +27,20 @@ export type ContentStore = {
   upsertArticle(article: CanonicalArticle): ContentState;
   upsertVariant(variant: DestinationVariant): ContentState;
   addReceipt(receipt: PublicationReceipt): ContentState;
+  addQaVerdict(verdict: ArticleQaVerdict): ContentState;
   addReleaseOutcome(outcome: WritePathOutcomeEvidence): ContentState;
   listCampaigns(limit?: number): ContentCampaign[];
   listArticles(limit?: number): CanonicalArticle[];
   listVariants(limit?: number): DestinationVariant[];
   listReceipts(limit?: number): PublicationReceipt[];
+  listQaVerdicts(limit?: number): ArticleQaVerdict[];
   status(): {
     campaignCount: number;
     articleCount: number;
     variantCount: number;
     receiptCount: number;
     destinationCount: number;
+    qaVerdictCount: number;
     releaseOutcomeCount: number;
     liveCmsPublishWiring: ContentState["liveCmsPublishWiring"];
     liveGbpWiring: ContentState["liveGbpWiring"];
@@ -79,6 +83,7 @@ export function createFileContentStore(stateDir: string): ContentStore {
       articles: existing.articles ?? [],
       variants: existing.variants ?? [],
       receipts: existing.receipts ?? [],
+      qaVerdicts: existing.qaVerdicts ?? [],
       releaseOutcomes: existing.releaseOutcomes ?? [],
       liveCmsPublishWiring: "NOT_WIRED",
       liveGbpWiring: "NOT_WIRED",
@@ -148,6 +153,17 @@ export function createFileContentStore(stateDir: string): ContentStore {
         receipts: [...state.receipts, receipt].slice(-500),
         updatedAtIso: receipt.recordedAtIso,
       })),
+    addQaVerdict: (verdict) =>
+      update((state) => {
+        const others = state.qaVerdicts.filter(
+          (v) => v.verdictId !== verdict.verdictId,
+        );
+        return {
+          ...state,
+          qaVerdicts: [...others, verdict].slice(-500),
+          updatedAtIso: verdict.decidedAtIso,
+        };
+      }),
     addReleaseOutcome: (outcome) =>
       update((state) => ({
         ...state,
@@ -170,6 +186,10 @@ export function createFileContentStore(stateDir: string): ContentStore {
       const rows = read().receipts;
       return rows.slice(Math.max(0, rows.length - limit));
     },
+    listQaVerdicts: (limit = 100) => {
+      const rows = read().qaVerdicts;
+      return rows.slice(Math.max(0, rows.length - limit));
+    },
     status: () => {
       const state = read();
       return {
@@ -178,12 +198,13 @@ export function createFileContentStore(stateDir: string): ContentStore {
         variantCount: state.variants.length,
         receiptCount: state.receipts.length,
         destinationCount: state.destinations.length,
+        qaVerdictCount: state.qaVerdicts.length,
         releaseOutcomeCount: state.releaseOutcomes.length,
         liveCmsPublishWiring: state.liveCmsPublishWiring,
         liveGbpWiring: state.liveGbpWiring,
         liveSocialWiring: state.liveSocialWiring,
         honestNote:
-          "Article pipeline, destination variants, and gateway-gated fixture distribution. Live CMS / GBP / social remain NOT_WIRED. Gateway acceptance ≠ verified. Released claims require SUPPORTED facts only.",
+          "Article pipeline, destination variants, and gateway-gated fixture distribution. Live CMS / GBP / social remain NOT_WIRED. Gateway acceptance ≠ verified. Released claims require SUPPORTED facts + independent QA.",
       };
     },
   };

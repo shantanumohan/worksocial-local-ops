@@ -18,16 +18,19 @@ import {
   VariantStatus,
   applyCanonicalReleaseVerification,
   applyVariantReleaseVerification,
+  createArticleQaVerdict,
   createCanonicalArticle,
   createContentBrief,
   createContentCampaign,
   createDestinationVariant,
   createPublicationReceipt,
   defaultDestinationRegistry,
+  evaluateArticleApprovalGate,
   evaluateArticleGate,
   evaluateContentReadBack,
   evaluateVariantReleaseGate,
   listContentOutcomesForLearning,
+  type ArticleQaVerdict,
   type CanonicalArticle,
   type ContentCampaign,
   type ContentFormatValue,
@@ -50,9 +53,9 @@ import {
   type GatewayDecisionRecord,
 } from "@worksocial/action-gateway";
 import {
-  CONTENT_PILOT_ARTICLE_ASSET_ID,
   CONTENT_PILOT_ARTICLE_ID,
   CONTENT_PILOT_CMS_WRITE_PATH_ID,
+  CONTENT_PILOT_FACEBOOK_WRITE_PATH_ID,
   CONTENT_PILOT_GBP_WRITE_PATH_ID,
   CONTENT_PILOT_LINKEDIN_WRITE_PATH_ID,
   buildFixtureContentSeed,
@@ -71,9 +74,8 @@ const TERMINAL_ARTICLE: ReadonlySet<string> = new Set([
 
 function writePathForDestination(destinationId: string): string {
   if (destinationId === "dest-gbp") return CONTENT_PILOT_GBP_WRITE_PATH_ID;
-  if (destinationId === "dest-linkedin" || destinationId === "dest-facebook") {
-    return CONTENT_PILOT_LINKEDIN_WRITE_PATH_ID;
-  }
+  if (destinationId === "dest-linkedin") return CONTENT_PILOT_LINKEDIN_WRITE_PATH_ID;
+  if (destinationId === "dest-facebook") return CONTENT_PILOT_FACEBOOK_WRITE_PATH_ID;
   return CONTENT_PILOT_CMS_WRITE_PATH_ID;
 }
 
@@ -102,8 +104,21 @@ export type ContentService = {
     articles: CanonicalArticle[];
     variants: DestinationVariant[];
     destinations: DestinationRegistryEntry[];
+    qaVerdicts: ArticleQaVerdict[];
     skippedProgressedArticleIds: string[];
+    skippedProgressedCampaignIds: string[];
   };
+  recordQaVerdict(input: {
+    verdictId?: string;
+    articleId: string;
+    authorId: string;
+    reviewerId: string;
+    approved: boolean;
+    summary?: string;
+    nowIso?: string;
+  }):
+    | { ok: true; verdict: ArticleQaVerdict }
+    | { ok: false; code: string; reasons: string[] };
   createCampaign(input: {
     campaignId?: string;
     title: string;
@@ -229,7 +244,7 @@ export type ContentService = {
   };
   seedAndProveContentMapping(nowIso?: string): {
     mapping: ProductionMappingState;
-    writePathIds: { cms: string; gbp: string; linkedin: string };
+    writePathIds: { cms: string; gbp: string; linkedin: string; facebook: string };
   };
   listLearningOutcomes(includeFixture?: boolean): WritePathOutcomeEvidence[];
   readState(): ContentState;
@@ -277,10 +292,23 @@ export function createContentService(
       const seed = buildFixtureContentSeed(ts);
       const existing = store.read();
       const skippedProgressedArticleIds: string[] = [];
+      const skippedProgressedCampaignIds: string[] = [];
 
       store.setDestinations(seed.destinations);
 
       for (const campaign of seed.campaigns) {
+        const prior = existing.campaigns.find(
+          (c) => c.campaignId === campaign.campaignId,
+        );
+        if (
+          prior &&
+          (prior.status === CampaignStatus.DISTRIBUTING ||
+            prior.status === CampaignStatus.COMPLETE ||
+            prior.status === CampaignStatus.BLOCKED)
+        ) {
+          skippedProgressedCampaignIds.push(prior.campaignId);
+          continue;
+        }
         store.upsertCampaign(campaign);
       }
 
@@ -310,14 +338,26 @@ export function createContentService(
         store.upsertVariant(variant);
       }
 
+      for (const verdict of seed.qaVerdicts) {
+        const prior = existing.qaVerdicts.find(
+          (v) => v.verdictId === verdict.verdictId,
+        );
+        if (prior) continue;
+        store.addQaVerdict(verdict);
+      }
+
       return {
-        campaigns: seed.campaigns,
+        campaigns: seed.campaigns.filter(
+          (c) => !skippedProgressedCampaignIds.includes(c.campaignId),
+        ),
         articles: seed.articles.filter(
           (a) => !skippedProgressedArticleIds.includes(a.articleId),
         ),
         variants: seed.variants,
         destinations: seed.destinations,
+        qaVerdicts: seed.qaVerdicts,
         skippedProgressedArticleIds,
+        skippedProgressedCampaignIds,
       };
     },
 
@@ -435,6 +475,39 @@ export function createContentService(
       return { ok: true, variant };
     },
 
+    recordQaVerdict(input) {
+      const nowIso = input.nowIso ?? new Date().toISOString();
+      const state = store.read();
+      const article =
+        state.articles.find((a) => a.articleId === input.articleId) ?? null;
+      if (!article) {
+        return {
+          ok: false as const,
+          code: "ARTICLE_NOT_FOUND",
+          reasons: [`Unknown article ${input.articleId}`],
+        };
+      }
+      const created = createArticleQaVerdict({
+        verdictId: input.verdictId ?? `qa-${randomUUID()}`,
+        articleId: article.articleId,
+        authorId: input.authorId,
+        reviewerId: input.reviewerId,
+        approved: input.approved,
+        contentDigest: article.contentDigest,
+        summary: input.summary ?? "Independent QA verdict",
+        decidedAtIso: nowIso,
+      });
+      if (!created.ok) {
+        return {
+          ok: false as const,
+          code: created.code,
+          reasons: created.reasons,
+        };
+      }
+      store.addQaVerdict(created.verdict);
+      return { ok: true as const, verdict: created.verdict };
+    },
+
     approveArticle(input) {
       const nowIso = input.nowIso ?? new Date().toISOString();
       const state = store.read();
@@ -457,9 +530,15 @@ export function createContentService(
           reasons: [`Cannot approve article in status ${article.status}`],
         };
       }
-      const gate = evaluateArticleGate({
+      const qaVerdict =
+        state.qaVerdicts
+          .filter((v) => v.articleId === article.articleId)
+          .filter((v) => v.contentDigest === article.contentDigest)
+          .at(-1) ?? null;
+      const gate = evaluateArticleApprovalGate({
         article,
         factLabels: input.factLabels,
+        qaVerdict,
       });
       if (!gate.allowed) {
         return { ok: false, article, reasons: gate.reasons };
@@ -580,8 +659,8 @@ export function createContentService(
           channelId: "owned-site",
           targetAccountId: input.targetAccountId ?? "acct-demo",
           operation: "publish_article",
-          assetId: CONTENT_PILOT_ARTICLE_ASSET_ID,
-          contentRevision: input.contentRevision ?? "rev-content-demo",
+          assetId: article.articleId,
+          contentRevision: input.contentRevision ?? article.contentDigest,
           writePathId: CONTENT_PILOT_CMS_WRITE_PATH_ID,
           payload: {
             articleId: article.articleId,
@@ -600,32 +679,30 @@ export function createContentService(
       );
 
       if (!submitted.decision.allowed) {
-        const applied = applyCanonicalReleaseVerification(store.read(), {
+        // Transient authority denials stay retryable — article remains APPROVED.
+        details.push(
+          "Gateway denial recorded; article remains APPROVED for retry after authority is restored",
+        );
+        const receipt = createPublicationReceipt({
+          receiptId: `rcpt-${randomUUID()}`,
+          campaignId: article.campaignId,
           articleId: article.articleId,
-          decision: ContentReleaseDecision.FAILURE,
-          source: OutcomeEvidenceSource.GATEWAY_RECEIPT,
-          fixtureOnly: article.fixtureOnly,
-          summary: `Gateway denied canonical release: ${submitted.decision.code ?? submitted.decision.reason}`,
-          outcomeId: `out-${randomUUID()}`,
-          operationId,
-          writePathId: CONTENT_PILOT_CMS_WRITE_PATH_ID,
-          nowIso,
-        });
-        const failed: CanonicalArticle = {
-          ...(applied.article ?? article),
-          status: ArticleStatus.FAILED,
+          destinationId: "dest-cms",
+          kind: DestinationKind.CMS,
+          outcome: PublicationOutcome.FAILED,
           gatewayOperationId: operationId,
           writePathId: CONTENT_PILOT_CMS_WRITE_PATH_ID,
-          updatedAtIso: nowIso,
-        };
-        store.upsertArticle(failed);
-        if (applied.outcome) store.addReleaseOutcome(applied.outcome);
-        if (applied.receipt) store.addReceipt(applied.receipt);
+          summary: `Gateway denied (retryable): ${submitted.decision.code ?? submitted.decision.reason}`,
+          fixtureOnly: article.fixtureOnly,
+          liveWiring: AdapterLiveStatus.NOT_WIRED,
+          recordedAtIso: nowIso,
+        });
+        store.addReceipt(receipt);
         return {
-          article: failed,
+          article,
           gatewayDecision: submitted.decision,
-          receipt: applied.receipt,
-          outcome: applied.outcome,
+          receipt,
+          outcome: null,
           liveCmsPublishWiring: "NOT_WIRED",
           acceptanceEqualsVerified: false,
           details,
@@ -720,6 +797,17 @@ export function createContentService(
         };
       }
 
+      // Survive API/gateway restarts: rehydrate ACCEPTED_PENDING from durable op id.
+      if (!gateway.getDecision(article.gatewayOperationId)) {
+        gateway.rehydratePending({
+          operationId: article.gatewayOperationId,
+          writePathId: article.writePathId ?? CONTENT_PILOT_CMS_WRITE_PATH_ID,
+          decidedAtIso: article.updatedAtIso,
+          reason: "Rehydrated content canonical release after gateway restart",
+        });
+        details.push("Rehydrated gateway decision after process restart");
+      }
+
       const expected = {
         title: article.title,
         body: article.body,
@@ -735,6 +823,11 @@ export function createContentService(
         input.forceFailure === true || readBack.matched === false;
 
       if (failed) {
+        const failedDecision = gateway.markFailed(
+          article.gatewayOperationId,
+          nowIso,
+          details.join("; ") || "Fixture read-back failed",
+        );
         const applied = applyCanonicalReleaseVerification(store.read(), {
           articleId: article.articleId,
           decision: ContentReleaseDecision.FAILURE,
@@ -751,8 +844,7 @@ export function createContentService(
         if (applied.article) store.upsertArticle(applied.article);
         return {
           article: applied.article,
-          gatewayDecision:
-            gateway.getDecision(article.gatewayOperationId) ?? null,
+          gatewayDecision: failedDecision,
           receipt: applied.receipt,
           outcome: applied.outcome,
           details,
@@ -940,12 +1032,14 @@ export function createContentService(
           channelId: destination.channelId,
           targetAccountId: input.targetAccountId ?? "acct-demo",
           operation: operationForDestination(variant.kind),
-          assetId: CONTENT_PILOT_ARTICLE_ASSET_ID,
-          contentRevision: input.contentRevision ?? "rev-content-demo",
+          assetId: article.articleId,
+          contentRevision: input.contentRevision ?? article.contentDigest,
           writePathId,
           payload: {
             variantId: variant.variantId,
             destinationId: variant.destinationId,
+            articleId: article.articleId,
+            contentDigest: article.contentDigest,
             title: variant.title,
             body: variant.body,
             fixtureOnly: variant.fixtureOnly,
@@ -961,32 +1055,31 @@ export function createContentService(
       );
 
       if (!submitted.decision.allowed) {
-        const applied = applyVariantReleaseVerification(store.read(), {
+        // Transient authority denials stay retryable — variant remains READY/prior status.
+        details.push(
+          "Gateway denial recorded; variant remains retryable after authority is restored",
+        );
+        const receipt = createPublicationReceipt({
+          receiptId: `rcpt-${randomUUID()}`,
+          campaignId: variant.campaignId,
+          articleId: variant.articleId,
           variantId: variant.variantId,
-          decision: ContentReleaseDecision.FAILURE,
-          source: OutcomeEvidenceSource.GATEWAY_RECEIPT,
-          fixtureOnly: variant.fixtureOnly,
-          summary: `Gateway denied variant release: ${submitted.decision.code ?? submitted.decision.reason}`,
-          outcomeId: `out-${randomUUID()}`,
-          operationId,
-          writePathId,
-          nowIso,
-        });
-        const failed: DestinationVariant = {
-          ...(applied.variant ?? variant),
-          status: VariantStatus.FAILED,
+          destinationId: variant.destinationId,
+          kind: variant.kind,
+          outcome: PublicationOutcome.FAILED,
           gatewayOperationId: operationId,
           writePathId,
-          updatedAtIso: nowIso,
-        };
-        store.upsertVariant(failed);
-        if (applied.outcome) store.addReleaseOutcome(applied.outcome);
-        if (applied.receipt) store.addReceipt(applied.receipt);
+          summary: `Gateway denied (retryable): ${submitted.decision.code ?? submitted.decision.reason}`,
+          fixtureOnly: variant.fixtureOnly,
+          liveWiring: AdapterLiveStatus.NOT_WIRED,
+          recordedAtIso: nowIso,
+        });
+        store.addReceipt(receipt);
         return {
-          variant: failed,
+          variant,
           gatewayDecision: submitted.decision,
-          receipt: applied.receipt,
-          outcome: applied.outcome,
+          receipt,
+          outcome: null,
           liveWiring: "NOT_WIRED",
           acceptanceEqualsVerified: false,
           details,
@@ -1082,6 +1175,19 @@ export function createContentService(
         };
       }
 
+      const writePathId =
+        variant.writePathId ?? writePathForDestination(variant.destinationId);
+
+      if (!gateway.getDecision(variant.gatewayOperationId)) {
+        gateway.rehydratePending({
+          operationId: variant.gatewayOperationId,
+          writePathId,
+          decidedAtIso: variant.updatedAtIso,
+          reason: "Rehydrated content variant release after gateway restart",
+        });
+        details.push("Rehydrated gateway decision after process restart");
+      }
+
       const expected = {
         title: variant.title,
         body: variant.body,
@@ -1094,10 +1200,13 @@ export function createContentService(
 
       const failed =
         input.forceFailure === true || readBack.matched === false;
-      const writePathId =
-        variant.writePathId ?? writePathForDestination(variant.destinationId);
 
       if (failed) {
+        const failedDecision = gateway.markFailed(
+          variant.gatewayOperationId,
+          nowIso,
+          details.join("; ") || "Fixture read-back failed",
+        );
         const applied = applyVariantReleaseVerification(store.read(), {
           variantId: variant.variantId,
           decision: ContentReleaseDecision.FAILURE,
@@ -1114,8 +1223,7 @@ export function createContentService(
         if (applied.variant) store.upsertVariant(applied.variant);
         return {
           variant: applied.variant,
-          gatewayDecision:
-            gateway.getDecision(variant.gatewayOperationId) ?? null,
+          gatewayDecision: failedDecision,
           receipt: applied.receipt,
           outcome: applied.outcome,
           details,

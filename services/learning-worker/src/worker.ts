@@ -9,6 +9,7 @@ import {
   listWritePathOutcomesForLearning,
   type ProductionMappingState,
   type RoleRunOutcomeEvidence,
+  type WritePathOutcomeEvidence,
 } from "@worksocial/domain";
 import {
   assertLearningWorkerIsolation,
@@ -30,6 +31,8 @@ export type LearningWorker = {
   trainFromLedgers(input: {
     mapping: ProductionMappingState;
     roleOutcomes: readonly RoleRunOutcomeEvidence[];
+    /** Extra write-path outcomes (e.g. content distribution SUCCESS/FAILURE). */
+    extraWritePathOutcomes?: readonly WritePathOutcomeEvidence[];
     nowIso?: string;
     includeFixture?: boolean;
   }): TrainLoopResult;
@@ -62,12 +65,19 @@ export function createLearningWorker(store: LearningStore): LearningWorker {
     trainFromLedgers(input) {
       assertLearningWorkerIsolation(isolation);
       const includeFixture = input.includeFixture ?? false;
-      const writePathOutcomes = listWritePathOutcomesForLearning(input.mapping, {
+      const mappingOutcomes = listWritePathOutcomesForLearning(input.mapping, {
         includeFixture,
       });
+      const extra = (input.extraWritePathOutcomes ?? []).filter((o) => {
+        if (o.fixtureOnly && !includeFixture) return false;
+        return true;
+      });
+      const writePathOutcomes = [...mappingOutcomes, ...extra];
       // listWritePathOutcomesForLearning already filtered; recount fixtures from raw ledger.
       const fixtureExcludedCount =
         input.mapping.writePathOutcomes.filter((o) => o.fixtureOnly).length +
+        (input.extraWritePathOutcomes ?? []).filter((o) => o.fixtureOnly)
+          .length +
         input.roleOutcomes.filter((o) => o.executionMode === "fixture").length;
 
       const roleOutcomes = includeFixture

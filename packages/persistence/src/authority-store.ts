@@ -260,17 +260,28 @@ export function createDemoPublishGrant(nowIso: string): {
 
 /**
  * Standing policies+grants for R1-08 content distribution fixtures.
- * Separate channels for CMS, GBP, and LinkedIn — live adapters remain NOT_WIRED.
+ * Separate channels for CMS, GBP, LinkedIn, and Facebook.
+ * assetId/contentRevision must match the reviewed article id + digest.
  */
-export function createDemoContentDistributionGrants(nowIso: string): {
+export function createDemoContentDistributionGrants(
+  nowIso: string,
+  options?: {
+    assetId?: string;
+    contentRevision?: string;
+  },
+): {
   policy: StandingPolicy;
   grant: CapabilityGrant;
   gbpPolicy: StandingPolicy;
   gbpGrant: CapabilityGrant;
   linkedinPolicy: StandingPolicy;
   linkedinGrant: CapabilityGrant;
+  facebookPolicy: StandingPolicy;
+  facebookGrant: CapabilityGrant;
 } {
-  const assetScope = ["article-training-brief"];
+  const assetId = options?.assetId ?? "golden-art-training";
+  const contentRevision = options?.contentRevision ?? null;
+  const assetScope = [assetId];
   const policy: StandingPolicy = {
     policyId: "pol-demo-content-cms",
     version: 1,
@@ -289,7 +300,7 @@ export function createDemoContentDistributionGrants(nowIso: string): {
     targetAccountId: "acct-demo",
     allowedOperations: ["publish_article"],
     allowedAssetScope: assetScope,
-    contentRevisionBound: "rev-content-demo",
+    contentRevisionBound: contentRevision,
     rateLimitPerHour: 5,
     expiresAtIso: null,
     revoked: false,
@@ -313,7 +324,7 @@ export function createDemoContentDistributionGrants(nowIso: string): {
     targetAccountId: "acct-demo",
     allowedOperations: ["publish_gbp_update"],
     allowedAssetScope: assetScope,
-    contentRevisionBound: "rev-content-demo",
+    contentRevisionBound: contentRevision,
     rateLimitPerHour: 5,
     expiresAtIso: null,
     revoked: false,
@@ -337,7 +348,31 @@ export function createDemoContentDistributionGrants(nowIso: string): {
     targetAccountId: "acct-demo",
     allowedOperations: ["publish_social_post"],
     allowedAssetScope: assetScope,
-    contentRevisionBound: "rev-content-demo",
+    contentRevisionBound: contentRevision,
+    rateLimitPerHour: 5,
+    expiresAtIso: null,
+    revoked: false,
+    createdAtIso: nowIso,
+  };
+  const facebookPolicy: StandingPolicy = {
+    policyId: "pol-demo-content-facebook",
+    version: 1,
+    actorRole: LocalRole.ADMINISTRATOR,
+    channelId: "facebook",
+    actionClass: ActionClass.ROUTINE_PUBLISH,
+    allowedAssetScope: assetScope,
+    enabled: true,
+    emergencyStopApplies: true,
+    expiresAtIso: null,
+    createdAtIso: nowIso,
+  };
+  const facebookGrant: CapabilityGrant = {
+    grantId: "grant-demo-content-facebook",
+    policyId: facebookPolicy.policyId,
+    targetAccountId: "acct-demo",
+    allowedOperations: ["publish_social_post"],
+    allowedAssetScope: assetScope,
+    contentRevisionBound: contentRevision,
     rateLimitPerHour: 5,
     expiresAtIso: null,
     revoked: false,
@@ -350,6 +385,8 @@ export function createDemoContentDistributionGrants(nowIso: string): {
     gbpGrant,
     linkedinPolicy,
     linkedinGrant,
+    facebookPolicy,
+    facebookGrant,
   };
 }
 

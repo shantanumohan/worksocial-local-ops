@@ -7,6 +7,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   ArticleStatus,
+  CampaignStatus,
+  ContentFormat,
   OperatingMode,
   PublicationOutcome,
   SupportLabel,
@@ -23,6 +25,7 @@ import {
   liveGbpPublishStub,
   liveCmsPublishStub,
 } from "./index.js";
+import { goldenArticleContentDigest } from "./fixtures.js";
 
 const dirs: string[] = [];
 const now = "2026-11-19T19:00:00.000Z";
@@ -46,6 +49,29 @@ function makeService() {
   return { service, store, gateway };
 }
 
+function demoAuthority(nowIso: string) {
+  const grants = createDemoContentDistributionGrants(nowIso, {
+    assetId: CONTENT_PILOT_ARTICLE_ID,
+    contentRevision: goldenArticleContentDigest(),
+  });
+  return {
+    outboundStopped: false,
+    operatingMode: OperatingMode.OPERATE,
+    policies: [
+      grants.policy,
+      grants.gbpPolicy,
+      grants.linkedinPolicy,
+      grants.facebookPolicy,
+    ],
+    grants: [
+      grants.grant,
+      grants.gbpGrant,
+      grants.linkedinGrant,
+      grants.facebookGrant,
+    ],
+  };
+}
+
 describe("content service", () => {
   it("seeds fixtures and reports honest NOT_WIRED wiring", () => {
     const { service } = makeService();
@@ -55,6 +81,7 @@ describe("content service", () => {
       true,
     );
     expect(seed.variants.length).toBeGreaterThan(0);
+    expect(seed.qaVerdicts.length).toBeGreaterThan(0);
     const status = service.status();
     expect(status.liveCmsPublishWiring).toBe("NOT_WIRED");
     expect(status.liveGbpWiring).toBe("NOT_WIRED");
@@ -66,8 +93,43 @@ describe("content service", () => {
     expect(liveGbpPublishStub().code).toBe("NOT_WIRED");
   });
 
+  it("requires independent QA before approval", () => {
+    const { service, store } = makeService();
+    service.seedFixtures(now);
+    // Clear seeded QA so approval must fail without a verdict.
+    store.write({
+      ...store.read(),
+      qaVerdicts: [],
+      updatedAtIso: now,
+    });
+    const blocked = service.approveArticle({
+      articleId: CONTENT_PILOT_ARTICLE_ID,
+      factLabels: labels,
+      nowIso: now,
+    });
+    expect(blocked.ok).toBe(false);
+    expect(blocked.reasons.some((r) => /Independent QA/i.test(r))).toBe(true);
+
+    const recorded = service.recordQaVerdict({
+      articleId: CONTENT_PILOT_ARTICLE_ID,
+      authorId: "author-fixture",
+      reviewerId: "reviewer-fixture",
+      approved: true,
+      nowIso: now,
+    });
+    expect(recorded.ok).toBe(true);
+
+    const approved = service.approveArticle({
+      articleId: CONTENT_PILOT_ARTICLE_ID,
+      factLabels: labels,
+      nowIso: now,
+    });
+    expect(approved.ok).toBe(true);
+    expect(approved.article?.status).toBe(ArticleStatus.APPROVED);
+  });
+
   it("approves article with SUPPORTED facts then releases via gateway", () => {
-    const { service } = makeService();
+    const { service, gateway } = makeService();
     service.seedFixtures(now);
     const approved = service.approveArticle({
       articleId: CONTENT_PILOT_ARTICLE_ID,
@@ -78,17 +140,11 @@ describe("content service", () => {
     expect(approved.article?.status).toBe(ArticleStatus.APPROVED);
 
     const { mapping } = service.seedAndProveContentMapping(now);
-    const { policy, grant, gbpPolicy, gbpGrant, linkedinPolicy, linkedinGrant } =
-      createDemoContentDistributionGrants(now);
+    const authority = demoAuthority(now);
 
     const released = service.releaseCanonical({
       articleId: CONTENT_PILOT_ARTICLE_ID,
-      authority: {
-        outboundStopped: false,
-        operatingMode: OperatingMode.OPERATE,
-        policies: [policy, gbpPolicy, linkedinPolicy],
-        grants: [grant, gbpGrant, linkedinGrant],
-      },
+      authority,
       productionMapping: mapping,
       factLabels: labels,
       nowIso: now,
@@ -112,6 +168,97 @@ describe("content service", () => {
     expect(verified.article?.verifiedCanonicalUrl).toBeTruthy();
     expect(verified.outcome?.label).toBe("SUCCESS");
     expect(verified.receipt?.outcome).toBe(PublicationOutcome.PUBLISHED_VERIFIED);
+    expect(gateway.getDecision(released.article!.gatewayOperationId!)?.outcome).toBe(
+      "VERIFIED",
+    );
+  });
+
+  it("keeps APPROVED on gateway denial and settles FAILED on bad read-back", () => {
+    const { service, gateway } = makeService();
+    service.seedFixtures(now);
+    service.approveArticle({
+      articleId: CONTENT_PILOT_ARTICLE_ID,
+      factLabels: labels,
+      nowIso: now,
+    });
+    const { mapping } = service.seedAndProveContentMapping(now);
+    const authority = {
+      ...demoAuthority(now),
+      outboundStopped: true,
+    };
+
+    const denied = service.releaseCanonical({
+      articleId: CONTENT_PILOT_ARTICLE_ID,
+      authority,
+      productionMapping: mapping,
+      factLabels: labels,
+      nowIso: now,
+    });
+    expect(denied.gatewayDecision?.allowed).toBe(false);
+    expect(denied.article?.status).toBe(ArticleStatus.APPROVED);
+    expect(denied.receipt?.outcome).toBe(PublicationOutcome.FAILED);
+
+    const okAuthority = demoAuthority(now);
+    const released = service.releaseCanonical({
+      articleId: CONTENT_PILOT_ARTICLE_ID,
+      authority: okAuthority,
+      productionMapping: mapping,
+      factLabels: labels,
+      nowIso: now,
+    });
+    expect(released.article?.status).toBe(ArticleStatus.RELEASED_PENDING);
+
+    const failed = service.verifyCanonicalRelease({
+      articleId: CONTENT_PILOT_ARTICLE_ID,
+      observedFields: { title: "wrong", body: "wrong" },
+      forceFailure: true,
+      nowIso: now,
+    });
+    expect(failed.article?.status).toBe(ArticleStatus.FAILED);
+    expect(
+      gateway.getDecision(released.article!.gatewayOperationId!)?.outcome,
+    ).toBe("FAILED");
+  });
+
+  it("rehydrates gateway decisions after restart for verify", () => {
+    const dir = mkdtempSync(join(tmpdir(), "ws-content-rehydrate-"));
+    dirs.push(dir);
+    const store = createFileContentStore(dir);
+    const gateway1 = createActionGateway();
+    const service1 = createContentService(store, { gateway: gateway1 });
+    service1.seedFixtures(now);
+    service1.approveArticle({
+      articleId: CONTENT_PILOT_ARTICLE_ID,
+      factLabels: labels,
+      nowIso: now,
+    });
+    const { mapping } = service1.seedAndProveContentMapping(now);
+    const released = service1.releaseCanonical({
+      articleId: CONTENT_PILOT_ARTICLE_ID,
+      authority: demoAuthority(now),
+      productionMapping: mapping,
+      factLabels: labels,
+      nowIso: now,
+    });
+    expect(released.article?.status).toBe(ArticleStatus.RELEASED_PENDING);
+    const opId = released.article!.gatewayOperationId!;
+
+    // New gateway = process restart (in-memory decisions gone).
+    const gateway2 = createActionGateway();
+    const service2 = createContentService(store, { gateway: gateway2 });
+    expect(gateway2.getDecision(opId)).toBeUndefined();
+
+    const verified = service2.verifyCanonicalRelease({
+      articleId: CONTENT_PILOT_ARTICLE_ID,
+      observedFields: {
+        title: released.article!.title,
+        body: released.article!.body,
+        contentDigest: released.article!.contentDigest,
+      },
+      nowIso: now,
+    });
+    expect(verified.article?.status).toBe(ArticleStatus.VERIFIED);
+    expect(gateway2.getDecision(opId)?.outcome).toBe("VERIFIED");
   });
 
   it("blocks GBP variant until canonical URL is verified", () => {
@@ -123,16 +270,11 @@ describe("content service", () => {
       nowIso: now,
     });
     const { mapping } = service.seedAndProveContentMapping(now);
-    const grants = createDemoContentDistributionGrants(now);
+    const authority = demoAuthority(now);
 
     const blocked = service.releaseVariant({
       variantId: "golden-var-gbp",
-      authority: {
-        outboundStopped: false,
-        operatingMode: OperatingMode.OPERATE,
-        policies: [grants.policy, grants.gbpPolicy, grants.linkedinPolicy],
-        grants: [grants.grant, grants.gbpGrant, grants.linkedinGrant],
-      },
+      authority,
       productionMapping: mapping,
       nowIso: now,
     });
@@ -141,7 +283,7 @@ describe("content service", () => {
     expect(blocked.details.some((d) => /canonical URL/i.test(d))).toBe(true);
   });
 
-  it("releases GBP/social variants after canonical verify; live path stays NOT_WIRED", () => {
+  it("rejects CMS destination variants and releases GBP/Facebook after canonical verify", () => {
     const { service } = makeService();
     service.seedFixtures(now);
     service.approveArticle({
@@ -150,13 +292,7 @@ describe("content service", () => {
       nowIso: now,
     });
     const { mapping } = service.seedAndProveContentMapping(now);
-    const grants = createDemoContentDistributionGrants(now);
-    const authority = {
-      outboundStopped: false,
-      operatingMode: OperatingMode.OPERATE,
-      policies: [grants.policy, grants.gbpPolicy, grants.linkedinPolicy],
-      grants: [grants.grant, grants.gbpGrant, grants.linkedinGrant],
-    };
+    const authority = demoAuthority(now);
 
     service.releaseCanonical({
       articleId: CONTENT_PILOT_ARTICLE_ID,
@@ -178,6 +314,26 @@ describe("content service", () => {
       nowIso: now,
     });
 
+    const cmsPrepared = service.prepareVariant({
+      variantId: "test-var-cms",
+      campaignId: article.campaignId,
+      articleId: article.articleId,
+      destinationId: "dest-cms",
+      format: ContentFormat.FULL_ARTICLE,
+      nowIso: now,
+    });
+    expect(cmsPrepared.ok).toBe(true);
+    const cmsBlocked = service.releaseVariant({
+      variantId: "test-var-cms",
+      authority,
+      productionMapping: mapping,
+      nowIso: now,
+    });
+    expect(cmsBlocked.gatewayDecision).toBeNull();
+    expect(
+      cmsBlocked.details.some((d) => /canonical article release path/i.test(d)),
+    ).toBe(true);
+
     const gbp = service.releaseVariant({
       variantId: "golden-var-gbp",
       authority,
@@ -198,6 +354,15 @@ describe("content service", () => {
     expect(gbpVerified.variant?.status).toBe(VariantStatus.VERIFIED);
     expect(gbpVerified.outcome?.label).toBe("SUCCESS");
 
+    const facebook = service.releaseVariant({
+      variantId: "golden-var-facebook",
+      authority,
+      productionMapping: mapping,
+      nowIso: now,
+    });
+    expect(facebook.gatewayDecision?.allowed).toBe(true);
+    expect(facebook.variant?.status).toBe(VariantStatus.RELEASED_PENDING);
+
     const live = service.releaseVariant({
       variantId: "golden-var-linkedin",
       authority,
@@ -208,5 +373,21 @@ describe("content service", () => {
     expect(live.liveWiring).toBe("NOT_WIRED");
     expect(live.receipt?.outcome).toBe(PublicationOutcome.UNSUPPORTED_ACTION);
     expect(live.details.some((d) => /NOT_WIRED/.test(d))).toBe(true);
+  });
+
+  it("preserves progressed campaigns on reseed", () => {
+    const { service, store } = makeService();
+    service.seedFixtures(now);
+    const campaign = store.read().campaigns[0]!;
+    store.upsertCampaign({
+      ...campaign,
+      status: CampaignStatus.DISTRIBUTING,
+      updatedAtIso: now,
+    });
+    const seed = service.seedFixtures(now);
+    expect(seed.skippedProgressedCampaignIds).toContain(campaign.campaignId);
+    expect(store.read().campaigns.find((c) => c.campaignId === campaign.campaignId)?.status).toBe(
+      CampaignStatus.DISTRIBUTING,
+    );
   });
 });

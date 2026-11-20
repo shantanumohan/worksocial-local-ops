@@ -18,6 +18,8 @@ import {
   defaultDestinationRegistry,
   digestArticleContent,
   emptyContentState,
+  createArticleQaVerdict,
+  evaluateArticleApprovalGate,
   evaluateArticleGate,
   evaluateContentReadBack,
   evaluateVariantReleaseGate,
@@ -381,5 +383,99 @@ describe("content domain — receipts and learning", () => {
     expect(applied.variant?.status).toBe(VariantStatus.VERIFIED);
     expect(applied.receipt?.kind).toBe(DestinationKind.GBP);
     expect(applied.receipt?.liveWiring).toBe(AdapterLiveStatus.NOT_WIRED);
+  });
+});
+
+describe("content domain — independent QA + CMS path", () => {
+  it("forbids self-review QA verdicts", () => {
+    const created = createArticleQaVerdict({
+      verdictId: "qa-1",
+      articleId: "art-qa",
+      authorId: "same",
+      reviewerId: "same",
+      approved: true,
+      contentDigest: "dig",
+      summary: "nope",
+      decidedAtIso: now,
+    });
+    expect(created.ok).toBe(false);
+    if (created.ok) return;
+    expect(created.code).toBe("QA_SELF_REVIEW_FORBIDDEN");
+  });
+
+  it("requires matching independent QA before approval", () => {
+    const article = createCanonicalArticle({
+      articleId: "art-qa-2",
+      campaignId: "camp-qa",
+      title: "Title",
+      body: "Body",
+      citedFactIds: ["fixture-fact-hours"],
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    const missing = evaluateArticleApprovalGate({
+      article,
+      factLabels: labels,
+      qaVerdict: null,
+    });
+    expect(missing.allowed).toBe(false);
+    expect(missing.code).toBe("INDEPENDENT_QA_REQUIRED");
+
+    const qa = createArticleQaVerdict({
+      verdictId: "qa-2",
+      articleId: article.articleId,
+      authorId: "author",
+      reviewerId: "reviewer",
+      approved: true,
+      contentDigest: article.contentDigest,
+      summary: "ok",
+      decidedAtIso: now,
+    });
+    expect(qa.ok).toBe(true);
+    if (!qa.ok) return;
+    const ok = evaluateArticleApprovalGate({
+      article,
+      factLabels: labels,
+      qaVerdict: qa.verdict,
+    });
+    expect(ok.allowed).toBe(true);
+  });
+
+  it("rejects CMS variants on the destination release path", () => {
+    const cms = defaultDestinationRegistry().find(
+      (d) => d.destinationId === "dest-cms",
+    )!;
+    const article = {
+      ...createCanonicalArticle({
+        articleId: "art-cms",
+        campaignId: "camp-cms",
+        title: "Title",
+        body: "Body",
+        fixtureOnly: true,
+        createdAtIso: now,
+      }),
+      status: ArticleStatus.APPROVED,
+      verifiedCanonicalUrl: "https://fixture.example/art-cms",
+    };
+    const created = createDestinationVariant({
+      variantId: "var-cms",
+      campaignId: "camp-cms",
+      article,
+      destination: cms,
+      format: ContentFormat.FULL_ARTICLE,
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    const gate = evaluateVariantReleaseGate({
+      variant: { ...created.variant, status: VariantStatus.READY },
+      article,
+      destination: cms,
+    });
+    expect(gate.allowed).toBe(false);
+    expect(gate.reasons.some((r) => /canonical article release path/i.test(r))).toBe(
+      true,
+    );
   });
 });

@@ -214,6 +214,21 @@ export type PublicationReceipt = {
   recordedAtIso: string;
 };
 
+/**
+ * Independent QA verdict — author cannot self-approve.
+ * Approval requires a matching approved verdict for the current contentDigest.
+ */
+export type ArticleQaVerdict = {
+  verdictId: string;
+  articleId: string;
+  authorId: string;
+  reviewerId: string;
+  approved: boolean;
+  contentDigest: string;
+  summary: string;
+  decidedAtIso: string;
+};
+
 export type ContentState = {
   version: 1;
   updatedAtIso: string;
@@ -222,6 +237,7 @@ export type ContentState = {
   articles: CanonicalArticle[];
   variants: DestinationVariant[];
   receipts: PublicationReceipt[];
+  qaVerdicts: ArticleQaVerdict[];
   /** Verified distribution SUCCESS/FAILURE outcomes for learning-worker. */
   releaseOutcomes: WritePathOutcomeEvidence[];
   liveCmsPublishWiring: "NOT_WIRED";
@@ -238,6 +254,7 @@ export function emptyContentState(nowIso: string): ContentState {
     articles: [],
     variants: [],
     receipts: [],
+    qaVerdicts: [],
     releaseOutcomes: [],
     liveCmsPublishWiring: "NOT_WIRED",
     liveGbpWiring: "NOT_WIRED",
@@ -442,6 +459,112 @@ export function evaluateArticleGate(input: {
   return { allowed: true, code: null, reasons: ["Article gate passed"] };
 }
 
+export function createArticleQaVerdict(input: {
+  verdictId: string;
+  articleId: string;
+  authorId: string;
+  reviewerId: string;
+  approved: boolean;
+  contentDigest: string;
+  summary: string;
+  decidedAtIso: string;
+}):
+  | { ok: true; verdict: ArticleQaVerdict }
+  | { ok: false; code: string; reasons: string[] } {
+  if (!input.authorId.trim() || !input.reviewerId.trim()) {
+    return {
+      ok: false,
+      code: "QA_IDENTITY_REQUIRED",
+      reasons: ["authorId and reviewerId are required"],
+    };
+  }
+  if (input.authorId === input.reviewerId) {
+    return {
+      ok: false,
+      code: "QA_SELF_REVIEW_FORBIDDEN",
+      reasons: ["Independent QA reviewer must differ from the article author"],
+    };
+  }
+  return {
+    ok: true,
+    verdict: {
+      verdictId: input.verdictId,
+      articleId: input.articleId,
+      authorId: input.authorId.trim(),
+      reviewerId: input.reviewerId.trim(),
+      approved: input.approved,
+      contentDigest: input.contentDigest,
+      summary: input.summary.trim(),
+      decidedAtIso: input.decidedAtIso,
+    },
+  };
+}
+
+/**
+ * Approval requires SUPPORTED-fact gate plus an independent QA verdict bound
+ * to the current article contentDigest (author ≠ reviewer).
+ */
+export function evaluateArticleApprovalGate(input: {
+  article: CanonicalArticle;
+  factLabels: FactSupportLookup;
+  qaVerdict: ArticleQaVerdict | null;
+}): { allowed: boolean; code: string | null; reasons: string[] } {
+  const factGate = evaluateArticleGate({
+    article: input.article,
+    factLabels: input.factLabels,
+  });
+  if (!factGate.allowed) {
+    return factGate;
+  }
+  const reasons: string[] = [...factGate.reasons];
+  if (!input.qaVerdict) {
+    return {
+      allowed: false,
+      code: "INDEPENDENT_QA_REQUIRED",
+      reasons: [
+        ...reasons,
+        "Independent QA verdict required before approval (Draft → Independent QA → Canonical release)",
+      ],
+    };
+  }
+  if (input.qaVerdict.articleId !== input.article.articleId) {
+    return {
+      allowed: false,
+      code: "QA_ARTICLE_MISMATCH",
+      reasons: [...reasons, "QA verdict articleId does not match article"],
+    };
+  }
+  if (input.qaVerdict.contentDigest !== input.article.contentDigest) {
+    return {
+      allowed: false,
+      code: "QA_DIGEST_STALE",
+      reasons: [
+        ...reasons,
+        "QA verdict contentDigest does not match current article — re-run QA after edits",
+      ],
+    };
+  }
+  if (input.qaVerdict.authorId === input.qaVerdict.reviewerId) {
+    return {
+      allowed: false,
+      code: "QA_SELF_REVIEW_FORBIDDEN",
+      reasons: [...reasons, "QA reviewer must differ from author"],
+    };
+  }
+  if (!input.qaVerdict.approved) {
+    return {
+      allowed: false,
+      code: "QA_REJECTED",
+      reasons: [...reasons, "Independent QA rejected this revision"],
+    };
+  }
+  return {
+    allowed: true,
+    code: null,
+    reasons: [...reasons, "Independent QA verdict accepted"],
+  };
+}
+
 /**
  * Adapt a canonical article into a destination variant.
  * Rejects formats the destination does not allow; truncates short updates.
@@ -517,6 +640,7 @@ export function createDestinationVariant(input: {
 
 /**
  * Evaluate whether a variant may be released.
+ * CMS is canonical-only — never via the destination variant path.
  * Dependent destinations require a verified canonical URL first.
  * Article digest must still match (approval invalidated on edit).
  */
@@ -527,6 +651,16 @@ export function evaluateVariantReleaseGate(input: {
   preferLive?: boolean;
 }): { allowed: boolean; code: string | null; reasons: string[] } {
   const reasons: string[] = [];
+
+  if (
+    input.destination.kind === DestinationKind.CMS ||
+    input.variant.kind === DestinationKind.CMS ||
+    input.variant.destinationId === "dest-cms"
+  ) {
+    reasons.push(
+      "CMS publication must use the canonical article release path — destination variants are for GBP/social only",
+    );
+  }
 
   if (input.variant.articleContentDigest !== input.article.contentDigest) {
     reasons.push(

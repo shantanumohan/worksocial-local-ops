@@ -29,6 +29,7 @@ import { createActionGateway } from "@worksocial/action-gateway";
 import {
   CONTENT_PILOT_ARTICLE_ID,
   createContentService,
+  goldenArticleContentDigest,
   liveGbpPublishStub,
   liveSocialPublishStub,
 } from "@worksocial/content";
@@ -104,12 +105,25 @@ describe("contract: gateway content distribution", () => {
     expect(approved.ok).toBe(true);
 
     const { mapping } = service.seedAndProveContentMapping(now);
-    const grants = createDemoContentDistributionGrants(now);
+    const grants = createDemoContentDistributionGrants(now, {
+      assetId: CONTENT_PILOT_ARTICLE_ID,
+      contentRevision: goldenArticleContentDigest(),
+    });
     const authority = {
       outboundStopped: false,
       operatingMode: OperatingMode.OPERATE,
-      policies: [grants.policy, grants.gbpPolicy, grants.linkedinPolicy],
-      grants: [grants.grant, grants.gbpGrant, grants.linkedinGrant],
+      policies: [
+        grants.policy,
+        grants.gbpPolicy,
+        grants.linkedinPolicy,
+        grants.facebookPolicy,
+      ],
+      grants: [
+        grants.grant,
+        grants.gbpGrant,
+        grants.linkedinGrant,
+        grants.facebookGrant,
+      ],
     };
 
     const blockedGbp = service.releaseVariant({
