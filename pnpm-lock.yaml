@@ -29,6 +29,9 @@ importers:
       '@worksocial/claude-runner':
         specifier: workspace:*
         version: link:../../services/claude-runner
+      '@worksocial/content':
+        specifier: workspace:*
+        version: link:../../services/content
       '@worksocial/credential-broker':
         specifier: workspace:*
         version: link:../../services/credential-broker
@@ -190,6 +193,28 @@ importers:
         specifier: 2.1.8
         version: 2.1.8(@types/node@22.10.2)
 
+  services/content:
+    dependencies:
+      '@worksocial/action-gateway':
+        specifier: workspace:*
+        version: link:../action-gateway
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@worksocial/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
+    devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)
+
   services/credential-broker:
     devDependencies:
       '@types/node':
@@ -339,6 +364,9 @@ importers:
       '@worksocial/claude-runner':
         specifier: workspace:*
         version: link:../../services/claude-runner
+      '@worksocial/content':
+        specifier: workspace:*
+        version: link:../../services/content
       '@worksocial/credential-broker':
         specifier: workspace:*
         version: link:../../services/credential-broker

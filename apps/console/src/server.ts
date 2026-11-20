@@ -8,6 +8,7 @@ import {
   monitoringPage,
   rolesPage,
   seoPage,
+  contentPage,
 } from "./pages.js";
 
 export type ConsoleServerOptions = {
@@ -25,7 +26,7 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
         status: "running",
         productionActivated: false,
         identity:
-          "R1-02–R1-07 login + authority + mapping + roles + monitoring + knowledge + SEO + learning",
+          "R1-02–R1-08 login + authority + mapping + roles + monitoring + knowledge + SEO + content + learning",
         message: "Minimal console surface; not full React routes.",
       });
       res.writeHead(200, { "content-type": "application/json" });
@@ -78,6 +79,12 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
     if (url.pathname === "/seo") {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       res.end(seoPage(options.apiOrigin));
+      return;
+    }
+
+    if (url.pathname === "/content") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(contentPage(options.apiOrigin));
       return;
     }
 

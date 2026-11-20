@@ -54,8 +54,10 @@ import {
 } from "@worksocial/domain";
 import {
   createDemoCanaryGrant,
+  createDemoContentDistributionGrants,
   createDemoPublishGrant,
   createFileAuthorityStore,
+  createFileContentStore,
   createFileLearningStore,
   createFileKnowledgeStore,
   createFileProbeStore,
@@ -68,6 +70,7 @@ import {
   type KnowledgeStore,
   type LearningStore,
   type PolicyDecisionRecord,
+  type ContentStore,
   type ProbeStore,
   type ProductionMappingStore,
   type RoleRuntimeStore,
@@ -106,6 +109,12 @@ import {
   upsertFixtureSeoMapping,
   type SeoService,
 } from "@worksocial/seo";
+import {
+  createContentService,
+  proveFixtureContentWritePaths,
+  upsertFixtureContentMapping,
+  type ContentService,
+} from "@worksocial/content";
 import { listPinnedModels } from "@worksocial/ml";
 
 function factLabelsFromKnowledge(
@@ -193,6 +202,8 @@ export type ApiRuntime = {
   knowledge: KnowledgeService;
   seoStore: SeoStore;
   seo: SeoService;
+  contentStore: ContentStore;
+  content: ContentService;
   runner: ClaudeRunner;
   missions: MissionEnqueueService;
   gateway: ActionGateway;
@@ -222,8 +233,10 @@ export function createApiRuntime(options: {
   const knowledgeStore = createFileKnowledgeStore(options.stateDir);
   const knowledge = createKnowledgeService(knowledgeStore);
   const seoStore = createFileSeoStore(options.stateDir);
+  const contentStore = createFileContentStore(options.stateDir);
   const gateway = createActionGateway();
   const seo = createSeoService(seoStore, { gateway });
+  const content = createContentService(contentStore, { gateway });
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
@@ -248,6 +261,8 @@ export function createApiRuntime(options: {
     knowledge,
     seoStore,
     seo,
+    contentStore,
+    content,
     runner,
     missions,
     gateway,
@@ -405,9 +420,9 @@ export async function handleApiRequest(
         status: "running",
         productionActivated: false,
         identity:
-          "R1-02–R1-07 auth + mapping + roles + learning + probes + knowledge + SEO/search",
+          "R1-02–R1-08 auth + mapping + roles + learning + probes + knowledge + SEO/search + content/distribution",
         message:
-          "API surface includes SEO audits, proposals, schema validation, semantic search, and gateway-gated fixture page release. Live CMS publish NOT_WIRED. No live SERP/Trends/Zoho.",
+          "API surface includes content pipeline, destination variants, gateway-gated fixture CMS/GBP/social receipts, and SEO/search. Live CMS/GBP/social NOT_WIRED. No live SERP/Trends/Zoho.",
       },
       cors,
     );
@@ -3156,6 +3171,570 @@ export async function handleApiRequest(
     return;
   }
 
+  // --- R1-08 Content and distribution ---
+
+  if (method === "GET" && url.pathname === "/content/status") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const status = runtime.content.status();
+    json(res, 200, { ...status, note: status.honestNote }, cors);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/content/campaigns") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(res, 200, { campaigns: runtime.content.listCampaigns(100) }, cors);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/content/articles") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(res, 200, { articles: runtime.content.listArticles(100) }, cors);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/content/variants") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(res, 200, { variants: runtime.content.listVariants(100) }, cors);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/content/receipts") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(res, 200, { receipts: runtime.content.listReceipts(100) }, cors);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/content/destinations") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(
+      res,
+      200,
+      { destinations: runtime.content.listDestinations() },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/content/seed-fixtures") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const seed = runtime.content.seedFixtures();
+    // Ensure knowledge labels exist for article gates when fixtures are used.
+    runtime.knowledge.seedFixtures();
+    json(
+      res,
+      200,
+      {
+        ...seed,
+        note: "Seeded golden campaign, article, and destination variants. Live CMS/GBP/social remain NOT_WIRED.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/content/ensure-fixture-mapping") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason:
+            "Content fixture mapping requires administrator manage_standing_policies",
+        },
+        cors,
+      );
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    const current = runtime.mappingStore.read();
+    const upserted = upsertFixtureContentMapping(current, nowIso);
+    const proven = proveFixtureContentWritePaths(upserted.state, nowIso);
+    runtime.mappingStore.write(proven);
+    json(
+      res,
+      200,
+      {
+        writePathIds: upserted.writePathIds,
+        created: upserted.created,
+        note: "Persisted content CMS/GBP/LinkedIn write paths + fixture read evidence in mappingStore.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/content/approve-article") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: { articleId?: string };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.articleId) {
+      json(res, 400, { error: "MISSING_ARTICLE_ID" }, cors);
+      return;
+    }
+    const approved = runtime.content.approveArticle({
+      articleId: body.articleId,
+      factLabels: factLabelsFromKnowledge(runtime.knowledge),
+    });
+    json(res, approved.ok ? 200 : 400, approved, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/content/release-canonical") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason:
+            "Content canonical release requires administrator manage_standing_policies",
+        },
+        cors,
+      );
+      return;
+    }
+    const raw = await readBody(req);
+    let body: { articleId?: string; preferLive?: boolean };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.articleId) {
+      json(res, 400, { error: "MISSING_ARTICLE_ID" }, cors);
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    const demo = createDemoContentDistributionGrants(nowIso);
+    const auth = runtime.store.read();
+    const grantIds = new Set(auth.capabilityGrants.map((g) => g.grantId));
+    if (!grantIds.has(demo.grant.grantId)) {
+      runtime.store.update((state) => ({
+        ...state,
+        standingPolicies: [
+          ...state.standingPolicies.filter(
+            (p) =>
+              p.policyId !== demo.policy.policyId &&
+              p.policyId !== demo.gbpPolicy.policyId &&
+              p.policyId !== demo.linkedinPolicy.policyId,
+          ),
+          demo.policy,
+          demo.gbpPolicy,
+          demo.linkedinPolicy,
+        ],
+        capabilityGrants: [
+          ...state.capabilityGrants.filter(
+            (g) =>
+              g.grantId !== demo.grant.grantId &&
+              g.grantId !== demo.gbpGrant.grantId &&
+              g.grantId !== demo.linkedinGrant.grantId,
+          ),
+          demo.grant,
+          demo.gbpGrant,
+          demo.linkedinGrant,
+        ],
+        updatedAt: nowIso,
+      }));
+    }
+
+    const authorityState = runtime.store.read();
+    const productionMapping = runtime.mappingStore.read();
+    const released = runtime.content.releaseCanonical({
+      articleId: body.articleId,
+      preferLive: body.preferLive === true,
+      authority: {
+        outboundStopped: authorityState.ownerControls.outboundStopped,
+        operatingMode: authorityState.ownerControls.operatingMode,
+        policies: authorityState.standingPolicies,
+        grants: authorityState.capabilityGrants,
+      },
+      productionMapping,
+      factLabels: factLabelsFromKnowledge(runtime.knowledge),
+    });
+
+    if (released.gatewayDecision) {
+      const decision: PolicyDecisionRecord = {
+        decisionId: released.gatewayDecision.decisionId,
+        operationId: released.gatewayDecision.operationId,
+        payloadDigest: released.gatewayDecision.payloadDigest,
+        allowed: released.gatewayDecision.allowed,
+        code: released.gatewayDecision.code,
+        reason: released.gatewayDecision.reason,
+        grantId: released.gatewayDecision.grantId,
+        policyId: released.gatewayDecision.policyId,
+        decidedAtIso: released.gatewayDecision.decidedAtIso,
+      };
+      runtime.store.update((s) => ({
+        ...s,
+        policyDecisions: [...s.policyDecisions, decision],
+        updatedAt: decision.decidedAtIso,
+      }));
+    }
+
+    json(
+      res,
+      200,
+      {
+        ...released,
+        note: "Canonical CMS release via shared action gateway. ACCEPTED_PENDING ≠ VERIFIED — call /content/verify-canonical with fixture read-back. Live CMS remains NOT_WIRED.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/content/verify-canonical") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason:
+            "Content verify requires administrator manage_standing_policies",
+        },
+        cors,
+      );
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      articleId?: string;
+      observedFields?: Record<string, string>;
+      forceFailure?: boolean;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (
+      !body.articleId ||
+      !body.observedFields ||
+      typeof body.observedFields !== "object"
+    ) {
+      json(res, 400, { error: "MISSING_READ_BACK" }, cors);
+      return;
+    }
+    const verified = runtime.content.verifyCanonicalRelease({
+      articleId: body.articleId,
+      observedFields: body.observedFields,
+      forceFailure: body.forceFailure === true,
+    });
+
+    if (verified.gatewayDecision) {
+      const decision: PolicyDecisionRecord = {
+        decisionId: verified.gatewayDecision.decisionId,
+        operationId: verified.gatewayDecision.operationId,
+        payloadDigest: verified.gatewayDecision.payloadDigest,
+        allowed: verified.gatewayDecision.allowed,
+        code: verified.gatewayDecision.code,
+        reason: verified.gatewayDecision.reason,
+        grantId: verified.gatewayDecision.grantId,
+        policyId: verified.gatewayDecision.policyId,
+        decidedAtIso: verified.gatewayDecision.decidedAtIso,
+      };
+      runtime.store.update((s) => ({
+        ...s,
+        policyDecisions: [...s.policyDecisions, decision],
+        updatedAt: decision.decidedAtIso,
+      }));
+    }
+
+    json(
+      res,
+      200,
+      {
+        ...verified,
+        note: "Verification requires matching fixture read-back. Gateway acceptance alone never implies VERIFIED.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/content/release-variant") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason:
+            "Content variant release requires administrator manage_standing_policies",
+        },
+        cors,
+      );
+      return;
+    }
+    const raw = await readBody(req);
+    let body: { variantId?: string; preferLive?: boolean };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.variantId) {
+      json(res, 400, { error: "MISSING_VARIANT_ID" }, cors);
+      return;
+    }
+
+    const nowIso = new Date().toISOString();
+    const demo = createDemoContentDistributionGrants(nowIso);
+    const auth = runtime.store.read();
+    if (!auth.capabilityGrants.some((g) => g.grantId === demo.grant.grantId)) {
+      runtime.store.update((state) => ({
+        ...state,
+        standingPolicies: [
+          ...state.standingPolicies.filter(
+            (p) =>
+              p.policyId !== demo.policy.policyId &&
+              p.policyId !== demo.gbpPolicy.policyId &&
+              p.policyId !== demo.linkedinPolicy.policyId,
+          ),
+          demo.policy,
+          demo.gbpPolicy,
+          demo.linkedinPolicy,
+        ],
+        capabilityGrants: [
+          ...state.capabilityGrants.filter(
+            (g) =>
+              g.grantId !== demo.grant.grantId &&
+              g.grantId !== demo.gbpGrant.grantId &&
+              g.grantId !== demo.linkedinGrant.grantId,
+          ),
+          demo.grant,
+          demo.gbpGrant,
+          demo.linkedinGrant,
+        ],
+        updatedAt: nowIso,
+      }));
+    }
+
+    const authorityState = runtime.store.read();
+    const released = runtime.content.releaseVariant({
+      variantId: body.variantId,
+      preferLive: body.preferLive === true,
+      authority: {
+        outboundStopped: authorityState.ownerControls.outboundStopped,
+        operatingMode: authorityState.ownerControls.operatingMode,
+        policies: authorityState.standingPolicies,
+        grants: authorityState.capabilityGrants,
+      },
+      productionMapping: runtime.mappingStore.read(),
+    });
+
+    if (released.gatewayDecision) {
+      const decision: PolicyDecisionRecord = {
+        decisionId: released.gatewayDecision.decisionId,
+        operationId: released.gatewayDecision.operationId,
+        payloadDigest: released.gatewayDecision.payloadDigest,
+        allowed: released.gatewayDecision.allowed,
+        code: released.gatewayDecision.code,
+        reason: released.gatewayDecision.reason,
+        grantId: released.gatewayDecision.grantId,
+        policyId: released.gatewayDecision.policyId,
+        decidedAtIso: released.gatewayDecision.decidedAtIso,
+      };
+      runtime.store.update((s) => ({
+        ...s,
+        policyDecisions: [...s.policyDecisions, decision],
+        updatedAt: decision.decidedAtIso,
+      }));
+    }
+
+    json(
+      res,
+      200,
+      {
+        ...released,
+        note: "Destination variant release. Dependent channels require verified canonical URL. Live GBP/social remain NOT_WIRED when preferLive=true.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/content/verify-variant") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason:
+            "Content variant verify requires administrator manage_standing_policies",
+        },
+        cors,
+      );
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      variantId?: string;
+      observedFields?: Record<string, string>;
+      forceFailure?: boolean;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (
+      !body.variantId ||
+      !body.observedFields ||
+      typeof body.observedFields !== "object"
+    ) {
+      json(res, 400, { error: "MISSING_READ_BACK" }, cors);
+      return;
+    }
+    const verified = runtime.content.verifyVariantRelease({
+      variantId: body.variantId,
+      observedFields: body.observedFields,
+      forceFailure: body.forceFailure === true,
+    });
+
+    if (verified.gatewayDecision) {
+      const decision: PolicyDecisionRecord = {
+        decisionId: verified.gatewayDecision.decisionId,
+        operationId: verified.gatewayDecision.operationId,
+        payloadDigest: verified.gatewayDecision.payloadDigest,
+        allowed: verified.gatewayDecision.allowed,
+        code: verified.gatewayDecision.code,
+        reason: verified.gatewayDecision.reason,
+        grantId: verified.gatewayDecision.grantId,
+        policyId: verified.gatewayDecision.policyId,
+        decidedAtIso: verified.gatewayDecision.decidedAtIso,
+      };
+      runtime.store.update((s) => ({
+        ...s,
+        policyDecisions: [...s.policyDecisions, decision],
+        updatedAt: decision.decidedAtIso,
+      }));
+    }
+
+    json(
+      res,
+      200,
+      {
+        ...verified,
+        note: "Per-destination verification requires matching fixture read-back. Partial success remains visible.",
+      },
+      cors,
+    );
+    return;
+  }
 
   json(res, 404, { error: "NOT_FOUND" }, cors);
 }

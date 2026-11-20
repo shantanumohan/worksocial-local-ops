@@ -4,7 +4,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 
 **Not production-activated.** No live providers, credentials, schedules, website changes, CRM writes, or customer replies. External effects: none.
 
-## What is real (R1-01 → R1-07 + learning)
+## What is real (R1-01 → R1-08 + learning)
 
 ### R1-01 local execution
 - **Supervisor-owned local lifecycle** — `pnpm local:start|stop|doctor|health` and VS Code tasks call `services/supervisor`.
@@ -77,22 +77,34 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - Console `/seo` + API `/seo/*` — audits, proposals, schema validate, search, fixture release.
 - SQL `009_seo.sql` companion schema; **live CMS publish remains `NOT_WIRED`**.
 
+### R1-08 Content and distribution
+- **Article pipeline** — brief → draft → QA gate → approve → gateway release → read-back verify.
+- **Destination registry** — CMS, GBP, LinkedIn, Facebook with format/length contracts; full-blog rejected on short-update channels.
+- **Canonical-first distribution** — dependent GBP/social variants require a verified owned-site URL; article edits invalidate variant approvals.
+- **Fixture adapters** for CMS / GBP / social receipts; **live adapters honestly `NOT_WIRED`** without credentials.
+- **Per-destination receipts** — `ACCEPTED_PENDING` / `PUBLISHED_VERIFIED` / `FAILED` / `UNSUPPORTED_ACTION`; partial success stays visible.
+- **Gateway-gated** releases with mapping ownership + read evidence + standing grants; **acceptance ≠ verified**.
+- **Learning hooks** — SUCCESS/FAILURE outcomes (`fixtureOnly` when fixture); no authority auto-apply.
+- Console `/content` + API `/content/*` — campaigns, articles, variants, receipts, release/verify.
+- SQL `010_content.sql` companion schema; **live CMS / GBP / social remain `NOT_WIRED`**.
+
 ## What is still stub / NOT_WIRED
 
 | Area | Status |
 |------|--------|
 | Temporal runtime / durable workflows | **stub** — `NOT_WIRED` (in-process enqueue only) |
 | Live Claude Code CLI fleet | optional; default **fixture** (`WORKSOCIAL_CLAUDE_FIXTURE` unset/`1`) |
-| Full console React routes (v5 25 screens) | minimal login + authority + mapping + roles + monitoring + knowledge + SEO + learning |
+| Full console React routes (v5 25 screens) | minimal login + authority + mapping + roles + monitoring + knowledge + SEO + content + learning |
 | Live OAuth / provider connections | **excluded** — fixture/NOT_WIRED scaffolds only |
-| Live Zoho / CMS / booking mutations | **excluded** — fixture canary / fixture SEO release only |
+| Live Zoho / CMS / booking mutations | **excluded** — fixture canary / fixture SEO/content release only |
 | Live SERP / Google Trends | **NOT_WIRED** — fixture demand adapters only (R1-06) |
-| Live CMS page publish | **NOT_WIRED** — fixture read-back release only (R1-07) |
+| Live CMS page / article publish | **NOT_WIRED** — fixture read-back release only (R1-07/R1-08) |
+| Live GBP / LinkedIn / Facebook publish | **NOT_WIRED** — fixture receipts only (R1-08) |
 | Live Playwright browser sessions | **NOT_WIRED** unless optional install + URL binding |
 | Postgres bound as live control plane | schema ready; runtime state is **file-backed** |
 | Hugging Face / ONNX weight downloads | **not used** — pure-TS offline trainers + fixture baselines |
 | Production-canary-verified learning | **not claimed** — offline metrics only |
-| Multi-destination distribution / after-hours | excluded (R1-08–R1-09) |
+| After-hours concierge | excluded (R1-09) |
 
 Status labels stay honest: fixture / stub / `NOT_RUN` ≠ sandbox-verified or production-canary-verified.
 
@@ -100,7 +112,7 @@ Status labels stay honest: fixture / stub / `NOT_RUN` ≠ sandbox-verified or pr
 
 ```
 apps/console, apps/api
-services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-broker,learning-worker,probes,knowledge,seo,evaluation-worker}
+services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-broker,learning-worker,probes,knowledge,seo,content,evaluation-worker}
 packages/{contracts,domain,ml,persistence,provider-adapters,observability,ui}
 database/migrations
 tests/{unit,integration,contract,workflow,e2e,security,eval,soak}
@@ -115,8 +127,8 @@ docs/{adrs,runbooks,product,contracts,v5}
 pnpm install
 pnpm local:doctor | local:start | local:stop | local:health
 pnpm check
-pnpm test:unit          # domain + ml + persistence + supervisor + gateway + broker + runners + learning-worker + probes + knowledge + seo + api
-pnpm test:contract      # unauthorized-write + stop-switch + read-evidence + thirty-role-runtime + learning-worker + form-crm-canary + knowledge-labeling + seo-search
+pnpm test:unit          # domain + ml + persistence + supervisor + gateway + broker + runners + learning-worker + probes + knowledge + seo + content + api
+pnpm test:contract      # unauthorized-write + stop-switch + read-evidence + thirty-role-runtime + learning-worker + form-crm-canary + knowledge-labeling + seo-search + content-distribution
 pnpm test:e2e           # offline e2e-lite HTTP→DOM→canary journey
 pnpm test:database | test:workflow | test:security | test:eval
 pnpm recovery:rehearse | release:evidence
