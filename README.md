@@ -140,12 +140,14 @@ That path is a **workspace / artifact root example**, not a database root. **Do 
 
 ## Acceptance vs reference-core
 
+- `docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md` — product acceptance catalog (159 cases; statuses remain `NOT_RUN` until evidence).
 - `tests/acceptance-matrix-v6.json` — **159** product acceptance cases (bootstrap statuses unchanged unless a later WP updates them).
 - Domain / persistence / gateway / broker / runner / learning / API unit tests prove offline behavior; they are **not** production acceptance (see `docs/product/reference-core-vs-acceptance.md`).
 
 ## Specs in-repo
 
 - `docs/product/WorkSocial_Operations_v6_implementation_baseline.md`
+- `docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md`
 - `docs/WorkSocial_Local_30_Agent_Operating_System_v3.md`
-- `docs/v5/*`
+- `docs/v5/*` — see `docs/v5/README.md`
 - `docs/product/ml-learning-from-outcomes.md` — owner requirement; local multi-model learning slice
