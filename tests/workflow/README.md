@@ -1,1 +1,7 @@
-# workflow\n\nScaffold placeholder for worksocial-operations Release 1 (WP01–WP02). Not production-activated.\n
+# workflow
+
+Placeholder suite — **not implemented**.
+
+`pnpm test:workflow` invokes `scripts/stub-test.ts` and exits **non-zero** (`INCOMPLETE`). It must never satisfy required CI or release checks.
+
+Temporal durable workflow tests belong here later. Not production-activated. External effects: none.

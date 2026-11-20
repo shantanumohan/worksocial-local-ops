@@ -1,7 +1,7 @@
 /**
  * Contract: form-to-CRM canary requires grant + read evidence; correlated fixture
  * receipt reconciles SUCCESS; live Zoho stays NOT_WIRED; ambiguous fails closed.
- * Catalog refs T-F11 / T-X040 — not product VERIFIED.
+ * Catalog refs T-F20 / T-X049 — not product VERIFIED.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -73,7 +73,7 @@ describe("contract: form-to-CRM canary", () => {
     expect(result.run.reconciliation?.status).toBe(ReconciliationStatus.MATCHED);
     expect(result.outcome?.fixtureOnly).toBe(true);
     expect(result.outcome?.label).toBe("SUCCESS");
-    expect(result.run.acceptanceCaseIds).toContain("T-F11");
+    expect(result.run.acceptanceCaseIds).toContain("T-F20");
   });
 
   it("denies canary without read evidence and labels FAILURE for learning", () => {

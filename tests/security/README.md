@@ -1,1 +1,7 @@
-# security\n\nScaffold placeholder for worksocial-operations Release 1 (WP01–WP02). Not production-activated.\n
+# security
+
+Placeholder suite — **not implemented**.
+
+`pnpm test:security` invokes `scripts/stub-test.ts` and exits **non-zero** (`INCOMPLETE`). It must never satisfy required CI or release checks.
+
+Not production-activated. External effects: none.

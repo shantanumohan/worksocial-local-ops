@@ -45,7 +45,7 @@ describe("probe-store", () => {
       writePathId: null,
       operationId: null,
       gatewayDecisionId: null,
-      acceptanceCaseIds: ["T-F11"],
+      acceptanceCaseIds: ["T-F20"],
     };
     store.recordRun(run);
     expect(store.lastRun(ProbeKind.HTTP)?.runId).toBe("run-1");

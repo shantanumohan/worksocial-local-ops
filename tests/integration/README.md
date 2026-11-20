@@ -1,1 +1,5 @@
-# integration\n\nScaffold placeholder for worksocial-operations Release 1 (WP01–WP02). Not production-activated.\n
+# integration
+
+Scaffold for future integration tests. Not wired to a release-passing script yet.
+
+Not production-activated. External effects: none.
