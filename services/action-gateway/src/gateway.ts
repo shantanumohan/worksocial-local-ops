@@ -2,6 +2,11 @@
  * Action gateway — sole mutation authority stub (R1-02 + R1-03).
  * Durable intent → authorize → apply/deny. Provider acceptance ≠ verified.
  * Pilot write classes require mapped ownership + prior read evidence.
+ *
+ * Fixture/default path keeps in-memory SimulatedEffectLedger + decisions Map
+ * for offline unit tests. Production durable accept/verify (restart-safe,
+ * no duplicate apply) lives in @worksocial/persistence
+ * `createPgDurableExecutionService` (M2 / NEXT-08–09).
  */
 
 import { createHash, randomBytes } from "node:crypto";

@@ -52,7 +52,7 @@ jobs:
         run: |
           set +e
           failed=0
-          for suite in test:database test:workflow test:security test:eval recovery:rehearse release:evidence; do
+          for suite in test:workflow test:security test:eval recovery:rehearse release:evidence; do
             echo "::group::stub $suite (must exit non-zero)"
             pnpm "$suite"
             code=$?
@@ -65,5 +65,49 @@ jobs:
           done
           exit $failed
 
-  # Explicit note: stub/incomplete suites are NOT required green checks.
-  # They must fail (see assert step above). Do not add them as required status checks.
+  database-durable:
+    name: postgres durable execution
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: worksocial
+          POSTGRES_PASSWORD: worksocial
+          POSTGRES_DB: worksocial_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U worksocial -d worksocial_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://worksocial:worksocial@localhost:5432/worksocial_test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (pinned)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable Corepack / pnpm (packageManager)
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.0 --activate
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Migrate
+        run: pnpm db:migrate
+
+      - name: Database suite (restart + uniqueness races)
+        run: pnpm test:database
+
+  # Stub/incomplete suites (workflow/security/eval/recovery/release) are NOT
+  # required green checks — they must fail (see assert step above).
+  # test:database is implemented for M2 durable execution and is required above.
