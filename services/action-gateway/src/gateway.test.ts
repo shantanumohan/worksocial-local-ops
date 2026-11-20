@@ -84,6 +84,25 @@ describe("action-gateway", () => {
     expect(result.decision.outcome).toBe("DENIED");
   });
 
+  it("rehydrates pending decisions and settles FAILED on markFailed", () => {
+    const gateway = createActionGateway();
+    gateway.rehydratePending({
+      operationId: "op-rehydrate",
+      writePathId: "wp-1",
+      decidedAtIso: now,
+    });
+    expect(gateway.getDecision("op-rehydrate")?.outcome).toBe("ACCEPTED_PENDING");
+    const failed = gateway.markFailed(
+      "op-rehydrate",
+      "2026-11-18T12:06:00.000Z",
+      "read-back mismatch",
+    );
+    expect(failed.outcome).toBe("FAILED");
+    expect(() =>
+      gateway.markVerified("op-rehydrate", "2026-11-18T12:07:00.000Z"),
+    ).toThrow(/Failed operation/);
+  });
+
   it("records acceptance without implying verified", () => {
     const gateway = createActionGateway();
     const result = gateway.submitIntent(allowedIntent, {

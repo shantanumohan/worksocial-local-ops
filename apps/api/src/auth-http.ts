@@ -39,6 +39,8 @@ import {
   FactVerificationDecision,
   SupportLabel,
   SeoChangeKind,
+  ArticleStatus,
+  VariantStatus,
   type BookingOwnership,
   type CollectionMethodValue,
   type CrmOwnership,
@@ -213,6 +215,155 @@ export type ApiRuntime = {
   sessionTtlMs: number;
 };
 
+/** Upsert by decisionId so verify/rehydrate updates do not duplicate rows. */
+function upsertPolicyDecision(
+  store: AuthorityStore,
+  decision: PolicyDecisionRecord,
+): void {
+  store.update((s) => ({
+    ...s,
+    policyDecisions: [
+      ...s.policyDecisions.filter((d) => d.decisionId !== decision.decisionId),
+      decision,
+    ],
+    updatedAt: decision.decidedAtIso,
+  }));
+}
+
+function policyDecisionFromGateway(decision: {
+  decisionId: string;
+  operationId: string;
+  payloadDigest: string;
+  allowed: boolean;
+  code: string | null;
+  reason: string;
+  grantId: string | null;
+  policyId: string | null;
+  decidedAtIso: string;
+}): PolicyDecisionRecord {
+  return {
+    decisionId: decision.decisionId,
+    operationId: decision.operationId,
+    payloadDigest: decision.payloadDigest,
+    allowed: decision.allowed,
+    code: decision.code,
+    reason: decision.reason,
+    grantId: decision.grantId,
+    policyId: decision.policyId,
+    decidedAtIso: decision.decidedAtIso,
+  };
+}
+
+/**
+ * Survive API restarts: restore ACCEPTED_PENDING gateway decisions for any
+ * content article/variant left RELEASED_PENDING with a durable operation id.
+ * Reuses the persisted authority decision identity when present.
+ */
+function rehydratePendingContentGatewayDecisions(
+  gateway: ActionGateway,
+  contentStore: ContentStore,
+  authorityStore: AuthorityStore,
+): void {
+  const state = contentStore.read();
+  const persisted = authorityStore.read().policyDecisions;
+  const byOp = new Map(persisted.map((d) => [d.operationId, d]));
+
+  const restore = (
+    operationId: string,
+    writePathId: string | null,
+    decidedAtIso: string,
+    reason: string,
+  ) => {
+    if (gateway.getDecision(operationId)) return;
+    const prior = byOp.get(operationId);
+    gateway.rehydratePending({
+      operationId,
+      ...(prior
+        ? {
+            decisionId: prior.decisionId,
+            payloadDigest: prior.payloadDigest,
+            grantId: prior.grantId,
+            policyId: prior.policyId,
+            decidedAtIso: prior.decidedAtIso,
+          }
+        : { decidedAtIso }),
+      writePathId,
+      reason,
+      gateDetails: prior
+        ? ["rehydrated from persisted authority decision"]
+        : ["rehydrated from durable ledger"],
+    });
+  };
+
+  for (const article of state.articles) {
+    if (
+      article.status === ArticleStatus.RELEASED_PENDING &&
+      article.gatewayOperationId
+    ) {
+      restore(
+        article.gatewayOperationId,
+        article.writePathId,
+        article.updatedAtIso,
+        "Boot rehydrate: content canonical RELEASED_PENDING",
+      );
+    }
+  }
+  for (const variant of state.variants) {
+    if (
+      variant.status === VariantStatus.RELEASED_PENDING &&
+      variant.gatewayOperationId
+    ) {
+      restore(
+        variant.gatewayOperationId,
+        variant.writePathId,
+        variant.updatedAtIso,
+        "Boot rehydrate: content variant RELEASED_PENDING",
+      );
+    }
+  }
+}
+
+/**
+ * Seed demo content grants only when none of the demo grant IDs exist yet.
+ * Never overwrites or restores a revoked/disabled owner-edited grant.
+ */
+function seedDemoContentDistributionGrantsIfAbsent(
+  store: AuthorityStore,
+  nowIso: string,
+  options?: { assetId?: string; contentRevision?: string },
+): boolean {
+  const demo = createDemoContentDistributionGrants(nowIso, options);
+  const auth = store.read();
+  const demoGrantIds = new Set([
+    demo.grant.grantId,
+    demo.gbpGrant.grantId,
+    demo.linkedinGrant.grantId,
+    demo.facebookGrant.grantId,
+  ]);
+  if (auth.capabilityGrants.some((g) => demoGrantIds.has(g.grantId))) {
+    return false;
+  }
+  store.update((state) => ({
+    ...state,
+    standingPolicies: [
+      ...state.standingPolicies,
+      demo.policy,
+      demo.gbpPolicy,
+      demo.linkedinPolicy,
+      demo.facebookPolicy,
+    ],
+    capabilityGrants: [
+      ...state.capabilityGrants,
+      demo.grant,
+      demo.gbpGrant,
+      demo.linkedinGrant,
+      demo.facebookGrant,
+    ],
+    updatedAt: nowIso,
+  }));
+  return true;
+}
+
 export function createApiRuntime(options: {
   stateDir: string;
   apiPort: number;
@@ -235,6 +386,7 @@ export function createApiRuntime(options: {
   const seoStore = createFileSeoStore(options.stateDir);
   const contentStore = createFileContentStore(options.stateDir);
   const gateway = createActionGateway();
+  rehydratePendingContentGatewayDecisions(gateway, contentStore, store);
   const seo = createSeoService(seoStore, { gateway });
   const content = createContentService(contentStore, { gateway });
   const ownerPassword =
@@ -1837,6 +1989,12 @@ export async function handleApiRequest(
     const trained = runtime.learningWorker.trainFromLedgers({
       mapping: runtime.mappingStore.read(),
       roleOutcomes: runtime.roleRuntimeStore.listOutcomesForLearning(),
+      // Content/SEO outcomes wire in, but fixtures stay excluded by default.
+      extraWritePathOutcomes: [
+        ...runtime.seo.listLearningOutcomes(false),
+        ...runtime.content.listLearningOutcomes(false),
+      ],
+      includeFixture: false,
     });
     json(
       res,
@@ -3296,16 +3454,101 @@ export async function handleApiRequest(
     const upserted = upsertFixtureContentMapping(current, nowIso);
     const proven = proveFixtureContentWritePaths(upserted.state, nowIso);
     runtime.mappingStore.write(proven);
+    // Seed demo grants once if absent — never restores revoked grants on release.
+    const article =
+      runtime.content
+        .listArticles()
+        .find((a) => a.articleId === "golden-art-training") ??
+      runtime.content.listArticles()[0];
+    const grantsSeeded = seedDemoContentDistributionGrantsIfAbsent(
+      runtime.store,
+      nowIso,
+      article
+        ? {
+            assetId: article.articleId,
+            contentRevision: article.contentDigest,
+          }
+        : undefined,
+    );
     json(
       res,
       200,
       {
         writePathIds: upserted.writePathIds,
         created: upserted.created,
-        note: "Persisted content CMS/GBP/LinkedIn write paths + fixture read evidence in mappingStore.",
+        addedWritePathIds: upserted.addedWritePathIds,
+        grantsSeeded,
+        note: "Merged/migrated content CMS/GBP/LinkedIn/Facebook write paths + per-destination bindings; fixture read evidence in mappingStore. Demo grants seeded only if absent.",
       },
       cors,
     );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/content/record-qa") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      articleId?: string;
+      approved?: boolean;
+      summary?: string;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.articleId || typeof body.approved !== "boolean") {
+      json(
+        res,
+        400,
+        {
+          error: "MISSING_QA_FIELDS",
+          reason: "articleId and approved (boolean) are required",
+        },
+        cors,
+      );
+      return;
+    }
+    const article = runtime.content
+      .listArticles()
+      .find((a) => a.articleId === body.articleId);
+    if (!article) {
+      json(res, 404, { error: "ARTICLE_NOT_FOUND" }, cors);
+      return;
+    }
+    // Reviewer is the authenticated session user; author is authoritative on the article.
+    if (result.session.userId === article.authorId) {
+      json(
+        res,
+        403,
+        {
+          error: "QA_SELF_REVIEW_FORBIDDEN",
+          reason: "Independent QA reviewer must differ from the article author",
+        },
+        cors,
+      );
+      return;
+    }
+    const recorded = runtime.content.recordQaVerdict({
+      articleId: body.articleId,
+      authorId: article.authorId,
+      reviewerId: result.session.userId,
+      approved: body.approved,
+      ...(body.summary !== undefined ? { summary: body.summary } : {}),
+    });
+    json(res, recorded.ok ? 200 : 400, recorded, cors);
     return;
   }
 
@@ -3379,39 +3622,7 @@ export async function handleApiRequest(
       return;
     }
 
-    const nowIso = new Date().toISOString();
-    const demo = createDemoContentDistributionGrants(nowIso);
-    const auth = runtime.store.read();
-    const grantIds = new Set(auth.capabilityGrants.map((g) => g.grantId));
-    if (!grantIds.has(demo.grant.grantId)) {
-      runtime.store.update((state) => ({
-        ...state,
-        standingPolicies: [
-          ...state.standingPolicies.filter(
-            (p) =>
-              p.policyId !== demo.policy.policyId &&
-              p.policyId !== demo.gbpPolicy.policyId &&
-              p.policyId !== demo.linkedinPolicy.policyId,
-          ),
-          demo.policy,
-          demo.gbpPolicy,
-          demo.linkedinPolicy,
-        ],
-        capabilityGrants: [
-          ...state.capabilityGrants.filter(
-            (g) =>
-              g.grantId !== demo.grant.grantId &&
-              g.grantId !== demo.gbpGrant.grantId &&
-              g.grantId !== demo.linkedinGrant.grantId,
-          ),
-          demo.grant,
-          demo.gbpGrant,
-          demo.linkedinGrant,
-        ],
-        updatedAt: nowIso,
-      }));
-    }
-
+    // Evaluate existing grants only — do not mint/restore revoked authority.
     const authorityState = runtime.store.read();
     const productionMapping = runtime.mappingStore.read();
     const released = runtime.content.releaseCanonical({
@@ -3428,22 +3639,10 @@ export async function handleApiRequest(
     });
 
     if (released.gatewayDecision) {
-      const decision: PolicyDecisionRecord = {
-        decisionId: released.gatewayDecision.decisionId,
-        operationId: released.gatewayDecision.operationId,
-        payloadDigest: released.gatewayDecision.payloadDigest,
-        allowed: released.gatewayDecision.allowed,
-        code: released.gatewayDecision.code,
-        reason: released.gatewayDecision.reason,
-        grantId: released.gatewayDecision.grantId,
-        policyId: released.gatewayDecision.policyId,
-        decidedAtIso: released.gatewayDecision.decidedAtIso,
-      };
-      runtime.store.update((s) => ({
-        ...s,
-        policyDecisions: [...s.policyDecisions, decision],
-        updatedAt: decision.decidedAtIso,
-      }));
+      upsertPolicyDecision(
+        runtime.store,
+        policyDecisionFromGateway(released.gatewayDecision),
+      );
     }
 
     json(
@@ -3510,22 +3709,10 @@ export async function handleApiRequest(
     });
 
     if (verified.gatewayDecision) {
-      const decision: PolicyDecisionRecord = {
-        decisionId: verified.gatewayDecision.decisionId,
-        operationId: verified.gatewayDecision.operationId,
-        payloadDigest: verified.gatewayDecision.payloadDigest,
-        allowed: verified.gatewayDecision.allowed,
-        code: verified.gatewayDecision.code,
-        reason: verified.gatewayDecision.reason,
-        grantId: verified.gatewayDecision.grantId,
-        policyId: verified.gatewayDecision.policyId,
-        decidedAtIso: verified.gatewayDecision.decidedAtIso,
-      };
-      runtime.store.update((s) => ({
-        ...s,
-        policyDecisions: [...s.policyDecisions, decision],
-        updatedAt: decision.decidedAtIso,
-      }));
+      upsertPolicyDecision(
+        runtime.store,
+        policyDecisionFromGateway(verified.gatewayDecision),
+      );
     }
 
     json(
@@ -3578,38 +3765,7 @@ export async function handleApiRequest(
       return;
     }
 
-    const nowIso = new Date().toISOString();
-    const demo = createDemoContentDistributionGrants(nowIso);
-    const auth = runtime.store.read();
-    if (!auth.capabilityGrants.some((g) => g.grantId === demo.grant.grantId)) {
-      runtime.store.update((state) => ({
-        ...state,
-        standingPolicies: [
-          ...state.standingPolicies.filter(
-            (p) =>
-              p.policyId !== demo.policy.policyId &&
-              p.policyId !== demo.gbpPolicy.policyId &&
-              p.policyId !== demo.linkedinPolicy.policyId,
-          ),
-          demo.policy,
-          demo.gbpPolicy,
-          demo.linkedinPolicy,
-        ],
-        capabilityGrants: [
-          ...state.capabilityGrants.filter(
-            (g) =>
-              g.grantId !== demo.grant.grantId &&
-              g.grantId !== demo.gbpGrant.grantId &&
-              g.grantId !== demo.linkedinGrant.grantId,
-          ),
-          demo.grant,
-          demo.gbpGrant,
-          demo.linkedinGrant,
-        ],
-        updatedAt: nowIso,
-      }));
-    }
-
+    // Evaluate existing grants only — do not mint/restore revoked authority.
     const authorityState = runtime.store.read();
     const released = runtime.content.releaseVariant({
       variantId: body.variantId,
@@ -3624,22 +3780,10 @@ export async function handleApiRequest(
     });
 
     if (released.gatewayDecision) {
-      const decision: PolicyDecisionRecord = {
-        decisionId: released.gatewayDecision.decisionId,
-        operationId: released.gatewayDecision.operationId,
-        payloadDigest: released.gatewayDecision.payloadDigest,
-        allowed: released.gatewayDecision.allowed,
-        code: released.gatewayDecision.code,
-        reason: released.gatewayDecision.reason,
-        grantId: released.gatewayDecision.grantId,
-        policyId: released.gatewayDecision.policyId,
-        decidedAtIso: released.gatewayDecision.decidedAtIso,
-      };
-      runtime.store.update((s) => ({
-        ...s,
-        policyDecisions: [...s.policyDecisions, decision],
-        updatedAt: decision.decidedAtIso,
-      }));
+      upsertPolicyDecision(
+        runtime.store,
+        policyDecisionFromGateway(released.gatewayDecision),
+      );
     }
 
     json(
@@ -3706,22 +3850,10 @@ export async function handleApiRequest(
     });
 
     if (verified.gatewayDecision) {
-      const decision: PolicyDecisionRecord = {
-        decisionId: verified.gatewayDecision.decisionId,
-        operationId: verified.gatewayDecision.operationId,
-        payloadDigest: verified.gatewayDecision.payloadDigest,
-        allowed: verified.gatewayDecision.allowed,
-        code: verified.gatewayDecision.code,
-        reason: verified.gatewayDecision.reason,
-        grantId: verified.gatewayDecision.grantId,
-        policyId: verified.gatewayDecision.policyId,
-        decidedAtIso: verified.gatewayDecision.decidedAtIso,
-      };
-      runtime.store.update((s) => ({
-        ...s,
-        policyDecisions: [...s.policyDecisions, decision],
-        updatedAt: decision.decidedAtIso,
-      }));
+      upsertPolicyDecision(
+        runtime.store,
+        policyDecisionFromGateway(verified.gatewayDecision),
+      );
     }
 
     json(

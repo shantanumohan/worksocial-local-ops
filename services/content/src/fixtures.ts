@@ -16,12 +16,15 @@ import {
   VariantStatus,
   VerificationState,
   WriteReadiness,
+  createArticleQaVerdict,
   createCanonicalArticle,
   createContentBrief,
   createContentCampaign,
   createDestinationVariant,
   defaultDestinationRegistry,
+  digestArticleContent,
   proveFixturePilotWritePath,
+  type ArticleQaVerdict,
   type CanonicalArticle,
   type ContentCampaign,
   type DestinationRegistryEntry,
@@ -31,17 +34,34 @@ import {
   type PilotWritePath,
 } from "@worksocial/domain";
 
-export const CONTENT_PILOT_ARTICLE_ASSET_ID = "article-training-brief" as const;
+/** Asset id equals the canonical article id — grants bind to the reviewed article. */
+export const CONTENT_PILOT_ARTICLE_ID = "golden-art-training" as const;
+export const CONTENT_PILOT_ARTICLE_ASSET_ID = CONTENT_PILOT_ARTICLE_ID;
 export const CONTENT_PILOT_CMS_WRITE_PATH_ID = "wp-content-cms-publish" as const;
 export const CONTENT_PILOT_GBP_WRITE_PATH_ID = "wp-content-gbp-publish" as const;
 export const CONTENT_PILOT_LINKEDIN_WRITE_PATH_ID =
   "wp-content-linkedin-publish" as const;
-export const CONTENT_PILOT_BINDING_ID = "bind-content-cms" as const;
+export const CONTENT_PILOT_FACEBOOK_WRITE_PATH_ID =
+  "wp-content-facebook-publish" as const;
+export const CONTENT_PILOT_CMS_BINDING_ID = "bind-content-cms" as const;
+export const CONTENT_PILOT_GBP_BINDING_ID = "bind-content-gbp" as const;
+export const CONTENT_PILOT_LINKEDIN_BINDING_ID = "bind-content-linkedin" as const;
+export const CONTENT_PILOT_FACEBOOK_BINDING_ID = "bind-content-facebook" as const;
+/** @deprecated use CONTENT_PILOT_CMS_BINDING_ID */
+export const CONTENT_PILOT_BINDING_ID = CONTENT_PILOT_CMS_BINDING_ID;
 export const CONTENT_PILOT_CAMPAIGN_ID = "golden-camp-training" as const;
-export const CONTENT_PILOT_ARTICLE_ID = "golden-art-training" as const;
 
+export const CONTENT_GOLDEN_ARTICLE_TITLE =
+  "A better brief for your next training day" as const;
 export const CONTENT_GOLDEN_ARTICLE_BODY =
   "A successful training day starts before the first attendee arrives. Start with the learning outcome, then choose a room layout that supports it. Confirm the display, audio, and connectivity you will actually use. Share verified directions and arrival instructions. Confirm current rates and availability directly before committing." as const;
+
+export function goldenArticleContentDigest(): string {
+  return digestArticleContent(
+    CONTENT_GOLDEN_ARTICLE_TITLE,
+    CONTENT_GOLDEN_ARTICLE_BODY,
+  );
+}
 
 /** Destination adapters: fixture publish vs honest NOT_WIRED live stubs. */
 export type DestinationAdapterResult =
@@ -160,7 +180,7 @@ export function invokeDestinationAdapter(input: {
 export function buildGoldenCampaign(nowIso: string): ContentCampaign {
   return createContentCampaign({
     campaignId: CONTENT_PILOT_CAMPAIGN_ID,
-    title: "A better brief for your next training day",
+    title: CONTENT_GOLDEN_ARTICLE_TITLE,
     topic: "Corporate training rooms",
     brief: createContentBrief({
       briefId: "golden-brief-training",
@@ -170,25 +190,49 @@ export function buildGoldenCampaign(nowIso: string): ContentCampaign {
       sourceFactIds: ["fixture-fact-hours"],
       createdAtIso: nowIso,
     }),
-    destinationIds: ["dest-cms", "dest-gbp", "dest-linkedin"],
+    destinationIds: ["dest-cms", "dest-gbp", "dest-linkedin", "dest-facebook"],
     fixtureOnly: true,
     createdAtIso: nowIso,
     status: CampaignStatus.DRAFTING,
   });
 }
 
+export const CONTENT_PILOT_AUTHOR_ID = "author-a13" as const;
+export const CONTENT_PILOT_REVIEWER_ID = "reviewer-a25" as const;
+
 export function buildGoldenArticle(nowIso: string): CanonicalArticle {
   return createCanonicalArticle({
     articleId: CONTENT_PILOT_ARTICLE_ID,
     campaignId: CONTENT_PILOT_CAMPAIGN_ID,
-    title: "A better brief for your next training day",
+    title: CONTENT_GOLDEN_ARTICLE_TITLE,
     body: CONTENT_GOLDEN_ARTICLE_BODY,
+    authorId: CONTENT_PILOT_AUTHOR_ID,
     citedFactIds: ["fixture-fact-hours"],
     hypothesisFactIds: ["fixture-fact-hypothesis"],
     fixtureOnly: true,
     createdAtIso: nowIso,
     status: ArticleStatus.READY_FOR_REVIEW,
   });
+}
+
+export function buildGoldenQaVerdict(
+  nowIso: string,
+  article: CanonicalArticle,
+): ArticleQaVerdict {
+  const created = createArticleQaVerdict({
+    verdictId: "golden-qa-training",
+    articleId: article.articleId,
+    authorId: CONTENT_PILOT_AUTHOR_ID,
+    reviewerId: CONTENT_PILOT_REVIEWER_ID,
+    approved: true,
+    contentDigest: article.contentDigest,
+    summary: "Independent QA passed originality, sources, and accessibility checks",
+    decidedAtIso: nowIso,
+  });
+  if (!created.ok) {
+    throw new Error(created.reasons.join("; "));
+  }
+  return created.verdict;
 }
 
 export function buildGoldenVariants(
@@ -199,6 +243,7 @@ export function buildGoldenVariants(
   const variants: DestinationVariant[] = [];
   const gbp = destinations.find((d) => d.destinationId === "dest-gbp");
   const linkedin = destinations.find((d) => d.destinationId === "dest-linkedin");
+  const facebook = destinations.find((d) => d.destinationId === "dest-facebook");
 
   if (gbp) {
     const created = createDestinationVariant({
@@ -234,6 +279,23 @@ export function buildGoldenVariants(
     }
   }
 
+  if (facebook) {
+    const created = createDestinationVariant({
+      variantId: "golden-var-facebook",
+      campaignId: CONTENT_PILOT_CAMPAIGN_ID,
+      article,
+      destination: facebook,
+      format: ContentFormat.SHORT_UPDATE,
+      title: "Training-day checklist",
+      body: "Match the room to the work. Confirm tech. Share arrival instructions.",
+      fixtureOnly: true,
+      createdAtIso: nowIso,
+    });
+    if (created.ok) {
+      variants.push({ ...created.variant, status: VariantStatus.READY });
+    }
+  }
+
   return variants;
 }
 
@@ -242,17 +304,18 @@ export function buildFixtureContentSeed(nowIso: string): {
   campaigns: ContentCampaign[];
   articles: CanonicalArticle[];
   variants: DestinationVariant[];
+  qaVerdicts: ArticleQaVerdict[];
   factLabels: Map<string, (typeof SupportLabel)[keyof typeof SupportLabel]>;
 } {
   const destinations = defaultDestinationRegistry();
   const campaign = buildGoldenCampaign(nowIso);
   const article = buildGoldenArticle(nowIso);
-  campaign.canonicalArticleId = article.articleId;
   return {
     destinations,
     campaigns: [{ ...campaign, canonicalArticleId: article.articleId }],
     articles: [article],
     variants: buildGoldenVariants(nowIso, article, destinations),
+    qaVerdicts: [buildGoldenQaVerdict(nowIso, article)],
     factLabels: new Map([
       ["fixture-fact-hours", SupportLabel.SUPPORTED],
       ["fixture-fact-hypothesis", SupportLabel.HYPOTHESIS],
@@ -260,24 +323,19 @@ export function buildFixtureContentSeed(nowIso: string): {
   };
 }
 
-/**
- * Fixture production mapping for content CMS + GBP + LinkedIn write paths.
- */
-export function createFixtureContentPilotMapping(nowIso: string): {
-  state: ProductionMappingState;
-  writePathIds: {
-    cms: string;
-    gbp: string;
-    linkedin: string;
-  };
-} {
-  const siteId = "worksocial-pilot";
-  const binding: SourceBinding = {
-    bindingId: CONTENT_PILOT_BINDING_ID,
-    siteId,
+function makeBinding(input: {
+  bindingId: string;
+  siteId: string;
+  resourceRef: string;
+  displayName: string;
+  nowIso: string;
+}): SourceBinding {
+  return {
+    bindingId: input.bindingId,
+    siteId: input.siteId,
     kind: BindingKind.WEBSITE,
-    resourceRef: "https://example.worksocial.local/blog",
-    displayName: "Pilot blog (content fixture)",
+    resourceRef: input.resourceRef,
+    displayName: input.displayName,
     identityLabel: null,
     connectionState: ConnectionState.NOT_CONFIGURED,
     writeReadiness: WriteReadiness.NOT_AUTHORIZED,
@@ -285,66 +343,128 @@ export function createFixtureContentPilotMapping(nowIso: string): {
     ownershipProven: false,
     observedRevision: null,
     adapterWiring: AdapterWiring.FIXTURE,
-    createdAtIso: nowIso,
-    updatedAtIso: nowIso,
+    createdAtIso: input.nowIso,
+    updatedAtIso: input.nowIso,
   };
+}
 
-  const cmsPath: PilotWritePath = {
+function makeWritePath(input: {
+  writePathId: string;
+  channelId: string;
+  operation: string;
+  siteId: string;
+  bindingId: string;
+  nowIso: string;
+}): PilotWritePath {
+  return {
+    writePathId: input.writePathId,
+    channelId: input.channelId,
+    assetId: CONTENT_PILOT_ARTICLE_ASSET_ID,
+    operation: input.operation,
+    siteId: input.siteId,
+    bindingId: input.bindingId,
+    formId: null,
+    bookingOwnershipId: null,
+    crmOwnershipId: null,
+    requiredEvidenceKinds: [...DEFAULT_PILOT_EVIDENCE_KINDS],
+    createdAtIso: input.nowIso,
+  };
+}
+
+export type ContentWritePathIds = {
+  cms: string;
+  gbp: string;
+  linkedin: string;
+  facebook: string;
+};
+
+/**
+ * Fixture production mapping with per-destination bindings + write paths.
+ */
+export function createFixtureContentPilotMapping(nowIso: string): {
+  state: ProductionMappingState;
+  writePathIds: ContentWritePathIds;
+} {
+  const siteId = "worksocial-pilot";
+  const cmsBinding = makeBinding({
+    bindingId: CONTENT_PILOT_CMS_BINDING_ID,
+    siteId,
+    resourceRef: "https://example.worksocial.local/blog",
+    displayName: "Pilot blog (content CMS fixture)",
+    nowIso,
+  });
+  const gbpBinding = makeBinding({
+    bindingId: CONTENT_PILOT_GBP_BINDING_ID,
+    siteId,
+    resourceRef: "gbp:location:fixture-jersey-city",
+    displayName: "Pilot GBP location (fixture)",
+    nowIso,
+  });
+  const linkedinBinding = makeBinding({
+    bindingId: CONTENT_PILOT_LINKEDIN_BINDING_ID,
+    siteId,
+    resourceRef: "linkedin:org:fixture-worksocial",
+    displayName: "Pilot LinkedIn organization (fixture)",
+    nowIso,
+  });
+  const facebookBinding = makeBinding({
+    bindingId: CONTENT_PILOT_FACEBOOK_BINDING_ID,
+    siteId,
+    resourceRef: "facebook:page:fixture-worksocial",
+    displayName: "Pilot Facebook page (fixture)",
+    nowIso,
+  });
+
+  const cmsPath = makeWritePath({
     writePathId: CONTENT_PILOT_CMS_WRITE_PATH_ID,
     channelId: "owned-site",
-    assetId: CONTENT_PILOT_ARTICLE_ASSET_ID,
     operation: "publish_article",
     siteId,
-    bindingId: CONTENT_PILOT_BINDING_ID,
-    formId: null,
-    bookingOwnershipId: null,
-    crmOwnershipId: null,
-    requiredEvidenceKinds: [...DEFAULT_PILOT_EVIDENCE_KINDS],
-    createdAtIso: nowIso,
-  };
-
-  const gbpPath: PilotWritePath = {
+    bindingId: CONTENT_PILOT_CMS_BINDING_ID,
+    nowIso,
+  });
+  const gbpPath = makeWritePath({
     writePathId: CONTENT_PILOT_GBP_WRITE_PATH_ID,
     channelId: "gbp",
-    assetId: CONTENT_PILOT_ARTICLE_ASSET_ID,
     operation: "publish_gbp_update",
     siteId,
-    bindingId: CONTENT_PILOT_BINDING_ID,
-    formId: null,
-    bookingOwnershipId: null,
-    crmOwnershipId: null,
-    requiredEvidenceKinds: [...DEFAULT_PILOT_EVIDENCE_KINDS],
-    createdAtIso: nowIso,
-  };
-
-  const linkedinPath: PilotWritePath = {
+    bindingId: CONTENT_PILOT_GBP_BINDING_ID,
+    nowIso,
+  });
+  const linkedinPath = makeWritePath({
     writePathId: CONTENT_PILOT_LINKEDIN_WRITE_PATH_ID,
     channelId: "linkedin",
-    assetId: CONTENT_PILOT_ARTICLE_ASSET_ID,
     operation: "publish_social_post",
     siteId,
-    bindingId: CONTENT_PILOT_BINDING_ID,
-    formId: null,
-    bookingOwnershipId: null,
-    crmOwnershipId: null,
-    requiredEvidenceKinds: [...DEFAULT_PILOT_EVIDENCE_KINDS],
-    createdAtIso: nowIso,
+    bindingId: CONTENT_PILOT_LINKEDIN_BINDING_ID,
+    nowIso,
+  });
+  const facebookPath = makeWritePath({
+    writePathId: CONTENT_PILOT_FACEBOOK_WRITE_PATH_ID,
+    channelId: "facebook",
+    operation: "publish_social_post",
+    siteId,
+    bindingId: CONTENT_PILOT_FACEBOOK_BINDING_ID,
+    nowIso,
+  });
+
+  const writePathIds: ContentWritePathIds = {
+    cms: CONTENT_PILOT_CMS_WRITE_PATH_ID,
+    gbp: CONTENT_PILOT_GBP_WRITE_PATH_ID,
+    linkedin: CONTENT_PILOT_LINKEDIN_WRITE_PATH_ID,
+    facebook: CONTENT_PILOT_FACEBOOK_WRITE_PATH_ID,
   };
 
   return {
-    writePathIds: {
-      cms: CONTENT_PILOT_CMS_WRITE_PATH_ID,
-      gbp: CONTENT_PILOT_GBP_WRITE_PATH_ID,
-      linkedin: CONTENT_PILOT_LINKEDIN_WRITE_PATH_ID,
-    },
+    writePathIds,
     state: {
       version: 1,
       sites: [siteId],
-      bindings: [binding],
+      bindings: [cmsBinding, gbpBinding, linkedinBinding, facebookBinding],
       forms: [],
       bookingOwnership: [],
       crmOwnership: [],
-      writePaths: [cmsPath, gbpPath, linkedinPath],
+      writePaths: [cmsPath, gbpPath, linkedinPath, facebookPath],
       journeys: [
         {
           journeyId: "journey-content-distribution",
@@ -358,11 +478,7 @@ export function createFixtureContentPilotMapping(nowIso: string): {
             "variants",
             "receipts",
           ],
-          writePathIds: [
-            CONTENT_PILOT_CMS_WRITE_PATH_ID,
-            CONTENT_PILOT_GBP_WRITE_PATH_ID,
-            CONTENT_PILOT_LINKEDIN_WRITE_PATH_ID,
-          ],
+          writePathIds: Object.values(writePathIds),
           createdAtIso: nowIso,
         },
       ],
@@ -377,61 +493,121 @@ export function proveFixtureContentWritePaths(
   state: ProductionMappingState,
   nowIso: string,
 ): ProductionMappingState {
-  let next = proveFixturePilotWritePath(
-    state,
+  let next = state;
+  for (const writePathId of [
     CONTENT_PILOT_CMS_WRITE_PATH_ID,
-    nowIso,
-  );
-  next = proveFixturePilotWritePath(
-    next,
     CONTENT_PILOT_GBP_WRITE_PATH_ID,
-    nowIso,
-  );
-  next = proveFixturePilotWritePath(
-    next,
     CONTENT_PILOT_LINKEDIN_WRITE_PATH_ID,
-    nowIso,
-  );
+    CONTENT_PILOT_FACEBOOK_WRITE_PATH_ID,
+  ]) {
+    if (next.writePaths.some((p) => p.writePathId === writePathId)) {
+      next = proveFixturePilotWritePath(next, writePathId, nowIso);
+    }
+  }
   return next;
 }
 
+/**
+ * Merge every missing content write path / binding independently.
+ */
 export function upsertFixtureContentMapping(
   current: ProductionMappingState,
   nowIso: string,
 ): {
   state: ProductionMappingState;
-  writePathIds: { cms: string; gbp: string; linkedin: string };
+  writePathIds: ContentWritePathIds;
   created: boolean;
+  addedWritePathIds: string[];
 } {
   const { state: fixture, writePathIds } =
     createFixtureContentPilotMapping(nowIso);
-  const existingPath = current.writePaths.find(
-    (p) => p.writePathId === writePathIds.cms,
-  );
-  if (existingPath) {
-    return { state: current, writePathIds, created: false };
+  const addedWritePathIds: string[] = [];
+  let state = current;
+
+  for (const binding of fixture.bindings) {
+    if (!state.bindings.some((b) => b.bindingId === binding.bindingId)) {
+      state = {
+        ...state,
+        bindings: [...state.bindings, binding],
+        updatedAt: nowIso,
+      };
+    }
   }
+
+  for (const path of fixture.writePaths) {
+    const existing = state.writePaths.find(
+      (p) => p.writePathId === path.writePathId,
+    );
+    if (!existing) {
+      state = {
+        ...state,
+        writePaths: [...state.writePaths, path],
+        updatedAt: nowIso,
+      };
+      addedWritePathIds.push(path.writePathId);
+      continue;
+    }
+    // Migrate legacy shared-CMS bindingIds to destination-specific bindings.
+    if (
+      existing.bindingId !== path.bindingId ||
+      existing.channelId !== path.channelId ||
+      existing.operation !== path.operation ||
+      existing.siteId !== path.siteId ||
+      existing.assetId !== path.assetId
+    ) {
+      state = {
+        ...state,
+        writePaths: state.writePaths.map((p) =>
+          p.writePathId === path.writePathId
+            ? {
+                ...p,
+                bindingId: path.bindingId,
+                channelId: path.channelId,
+                operation: path.operation,
+                siteId: path.siteId,
+                assetId: path.assetId,
+              }
+            : p,
+        ),
+        updatedAt: nowIso,
+      };
+    }
+  }
+
+  for (const journey of fixture.journeys) {
+    if (!state.journeys.some((j) => j.journeyId === journey.journeyId)) {
+      state = {
+        ...state,
+        journeys: [...state.journeys, journey],
+        updatedAt: nowIso,
+      };
+    } else {
+      state = {
+        ...state,
+        journeys: state.journeys.map((j) =>
+          j.journeyId === journey.journeyId
+            ? {
+                ...j,
+                writePathIds: [
+                  ...new Set([...j.writePathIds, ...journey.writePathIds]),
+                ],
+              }
+            : j,
+        ),
+        updatedAt: nowIso,
+      };
+    }
+  }
+
+  state = {
+    ...state,
+    sites: [...new Set([...state.sites, ...fixture.sites])],
+  };
 
   return {
     writePathIds,
-    created: true,
-    state: {
-      ...current,
-      sites: [...new Set([...current.sites, ...fixture.sites])],
-      bindings: [
-        ...current.bindings.filter(
-          (b) => !fixture.bindings.some((fb) => fb.bindingId === b.bindingId),
-        ),
-        ...fixture.bindings,
-      ],
-      writePaths: [...current.writePaths, ...fixture.writePaths],
-      journeys: [
-        ...current.journeys.filter(
-          (j) => !fixture.journeys.some((fj) => fj.journeyId === j.journeyId),
-        ),
-        ...fixture.journeys,
-      ],
-      updatedAt: nowIso,
-    },
+    created: addedWritePathIds.length > 0,
+    addedWritePathIds,
+    state,
   };
 }

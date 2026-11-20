@@ -71,7 +71,8 @@ export type GatewayDecisionRecord = {
     | "DENIED"
     | "INTENDED"
     | "ACCEPTED_PENDING"
-    | "VERIFIED";
+    | "VERIFIED"
+    | "FAILED";
   writePathId: string | null;
   gateDetails: string[];
 };
@@ -142,6 +143,25 @@ export type ActionGateway = {
   ): GatewaySubmitResult;
   /** Explicit verification step — never implied by acceptance. */
   markVerified(operationId: string, nowIso: string): GatewayDecisionRecord;
+  /** Terminal failure after acceptance (e.g. fixture read-back mismatch). */
+  markFailed(operationId: string, nowIso: string, reason?: string): GatewayDecisionRecord;
+  /**
+   * Restore an ACCEPTED_PENDING decision after process restart so markVerified
+   * / markFailed can proceed against a durable operation id.
+   */
+  rehydratePending(
+    input: {
+      operationId: string;
+      decisionId?: string;
+      payloadDigest?: string;
+      writePathId?: string | null;
+      grantId?: string | null;
+      policyId?: string | null;
+      decidedAtIso: string;
+      reason?: string;
+      gateDetails?: string[];
+    },
+  ): GatewayDecisionRecord;
   getDecision(operationId: string): GatewayDecisionRecord | undefined;
   listDecisions(): GatewayDecisionRecord[];
 };
@@ -251,6 +271,9 @@ export function createActionGateway(): ActionGateway {
     if (!existing.allowed) {
       throw new Error(`Denied operation ${operationId} cannot be verified`);
     }
+    if (existing.outcome === "FAILED") {
+      throw new Error(`Failed operation ${operationId} cannot be verified`);
+    }
     ledger.settle(operationId, "VERIFIED");
     const verified: GatewayDecisionRecord = {
       ...existing,
@@ -263,10 +286,98 @@ export function createActionGateway(): ActionGateway {
     return verified;
   };
 
+  const markFailed = (
+    operationId: string,
+    nowIso: string,
+    reason?: string,
+  ): GatewayDecisionRecord => {
+    const existing = decisions.get(operationId);
+    if (!existing) {
+      throw new Error(`Unknown operation ${operationId}`);
+    }
+    if (existing.outcome === "VERIFIED") {
+      throw new Error(`Verified operation ${operationId} cannot be failed`);
+    }
+    if (!ledger.get(operationId)) {
+      ledger.recordIntent(
+        operationId,
+        existing.payloadDigest,
+        existing.decidedAtIso,
+      );
+      if (existing.allowed) {
+        ledger.settle(operationId, "ACCEPTED_PENDING");
+      }
+    }
+    ledger.settle(operationId, "FAILED");
+    let effectState = existing.effectState;
+    if (effectState === EffectState.VERIFYING) {
+      effectState = transition(effectState, EffectState.UNKNOWN_REMOTE_OUTCOME);
+      effectState = transition(effectState, EffectState.QUARANTINED);
+    } else if (
+      effectState !== EffectState.QUARANTINED &&
+      effectState !== EffectState.COMPLETE &&
+      effectState !== EffectState.CANCELLED
+    ) {
+      effectState = EffectState.QUARANTINED;
+    }
+    const failed: GatewayDecisionRecord = {
+      ...existing,
+      effectState,
+      outcome: "FAILED",
+      decidedAtIso: nowIso,
+      reason: reason ?? "Failed with environment evidence",
+    };
+    decisions.set(operationId, failed);
+    return failed;
+  };
+
+  const rehydratePending = (input: {
+    operationId: string;
+    decisionId?: string;
+    payloadDigest?: string;
+    writePathId?: string | null;
+    grantId?: string | null;
+    policyId?: string | null;
+    decidedAtIso: string;
+    reason?: string;
+    gateDetails?: string[];
+  }): GatewayDecisionRecord => {
+    const existing = decisions.get(input.operationId);
+    if (existing) {
+      return existing;
+    }
+    const payloadDigest =
+      input.payloadDigest ??
+      digestPayload({ rehydrated: true, operationId: input.operationId });
+    ledger.recordIntent(input.operationId, payloadDigest, input.decidedAtIso);
+    ledger.settle(input.operationId, "ACCEPTED_PENDING");
+    const restored: GatewayDecisionRecord = {
+      decisionId: input.decisionId ?? `dec-rehydrate-${input.operationId}`,
+      operationId: input.operationId,
+      payloadDigest,
+      allowed: true,
+      code: null,
+      reason:
+        input.reason ??
+        "Rehydrated ACCEPTED_PENDING decision after process restart",
+      grantId: input.grantId ?? null,
+      policyId: input.policyId ?? null,
+      decidedAtIso: input.decidedAtIso,
+      effectState: EffectState.VERIFYING,
+      outcome: "ACCEPTED_PENDING",
+      writePathId: input.writePathId ?? null,
+      gateDetails: input.gateDetails ?? ["rehydrated from durable ledger"],
+    };
+    decisions.set(input.operationId, restored);
+    return restored;
+  };
+
   return {
     ledger,
     submitIntent,
     markVerified,
+    markFailed,
+    rehydratePending,
     getDecision: (operationId) => decisions.get(operationId),
     listDecisions: () => [...decisions.values()],
   };
