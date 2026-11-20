@@ -103,6 +103,8 @@ export type VerifyIndependentResult = {
   receipt: ExecutionReceipt;
   provider: FakeProviderEffect | undefined;
   applyAttemptCount: number;
+  /** false when independent read mismatched; failure state is already committed. */
+  matched: boolean;
 };
 
 export type DurableExecutionService = {
@@ -162,6 +164,56 @@ function createTxBudgetStore(client: PgClient): BudgetStore {
       };
     },
     async reserve(input) {
+      const existingReservation = await client.query(
+        `SELECT * FROM measure.budget_reservations WHERE reservation_id = $1 FOR UPDATE`,
+        [input.reservationId],
+      );
+      if (existingReservation.rows[0]) {
+        const resRow = existingReservation.rows[0] as Record<string, unknown>;
+        if (
+          String(resRow.account_id) !== input.accountId ||
+          Number(resRow.amount_minor) !== input.amountMinor
+        ) {
+          throw new Error(
+            `Reservation ${input.reservationId} already exists with different parameters`,
+          );
+        }
+        const accountResult = await client.query(
+          `SELECT * FROM measure.budget_accounts WHERE account_id = $1`,
+          [input.accountId],
+        );
+        const accountRow = accountResult.rows[0] as Record<string, unknown>;
+        return {
+          ok: true as const,
+          account: {
+            accountId: String(accountRow.account_id),
+            dayKey: String(accountRow.day_key),
+            currency: String(accountRow.currency),
+            limitMinor: Number(accountRow.limit_minor),
+            reservedMinor: Number(accountRow.reserved_minor),
+            settledMinor: Number(accountRow.settled_minor),
+            createdAtIso: new Date(String(accountRow.created_at)).toISOString(),
+            updatedAtIso: new Date(String(accountRow.updated_at)).toISOString(),
+          },
+          reservation: {
+            reservationId: String(resRow.reservation_id),
+            accountId: String(resRow.account_id),
+            amountMinor: Number(resRow.amount_minor),
+            status: resRow.status as "open" | "settled" | "released",
+            actualMinor:
+              resRow.actual_minor == null ? null : Number(resRow.actual_minor),
+            jobId: resRow.job_id == null ? null : String(resRow.job_id),
+            operationId:
+              resRow.operation_id == null ? null : String(resRow.operation_id),
+            createdAtIso: new Date(String(resRow.created_at)).toISOString(),
+            settledAtIso:
+              resRow.settled_at == null
+                ? null
+                : new Date(String(resRow.settled_at)).toISOString(),
+          },
+        };
+      }
+
       const accountResult = await client.query(
         `SELECT * FROM measure.budget_accounts WHERE account_id = $1 FOR UPDATE`,
         [input.accountId],
@@ -318,6 +370,66 @@ async function acceptWithStores(
     payload: Record<string, unknown>;
   }) => Promise<OutboxEvent>,
 ): Promise<AcceptPendingResult> {
+  if (input.decision.allowed === false) {
+    throw new Error(
+      `Denied decision cannot accept an effect for ${input.operationId}`,
+    );
+  }
+
+  // Idempotent replay: already ACCEPTED_PENDING/VERIFIED → return without re-apply.
+  const existingDecision = await stores.decisions.get(input.operationId);
+  if (
+    existingDecision &&
+    (existingDecision.outcome === "ACCEPTED_PENDING" ||
+      existingDecision.outcome === "VERIFIED")
+  ) {
+    const intent = (await stores.effects.get(input.operationId))!;
+    const provider = (await stores.fakeProvider.getByOperation(
+      input.operationId,
+    ))!;
+    let reservation: DurableBudgetReservation | null = null;
+    let account: DurableBudgetAccount | null = null;
+    if (input.budget) {
+      const reserved = await stores.budgets.reserve({
+        accountId: input.budget.accountId,
+        reservationId: input.budget.reservationId,
+        amountMinor: input.budget.amountMinor,
+        jobId: intent.jobId,
+        operationId: input.operationId,
+      });
+      if (!reserved.ok) {
+        throw new Error(
+          `BUDGET_EXHAUSTED available=${reserved.availableMinor}`,
+        );
+      }
+      reservation = reserved.reservation;
+      account = reserved.account;
+    }
+    const job =
+      (intent.jobId
+        ? await stores.jobs.get(intent.jobId)
+        : undefined) ??
+      (
+        await stores.jobs.insertIdempotent({
+          ...input.job,
+          status: input.job.status ?? "queued",
+        })
+      ).job;
+    return {
+      job,
+      jobCreated: false,
+      intent,
+      decision: existingDecision,
+      provider,
+      providerCreated: false,
+      reservation,
+      account,
+      applyAttemptCount: await stores.effects.countApplyAttempts(
+        input.operationId,
+      ),
+    };
+  }
+
   const { job, created: jobCreated } = await stores.jobs.insertIdempotent({
     ...input.job,
     status: input.job.status ?? "queued",
@@ -357,6 +469,7 @@ async function acceptWithStores(
 
   const decision: DurableGatewayDecision = {
     ...input.decision,
+    allowed: true,
     outcome: "ACCEPTED_PENDING",
     effectState: "VERIFYING",
     payloadDigest: input.payloadDigest,
@@ -437,7 +550,13 @@ export function createDurableExecutionService(
       return acceptWithStores(stores, input);
     },
     async verifyIndependent(input) {
-      return verifyWithStores(stores, input);
+      const result = await verifyWithStores(stores, input);
+      if (!result.matched && result.decision.outcome === "FAILED") {
+        throw new Error(
+          `Independent read mismatch for ${input.operationId}`,
+        );
+      }
+      return result;
     },
     async getDecision(operationId) {
       return stores.decisions.get(operationId);
@@ -463,10 +582,17 @@ export function createPgDurableExecutionService(
       });
     },
     async verifyIndependent(input) {
-      return withTransaction(pool, async (client) => {
+      const result = await withTransaction(pool, async (client) => {
         const txStores = createStoresForClient(client);
         return verifyWithStores(txStores, input);
       });
+      // Mismatch evidence is committed above; surface the error after COMMIT.
+      if (!result.matched && result.decision.outcome === "FAILED") {
+        throw new Error(
+          `Independent read mismatch for ${input.operationId}`,
+        );
+      }
+      return result;
     },
     async getDecision(operationId) {
       return stores.decisions.get(operationId);
@@ -486,7 +612,20 @@ async function verifyWithStores(
     throw new Error(`Denied operation ${input.operationId} cannot be verified`);
   }
   if (decision.outcome === "FAILED") {
-    throw new Error(`Failed operation ${input.operationId} cannot be verified`);
+    const intent = (await stores.effects.get(input.operationId))!;
+    const receipts = await stores.receipts.listForOperation(input.operationId);
+    const prior =
+      receipts.find((r) => r.kind === "independent_read") ?? receipts[0]!;
+    return {
+      decision,
+      intent,
+      receipt: prior,
+      provider: await stores.fakeProvider.getByOperation(input.operationId),
+      applyAttemptCount: await stores.effects.countApplyAttempts(
+        input.operationId,
+      ),
+      matched: false,
+    };
   }
   if (decision.outcome === "VERIFIED") {
     const intent = (await stores.effects.get(input.operationId))!;
@@ -500,6 +639,7 @@ async function verifyWithStores(
       applyAttemptCount: await stores.effects.countApplyAttempts(
         input.operationId,
       ),
+      matched: true,
     };
   }
 
@@ -508,7 +648,7 @@ async function verifyWithStores(
   const match =
     provider !== undefined && provider.payloadDigest === input.observedDigest;
 
-  await stores.receipts.add({
+  const readReceipt = await stores.receipts.add({
     operationId: input.operationId,
     kind: "independent_read",
     observedDigest: input.observedDigest,
@@ -521,7 +661,11 @@ async function verifyWithStores(
   });
 
   if (!match) {
-    await stores.effects.settle(input.operationId, "FAILED", "QUARANTINED");
+    const intent = await stores.effects.settle(
+      input.operationId,
+      "FAILED",
+      "QUARANTINED",
+    );
     const failed: DurableGatewayDecision = {
       ...decision,
       outcome: "FAILED",
@@ -530,7 +674,16 @@ async function verifyWithStores(
       reason: "Independent read mismatch",
     };
     await stores.decisions.put(failed);
-    throw new Error(`Independent read mismatch for ${input.operationId}`);
+    return {
+      decision: failed,
+      intent,
+      receipt: readReceipt,
+      provider,
+      applyAttemptCount: await stores.effects.countApplyAttempts(
+        input.operationId,
+      ),
+      matched: false,
+    };
   }
 
   await stores.effects.recordAttempt({
@@ -573,6 +726,7 @@ async function verifyWithStores(
     applyAttemptCount: await stores.effects.countApplyAttempts(
       input.operationId,
     ),
+    matched: true,
   };
 }
 

@@ -110,8 +110,18 @@ export function createMemoryBudgetStore(): BudgetStore {
     },
 
     async reserve(input) {
-      if (reservations.has(input.reservationId)) {
-        throw new Error(`Reservation ${input.reservationId} already exists`);
+      const prior = reservations.get(input.reservationId);
+      if (prior) {
+        if (
+          prior.accountId !== input.accountId ||
+          prior.amountMinor !== input.amountMinor
+        ) {
+          throw new Error(
+            `Reservation ${input.reservationId} already exists with different parameters`,
+          );
+        }
+        const account = accounts.get(prior.accountId)!;
+        return { ok: true, account, reservation: prior };
       }
       const account = accounts.get(input.accountId);
       if (!account) throw new Error(`Unknown budget account ${input.accountId}`);
@@ -143,6 +153,9 @@ export function createMemoryBudgetStore(): BudgetStore {
     },
 
     async settle(input) {
+      if (input.actualMinor < 0) {
+        throw new Error("Amounts must be non-negative");
+      }
       const reservation = reservations.get(input.reservationId);
       if (!reservation) {
         return { ok: false, code: "UNKNOWN_RESERVATION", reservationId: input.reservationId };
@@ -231,6 +244,38 @@ export function createPgBudgetStore(pool: PgPool): BudgetStore {
 
     async reserve(input) {
       return withTransaction(pool, async (client) => {
+        const existingReservation = await client.query(
+          `SELECT * FROM measure.budget_reservations WHERE reservation_id = $1 FOR UPDATE`,
+          [input.reservationId],
+        );
+        if (existingReservation.rows[0]) {
+          const reservation = rowToReservation(
+            existingReservation.rows[0] as Record<string, unknown>,
+          );
+          if (
+            reservation.accountId !== input.accountId ||
+            reservation.amountMinor !== input.amountMinor
+          ) {
+            throw new Error(
+              `Reservation ${input.reservationId} already exists with different parameters`,
+            );
+          }
+          const accountResult = await client.query(
+            `SELECT * FROM measure.budget_accounts WHERE account_id = $1`,
+            [input.accountId],
+          );
+          if (!accountResult.rows[0]) {
+            throw new Error(`Unknown budget account ${input.accountId}`);
+          }
+          return {
+            ok: true as const,
+            account: rowToAccount(
+              accountResult.rows[0] as Record<string, unknown>,
+            ),
+            reservation,
+          };
+        }
+
         const accountResult = await client.query(
           `SELECT * FROM measure.budget_accounts WHERE account_id = $1 FOR UPDATE`,
           [input.accountId],
@@ -250,47 +295,42 @@ export function createPgBudgetStore(pool: PgPool): BudgetStore {
             availableMinor: available,
           };
         }
-        try {
-          const reservationResult = await client.query(
-            `INSERT INTO measure.budget_reservations (
-               reservation_id, account_id, amount_minor, status, job_id, operation_id
-             ) VALUES ($1,$2,$3,'open',$4,$5)
-             RETURNING *`,
-            [
-              input.reservationId,
-              input.accountId,
-              input.amountMinor,
-              input.jobId ?? null,
-              input.operationId ?? null,
-            ],
-          );
-          const updatedAccountResult = await client.query(
-            `UPDATE measure.budget_accounts
-             SET reserved_minor = reserved_minor + $2, updated_at = now()
-             WHERE account_id = $1
-             RETURNING *`,
-            [input.accountId, input.amountMinor],
-          );
-          return {
-            ok: true as const,
-            account: rowToAccount(
-              updatedAccountResult.rows[0] as Record<string, unknown>,
-            ),
-            reservation: rowToReservation(
-              reservationResult.rows[0] as Record<string, unknown>,
-            ),
-          };
-        } catch (err) {
-          const code = (err as { code?: string }).code;
-          if (code === "23505") {
-            throw new Error(`Reservation ${input.reservationId} already exists`);
-          }
-          throw err;
-        }
+        const reservationResult = await client.query(
+          `INSERT INTO measure.budget_reservations (
+             reservation_id, account_id, amount_minor, status, job_id, operation_id
+           ) VALUES ($1,$2,$3,'open',$4,$5)
+           RETURNING *`,
+          [
+            input.reservationId,
+            input.accountId,
+            input.amountMinor,
+            input.jobId ?? null,
+            input.operationId ?? null,
+          ],
+        );
+        const updatedAccountResult = await client.query(
+          `UPDATE measure.budget_accounts
+           SET reserved_minor = reserved_minor + $2, updated_at = now()
+           WHERE account_id = $1
+           RETURNING *`,
+          [input.accountId, input.amountMinor],
+        );
+        return {
+          ok: true as const,
+          account: rowToAccount(
+            updatedAccountResult.rows[0] as Record<string, unknown>,
+          ),
+          reservation: rowToReservation(
+            reservationResult.rows[0] as Record<string, unknown>,
+          ),
+        };
       });
     },
 
     async settle(input) {
+      if (input.actualMinor < 0) {
+        throw new Error("Amounts must be non-negative");
+      }
       return withTransaction(pool, async (client) => {
         const reservationResult = await client.query(
           `SELECT * FROM measure.budget_reservations WHERE reservation_id = $1 FOR UPDATE`,

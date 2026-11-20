@@ -58,51 +58,76 @@ export async function appliedMigrations(
   return new Map(result.rows.map((row) => [row.filename, row.checksum]));
 }
 
+/** Stable advisory lock key for WorkSocial migration runners. */
+const MIGRATION_LOCK_KEY = 0x77_6f_72_6b; // 'work'
+
 export async function runMigrations(options: {
   pool: PgPool;
   migrationsDir: string;
 }): Promise<MigrationResult> {
   const { pool, migrationsDir } = options;
   const files = await listMigrationFiles(migrationsDir);
-  const already = await appliedMigrations(pool);
   const applied: string[] = [];
   const skipped: string[] = [];
 
-  for (const filename of files) {
-    const fullPath = path.join(migrationsDir, filename);
-    const contents = await readFile(fullPath, "utf8");
-    const sum = checksum(contents);
-    const prior = already.get(filename);
-    if (prior) {
-      if (prior !== sum) {
-        throw new Error(
-          `Migration checksum mismatch for ${filename}: applied=${prior} current=${sum}`,
-        );
-      }
-      skipped.push(filename);
-      continue;
-    }
+  // Serialize concurrent migrate processes against the same database.
+  await pool.query(`SELECT pg_advisory_lock($1)`, [MIGRATION_LOCK_KEY]);
+  try {
+    const already = await appliedMigrations(pool);
 
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      await client.query(contents);
-      await client.query(
-        `INSERT INTO core.schema_migrations (filename, checksum) VALUES ($1, $2)`,
-        [filename, sum],
-      );
-      await client.query("COMMIT");
-      applied.push(filename);
-    } catch (err) {
-      try {
-        await client.query("ROLLBACK");
-      } catch {
-        // ignore
+    for (const filename of files) {
+      const fullPath = path.join(migrationsDir, filename);
+      const contents = await readFile(fullPath, "utf8");
+      const sum = checksum(contents);
+      const prior = already.get(filename);
+      if (prior) {
+        if (prior !== sum) {
+          throw new Error(
+            `Migration checksum mismatch for ${filename}: applied=${prior} current=${sum}`,
+          );
+        }
+        skipped.push(filename);
+        continue;
       }
-      throw err;
-    } finally {
-      client.release();
+
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        // Re-check inside the transaction in case another runner just applied it.
+        const raced = await client.query<{ filename: string; checksum: string }>(
+          `SELECT filename, checksum FROM core.schema_migrations WHERE filename = $1 FOR UPDATE`,
+          [filename],
+        );
+        if (raced.rows[0]) {
+          if (raced.rows[0].checksum !== sum) {
+            throw new Error(
+              `Migration checksum mismatch for ${filename}: applied=${raced.rows[0].checksum} current=${sum}`,
+            );
+          }
+          await client.query("COMMIT");
+          skipped.push(filename);
+          continue;
+        }
+        await client.query(contents);
+        await client.query(
+          `INSERT INTO core.schema_migrations (filename, checksum) VALUES ($1, $2)`,
+          [filename, sum],
+        );
+        await client.query("COMMIT");
+        applied.push(filename);
+      } catch (err) {
+        try {
+          await client.query("ROLLBACK");
+        } catch {
+          // ignore
+        }
+        throw err;
+      } finally {
+        client.release();
+      }
     }
+  } finally {
+    await pool.query(`SELECT pg_advisory_unlock($1)`, [MIGRATION_LOCK_KEY]);
   }
 
   return { applied, skipped, migrationsDir };

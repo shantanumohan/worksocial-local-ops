@@ -84,6 +84,109 @@ describe("durable execution (memory fixture)", () => {
     expect(provider?.applyCount).toBe(1);
   });
 
+  it("rejects denied decisions before any provider apply", async () => {
+    const stores = createMemoryDurableStores();
+    const service = createDurableExecutionService(stores);
+    await expect(
+      service.acceptPending({
+        job: {
+          jobId: newJobId(),
+          roleId: "A01",
+          workflowId: "wf-denied",
+          siteId: "site-1",
+          assetId: "page-home",
+          trigger: "manual",
+          policyVersion: "1",
+          inputArtifactIds: [],
+          capabilityGrantId: "grant-1",
+          sourceRevision: "rev-1",
+          maxAttempts: 2,
+          deadlineSeconds: 600,
+          idempotencyKey: "idem-denied",
+          expectedOutcome: "verified",
+        },
+        operationId: "op-denied",
+        payloadDigest: "digest-denied",
+        businessIdempotencyKey: "biz-denied",
+        nowIso: "2026-11-20T04:10:00.000Z",
+        decision: {
+          decisionId: "dec-denied",
+          operationId: "op-denied",
+          payloadDigest: "digest-denied",
+          allowed: false,
+          code: "GRANT_MISSING",
+          reason: "denied",
+          grantId: null,
+          policyId: null,
+          decidedAtIso: "2026-11-20T04:10:00.000Z",
+          writePathId: null,
+          gateDetails: [],
+        },
+      }),
+    ).rejects.toThrow(/Denied decision/);
+    expect(await stores.fakeProvider.list()).toHaveLength(0);
+  });
+
+  it("replays acceptPending with the same budget reservation id", async () => {
+    const stores = createMemoryDurableStores();
+    const service = createDurableExecutionService(stores);
+    const account = await stores.budgets.ensureAccount({
+      dayKey: "2026-11-20",
+      currency: "USD",
+      limitMinor: 100,
+    });
+    const input = {
+      job: {
+        jobId: newJobId(),
+        roleId: "A01" as const,
+        workflowId: "wf-replay",
+        siteId: "site-1",
+        assetId: "page-home",
+        trigger: "manual",
+        policyVersion: "1",
+        inputArtifactIds: [] as string[],
+        capabilityGrantId: "grant-1",
+        sourceRevision: "rev-1",
+        maxAttempts: 2,
+        deadlineSeconds: 600,
+        idempotencyKey: "idem-replay",
+        expectedOutcome: "verified",
+      },
+      operationId: "op-replay",
+      payloadDigest: "digest-replay",
+      businessIdempotencyKey: "biz-replay",
+      nowIso: "2026-11-20T04:20:00.000Z",
+      budget: {
+        accountId: account.accountId,
+        reservationId: "res-replay",
+        amountMinor: 50,
+      },
+      decision: {
+        decisionId: "dec-replay",
+        operationId: "op-replay",
+        payloadDigest: "digest-replay",
+        allowed: true,
+        code: null,
+        reason: "ok",
+        grantId: "grant-1",
+        policyId: "pol-1",
+        decidedAtIso: "2026-11-20T04:20:00.000Z",
+        writePathId: null,
+        gateDetails: [] as string[],
+      },
+    };
+    const first = await service.acceptPending(input);
+    const second = await service.acceptPending(input);
+    expect(second.providerCreated).toBe(false);
+    expect(second.applyAttemptCount).toBe(1);
+    expect(second.reservation?.reservationId).toBe(
+      first.reservation?.reservationId,
+    );
+    expect((await stores.budgets.getAccount(account.accountId))?.reservedMinor).toBe(
+      50,
+    );
+  });
+
   it("job insertIdempotent returns the same job on replay", async () => {
     const stores = createMemoryDurableStores();
     const jobInput = {

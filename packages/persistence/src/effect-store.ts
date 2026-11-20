@@ -5,7 +5,8 @@
 
 import { randomBytes } from "node:crypto";
 import type { EffectOutcome } from "@worksocial/domain";
-import type { PgQueryable } from "./pg/client.js";
+import type { PgClient, PgPool, PgQueryable } from "./pg/client.js";
+import { withTransaction } from "./pg/client.js";
 import type {
   DurableEffectIntent,
   EffectAttemptPhase,
@@ -13,6 +14,14 @@ import type {
   EffectAttemptStatus,
   EffectIntentInput,
 } from "./execution-types.js";
+
+function isPool(db: PgQueryable): db is PgPool {
+  // PoolClient also has connect() in some pg versions; Pool has no release().
+  return (
+    typeof (db as PgPool).connect === "function" &&
+    typeof (db as PgClient).release !== "function"
+  );
+}
 
 const TERMINAL: ReadonlySet<EffectOutcome> = new Set([
   "VERIFIED",
@@ -206,37 +215,44 @@ export function createPgEffectStore(db: PgQueryable): EffectStore {
     },
 
     async settle(operationId, outcome, effectState) {
-      const existingResult = await db.query(
-        `SELECT * FROM core.effect_intents WHERE operation_id = $1 FOR UPDATE`,
-        [operationId],
-      );
-      if (!existingResult.rows[0]) {
-        throw new Error(`Unknown operation ${operationId}`);
-      }
-      const existing = rowToIntent(
-        existingResult.rows[0] as Record<string, unknown>,
-      );
-      if (TERMINAL.has(existing.outcome)) {
-        if (existing.outcome === outcome) return existing;
-        throw new Error(
-          `Operation ${operationId} is terminal (${existing.outcome}); cannot settle to ${outcome}`,
+      const run = async (q: PgQueryable): Promise<DurableEffectIntent> => {
+        const existingResult = await q.query(
+          `SELECT * FROM core.effect_intents WHERE operation_id = $1 FOR UPDATE`,
+          [operationId],
         );
-      }
-      if (OUTCOME_RANK[outcome] < OUTCOME_RANK[existing.outcome]) {
-        throw new Error(
-          `Operation ${operationId} cannot regress from ${existing.outcome} to ${outcome}`,
+        if (!existingResult.rows[0]) {
+          throw new Error(`Unknown operation ${operationId}`);
+        }
+        const existing = rowToIntent(
+          existingResult.rows[0] as Record<string, unknown>,
         );
+        if (TERMINAL.has(existing.outcome)) {
+          if (existing.outcome === outcome) return existing;
+          throw new Error(
+            `Operation ${operationId} is terminal (${existing.outcome}); cannot settle to ${outcome}`,
+          );
+        }
+        if (OUTCOME_RANK[outcome] < OUTCOME_RANK[existing.outcome]) {
+          throw new Error(
+            `Operation ${operationId} cannot regress from ${existing.outcome} to ${outcome}`,
+          );
+        }
+        const result = await q.query(
+          `UPDATE core.effect_intents
+           SET outcome = $2,
+               effect_state = COALESCE($3, effect_state),
+               updated_at = now()
+           WHERE operation_id = $1
+           RETURNING *`,
+          [operationId, outcome, effectState ?? null],
+        );
+        return rowToIntent(result.rows[0] as Record<string, unknown>);
+      };
+      // Keep FOR UPDATE + UPDATE in one transaction when called on a pool.
+      if (isPool(db)) {
+        return withTransaction(db, (client) => run(client));
       }
-      const result = await db.query(
-        `UPDATE core.effect_intents
-         SET outcome = $2,
-             effect_state = COALESCE($3, effect_state),
-             updated_at = now()
-         WHERE operation_id = $1
-         RETURNING *`,
-        [operationId, outcome, effectState ?? null],
-      );
-      return rowToIntent(result.rows[0] as Record<string, unknown>);
+      return run(db);
     },
 
     async get(operationId) {
@@ -264,6 +280,7 @@ export function createPgEffectStore(db: PgQueryable): EffectStore {
         `INSERT INTO core.effect_attempts (
            attempt_id, operation_id, attempt_number, phase, status, detail, provider_receipt_id
          ) VALUES ($1,$2,$3,$4,$5,$6,$7)
+         ON CONFLICT (operation_id, attempt_number, phase) DO NOTHING
          RETURNING *`,
         [
           attemptId,
@@ -275,7 +292,20 @@ export function createPgEffectStore(db: PgQueryable): EffectStore {
           input.providerReceiptId ?? null,
         ],
       );
-      return rowToAttempt(result.rows[0] as Record<string, unknown>);
+      if (result.rows[0]) {
+        return rowToAttempt(result.rows[0] as Record<string, unknown>);
+      }
+      const existing = await db.query(
+        `SELECT * FROM core.effect_attempts
+         WHERE operation_id = $1 AND attempt_number = $2 AND phase = $3`,
+        [input.operationId, input.attemptNumber, input.phase],
+      );
+      if (!existing.rows[0]) {
+        throw new Error(
+          `Failed to record attempt ${input.phase} for ${input.operationId}`,
+        );
+      }
+      return rowToAttempt(existing.rows[0] as Record<string, unknown>);
     },
 
     async listAttempts(operationId) {

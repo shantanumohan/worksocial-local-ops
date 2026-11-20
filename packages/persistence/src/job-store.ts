@@ -148,8 +148,19 @@ export function createPgJobStore(db: PgQueryable): JobStore {
     },
 
     async insertIdempotent(input) {
-      try {
-        const result = await db.query(insertSql, [
+      // ON CONFLICT avoids aborting an open transaction (unlike catch-23505).
+      const result = await db.query(
+        `
+        INSERT INTO core.jobs (
+          job_id, role_id, workflow_id, site_id, asset_id, trigger, policy_version,
+          input_artifact_ids, capability_grant_id, source_revision, max_attempts,
+          deadline_seconds, idempotency_key, expected_outcome, status, envelope_json
+        ) VALUES (
+          $1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,$13,$14,$15,$16::jsonb
+        )
+        ON CONFLICT (idempotency_key) DO NOTHING
+        RETURNING *`,
+        [
           input.jobId,
           input.roleId,
           input.workflowId,
@@ -166,27 +177,27 @@ export function createPgJobStore(db: PgQueryable): JobStore {
           input.expectedOutcome,
           input.status ?? "queued",
           JSON.stringify(input.envelopeJson ?? {}),
-        ]);
+        ],
+      );
+      if (result.rows[0]) {
         return {
           job: rowToJob(result.rows[0] as Record<string, unknown>),
           created: true,
         };
-      } catch (err) {
-        const code = (err as { code?: string }).code;
-        if (code === "23505") {
-          const existing = await db.query(
-            `SELECT * FROM core.jobs WHERE idempotency_key = $1`,
-            [input.idempotencyKey],
-          );
-          if (existing.rows[0]) {
-            return {
-              job: rowToJob(existing.rows[0] as Record<string, unknown>),
-              created: false,
-            };
-          }
-        }
-        throw err;
       }
+      const existing = await db.query(
+        `SELECT * FROM core.jobs WHERE idempotency_key = $1`,
+        [input.idempotencyKey],
+      );
+      if (!existing.rows[0]) {
+        throw new Error(
+          `Job idempotent insert failed for key ${input.idempotencyKey}`,
+        );
+      }
+      return {
+        job: rowToJob(existing.rows[0] as Record<string, unknown>),
+        created: false,
+      };
     },
 
     async get(jobId) {

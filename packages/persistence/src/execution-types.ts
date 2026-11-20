@@ -158,6 +158,7 @@ export type JobInsertInput = Omit<
   | "attemptCount"
   | "createdAtIso"
   | "updatedAtIso"
+  | "envelopeJson"
 > & {
   status?: JobStatus;
   envelopeJson?: Record<string, unknown>;

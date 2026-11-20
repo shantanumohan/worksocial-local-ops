@@ -233,6 +233,55 @@ describePg("durable execution (postgres)", () => {
     expect(applyAttempts.rows[0].n).toBe(1);
   });
 
+  it("commits mismatch evidence then throws after transaction", async () => {
+    const service = createPgDurableExecutionService(pool);
+    const suffix = randomBytes(4).toString("hex");
+    const operationId = `op-mismatch-${suffix}`;
+    const digest = `digest-${suffix}`;
+    await service.acceptPending({
+      job: sampleJob(`mismatch-${suffix}`),
+      operationId,
+      payloadDigest: digest,
+      businessIdempotencyKey: `biz-mismatch-${suffix}`,
+      nowIso: "2026-11-20T08:00:00.000Z",
+      decision: {
+        decisionId: `dec-mismatch-${suffix}`,
+        operationId,
+        payloadDigest: digest,
+        allowed: true,
+        code: null,
+        reason: "ok",
+        grantId: "grant-1",
+        policyId: "pol-1",
+        decidedAtIso: "2026-11-20T08:00:00.000Z",
+        writePathId: null,
+        gateDetails: [],
+      },
+    });
+
+    await expect(
+      service.verifyIndependent({
+        operationId,
+        observedDigest: "wrong-digest",
+        nowIso: "2026-11-20T08:01:00.000Z",
+      }),
+    ).rejects.toThrow(/Independent read mismatch/);
+
+    const decision = await service.getDecision(operationId);
+    expect(decision?.outcome).toBe("FAILED");
+    const intent = await pool.query(
+      `SELECT outcome FROM core.effect_intents WHERE operation_id = $1`,
+      [operationId],
+    );
+    expect(intent.rows[0].outcome).toBe("FAILED");
+    const receipts = await pool.query(
+      `SELECT verdict FROM core.execution_receipts
+       WHERE operation_id = $1 AND kind = 'independent_read'`,
+      [operationId],
+    );
+    expect(receipts.rows[0].verdict).toBe("MISMATCH");
+  });
+
   it("fake provider applyOnce is idempotent under concurrency", async () => {
     const service = createPgDurableExecutionService(pool);
     const key = `biz-concurrent-${randomBytes(4).toString("hex")}`;
