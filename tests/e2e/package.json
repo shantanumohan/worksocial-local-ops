@@ -10,7 +10,8 @@
     "@worksocial/action-gateway": "workspace:*",
     "@worksocial/domain": "workspace:*",
     "@worksocial/persistence": "workspace:*",
-    "@worksocial/probes": "workspace:*"
+    "@worksocial/probes": "workspace:*",
+    "@worksocial/lead-capture": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "22.10.2",

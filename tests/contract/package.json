@@ -19,6 +19,7 @@
     "@worksocial/content": "workspace:*",
     "@worksocial/inbox": "workspace:*",
     "@worksocial/repair": "workspace:*",
+    "@worksocial/lead-capture": "workspace:*",
     "@worksocial/probes": "workspace:*"
   },
   "devDependencies": {

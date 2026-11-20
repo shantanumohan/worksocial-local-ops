@@ -67,9 +67,11 @@ export const R1_03_ADAPTERS: readonly AdapterDescriptor[] = [
       "fixture_read_module",
       "fixture_read_org",
       "fixture_canary_receipt",
+      "fixture_field_verify",
+      "fixture_synthetic_cleanup",
     ],
     notes:
-      "Fixture CRM identity/module reads + correlated canary receipts. Live Zoho writes remain NOT_WIRED without owner credentials.",
+      "M5 fixture CRM write/verify/cleanup + correlated canary receipts. Synthetic leads excluded from commerce. Live Zoho writes remain NOT_WIRED.",
   },
   {
     adapterId: "zoho-crm-live",
@@ -258,3 +260,12 @@ export {
   stagingCmsLiveAvailable,
   type StagingCmsSimulator,
 } from "./staging-cms.js";
+
+export {
+  createZohoCrmFixtureAdapter,
+  liveZohoCrmStub,
+  type ZohoCrmFixtureAdapter,
+  type FixtureCrmWriteInput,
+  type FixtureCrmCleanupResult,
+  type FixtureCrmLedgerEntry,
+} from "./zoho-crm-fixture.js";
