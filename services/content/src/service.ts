@@ -745,8 +745,13 @@ export function createContentService(
 
       if (!submitted.decision.allowed) {
         // Transient authority denials stay retryable — article remains APPROVED.
+        // Stop-switch uses BLOCKED (resumable); other denials stay FAILED attempt receipts.
+        const blockedAttempt =
+          submitted.decision.code === "OUTBOUND_STOPPED";
         details.push(
-          "Gateway denial recorded; article remains APPROVED for retry after authority is restored",
+          blockedAttempt
+            ? "Stop-switch BLOCKED attempt; approved revision kept — resumable after outbound resumes"
+            : "Gateway denial recorded; article remains APPROVED for retry after authority is restored",
         );
         const receipt = createPublicationReceipt({
           receiptId: `rcpt-${randomUUID()}`,
@@ -754,7 +759,9 @@ export function createContentService(
           articleId: article.articleId,
           destinationId: "dest-cms",
           kind: DestinationKind.CMS,
-          outcome: PublicationOutcome.FAILED,
+          outcome: blockedAttempt
+            ? PublicationOutcome.BLOCKED
+            : PublicationOutcome.FAILED,
           gatewayOperationId: operationId,
           writePathId: CONTENT_PILOT_CMS_WRITE_PATH_ID,
           summary: `Gateway denied (retryable): ${submitted.decision.code ?? submitted.decision.reason}`,
@@ -1142,8 +1149,12 @@ export function createContentService(
 
       if (!submitted.decision.allowed) {
         // Transient authority denials stay retryable — variant remains READY/prior status.
+        const blockedAttempt =
+          submitted.decision.code === "OUTBOUND_STOPPED";
         details.push(
-          "Gateway denial recorded; variant remains retryable after authority is restored",
+          blockedAttempt
+            ? "Stop-switch BLOCKED attempt; variant remains resumable after outbound resumes"
+            : "Gateway denial recorded; variant remains retryable after authority is restored",
         );
         const receipt = createPublicationReceipt({
           receiptId: `rcpt-${randomUUID()}`,
@@ -1152,7 +1163,9 @@ export function createContentService(
           variantId: variant.variantId,
           destinationId: variant.destinationId,
           kind: variant.kind,
-          outcome: PublicationOutcome.FAILED,
+          outcome: blockedAttempt
+            ? PublicationOutcome.BLOCKED
+            : PublicationOutcome.FAILED,
           gatewayOperationId: operationId,
           writePathId,
           summary: `Gateway denied (retryable): ${submitted.decision.code ?? submitted.decision.reason}`,

@@ -53,6 +53,8 @@ export type ContentFormatValue =
 export const PublicationOutcome = {
   PUBLISHED_VERIFIED: "PUBLISHED_VERIFIED",
   ACCEPTED_PENDING: "ACCEPTED_PENDING",
+  /** Attempt blocked (e.g. stop-switch) — approved revision kept; resumable. */
+  BLOCKED: "BLOCKED",
   FAILED: "FAILED",
   UNKNOWN_REMOTE_OUTCOME: "UNKNOWN_REMOTE_OUTCOME",
   NEEDS_REAUTH: "NEEDS_REAUTH",

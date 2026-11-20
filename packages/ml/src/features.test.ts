@@ -101,6 +101,21 @@ describe("feature extraction", () => {
     expect(examples.map((e) => e.exampleId)).toEqual(["role-live"]);
   });
 
+  it("fixture baseline weights do not encode label= or status= leakage (F08)", async () => {
+    const { fixtureBaselineWeights, FEATURE_DIM } = await import("./models.js");
+    const { hashToken } = await import("./features.js");
+    const lr = fixtureBaselineWeights(
+      "outcome-logreg-l2@1.0.0",
+      "2026-11-20T00:00:00.000Z",
+    );
+    const coeffs = lr.params.coefficients as number[];
+    expect(coeffs[hashToken("label=SUCCESS", FEATURE_DIM)]).toBe(0);
+    expect(coeffs[hashToken("label=FAILURE", FEATURE_DIM)]).toBe(0);
+    expect(coeffs[hashToken("status=failed", FEATURE_DIM)]).toBe(0);
+    // Pre-action priors remain present.
+    expect(coeffs[hashToken("hint.code=DENIED", FEATURE_DIM)]).toBeGreaterThan(0);
+  });
+
   it("does not leak SUCCESS/FAILURE labels or post-outcome fields into features (F08)", () => {
     const rows = [
       writeOutcome({

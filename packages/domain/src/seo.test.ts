@@ -315,6 +315,20 @@ describe("seo domain — semantic search", () => {
     expect(negated.requiredAmenities).not.toContain("parking");
     expect(negated.unknownConstraints).not.toContain("parking");
 
+    const withoutVideo = parseSearchConstraints(
+      "meeting room without video in Jersey City",
+    );
+    expect(withoutVideo.requiredAmenities).not.toContain("video");
+    expect(withoutVideo.negatedTerms).toContain("video");
+
+    const notLa = parseSearchConstraints(
+      "not in Los Angeles meeting room for 8 people",
+    );
+    expect(notLa.location).toBeNull();
+    expect(
+      notLa.unresolvedConstraints.some((c) => c.includes("negation:location")),
+    ).toBe(true);
+
     const result = runSemanticSearch({
       queryId: "q-f10",
       rawQuery: "Meeting for 8 in Jersey City under $150 without video",

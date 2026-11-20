@@ -38,12 +38,11 @@ export function fixtureBaselineWeights(modelId: string, nowIso: string): Trained
     throw new Error(`Unknown modelId: ${modelId}`);
   }
   const weights = new Array<number>(FEATURE_DIM).fill(0);
-  // Mild prior: tokens mentioning FAILURE / stop_switch / denied nudge risk up.
+  // Pre-action priors only (F08) — never label=SUCCESS/FAILURE or post-outcome status=.
   weights[hashToken("hint.code=DENIED", FEATURE_DIM)] = 1.2;
-  weights[hashToken("status=failed", FEATURE_DIM)] = 1.0;
   weights[hashToken("source=stop_switch", FEATURE_DIM)] = 0.8;
-  weights[hashToken("label=FAILURE", FEATURE_DIM)] = 0.5;
-  weights[hashToken("label=SUCCESS", FEATURE_DIM)] = -0.5;
+  weights[hashToken("writePathId=wp-a", FEATURE_DIM)] = 0.3;
+  weights[hashToken("kind=write_path", FEATURE_DIM)] = 0.1;
 
   if (pinned.algorithm === "BernoulliNB") {
     return {

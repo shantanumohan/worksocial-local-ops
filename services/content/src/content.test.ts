@@ -232,7 +232,8 @@ describe("content service", () => {
     });
     expect(denied.gatewayDecision?.allowed).toBe(false);
     expect(denied.article?.status).toBe(ArticleStatus.APPROVED);
-    expect(denied.receipt?.outcome).toBe(PublicationOutcome.FAILED);
+    expect(denied.receipt?.outcome).toBe(PublicationOutcome.BLOCKED);
+    expect(denied.details.join(" ")).toMatch(/BLOCKED|resumable/i);
 
     const okAuthority = demoAuthority(now);
     const released = service.releaseCanonical({

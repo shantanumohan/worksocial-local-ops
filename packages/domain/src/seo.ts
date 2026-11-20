@@ -671,11 +671,21 @@ export function parseSearchConstraints(rawQuery: string): ParsedSearchConstraint
   else if (/event|reception|party/.test(q)) category = "Event";
   else if (/meeting|conference|boardroom/.test(q)) category = "Meeting";
 
+  // Location — never invert "not in X" into a positive hard filter.
   let location: string | null = null;
-  if (/new york|manhattan|nyc/.test(q)) location = "New York";
-  else if (/los angeles|\bla\b/.test(q)) location = "Los Angeles";
-  else if (/jersey/.test(q)) location = "Jersey City";
-  else {
+  const negatedLocationMatch = q.match(
+    /\b(?:not\s+(?:in|near|around)|outside(?:\s+of)?|excluding)\s+(new york|manhattan|nyc|los angeles|\bla\b|jersey(?:\s+city)?|[a-z][a-z\s-]{1,40}?)(?=\s+(?:with|without|under|before|after|for|on|,|\.|$)|$)/,
+  );
+  if (negatedLocationMatch?.[1]) {
+    const raw = negatedLocationMatch[1].trim();
+    unresolvedConstraints.push(`negation:location:${raw}`);
+  } else if (/new york|manhattan|nyc/.test(q)) {
+    location = "New York";
+  } else if (/los angeles|\bla\b/.test(q)) {
+    location = "Los Angeles";
+  } else if (/jersey/.test(q)) {
+    location = "Jersey City";
+  } else {
     // Preserve unrecognized location phrases rather than silently dropping them.
     const locMatch = q.match(
       /\b(?:in|near|around)\s+([a-z][a-z\s-]{1,40}?)(?=\s+(?:with|without|under|before|after|for|on|,|\.|$))/,
@@ -689,9 +699,16 @@ export function parseSearchConstraints(rawQuery: string): ParsedSearchConstraint
   }
 
   const requiredAmenities: string[] = [];
-  if (/display|screen|projector/.test(q)) requiredAmenities.push("display");
-  if (/video|zoom|teams/.test(q)) requiredAmenities.push("video");
-  if (/whiteboard/.test(q)) requiredAmenities.push("whiteboard");
+  // Positive amenity phrases only — "without/no X" handled below (never invert).
+  if (/(?<!\bwithout\s)(?<!\bno\s)(?:display|screen|projector)\b/.test(q)) {
+    requiredAmenities.push("display");
+  }
+  if (/(?<!\bwithout\s)(?<!\bno\s)(?:video|zoom|teams)\b/.test(q)) {
+    requiredAmenities.push("video");
+  }
+  if (/(?<!\bwithout\s)(?<!\bno\s)whiteboard\b/.test(q)) {
+    requiredAmenities.push("whiteboard");
+  }
 
   // Price — preserve; do not invent "free" or drop the bound.
   let priceMaxMinor: number | null = null;
@@ -747,7 +764,6 @@ export function parseSearchConstraints(rawQuery: string): ParsedSearchConstraint
         continue;
       }
       if (
-        requiredAmenities.includes(term) ||
         ["parking", "video", "display", "whiteboard", "catering"].includes(term)
       ) {
         continue;
@@ -756,10 +772,13 @@ export function parseSearchConstraints(rawQuery: string): ParsedSearchConstraint
       unresolvedConstraints.push(`negation:${term}`);
     } else if (!negatedTerms.includes(label)) {
       negatedTerms.push(label);
-      // Known amenity negation: enforce by excluding that amenity requirement
-      // and recording unresolved when the index cannot prove absence.
       unresolvedConstraints.push(`negation:${label}`);
     }
+  }
+  // Strip any amenity that was also negated (defense in depth against invert).
+  for (const term of negatedTerms) {
+    const idx = requiredAmenities.indexOf(term);
+    if (idx >= 0) requiredAmenities.splice(idx, 1);
   }
 
   const unknownConstraints: string[] = [];
