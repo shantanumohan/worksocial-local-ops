@@ -17,6 +17,7 @@
     "@worksocial/knowledge": "workspace:*",
     "@worksocial/seo": "workspace:*",
     "@worksocial/content": "workspace:*",
+    "@worksocial/inbox": "workspace:*",
     "@worksocial/probes": "workspace:*"
   },
   "devDependencies": {

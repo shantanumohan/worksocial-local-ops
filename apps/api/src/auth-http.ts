@@ -41,6 +41,8 @@ import {
   SeoChangeKind,
   ArticleStatus,
   VariantStatus,
+  BookingClaimKind,
+  type BookingClaimKindValue,
   type BookingOwnership,
   type CollectionMethodValue,
   type CrmOwnership,
@@ -57,9 +59,11 @@ import {
 import {
   createDemoCanaryGrant,
   createDemoContentDistributionGrants,
+  createDemoInboxGrants,
   createDemoPublishGrant,
   createFileAuthorityStore,
   createFileContentStore,
+  createFileInboxStore,
   createFileLearningStore,
   createFileKnowledgeStore,
   createFileProbeStore,
@@ -73,6 +77,7 @@ import {
   type LearningStore,
   type PolicyDecisionRecord,
   type ContentStore,
+  type InboxStore,
   type ProbeStore,
   type ProductionMappingStore,
   type RoleRuntimeStore,
@@ -117,6 +122,13 @@ import {
   upsertFixtureContentMapping,
   type ContentService,
 } from "@worksocial/content";
+import {
+  createInboxService,
+  proveFixtureInboxWritePaths,
+  upsertFixtureInboxMapping,
+  INBOX_SUPPORTED_FACT_ID,
+  type InboxService,
+} from "@worksocial/inbox";
 import { listPinnedModels } from "@worksocial/ml";
 
 function factLabelsFromKnowledge(
@@ -206,6 +218,8 @@ export type ApiRuntime = {
   seo: SeoService;
   contentStore: ContentStore;
   content: ContentService;
+  inboxStore: InboxStore;
+  inbox: InboxService;
   runner: ClaudeRunner;
   missions: MissionEnqueueService;
   gateway: ActionGateway;
@@ -385,10 +399,12 @@ export function createApiRuntime(options: {
   const knowledge = createKnowledgeService(knowledgeStore);
   const seoStore = createFileSeoStore(options.stateDir);
   const contentStore = createFileContentStore(options.stateDir);
+  const inboxStore = createFileInboxStore(options.stateDir);
   const gateway = createActionGateway();
   rehydratePendingContentGatewayDecisions(gateway, contentStore, store);
   const seo = createSeoService(seoStore, { gateway });
   const content = createContentService(contentStore, { gateway });
+  const inbox = createInboxService(inboxStore, { gateway });
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
@@ -415,6 +431,8 @@ export function createApiRuntime(options: {
     seo,
     contentStore,
     content,
+    inboxStore,
+    inbox,
     runner,
     missions,
     gateway,
@@ -572,9 +590,9 @@ export async function handleApiRequest(
         status: "running",
         productionActivated: false,
         identity:
-          "R1-02–R1-08 auth + mapping + roles + learning + probes + knowledge + SEO/search + content/distribution",
+          "R1-02–R1-09 auth + mapping + roles + learning + probes + knowledge + SEO/search + content/distribution + inbox/after-hours",
         message:
-          "API surface includes content pipeline, destination variants, gateway-gated fixture CMS/GBP/social receipts, and SEO/search. Live CMS/GBP/social NOT_WIRED. No live SERP/Trends/Zoho.",
+          "API surface includes after-hours inbox/takeover, content pipeline, SEO/search. Live CMS/GBP/social/inbox/Zoho NOT_WIRED. No live SERP/Trends.",
       },
       cors,
     );
@@ -3868,6 +3886,665 @@ export async function handleApiRequest(
     return;
   }
 
+  if (method === "GET" && url.pathname === "/inbox/status") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(res, 200, runtime.inbox.status(), cors);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/inbox/conversations") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(
+      res,
+      200,
+      { conversations: runtime.inbox.listConversations(100) },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/inbox/messages") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const conversationId = url.searchParams.get("conversationId") ?? undefined;
+    json(
+      res,
+      200,
+      { messages: runtime.inbox.listMessages(conversationId, 200) },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/inbox/leads") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(res, 200, { leads: runtime.inbox.listLeads(100) }, cors);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/inbox/handoffs") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(res, 200, { handoffs: runtime.inbox.listHandoffs(100) }, cors);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/inbox/policy") {
+    const result = requireSession(runtime, req, { requireCsrf: false });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    json(res, 200, { policy: runtime.inbox.getPolicy() }, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/inbox/seed-fixtures") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    runtime.knowledge.seedFixtures();
+    const seed = runtime.inbox.seedFixtures();
+    json(
+      res,
+      200,
+      {
+        ...seed,
+        note: "Seeded golden after-hours conversation. Live inbox providers and live Zoho remain NOT_WIRED.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/inbox/ensure-fixture-mapping") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason:
+            "Inbox fixture mapping requires administrator manage_standing_policies",
+        },
+        cors,
+      );
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    const current = runtime.mappingStore.read();
+    const upserted = upsertFixtureInboxMapping(current, nowIso);
+    const proven = proveFixtureInboxWritePaths(upserted.state, nowIso);
+    runtime.mappingStore.write(proven);
+
+    const demo = createDemoInboxGrants(nowIso);
+    runtime.store.update((s) => ({
+      ...s,
+      standingPolicies: [
+        ...s.standingPolicies.filter(
+          (p) =>
+            p.policyId !== demo.replyPolicy.policyId &&
+            p.policyId !== demo.leadPolicy.policyId,
+        ),
+        demo.replyPolicy,
+        demo.leadPolicy,
+      ],
+      capabilityGrants: [
+        ...s.capabilityGrants.filter(
+          (g) =>
+            g.grantId !== demo.replyGrant.grantId &&
+            g.grantId !== demo.leadGrant.grantId,
+        ),
+        demo.replyGrant,
+        demo.leadGrant,
+      ],
+      updatedAt: nowIso,
+    }));
+
+    json(
+      res,
+      200,
+      {
+        writePathIds: upserted.writePathIds,
+        created: upserted.created,
+        note: "Persisted inbox reply + CRM lead write paths, fixture read evidence, and demo grants.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/inbox/draft-reply") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      conversationId?: string;
+      citedFactIds?: string[];
+      bookingClaim?: string;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.conversationId) {
+      json(res, 400, { error: "MISSING_CONVERSATION_ID" }, cors);
+      return;
+    }
+    const citedFactIds =
+      body.citedFactIds && body.citedFactIds.length > 0
+        ? body.citedFactIds
+        : [INBOX_SUPPORTED_FACT_ID];
+    let bookingClaim: BookingClaimKindValue | null =
+      BookingClaimKind.AVAILABILITY_LINK;
+    if (typeof body.bookingClaim === "string") {
+      const allowed = Object.values(BookingClaimKind) as string[];
+      if (!allowed.includes(body.bookingClaim)) {
+        json(res, 400, { error: "INVALID_BOOKING_CLAIM" }, cors);
+        return;
+      }
+      bookingClaim = body.bookingClaim as BookingClaimKindValue;
+    }
+    const drafted = runtime.inbox.draftReply({
+      conversationId: body.conversationId,
+      citedFactIds,
+      factLabels: factLabelsFromKnowledge(runtime.knowledge),
+      bookingClaim,
+    });
+    json(res, drafted.ok ? 200 : 400, drafted, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/inbox/queue-reply") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: { conversationId?: string; draftId?: string };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.conversationId || !body.draftId) {
+      json(res, 400, { error: "MISSING_FIELDS" }, cors);
+      return;
+    }
+    const queued = runtime.inbox.queueReply({
+      conversationId: body.conversationId,
+      draftId: body.draftId,
+    });
+    json(res, queued.ok ? 200 : 400, queued, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/inbox/send-reply") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason: "Inbox send requires administrator manage_standing_policies",
+        },
+        cors,
+      );
+      return;
+    }
+    const raw = await readBody(req);
+    let body: { messageId?: string; preferLive?: boolean };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.messageId) {
+      json(res, 400, { error: "MISSING_MESSAGE_ID" }, cors);
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    const authorityState = runtime.store.read();
+    const hasReplyGrant = authorityState.capabilityGrants.some(
+      (g) =>
+        !g.revoked &&
+        g.allowedOperations.includes("send_customer_reply") &&
+        g.grantId === "grant-demo-inbox-reply",
+    );
+    if (!hasReplyGrant) {
+      json(
+        res,
+        403,
+        {
+          error: "GRANT_MISSING",
+          reason:
+            "No persisted inbox reply grant. Call /inbox/ensure-fixture-mapping first — will not mint demo authority at send time.",
+        },
+        cors,
+      );
+      return;
+    }
+    const sent = runtime.inbox.sendQueuedReply({
+      messageId: body.messageId,
+      preferLive: body.preferLive === true,
+      authority: {
+        outboundStopped: authorityState.ownerControls.outboundStopped,
+        operatingMode: authorityState.ownerControls.operatingMode,
+        policies: authorityState.standingPolicies,
+        grants: authorityState.capabilityGrants,
+      },
+      productionMapping: runtime.mappingStore.read(),
+      nowIso,
+    });
+    if (sent.gatewayDecision) {
+      const decision: PolicyDecisionRecord = {
+        decisionId: sent.gatewayDecision.decisionId,
+        operationId: sent.gatewayDecision.operationId,
+        payloadDigest: sent.gatewayDecision.payloadDigest,
+        allowed: sent.gatewayDecision.allowed,
+        code: sent.gatewayDecision.code,
+        reason: sent.gatewayDecision.reason,
+        grantId: sent.gatewayDecision.grantId,
+        policyId: sent.gatewayDecision.policyId,
+        decidedAtIso: sent.gatewayDecision.decidedAtIso,
+      };
+      runtime.store.update((s) => ({
+        ...s,
+        policyDecisions: [...s.policyDecisions, decision],
+        updatedAt: decision.decidedAtIso,
+      }));
+    }
+    if (sent.outcome) {
+      runtime.mappingStore.addWritePathOutcome(sent.outcome);
+    }
+    json(
+      res,
+      200,
+      {
+        ...sent,
+        note: "Gateway-gated fixture inbox send. Live providers remain NOT_WIRED. Takeover version checked before send.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/inbox/takeover") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: { conversationId?: string };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.conversationId) {
+      json(res, 400, { error: "MISSING_CONVERSATION_ID" }, cors);
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    const takeover = runtime.inbox.takeOver({
+      conversationId: body.conversationId,
+      actorUserId: result.session.userId,
+      nowIso,
+    });
+    if (takeover.ok) {
+      runtime.store.update((state) => ({
+        ...state,
+        auditEvents: [
+          ...state.auditEvents,
+          {
+            eventId: `evt-${randomBytes(6).toString("hex")}`,
+            actorUserId: result.session.userId,
+            eventType: "conversation_takeover",
+            detail: `Takeover conversation ${body.conversationId}; cancelled=${takeover.cancelledMessageIds.join(",") || "none"}`,
+            createdAtIso: nowIso,
+          },
+        ],
+        updatedAt: nowIso,
+      }));
+    }
+    json(
+      res,
+      takeover.ok ? 200 : 400,
+      {
+        ...takeover,
+        note: takeover.ok
+          ? "Conversation version incremented; queued agent replies cancelled."
+          : undefined,
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/inbox/log-lead") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason:
+            "CRM lead logging requires administrator manage_standing_policies",
+        },
+        cors,
+      );
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      conversationId?: string;
+      locationNeed?: string;
+      dateNeed?: string;
+      sizeNeed?: string;
+      preferLive?: boolean;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.conversationId) {
+      json(res, 400, { error: "MISSING_CONVERSATION_ID" }, cors);
+      return;
+    }
+    const nowIso = new Date().toISOString();
+    const authorityState = runtime.store.read();
+    const hasLeadGrant = authorityState.capabilityGrants.some(
+      (g) =>
+        !g.revoked &&
+        g.allowedOperations.includes("log_qualified_lead") &&
+        g.grantId === "grant-demo-inbox-crm-lead",
+    );
+    if (!hasLeadGrant) {
+      json(
+        res,
+        403,
+        {
+          error: "GRANT_MISSING",
+          reason:
+            "No persisted inbox CRM lead grant. Call /inbox/ensure-fixture-mapping first — will not mint demo authority at log time.",
+        },
+        cors,
+      );
+      return;
+    }
+    const lead = runtime.inbox.logLead({
+      conversationId: body.conversationId,
+      ...(body.locationNeed !== undefined
+        ? { locationNeed: body.locationNeed }
+        : {}),
+      ...(body.dateNeed !== undefined ? { dateNeed: body.dateNeed } : {}),
+      ...(body.sizeNeed !== undefined ? { sizeNeed: body.sizeNeed } : {}),
+      preferLive: body.preferLive === true,
+      authority: {
+        outboundStopped: authorityState.ownerControls.outboundStopped,
+        operatingMode: authorityState.ownerControls.operatingMode,
+        policies: authorityState.standingPolicies,
+        grants: authorityState.capabilityGrants,
+      },
+      productionMapping: runtime.mappingStore.read(),
+      nowIso,
+    });
+    if (lead.gatewayDecision) {
+      const decision: PolicyDecisionRecord = {
+        decisionId: lead.gatewayDecision.decisionId,
+        operationId: lead.gatewayDecision.operationId,
+        payloadDigest: lead.gatewayDecision.payloadDigest,
+        allowed: lead.gatewayDecision.allowed,
+        code: lead.gatewayDecision.code,
+        reason: lead.gatewayDecision.reason,
+        grantId: lead.gatewayDecision.grantId,
+        policyId: lead.gatewayDecision.policyId,
+        decidedAtIso: lead.gatewayDecision.decidedAtIso,
+      };
+      runtime.store.update((s) => ({
+        ...s,
+        policyDecisions: [...s.policyDecisions, decision],
+        updatedAt: decision.decidedAtIso,
+      }));
+    }
+    if (lead.outcome) {
+      runtime.mappingStore.addWritePathOutcome(lead.outcome);
+    }
+    json(
+      res,
+      200,
+      {
+        ...lead,
+        note: "Fixture Zoho qualified-lead path. Synthetic leads excluded from commercial totals. Live Zoho remains NOT_WIRED.",
+      },
+      cors,
+    );
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/inbox/handoff") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      conversationId?: string;
+      reason?: string;
+      nextOwner?: string;
+      customerQuestions?: string[];
+      verifiedAnswers?: string[];
+      requestedAction?: string;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.conversationId || !body.reason) {
+      json(res, 400, { error: "MISSING_FIELDS" }, cors);
+      return;
+    }
+    if (
+      body.customerQuestions !== undefined &&
+      (!Array.isArray(body.customerQuestions) ||
+        !body.customerQuestions.every((q) => typeof q === "string"))
+    ) {
+      json(res, 400, { error: "INVALID_CUSTOMER_QUESTIONS" }, cors);
+      return;
+    }
+    if (
+      body.verifiedAnswers !== undefined &&
+      (!Array.isArray(body.verifiedAnswers) ||
+        !body.verifiedAnswers.every((q) => typeof q === "string"))
+    ) {
+      json(res, 400, { error: "INVALID_VERIFIED_ANSWERS" }, cors);
+      return;
+    }
+    const handoff = runtime.inbox.createMorningHandoff({
+      conversationId: body.conversationId,
+      reason: body.reason,
+      ...(body.nextOwner !== undefined ? { nextOwner: body.nextOwner } : {}),
+      ...(body.customerQuestions !== undefined
+        ? { customerQuestions: body.customerQuestions }
+        : {}),
+      ...(body.verifiedAnswers !== undefined
+        ? { verifiedAnswers: body.verifiedAnswers }
+        : {}),
+      ...(body.requestedAction !== undefined
+        ? { requestedAction: body.requestedAction }
+        : {}),
+    });
+    json(res, handoff.ok ? 200 : 400, handoff, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/inbox/acknowledge-handoff") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: { handoffId?: string };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.handoffId) {
+      json(res, 400, { error: "MISSING_HANDOFF_ID" }, cors);
+      return;
+    }
+    const ack = runtime.inbox.acknowledgeMorningHandoff({
+      handoffId: body.handoffId,
+    });
+    json(res, ack.ok ? 200 : 400, ack, cors);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/inbox/pause-replies") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason:
+            "Pause/resume replies requires administrator manage_standing_policies",
+        },
+        cors,
+      );
+      return;
+    }
+    const raw = await readBody(req);
+    let body: { paused?: boolean };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    const policy = runtime.inbox.pauseReplies(body.paused === true);
+    json(res, 200, { policy }, cors);
+    return;
+  }
+
   json(res, 404, { error: "NOT_FOUND" }, cors);
 }
 
@@ -3877,3 +4554,4 @@ export function describeDefaultOwner(): {
 } {
   return { username: "owner", role: LocalRole.ADMINISTRATOR };
 }
+

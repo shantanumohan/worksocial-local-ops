@@ -78,6 +78,7 @@ export {
   createDemoPublishGrant,
   createDemoContentDistributionGrants,
   createDemoCanaryGrant,
+  createDemoInboxGrants,
   defaultAuthorityStateDir,
   hashPassword,
   verifyPassword,
@@ -136,3 +137,9 @@ export {
   defaultContentStateDir,
   type ContentStore,
 } from "./content-store.js";
+
+export {
+  createFileInboxStore,
+  defaultInboxStateDir,
+  type InboxStore,
+} from "./inbox-store.js";

@@ -422,6 +422,70 @@ export function createDemoCanaryGrant(nowIso: string): {
   return { policy, grant };
 }
 
+/** Standing policies+grants for fixture after-hours reply + CRM lead (R1-09). */
+export function createDemoInboxGrants(nowIso: string): {
+  replyPolicy: StandingPolicy;
+  replyGrant: CapabilityGrant;
+  leadPolicy: StandingPolicy;
+  leadGrant: CapabilityGrant;
+} {
+  // Scope to the golden conversation id (not a shared fixture asset label) so
+  // gateway authorization cannot authorize arbitrary ingested threads.
+  const assetScope = [
+    "golden-conv-after-hours",
+    "lead-fixture-after-hours",
+  ];
+  const replyPolicy: StandingPolicy = {
+    policyId: "pol-demo-inbox-reply",
+    version: 1,
+    actorRole: LocalRole.ADMINISTRATOR,
+    channelId: "inbox",
+    actionClass: ActionClass.ROUTINE_CUSTOMER_SERVICE,
+    allowedAssetScope: assetScope,
+    enabled: true,
+    emergencyStopApplies: true,
+    expiresAtIso: null,
+    createdAtIso: nowIso,
+  };
+  const replyGrant: CapabilityGrant = {
+    grantId: "grant-demo-inbox-reply",
+    policyId: replyPolicy.policyId,
+    targetAccountId: "acct-demo",
+    allowedOperations: ["send_customer_reply"],
+    allowedAssetScope: assetScope,
+    contentRevisionBound: "rev-inbox-demo",
+    rateLimitPerHour: 30,
+    expiresAtIso: null,
+    revoked: false,
+    createdAtIso: nowIso,
+  };
+  const leadPolicy: StandingPolicy = {
+    policyId: "pol-demo-inbox-crm-lead",
+    version: 1,
+    actorRole: LocalRole.ADMINISTRATOR,
+    channelId: "crm",
+    actionClass: ActionClass.ROUTINE_CUSTOMER_SERVICE,
+    allowedAssetScope: assetScope,
+    enabled: true,
+    emergencyStopApplies: true,
+    expiresAtIso: null,
+    createdAtIso: nowIso,
+  };
+  const leadGrant: CapabilityGrant = {
+    grantId: "grant-demo-inbox-crm-lead",
+    policyId: leadPolicy.policyId,
+    targetAccountId: "acct-demo",
+    allowedOperations: ["log_qualified_lead"],
+    allowedAssetScope: assetScope,
+    contentRevisionBound: null,
+    rateLimitPerHour: 30,
+    expiresAtIso: null,
+    revoked: false,
+    createdAtIso: nowIso,
+  };
+  return { replyPolicy, replyGrant, leadPolicy, leadGrant };
+}
+
 export function defaultAuthorityStateDir(repoRoot: string): string {
   return join(repoRoot, ".worksocial", "local-state");
 }

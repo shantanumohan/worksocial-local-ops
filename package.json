@@ -2,19 +2,19 @@
   "name": "worksocial-operations",
   "private": true,
   "version": "0.1.0",
-  "description": "WorkSocial local operations monorepo — content/distribution, SEO/search, knowledge/demand, monitoring, multi-model learning. Not production-activated.",
+  "description": "WorkSocial local operations monorepo — after-hours inbox, content/distribution, SEO/search, knowledge/demand, monitoring, multi-model learning. Not production-activated.",
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=20.0.0"
   },
   "scripts": {
-    "build:local": "tsc -b packages/contracts packages/domain packages/ml packages/persistence packages/provider-adapters services/action-gateway services/credential-broker services/claude-runner services/workflow-worker services/learning-worker services/probes services/knowledge services/seo services/content apps/api apps/console services/supervisor --pretty false",
+    "build:local": "tsc -b packages/contracts packages/domain packages/ml packages/persistence packages/provider-adapters services/action-gateway services/credential-broker services/claude-runner services/workflow-worker services/learning-worker services/probes services/knowledge services/seo services/content services/inbox apps/api apps/console services/supervisor --pretty false",
     "local:doctor": "pnpm build:local && tsx scripts/local-doctor.ts",
     "local:start": "pnpm build:local && tsx services/supervisor/src/cli.ts start",
     "local:stop": "pnpm build:local && tsx services/supervisor/src/cli.ts stop",
     "local:health": "pnpm build:local && tsx services/supervisor/src/cli.ts health",
     "check": "tsc -b --pretty false",
-    "test:unit": "pnpm build:local && pnpm --filter @worksocial/domain --filter @worksocial/ml --filter @worksocial/persistence --filter @worksocial/supervisor --filter @worksocial/action-gateway --filter @worksocial/credential-broker --filter @worksocial/claude-runner --filter @worksocial/workflow-worker --filter @worksocial/learning-worker --filter @worksocial/probes --filter @worksocial/knowledge --filter @worksocial/seo --filter @worksocial/content --filter @worksocial/api test",
+    "test:unit": "pnpm build:local && pnpm --filter @worksocial/domain --filter @worksocial/ml --filter @worksocial/persistence --filter @worksocial/supervisor --filter @worksocial/action-gateway --filter @worksocial/credential-broker --filter @worksocial/claude-runner --filter @worksocial/workflow-worker --filter @worksocial/learning-worker --filter @worksocial/probes --filter @worksocial/knowledge --filter @worksocial/seo --filter @worksocial/content --filter @worksocial/inbox --filter @worksocial/api test",
     "test:database": "tsx scripts/stub-test.ts test:database",
     "test:workflow": "tsx scripts/stub-test.ts test:workflow",
     "test:contract": "pnpm build:local && pnpm --filter @worksocial/contract-tests test",

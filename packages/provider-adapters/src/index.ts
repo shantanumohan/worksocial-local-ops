@@ -157,6 +157,43 @@ export const R1_03_ADAPTERS: readonly AdapterDescriptor[] = [
     notes:
       "Live Facebook/Instagram posts — NOT_WIRED (R1-08) without app review/scopes.",
   },
+  {
+    adapterId: "inbox-fixture",
+    providerId: "inbox",
+    status: AdapterStatus.FIXTURE,
+    capabilities: [
+      "fixture_inbound_ingest",
+      "fixture_outbound_send",
+      "fixture_takeover",
+      "fixture_handoff",
+    ],
+    notes:
+      "R1-09 fixture inbox ingest/send/takeover/handoff. Live inbox providers remain NOT_WIRED.",
+  },
+  {
+    adapterId: "inbox-email-live",
+    providerId: "inbox",
+    status: AdapterStatus.NOT_WIRED,
+    capabilities: [],
+    notes:
+      "Live email inbox — NOT_WIRED (R1-09) without owner credentials and provider binding.",
+  },
+  {
+    adapterId: "inbox-webchat-live",
+    providerId: "inbox",
+    status: AdapterStatus.NOT_WIRED,
+    capabilities: [],
+    notes:
+      "Live web chat — NOT_WIRED (R1-09). Host-down must use hosted contact path, not pretend receipt.",
+  },
+  {
+    adapterId: "zoho-crm-lead-fixture",
+    providerId: "crm",
+    status: AdapterStatus.FIXTURE,
+    capabilities: ["fixture_log_qualified_lead"],
+    notes:
+      "R1-09 fixture Zoho qualified-lead logging from after-hours concierge. Synthetic leads excluded from commercial totals.",
+  },
 ] as const;
 
 export function listAdapters(): AdapterDescriptor[] {

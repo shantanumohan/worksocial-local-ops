@@ -4,7 +4,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 
 **Not production-activated.** No live providers, credentials, schedules, website changes, CRM writes, or customer replies. External effects: none.
 
-## What is real (R1-01 → R1-08 + learning)
+## What is real (R1-01 → R1-09 + learning)
 
 ### R1-01 local execution
 - **Supervisor-owned local lifecycle** — `pnpm local:start|stop|doctor|health` and VS Code tasks call `services/supervisor`.
@@ -88,15 +88,26 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - Console `/content` + API `/content/*` — campaigns, articles, variants, receipts, release/verify.
 - SQL `010_content.sql` companion schema; **live CMS / GBP / social remain `NOT_WIRED`**.
 
+### R1-09 Customer response / after-hours
+- **Unified inbox domain** — conversations, messages, leases, response policy, handoffs, qualified leads, booking evidence.
+- **Concierge drafts** grounded in **SUPPORTED** facts only; identifies as virtual assistant; no invented prices/availability.
+- **Human takeover** increments conversation version and cancels queued agent sends; gateway re-checks version before send.
+- **Fixture Zoho lead logging** via action gateway + mapping gates; synthetic leads excluded from commercial totals.
+- **Morning handoff** with acknowledgement; pause-replies control distinct from takeover.
+- **No reservation without booking evidence** — recommendation / tour request / booking link ≠ confirmation.
+- **Learning hooks** — SUCCESS/FAILURE send/lead outcomes (`fixtureOnly` when fixture).
+- Console `/inbox` + API `/inbox/*` — seed, draft, queue, send, takeover, log-lead, handoff.
+- SQL `011_inbox.sql` companion schema; **live inbox providers and live Zoho remain `NOT_WIRED`**.
+
 ## What is still stub / NOT_WIRED
 
 | Area | Status |
 |------|--------|
 | Temporal runtime / durable workflows | **stub** — `NOT_WIRED` (in-process enqueue only) |
 | Live Claude Code CLI fleet | optional; default **fixture** (`WORKSOCIAL_CLAUDE_FIXTURE` unset/`1`) |
-| Full console React routes (v5 25 screens) | minimal login + authority + mapping + roles + monitoring + knowledge + SEO + content + learning |
+| Full console React routes (v5 25 screens) | minimal login + authority + mapping + roles + monitoring + knowledge + SEO + content + inbox + learning |
 | Live OAuth / provider connections | **excluded** — fixture/NOT_WIRED scaffolds only |
-| Live Zoho / CMS / booking mutations | **excluded** — fixture canary / fixture SEO/content release only |
+| Live Zoho / CMS / booking mutations | **excluded** — fixture canary / fixture SEO/content/inbox lead only |
 | Live SERP / Google Trends | **NOT_WIRED** — fixture demand adapters only (R1-06) |
 | Live CMS page / article publish | **NOT_WIRED** — fixture read-back release only (R1-07/R1-08) |
 | Live GBP / LinkedIn / Facebook publish | **NOT_WIRED** — fixture receipts only (R1-08) |
@@ -104,7 +115,8 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 | Postgres bound as live control plane | schema ready; runtime state is **file-backed** |
 | Hugging Face / ONNX weight downloads | **not used** — pure-TS offline trainers + fixture baselines |
 | Production-canary-verified learning | **not claimed** — offline metrics only |
-| After-hours concierge | excluded (R1-09) |
+| Live inbox providers (email/webchat/SMS) | **NOT_WIRED** — fixture ingest/send only (R1-09) |
+| Live Zoho after-hours lead write | **NOT_WIRED** — fixture CRM receipt only (R1-09) |
 
 Status labels stay honest: fixture / stub / `NOT_RUN` ≠ sandbox-verified or production-canary-verified.
 
@@ -112,7 +124,7 @@ Status labels stay honest: fixture / stub / `NOT_RUN` ≠ sandbox-verified or pr
 
 ```
 apps/console, apps/api
-services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-broker,learning-worker,probes,knowledge,seo,content,evaluation-worker}
+services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-broker,learning-worker,probes,knowledge,seo,content,inbox,evaluation-worker}
 packages/{contracts,domain,ml,persistence,provider-adapters,observability,ui}
 database/migrations
 tests/{unit,integration,contract,workflow,e2e,security,eval,soak}
@@ -127,8 +139,8 @@ docs/{adrs,runbooks,product,contracts,v5}
 pnpm install
 pnpm local:doctor | local:start | local:stop | local:health
 pnpm check
-pnpm test:unit          # domain + ml + persistence + supervisor + gateway + broker + runners + learning-worker + probes + knowledge + seo + content + api
-pnpm test:contract      # unauthorized-write + stop-switch + read-evidence + thirty-role-runtime + learning-worker + form-crm-canary + knowledge-labeling + seo-search + content-distribution
+pnpm test:unit          # domain + ml + persistence + supervisor + gateway + broker + runners + learning-worker + probes + knowledge + seo + content + inbox + api
+pnpm test:contract      # unauthorized-write + stop-switch + read-evidence + thirty-role-runtime + learning-worker + form-crm-canary + knowledge-labeling + seo-search + content-distribution + inbox-after-hours
 pnpm test:e2e           # offline e2e-lite HTTP→DOM→canary journey
 pnpm test:database | test:workflow | test:security | test:eval
 pnpm recovery:rehearse | release:evidence
