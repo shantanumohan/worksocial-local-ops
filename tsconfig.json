@@ -18,6 +18,7 @@
     { "path": "services/learning-worker" },
     { "path": "services/probes" },
     { "path": "services/knowledge" },
+    { "path": "services/seo" },
     { "path": "services/evaluation-worker" }
   ]
 }

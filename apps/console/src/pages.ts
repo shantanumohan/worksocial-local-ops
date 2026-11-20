@@ -89,7 +89,7 @@ export function authorityPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -199,7 +199,7 @@ export function mappingPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -340,7 +340,7 @@ export function rolesPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -482,7 +482,7 @@ export function monitoringPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -615,7 +615,7 @@ export function learningPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -747,7 +747,7 @@ export function knowledgePage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -893,6 +893,213 @@ export function knowledgePage(apiOrigin: string): string {
     });
     const body = await res.json();
     document.getElementById('note').textContent = body.note || (body.fact ? ('HYPOTHESIS ' + body.fact.factId) : (body.error || 'failed'));
+    refresh();
+  };
+  document.getElementById('btn-refresh').onclick = () => refresh();
+  refresh();
+</script>
+</body>
+</html>`;
+}
+
+export function seoPage(apiOrigin: string): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WorkSocial — SEO &amp; search</title>
+  <style>
+    :root { --ink:#1b2a22; --panel:#fff; --accent:#2f6b4f; --warn:#8a5a00; }
+    body { margin:0; font-family:"IBM Plex Sans","Segoe UI",sans-serif; background:
+      linear-gradient(180deg,#e7efe9,#f6f3ec); color:var(--ink); }
+    header { padding:1.25rem 1.5rem; border-bottom:1px solid #c9d6cc; background:rgba(255,255,255,.7); }
+    h1 { font-family:"IBM Plex Serif",Georgia,serif; margin:0; font-size:1.45rem; }
+    main { max-width:980px; margin:0 auto; padding:1.5rem; display:grid; gap:1rem; }
+    section { background:var(--panel); border:1px solid #c9d6cc; padding:1rem 1.1rem; }
+    h2 { margin:.2rem 0 .6rem; font-size:1.05rem; }
+    .row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; }
+    button { background:var(--accent); color:#fff; border:0; padding:.5rem .85rem; cursor:pointer; }
+    table { width:100%; border-collapse:collapse; font-size:.9rem; }
+    th, td { text-align:left; padding:.35rem .25rem; border-bottom:1px solid #e0e7e2; vertical-align:top; }
+    .muted { color:#516258; font-size:.85rem; }
+    .warn { color:var(--warn); }
+    .pill { display:inline-block; padding:.15rem .45rem; border:1px solid #b7c5bb; font-size:.75rem; }
+    pre { white-space:pre-wrap; font-size:.8rem; max-height:280px; overflow:auto; }
+    input, select { width:100%; box-sizing:border-box; padding:.45rem .55rem; border:1px solid #b7c5bb; margin:.25rem 0 .6rem; }
+    label { font-size:.85rem; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>WorkSocial</h1>
+  <p class="muted" id="who">Checking session…</p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+</header>
+<main>
+  <section>
+    <h2>SEO and search (R1-07)</h2>
+    <p class="muted">Page audits, SEO proposals, schema validation, fixture semantic search, gateway-gated pilot page release.</p>
+    <p class="warn">Live CMS publish is <strong>NOT_WIRED</strong>. Gateway acceptance ≠ verified. Schema truth requires <strong>SUPPORTED</strong> facts — never HYPOTHESIS. Set Authority mode to <strong>operate</strong>. Ensure fixture mapping, approve, release, then verify with read-back. Administrators only for release/verify.</p>
+    <div class="row">
+      <button id="btn-seed" type="button">Seed fixtures</button>
+      <button id="btn-refresh" type="button">Refresh</button>
+    </div>
+    <p class="muted" id="note"></p>
+  </section>
+  <section>
+    <h2>Status</h2>
+    <table>
+      <thead><tr><th>Signal</th><th>Value</th></tr></thead>
+      <tbody id="status-rows"><tr><td colspan="2" class="muted">Loading…</td></tr></tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Semantic search</h2>
+    <label for="search-q">Query</label>
+    <input id="search-q" value="Meeting for 8 with a display in Jersey City" />
+    <div class="row">
+      <button id="btn-search" type="button">Search fixture catalog</button>
+    </div>
+    <pre id="search-out">—</pre>
+  </section>
+  <section>
+    <h2>Proposal review / release</h2>
+    <label for="prop-id">Proposal id</label>
+    <input id="prop-id" placeholder="golden-prop-title" />
+    <div class="row">
+      <button id="btn-ensure-map" type="button">Ensure fixture mapping</button>
+      <button id="btn-approve" type="button">Approve proposal</button>
+      <button id="btn-release" type="button">Release pilot (gateway)</button>
+      <button id="btn-verify" type="button">Verify with read-back</button>
+    </div>
+  </section>
+  <section>
+    <h2>Page audits</h2>
+    <pre id="audits">Loading…</pre>
+  </section>
+  <section>
+    <h2>Proposals</h2>
+    <pre id="proposals">Loading…</pre>
+  </section>
+</main>
+<script>
+  const API = ${JSON.stringify(apiOrigin)};
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ origin: window.location.origin }, opts.headers || {});
+    const csrf = sessionStorage.getItem('ws_csrf');
+    if (opts.method && opts.method !== 'GET' && csrf) headers['x-csrf-token'] = csrf;
+    return fetch(API + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+  }
+  async function refresh() {
+    const session = await api('/auth/session');
+    if (!session.ok) { location.href = '/login'; return; }
+    const s = await session.json();
+    sessionStorage.setItem('ws_csrf', s.csrfToken);
+    document.getElementById('who').textContent = s.username + ' · ' + s.role + ' · local session';
+    const [statusRes, auditsRes, propsRes] = await Promise.all([
+      api('/seo/status'),
+      api('/seo/audits'),
+      api('/seo/proposals'),
+    ]);
+    if (!statusRes.ok) { location.href = '/login'; return; }
+    const status = await statusRes.json();
+    const auditsBody = await auditsRes.json();
+    const propsBody = await propsRes.json();
+    const tbody = document.getElementById('status-rows');
+    tbody.replaceChildren();
+    const rows = [
+      ['Live CMS publish', status.liveCmsPublishWiring],
+      ['Audits', String(status.auditCount ?? 0)],
+      ['Proposals', String(status.proposalCount ?? 0)],
+      ['Schema validations', String(status.schemaValidationCount ?? 0)],
+      ['Search index version', String(status.searchIndexVersion ?? 'none')],
+      ['Release outcomes', String(status.releaseOutcomeCount ?? 0)],
+    ];
+    for (const [k, v] of rows) {
+      const tr = document.createElement('tr');
+      const tdK = document.createElement('td');
+      tdK.textContent = k;
+      const tdV = document.createElement('td');
+      const pill = document.createElement('span');
+      pill.className = 'pill';
+      pill.textContent = String(v);
+      tdV.appendChild(pill);
+      tr.appendChild(tdK);
+      tr.appendChild(tdV);
+      tbody.appendChild(tr);
+    }
+    document.getElementById('audits').textContent = JSON.stringify(auditsBody.audits || [], null, 2);
+    document.getElementById('proposals').textContent = JSON.stringify(propsBody.proposals || [], null, 2);
+    document.getElementById('note').textContent = status.note || status.honestNote || '';
+    const first = (propsBody.proposals || [])[0];
+    if (first && !document.getElementById('prop-id').value) {
+      document.getElementById('prop-id').value = first.proposalId;
+    }
+  }
+  document.getElementById('btn-seed').onclick = async () => {
+    document.getElementById('note').textContent = 'Seeding golden SEO fixtures…';
+    const res = await api('/seo/seed-fixtures', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.note || (res.ok ? 'Seeded' : (body.error || 'failed'));
+    refresh();
+  };
+  document.getElementById('btn-search').onclick = async () => {
+    const rawQuery = document.getElementById('search-q').value;
+    const res = await api('/seo/search', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ rawQuery })
+    });
+    const body = await res.json();
+    document.getElementById('search-out').textContent = JSON.stringify(body, null, 2);
+  };
+  document.getElementById('btn-ensure-map').onclick = async () => {
+    const res = await api('/seo/ensure-fixture-mapping', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.note || body.reason || body.error || (res.ok ? 'Mapping ready' : 'failed');
+  };
+  document.getElementById('btn-approve').onclick = async () => {
+    const proposalId = document.getElementById('prop-id').value;
+    const res = await api('/seo/approve-proposal', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ proposalId })
+    });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.reasons?.join('; ') || body.error || (res.ok ? 'Approved' : 'failed');
+    refresh();
+  };
+  document.getElementById('btn-release').onclick = async () => {
+    const proposalId = document.getElementById('prop-id').value;
+    const res = await api('/seo/release-pilot', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ proposalId })
+    });
+    const body = await res.json();
+    document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
+    document.getElementById('search-out').textContent = JSON.stringify({
+      gateway: body.gatewayDecision,
+      proposal: body.proposal,
+      outcome: body.outcome,
+      liveCmsPublishWiring: body.liveCmsPublishWiring,
+      acceptanceEqualsVerified: body.acceptanceEqualsVerified,
+    }, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-verify').onclick = async () => {
+    const proposalId = document.getElementById('prop-id').value;
+    const props = JSON.parse(document.getElementById('proposals').textContent || '[]');
+    const row = props.find(p => p.proposalId === proposalId);
+    const observedFields = row?.proposedFields || {};
+    const res = await api('/seo/verify-pilot', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ proposalId, observedFields })
+    });
+    const body = await res.json();
+    document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
+    document.getElementById('search-out').textContent = JSON.stringify(body, null, 2);
     refresh();
   };
   document.getElementById('btn-refresh').onclick = () => refresh();

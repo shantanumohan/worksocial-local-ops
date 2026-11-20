@@ -98,6 +98,27 @@ export const R1_03_ADAPTERS: readonly AdapterDescriptor[] = [
     capabilities: [],
     notes: "Live Google Trends API — NOT_WIRED; access-controlled and not assumed (R1-06).",
   },
+  {
+    adapterId: "seo-fixture-pages",
+    providerId: "owned-site",
+    status: AdapterStatus.FIXTURE,
+    capabilities: [
+      "fixture_page_audit",
+      "fixture_schema_validate",
+      "fixture_semantic_search",
+      "fixture_pilot_page_release",
+    ],
+    notes:
+      "R1-07 golden page audits, schema validation, semantic catalog, gateway-gated fixture page release. No live CMS mutation.",
+  },
+  {
+    adapterId: "cms-publish-live",
+    providerId: "cms",
+    status: AdapterStatus.NOT_WIRED,
+    capabilities: [],
+    notes:
+      "Live CMS publish — NOT_WIRED (R1-07). Acceptance ≠ verified; no silent live site mutation.",
+  },
 ] as const;
 
 export function listAdapters(): AdapterDescriptor[] {

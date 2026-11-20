@@ -123,3 +123,9 @@ export {
   defaultKnowledgeStateDir,
   type KnowledgeStore,
 } from "./knowledge-store.js";
+
+export {
+  createFileSeoStore,
+  defaultSeoStateDir,
+  type SeoStore,
+} from "./seo-store.js";
