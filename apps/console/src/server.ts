@@ -9,6 +9,7 @@ import {
   rolesPage,
   seoPage,
   contentPage,
+  inboxPage,
 } from "./pages.js";
 
 export type ConsoleServerOptions = {
@@ -26,7 +27,7 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
         status: "running",
         productionActivated: false,
         identity:
-          "R1-02–R1-08 login + authority + mapping + roles + monitoring + knowledge + SEO + content + learning",
+          "R1-02–R1-09 login + authority + mapping + roles + monitoring + knowledge + SEO + content + inbox + learning",
         message: "Minimal console surface; not full React routes.",
       });
       res.writeHead(200, { "content-type": "application/json" });
@@ -85,6 +86,12 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
     if (url.pathname === "/content") {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       res.end(contentPage(options.apiOrigin));
+      return;
+    }
+
+    if (url.pathname === "/inbox") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(inboxPage(options.apiOrigin));
       return;
     }
 
