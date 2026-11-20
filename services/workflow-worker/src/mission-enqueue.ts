@@ -69,6 +69,18 @@ export function createMissionEnqueueService(options: {
         };
       }
 
+      if (temporalStatus === "LOCAL_DURABLE") {
+        const run = await options.runner.enqueue(enqueueArgs);
+        return {
+          accepted: true,
+          temporalStatus: "LOCAL_DURABLE",
+          detail:
+            "LOCAL_DURABLE: Postgres-backed mission durability (enqueue/leases/effect boundaries). Temporal cluster remains NOT_WIRED.",
+          workflowId: parsed.data.workflowId,
+          run,
+        };
+      }
+
       // FIXTURE temporal path still uses in-process runner — no live Temporal SDK.
       const run = await options.runner.enqueue(enqueueArgs);
       return {

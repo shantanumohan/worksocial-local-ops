@@ -3,14 +3,14 @@
  *
  * Contract:
  * 1. Enqueue workflow + job row BEFORE any effect ack
- * 2. Claim lease
- * 3. Accept effect via DurableExecutionService (ACCEPTED_PENDING)
- * 4. Optional review wait
- * 5. Independent verify (no second apply)
- * 6. Crash/restart resumes from durable Postgres state
+ * 2. Claim lease (honor maxAttempts + deadline)
+ * 3. Bind operation_id while leased, then accept effect (ACCEPTED_PENDING)
+ * 4. Fenced mark effect_pending
+ * 5. Optional review wait
+ * 6. Independent verify (no second apply); update job status on terminal
+ * 7. Crash/restart resumes from durable Postgres state
  *
- * Temporal cluster remains NOT_WIRED; temporalWiring label is LOCAL_DURABLE
- * for this path (or NOT_WIRED when only the legacy in-process enqueue is used).
+ * Temporal cluster remains NOT_WIRED; temporalWiring label is LOCAL_DURABLE.
  */
 
 import { randomBytes } from "node:crypto";
@@ -33,10 +33,6 @@ import {
 export type DurableMissionRuntime = {
   readonly temporal: TemporalBindingReport;
   readonly temporalLabel: "NOT_WIRED" | "LOCAL_DURABLE" | "FIXTURE";
-  /**
-   * Persist job + workflow as enqueued before any provider apply.
-   * Returns the durable workflow record (phase=enqueued).
-   */
   enqueueBeforeAck(input: {
     envelope: JobEnvelope;
     reviewRequired?: boolean;
@@ -77,10 +73,6 @@ export type DurableMissionRuntime = {
     verifiedOutcome: "VERIFIED";
     applyAttemptCount: number;
   }>;
-  /**
-   * Resume after process restart: read workflow; if effect_pending/review_wait,
-   * verify without a second apply when digest matches.
-   */
   resumeAfterRestart(input: {
     workflowId: string;
     observedDigest: string;
@@ -94,6 +86,20 @@ export type DurableMissionRuntime = {
   getWorkflow(workflowId: string): Promise<MissionWorkflowRecord | undefined>;
 };
 
+function maxAttemptsOf(workflow: MissionWorkflowRecord): number {
+  return Number(workflow.envelopeJson.maxAttempts ?? 2);
+}
+
+function deadlineSecondsOf(workflow: MissionWorkflowRecord): number {
+  return Number(workflow.envelopeJson.deadlineSeconds ?? 600);
+}
+
+function deadlineExceeded(workflow: MissionWorkflowRecord, nowIso: string): boolean {
+  const deadlineMs =
+    Date.parse(workflow.createdAtIso) + deadlineSecondsOf(workflow) * 1000;
+  return Date.parse(nowIso) > deadlineMs;
+}
+
 export function createDurableMissionRuntime(options: {
   missions: MissionWorkflowStore;
   execution: DurableExecutionService;
@@ -106,6 +112,34 @@ export function createDurableMissionRuntime(options: {
       : runtimeTemporalLabel(temporal);
 
   const { missions, execution } = options;
+
+  async function markJobTerminal(
+    jobId: string,
+    status: "succeeded" | "failed",
+    nowIso: string,
+  ): Promise<void> {
+    await execution.stores.jobs.updateStatus(jobId, status, nowIso);
+  }
+
+  async function succeedMission(
+    workflowId: string,
+    nowIso: string,
+  ): Promise<MissionWorkflowRecord> {
+    const workflow = await missions.succeed(workflowId, nowIso);
+    await markJobTerminal(workflow.jobId, "succeeded", nowIso);
+    return workflow;
+  }
+
+  async function failMission(input: {
+    workflowId: string;
+    retryCategory: "transient" | "policy" | "unknown_remote" | "fatal" | "none";
+    lastError: string;
+    nowIso: string;
+  }): Promise<MissionWorkflowRecord> {
+    const workflow = await missions.fail(input);
+    await markJobTerminal(workflow.jobId, "failed", input.nowIso);
+    return workflow;
+  }
 
   return {
     temporal,
@@ -136,10 +170,33 @@ export function createDurableMissionRuntime(options: {
         reviewRequired: input.reviewRequired ?? false,
         temporalWiring: temporalLabel,
         envelopeJson: input.envelope as unknown as Record<string, unknown>,
+        nowIso: input.nowIso,
       });
     },
 
     async claimAndAcceptEffect(input) {
+      const prior = await missions.get(input.workflowId);
+      if (!prior) throw new Error(`Unknown workflow ${input.workflowId}`);
+
+      if (deadlineExceeded(prior, input.nowIso)) {
+        await failMission({
+          workflowId: input.workflowId,
+          retryCategory: "fatal",
+          lastError: "Mission deadline exceeded before lease claim",
+          nowIso: input.nowIso,
+        });
+        throw new Error(`Deadline exceeded for ${input.workflowId}`);
+      }
+      if (prior.attemptCount >= maxAttemptsOf(prior)) {
+        await failMission({
+          workflowId: input.workflowId,
+          retryCategory: "fatal",
+          lastError: "Mission maxAttempts exhausted before lease claim",
+          nowIso: input.nowIso,
+        });
+        throw new Error(`maxAttempts exhausted for ${input.workflowId}`);
+      }
+
       const leaseExpiresAtIso = new Date(
         Date.parse(input.nowIso) + (input.leaseMs ?? 60_000),
       ).toISOString();
@@ -153,37 +210,40 @@ export function createDurableMissionRuntime(options: {
         throw new Error(`Unable to claim lease for ${input.workflowId}`);
       }
 
-      const workflowRow = await missions.get(input.workflowId);
-      if (!workflowRow) throw new Error(`Unknown workflow ${input.workflowId}`);
+      // Persist operation boundary BEFORE provider apply so restart can recover.
+      await missions.bindOperationWhileLeased({
+        workflowId: input.workflowId,
+        operationId: input.operationId,
+        holder: input.holder,
+        nowIso: input.nowIso,
+        payloadDigest: input.payloadDigest,
+        businessIdempotencyKey: input.businessIdempotencyKey,
+      });
 
       const accepted = await execution.acceptPending({
         job: {
-          jobId: workflowRow.jobId,
-          roleId: String(workflowRow.envelopeJson.roleId ?? "A01"),
+          jobId: leased.jobId,
+          roleId: String(leased.envelopeJson.roleId ?? "A01"),
           workflowId: input.workflowId,
-          siteId: String(workflowRow.envelopeJson.siteId ?? "site"),
-          assetId: String(workflowRow.envelopeJson.assetId ?? "asset"),
-          trigger: String(workflowRow.envelopeJson.trigger ?? "manual"),
-          policyVersion: String(workflowRow.envelopeJson.policyVersion ?? "1"),
-          inputArtifactIds: Array.isArray(workflowRow.envelopeJson.inputArtifactIds)
-            ? (workflowRow.envelopeJson.inputArtifactIds as string[])
+          siteId: String(leased.envelopeJson.siteId ?? "site"),
+          assetId: String(leased.envelopeJson.assetId ?? "asset"),
+          trigger: String(leased.envelopeJson.trigger ?? "manual"),
+          policyVersion: String(leased.envelopeJson.policyVersion ?? "1"),
+          inputArtifactIds: Array.isArray(leased.envelopeJson.inputArtifactIds)
+            ? (leased.envelopeJson.inputArtifactIds as string[])
             : [],
           capabilityGrantId: String(
-            workflowRow.envelopeJson.capabilityGrantId ?? "grant",
+            leased.envelopeJson.capabilityGrantId ?? "grant",
           ),
-          sourceRevision: String(
-            workflowRow.envelopeJson.sourceRevision ?? "rev",
-          ),
-          maxAttempts: Number(workflowRow.envelopeJson.maxAttempts ?? 2),
-          deadlineSeconds: Number(
-            workflowRow.envelopeJson.deadlineSeconds ?? 600,
-          ),
+          sourceRevision: String(leased.envelopeJson.sourceRevision ?? "rev"),
+          maxAttempts: Number(leased.envelopeJson.maxAttempts ?? 2),
+          deadlineSeconds: Number(leased.envelopeJson.deadlineSeconds ?? 600),
           idempotencyKey: String(
-            workflowRow.envelopeJson.idempotencyKey ??
+            leased.envelopeJson.idempotencyKey ??
               `mission/${input.workflowId}`,
           ),
           expectedOutcome: String(
-            workflowRow.envelopeJson.expectedOutcome ?? "verified",
+            leased.envelopeJson.expectedOutcome ?? "verified",
           ),
         },
         operationId: input.operationId,
@@ -208,6 +268,7 @@ export function createDurableMissionRuntime(options: {
       const pending = await missions.markEffectPending({
         workflowId: input.workflowId,
         operationId: input.operationId,
+        holder: input.holder,
         nowIso: input.nowIso,
       });
 
@@ -234,12 +295,13 @@ export function createDurableMissionRuntime(options: {
         reviewToken: input.reviewToken,
         nowIso: input.nowIso,
       });
+      const current = (await missions.get(input.workflowId))!;
       const verified = await execution.verifyIndependent({
-        operationId: (await missions.get(input.workflowId))!.operationId!,
+        operationId: current.operationId!,
         observedDigest: input.observedDigest,
         nowIso: input.nowIso,
       });
-      const workflow = await missions.succeed(input.workflowId, input.nowIso);
+      const workflow = await succeedMission(input.workflowId, input.nowIso);
       return {
         workflow,
         verifiedOutcome: "VERIFIED",
@@ -248,17 +310,109 @@ export function createDurableMissionRuntime(options: {
     },
 
     async resumeAfterRestart(input) {
-      const workflow = await missions.get(input.workflowId);
+      let workflow = await missions.get(input.workflowId);
       if (!workflow) throw new Error(`Unknown workflow ${input.workflowId}`);
 
       if (workflow.phase === "succeeded") {
         const op = workflow.operationId!;
-        const count = await execution.stores.effects.countApplyAttempts(op);
         return {
           workflow,
           outcome: "VERIFIED",
-          applyAttemptCount: count,
+          applyAttemptCount: await execution.stores.effects.countApplyAttempts(op),
         };
+      }
+
+      if (workflow.phase === "failed" || workflow.phase === "cancelled") {
+        return {
+          workflow,
+          outcome: "FAILED",
+          applyAttemptCount: workflow.operationId
+            ? await execution.stores.effects.countApplyAttempts(
+                workflow.operationId,
+              )
+            : 0,
+        };
+      }
+
+      // Crash after bind/apply but before markEffectPending: still leased with op id.
+      if (workflow.phase === "leased" && workflow.operationId) {
+        const decision = await execution.getDecision(workflow.operationId);
+        if (
+          decision &&
+          (decision.outcome === "ACCEPTED_PENDING" ||
+            decision.outcome === "VERIFIED" ||
+            decision.outcome === "FAILED")
+        ) {
+          workflow = await missions.recoverEffectPending({
+            workflowId: input.workflowId,
+            operationId: workflow.operationId,
+            nowIso: input.nowIso,
+          });
+        } else {
+          // Re-accept with bound keys (idempotent; no second apply).
+          const digest = String(
+            workflow.envelopeJson.boundPayloadDigest ?? input.observedDigest,
+          );
+          const bizKey = String(
+            workflow.envelopeJson.boundBusinessIdempotencyKey ??
+              `biz-${workflow.workflowId}`,
+          );
+          await execution.acceptPending({
+            job: {
+              jobId: workflow.jobId,
+              roleId: String(workflow.envelopeJson.roleId ?? "A01"),
+              workflowId: workflow.workflowId,
+              siteId: String(workflow.envelopeJson.siteId ?? "site"),
+              assetId: String(workflow.envelopeJson.assetId ?? "asset"),
+              trigger: String(workflow.envelopeJson.trigger ?? "manual"),
+              policyVersion: String(workflow.envelopeJson.policyVersion ?? "1"),
+              inputArtifactIds: Array.isArray(
+                workflow.envelopeJson.inputArtifactIds,
+              )
+                ? (workflow.envelopeJson.inputArtifactIds as string[])
+                : [],
+              capabilityGrantId: String(
+                workflow.envelopeJson.capabilityGrantId ?? "grant",
+              ),
+              sourceRevision: String(
+                workflow.envelopeJson.sourceRevision ?? "rev",
+              ),
+              maxAttempts: Number(workflow.envelopeJson.maxAttempts ?? 2),
+              deadlineSeconds: Number(
+                workflow.envelopeJson.deadlineSeconds ?? 600,
+              ),
+              idempotencyKey: String(
+                workflow.envelopeJson.idempotencyKey ??
+                  `mission/${workflow.workflowId}`,
+              ),
+              expectedOutcome: String(
+                workflow.envelopeJson.expectedOutcome ?? "verified",
+              ),
+            },
+            operationId: workflow.operationId,
+            payloadDigest: digest,
+            businessIdempotencyKey: bizKey,
+            nowIso: input.nowIso,
+            decision: {
+              decisionId: `dec-recover-${workflow.workflowId}`,
+              operationId: workflow.operationId,
+              payloadDigest: digest,
+              allowed: true,
+              code: null,
+              reason: "recovered after restart at leased boundary",
+              grantId: null,
+              policyId: null,
+              decidedAtIso: input.nowIso,
+              writePathId: null,
+              gateDetails: ["recovered"],
+            },
+          });
+          workflow = await missions.recoverEffectPending({
+            workflowId: input.workflowId,
+            operationId: workflow.operationId,
+            nowIso: input.nowIso,
+          });
+        }
       }
 
       if (workflow.phase === "review_wait") {
@@ -287,41 +441,76 @@ export function createDurableMissionRuntime(options: {
       }
 
       if (workflow.phase === "effect_pending" && workflow.operationId) {
+        if (workflow.reviewRequired) {
+          return {
+            workflow,
+            outcome: "REVIEW_WAIT",
+            applyAttemptCount: await execution.stores.effects.countApplyAttempts(
+              workflow.operationId,
+            ),
+          };
+        }
+
         const decision = await execution.getDecision(workflow.operationId);
         if (!decision) {
-          await missions.fail({
+          const failed = await failMission({
             workflowId: input.workflowId,
             retryCategory: "unknown_remote",
             lastError: "Missing durable decision after restart",
             nowIso: input.nowIso,
           });
+          return { workflow: failed, outcome: "FAILED", applyAttemptCount: 0 };
+        }
+        if (decision.outcome === "FAILED") {
+          const failed = await failMission({
+            workflowId: input.workflowId,
+            retryCategory: "unknown_remote",
+            lastError: decision.reason,
+            nowIso: input.nowIso,
+          });
           return {
-            workflow: (await missions.get(input.workflowId))!,
+            workflow: failed,
             outcome: "FAILED",
-            applyAttemptCount: 0,
+            applyAttemptCount: await execution.stores.effects.countApplyAttempts(
+              workflow.operationId,
+            ),
           };
         }
         if (decision.outcome === "ACCEPTED_PENDING") {
-          const verified = await execution.verifyIndependent({
-            operationId: workflow.operationId,
-            observedDigest: input.observedDigest,
-            nowIso: input.nowIso,
-          });
-          const succeeded = await missions.succeed(
-            input.workflowId,
-            input.nowIso,
-          );
-          return {
-            workflow: succeeded,
-            outcome: "VERIFIED",
-            applyAttemptCount: verified.applyAttemptCount,
-          };
+          try {
+            const verified = await execution.verifyIndependent({
+              operationId: workflow.operationId,
+              observedDigest: input.observedDigest,
+              nowIso: input.nowIso,
+            });
+            const succeeded = await succeedMission(
+              input.workflowId,
+              input.nowIso,
+            );
+            return {
+              workflow: succeeded,
+              outcome: "VERIFIED",
+              applyAttemptCount: verified.applyAttemptCount,
+            };
+          } catch (err) {
+            const failed = await failMission({
+              workflowId: input.workflowId,
+              retryCategory: "unknown_remote",
+              lastError:
+                err instanceof Error ? err.message : "verify failed after restart",
+              nowIso: input.nowIso,
+            });
+            return {
+              workflow: failed,
+              outcome: "FAILED",
+              applyAttemptCount: await execution.stores.effects.countApplyAttempts(
+                workflow.operationId,
+              ),
+            };
+          }
         }
         if (decision.outcome === "VERIFIED") {
-          const succeeded = await missions.succeed(
-            input.workflowId,
-            input.nowIso,
-          );
+          const succeeded = await succeedMission(input.workflowId, input.nowIso);
           return {
             workflow: succeeded,
             outcome: "VERIFIED",

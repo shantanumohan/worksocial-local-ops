@@ -44,4 +44,36 @@ describe("mission enqueue (Temporal NOT_WIRED)", () => {
     expect(result.run?.roleId).toBe("A01");
     expect(result.detail).toMatch(/Temporal/);
   });
+
+  it("preserves LOCAL_DURABLE status when configured", async () => {
+    const runner = createClaudeRunner({
+      workspaceRoot: process.cwd(),
+      forceFixture: true,
+    });
+    const service = createMissionEnqueueService({
+      runner,
+      temporalStatus: "LOCAL_DURABLE",
+    });
+    const result = await service.enqueue({
+      envelope: {
+        jobId: uuid(),
+        roleId: "A01",
+        workflowId: "wf-local-durable",
+        siteId: "worksocial",
+        assetId: "mission-1",
+        trigger: "owner_goal",
+        policyVersion: "m2",
+        inputArtifactIds: [],
+        capabilityGrantId: "fixture-grant",
+        sourceRevision: "rev",
+        maxAttempts: 1,
+        deadlineSeconds: 60,
+        idempotencyKey: `mission/${uuid()}`,
+        expectedOutcome: "plan",
+      },
+    });
+    expect(result.accepted).toBe(true);
+    expect(result.temporalStatus).toBe("LOCAL_DURABLE");
+    expect(result.detail).toMatch(/LOCAL_DURABLE/);
+  });
 });

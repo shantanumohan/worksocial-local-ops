@@ -85,8 +85,6 @@ describe("durable mission runtime (LOCAL_DURABLE)", () => {
 
   it("survives restart at effect_pending without a second apply", async () => {
     const runtimeA = createMemoryDurableMissionRuntime();
-    // Share stores by reconstructing is hard with memory factory — use one runtime
-    // and simulate restart via resumeAfterRestart (durable state in same stores).
     const workflowId = `wf-restart-${uuid()}`;
     const digest = "digest-restart";
     const now = "2026-11-20T06:00:00.000Z";
@@ -126,7 +124,6 @@ describe("durable mission runtime (LOCAL_DURABLE)", () => {
     expect(accepted.workflow.phase).toBe("effect_pending");
     expect(accepted.applyAttemptCount).toBe(1);
 
-    // Process "restart": resume from durable ACCEPTED_PENDING.
     const resumed = await runtimeA.resumeAfterRestart({
       workflowId,
       observedDigest: digest,
@@ -135,5 +132,50 @@ describe("durable mission runtime (LOCAL_DURABLE)", () => {
     expect(resumed.outcome).toBe("VERIFIED");
     expect(resumed.workflow.phase).toBe("succeeded");
     expect(resumed.applyAttemptCount).toBe(1);
+  });
+
+  it("honors reviewRequired after restart at effect_pending", async () => {
+    const runtime = createMemoryDurableMissionRuntime();
+    const workflowId = `wf-review-restart-${uuid()}`;
+    const digest = "digest-review-restart";
+
+    await runtime.enqueueBeforeAck({
+      envelope: {
+        jobId: uuid(),
+        roleId: "A25",
+        workflowId,
+        siteId: "site-1",
+        assetId: "page-home",
+        trigger: "manual",
+        policyVersion: "m2",
+        inputArtifactIds: [],
+        capabilityGrantId: "grant-1",
+        sourceRevision: "rev-1",
+        maxAttempts: 2,
+        deadlineSeconds: 600,
+        idempotencyKey: `mission/${workflowId}`,
+        expectedOutcome: "verified",
+      },
+      reviewRequired: true,
+      nowIso: "2026-11-20T06:10:00.000Z",
+    });
+
+    await runtime.claimAndAcceptEffect({
+      workflowId,
+      holder: "worker-a",
+      operationId: `op-${workflowId}`,
+      payloadDigest: digest,
+      businessIdempotencyKey: `biz-${workflowId}`,
+      nowIso: "2026-11-20T06:11:00.000Z",
+      decision: { decisionId: `dec-${workflowId}`, reason: "ok" },
+    });
+
+    const resumed = await runtime.resumeAfterRestart({
+      workflowId,
+      observedDigest: digest,
+      nowIso: "2026-11-20T06:12:00.000Z",
+    });
+    expect(resumed.outcome).toBe("REVIEW_WAIT");
+    expect(resumed.workflow.phase).toBe("effect_pending");
   });
 });
