@@ -449,7 +449,7 @@ export function createApiRuntime(options: {
   const leadCaptureStore = createFileLeadCaptureStore(options.stateDir);
   const leadCapture = createLeadCaptureService(leadCaptureStore, {
     gateway,
-    repair,
+    repairStore,
   });
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;

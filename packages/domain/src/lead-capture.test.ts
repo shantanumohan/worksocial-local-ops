@@ -92,7 +92,7 @@ describe("lead-capture domain", () => {
     expect(bad.mismatchedFields.length).toBeGreaterThan(0);
   });
 
-  it("tracks journey stages and summary lastSuccess/currentFailure", () => {
+  it("tracks journey stages and keeps failures visible while repairing", () => {
     let journey = createLeadCaptureJourney({
       journeyId: "j1",
       correlationId: "c1",
@@ -115,6 +115,11 @@ describe("lead-capture domain", () => {
       details: ["MISSING_REMOTE"],
       atIso: "2026-11-20T15:01:00.000Z",
     });
+    failed = {
+      ...failed,
+      status: LeadCaptureJourneyStatus.REPAIRING,
+      currentFailure: failed.currentFailure,
+    };
     expect(failed.cleanup.status).toBe(CleanupStatus.PENDING);
 
     const state = {

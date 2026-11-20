@@ -119,6 +119,8 @@ describe("lead-capture service", () => {
     });
     expect(failed.journey.status).toBe(LeadCaptureJourneyStatus.FAILED);
     expect(failed.journey.currentFailure?.stage).toBe("crm_write");
+    expect(failed.journey.stagesCompleted).not.toContain("crm_write");
+    expect(failed.journey.submission).toBeTruthy();
 
     const recovered = await service.runBoundedRepairRecovery({
       journeyId: failed.journey.journeyId,
@@ -130,5 +132,42 @@ describe("lead-capture service", () => {
     expect(recovered.ok).toBe(true);
     expect(recovered.journey?.status).toBe(LeadCaptureJourneyStatus.RECOVERED);
     expect(recovered.journey?.repair?.state).toBe("verified_recovered");
+
+    const again = await service.runBoundedRepairRecovery({
+      journeyId: failed.journey.journeyId,
+      authority: authority(proven),
+      nowIso: "2026-11-20T16:06:00.000Z",
+    });
+    expect(again.ok).toBe(false);
+    expect(again.details.some((d) => /Refuse repeated recovery/i.test(d))).toBe(
+      true,
+    );
+  });
+
+  it("denies recovery when outbound is stopped", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "ws-lc-stop-"));
+    dirs.push(dir);
+    const store = createFileLeadCaptureStore(dir);
+    const service = createLeadCaptureService(store, {
+      gateway: createActionGateway(),
+    });
+    const seeded = createFixturePilotMapping(now);
+    const proven = proveFixturePilotWritePath(
+      seeded.state,
+      seeded.writePathId,
+      now,
+    );
+    const failed = await service.runJourney({
+      authority: authority(proven),
+      nowIso: now,
+      failDelivery: true,
+    });
+    const denied = await service.runBoundedRepairRecovery({
+      journeyId: failed.journey.journeyId,
+      authority: { ...authority(proven), outboundStopped: true },
+      nowIso: "2026-11-20T16:10:00.000Z",
+    });
+    expect(denied.ok).toBe(false);
+    expect(denied.details.some((d) => /denied by gateway/i.test(d))).toBe(true);
   });
 });

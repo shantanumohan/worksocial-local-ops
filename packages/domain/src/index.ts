@@ -539,6 +539,8 @@ export {
   appendCommerceLead,
   verifyCanaryCrmFields,
   linkRepairToJourney,
+  isCrmDeliveryFailure,
+  CRM_DELIVERY_FAILURE_STAGES,
   summarizeLeadCaptureStatus,
   type LeadCaptureStageValue,
   type LeadCaptureJourneyStatusValue,

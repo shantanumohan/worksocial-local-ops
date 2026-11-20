@@ -316,9 +316,6 @@ importers:
       '@worksocial/provider-adapters':
         specifier: workspace:*
         version: link:../../packages/provider-adapters
-      '@worksocial/repair':
-        specifier: workspace:*
-        version: link:../repair
     devDependencies:
       '@types/node':
         specifier: 22.10.2

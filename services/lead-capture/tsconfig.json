@@ -10,7 +10,6 @@
     { "path": "../../packages/domain" },
     { "path": "../../packages/persistence" },
     { "path": "../../packages/provider-adapters" },
-    { "path": "../action-gateway" },
-    { "path": "../repair" }
+    { "path": "../action-gateway" }
   ]
 }

@@ -64,6 +64,8 @@ export type LeadCaptureRepairLink = {
   ticketId: string | null;
   proposalId: string | null;
   state: string;
+  /** Bounded repair attempts for this journey (max 2). */
+  attemptCount: number;
 };
 
 export type LeadCaptureCleanupRecord = {
@@ -353,12 +355,31 @@ export function linkRepairToJourney(
   return {
     ...journey,
     status: LeadCaptureJourneyStatus.REPAIRING,
-    repair: link,
+    repair: {
+      ...link,
+      attemptCount: link.attemptCount ?? 0,
+    },
     stagesCompleted: journey.stagesCompleted.includes(LeadCaptureStage.INCIDENT)
       ? journey.stagesCompleted
       : [...journey.stagesCompleted, LeadCaptureStage.INCIDENT],
     updatedAtIso: nowIso,
   };
+}
+
+/** Stages eligible for CRM delivery repair (not browser/gateway pre-submit failures). */
+export const CRM_DELIVERY_FAILURE_STAGES: readonly LeadCaptureStageValue[] = [
+  LeadCaptureStage.CRM_WRITE,
+  LeadCaptureStage.VERIFY,
+  LeadCaptureStage.CLEANUP,
+];
+
+export function isCrmDeliveryFailure(
+  journey: Pick<LeadCaptureJourney, "currentFailure" | "submission">,
+): boolean {
+  if (!journey.currentFailure || !journey.submission) {
+    return false;
+  }
+  return CRM_DELIVERY_FAILURE_STAGES.includes(journey.currentFailure.stage);
 }
 
 export function summarizeLeadCaptureStatus(state: LeadCaptureState): {
@@ -390,8 +411,15 @@ export function summarizeLeadCaptureStatus(state: LeadCaptureState): {
       String(b.lastSuccessAtIso).localeCompare(String(a.lastSuccessAtIso)),
     );
   const last = successes[0] ?? null;
+  // Keep unresolved failures visible while REPAIRING (until recovered/cleared).
   const failures = state.journeys
-    .filter((j) => j.currentFailure && j.status === LeadCaptureJourneyStatus.FAILED)
+    .filter(
+      (j) =>
+        j.currentFailure &&
+        (j.status === LeadCaptureJourneyStatus.FAILED ||
+          j.status === LeadCaptureJourneyStatus.REPAIRING ||
+          j.status === LeadCaptureJourneyStatus.ESCALATED),
+    )
     .sort((a, b) =>
       String(b.currentFailure?.atIso).localeCompare(
         String(a.currentFailure?.atIso),

@@ -648,6 +648,7 @@ export function monitoringPage(apiOrigin: string): string {
     const res = await api('/lead-capture/run-bounded-repair', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ journeyId: lastFailedJourneyId, attemptWeakenTest: true }) });
     const body = await res.json();
     document.getElementById('note').textContent = body.ok ? ('Recovered · weaken blocked=' + body.weakenTestBlocked) : (body.details || [body.error || 'failed']).join('; ');
+    if (body.ok) lastFailedJourneyId = null;
     refresh();
   };
   document.getElementById('btn-refresh').onclick = () => refresh();

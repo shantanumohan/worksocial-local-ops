@@ -6,7 +6,7 @@
  * External effects: NONE. Live Zoho NOT_WIRED. Temporal NOT_WIRED.
  */
 
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import {
   ActionClass,
   CleanupStatus,
@@ -15,6 +15,7 @@ import {
   LeadCaptureJourneyStatus,
   LeadCaptureStage,
   LocalRole,
+  MAX_REPAIR_ATTEMPTS,
   ProbeVerdict,
   RepairClass,
   RepairPatchOp,
@@ -28,6 +29,7 @@ import {
   digestTestBaseline,
   evaluateProtectedPathGate,
   evaluateTestIntegrityGate,
+  isCrmDeliveryFailure,
   linkRepairToJourney,
   markJourneyFailure,
   markJourneySuccess,
@@ -46,6 +48,7 @@ import {
   newJobId,
   type DurableExecutionService,
   type LeadCaptureStore,
+  type RepairStore,
 } from "@worksocial/persistence";
 import {
   createZohoCrmFixtureAdapter,
@@ -57,7 +60,6 @@ import {
   type ActionGateway,
   type GatewayAuthoritySnapshot,
 } from "@worksocial/action-gateway";
-import type { RepairService } from "@worksocial/repair";
 import { runBrowserFormSubmit } from "./browser-harness.js";
 
 function id(prefix: string): string {
@@ -83,7 +85,8 @@ export type LeadCaptureServiceOptions = {
   gateway?: ActionGateway;
   crm?: ZohoCrmFixtureAdapter;
   durable?: DurableExecutionService;
-  repair?: RepairService;
+  /** Persist incidents/tickets/proposals into the repair ledger. */
+  repairStore?: RepairStore;
 };
 
 export type LeadCaptureService = {
@@ -97,7 +100,6 @@ export type LeadCaptureService = {
     authority: LeadCaptureAuthority;
     nowIso?: string;
     writePathId?: string;
-    /** Inject CRM delivery failure for incident/repair demos. */
     failDelivery?: boolean;
     preferLiveBrowser?: boolean;
     skipCleanup?: boolean;
@@ -126,15 +128,12 @@ export type LeadCaptureService = {
     proposalId?: string;
     details: string[];
   };
-  /**
-   * Prove bounded repair cannot weaken protected tests, then recover journey.
-   */
   runBoundedRepairRecovery(input: {
     journeyId: string;
     authority: LeadCaptureAuthority;
     nowIso?: string;
-    /** Attempt a weaken-test proposal first — must fail closed. */
     attemptWeakenTest?: boolean;
+    targetAccountId?: string;
   }): Promise<{
     ok: boolean;
     weakenTestBlocked: boolean;
@@ -151,6 +150,7 @@ export function createLeadCaptureService(
   const crm = options.crm ?? createZohoCrmFixtureAdapter();
   const durable =
     options.durable ?? createDurableExecutionService(createMemoryDurableStores());
+  const repairStore = options.repairStore;
 
   return {
     status() {
@@ -190,7 +190,6 @@ export function createLeadCaptureService(
       const lead = createSyntheticLead({ correlationId });
       assertSyntheticExcludedFromCommercial(lead);
 
-      // 1) Browser / form submit into approved fixture destination
       const browser = await runBrowserFormSubmit({
         correlationId,
         fieldValues: lead.fieldValues,
@@ -214,7 +213,6 @@ export function createLeadCaptureService(
       }
       journey = markStageComplete(journey, LeadCaptureStage.BROWSER, nowIso);
 
-      // 2) Gateway authorize form accept
       const mapping = input.authority.productionMapping;
       const writePathId =
         input.writePathId ??
@@ -302,7 +300,6 @@ export function createLeadCaptureService(
         },
       };
 
-      // 3) Durable accept (M2) — LOCAL_DURABLE; Temporal stays NOT_WIRED
       const durableOpId = operationId;
       try {
         await durable.acceptPending({
@@ -346,12 +343,18 @@ export function createLeadCaptureService(
         journey = { ...journey, durableOperationId: durableOpId };
         details.push("Durable effect ACCEPTED_PENDING (LOCAL_DURABLE)");
       } catch (err) {
-        details.push(
-          `Durable accept failed: ${err instanceof Error ? err.message : String(err)}`,
-        );
+        const msg = err instanceof Error ? err.message : String(err);
+        details.push(`Durable accept failed: ${msg}`);
+        journey = markJourneyFailure(journey, {
+          stage: LeadCaptureStage.FORM_ACCEPT,
+          verdict: "FAILURE",
+          details: [`Durable accept failed — aborting before CRM write: ${msg}`],
+          atIso: nowIso,
+        });
+        store.upsertJourney(journey);
+        return { journey, details };
       }
 
-      // 4) Fixture CRM write
       const receipt = crm.writeSyntheticLead({
         correlationId,
         moduleId: crmOwn?.moduleId ?? form?.crmModuleId ?? "Leads",
@@ -361,7 +364,7 @@ export function createLeadCaptureService(
       });
       if (!receipt) {
         details.push("CRM delivery failed — no fixture receipt");
-        journey = markStageComplete(journey, LeadCaptureStage.CRM_WRITE, nowIso);
+        // Do NOT mark CRM_WRITE complete — delivery produced no receipt.
         journey = {
           ...journey,
           crmReceipt: null,
@@ -373,7 +376,6 @@ export function createLeadCaptureService(
           details: ["MISSING_REMOTE: fixture CRM write skipped/failed"],
           atIso: nowIso,
         });
-        // Still record synthetic exclusion intent in commerce ledger (no count)
         store.addCommerceLead({
           recordId: `pending-${correlationId}`,
           synthetic: true,
@@ -397,7 +399,6 @@ export function createLeadCaptureService(
         countedInCommerce: false,
       });
 
-      // 5) Field verify
       const verified = crm.verifyFields({
         correlationId,
         expected: lead.fieldValues,
@@ -419,7 +420,6 @@ export function createLeadCaptureService(
       }
       journey = markStageComplete(journey, LeadCaptureStage.VERIFY, nowIso);
 
-      // Independent durable verify (no second apply)
       if (journey.durableOperationId) {
         try {
           const v = await durable.verifyIndependent({
@@ -428,39 +428,74 @@ export function createLeadCaptureService(
             observedPayload: { correlationId, recordId: receipt.recordId },
             nowIso,
           });
+          if (!v.matched) {
+            details.push("Durable verify mismatched");
+            journey = markJourneyFailure(journey, {
+              stage: LeadCaptureStage.VERIFY,
+              verdict: ProbeVerdict.FAILURE,
+              details: ["Durable independent verify mismatched — journey quarantined"],
+              atIso: nowIso,
+            });
+            store.upsertJourney(journey);
+            return { journey, details };
+          }
           details.push(
-            v.matched
-              ? `Durable verify VERIFIED (applyCount=${v.applyAttemptCount})`
-              : "Durable verify mismatched",
+            `Durable verify VERIFIED (applyCount=${v.applyAttemptCount})`,
           );
         } catch (err) {
-          details.push(
-            `Durable verify error: ${err instanceof Error ? err.message : String(err)}`,
-          );
+          const msg = err instanceof Error ? err.message : String(err);
+          details.push(`Durable verify error: ${msg}`);
+          journey = markJourneyFailure(journey, {
+            stage: LeadCaptureStage.VERIFY,
+            verdict: ProbeVerdict.FAILURE,
+            details: [`Durable verify error — refusing SUCCESS: ${msg}`],
+            atIso: nowIso,
+          });
+          store.upsertJourney(journey);
+          return { journey, details };
         }
       }
 
       gateway.markVerified(operationId, nowIso);
       journey = markJourneySuccess(journey, nowIso);
 
-      // 6) Cleanup synthetic CRM record
       if (!input.skipCleanup) {
         const cleaned = crm.cleanup({ correlationId, nowIso });
         details.push(...cleaned.details);
+        if (!cleaned.ok) {
+          journey = {
+            ...journey,
+            cleanup: {
+              status: CleanupStatus.FAILED,
+              cleanedRecordId: cleaned.cleanedRecordId,
+              cleanedAtIso: null,
+              details: cleaned.details,
+            },
+          };
+          journey = markJourneyFailure(journey, {
+            stage: LeadCaptureStage.CLEANUP,
+            verdict: ProbeVerdict.FAILURE,
+            details: [
+              "Synthetic cleanup failed — journey not SUCCESS while CRM record remains",
+              ...cleaned.details,
+            ],
+            atIso: nowIso,
+          });
+          store.upsertJourney(journey);
+          return { journey, details };
+        }
         journey = {
           ...journey,
           cleanup: {
-            status: cleaned.ok ? CleanupStatus.DONE : CleanupStatus.FAILED,
+            status: CleanupStatus.DONE,
             cleanedRecordId: cleaned.cleanedRecordId,
-            cleanedAtIso: cleaned.ok ? nowIso : null,
+            cleanedAtIso: nowIso,
             details: cleaned.details,
           },
-          status: cleaned.ok
-            ? LeadCaptureJourneyStatus.CLEANED
-            : journey.status,
+          status: LeadCaptureJourneyStatus.CLEANED,
         };
         journey = markStageComplete(journey, LeadCaptureStage.CLEANUP, nowIso);
-        if (cleaned.ok && cleaned.receiptId) {
+        if (cleaned.receiptId) {
           store.addCleanupEvent({
             cleanupId: id("cleanup"),
             correlationId,
@@ -512,6 +547,7 @@ export function createLeadCaptureService(
         next = {
           ...markStageComplete(next, LeadCaptureStage.CLEANUP, nowIso),
           status: LeadCaptureJourneyStatus.CLEANED,
+          currentFailure: null,
         };
         if (cleaned.receiptId) {
           store.addCleanupEvent({
@@ -522,6 +558,13 @@ export function createLeadCaptureService(
             cleanedAtIso: nowIso,
           });
         }
+      } else {
+        next = markJourneyFailure(next, {
+          stage: LeadCaptureStage.CLEANUP,
+          verdict: ProbeVerdict.FAILURE,
+          details: cleaned.details,
+          atIso: nowIso,
+        });
       }
       store.upsertJourney(next);
       return { ok: cleaned.ok, journey: next, details: cleaned.details };
@@ -546,6 +589,16 @@ export function createLeadCaptureService(
           code: "NO_FAILURE",
           journey,
           details: ["Journey has no current failure to open an incident from"],
+        };
+      }
+      if (!isCrmDeliveryFailure(journey)) {
+        return {
+          ok: false,
+          code: "NOT_CRM_DELIVERY_FAILURE",
+          journey,
+          details: [
+            "Incidents for bounded CRM repair require a CRM delivery/verify/cleanup failure with an authorized submission — pre-submit browser/gateway failures are not eligible",
+          ],
         };
       }
       if (journey.repair?.incidentId) {
@@ -616,16 +669,6 @@ export function createLeadCaptureService(
         status: RepairProposalStatus.READY_FOR_REVIEW,
       });
 
-      // Persist via optional repair service when available
-      if (options.repair) {
-        const repairStore = (
-          options.repair as unknown as { /* opaque */ }
-        );
-        void repairStore;
-        // Repair service has no public upsert for arbitrary incidents; keep links on journey.
-      }
-
-      // Fail-closed integrity check on the proposal we just built
       const integrity = evaluateTestIntegrityGate(proposal);
       const protectedPaths = evaluateProtectedPathGate(proposal);
       if (!integrity.allowed || !protectedPaths.allowed) {
@@ -640,30 +683,25 @@ export function createLeadCaptureService(
         };
       }
 
-      let next = linkRepairToJourney(
+      if (repairStore) {
+        repairStore.upsertIncident(incident);
+        repairStore.upsertTicket(ticket);
+        repairStore.upsertProposal(proposal);
+      }
+
+      const next = linkRepairToJourney(
         journey,
         {
           incidentId,
           ticketId,
           proposalId,
-          state: "incident_open",
+          state: `incident_open:${incident.status}:${ticket.repairClass}`,
+          attemptCount: 0,
         },
         nowIso,
       );
-      // Stash proposal essentials on journey via repair state label
-      next = {
-        ...next,
-        repair: {
-          incidentId,
-          ticketId,
-          proposalId,
-          state: `incident_open:${incident.status}:${ticket.repairClass}`,
-        },
-      };
+      // Retain currentFailure while REPAIRING so monitoring still shows it.
       store.upsertJourney(next);
-      // Keep incident object referenced via details for callers/tests
-      void incident;
-      void ticket;
       return {
         ok: true,
         journey: next,
@@ -673,6 +711,9 @@ export function createLeadCaptureService(
         details: [
           `Opened incident ${incidentId} from delivery failure`,
           `Ticket ${ticketId} / proposal ${proposalId} (idempotent_retry)`,
+          repairStore
+            ? "Persisted incident bundle to repair ledger"
+            : "Repair store not wired — IDs linked on journey only",
           "Test integrity + protected path gates passed",
         ],
       };
@@ -693,7 +734,53 @@ export function createLeadCaptureService(
         };
       }
 
-      // Ensure incident exists
+      if (
+        journey.status === LeadCaptureJourneyStatus.RECOVERED ||
+        journey.status === LeadCaptureJourneyStatus.CLEANED ||
+        journey.status === LeadCaptureJourneyStatus.SUCCESS
+      ) {
+        return {
+          ok: false,
+          weakenTestBlocked: false,
+          journey,
+          details: [
+            `Refuse repeated recovery — journey already ${journey.status}`,
+          ],
+        };
+      }
+
+      if (!journey.currentFailure || !isCrmDeliveryFailure(journey)) {
+        return {
+          ok: false,
+          weakenTestBlocked: false,
+          journey,
+          details: [
+            "Recovery restricted to CRM delivery/verify/cleanup failures with an authorized submission",
+          ],
+        };
+      }
+
+      const priorAttempts = journey.repair?.attemptCount ?? 0;
+      if (priorAttempts >= MAX_REPAIR_ATTEMPTS) {
+        journey = {
+          ...journey,
+          status: LeadCaptureJourneyStatus.ESCALATED,
+          repair: journey.repair
+            ? { ...journey.repair, state: "escalated_attempt_limit" }
+            : journey.repair,
+          updatedAtIso: nowIso,
+        };
+        store.upsertJourney(journey);
+        return {
+          ok: false,
+          weakenTestBlocked: false,
+          journey,
+          details: [
+            `Repair attempt limit (${MAX_REPAIR_ATTEMPTS}) reached — escalate`,
+          ],
+        };
+      }
+
       if (!journey.repair?.incidentId) {
         const opened = this.openIncidentFromFailure({
           journeyId: input.journeyId,
@@ -766,18 +853,99 @@ export function createLeadCaptureService(
         }
       }
 
-      // Perform bounded recovery: restore CRM delivery and re-verify
+      // Authorize repair CRM rewrite via action gateway (stop switch / grants).
+      const mapping = input.authority.productionMapping;
+      const writePathId =
+        journey.submission?.writePathId ??
+        mapping.writePaths.find((p) => p.operation === "submit_form_canary")
+          ?.writePathId ??
+        null;
+      if (!writePathId || !journey.submission) {
+        return {
+          ok: false,
+          weakenTestBlocked,
+          journey,
+          details: ["Missing write path or submission for authorized recovery"],
+        };
+      }
+      const path = mapping.writePaths.find((p) => p.writePathId === writePathId);
+      if (!path) {
+        return {
+          ok: false,
+          weakenTestBlocked,
+          journey,
+          details: [`Unknown write path ${writePathId}`],
+        };
+      }
+
+      const lead = createSyntheticLead({ correlationId: journey.correlationId });
+      const repairOpId = id("op-repair");
+      const repairPayload: Record<string, unknown> = {
+        ...lead.fieldValues,
+        synthetic: true,
+        correlationId: journey.correlationId,
+        commercialExcluded: true,
+        repairRetry: true,
+      };
+      const snapshot: GatewayAuthoritySnapshot = {
+        outboundStopped: input.authority.outboundStopped,
+        operatingMode: input.authority.operatingMode,
+        actorRole: input.authority.actorRole ?? LocalRole.ADMINISTRATOR,
+        policies: input.authority.policies,
+        grants: input.authority.grants,
+        nowIso,
+        productionMapping: mapping,
+      };
+      const authorized = gateway.submitIntent(
+        {
+          operationId: repairOpId,
+          actionClass: ActionClass.ROUTINE_CUSTOMER_SERVICE,
+          channelId: path.channelId,
+          targetAccountId: input.targetAccountId ?? "acct-fixture-canary",
+          operation: path.operation,
+          assetId: path.assetId,
+          contentRevision: null,
+          writePathId,
+          payload: repairPayload,
+        },
+        snapshot,
+      );
+      if (!authorized.decision.allowed) {
+        details.push(
+          `Repair CRM write denied by gateway: ${authorized.decision.code ?? authorized.decision.reason}`,
+        );
+        journey = {
+          ...journey,
+          status: LeadCaptureJourneyStatus.FAILED,
+          repair: journey.repair
+            ? {
+                ...journey.repair,
+                state: "gate_denied",
+                attemptCount: priorAttempts + 1,
+              }
+            : journey.repair,
+          gatewayDecisionId: authorized.decision.decisionId,
+          updatedAtIso: nowIso,
+        };
+        store.upsertJourney(journey);
+        return { ok: false, weakenTestBlocked, journey, details };
+      }
+
       journey = {
         ...journey,
         repair: journey.repair
-          ? { ...journey.repair, state: "repairing" }
+          ? {
+              ...journey.repair,
+              state: "repairing",
+              attemptCount: priorAttempts + 1,
+            }
           : journey.repair,
         status: LeadCaptureJourneyStatus.REPAIRING,
+        gatewayDecisionId: authorized.decision.decisionId,
       };
       journey = markStageComplete(journey, LeadCaptureStage.REPAIR, nowIso);
       store.upsertJourney(journey);
 
-      const lead = createSyntheticLead({ correlationId: journey.correlationId });
       const receipt = crm.writeSyntheticLead({
         correlationId: journey.correlationId,
         fieldSnapshot: lead.fieldValues,
@@ -785,6 +953,13 @@ export function createLeadCaptureService(
       });
       if (!receipt) {
         details.push("Repair CRM rewrite failed");
+        journey = markJourneyFailure(journey, {
+          stage: LeadCaptureStage.REVERIFY,
+          verdict: ProbeVerdict.FAILURE,
+          details: ["Repair CRM rewrite produced no receipt"],
+          atIso: nowIso,
+        });
+        store.upsertJourney(journey);
         return { ok: false, weakenTestBlocked, journey, details };
       }
       const verified = crm.verifyFields({
@@ -803,32 +978,51 @@ export function createLeadCaptureService(
         return { ok: false, weakenTestBlocked, journey, details };
       }
 
+      gateway.markVerified(repairOpId, nowIso);
+
       const cleaned = crm.cleanup({
         correlationId: journey.correlationId,
         nowIso,
       });
       details.push(...cleaned.details);
+      if (!cleaned.ok) {
+        journey = {
+          ...journey,
+          crmReceipt: receipt,
+          fieldVerifyPassed: true,
+          cleanup: {
+            status: CleanupStatus.FAILED,
+            cleanedRecordId: cleaned.cleanedRecordId,
+            cleanedAtIso: null,
+            details: cleaned.details,
+          },
+        };
+        journey = markJourneyFailure(journey, {
+          stage: LeadCaptureStage.CLEANUP,
+          verdict: ProbeVerdict.FAILURE,
+          details: [
+            "Recovery verify passed but synthetic cleanup failed",
+            ...cleaned.details,
+          ],
+          atIso: nowIso,
+        });
+        store.upsertJourney(journey);
+        return { ok: false, weakenTestBlocked, journey, details };
+      }
 
       journey = {
         ...journey,
         crmReceipt: receipt,
         fieldVerifyPassed: true,
-        submission: journey.submission ?? {
-          operationId: id("op"),
-          writePathId: "wp-form-crm-canary",
-          formId: "form-contact",
-          correlationId: journey.correlationId,
-          payloadDigest: hashPayload(lead.fieldValues),
-          synthetic: true,
-          submittedAtIso: nowIso,
-        },
+        // Keep original authorized submission — never fabricate.
+        submission: journey.submission,
         lastSuccessAtIso: nowIso,
         currentFailure: null,
         status: LeadCaptureJourneyStatus.RECOVERED,
         cleanup: {
-          status: cleaned.ok ? CleanupStatus.DONE : CleanupStatus.FAILED,
+          status: CleanupStatus.DONE,
           cleanedRecordId: cleaned.cleanedRecordId,
-          cleanedAtIso: cleaned.ok ? nowIso : null,
+          cleanedAtIso: nowIso,
           details: cleaned.details,
         },
         repair: journey.repair
@@ -839,7 +1033,7 @@ export function createLeadCaptureService(
       journey = markStageComplete(journey, LeadCaptureStage.REVERIFY, nowIso);
       journey = markStageComplete(journey, LeadCaptureStage.CLEANUP, nowIso);
       store.upsertJourney(journey);
-      if (cleaned.ok && cleaned.receiptId) {
+      if (cleaned.receiptId) {
         store.addCleanupEvent({
           cleanupId: id("cleanup"),
           correlationId: journey.correlationId,
@@ -851,7 +1045,6 @@ export function createLeadCaptureService(
       details.push(
         `Recovered journey ${journey.journeyId}: incident→repair→verify complete`,
       );
-      // Ensure commerce still excludes synthetic
       const commerce = projectCommerceTotals(store.read().commerceLeads);
       details.push(
         `Commerce totals: leads=${commerce.leadCount} syntheticExcluded=${commerce.syntheticExcludedCount}`,
@@ -900,9 +1093,4 @@ function createLeadCaptureJourneyLocal(input: {
     createdAtIso: input.createdAtIso,
     updatedAtIso: input.createdAtIso,
   };
-}
-
-function hashPayload(payload: Record<string, unknown>): string {
-  const canonical = JSON.stringify(payload, Object.keys(payload).sort());
-  return createHash("sha256").update(canonical).digest("hex");
 }
