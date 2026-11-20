@@ -50,9 +50,25 @@ describe("canonical-publish — versioned draft edit", () => {
     expect(edited.ok).toBe(true);
     if (!edited.ok) return;
     expect(edited.digestChanged).toBe(true);
+    expect(edited.evidenceChanged).toBe(false);
     expect(edited.article.version).toBe(3);
     expect(edited.article.status).toBe(ArticleStatus.DRAFT);
     expect(edited.article.contentDigest).not.toBe(base.contentDigest);
+  });
+
+  it("invalidates evidence when cited facts change without body edit", () => {
+    const base = { ...article(), status: ArticleStatus.APPROVED, version: 1 };
+    const edited = editCanonicalArticle({
+      article: base,
+      citedFactIds: ["fixture-fact-hours", "fixture-fact-extra"],
+      nowIso: now,
+    });
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+    expect(edited.digestChanged).toBe(false);
+    expect(edited.evidenceChanged).toBe(true);
+    expect(edited.article.version).toBe(2);
+    expect(edited.article.status).toBe(ArticleStatus.READY_FOR_REVIEW);
   });
 
   it("refuses edit of RELEASED_PENDING / VERIFIED articles", () => {
@@ -172,7 +188,7 @@ describe("canonical-publish — A25 review binding", () => {
 });
 
 describe("canonical-publish — stable keys + partial recovery", () => {
-  it("builds deterministic business keys", () => {
+  it("builds deterministic business keys including destination set", () => {
     const a = stableContentOperationKey({
       kind: "canonical",
       campaignId: "camp-m6",
@@ -189,6 +205,23 @@ describe("canonical-publish — stable keys + partial recovery", () => {
     });
     expect(a).toBe(b);
     expect(a).toContain("biz-content:canonical:camp-m6:art-m6");
+    const d1 = stableContentOperationKey({
+      kind: "distribution",
+      campaignId: "camp-m6",
+      articleId: "art-m6",
+      destinationIds: ["dest-cms"],
+      contentDigest: "abcdef0123456789ffff",
+      version: 1,
+    });
+    const d2 = stableContentOperationKey({
+      kind: "distribution",
+      campaignId: "camp-m6",
+      articleId: "art-m6",
+      destinationIds: ["dest-cms", "dest-gbp"],
+      contentDigest: "abcdef0123456789ffff",
+      version: 1,
+    });
+    expect(d1).not.toBe(d2);
   });
 
   it("marks partial failure and lists only recoverable destinations", () => {

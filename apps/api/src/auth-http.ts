@@ -59,8 +59,10 @@ import {
   createDemoContentDistributionGrants,
   createDemoPublishGrant,
   createDemoRepairGrant,
+  createDurableExecutionService,
   createFileAuthorityStore,
   createFileContentStore,
+  createFileDurableStores,
   createFileInboxStore,
   createFileLearningStore,
   createFileKnowledgeStore,
@@ -71,6 +73,7 @@ import {
   createFileRepairStore,
   createFileRoleRuntimeStore,
   createFileSeoStore,
+  defaultDurableStateDir,
   ensureBootstrapOwner,
   verifyPassword,
   type AuthorityStore,
@@ -434,7 +437,13 @@ export function createApiRuntime(options: {
   const gateway = createActionGateway();
   rehydratePendingContentGatewayDecisions(gateway, contentStore, store);
   const seo = createSeoService(seoStore, { gateway });
-  const content = createContentService(contentStore, { gateway });
+  const contentDurable = createDurableExecutionService(
+    createFileDurableStores(defaultDurableStateDir(options.stateDir)),
+  );
+  const content = createContentService(contentStore, {
+    gateway,
+    durable: contentDurable,
+  });
   const inbox = createInboxService(inboxStore, { gateway });
   const repair = createRepairService(repairStore, { gateway });
   const stagingCms = createStagingCmsSimulator();

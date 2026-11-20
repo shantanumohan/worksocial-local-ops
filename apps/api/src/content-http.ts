@@ -15,6 +15,7 @@ import {
 import type {
   AuthorityStore,
   KnowledgeStore,
+  PolicyDecisionRecord,
   ProductionMappingStore,
 } from "@worksocial/persistence";
 import type { ContentService } from "@worksocial/content";
@@ -34,8 +35,49 @@ type ParseJsonFn = (
 ) => { ok: true; value: Record<string, unknown> } | { ok: false; error: string };
 
 type SessionResult =
-  | { ok: true; session: { role: string; username?: string } }
+  | {
+      ok: true;
+      session: { role: string; username?: string; userId: string };
+    }
   | { ok: false; code: string; reason: string };
+
+function upsertPolicyDecision(
+  store: AuthorityStore,
+  decision: PolicyDecisionRecord,
+): void {
+  store.update((s) => ({
+    ...s,
+    policyDecisions: [
+      ...s.policyDecisions.filter((d) => d.decisionId !== decision.decisionId),
+      decision,
+    ],
+    updatedAt: decision.decidedAtIso,
+  }));
+}
+
+function policyDecisionFromGateway(decision: {
+  decisionId: string;
+  operationId: string;
+  payloadDigest: string;
+  allowed: boolean;
+  code: string | null;
+  reason: string;
+  grantId: string | null;
+  policyId: string | null;
+  decidedAtIso: string;
+}): PolicyDecisionRecord {
+  return {
+    decisionId: decision.decisionId,
+    operationId: decision.operationId,
+    payloadDigest: decision.payloadDigest,
+    allowed: decision.allowed,
+    code: decision.code,
+    reason: decision.reason,
+    grantId: decision.grantId,
+    policyId: decision.policyId,
+    decidedAtIso: decision.decidedAtIso,
+  };
+}
 
 type RequireSessionFn = (
   req: IncomingMessage,
@@ -267,10 +309,9 @@ export async function handleCanonicalPublishRequest(input: {
       );
       return true;
     }
-    const authorId =
-      typeof v.authorId === "string" && v.authorId.trim()
-        ? v.authorId.trim()
-        : "author-a13";
+    // Authorship is bound to the authenticated session so independent QA
+    // cannot be bypassed by spoofing authorId.
+    const authorId = result.session.userId;
     const created = content.createArticle({
       campaignId: v.campaignId,
       title: v.title,
@@ -582,6 +623,12 @@ export async function handleCanonicalPublishRequest(input: {
       forceGbpFailure: v.forceGbpFailure === true,
       forceGbpUnknown: v.forceGbpUnknown === true,
     });
+    for (const decision of distributed.gatewayDecisions) {
+      upsertPolicyDecision(
+        authorityStore,
+        policyDecisionFromGateway(decision),
+      );
+    }
     json(
       res,
       200,
@@ -647,6 +694,12 @@ export async function handleCanonicalPublishRequest(input: {
       productionMapping: authority.productionMapping,
       factLabels: factLabelsFromKnowledge(knowledge),
     });
+    for (const decision of recovered.gatewayDecisions) {
+      upsertPolicyDecision(
+        authorityStore,
+        policyDecisionFromGateway(decision),
+      );
+    }
     json(
       res,
       200,

@@ -128,6 +128,13 @@ export const EDITABLE_ARTICLE_STATUSES: ReadonlySet<ArticleStatusValue> =
     ArticleStatus.REJECTED,
   ]);
 
+function sameIdList(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) return false;
+  const left = [...a].sort();
+  const right = [...b].sort();
+  return left.every((v, i) => v === right[i]);
+}
+
 export function editCanonicalArticle(input: {
   article: CanonicalArticle;
   title?: string;
@@ -136,7 +143,13 @@ export function editCanonicalArticle(input: {
   hypothesisFactIds?: string[];
   nowIso: string;
 }):
-  | { ok: true; article: CanonicalArticle; digestChanged: boolean }
+  | {
+      ok: true;
+      article: CanonicalArticle;
+      digestChanged: boolean;
+      /** True when cited/hypothesis facts changed — A25 evidence must rebind. */
+      evidenceChanged: boolean;
+    }
   | { ok: false; code: string; reasons: string[] } {
   if (!EDITABLE_ARTICLE_STATUSES.has(input.article.status)) {
     return {
@@ -158,45 +171,45 @@ export function editCanonicalArticle(input: {
     };
   }
 
+  const nextCited =
+    input.citedFactIds !== undefined
+      ? [...input.citedFactIds]
+      : input.article.citedFactIds;
+  const nextHypothesis =
+    input.hypothesisFactIds !== undefined
+      ? [...input.hypothesisFactIds]
+      : input.article.hypothesisFactIds;
+  const evidenceChanged =
+    !sameIdList(nextCited, input.article.citedFactIds) ||
+    !sameIdList(nextHypothesis, input.article.hypothesisFactIds);
+
   const nextDigest = digestArticleContent(title, body);
   const digestChanged = nextDigest !== input.article.contentDigest;
-  const nextVersion = digestChanged
-    ? input.article.version + 1
-    : input.article.version;
+  const nextVersion =
+    digestChanged || evidenceChanged
+      ? input.article.version + 1
+      : input.article.version;
 
   // Edits invalidate approval — return to draft (or ready_for_review if only claims change).
   let nextStatus: ArticleStatusValue = input.article.status;
   if (digestChanged) {
     nextStatus = ArticleStatus.DRAFT;
-  } else if (
-    input.citedFactIds !== undefined ||
-    input.hypothesisFactIds !== undefined
-  ) {
-    if (
-      input.article.status === ArticleStatus.APPROVED ||
-      input.article.status === ArticleStatus.REJECTED
-    ) {
-      nextStatus = ArticleStatus.READY_FOR_REVIEW;
-    }
+  } else if (evidenceChanged) {
+    nextStatus = ArticleStatus.READY_FOR_REVIEW;
   }
 
   return {
     ok: true,
     digestChanged,
+    evidenceChanged,
     article: {
       ...input.article,
       title,
       body,
       contentDigest: nextDigest,
       version: nextVersion,
-      citedFactIds:
-        input.citedFactIds !== undefined
-          ? [...input.citedFactIds]
-          : input.article.citedFactIds,
-      hypothesisFactIds:
-        input.hypothesisFactIds !== undefined
-          ? [...input.hypothesisFactIds]
-          : input.article.hypothesisFactIds,
+      citedFactIds: nextCited,
+      hypothesisFactIds: nextHypothesis,
       status: nextStatus,
       // Clear release linkage on digest change.
       ...(digestChanged
@@ -389,10 +402,15 @@ export function stableContentOperationKey(input: {
   campaignId: string;
   articleId: string;
   destinationId?: string;
+  /** Sorted destination set for distribution-run keys (required for kind=distribution). */
+  destinationIds?: readonly string[];
   contentDigest: string;
   version: number;
 }): string {
-  const dest = input.destinationId ?? "owned-site";
+  const dest =
+    input.kind === "distribution"
+      ? [...(input.destinationIds ?? [])].sort().join("+") || "none"
+      : (input.destinationId ?? "owned-site");
   return [
     "biz-content",
     input.kind,

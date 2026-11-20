@@ -114,19 +114,85 @@ describe("M6 canonical publish ops", () => {
     });
     expect(bound.ok).toBe(true);
 
-    const edited = service.canonicalPublish.editArticle({
+    // Cited-fact-only edits must invalidate even when body digest is stable.
+    const factEdit = service.canonicalPublish.editArticle({
       articleId: created.article.articleId,
+      citedFactIds: ["fixture-fact-hours", "fixture-fact-hypothesis"],
+      nowIso: now,
+    });
+    expect(factEdit.ok).toBe(true);
+    if (!factEdit.ok) return;
+    expect(factEdit.evidenceChanged).toBe(true);
+    expect(factEdit.digestChanged).toBe(false);
+    expect(factEdit.article.version).toBe(2);
+    expect(
+      service.canonicalPublish
+        .listReviewBindings()
+        .filter((b) => b.status === "bound"),
+    ).toHaveLength(0);
+
+    const edited = service.canonicalPublish.editArticle({
+      articleId: factEdit.article.articleId,
       body: "Verified hours and capacity.",
       nowIso: now,
     });
     expect(edited.ok).toBe(true);
     if (!edited.ok) return;
     expect(edited.digestChanged).toBe(true);
-    expect(edited.article.version).toBe(2);
+    expect(edited.article.version).toBe(3);
     expect(edited.article.status).toBe(ArticleStatus.DRAFT);
 
     const bindings = service.canonicalPublish.listReviewBindings();
     expect(bindings.some((b) => b.status === "invalidated")).toBe(true);
+  });
+
+  it("blocks distribute without A25 binding for current revision", async () => {
+    const { service } = makeService();
+    service.seedFixtures(now);
+    const mapping = service.seedAndProveContentMapping(now);
+    const article = service.listArticles()[0]!;
+    service.canonicalPublish.recordClaimSourceQa({
+      articleId: article.articleId,
+      claims: [
+        {
+          claimId: "c-hours",
+          factId: "fixture-fact-hours",
+          sourceRef: "src-hours",
+          statement: "Open with verified hours",
+        },
+      ],
+      factLabels: labels,
+      nowIso: now,
+    });
+    service.recordQaVerdict({
+      articleId: article.articleId,
+      authorId: article.authorId,
+      reviewerId: "reviewer-a25",
+      approved: true,
+      nowIso: now,
+    });
+    const approved = service.approveArticle({
+      articleId: article.articleId,
+      factLabels: labels,
+      nowIso: now,
+    });
+    expect(approved.ok).toBe(true);
+    const authority = demoAuthority(
+      now,
+      approved.article!.articleId,
+      approved.article!.contentDigest,
+    );
+    const blocked = await service.canonicalPublish.runCanonicalDistribution({
+      articleId: approved.article!.articleId,
+      authority: { ...authority, actorRole: "administrator" },
+      productionMapping: mapping.mapping,
+      factLabels: labels,
+      nowIso: now,
+    });
+    expect(
+      blocked.details.some((d) => d.includes("A25 review binding required")),
+    ).toBe(true);
+    expect(blocked.run.attempts).toHaveLength(0);
   });
 
   it("distributes CMS+GBP+LinkedIn with durable verify; partial GBP failure recovers without re-applying CMS", async () => {
@@ -191,6 +257,12 @@ describe("M6 canonical publish ops", () => {
       nowIso: now,
     });
     expect(failed.run.status).toBe(DistributionRunStatus.PARTIAL);
+    expect(
+      service.readState().campaigns.find(
+        (c) => c.campaignId === approved.article!.campaignId,
+      )?.status,
+    ).toBe("blocked");
+    expect(service.readState().receipts.length).toBeGreaterThan(0);
     const cmsAttempt = failed.run.attempts.find(
       (a) => (a as { destinationId?: string }).destinationId === "dest-cms",
     ) as { status?: string } | undefined;
@@ -234,6 +306,10 @@ describe("M6 canonical publish ops", () => {
         },
       ],
       factLabels: labels,
+      nowIso: now,
+    });
+    service.canonicalPublish.bindIndependentReview({
+      articleId: article.articleId,
       nowIso: now,
     });
     service.recordQaVerdict({

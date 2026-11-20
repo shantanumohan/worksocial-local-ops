@@ -11,17 +11,22 @@ import {
   CANONICAL_PUBLISH_RELATED_CASE_IDS,
   CampaignStatus,
   ContentFormat,
+  ContentReleaseDecision,
   DestinationAttemptStatus,
   DestinationKind,
   DistributionRunStatus,
+  OutcomeEvidenceSource,
   PublicationOutcome,
   VariantStatus,
+  applyCanonicalReleaseVerification,
+  applyVariantReleaseVerification,
   bindContentIndependentReview,
   createDestinationVariant,
   createDistributionRun,
   createVariantQaVerdict,
   digestContentEvidencePackage,
   editCanonicalArticle,
+  evaluateArticleApprovalGate,
   evaluateClaimSourceQa,
   listRecoverableDestinations,
   stableContentOperationKey,
@@ -56,7 +61,11 @@ import {
   type LinkedInFixtureSimulator,
   type StagingCmsSimulator,
 } from "@worksocial/provider-adapters";
-import type { ActionGateway, GatewayAuthoritySnapshot } from "@worksocial/action-gateway";
+import type {
+  ActionGateway,
+  GatewayAuthoritySnapshot,
+  GatewayDecisionRecord,
+} from "@worksocial/action-gateway";
 import {
   ensureContentMappingForArticle,
   invokeDestinationAdapter,
@@ -110,7 +119,12 @@ export type CanonicalPublishOps = {
     hypothesisFactIds?: string[];
     nowIso?: string;
   }):
-    | { ok: true; article: CanonicalArticle; digestChanged: boolean }
+    | {
+        ok: true;
+        article: CanonicalArticle;
+        digestChanged: boolean;
+        evidenceChanged: boolean;
+      }
     | { ok: false; code: string; reasons: string[] };
   recordClaimSourceQa(input: {
     articleId: string;
@@ -160,6 +174,7 @@ export type CanonicalPublishOps = {
     run: ContentDistributionRunRecord;
     article: CanonicalArticle | null;
     details: string[];
+    gatewayDecisions: GatewayDecisionRecord[];
   }>;
   recoverDistribution(input: {
     runId: string;
@@ -176,6 +191,7 @@ export type CanonicalPublishOps = {
   }): Promise<{
     run: ContentDistributionRunRecord | null;
     details: string[];
+    gatewayDecisions: GatewayDecisionRecord[];
   }>;
 };
 
@@ -191,23 +207,50 @@ export function createCanonicalPublishOps(
   const gbp = options.gbp ?? createGbpFixtureSimulator();
   const linkedIn = options.linkedIn ?? createLinkedInFixtureSimulator();
 
-  // Seed a default staging page for owned-site article publishes.
-  if (!stagingCms.getPage("page-canonical-blog")) {
-    stagingCms.seedPage({
-      pageId: "page-canonical-blog",
-      siteId: "worksocial-pilot",
-      path: "/blog/canonical",
-      fields: {
-        title: "Placeholder",
-        metaDescription: "Placeholder",
-        h1: "Placeholder",
-        bodyExcerpt: "Placeholder",
-      },
-      revision: "rev_seed",
-      contentDigest: "seed",
-      updatedAtIso: new Date().toISOString(),
+  const ensureArticlePage = (articleId: string, nowIso: string) => {
+    const pageId = `page-canonical-${articleId}`;
+    if (!stagingCms.getPage(pageId)) {
+      stagingCms.seedPage({
+        pageId,
+        siteId: "worksocial-pilot",
+        path: `/blog/${articleId}`,
+        fields: {
+          title: "Placeholder",
+          metaDescription: "Placeholder",
+          h1: "Placeholder",
+          bodyExcerpt: "Placeholder",
+        },
+        revision: "rev_seed",
+        contentDigest: "seed",
+        updatedAtIso: nowIso,
+      });
+    }
+    return pageId;
+  };
+
+  const syncCampaignFromRun = (
+    campaignId: string,
+    runStatus: DistributionRun["status"],
+    nowIso: string,
+  ) => {
+    const camp = store
+      .read()
+      .campaigns.find((c) => c.campaignId === campaignId);
+    if (!camp) return;
+    const nextStatus =
+      runStatus === DistributionRunStatus.COMPLETE
+        ? CampaignStatus.COMPLETE
+        : runStatus === DistributionRunStatus.PARTIAL ||
+            runStatus === DistributionRunStatus.FAILED
+          ? CampaignStatus.BLOCKED
+          : CampaignStatus.DISTRIBUTING;
+    if (camp.status === nextStatus) return;
+    store.upsertCampaign({
+      ...camp,
+      status: nextStatus,
+      updatedAtIso: nowIso,
     });
-  }
+  };
 
   const persistRun = (run: DistributionRun) => {
     const record = toRunRecord(run);
@@ -341,8 +384,8 @@ export function createCanonicalPublishOps(
       });
       if (!edited.ok) return edited;
       store.upsertArticle(edited.article);
-      if (edited.digestChanged) {
-        // Invalidate prior review bindings for this article on digest change.
+      if (edited.digestChanged || edited.evidenceChanged) {
+        // Invalidate prior review bindings when body or cited facts change.
         for (const binding of store.read().reviewBindings) {
           if (
             binding.articleId === edited.article.articleId &&
@@ -355,7 +398,9 @@ export function createCanonicalPublishOps(
               bindingJson: {
                 ...binding.bindingJson,
                 status: "invalidated",
-                invalidationReason: "Article digest changed — rebind A25 review",
+                invalidationReason: edited.digestChanged
+                  ? "Article digest changed — rebind A25 review"
+                  : "Cited facts changed — rebind A25 review with new evidence package",
               },
             });
           }
@@ -494,6 +539,7 @@ export function createCanonicalPublishOps(
     async runCanonicalDistribution(input) {
       const nowIso = input.nowIso ?? new Date().toISOString();
       const details: string[] = [];
+      const gatewayDecisions: GatewayDecisionRecord[] = [];
       const state = store.read();
       const article =
         state.articles.find((a) => a.articleId === input.articleId) ?? null;
@@ -512,6 +558,7 @@ export function createCanonicalPublishOps(
           ),
           article: null,
           details: [`Unknown article ${input.articleId}`],
+          gatewayDecisions,
         };
       }
 
@@ -523,6 +570,7 @@ export function createCanonicalPublishOps(
         kind: "distribution",
         campaignId: article.campaignId,
         articleId: article.articleId,
+        destinationIds,
         contentDigest: article.contentDigest,
         version: article.version,
       });
@@ -554,7 +602,7 @@ export function createCanonicalPublishOps(
         details.push(
           "Distribution already COMPLETE for this business key — refusing duplicate effects",
         );
-        return { run: toRunRecord(run), article, details };
+        return { run: toRunRecord(run), article, details, gatewayDecisions };
       }
 
       if (
@@ -579,6 +627,7 @@ export function createCanonicalPublishOps(
           details: [
             `Article status is ${article.status}; distribution requires APPROVED`,
           ],
+          gatewayDecisions,
         };
       }
 
@@ -588,13 +637,61 @@ export function createCanonicalPublishOps(
             (b) =>
               b.articleId === article.articleId &&
               b.contentDigest === article.contentDigest &&
+              b.version === article.version &&
               b.status === "bound",
           )
           .at(-1) ?? null;
       if (!binding) {
-        details.push(
-          "No bound A25 review for current revision — continuing with QA verdict path only (bindIndependentReview recommended)",
-        );
+        return {
+          run: toRunRecord(
+            createDistributionRun({
+              runId: `run-nobind-${article.articleId}`,
+              campaignId: article.campaignId,
+              articleId: article.articleId,
+              destinationIds,
+              businessIdempotencyKey: businessKey,
+              fixtureOnly: true,
+              createdAtIso: nowIso,
+            }),
+          ),
+          article,
+          details: [
+            "A25 review binding required for current article revision before distribution",
+          ],
+          gatewayDecisions,
+        };
+      }
+
+      const qaVerdict =
+        state.qaVerdicts
+          .filter((v) => v.articleId === article.articleId)
+          .filter((v) => v.contentDigest === article.contentDigest)
+          .at(-1) ?? null;
+      const approvalGate = evaluateArticleApprovalGate({
+        article,
+        factLabels: input.factLabels,
+        qaVerdict,
+      });
+      if (!approvalGate.allowed) {
+        return {
+          run: toRunRecord(
+            createDistributionRun({
+              runId: `run-gate-${article.articleId}`,
+              campaignId: article.campaignId,
+              articleId: article.articleId,
+              destinationIds,
+              businessIdempotencyKey: businessKey,
+              fixtureOnly: true,
+              createdAtIso: nowIso,
+            }),
+          ),
+          article,
+          details: [
+            "Current fact-support gate failed at distribute boundary",
+            ...approvalGate.reasons,
+          ],
+          gatewayDecisions,
+        };
       }
 
       store.upsertCampaign({
@@ -683,6 +780,7 @@ export function createCanonicalPublishOps(
             snapshot,
           );
           details.push(`CMS gateway: ${submitted.decision.reason}`);
+          gatewayDecisions.push(submitted.decision);
 
           if (!submitted.decision.allowed) {
             run = upsertDestinationAttempt(run, {
@@ -746,10 +844,11 @@ export function createCanonicalPublishOps(
                 h1: article.title,
                 bodyExcerpt: article.body.slice(0, 280),
               };
+              const pageId = ensureArticlePage(article.articleId, nowIso);
               const staging = stagingCms.applyChange({
                 changeId: `chg-${opId}`,
                 missionId: run.runId,
-                pageId: "page-canonical-blog",
+                pageId,
                 desiredFields: desired,
                 nowIso,
               });
@@ -804,14 +903,22 @@ export function createCanonicalPublishOps(
               if (matched && dVerify.matched) {
                 gateway.markVerified(opId, nowIso);
                 const url = `https://fixture.worksocial.local/articles/${article.articleId}`;
-                store.upsertArticle({
-                  ...store
-                    .read()
-                    .articles.find((a) => a.articleId === article.articleId)!,
-                  status: ArticleStatus.VERIFIED,
-                  verifiedCanonicalUrl: url,
-                  updatedAtIso: nowIso,
+                const applied = applyCanonicalReleaseVerification(store.read(), {
+                  articleId: article.articleId,
+                  decision: ContentReleaseDecision.SUCCESS,
+                  source: OutcomeEvidenceSource.FIXTURE,
+                  fixtureOnly: true,
+                  summary:
+                    "Owned-site verified via staging CMS + fixture ledger",
+                  outcomeId: `out-${opId}`,
+                  operationId: opId,
+                  writePathId: articleWritePaths.cms,
+                  canonicalUrl: url,
+                  nowIso,
                 });
+                if (applied.outcome) store.addReleaseOutcome(applied.outcome);
+                if (applied.receipt) store.addReceipt(applied.receipt);
+                if (applied.article) store.upsertArticle(applied.article);
                 run = upsertDestinationAttempt(run, {
                   attemptId: `att-${randomUUID()}`,
                   destinationId: "dest-cms",
@@ -822,13 +929,27 @@ export function createCanonicalPublishOps(
                   operationKey: opKey,
                   durableOperationId: opId,
                   gatewayOperationId: opId,
-                  receiptId: `rcpt-${opId}`,
+                  receiptId: applied.receipt?.receiptId ?? `rcpt-${opId}`,
                   outcome: PublicationOutcome.PUBLISHED_VERIFIED,
                   summary: "Owned-site verified via staging CMS + fixture ledger",
                   updatedAtIso: nowIso,
                 });
                 details.push("CMS PUBLISHED_VERIFIED");
               } else {
+                const applied = applyCanonicalReleaseVerification(store.read(), {
+                  articleId: article.articleId,
+                  decision: ContentReleaseDecision.FAILURE,
+                  source: OutcomeEvidenceSource.FIXTURE,
+                  fixtureOnly: true,
+                  summary: "Owned-site independent read-back failed",
+                  outcomeId: `out-fail-${opId}`,
+                  operationId: opId,
+                  writePathId: articleWritePaths.cms,
+                  nowIso,
+                });
+                if (applied.outcome) store.addReleaseOutcome(applied.outcome);
+                if (applied.receipt) store.addReceipt(applied.receipt);
+                if (applied.article) store.upsertArticle(applied.article);
                 run = upsertDestinationAttempt(run, {
                   attemptId: `att-${randomUUID()}`,
                   destinationId: "dest-cms",
@@ -839,7 +960,7 @@ export function createCanonicalPublishOps(
                   operationKey: opKey,
                   durableOperationId: opId,
                   gatewayOperationId: opId,
-                  receiptId: null,
+                  receiptId: applied.receipt?.receiptId ?? null,
                   outcome: PublicationOutcome.FAILED,
                   summary: "Owned-site independent read-back failed",
                   updatedAtIso: nowIso,
@@ -894,7 +1015,36 @@ export function createCanonicalPublishOps(
           continue;
         }
 
+        if (destId !== "dest-gbp" && destId !== "dest-linkedin") {
+          run = upsertDestinationAttempt(run, {
+            attemptId: `att-${randomUUID()}`,
+            destinationId: destId,
+            kind: DestinationKind.OTHER_BLOG,
+            variantId: null,
+            articleId: article.articleId,
+            status: DestinationAttemptStatus.FAILED,
+            operationKey: "n/a",
+            durableOperationId: null,
+            gatewayOperationId: null,
+            receiptId: null,
+            outcome: PublicationOutcome.UNSUPPORTED_ACTION,
+            summary: `Unsupported M6 destination ${destId} — only dest-cms, dest-gbp, dest-linkedin`,
+            updatedAtIso: nowIso,
+          });
+          details.push(`Rejected unsupported destination ${destId}`);
+          continue;
+        }
+
         let variant = findVariant(article.articleId, destId);
+        if (
+          variant &&
+          variant.articleContentDigest !== refreshedArticle.contentDigest
+        ) {
+          details.push(
+            `Stale variant ${variant.variantId} for older article digest — regenerating`,
+          );
+          variant = null;
+        }
         if (!variant) {
           // Auto-prepare a short-update / social variant from the article.
           const destinations =
@@ -906,19 +1056,18 @@ export function createCanonicalPublishOps(
             details.push(`Unknown destination ${destId}`);
             continue;
           }
-          const format =
-            destId === "dest-gbp"
-              ? ContentFormat.SHORT_UPDATE
-              : ContentFormat.SHORT_UPDATE;
           const created = createDestinationVariant({
-            variantId: `var-${destId}-${article.articleId}`,
+            variantId: `var-${destId}-${article.articleId}-v${refreshedArticle.version}`,
             campaignId: article.campaignId,
             article: refreshedArticle,
             destination: dest,
-            format,
+            format: ContentFormat.SHORT_UPDATE,
             body:
               destId === "dest-gbp"
-                ? refreshedArticle.body.slice(0, Math.min(280, refreshedArticle.body.length))
+                ? refreshedArticle.body.slice(
+                    0,
+                    Math.min(280, refreshedArticle.body.length),
+                  )
                 : refreshedArticle.body.slice(0, 500),
             fixtureOnly: true,
             createdAtIso: nowIso,
@@ -1031,6 +1180,7 @@ export function createCanonicalPublishOps(
           snapshot,
         );
         details.push(`${destId} gateway: ${submitted.decision.reason}`);
+        gatewayDecisions.push(submitted.decision);
         if (!submitted.decision.allowed) {
           run = upsertDestinationAttempt(run, {
             attemptId: `att-${randomUUID()}`,
@@ -1191,13 +1341,21 @@ export function createCanonicalPublishOps(
 
         if (read.matched && dVerify.matched) {
           gateway.markVerified(opId, nowIso);
-          store.upsertVariant({
-            ...store
-              .read()
-              .variants.find((v) => v.variantId === variant!.variantId)!,
-            status: VariantStatus.VERIFIED,
-            updatedAtIso: nowIso,
+          const applied = applyVariantReleaseVerification(store.read(), {
+            variantId: variant.variantId,
+            decision: ContentReleaseDecision.SUCCESS,
+            source: OutcomeEvidenceSource.FIXTURE,
+            fixtureOnly: true,
+            summary: `${destId} verified via independent fixture read-back`,
+            outcomeId: `out-${opId}`,
+            operationId: opId,
+            writePathId,
+            remoteId: applyOutcome.remoteId,
+            nowIso,
           });
+          if (applied.outcome) store.addReleaseOutcome(applied.outcome);
+          if (applied.receipt) store.addReceipt(applied.receipt);
+          if (applied.variant) store.upsertVariant(applied.variant);
           run = upsertDestinationAttempt(run, {
             attemptId: `att-${randomUUID()}`,
             destinationId: destId,
@@ -1208,12 +1366,26 @@ export function createCanonicalPublishOps(
             operationKey: opKey,
             durableOperationId: opId,
             gatewayOperationId: opId,
-            receiptId: `rcpt-${opId}`,
+            receiptId: applied.receipt?.receiptId ?? `rcpt-${opId}`,
             outcome: PublicationOutcome.PUBLISHED_VERIFIED,
             summary: `${destId} verified via independent fixture read-back`,
             updatedAtIso: nowIso,
           });
         } else {
+          const applied = applyVariantReleaseVerification(store.read(), {
+            variantId: variant.variantId,
+            decision: ContentReleaseDecision.FAILURE,
+            source: OutcomeEvidenceSource.FIXTURE,
+            fixtureOnly: true,
+            summary: `${destId} independent read-back failed`,
+            outcomeId: `out-fail-${opId}`,
+            operationId: opId,
+            writePathId,
+            nowIso,
+          });
+          if (applied.outcome) store.addReleaseOutcome(applied.outcome);
+          if (applied.receipt) store.addReceipt(applied.receipt);
+          if (applied.variant) store.upsertVariant(applied.variant);
           run = upsertDestinationAttempt(run, {
             attemptId: `att-${randomUUID()}`,
             destinationId: destId,
@@ -1224,7 +1396,7 @@ export function createCanonicalPublishOps(
             operationKey: opKey,
             durableOperationId: opId,
             gatewayOperationId: opId,
-            receiptId: null,
+            receiptId: applied.receipt?.receiptId ?? null,
             outcome: PublicationOutcome.FAILED,
             summary: `${destId} independent read-back failed`,
             updatedAtIso: nowIso,
@@ -1232,20 +1404,8 @@ export function createCanonicalPublishOps(
         }
       }
 
-      if (run.status === DistributionRunStatus.COMPLETE) {
-        const camp = store
-          .read()
-          .campaigns.find((c) => c.campaignId === article.campaignId);
-        if (camp) {
-          store.upsertCampaign({
-            ...camp,
-            status: CampaignStatus.COMPLETE,
-            updatedAtIso: nowIso,
-          });
-        }
-      }
-
       const record = persistRun(run);
+      syncCampaignFromRun(article.campaignId, record.status as DistributionRun["status"], nowIso);
       details.push(`Distribution status=${record.status}`);
       return {
         run: record,
@@ -1253,23 +1413,30 @@ export function createCanonicalPublishOps(
           store.read().articles.find((a) => a.articleId === article.articleId) ??
           null,
         details,
+        gatewayDecisions,
       };
     },
 
     async recoverDistribution(input) {
       const nowIso = input.nowIso ?? new Date().toISOString();
       const details: string[] = [];
+      const gatewayDecisions: GatewayDecisionRecord[] = [];
       const record =
         store.read().distributionRuns.find((r) => r.runId === input.runId) ??
         null;
       if (!record) {
-        return { run: null, details: [`Unknown run ${input.runId}`] };
+        return {
+          run: null,
+          details: [`Unknown run ${input.runId}`],
+          gatewayDecisions,
+        };
       }
       let run = fromRunRecord(record);
       if (run.status === DistributionRunStatus.COMPLETE) {
         return {
           run: record,
           details: ["Run already COMPLETE — nothing to recover"],
+          gatewayDecisions,
         };
       }
 
@@ -1278,6 +1445,7 @@ export function createCanonicalPublishOps(
         return {
           run: record,
           details: ["No recoverable destinations (verified stays untouched)"],
+          gatewayDecisions,
         };
       }
 
@@ -1291,14 +1459,214 @@ export function createCanonicalPublishOps(
       const article =
         store.read().articles.find((a) => a.articleId === run.articleId) ?? null;
       if (!article) {
-        return { run: toRunRecord(run), details: ["Article missing"] };
+        return {
+          run: toRunRecord(run),
+          details: ["Article missing"],
+          gatewayDecisions,
+        };
       }
+
+      const ensured = ensureContentMappingForArticle(
+        input.productionMapping,
+        article.articleId,
+        nowIso,
+      );
+      const productionMapping = ensured.state;
+      const articleWritePaths = ensured.writePathIds;
+      const snapshot: GatewayAuthoritySnapshot = {
+        outboundStopped: input.authority.outboundStopped,
+        operatingMode: input.authority.operatingMode,
+        actorRole: input.authority.actorRole ?? "administrator",
+        policies: input.authority.policies,
+        grants: input.authority.grants,
+        nowIso,
+        productionMapping,
+      };
 
       for (const attempt of recoverable) {
         if (attempt.destinationId === "dest-cms") {
-          details.push("Re-running CMS via distribution (verified destinations skipped)");
+          const opId = stableGatewayOperationId({
+            destinationId: "dest-cms",
+            articleId: article.articleId,
+            contentDigest: article.contentDigest,
+            version: article.version,
+          });
+          const opKey = stableContentOperationKey({
+            kind: "canonical",
+            campaignId: article.campaignId,
+            articleId: article.articleId,
+            destinationId: "dest-cms",
+            contentDigest: article.contentDigest,
+            version: article.version,
+          });
+          const submitted = gateway.submitIntent(
+            {
+              operationId: opId,
+              actionClass: ActionClass.ROUTINE_PUBLISH,
+              channelId: "owned-site",
+              targetAccountId: "acct-demo",
+              operation: "publish_article",
+              assetId: article.articleId,
+              contentRevision: article.contentDigest,
+              writePathId: articleWritePaths.cms,
+              payload: {
+                articleId: article.articleId,
+                title: article.title,
+                contentDigest: article.contentDigest,
+                fixtureOnly: true,
+              },
+            },
+            snapshot,
+          );
+          gatewayDecisions.push(submitted.decision);
+          details.push(`CMS recovery gateway: ${submitted.decision.reason}`);
+          if (!submitted.decision.allowed) {
+            run = upsertDestinationAttempt(run, {
+              ...attempt,
+              attemptId: `att-${randomUUID()}`,
+              status:
+                submitted.decision.code === "OUTBOUND_STOPPED"
+                  ? DestinationAttemptStatus.BLOCKED
+                  : DestinationAttemptStatus.FAILED,
+              gatewayOperationId: opId,
+              operationKey: opKey,
+              summary: submitted.decision.reason,
+              outcome:
+                submitted.decision.code === "OUTBOUND_STOPPED"
+                  ? PublicationOutcome.BLOCKED
+                  : PublicationOutcome.FAILED,
+              updatedAtIso: nowIso,
+            });
+            continue;
+          }
+
+          const dur = await durableAccept({
+            operationId: opId,
+            businessKey: opKey,
+            assetId: article.articleId,
+            writePathId: articleWritePaths.cms,
+            payloadDigest: article.contentDigest,
+            grantId: submitted.decision.grantId,
+            policyId: submitted.decision.policyId,
+            reason: submitted.decision.reason,
+            decidedAtIso: submitted.decision.decidedAtIso,
+            nowIso,
+            roleId: "A15",
+          });
+          if (!dur.ok) {
+            details.push(`CMS recovery durable accept failed: ${dur.reason}`);
+            run = upsertDestinationAttempt(run, {
+              ...attempt,
+              attemptId: `att-${randomUUID()}`,
+              status: DestinationAttemptStatus.FAILED,
+              gatewayOperationId: opId,
+              operationKey: opKey,
+              summary: dur.reason,
+              outcome: PublicationOutcome.FAILED,
+              updatedAtIso: nowIso,
+            });
+            continue;
+          }
+
+          const pageId = ensureArticlePage(article.articleId, nowIso);
+          const desired = {
+            title: article.title,
+            metaDescription: article.body.slice(0, 160),
+            h1: article.title,
+            bodyExcerpt: article.body.slice(0, 280),
+          };
+          const staging = stagingCms.applyChange({
+            changeId: `chg-recover-${opId}`,
+            missionId: run.runId,
+            pageId,
+            desiredFields: desired,
+            nowIso,
+          });
+          store.update((s) => ({
+            ...s,
+            fixtureCanonicalLedger: {
+              ...s.fixtureCanonicalLedger,
+              [article.articleId]: {
+                title: article.title,
+                body: article.body,
+              },
+            },
+            updatedAtIso: nowIso,
+          }));
+          const read = stagingCms.independentRead({
+            change: staging.change,
+            nowIso,
+          });
+          details.push(...read.details);
+          const ledger =
+            store.read().fixtureCanonicalLedger[article.articleId] ?? {};
+          const matched =
+            read.matched &&
+            ledger.title === article.title &&
+            ledger.body === article.body;
+          const dVerify = await durableVerify({
+            operationId: opId,
+            observedDigest: article.contentDigest,
+            nowIso,
+          });
+          details.push(...dVerify.details);
+          if (matched && dVerify.matched) {
+            gateway.markVerified(opId, nowIso);
+            const url = `https://fixture.worksocial.local/articles/${article.articleId}`;
+            const applied = applyCanonicalReleaseVerification(store.read(), {
+              articleId: article.articleId,
+              decision: ContentReleaseDecision.SUCCESS,
+              source: OutcomeEvidenceSource.FIXTURE,
+              fixtureOnly: true,
+              summary: "CMS recovered and verified via staging read-back",
+              outcomeId: `out-recover-${opId}`,
+              operationId: opId,
+              writePathId: articleWritePaths.cms,
+              canonicalUrl: url,
+              nowIso,
+            });
+            if (applied.outcome) store.addReleaseOutcome(applied.outcome);
+            if (applied.receipt) store.addReceipt(applied.receipt);
+            if (applied.article) store.upsertArticle(applied.article);
+            run = upsertDestinationAttempt(run, {
+              ...attempt,
+              attemptId: `att-${randomUUID()}`,
+              status: DestinationAttemptStatus.VERIFIED,
+              operationKey: opKey,
+              durableOperationId: opId,
+              gatewayOperationId: opId,
+              receiptId: applied.receipt?.receiptId ?? `rcpt-${opId}`,
+              outcome: PublicationOutcome.PUBLISHED_VERIFIED,
+              summary: "CMS recovered and verified via staging read-back",
+              updatedAtIso: nowIso,
+            });
+            details.push("CMS recovery PUBLISHED_VERIFIED");
+          } else {
+            run = upsertDestinationAttempt(run, {
+              ...attempt,
+              attemptId: `att-${randomUUID()}`,
+              status: DestinationAttemptStatus.FAILED,
+              operationKey: opKey,
+              durableOperationId: opId,
+              gatewayOperationId: opId,
+              summary: "CMS recovery independent read-back failed",
+              outcome: PublicationOutcome.FAILED,
+              updatedAtIso: nowIso,
+            });
+          }
           continue;
         }
+
+        if (
+          attempt.destinationId !== "dest-gbp" &&
+          attempt.destinationId !== "dest-linkedin"
+        ) {
+          details.push(
+            `Unsupported recovery destination ${attempt.destinationId}`,
+          );
+          continue;
+        }
+
         const variant = attempt.variantId
           ? store
               .read()
@@ -1308,6 +1676,93 @@ export function createCanonicalPublishOps(
           details.push(`Missing variant for ${attempt.destinationId}`);
           continue;
         }
+
+        const liveArticle =
+          store.read().articles.find((a) => a.articleId === article.articleId) ??
+          article;
+        if (
+          liveArticle.status !== ArticleStatus.VERIFIED ||
+          !liveArticle.verifiedCanonicalUrl
+        ) {
+          details.push(
+            `Cannot recover ${attempt.destinationId} without verified canonical`,
+          );
+          continue;
+        }
+
+        const writePathId =
+          attempt.destinationId === "dest-gbp"
+            ? articleWritePaths.gbp
+            : articleWritePaths.linkedin;
+        const opId =
+          attempt.gatewayOperationId ??
+          stableGatewayOperationId({
+            destinationId: attempt.destinationId,
+            articleId: article.articleId,
+            contentDigest: variant.contentDigest,
+            version: article.version,
+          });
+        const opKey =
+          attempt.operationKey !== "n/a"
+            ? attempt.operationKey
+            : stableContentOperationKey({
+                kind: "variant",
+                campaignId: article.campaignId,
+                articleId: article.articleId,
+                destinationId: attempt.destinationId,
+                contentDigest: variant.contentDigest,
+                version: article.version,
+              });
+
+        // Always reauthorize through the current authority gateway before
+        // applying or verifying any social recovery effect.
+        const submitted = gateway.submitIntent(
+          {
+            operationId: opId,
+            actionClass: ActionClass.ROUTINE_PUBLISH,
+            channelId:
+              attempt.destinationId === "dest-gbp" ? "gbp" : "linkedin",
+            targetAccountId: "acct-demo",
+            operation:
+              attempt.destinationId === "dest-gbp"
+                ? "publish_gbp_update"
+                : "publish_social_post",
+            assetId: article.articleId,
+            contentRevision: liveArticle.contentDigest,
+            writePathId,
+            payload: {
+              variantId: variant.variantId,
+              destinationId: attempt.destinationId,
+              contentDigest: variant.contentDigest,
+              fixtureOnly: true,
+            },
+          },
+          snapshot,
+        );
+        gatewayDecisions.push(submitted.decision);
+        details.push(
+          `${attempt.destinationId} recovery gateway: ${submitted.decision.reason}`,
+        );
+        if (!submitted.decision.allowed) {
+          run = upsertDestinationAttempt(run, {
+            ...attempt,
+            attemptId: `att-${randomUUID()}`,
+            status:
+              submitted.decision.code === "OUTBOUND_STOPPED"
+                ? DestinationAttemptStatus.BLOCKED
+                : DestinationAttemptStatus.FAILED,
+            gatewayOperationId: opId,
+            operationKey: opKey,
+            summary: submitted.decision.reason,
+            outcome:
+              submitted.decision.code === "OUTBOUND_STOPPED"
+                ? PublicationOutcome.BLOCKED
+                : PublicationOutcome.FAILED,
+            updatedAtIso: nowIso,
+          });
+          continue;
+        }
+
         if (attempt.status === DestinationAttemptStatus.UNKNOWN_REMOTE) {
           const recovered =
             attempt.destinationId === "dest-gbp"
@@ -1350,6 +1805,7 @@ export function createCanonicalPublishOps(
 
         if (
           attempt.durableOperationId &&
+          attempt.status === DestinationAttemptStatus.UNKNOWN_REMOTE &&
           read.matched &&
           read.observedFields
         ) {
@@ -1360,34 +1816,28 @@ export function createCanonicalPublishOps(
           });
           details.push(...dVerify.details);
           if (dVerify.matched) {
-              if (attempt.gatewayOperationId) {
-              if (!gateway.getDecision(attempt.gatewayOperationId)) {
-                const ensured = ensureContentMappingForArticle(
-                  input.productionMapping,
-                  article.articleId,
-                  nowIso,
-                );
-                gateway.rehydratePending({
-                  operationId: attempt.gatewayOperationId,
-                  writePathId:
-                    attempt.destinationId === "dest-gbp"
-                      ? ensured.writePathIds.gbp
-                      : ensured.writePathIds.linkedin,
-                  decidedAtIso: nowIso,
-                  reason: "Rehydrated after recovery",
-                });
-              }
-              gateway.markVerified(attempt.gatewayOperationId, nowIso);
-            }
-            store.upsertVariant({
-              ...variant,
-              status: VariantStatus.VERIFIED,
-              updatedAtIso: nowIso,
+            gateway.markVerified(opId, nowIso);
+            const applied = applyVariantReleaseVerification(store.read(), {
+              variantId: variant.variantId,
+              decision: ContentReleaseDecision.SUCCESS,
+              source: OutcomeEvidenceSource.FIXTURE,
+              fixtureOnly: true,
+              summary: `Recovered and verified ${attempt.destinationId}`,
+              outcomeId: `out-recover-${opId}`,
+              operationId: opId,
+              writePathId,
+              remoteId: variant.remoteId,
+              nowIso,
             });
+            if (applied.outcome) store.addReleaseOutcome(applied.outcome);
+            if (applied.receipt) store.addReceipt(applied.receipt);
+            if (applied.variant) store.upsertVariant(applied.variant);
             run = upsertDestinationAttempt(run, {
               ...attempt,
               attemptId: `att-${randomUUID()}`,
               status: DestinationAttemptStatus.VERIFIED,
+              gatewayOperationId: opId,
+              receiptId: applied.receipt?.receiptId ?? null,
               outcome: PublicationOutcome.PUBLISHED_VERIFIED,
               summary: `Recovered and verified ${attempt.destinationId}`,
               updatedAtIso: nowIso,
@@ -1396,20 +1846,40 @@ export function createCanonicalPublishOps(
           }
         }
 
-        // Failed destinations: re-apply through simulator (verified never re-applied).
         if (
           attempt.status === DestinationAttemptStatus.FAILED ||
           attempt.status === DestinationAttemptStatus.BLOCKED
         ) {
-          if (
-            !article.verifiedCanonicalUrl &&
-            article.status !== ArticleStatus.VERIFIED
-          ) {
+          const dur = await durableAccept({
+            operationId: opId,
+            businessKey: opKey,
+            assetId: article.articleId,
+            writePathId,
+            payloadDigest: variant.contentDigest,
+            grantId: submitted.decision.grantId,
+            policyId: submitted.decision.policyId,
+            reason: submitted.decision.reason,
+            decidedAtIso: submitted.decision.decidedAtIso,
+            nowIso,
+            roleId: "A16",
+          });
+          if (!dur.ok) {
             details.push(
-              `Cannot recover ${attempt.destinationId} without verified canonical`,
+              `${attempt.destinationId} recovery durable accept failed: ${dur.reason}`,
             );
+            run = upsertDestinationAttempt(run, {
+              ...attempt,
+              attemptId: `att-${randomUUID()}`,
+              status: DestinationAttemptStatus.FAILED,
+              gatewayOperationId: opId,
+              operationKey: opKey,
+              summary: dur.reason,
+              outcome: PublicationOutcome.FAILED,
+              updatedAtIso: nowIso,
+            });
             continue;
           }
+
           const reapply =
             attempt.destinationId === "dest-gbp"
               ? gbp.apply({
@@ -1436,17 +1906,36 @@ export function createCanonicalPublishOps(
                     expectedTitle: variant.title,
                     expectedBody: variant.body,
                   });
-            if (read2.matched) {
-              store.upsertVariant({
-                ...variant,
-                status: VariantStatus.VERIFIED,
+            const dVerify = await durableVerify({
+              operationId: opId,
+              observedDigest: variant.contentDigest,
+              nowIso,
+            });
+            if (read2.matched && dVerify.matched) {
+              gateway.markVerified(opId, nowIso);
+              const applied = applyVariantReleaseVerification(store.read(), {
+                variantId: variant.variantId,
+                decision: ContentReleaseDecision.SUCCESS,
+                source: OutcomeEvidenceSource.FIXTURE,
+                fixtureOnly: true,
+                summary: `Recovered ${attempt.destinationId} via re-apply + read-back`,
+                outcomeId: `out-recover-${opId}`,
+                operationId: opId,
+                writePathId,
                 remoteId: reapply.remoteId,
-                updatedAtIso: nowIso,
+                nowIso,
               });
+              if (applied.outcome) store.addReleaseOutcome(applied.outcome);
+              if (applied.receipt) store.addReceipt(applied.receipt);
+              if (applied.variant) store.upsertVariant(applied.variant);
               run = upsertDestinationAttempt(run, {
                 ...attempt,
                 attemptId: `att-${randomUUID()}`,
                 status: DestinationAttemptStatus.VERIFIED,
+                operationKey: opKey,
+                durableOperationId: opId,
+                gatewayOperationId: opId,
+                receiptId: applied.receipt?.receiptId ?? null,
                 outcome: PublicationOutcome.PUBLISHED_VERIFIED,
                 summary: `Recovered ${attempt.destinationId} via re-apply + read-back`,
                 updatedAtIso: nowIso,
@@ -1456,22 +1945,14 @@ export function createCanonicalPublishOps(
         }
       }
 
-      if (run.status === DistributionRunStatus.COMPLETE) {
-        const camp = store
-          .read()
-          .campaigns.find((c) => c.campaignId === article.campaignId);
-        if (camp) {
-          store.upsertCampaign({
-            ...camp,
-            status: CampaignStatus.COMPLETE,
-            updatedAtIso: nowIso,
-          });
-        }
-      }
-
       const saved = persistRun(run);
+      syncCampaignFromRun(
+        article.campaignId,
+        saved.status as DistributionRun["status"],
+        nowIso,
+      );
       details.push(`Recovery complete — status=${saved.status}`);
-      return { run: saved, details };
+      return { run: saved, details, gatewayDecisions };
     },
   };
 }
