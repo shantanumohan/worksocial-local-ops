@@ -13,15 +13,16 @@ import {
   INBOX_RELATED_CASE_IDS,
   MessageSendStatus,
   OutcomeEvidenceSource,
+  ConversationStatus,
   acknowledgeHandoff,
+  acquireConversationLease,
   applyConversationTakeover,
-  countAgentMessages,
+  countSentAgentMessages,
   createConversation,
   createHandoff,
   createQualifiedLead,
   defaultResponsePolicy,
   detectDuplicateOutbound,
-  evaluateBookingClaim,
   evaluateOutboundSendGate,
   ingestInboundMessage,
   listInboxOutcomesForLearning,
@@ -52,7 +53,7 @@ import {
 } from "@worksocial/action-gateway";
 import {
   INBOX_CRM_LEAD_WRITE_PATH_ID,
-  INBOX_PILOT_CONV_ASSET_ID,
+  INBOX_FIXTURE_BOOKING_URL,
   INBOX_PILOT_LEAD_ASSET_ID,
   INBOX_REPLY_WRITE_PATH_ID,
   buildGoldenInbound,
@@ -142,12 +143,14 @@ export type InboxService = {
   };
   takeOver(input: {
     conversationId: string;
+    actorUserId?: string | null;
     nowIso?: string;
   }):
     | {
         ok: true;
         conversation: ConversationRecord;
         cancelledMessageIds: string[];
+        actorUserId: string | null;
       }
     | { ok: false; code: string; reasons: string[] };
   logLead(input: {
@@ -238,9 +241,36 @@ export function createInboxService(
     seedFixtures(nowIso) {
       const ts = nowIso ?? new Date().toISOString();
       const golden = buildGoldenInbound(ts);
-      store.setResponsePolicy(golden.policy);
-      store.upsertConversation(golden.conversation);
-      // Avoid double-add on re-seed
+      const prior = store.read();
+      const priorConv =
+        prior.conversations.find(
+          (c) => c.conversationId === golden.conversation.conversationId,
+        ) ?? null;
+      const priorPolicy = prior.responsePolicy;
+
+      // Preserve takeover / pause safety across reseed.
+      const policy = {
+        ...golden.policy,
+        repliesPaused: priorPolicy?.repliesPaused ?? golden.policy.repliesPaused,
+        updatedAtIso: ts,
+      };
+      store.setResponsePolicy(policy);
+
+      let conversation = golden.conversation;
+      if (priorConv) {
+        conversation = {
+          ...golden.conversation,
+          version: priorConv.version,
+          humanOwned: priorConv.humanOwned,
+          agentSendAllowed: priorConv.agentSendAllowed,
+          status: priorConv.status,
+          leaseOwner: priorConv.leaseOwner,
+          leaseExpiresAtIso: priorConv.leaseExpiresAtIso,
+          updatedAtIso: ts,
+        };
+      }
+      store.upsertConversation(conversation);
+
       const existing = store
         .read()
         .messages.find((m) => m.messageId === golden.inbound.messageId);
@@ -248,9 +278,9 @@ export function createInboxService(
         store.addMessage(golden.inbound);
       }
       return {
-        conversation: golden.conversation,
+        conversation,
         inbound: golden.inbound,
-        policy: golden.policy,
+        policy,
       };
     },
 
@@ -264,12 +294,27 @@ export function createInboxService(
     ingestInbound(input) {
       const nowIso = input.nowIso ?? new Date().toISOString();
       const state = store.read();
-      let conversation =
+      const byId = input.conversationId
+        ? (state.conversations.find(
+            (c) => c.conversationId === input.conversationId,
+          ) ?? null)
+        : null;
+      const byThread =
         state.conversations.find(
-          (c) =>
-            c.conversationId === input.conversationId ||
-            c.providerThreadId === input.providerThreadId,
+          (c) => c.providerThreadId === input.providerThreadId,
         ) ?? null;
+
+      if (
+        byId &&
+        byThread &&
+        byId.conversationId !== byThread.conversationId
+      ) {
+        throw new Error(
+          `CONFLICTING_CONVERSATION_IDS: conversationId ${byId.conversationId} != providerThread ${byThread.conversationId}`,
+        );
+      }
+
+      let conversation = byId ?? byThread;
 
       if (!conversation) {
         conversation = createConversation({
@@ -283,6 +328,22 @@ export function createInboxService(
         });
         store.upsertConversation(conversation);
       }
+
+      const leaseOwner = `inbox-worker-${process.pid}`;
+      const leaseExpiresAtIso = new Date(
+        Date.parse(nowIso) + 5 * 60 * 1000,
+      ).toISOString();
+      const leased = acquireConversationLease({
+        conversation,
+        leaseOwner,
+        leaseExpiresAtIso,
+        nowIso,
+      });
+      if (!leased.ok) {
+        throw new Error(`${leased.code}: ${leased.reason}`);
+      }
+      conversation = leased.conversation;
+      store.upsertConversation(conversation);
 
       const result = ingestInboundMessage({
         state: store.read(),
@@ -334,6 +395,8 @@ export function createInboxService(
           )?.body ??
         "";
 
+      const bookingClaim =
+        input.bookingClaim ?? BookingClaimKind.AVAILABILITY_LINK;
       const prepared = prepareConciergeReply({
         draftId: `draft-${randomUUID()}`,
         conversation,
@@ -342,10 +405,25 @@ export function createInboxService(
         factLabels: input.factLabels,
         policy,
         bookingEvidence: state.bookingEvidence,
-        bookingClaim: input.bookingClaim ?? BookingClaimKind.AVAILABILITY_LINK,
+        bookingClaim,
+        ...(bookingClaim === BookingClaimKind.AVAILABILITY_LINK
+          ? { bookingLinkUrl: INBOX_FIXTURE_BOOKING_URL }
+          : {}),
         nowIso,
       });
-      if (!prepared.ok) return prepared;
+      if (!prepared.ok) {
+        if (prepared.code === "HUMAN_REQUESTED") {
+          const takeover = applyConversationTakeover({
+            state: store.read(),
+            conversationId: conversation.conversationId,
+            nowIso,
+          });
+          if (takeover.ok) {
+            store.write(takeover.state);
+          }
+        }
+        return prepared;
+      }
       store.addDraft(prepared.draft);
       return prepared;
     },
@@ -465,13 +543,11 @@ export function createInboxService(
           conversationId: conversation.conversationId,
         });
         details.push(live.summary);
-        const failed: MessageRecord = {
-          ...message,
-          sendStatus: MessageSendStatus.FAILED,
-        };
-        store.upsertMessage(failed);
+        details.push(
+          "Queued message left unchanged so a later fixture send can retry",
+        );
         return {
-          message: failed,
+          message,
           gatewayDecision: null,
           outcome: null,
           liveInboxWiring: "NOT_WIRED",
@@ -480,7 +556,7 @@ export function createInboxService(
       }
 
       const policy = state.responsePolicy ?? defaultResponsePolicy(nowIso);
-      const agentCount = countAgentMessages(
+      const sentCount = countSentAgentMessages(
         state.messages,
         conversation.conversationId,
       );
@@ -488,18 +564,27 @@ export function createInboxService(
         conversation,
         message,
         policy,
-        agentMessageCount: agentCount,
+        sentAgentMessageCount: sentCount,
+        bookingEvidence: state.bookingEvidence,
+        nowIso,
       });
       if (!sendGate.allowed) {
         details.push(...sendGate.reasons);
+        const terminal =
+          sendGate.code === "CONVERSATION_TAKEOVER" ||
+          sendGate.code === "MESSAGE_LIMIT";
         const blocked: MessageRecord = {
           ...message,
           sendStatus:
             sendGate.code === "CONVERSATION_TAKEOVER"
               ? MessageSendStatus.BLOCKED_TAKEOVER
-              : MessageSendStatus.FAILED,
+              : terminal
+                ? MessageSendStatus.FAILED
+                : message.sendStatus,
         };
-        store.upsertMessage(blocked);
+        if (blocked.sendStatus !== message.sendStatus) {
+          store.upsertMessage(blocked);
+        }
         const outcome = buildInboxSendOutcome({
           outcomeId: `out-${randomUUID()}`,
           conversationId: conversation.conversationId,
@@ -523,25 +608,6 @@ export function createInboxService(
         };
       }
 
-      // Re-check booking claim if somehow queued with reservation
-      if (message.bookingClaim === BookingClaimKind.RESERVATION) {
-        const booking = evaluateBookingClaim({
-          claim: BookingClaimKind.RESERVATION,
-          conversationId: conversation.conversationId,
-          bookingEvidence: state.bookingEvidence,
-        });
-        if (!booking.allowed) {
-          details.push(...booking.reasons);
-          return {
-            message,
-            gatewayDecision: null,
-            outcome: null,
-            liveInboxWiring: "NOT_WIRED",
-            details,
-          };
-        }
-      }
-
       const operationId = `inbox-reply-${randomUUID()}`;
       const snapshot: GatewayAuthoritySnapshot = {
         outboundStopped: input.authority.outboundStopped,
@@ -559,7 +625,7 @@ export function createInboxService(
           channelId: "inbox",
           targetAccountId: input.targetAccountId ?? "acct-demo",
           operation: "send_customer_reply",
-          assetId: INBOX_PILOT_CONV_ASSET_ID,
+          assetId: conversation.conversationId,
           contentRevision: input.contentRevision ?? "rev-inbox-demo",
           writePathId: INBOX_REPLY_WRITE_PATH_ID,
           payload: {
@@ -618,10 +684,12 @@ export function createInboxService(
         conversation: freshConv,
         message,
         policy,
-        agentMessageCount: countAgentMessages(
+        sentAgentMessageCount: countSentAgentMessages(
           fresh.messages,
           conversation.conversationId,
         ),
+        bookingEvidence: fresh.bookingEvidence,
+        nowIso,
       });
       if (!recheck.allowed) {
         details.push("Pre-send recheck failed after gateway authorize");
@@ -708,6 +776,7 @@ export function createInboxService(
         ok: true,
         conversation: result.conversation,
         cancelledMessageIds: result.cancelledMessageIds,
+        actorUserId: input.actorUserId ?? null,
       };
     },
 
@@ -749,8 +818,18 @@ export function createInboxService(
         };
       }
 
-      const email =
-        input.email ?? conversation.customerEmail ?? "unknown@example.com";
+      const email = (input.email ?? conversation.customerEmail ?? "").trim();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return {
+          lead: null,
+          gatewayDecision: null,
+          outcome: null,
+          liveCrmLeadWiring: "NOT_WIRED",
+          details: [
+            "CONTACT_EMAIL_REQUIRED: qualified lead logging needs a real customer email",
+          ],
+        };
+      }
       const displayName =
         input.displayName ?? conversation.customerDisplayName;
       const lead = createQualifiedLead({
@@ -891,7 +970,7 @@ export function createInboxService(
         requestedAction: input.requestedAction ?? "Morning follow-up",
         nowIso,
       });
-      // Increment version on handoff so any stale agent send is blocked.
+      // Increment version so stale agent sends are blocked, but keep handed_off.
       const takeover = applyConversationTakeover({
         state: {
           ...state,
@@ -903,12 +982,21 @@ export function createInboxService(
         nowIso,
       });
       if (takeover.ok) {
-        store.write(takeover.state);
+        const preserved: ConversationRecord = {
+          ...takeover.conversation,
+          status: ConversationStatus.HANDED_OFF,
+        };
+        store.write({
+          ...takeover.state,
+          conversations: takeover.state.conversations.map((c) =>
+            c.conversationId === preserved.conversationId ? preserved : c,
+          ),
+        });
         store.addHandoff(handoff);
         return {
           ok: true,
           handoff,
-          conversation: takeover.conversation,
+          conversation: preserved,
         };
       }
       store.upsertConversation(handed);

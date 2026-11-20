@@ -10,6 +10,7 @@ export {
   INBOX_PILOT_INBOUND_ID,
   INBOX_SUPPORTED_FACT_ID,
   INBOX_SITE_ID,
+  INBOX_FIXTURE_BOOKING_URL,
   buildGoldenInbound,
   createFixtureInboxPilotMapping,
   proveFixtureInboxWritePaths,

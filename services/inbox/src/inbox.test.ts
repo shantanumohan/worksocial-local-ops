@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   BookingClaimKind,
+  ConversationStatus,
   MessageSendStatus,
   OperatingMode,
   SupportLabel,
@@ -99,6 +100,7 @@ describe("inbox service", () => {
     if (handoff.ok) {
       expect(handoff.conversation.humanOwned).toBe(true);
       expect(handoff.conversation.agentSendAllowed).toBe(false);
+      expect(handoff.conversation.status).toBe(ConversationStatus.HANDED_OFF);
     }
   });
 

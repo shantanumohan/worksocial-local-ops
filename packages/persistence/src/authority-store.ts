@@ -429,7 +429,12 @@ export function createDemoInboxGrants(nowIso: string): {
   leadPolicy: StandingPolicy;
   leadGrant: CapabilityGrant;
 } {
-  const assetScope = ["conv-fixture-after-hours", "lead-fixture-after-hours"];
+  // Scope to the golden conversation id (not a shared fixture asset label) so
+  // gateway authorization cannot authorize arbitrary ingested threads.
+  const assetScope = [
+    "golden-conv-after-hours",
+    "lead-fixture-after-hours",
+  ];
   const replyPolicy: StandingPolicy = {
     policyId: "pol-demo-inbox-reply",
     version: 1,

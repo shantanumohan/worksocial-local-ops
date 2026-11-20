@@ -4173,21 +4173,33 @@ export async function handleApiRequest(
     }
     const nowIso = new Date().toISOString();
     const authorityState = runtime.store.read();
-    const demo = createDemoInboxGrants(nowIso);
+    const hasReplyGrant = authorityState.capabilityGrants.some(
+      (g) =>
+        !g.revoked &&
+        g.allowedOperations.includes("send_customer_reply") &&
+        g.grantId === "grant-demo-inbox-reply",
+    );
+    if (!hasReplyGrant) {
+      json(
+        res,
+        403,
+        {
+          error: "GRANT_MISSING",
+          reason:
+            "No persisted inbox reply grant. Call /inbox/ensure-fixture-mapping first — will not mint demo authority at send time.",
+        },
+        cors,
+      );
+      return;
+    }
     const sent = runtime.inbox.sendQueuedReply({
       messageId: body.messageId,
       preferLive: body.preferLive === true,
       authority: {
         outboundStopped: authorityState.ownerControls.outboundStopped,
         operatingMode: authorityState.ownerControls.operatingMode,
-        policies:
-          authorityState.standingPolicies.length > 0
-            ? authorityState.standingPolicies
-            : [demo.replyPolicy, demo.leadPolicy],
-        grants:
-          authorityState.capabilityGrants.length > 0
-            ? authorityState.capabilityGrants
-            : [demo.replyGrant, demo.leadGrant],
+        policies: authorityState.standingPolicies,
+        grants: authorityState.capabilityGrants,
       },
       productionMapping: runtime.mappingStore.read(),
       nowIso,
@@ -4249,9 +4261,28 @@ export async function handleApiRequest(
       json(res, 400, { error: "MISSING_CONVERSATION_ID" }, cors);
       return;
     }
+    const nowIso = new Date().toISOString();
     const takeover = runtime.inbox.takeOver({
       conversationId: body.conversationId,
+      actorUserId: result.session.userId,
+      nowIso,
     });
+    if (takeover.ok) {
+      runtime.store.update((state) => ({
+        ...state,
+        auditEvents: [
+          ...state.auditEvents,
+          {
+            eventId: `evt-${randomBytes(6).toString("hex")}`,
+            actorUserId: result.session.userId,
+            eventType: "conversation_takeover",
+            detail: `Takeover conversation ${body.conversationId}; cancelled=${takeover.cancelledMessageIds.join(",") || "none"}`,
+            createdAtIso: nowIso,
+          },
+        ],
+        updatedAt: nowIso,
+      }));
+    }
     json(
       res,
       takeover.ok ? 200 : 400,
@@ -4311,7 +4342,25 @@ export async function handleApiRequest(
     }
     const nowIso = new Date().toISOString();
     const authorityState = runtime.store.read();
-    const demo = createDemoInboxGrants(nowIso);
+    const hasLeadGrant = authorityState.capabilityGrants.some(
+      (g) =>
+        !g.revoked &&
+        g.allowedOperations.includes("log_qualified_lead") &&
+        g.grantId === "grant-demo-inbox-crm-lead",
+    );
+    if (!hasLeadGrant) {
+      json(
+        res,
+        403,
+        {
+          error: "GRANT_MISSING",
+          reason:
+            "No persisted inbox CRM lead grant. Call /inbox/ensure-fixture-mapping first — will not mint demo authority at log time.",
+        },
+        cors,
+      );
+      return;
+    }
     const lead = runtime.inbox.logLead({
       conversationId: body.conversationId,
       ...(body.locationNeed !== undefined
@@ -4323,14 +4372,8 @@ export async function handleApiRequest(
       authority: {
         outboundStopped: authorityState.ownerControls.outboundStopped,
         operatingMode: authorityState.ownerControls.operatingMode,
-        policies:
-          authorityState.standingPolicies.length > 0
-            ? authorityState.standingPolicies
-            : [demo.replyPolicy, demo.leadPolicy],
-        grants:
-          authorityState.capabilityGrants.length > 0
-            ? authorityState.capabilityGrants
-            : [demo.replyGrant, demo.leadGrant],
+        policies: authorityState.standingPolicies,
+        grants: authorityState.capabilityGrants,
       },
       productionMapping: runtime.mappingStore.read(),
       nowIso,
@@ -4399,6 +4442,22 @@ export async function handleApiRequest(
       json(res, 400, { error: "MISSING_FIELDS" }, cors);
       return;
     }
+    if (
+      body.customerQuestions !== undefined &&
+      (!Array.isArray(body.customerQuestions) ||
+        !body.customerQuestions.every((q) => typeof q === "string"))
+    ) {
+      json(res, 400, { error: "INVALID_CUSTOMER_QUESTIONS" }, cors);
+      return;
+    }
+    if (
+      body.verifiedAnswers !== undefined &&
+      (!Array.isArray(body.verifiedAnswers) ||
+        !body.verifiedAnswers.every((q) => typeof q === "string"))
+    ) {
+      json(res, 400, { error: "INVALID_VERIFIED_ANSWERS" }, cors);
+      return;
+    }
     const handoff = runtime.inbox.createMorningHandoff({
       conversationId: body.conversationId,
       reason: body.reason,
@@ -4458,6 +4517,19 @@ export async function handleApiRequest(
     });
     if (!result.ok) {
       json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    if (!roleMayPerform(result.session.role, "manage_standing_policies")) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason:
+            "Pause/resume replies requires administrator manage_standing_policies",
+        },
+        cors,
+      );
       return;
     }
     const raw = await readBody(req);

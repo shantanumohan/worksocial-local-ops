@@ -301,6 +301,44 @@ export function toConversationState(
   };
 }
 
+const WEEKDAY_TO_DOW: Record<string, number> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+};
+
+/**
+ * True when `nowIso` falls inside at least one coverage window in policy.timezone.
+ * Empty coverageWindows fails closed (no automated replies).
+ */
+export function isWithinCoverageWindow(
+  policy: ResponsePolicy,
+  nowIso: string,
+): boolean {
+  if (policy.coverageWindows.length === 0) return false;
+  const date = new Date(nowIso);
+  if (Number.isNaN(date.getTime())) return false;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: policy.timezone,
+    weekday: "short",
+    hour: "numeric",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const weekday = parts.find((p) => p.type === "weekday")?.value ?? "";
+  const hourRaw = parts.find((p) => p.type === "hour")?.value ?? "0";
+  const dayOfWeek = WEEKDAY_TO_DOW[weekday];
+  const hour = Number.parseInt(hourRaw, 10);
+  if (dayOfWeek === undefined || Number.isNaN(hour)) return false;
+  return policy.coverageWindows.some(
+    (w) =>
+      w.dayOfWeek === dayOfWeek && hour >= w.startHour && hour < w.endHour,
+  );
+}
+
 export function createConversation(input: {
   conversationId: string;
   providerThreadId: string;
@@ -451,6 +489,8 @@ export function prepareConciergeReply(input: {
   policy: ResponsePolicy;
   bookingEvidence: readonly BookingEvidence[];
   bookingClaim?: BookingClaimKindValue | null;
+  /** Required when bookingClaim is AVAILABILITY_LINK — must be a real URL. */
+  bookingLinkUrl?: string | null;
   nowIso: string;
 }):
   | { ok: true; draft: ConciergeDraft; reasons: string[] }
@@ -462,6 +502,15 @@ export function prepareConciergeReply(input: {
       ok: false,
       code: "REPLIES_PAUSED",
       reasons: ["Automated replies are paused by response policy"],
+    };
+  }
+  if (!isWithinCoverageWindow(input.policy, input.nowIso)) {
+    return {
+      ok: false,
+      code: "OUTSIDE_COVERAGE",
+      reasons: [
+        `Now is outside after-hours coverage windows (${input.policy.timezone})`,
+      ],
     };
   }
   if (input.conversation.humanOwned || !input.conversation.agentSendAllowed) {
@@ -489,6 +538,16 @@ export function prepareConciergeReply(input: {
     /\b(human|person|agent|someone|call me|speak to)\b/.test(lower) ||
     /\b(refund|legal|lawyer|dispute|emergency|locked out)\b/.test(lower);
 
+  if (asksForHuman) {
+    return {
+      ok: false,
+      code: "HUMAN_REQUESTED",
+      reasons: [
+        "Customer requested a human or raised a sensitive issue — stop automated handling and hand off",
+      ],
+    };
+  }
+
   const bookingClaim = input.bookingClaim ?? null;
   if (bookingClaim === BookingClaimKind.RESERVATION) {
     const bookingGate = evaluateBookingClaim({
@@ -509,19 +568,23 @@ export function prepareConciergeReply(input: {
     ? "I'm WorkSocial's virtual assistant. "
     : "";
   let body: string;
-  if (asksForHuman) {
-    body = `${identity}I can connect you with a teammate. I've flagged this for human follow-up.`;
-  } else if (bookingClaim === BookingClaimKind.AVAILABILITY_LINK) {
-    body = `${identity}Here is our booking link for current availability. A link is not a reservation — confirm only after the booking system returns a receipt.`;
+  if (bookingClaim === BookingClaimKind.AVAILABILITY_LINK) {
+    const url = input.bookingLinkUrl?.trim() ?? "";
+    if (!/^https?:\/\//i.test(url)) {
+      return {
+        ok: false,
+        code: "BOOKING_LINK_REQUIRED",
+        reasons: [
+          "Availability-link replies require a concrete http(s) booking URL grounded in verified evidence",
+        ],
+      };
+    }
+    body = `${identity}Here is our booking link for current availability: ${url}. A link is not a reservation — confirm only after the booking system returns a receipt.`;
   } else if (bookingClaim === BookingClaimKind.TOUR_REQUEST) {
     body = `${identity}I can log a tour request with your preferred location, date, and group size. A tour request is not a confirmed appointment.`;
   } else {
     body = `${identity}Thanks for reaching out. Based on our verified room details and documented policies, I can share supported information and collect the minimum details for a qualified lead.`;
   }
-
-  const qualification: LeadQualificationValue = asksForHuman
-    ? LeadQualification.NEEDS_HUMAN
-    : LeadQualification.QUALIFIED;
 
   return {
     ok: true,
@@ -531,8 +594,8 @@ export function prepareConciergeReply(input: {
       body,
       citedFactIds: [...input.citedFactIds],
       preparedAtVersion: input.conversation.version,
-      qualification,
-      asksForHuman,
+      qualification: LeadQualification.QUALIFIED,
+      asksForHuman: false,
       bookingClaim,
       createdAtIso: input.nowIso,
     },
@@ -555,6 +618,13 @@ export function queueOutboundReply(input: {
       ok: false,
       code: "DRAFT_MISMATCH",
       reasons: ["Draft conversation does not match"],
+    };
+  }
+  if (input.draft.asksForHuman) {
+    return {
+      ok: false,
+      code: "HUMAN_REQUESTED",
+      reasons: ["Cannot queue agent reply when customer requested a human"],
     };
   }
   const gate = canAgentSend(
@@ -596,7 +666,10 @@ export function evaluateOutboundSendGate(input: {
   conversation: ConversationRecord;
   message: MessageRecord;
   policy: ResponsePolicy;
-  agentMessageCount: number;
+  /** Count of already-SENT agent messages (excludes the queued message under evaluation). */
+  sentAgentMessageCount: number;
+  bookingEvidence: readonly BookingEvidence[];
+  nowIso: string;
 }):
   | { allowed: true }
   | { allowed: false; code: string; reasons: string[] } {
@@ -605,6 +678,15 @@ export function evaluateOutboundSendGate(input: {
       allowed: false,
       code: "REPLIES_PAUSED",
       reasons: ["Automated replies are paused"],
+    };
+  }
+  if (!isWithinCoverageWindow(input.policy, input.nowIso)) {
+    return {
+      allowed: false,
+      code: "OUTSIDE_COVERAGE",
+      reasons: [
+        `Send refused outside after-hours coverage windows (${input.policy.timezone})`,
+      ],
     };
   }
   if (input.message.sendStatus !== MessageSendStatus.QUEUED) {
@@ -636,7 +718,8 @@ export function evaluateOutboundSendGate(input: {
     };
   }
   if (
-    input.agentMessageCount >= input.policy.maxAgentMessagesPerConversation
+    input.sentAgentMessageCount >=
+    input.policy.maxAgentMessagesPerConversation
   ) {
     return {
       allowed: false,
@@ -647,13 +730,18 @@ export function evaluateOutboundSendGate(input: {
     };
   }
   if (input.message.bookingClaim === BookingClaimKind.RESERVATION) {
-    return {
-      allowed: false,
-      code: "BOOKING_EVIDENCE_REQUIRED",
-      reasons: [
-        "Reservation claims cannot be sent without verified booking evidence — use evaluateBookingClaim first",
-      ],
-    };
+    const booking = evaluateBookingClaim({
+      claim: BookingClaimKind.RESERVATION,
+      conversationId: input.conversation.conversationId,
+      bookingEvidence: input.bookingEvidence,
+    });
+    if (!booking.allowed) {
+      return {
+        allowed: false,
+        code: booking.code,
+        reasons: booking.reasons,
+      };
+    }
   }
   return { allowed: true };
 }
@@ -879,7 +967,7 @@ export function listInboxOutcomesForLearning(
   });
 }
 
-export function countAgentMessages(
+export function countSentAgentMessages(
   messages: readonly MessageRecord[],
   conversationId: string,
 ): number {
@@ -888,9 +976,16 @@ export function countAgentMessages(
       m.conversationId === conversationId &&
       m.direction === MessageDirection.OUTBOUND &&
       m.sender === "agent" &&
-      (m.sendStatus === MessageSendStatus.SENT ||
-        m.sendStatus === MessageSendStatus.QUEUED),
+      m.sendStatus === MessageSendStatus.SENT,
   ).length;
+}
+
+/** @deprecated Prefer countSentAgentMessages for send-limit checks. */
+export function countAgentMessages(
+  messages: readonly MessageRecord[],
+  conversationId: string,
+): number {
+  return countSentAgentMessages(messages, conversationId);
 }
 
 export function detectDuplicateOutbound(input: {
@@ -916,7 +1011,11 @@ export function detectDuplicateOutbound(input: {
     ) {
       return false;
     }
-    const ts = Date.parse(m.createdAtIso);
+    const stamp =
+      m.sendStatus === MessageSendStatus.SENT && m.sentAtIso
+        ? m.sentAtIso
+        : m.createdAtIso;
+    const ts = Date.parse(stamp);
     if (Number.isNaN(ts)) return false;
     return nowMs - ts <= input.windowSec * 1000;
   });

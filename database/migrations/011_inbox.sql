@@ -2,8 +2,9 @@
 -- handoffs, qualified leads, booking evidence, and send outcome ledger.
 -- Not production-activated. Schema only; file-backed inbox store is used until Postgres is bound.
 -- Live inbox providers and live Zoho lead writes remain NOT_WIRED without owner credentials.
+-- Tables live in journey (created by 001_control_plane.sql) — inbox is a journey concern.
 
-CREATE TABLE IF NOT EXISTS care.response_policies (
+CREATE TABLE IF NOT EXISTS journey.response_policies (
   policy_id                          text PRIMARY KEY,
   timezone                           text NOT NULL,
   coverage_windows_json              jsonb NOT NULL DEFAULT '[]'::jsonb,
@@ -16,7 +17,7 @@ CREATE TABLE IF NOT EXISTS care.response_policies (
   updated_at                         timestamptz NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS care.conversations (
+CREATE TABLE IF NOT EXISTS journey.conversations (
   conversation_id      text PRIMARY KEY,
   provider_thread_id   text NOT NULL,
   channel              text NOT NULL
@@ -38,11 +39,11 @@ CREATE TABLE IF NOT EXISTS care.conversations (
 );
 
 CREATE INDEX IF NOT EXISTS conversations_provider_thread_idx
-  ON care.conversations (provider_thread_id);
+  ON journey.conversations (provider_thread_id);
 
-CREATE TABLE IF NOT EXISTS care.messages (
+CREATE TABLE IF NOT EXISTS journey.messages (
   message_id           text PRIMARY KEY,
-  conversation_id      text NOT NULL REFERENCES care.conversations (conversation_id),
+  conversation_id      text NOT NULL REFERENCES journey.conversations (conversation_id),
   provider_message_id  text,
   direction            text NOT NULL
     CHECK (direction IN ('inbound', 'outbound')),
@@ -66,13 +67,13 @@ CREATE TABLE IF NOT EXISTS care.messages (
 );
 
 CREATE INDEX IF NOT EXISTS messages_conversation_idx
-  ON care.messages (conversation_id);
+  ON journey.messages (conversation_id);
 
 CREATE UNIQUE INDEX IF NOT EXISTS messages_provider_dedupe_idx
-  ON care.messages (conversation_id, provider_message_id)
+  ON journey.messages (conversation_id, provider_message_id)
   WHERE provider_message_id IS NOT NULL;
 
-CREATE TABLE IF NOT EXISTS care.qualified_leads (
+CREATE TABLE IF NOT EXISTS journey.qualified_leads (
   lead_id              text PRIMARY KEY,
   conversation_id      text NOT NULL,
   correlation_id       text NOT NULL,
@@ -92,9 +93,9 @@ CREATE TABLE IF NOT EXISTS care.qualified_leads (
 );
 
 CREATE INDEX IF NOT EXISTS qualified_leads_conversation_idx
-  ON care.qualified_leads (conversation_id);
+  ON journey.qualified_leads (conversation_id);
 
-CREATE TABLE IF NOT EXISTS care.handoffs (
+CREATE TABLE IF NOT EXISTS journey.handoffs (
   handoff_id           text PRIMARY KEY,
   conversation_id      text NOT NULL,
   reason               text NOT NULL,
@@ -110,9 +111,9 @@ CREATE TABLE IF NOT EXISTS care.handoffs (
 );
 
 CREATE INDEX IF NOT EXISTS handoffs_conversation_idx
-  ON care.handoffs (conversation_id);
+  ON journey.handoffs (conversation_id);
 
-CREATE TABLE IF NOT EXISTS care.booking_evidence (
+CREATE TABLE IF NOT EXISTS journey.booking_evidence (
   evidence_id          text PRIMARY KEY,
   conversation_id      text NOT NULL,
   provider_receipt_id  text NOT NULL,
@@ -124,7 +125,7 @@ CREATE TABLE IF NOT EXISTS care.booking_evidence (
   observed_at          timestamptz NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS care.inbox_send_outcomes (
+CREATE TABLE IF NOT EXISTS journey.inbox_send_outcomes (
   outcome_id       text PRIMARY KEY,
   write_path_id    text NOT NULL,
   operation_id     text NOT NULL,
@@ -138,4 +139,4 @@ CREATE TABLE IF NOT EXISTS care.inbox_send_outcomes (
 );
 
 CREATE INDEX IF NOT EXISTS inbox_send_outcomes_fixture_idx
-  ON care.inbox_send_outcomes (fixture_only);
+  ON journey.inbox_send_outcomes (fixture_only);

@@ -28,7 +28,7 @@ import {
   type JourneyRegistryEntry,
 } from "@worksocial/domain";
 
-export const INBOX_PILOT_CONV_ASSET_ID = "conv-fixture-after-hours" as const;
+export const INBOX_PILOT_CONV_ASSET_ID = "golden-conv-after-hours" as const;
 export const INBOX_PILOT_LEAD_ASSET_ID = "lead-fixture-after-hours" as const;
 export const INBOX_REPLY_WRITE_PATH_ID = "wp-inbox-reply-send" as const;
 export const INBOX_CRM_LEAD_WRITE_PATH_ID = "wp-inbox-crm-lead" as const;
@@ -38,6 +38,8 @@ export const INBOX_PILOT_CONVERSATION_ID = "golden-conv-after-hours" as const;
 export const INBOX_PILOT_INBOUND_ID = "golden-msg-inbound-1" as const;
 export const INBOX_SUPPORTED_FACT_ID = "fixture-fact-hours" as const;
 export const INBOX_SITE_ID = "worksocial-pilot" as const;
+export const INBOX_FIXTURE_BOOKING_URL =
+  "https://fixture.worksocial.local/book/training-rooms" as const;
 
 export type InboxAdapterResult =
   | {
@@ -288,12 +290,32 @@ export function upsertFixtureInboxMapping(
 } {
   const { state: fixture, writePathIds } =
     createFixtureInboxPilotMapping(nowIso);
-  const existingPath = current.writePaths.find(
+  const hasReply = current.writePaths.some(
     (p) => p.writePathId === writePathIds.reply,
   );
-  if (existingPath) {
+  const hasLead = current.writePaths.some(
+    (p) => p.writePathId === writePathIds.lead,
+  );
+  const hasCrm = current.crmOwnership.some(
+    (c) => c.crmOwnershipId === INBOX_CRM_OWNERSHIP_ID,
+  );
+  if (hasReply && hasLead && hasCrm) {
     return { state: current, writePathIds, created: false };
   }
+
+  const missingPaths = fixture.writePaths.filter(
+    (fp) => !current.writePaths.some((p) => p.writePathId === fp.writePathId),
+  );
+  const missingCrm = fixture.crmOwnership.filter(
+    (fc) =>
+      !current.crmOwnership.some((c) => c.crmOwnershipId === fc.crmOwnershipId),
+  );
+  const missingBindings = fixture.bindings.filter(
+    (fb) => !current.bindings.some((b) => b.bindingId === fb.bindingId),
+  );
+  const missingJourneys = fixture.journeys.filter(
+    (fj) => !current.journeys.some((j) => j.journeyId === fj.journeyId),
+  );
 
   return {
     writePathIds,
@@ -301,28 +323,10 @@ export function upsertFixtureInboxMapping(
     state: {
       ...current,
       sites: [...new Set([...current.sites, ...fixture.sites])],
-      bindings: [
-        ...current.bindings.filter(
-          (b) => !fixture.bindings.some((fb) => fb.bindingId === b.bindingId),
-        ),
-        ...fixture.bindings,
-      ],
-      crmOwnership: [
-        ...current.crmOwnership.filter(
-          (c) =>
-            !fixture.crmOwnership.some(
-              (fc) => fc.crmOwnershipId === c.crmOwnershipId,
-            ),
-        ),
-        ...fixture.crmOwnership,
-      ],
-      writePaths: [...current.writePaths, ...fixture.writePaths],
-      journeys: [
-        ...current.journeys.filter(
-          (j) => !fixture.journeys.some((fj) => fj.journeyId === j.journeyId),
-        ),
-        ...fixture.journeys,
-      ],
+      bindings: [...current.bindings, ...missingBindings],
+      crmOwnership: [...current.crmOwnership, ...missingCrm],
+      writePaths: [...current.writePaths, ...missingPaths],
+      journeys: [...current.journeys, ...missingJourneys],
       updatedAt: nowIso,
     },
   };

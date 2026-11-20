@@ -159,9 +159,64 @@ describe("inbox domain", () => {
         sendStatus: MessageSendStatus.QUEUED,
       },
       policy,
-      agentMessageCount: 1,
+      sentAgentMessageCount: 0,
+      bookingEvidence: [],
+      nowIso: now,
     });
     expect(sendGate.allowed).toBe(false);
+  });
+
+  it("rejects human-request drafts and requires booking URL for links", () => {
+    const conversation = createConversation({
+      conversationId: "c1",
+      providerThreadId: "thr-1",
+      channel: InboxChannel.FIXTURE,
+      customerDisplayName: "Alex",
+      nowIso: now,
+    });
+    const policy = defaultResponsePolicy(now);
+    const human = prepareConciergeReply({
+      draftId: "d-h",
+      conversation,
+      inboundBody: "Please let me speak to a human about a refund",
+      citedFactIds: ["fact-hours"],
+      factLabels: new Map([["fact-hours", SupportLabel.SUPPORTED]]),
+      policy,
+      bookingEvidence: [],
+      nowIso: now,
+    });
+    expect(human.ok).toBe(false);
+    if (!human.ok) expect(human.code).toBe("HUMAN_REQUESTED");
+
+    const noUrl = prepareConciergeReply({
+      draftId: "d-link",
+      conversation,
+      inboundBody: "Need a booking link",
+      citedFactIds: ["fact-hours"],
+      factLabels: new Map([["fact-hours", SupportLabel.SUPPORTED]]),
+      policy,
+      bookingEvidence: [],
+      bookingClaim: BookingClaimKind.AVAILABILITY_LINK,
+      nowIso: now,
+    });
+    expect(noUrl.ok).toBe(false);
+
+    const withUrl = prepareConciergeReply({
+      draftId: "d-link-ok",
+      conversation,
+      inboundBody: "Need a booking link",
+      citedFactIds: ["fact-hours"],
+      factLabels: new Map([["fact-hours", SupportLabel.SUPPORTED]]),
+      policy,
+      bookingEvidence: [],
+      bookingClaim: BookingClaimKind.AVAILABILITY_LINK,
+      bookingLinkUrl: "https://fixture.worksocial.local/book",
+      nowIso: now,
+    });
+    expect(withUrl.ok).toBe(true);
+    if (withUrl.ok) {
+      expect(withUrl.draft.body).toContain("https://fixture.worksocial.local/book");
+    }
   });
 
   it("rejects reservation without booking evidence", () => {
