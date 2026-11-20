@@ -4,6 +4,7 @@
  */
 
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import type { PgPool, PgQueryable } from "./client.js";
@@ -30,6 +31,11 @@ export function defaultMigrationsDir(fromCwd = process.cwd()): string {
     path.resolve(fromCwd, "../../database/migrations"),
     path.resolve(fromCwd, "../../../database/migrations"),
   ];
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
   return candidates[0]!;
 }
 
