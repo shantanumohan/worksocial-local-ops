@@ -6,6 +6,7 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import {
+  digestArticleContent,
   emptyContentState,
   type ArticleQaVerdict,
   type CanonicalArticle,
@@ -14,6 +15,7 @@ import {
   type DestinationRegistryEntry,
   type DestinationVariant,
   type PublicationReceipt,
+  type VariantQaVerdict,
   type WritePathOutcomeEvidence,
 } from "@worksocial/domain";
 
@@ -28,12 +30,14 @@ export type ContentStore = {
   upsertVariant(variant: DestinationVariant): ContentState;
   addReceipt(receipt: PublicationReceipt): ContentState;
   addQaVerdict(verdict: ArticleQaVerdict): ContentState;
+  addVariantQaVerdict(verdict: VariantQaVerdict): ContentState;
   addReleaseOutcome(outcome: WritePathOutcomeEvidence): ContentState;
   listCampaigns(limit?: number): ContentCampaign[];
   listArticles(limit?: number): CanonicalArticle[];
   listVariants(limit?: number): DestinationVariant[];
   listReceipts(limit?: number): PublicationReceipt[];
   listQaVerdicts(limit?: number): ArticleQaVerdict[];
+  listVariantQaVerdicts(limit?: number): VariantQaVerdict[];
   status(): {
     campaignCount: number;
     articleCount: number;
@@ -41,6 +45,7 @@ export type ContentStore = {
     receiptCount: number;
     destinationCount: number;
     qaVerdictCount: number;
+    variantQaVerdictCount: number;
     releaseOutcomeCount: number;
     liveCmsPublishWiring: ContentState["liveCmsPublishWiring"];
     liveGbpWiring: ContentState["liveGbpWiring"];
@@ -90,9 +95,24 @@ export function createFileContentStore(stateDir: string): ContentStore {
               : "unknown-author",
         };
       }),
-      variants: existing.variants ?? [],
+      variants: (existing.variants ?? []).map((v) => {
+        const raw = v as DestinationVariant & {
+          contentDigest?: string;
+          citedFactIds?: string[];
+        };
+        const contentDigest =
+          typeof raw.contentDigest === "string" && raw.contentDigest.length > 0
+            ? raw.contentDigest
+            : digestArticleContent(raw.title, raw.body);
+        return {
+          ...v,
+          contentDigest,
+          citedFactIds: Array.isArray(raw.citedFactIds) ? raw.citedFactIds : [],
+        };
+      }),
       receipts: existing.receipts ?? [],
       qaVerdicts: existing.qaVerdicts ?? [],
+      variantQaVerdicts: existing.variantQaVerdicts ?? [],
       releaseOutcomes: existing.releaseOutcomes ?? [],
       liveCmsPublishWiring: "NOT_WIRED",
       liveGbpWiring: "NOT_WIRED",
@@ -173,6 +193,17 @@ export function createFileContentStore(stateDir: string): ContentStore {
           updatedAtIso: verdict.decidedAtIso,
         };
       }),
+    addVariantQaVerdict: (verdict) =>
+      update((state) => {
+        const others = state.variantQaVerdicts.filter(
+          (v) => v.verdictId !== verdict.verdictId,
+        );
+        return {
+          ...state,
+          variantQaVerdicts: [...others, verdict].slice(-500),
+          updatedAtIso: verdict.decidedAtIso,
+        };
+      }),
     addReleaseOutcome: (outcome) =>
       update((state) => ({
         ...state,
@@ -199,6 +230,10 @@ export function createFileContentStore(stateDir: string): ContentStore {
       const rows = read().qaVerdicts;
       return rows.slice(Math.max(0, rows.length - limit));
     },
+    listVariantQaVerdicts: (limit = 100) => {
+      const rows = read().variantQaVerdicts;
+      return rows.slice(Math.max(0, rows.length - limit));
+    },
     status: () => {
       const state = read();
       return {
@@ -208,12 +243,13 @@ export function createFileContentStore(stateDir: string): ContentStore {
         receiptCount: state.receipts.length,
         destinationCount: state.destinations.length,
         qaVerdictCount: state.qaVerdicts.length,
+        variantQaVerdictCount: state.variantQaVerdicts.length,
         releaseOutcomeCount: state.releaseOutcomes.length,
         liveCmsPublishWiring: state.liveCmsPublishWiring,
         liveGbpWiring: state.liveGbpWiring,
         liveSocialWiring: state.liveSocialWiring,
         honestNote:
-          "Article pipeline, destination variants, and gateway-gated fixture distribution. Live CMS / GBP / social remain NOT_WIRED. Gateway acceptance ≠ verified. Released claims require SUPPORTED facts + independent QA.",
+          "Article pipeline, destination variants, and gateway-gated fixture distribution. Live CMS / GBP / social remain NOT_WIRED. Gateway acceptance ≠ verified. Released claims require SUPPORTED facts + independent per-variant QA.",
       };
     },
   };

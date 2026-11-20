@@ -8,11 +8,12 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from "
 import { dirname, join } from "node:path";
 import type {
   AgentRoleId,
+  CostRecordingKindValue,
   RoleExecutionModeValue,
   RoleRunOutcomeEvidence,
   RoleRunStatusValue,
 } from "@worksocial/domain";
-import { listAgentRoleContracts } from "@worksocial/domain";
+import { CostRecordingKind, listAgentRoleContracts } from "@worksocial/domain";
 
 export type RoleStatusRecord = {
   roleId: AgentRoleId;
@@ -40,6 +41,8 @@ export type RoleRunEvidence = {
   startedAtIso: string;
   finishedAtIso: string;
   costMinor: number;
+  /** How costMinor was obtained — required for honest /roles/status. */
+  costKind: CostRecordingKindValue;
   budgetReservationId: string | null;
 };
 
@@ -108,7 +111,17 @@ export function createFileRoleRuntimeStore(stateDir: string): RoleRuntimeStore {
     return {
       ...existing,
       roles: existing.roles ?? emptyRoleRuntimeState(existing.updatedAtIso).roles,
-      runs: existing.runs ?? [],
+      runs: (existing.runs ?? []).map((run) => {
+        const raw = run as RoleRunEvidence & { costKind?: CostRecordingKindValue };
+        return {
+          ...run,
+          costKind:
+            raw.costKind ??
+            (run.executionMode === "fixture"
+              ? CostRecordingKind.FIXTURE
+              : CostRecordingKind.UNKNOWN),
+        };
+      }),
       outcomes: existing.outcomes ?? [],
       temporalWiring: existing.temporalWiring ?? "NOT_WIRED",
     };

@@ -232,7 +232,8 @@ describe("content service", () => {
     });
     expect(denied.gatewayDecision?.allowed).toBe(false);
     expect(denied.article?.status).toBe(ArticleStatus.APPROVED);
-    expect(denied.receipt?.outcome).toBe(PublicationOutcome.FAILED);
+    expect(denied.receipt?.outcome).toBe(PublicationOutcome.BLOCKED);
+    expect(denied.details.join(" ")).toMatch(/BLOCKED|resumable/i);
 
     const okAuthority = demoAuthority(now);
     const released = service.releaseCanonical({
@@ -312,6 +313,7 @@ describe("content service", () => {
       variantId: "golden-var-gbp",
       authority,
       productionMapping: mapping,
+      factLabels: labels,
       nowIso: now,
     });
     expect(blocked.gatewayDecision).toBeNull();
@@ -363,6 +365,7 @@ describe("content service", () => {
       variantId: "test-var-cms",
       authority,
       productionMapping: mapping,
+      factLabels: labels,
       nowIso: now,
     });
     expect(cmsBlocked.gatewayDecision).toBeNull();
@@ -374,6 +377,7 @@ describe("content service", () => {
       variantId: "golden-var-gbp",
       authority,
       productionMapping: mapping,
+      factLabels: labels,
       nowIso: now,
     });
     expect(gbp.gatewayDecision?.allowed).toBe(true);
@@ -394,6 +398,7 @@ describe("content service", () => {
       variantId: "golden-var-facebook",
       authority,
       productionMapping: mapping,
+      factLabels: labels,
       nowIso: now,
     });
     expect(facebook.gatewayDecision?.allowed).toBe(true);
@@ -403,6 +408,7 @@ describe("content service", () => {
       variantId: "golden-var-linkedin",
       authority,
       productionMapping: mapping,
+      factLabels: labels,
       preferLive: true,
       nowIso: now,
     });

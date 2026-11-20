@@ -58,6 +58,13 @@ export {
   type LearningTrainingRun,
 } from "./proposals.js";
 
-export { runTrainLoop, type TrainLoopInput, type TrainLoopResult } from "./train.js";
+export {
+  runTrainLoop,
+  splitHoldout,
+  MIN_HOLDOUT_SPLIT_SAMPLES,
+  type TrainLoopInput,
+  type TrainLoopResult,
+  type HoldoutSplit,
+} from "./train.js";
 
 export const packageName = "@worksocial/ml" as const;

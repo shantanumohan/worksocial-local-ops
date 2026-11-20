@@ -25,6 +25,7 @@ import {
   createContentCampaign,
   createDestinationVariant,
   createPublicationReceipt,
+  createVariantQaVerdict,
   defaultDestinationRegistry,
   evaluateArticleApprovalGate,
   evaluateContentReadBack,
@@ -43,6 +44,7 @@ import {
   type CapabilityGrant,
   type PublicationReceipt,
   type StandingPolicy,
+  type VariantQaVerdict,
   type WritePathOutcomeEvidence,
 } from "@worksocial/domain";
 import type { ContentStore } from "@worksocial/persistence";
@@ -105,6 +107,7 @@ export type ContentService = {
     variants: DestinationVariant[];
     destinations: DestinationRegistryEntry[];
     qaVerdicts: ArticleQaVerdict[];
+    variantQaVerdicts: VariantQaVerdict[];
     skippedProgressedArticleIds: string[];
     skippedProgressedCampaignIds: string[];
   };
@@ -118,6 +121,18 @@ export type ContentService = {
     nowIso?: string;
   }):
     | { ok: true; verdict: ArticleQaVerdict }
+    | { ok: false; code: string; reasons: string[] };
+  /** Digest-bound per-variant QA — required before releaseVariant. */
+  recordVariantQaVerdict(input: {
+    verdictId?: string;
+    variantId: string;
+    authorId: string;
+    reviewerId: string;
+    approved: boolean;
+    summary?: string;
+    nowIso?: string;
+  }):
+    | { ok: true; verdict: VariantQaVerdict }
     | { ok: false; code: string; reasons: string[] };
   createCampaign(input: {
     campaignId?: string;
@@ -222,6 +237,8 @@ export type ContentService = {
       actorRole?: string;
     };
     productionMapping: ProductionMappingState;
+    /** Current knowledge support labels — required; missing fails closed. */
+    factLabels: FactSupportLookup;
     preferLive?: boolean;
     targetAccountId?: string;
     contentRevision?: string | null;
@@ -351,6 +368,14 @@ export function createContentService(
         store.addQaVerdict(verdict);
       }
 
+      for (const verdict of seed.variantQaVerdicts) {
+        const prior = existing.variantQaVerdicts.find(
+          (v) => v.verdictId === verdict.verdictId,
+        );
+        if (prior) continue;
+        store.addVariantQaVerdict(verdict);
+      }
+
       return {
         campaigns: seed.campaigns.filter(
           (c) => !skippedProgressedCampaignIds.includes(c.campaignId),
@@ -361,6 +386,7 @@ export function createContentService(
         variants: seed.variants,
         destinations: seed.destinations,
         qaVerdicts: seed.qaVerdicts,
+        variantQaVerdicts: seed.variantQaVerdicts,
         skippedProgressedArticleIds,
         skippedProgressedCampaignIds,
       };
@@ -534,6 +560,59 @@ export function createContentService(
         });
       }
 
+      return { ok: true as const, verdict: created.verdict };
+    },
+
+    recordVariantQaVerdict(input) {
+      const nowIso = input.nowIso ?? new Date().toISOString();
+      const state = store.read();
+      const variant =
+        state.variants.find((v) => v.variantId === input.variantId) ?? null;
+      if (!variant) {
+        return {
+          ok: false as const,
+          code: "VARIANT_NOT_FOUND",
+          reasons: [`Unknown variant ${input.variantId}`],
+        };
+      }
+      const article =
+        state.articles.find((a) => a.articleId === variant.articleId) ?? null;
+      if (!article) {
+        return {
+          ok: false as const,
+          code: "ARTICLE_NOT_FOUND",
+          reasons: [`Unknown article ${variant.articleId}`],
+        };
+      }
+      if (input.authorId !== article.authorId) {
+        return {
+          ok: false as const,
+          code: "VARIANT_QA_AUTHOR_MISMATCH",
+          reasons: [
+            "Variant QA authorId must match the article's authoritative authorId",
+          ],
+        };
+      }
+      const created = createVariantQaVerdict({
+        verdictId: input.verdictId ?? `vqa-${randomUUID()}`,
+        variantId: variant.variantId,
+        articleId: article.articleId,
+        authorId: article.authorId,
+        reviewerId: input.reviewerId,
+        approved: input.approved,
+        contentDigest: variant.contentDigest,
+        citedFactIds: variant.citedFactIds,
+        summary: input.summary ?? "Independent per-variant QA verdict",
+        decidedAtIso: nowIso,
+      });
+      if (!created.ok) {
+        return {
+          ok: false as const,
+          code: created.code,
+          reasons: created.reasons,
+        };
+      }
+      store.addVariantQaVerdict(created.verdict);
       return { ok: true as const, verdict: created.verdict };
     },
 
@@ -738,8 +817,13 @@ export function createContentService(
 
       if (!submitted.decision.allowed) {
         // Transient authority denials stay retryable — article remains APPROVED.
+        // Stop-switch uses BLOCKED (resumable); other denials stay FAILED attempt receipts.
+        const blockedAttempt =
+          submitted.decision.code === "OUTBOUND_STOPPED";
         details.push(
-          "Gateway denial recorded; article remains APPROVED for retry after authority is restored",
+          blockedAttempt
+            ? "Stop-switch BLOCKED attempt; approved revision kept — resumable after outbound resumes"
+            : "Gateway denial recorded; article remains APPROVED for retry after authority is restored",
         );
         const receipt = createPublicationReceipt({
           receiptId: `rcpt-${randomUUID()}`,
@@ -747,7 +831,9 @@ export function createContentService(
           articleId: article.articleId,
           destinationId: "dest-cms",
           kind: DestinationKind.CMS,
-          outcome: PublicationOutcome.FAILED,
+          outcome: blockedAttempt
+            ? PublicationOutcome.BLOCKED
+            : PublicationOutcome.FAILED,
           gatewayOperationId: operationId,
           writePathId: CONTENT_PILOT_CMS_WRITE_PATH_ID,
           summary: `Gateway denied (retryable): ${submitted.decision.code ?? submitted.decision.reason}`,
@@ -1004,11 +1090,49 @@ export function createContentService(
       }
 
       const preferLive = input.preferLive === true;
+      const variantQaVerdict =
+        state.variantQaVerdicts
+          .filter((v) => v.variantId === variant.variantId)
+          .filter((v) => v.contentDigest === variant.contentDigest)
+          .sort((a, b) => b.decidedAtIso.localeCompare(a.decidedAtIso))[0] ??
+        null;
+      // Current knowledge labels are required — never synthesize SUPPORTED from citation membership.
+      if (!input.factLabels) {
+        details.push(
+          "factLabels required for variant release — missing labels fail closed (do not infer SUPPORTED)",
+        );
+        const receipt = createPublicationReceipt({
+          receiptId: `rcpt-${randomUUID()}`,
+          campaignId: variant.campaignId,
+          articleId: variant.articleId,
+          variantId: variant.variantId,
+          destinationId: variant.destinationId,
+          kind: variant.kind,
+          outcome: PublicationOutcome.FAILED,
+          summary: "factLabels required; missing labels fail closed",
+          fixtureOnly: !preferLive,
+          liveWiring: AdapterLiveStatus.NOT_WIRED,
+          recordedAtIso: nowIso,
+        });
+        store.addReceipt(receipt);
+        return {
+          variant,
+          gatewayDecision: null,
+          receipt,
+          outcome: null,
+          liveWiring: "NOT_WIRED",
+          acceptanceEqualsVerified: false,
+          details,
+        };
+      }
       const gate = evaluateVariantReleaseGate({
         variant,
         article,
         destination,
         preferLive,
+        factLabels: input.factLabels,
+        variantQaVerdict,
+        requireVariantQa: true,
       });
       if (!gate.allowed) {
         details.push(...gate.reasons);
@@ -1115,8 +1239,12 @@ export function createContentService(
 
       if (!submitted.decision.allowed) {
         // Transient authority denials stay retryable — variant remains READY/prior status.
+        const blockedAttempt =
+          submitted.decision.code === "OUTBOUND_STOPPED";
         details.push(
-          "Gateway denial recorded; variant remains retryable after authority is restored",
+          blockedAttempt
+            ? "Stop-switch BLOCKED attempt; variant remains resumable after outbound resumes"
+            : "Gateway denial recorded; variant remains retryable after authority is restored",
         );
         const receipt = createPublicationReceipt({
           receiptId: `rcpt-${randomUUID()}`,
@@ -1125,7 +1253,9 @@ export function createContentService(
           variantId: variant.variantId,
           destinationId: variant.destinationId,
           kind: variant.kind,
-          outcome: PublicationOutcome.FAILED,
+          outcome: blockedAttempt
+            ? PublicationOutcome.BLOCKED
+            : PublicationOutcome.FAILED,
           gatewayOperationId: operationId,
           writePathId,
           summary: `Gateway denied (retryable): ${submitted.decision.code ?? submitted.decision.reason}`,

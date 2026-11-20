@@ -1622,6 +1622,7 @@ export async function handleApiRequest(
           startedAtIso: run.startedAtIso,
           finishedAtIso: run.finishedAtIso,
           costMinor: run.costMinor,
+          costKind: run.costKind,
           budgetReservationId: run.budgetReservationId,
         },
         run.outcome,
@@ -1639,6 +1640,8 @@ export async function handleApiRequest(
           executionMode: r.executionMode,
           summary: r.summary,
           outcomeLabel: r.outcome.label,
+          costMinor: r.costMinor,
+          costKind: r.costKind,
         })),
         note: "Offline fixture evaluation for all 30 roles. Temporal remains NOT_WIRED.",
       },
@@ -1761,6 +1764,7 @@ export async function handleApiRequest(
           startedAtIso: run.startedAtIso,
           finishedAtIso: run.finishedAtIso,
           costMinor: run.costMinor,
+          costKind: run.costKind,
           budgetReservationId: run.budgetReservationId,
         },
         run.outcome,
@@ -3591,6 +3595,79 @@ export async function handleApiRequest(
     return;
   }
 
+  if (method === "POST" && url.pathname === "/content/record-variant-qa") {
+    const result = requireSession(runtime, req, {
+      requireCsrf: true,
+      csrfHeader:
+        typeof req.headers["x-csrf-token"] === "string"
+          ? req.headers["x-csrf-token"]
+          : undefined,
+    });
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return;
+    }
+    const raw = await readBody(req);
+    let body: {
+      variantId?: string;
+      approved?: boolean;
+      summary?: string;
+    };
+    try {
+      body = JSON.parse(raw) as typeof body;
+    } catch {
+      json(res, 400, { error: "INVALID_JSON" }, cors);
+      return;
+    }
+    if (!body.variantId || typeof body.approved !== "boolean") {
+      json(
+        res,
+        400,
+        {
+          error: "MISSING_VARIANT_QA_FIELDS",
+          reason: "variantId and approved (boolean) are required",
+        },
+        cors,
+      );
+      return;
+    }
+    const variant = runtime.content
+      .listVariants()
+      .find((v) => v.variantId === body.variantId);
+    if (!variant) {
+      json(res, 404, { error: "VARIANT_NOT_FOUND" }, cors);
+      return;
+    }
+    const article = runtime.content
+      .listArticles()
+      .find((a) => a.articleId === variant.articleId);
+    if (!article) {
+      json(res, 404, { error: "ARTICLE_NOT_FOUND" }, cors);
+      return;
+    }
+    if (result.session.userId === article.authorId) {
+      json(
+        res,
+        403,
+        {
+          error: "VARIANT_QA_SELF_REVIEW_FORBIDDEN",
+          reason: "Independent variant QA reviewer must differ from the article author",
+        },
+        cors,
+      );
+      return;
+    }
+    const recorded = runtime.content.recordVariantQaVerdict({
+      variantId: body.variantId,
+      authorId: article.authorId,
+      reviewerId: result.session.userId,
+      approved: body.approved,
+      ...(body.summary !== undefined ? { summary: body.summary } : {}),
+    });
+    json(res, recorded.ok ? 200 : 400, recorded, cors);
+    return;
+  }
+
   if (method === "POST" && url.pathname === "/content/approve-article") {
     const result = requireSession(runtime, req, {
       requireCsrf: true,
@@ -3818,6 +3895,7 @@ export async function handleApiRequest(
         grants: authorityState.capabilityGrants,
       },
       productionMapping: runtime.mappingStore.read(),
+      factLabels: factLabelsFromKnowledge(runtime.knowledge),
     });
 
     if (released.gatewayDecision) {

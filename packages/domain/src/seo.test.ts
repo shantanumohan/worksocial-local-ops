@@ -323,6 +323,98 @@ describe("seo domain — semantic search", () => {
     expect(result.hits).toHaveLength(1);
     expect(result.hits[0]?.entryId).toBe("room-20");
   });
+
+  it("preserves price/date/negation as unresolved and prefers clarify/abstain (F10)", () => {
+    const priced = parseSearchConstraints(
+      "Meeting room for 8 in Jersey City under $200",
+    );
+    expect(priced.priceMaxMinor).toBe(20000);
+    expect(priced.priceRaw).toMatch(/200/);
+    expect(priced.unresolvedConstraints.some((c) => c.startsWith("price:"))).toBe(
+      true,
+    );
+
+    const dated = parseSearchConstraints(
+      "Training room for 10 in Jersey City next Friday",
+    );
+    expect(dated.dateRaw).toMatch(/friday/i);
+    expect(dated.unresolvedConstraints.some((c) => c.startsWith("date:"))).toBe(
+      true,
+    );
+
+    const negated = parseSearchConstraints(
+      "Meeting room for 8 in Jersey City without parking",
+    );
+    expect(negated.negatedTerms).toContain("parking");
+    expect(
+      negated.unresolvedConstraints.some((c) => c.startsWith("negation:")),
+    ).toBe(true);
+    // Must not invert negation into a positive amenity requirement.
+    expect(negated.requiredAmenities).not.toContain("parking");
+    expect(negated.unknownConstraints).not.toContain("parking");
+
+    const withoutVideo = parseSearchConstraints(
+      "meeting room without video in Jersey City",
+    );
+    expect(withoutVideo.requiredAmenities).not.toContain("video");
+    expect(withoutVideo.negatedTerms).toContain("video");
+
+    const notLa = parseSearchConstraints(
+      "not in Los Angeles meeting room for 8 people",
+    );
+    expect(notLa.location).toBeNull();
+    expect(
+      notLa.unresolvedConstraints.some((c) => c.includes("negation:location")),
+    ).toBe(true);
+
+    const result = runSemanticSearch({
+      queryId: "q-f10",
+      rawQuery: "Meeting for 8 in Jersey City under $150 without video",
+      index,
+      createdAtIso: now,
+    });
+    expect(result.hits).toHaveLength(0);
+    expect(result.noMatchReason).toMatch(/unresolved|Clarify|abstain/i);
+    expect(result.constraints.unresolvedConstraints.length).toBeGreaterThan(0);
+  });
+
+  it("does not silently drop unrecognized location phrases", () => {
+    const c = parseSearchConstraints("meeting room for 6 in Hoboken with display");
+    expect(c.location).toBeNull();
+    expect(c.unresolvedConstraints.some((x) => x.startsWith("location:"))).toBe(
+      true,
+    );
+    const terminal = parseSearchConstraints("meeting room for 6 in Hoboken");
+    expect(
+      terminal.unresolvedConstraints.some((x) => x.startsWith("location:")),
+    ).toBe(true);
+    const result = runSemanticSearch({
+      queryId: "q-loc",
+      rawQuery: "meeting room for 6 in Hoboken with display",
+      index,
+      createdAtIso: now,
+    });
+    expect(result.hits).toHaveLength(0);
+    expect(result.constraints.unresolvedConstraints.join(" ")).toMatch(/hoboken/i);
+  });
+
+  it("preserves ISO date constraints as unresolved", () => {
+    const c = parseSearchConstraints(
+      "meeting room in Jersey City on 2026-12-01",
+    );
+    expect(c.dateRaw).toMatch(/2026-12-01/);
+    expect(c.unresolvedConstraints.some((x) => x.startsWith("date:"))).toBe(
+      true,
+    );
+    const result = runSemanticSearch({
+      queryId: "q-iso",
+      rawQuery: "meeting room in Jersey City on 2026-12-01",
+      index,
+      createdAtIso: now,
+    });
+    expect(result.hits).toHaveLength(0);
+    expect(result.noMatchReason).toMatch(/unresolved|Clarify|abstain/i);
+  });
 });
 
 describe("seo domain — release learning hooks", () => {

@@ -103,6 +103,8 @@ describe("contract: learning-worker multi-model", () => {
           meanScore: null,
           fixtureExcludedCount: 0,
           modelIds: [],
+          dataAdequacy: "INSUFFICIENT_DATA",
+          dataAdequacyReason: "fixture",
         },
         payload: { publishAuthority: true },
         createdAtIso: "2026-11-18T00:00:00.000Z",

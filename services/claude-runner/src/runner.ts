@@ -7,6 +7,7 @@ import type { JobEnvelope } from "@worksocial/contracts";
 import { JobEnvelopeSchema } from "@worksocial/contracts";
 import {
   AGENT_ROLE_IDS,
+  CostRecordingKind,
   OutcomeLabel,
   RoleExecutionMode,
   RoleRunStatus,
@@ -14,13 +15,16 @@ import {
   createRoleRunOutcome,
   getAgentRoleContract,
   isAgentRoleId,
+  parseClaudeUsageCost,
   proposeEffect,
+  registeredAgentName,
   reserveBudget,
   settleBudget,
   validateRoleStructuredOutput,
   validateTypedDelegation,
   type AgentRoleId,
   type BudgetAccount,
+  type CostRecordingKindValue,
   type RoleExecutionModeValue,
   type RoleRunOutcomeEvidence,
   type RoleRunStatusValue,
@@ -57,6 +61,11 @@ export type RoleJobRequest = {
   requestPermissionBypass?: boolean | undefined;
   /** Force fixture for this job regardless of runner live settings. */
   forceFixture?: boolean | undefined;
+  /**
+   * Require live CLI. When true, missing CLI or live failure must not
+   * silently succeed via fixture (F01).
+   */
+  requireLive?: boolean | undefined;
 };
 
 export type RoleJobResult = {
@@ -74,6 +83,7 @@ export type RoleJobResult = {
   permissionBypassUsed: false;
   budgetReservationId: string | null;
   costMinor: number;
+  costKind: CostRecordingKindValue;
   modelId: string | null;
   startedAtIso: string;
   finishedAtIso: string;
@@ -83,6 +93,8 @@ export type RoleJobResult = {
   };
   /** True when this result was returned from idempotency coalesce. */
   idempotentReplay?: boolean;
+  /** Registered Claude agent name used (or that would be used) for --agent. */
+  registeredAgentName: string;
 };
 
 export type ClaudeRunner = {
@@ -204,10 +216,12 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
         permissionBypassUsed: false,
         budgetReservationId: null,
         costMinor: 0,
+        costKind: CostRecordingKind.FIXTURE,
         modelId: null,
         startedAtIso,
         finishedAtIso,
         temporalEnqueue: baseTemporal,
+        registeredAgentName: registeredAgentName(roleId),
       };
     }
 
@@ -247,18 +261,31 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
         permissionBypassUsed: false,
         budgetReservationId: null,
         costMinor: 0,
+        costKind: CostRecordingKind.FIXTURE,
         modelId: null,
         startedAtIso,
         finishedAtIso,
         temporalEnqueue: baseTemporal,
+        registeredAgentName: registeredAgentName(roleId),
       };
     }
     budget = reserve.account;
 
     const forceFixtureThisJob =
       request.forceFixture === true || options.forceFixture === true;
+    const requireLive = request.requireLive === true;
     const cliDetection = await detectCli();
-    const useFixture = forceFixtureThisJob || !cliDetection.available;
+    const agentName = registeredAgentName(roleId);
+
+    // Explicit mode selection — never silently treat a live miss as fixture SUCCESS.
+    let useFixture = forceFixtureThisJob;
+    if (!forceFixtureThisJob && !cliDetection.available) {
+      if (requireLive) {
+        useFixture = false;
+      } else {
+        useFixture = true;
+      }
+    }
 
     let output: RoleStructuredOutput | null = null;
     let deniedEffects: Array<{ code: string; reason: string }> = [];
@@ -266,9 +293,11 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
     let status: RoleRunStatusValue = RoleRunStatus.SUCCEEDED;
     let summary = "";
     let executionMode: RoleExecutionModeValue = RoleExecutionMode.FIXTURE;
-    let costMinor = 25;
+    let costMinor = 0;
+    let costKind: CostRecordingKindValue = CostRecordingKind.UNKNOWN;
     let usedModelId: string | null = null;
     let acceptedReviewableCount = 0;
+    let liveStdout: string | null = null;
 
     const settleAndFinish = (cost: number): void => {
       const settled = settleBudget(budget, reservationId, cost);
@@ -277,7 +306,19 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
       }
     };
 
-    if (useFixture) {
+    if (requireLive && (forceFixtureThisJob || !cliDetection.available)) {
+      executionMode = RoleExecutionMode.LIVE_CLI;
+      status = RoleRunStatus.FAILED;
+      summary = forceFixtureThisJob
+        ? "requireLive=true but fixture was forced — refusing silent fixture SUCCESS"
+        : `requireLive=true but Claude CLI unavailable (${cliDetection.reason}) — refusing silent fixture SUCCESS`;
+      const usage = parseClaudeUsageCost({
+        executionMode: RoleExecutionMode.LIVE_CLI,
+      });
+      costMinor = usage.costMinor;
+      costKind = usage.costKind;
+      settleAndFinish(0);
+    } else if (useFixture) {
       executionMode = RoleExecutionMode.FIXTURE;
       const fixture = runRoleFixture({
         envelope,
@@ -308,7 +349,11 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
       } else {
         status = RoleRunStatus.SUCCEEDED;
       }
-      costMinor = 10;
+      const usage = parseClaudeUsageCost({
+        executionMode: RoleExecutionMode.FIXTURE,
+      });
+      costMinor = usage.costMinor;
+      costKind = usage.costKind;
       settleAndFinish(costMinor);
     } else {
       executionMode = RoleExecutionMode.LIVE_CLI;
@@ -319,7 +364,7 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
       );
       const invoke = await invokeClaudeCli({
         executablePath: cliDetection.executablePath!,
-        agentName: roleId,
+        agentName,
         cwd: workspaceRoot,
         modelId,
         prompt: JSON.stringify({
@@ -338,9 +383,16 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
             : RoleRunStatus.FAILED;
         summary = invoke.reason;
         output = null;
-        costMinor = 25;
+        liveStdout = invoke.stdout ?? null;
+        const usage = parseClaudeUsageCost({
+          stdout: liveStdout,
+          executionMode: RoleExecutionMode.LIVE_CLI,
+        });
+        costMinor = usage.costMinor;
+        costKind = usage.costKind;
         settleAndFinish(costMinor);
       } else {
+        liveStdout = invoke.stdout;
         let parsedOut: unknown;
         try {
           parsedOut = JSON.parse(invoke.stdout);
@@ -355,7 +407,12 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
           status = RoleRunStatus.FAILED;
           summary = validated.reason;
           output = null;
-          costMinor = 50;
+          const usage = parseClaudeUsageCost({
+            stdout: liveStdout,
+            executionMode: RoleExecutionMode.LIVE_CLI,
+          });
+          costMinor = usage.costMinor;
+          costKind = usage.costKind;
           settleAndFinish(costMinor);
         } else {
           output = validated.output;
@@ -403,7 +460,12 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
           } else {
             status = RoleRunStatus.SUCCEEDED;
           }
-          costMinor = 75;
+          const usage = parseClaudeUsageCost({
+            stdout: liveStdout,
+            executionMode: RoleExecutionMode.LIVE_CLI,
+          });
+          costMinor = usage.costMinor;
+          costKind = usage.costKind;
           settleAndFinish(costMinor);
         }
       }
@@ -427,13 +489,17 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
       reason: summary || status,
       artifactIds: output?.artifactIds ?? [],
       costMinor,
+      costKind,
       recordedAtIso: finishedAtIso,
       featureHints: {
         suite: contract.evaluationSuiteId,
         startedAt: startedAtIso,
+        // Post-outcome counts stay on the ledger but must not feed predictors.
         deniedEffectCount: deniedEffects.length,
         deniedDelegationCount: deniedDelegations.length,
         acceptedReviewableCount,
+        registeredAgentName: agentName,
+        costKind,
       },
     });
 
@@ -452,17 +518,38 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): ClaudeRunner {
       permissionBypassUsed: false,
       budgetReservationId: reservationId,
       costMinor,
+      costKind,
       modelId: usedModelId,
       startedAtIso,
       finishedAtIso,
       temporalEnqueue: baseTemporal,
+      registeredAgentName: agentName,
     };
   };
 
   const enqueue = (request: RoleJobRequest): Promise<RoleJobResult> => {
-    const key = request.envelope.idempotencyKey;
+    // Include execution requirements so fixture vs requireLive cannot silently coalesce.
+    const key = [
+      request.envelope.idempotencyKey,
+      request.requireLive === true ? "live" : "any",
+      request.forceFixture === true || options.forceFixture === true
+        ? "fixture"
+        : "prefer-live-or-fixture",
+    ].join("|");
     const prior = completedByIdempotency.get(key);
     if (prior) {
+      if (
+        request.requireLive === true &&
+        prior.executionMode === RoleExecutionMode.FIXTURE &&
+        (prior.status === RoleRunStatus.SUCCEEDED ||
+          prior.status === RoleRunStatus.AWAITING_REVIEW)
+      ) {
+        // Never replay a fixture success as a requireLive result.
+        return execute({ ...request, requireLive: true }).then((r) => ({
+          ...r,
+          idempotentReplay: false,
+        }));
+      }
       return Promise.resolve({ ...prior, idempotentReplay: true });
     }
     const inflight = inflightByIdempotency.get(key);

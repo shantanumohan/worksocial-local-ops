@@ -52,6 +52,7 @@ describe("role-runtime-store", () => {
         startedAtIso: now,
         finishedAtIso: now,
         costMinor: 10,
+        costKind: "fixture",
         budgetReservationId: "res-1",
       },
       outcome,

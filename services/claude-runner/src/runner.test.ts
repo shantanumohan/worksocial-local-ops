@@ -269,4 +269,62 @@ describe("claude-runner (R1-04)", () => {
     const all = runAllRoleFixtureEvaluations((roleId) => envelopeFor(roleId));
     expect(all).toHaveLength(30);
   });
+
+  it("requireLive refuses silent fixture SUCCESS when CLI is absent (F01)", async () => {
+    const runner = createClaudeRunner({
+      workspaceRoot: process.cwd(),
+      forceFixture: false,
+    });
+    const result = await runner.enqueue({
+      envelope: envelopeFor("A01"),
+      requireLive: true,
+      forceFixture: false,
+    });
+    // Without a live CLI in CI, requireLive must fail closed — not fixture SUCCESS.
+    expect(result.executionMode).toBe(RoleExecutionMode.LIVE_CLI);
+    expect(result.status).toBe(RoleRunStatus.FAILED);
+    expect(result.summary).toMatch(/refusing silent fixture/i);
+    expect(result.outcome.label).toBe("FAILURE");
+    expect(result.registeredAgentName).toBe("A01");
+  });
+
+  it("does not replay fixture SUCCESS under the same key when requireLive is set", async () => {
+    const runner = createClaudeRunner({
+      workspaceRoot: process.cwd(),
+      forceFixture: false,
+    });
+    const key = `idem-live/${uuid()}`;
+    const env = envelopeFor("A04", { idempotencyKey: key });
+    const fixtureFirst = await runner.enqueue({
+      envelope: env,
+      forceFixture: true,
+    });
+    expect(fixtureFirst.executionMode).toBe(RoleExecutionMode.FIXTURE);
+    expect(fixtureFirst.status).not.toBe(RoleRunStatus.FAILED);
+
+    const liveSecond = await runner.enqueue({
+      envelope: { ...env, jobId: uuid() },
+      requireLive: true,
+      forceFixture: false,
+    });
+    expect(liveSecond.idempotentReplay).not.toBe(true);
+    expect(liveSecond.executionMode).toBe(RoleExecutionMode.LIVE_CLI);
+    expect(liveSecond.status).toBe(RoleRunStatus.FAILED);
+    expect(liveSecond.summary).toMatch(/refusing silent fixture/i);
+  });
+
+  it("records fixture cost as FIXTURE/0 — never invented 25/50/75 as ACTUAL (F07)", async () => {
+    const runner = createClaudeRunner({
+      workspaceRoot: process.cwd(),
+      forceFixture: true,
+    });
+    const result = await runner.enqueue({
+      envelope: envelopeFor("A02"),
+      forceFixture: true,
+    });
+    expect(result.costKind).toBe("fixture");
+    expect(result.costMinor).toBe(0);
+    expect(result.outcome.costKind).toBe("fixture");
+    expect([25, 50, 75]).not.toContain(result.costMinor);
+  });
 });

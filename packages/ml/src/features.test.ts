@@ -77,6 +77,7 @@ describe("feature extraction", () => {
         reason: "ok",
         artifactIds: [],
         costMinor: 1,
+        costKind: "unknown",
         recordedAtIso: "2026-11-18T00:00:00.000Z",
         featureHints: {},
       },
@@ -91,11 +92,58 @@ describe("feature extraction", () => {
         reason: "fixture",
         artifactIds: [],
         costMinor: 0,
+        costKind: "fixture",
         recordedAtIso: "2026-11-18T00:00:00.000Z",
         featureHints: {},
       },
     ];
     const examples = extractLearningExamples({ roleOutcomes: roles });
     expect(examples.map((e) => e.exampleId)).toEqual(["role-live"]);
+  });
+
+  it("fixture baseline weights do not encode label= or status= leakage (F08)", async () => {
+    const { fixtureBaselineWeights, FEATURE_DIM } = await import("./models.js");
+    const { hashToken } = await import("./features.js");
+    const lr = fixtureBaselineWeights(
+      "outcome-logreg-l2@1.0.0",
+      "2026-11-20T00:00:00.000Z",
+    );
+    const coeffs = lr.params.coefficients as number[];
+    expect(coeffs[hashToken("label=SUCCESS", FEATURE_DIM)]).toBe(0);
+    expect(coeffs[hashToken("label=FAILURE", FEATURE_DIM)]).toBe(0);
+    expect(coeffs[hashToken("status=failed", FEATURE_DIM)]).toBe(0);
+    // Pre-action priors remain present.
+    expect(
+      coeffs[hashToken("hint.channelId=owned-site", FEATURE_DIM)],
+    ).toBeGreaterThan(0);
+  });
+
+  it("does not leak SUCCESS/FAILURE labels or post-outcome fields into features (F08)", () => {
+    const rows = [
+      writeOutcome({
+        outcomeId: "real",
+        label: OutcomeLabel.SUCCESS,
+        source: OutcomeEvidenceSource.GATEWAY_RECEIPT,
+        fixtureOnly: false,
+        featureHints: {
+          channelId: "owned-site",
+          code: "ACCEPTED",
+          releaseDecision: "SUCCESS",
+          label: "SUCCESS",
+          deniedEffectCount: 2,
+          costMinor: 75,
+        },
+      }),
+    ];
+    const examples = extractWritePathExamples(rows);
+    expect(examples).toHaveLength(1);
+    const tokens = examples[0]!.features.tokens.join(" ");
+    expect(tokens).not.toMatch(/label=SUCCESS/);
+    expect(tokens).not.toMatch(/label=FAILURE/);
+    expect(tokens).not.toMatch(/releaseDecision=/);
+    expect(tokens).not.toMatch(/hint\.code=/);
+    expect(tokens).toContain("hint.channelId=owned-site");
+    expect(examples[0]!.features.numerics.deniedEffectCount).toBeUndefined();
+    expect(examples[0]!.features.numerics.costMinor).toBeUndefined();
   });
 });
