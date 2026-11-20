@@ -237,6 +237,7 @@ export function getAdapter(adapterId: string): AdapterDescriptor | undefined {
 export {
   FIXTURE_PILOT_HTML,
   capturePageSnapshot,
+  htmlFromStagingFields,
   readGscObservations,
   readGa4Observations,
   collectorCredentialHints,
@@ -244,6 +245,12 @@ export {
   type PageSnapshotCollectorResult,
   type MeasurementCollectorResult,
 } from "./collectors.js";
+
+export {
+  validateLiveCollectorUrl,
+  validateCollectorRedirectTarget,
+  type CollectorUrlPolicyVerdict,
+} from "./url-policy.js";
 
 export {
   createStagingCmsSimulator,

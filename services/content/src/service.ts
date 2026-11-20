@@ -292,8 +292,36 @@ export function createContentService(
   options: ContentServiceOptions = {},
 ): ContentService {
   const gateway = options.gateway ?? createActionGateway();
-  const fixtureCanonicalLedger = new Map<string, Record<string, string>>();
-  const fixtureVariantLedger = new Map<string, Record<string, string>>();
+
+  const putCanonicalLedger = (
+    articleId: string,
+    fields: Record<string, string>,
+    nowIso: string,
+  ) => {
+    store.update((state) => ({
+      ...state,
+      fixtureCanonicalLedger: {
+        ...state.fixtureCanonicalLedger,
+        [articleId]: { ...fields },
+      },
+      updatedAtIso: nowIso,
+    }));
+  };
+
+  const putVariantLedger = (
+    variantId: string,
+    fields: Record<string, string>,
+    nowIso: string,
+  ) => {
+    store.update((state) => ({
+      ...state,
+      fixtureVariantLedger: {
+        ...state.fixtureVariantLedger,
+        [variantId]: { ...fields },
+      },
+      updatedAtIso: nowIso,
+    }));
+  };
 
   return {
     gateway,
@@ -903,11 +931,15 @@ export function createContentService(
         recordedAtIso: nowIso,
       });
       store.addReceipt(receipt);
-      fixtureCanonicalLedger.set(article.articleId, {
-        title: article.title,
-        body: article.body,
-        contentDigest: article.contentDigest,
-      });
+      putCanonicalLedger(
+        article.articleId,
+        {
+          title: article.title,
+          body: article.body,
+          contentDigest: article.contentDigest,
+        },
+        nowIso,
+      );
       details.push(
         "Left ACCEPTED_PENDING / RELEASED_PENDING — call independentCanonicalReadBack then verify",
       );
@@ -945,7 +977,8 @@ export function createContentService(
           reason: `Article status is ${article.status}; independent read requires RELEASED_PENDING`,
         };
       }
-      const observed = fixtureCanonicalLedger.get(input.articleId);
+      const observed =
+        store.read().fixtureCanonicalLedger[input.articleId] ?? null;
       if (!observed) {
         return {
           ok: false,
@@ -1372,10 +1405,14 @@ export function createContentService(
         recordedAtIso: nowIso,
       });
       store.addReceipt(receipt);
-      fixtureVariantLedger.set(variant.variantId, {
-        title: variant.title,
-        body: variant.body,
-      });
+      putVariantLedger(
+        variant.variantId,
+        {
+          title: variant.title,
+          body: variant.body,
+        },
+        nowIso,
+      );
       details.push(
         "Left ACCEPTED_PENDING / RELEASED_PENDING — call independentVariantReadBack then verify",
       );
@@ -1413,7 +1450,8 @@ export function createContentService(
           reason: `Variant status is ${variant.status}; independent read requires RELEASED_PENDING`,
         };
       }
-      const observed = fixtureVariantLedger.get(input.variantId);
+      const observed =
+        store.read().fixtureVariantLedger[input.variantId] ?? null;
       if (!observed) {
         return {
           ok: false,

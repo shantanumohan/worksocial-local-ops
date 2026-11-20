@@ -310,6 +310,49 @@ export async function handleOwnerStagingRequest(input: {
       return true;
     }
     try {
+      let desiredFields:
+        | {
+            title: string;
+            metaDescription: string;
+            h1: string;
+            bodyExcerpt: string;
+          }
+        | undefined;
+      const rawDesired = parsed.value.desiredFields;
+      if (rawDesired !== undefined) {
+        if (
+          !rawDesired ||
+          typeof rawDesired !== "object" ||
+          Array.isArray(rawDesired)
+        ) {
+          json(res, 400, { error: "INVALID_DESIRED_FIELDS" }, cors);
+          return true;
+        }
+        const d = rawDesired as Record<string, unknown>;
+        const title = d.title;
+        const metaDescription = d.metaDescription;
+        const h1 = d.h1;
+        const bodyExcerpt = d.bodyExcerpt;
+        if (
+          typeof title !== "string" ||
+          typeof metaDescription !== "string" ||
+          typeof h1 !== "string" ||
+          typeof bodyExcerpt !== "string"
+        ) {
+          json(
+            res,
+            400,
+            {
+              error: "INVALID_DESIRED_FIELDS",
+              reason:
+                "desiredFields requires string title, metaDescription, h1, bodyExcerpt",
+            },
+            cors,
+          );
+          return true;
+        }
+        desiredFields = { title, metaDescription, h1, bodyExcerpt };
+      }
       const created = await staging.createPilotMission({
         siteId,
         ...(typeof parsed.value.displayTitle === "string"
@@ -318,6 +361,7 @@ export async function handleOwnerStagingRequest(input: {
         ...(typeof parsed.value.summary === "string"
           ? { summary: parsed.value.summary }
           : {}),
+        ...(desiredFields !== undefined ? { desiredFields } : {}),
       });
       json(res, 200, created, cors);
     } catch (err) {
@@ -331,6 +375,55 @@ export async function handleOwnerStagingRequest(input: {
         cors,
       );
     }
+    return true;
+  }
+
+  if (method === "POST" && url.pathname === "/owner/missions/revise") {
+    const result = sessionMutate();
+    if (!result.ok) {
+      json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return true;
+    }
+    const raw = await readBody(req);
+    const parsed = parseJsonObjectBody(raw);
+    if (!parsed.ok) {
+      json(res, 400, { error: parsed.error }, cors);
+      return true;
+    }
+    const missionId = parsed.value.missionId;
+    const rawDesired = parsed.value.desiredFields;
+    if (typeof missionId !== "string") {
+      json(res, 400, { error: "MISSING_MISSION_ID" }, cors);
+      return true;
+    }
+    if (
+      !rawDesired ||
+      typeof rawDesired !== "object" ||
+      Array.isArray(rawDesired)
+    ) {
+      json(res, 400, { error: "INVALID_DESIRED_FIELDS" }, cors);
+      return true;
+    }
+    const d = rawDesired as Record<string, unknown>;
+    if (
+      typeof d.title !== "string" ||
+      typeof d.metaDescription !== "string" ||
+      typeof d.h1 !== "string" ||
+      typeof d.bodyExcerpt !== "string"
+    ) {
+      json(res, 400, { error: "INVALID_DESIRED_FIELDS" }, cors);
+      return true;
+    }
+    const revised = staging.reviseMission({
+      missionId,
+      desiredFields: {
+        title: d.title,
+        metaDescription: d.metaDescription,
+        h1: d.h1,
+        bodyExcerpt: d.bodyExcerpt,
+      },
+    });
+    json(res, revised.ok ? 200 : 400, revised, cors);
     return true;
   }
 
@@ -471,6 +564,24 @@ export async function handleOwnerStagingRequest(input: {
     const result = sessionMutate();
     if (!result.ok) {
       json(res, 401, { error: result.code, reason: result.reason }, cors);
+      return true;
+    }
+    const recoverRole: LocalRoleValue | null = isLocalRole(result.session.role)
+      ? result.session.role
+      : null;
+    if (
+      !recoverRole ||
+      !roleMayPerform(recoverRole, "manage_standing_policies")
+    ) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason: "Staging recovery requires administrator",
+        },
+        cors,
+      );
       return true;
     }
     const raw = await readBody(req);

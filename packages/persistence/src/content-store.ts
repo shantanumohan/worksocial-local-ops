@@ -114,6 +114,8 @@ export function createFileContentStore(stateDir: string): ContentStore {
       qaVerdicts: existing.qaVerdicts ?? [],
       variantQaVerdicts: existing.variantQaVerdicts ?? [],
       releaseOutcomes: existing.releaseOutcomes ?? [],
+      fixtureCanonicalLedger: existing.fixtureCanonicalLedger ?? {},
+      fixtureVariantLedger: existing.fixtureVariantLedger ?? {},
       liveCmsPublishWiring: "NOT_WIRED",
       liveGbpWiring: "NOT_WIRED",
       liveSocialWiring: "NOT_WIRED",

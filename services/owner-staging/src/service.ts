@@ -33,6 +33,7 @@ import {
   capturePageSnapshot,
   collectorCredentialHints,
   createStagingCmsSimulator,
+  htmlFromStagingFields,
   readGa4Observations,
   readGscObservations,
   stagingCmsLiveAvailable,
@@ -128,6 +129,16 @@ export type OwnerStagingService = {
     missionId: string;
     decision: ReviewDecisionValue;
     note?: string;
+    nowIso?: string;
+  }): {
+    ok: boolean;
+    mission: OwnerMissionRecord | null;
+    reason: string;
+  };
+  /** Edit desired fields on a DRAFT mission and resubmit for review. */
+  reviseMission(input: {
+    missionId: string;
+    desiredFields: StagingPageFields;
     nowIso?: string;
   }): {
     ok: boolean;
@@ -251,13 +262,13 @@ export function createOwnerStagingService(
               : ConnectionMode.FIXTURE,
           accountLabel:
             creds.gsc === "present"
-              ? "Live credentials present (query bounded)"
+              ? "Credentials present (query not executed)"
               : "fixture-gsc-property",
           capabilitySummary: "Read search analytics",
           writeReady: false,
           note:
             creds.gsc === "present"
-              ? "LIVE credentials detected — measurement queries remain bounded in M4."
+              ? "Credentials present; measurements stay UNAVAILABLE until a query succeeds."
               : "FIXTURE connection — not a live Search Console property.",
           updatedAtIso: now,
         },
@@ -271,13 +282,13 @@ export function createOwnerStagingService(
               : ConnectionMode.FIXTURE,
           accountLabel:
             creds.ga4 === "present"
-              ? "Live credentials present (query bounded)"
+              ? "Credentials present (query not executed)"
               : "fixture-ga4-property",
           capabilitySummary: "Read traffic analytics",
           writeReady: false,
           note:
             creds.ga4 === "present"
-              ? "LIVE credentials detected — measurement queries remain bounded in M4."
+              ? "Credentials present; measurements stay UNAVAILABLE until a query succeeds."
               : "FIXTURE connection — not a live GA4 property.",
           updatedAtIso: now,
         },
@@ -353,11 +364,25 @@ export function createOwnerStagingService(
       if (!site) {
         throw new Error(`Unknown site ${input.siteId}`);
       }
+      const pageId = `page_${site.siteId}`;
+      const cmsPage =
+        cms.getPage(pageId) ??
+        store.read().cmsPages.find((p) => p.pageId === pageId) ??
+        null;
+      const fixtureHtml = cmsPage
+        ? htmlFromStagingFields(
+            cmsPage.fields,
+            site.pilotPagePath,
+            site.domain,
+          )
+        : undefined;
       const snapResult = await capturePageSnapshot({
         snapshotId: id("snap"),
         siteId: site.siteId,
         pagePath: site.pilotPagePath,
         nowIso,
+        allowedOrigins: [site.domain],
+        ...(fixtureHtml !== undefined ? { fixtureHtml } : {}),
         ...(input.preferLive !== undefined
           ? { preferLive: input.preferLive }
           : {}),
@@ -485,6 +510,7 @@ export function createOwnerStagingService(
         .filter(
           (m) =>
             m.status === MissionStatus.NEEDS_REVIEW ||
+            m.status === MissionStatus.DRAFT ||
             m.status === MissionStatus.APPROVED ||
             m.status === MissionStatus.ACCEPTED_PENDING ||
             m.status === MissionStatus.RECOVERY_REQUIRED,
@@ -541,7 +567,39 @@ export function createOwnerStagingService(
         reason:
           input.decision === ReviewDecision.APPROVE_EXACT
             ? "Exact revision approved — staging apply still required"
-            : `Review recorded: ${input.decision}`,
+            : input.decision === ReviewDecision.REQUEST_REVISION
+              ? "Revision requested — call reviseMission with updated fields to resubmit"
+              : `Review recorded: ${input.decision}`,
+      };
+    },
+    reviseMission(input) {
+      const nowIso = input.nowIso ?? new Date().toISOString();
+      const mission = store
+        .read()
+        .missions.find((m) => m.missionId === input.missionId);
+      if (!mission) {
+        return { ok: false, mission: null, reason: "Mission not found" };
+      }
+      if (mission.status !== MissionStatus.DRAFT) {
+        return {
+          ok: false,
+          mission,
+          reason: `Mission status ${mission.status} cannot be revised — expected DRAFT`,
+        };
+      }
+      const next: OwnerMissionRecord = {
+        ...mission,
+        desiredFields: { ...input.desiredFields },
+        status: MissionStatus.NEEDS_REVIEW,
+        reviewDecision: null,
+        reviewNote: null,
+        updatedAtIso: nowIso,
+      };
+      store.upsertMission(next);
+      return {
+        ok: true,
+        mission: next,
+        reason: "Revised fields submitted — mission returned to NEEDS_REVIEW",
       };
     },
     applyStaging(input) {
@@ -556,15 +614,15 @@ export function createOwnerStagingService(
           note: "Mission not found",
         };
       }
-      if (
-        mission.status !== MissionStatus.APPROVED &&
-        mission.status !== MissionStatus.RECOVERY_REQUIRED
-      ) {
+      if (mission.status !== MissionStatus.APPROVED) {
         return {
           ok: false,
           mission,
           change: null,
-          note: "Mission must be APPROVED before staging apply",
+          note:
+            mission.status === MissionStatus.RECOVERY_REQUIRED
+              ? "RECOVERY_REQUIRED missions must use recoverStaging — not apply"
+              : "Mission must be APPROVED before staging apply",
         };
       }
       const pageId = `page_${mission.siteId}`;
@@ -694,6 +752,15 @@ export function createOwnerStagingService(
           note: "Mission or change missing",
         };
       }
+      if (mission.status !== MissionStatus.RECOVERY_REQUIRED) {
+        return {
+          ok: false,
+          mission,
+          change:
+            state.changes.find((c) => c.changeId === mission.changeId) ?? null,
+          note: `Mission status ${mission.status} is not eligible for recovery`,
+        };
+      }
       const change = state.changes.find((c) => c.changeId === mission.changeId);
       if (!change) {
         return {
@@ -703,15 +770,28 @@ export function createOwnerStagingService(
           note: "Change record missing",
         };
       }
+      if (change.status !== StagingChangeStatus.UNKNOWN_REMOTE_OUTCOME) {
+        return {
+          ok: false,
+          mission,
+          change,
+          note: `Change status ${change.status} is not UNKNOWN_REMOTE_OUTCOME — recovery refused`,
+        };
+      }
       const recovered = cms.recoverUnknown({ change, nowIso });
+      if (recovered.change.status !== StagingChangeStatus.RECOVERED) {
+        return {
+          ok: false,
+          mission,
+          change: recovered.change,
+          note: recovered.note,
+        };
+      }
       store.upsertChange(recovered.change);
       if (recovered.page) store.upsertCmsPage(recovered.page);
       const next: OwnerMissionRecord = {
         ...mission,
-        status:
-          recovered.change.status === StagingChangeStatus.RECOVERED
-            ? MissionStatus.ACCEPTED_PENDING
-            : MissionStatus.FAILED,
+        status: MissionStatus.ACCEPTED_PENDING,
         updatedAtIso: nowIso,
       };
       store.upsertMission(next);
@@ -725,7 +805,7 @@ export function createOwnerStagingService(
         createdAtIso: nowIso,
       });
       return {
-        ok: recovered.change.status === StagingChangeStatus.RECOVERED,
+        ok: true,
         mission: next,
         change: recovered.change,
         note: recovered.note,

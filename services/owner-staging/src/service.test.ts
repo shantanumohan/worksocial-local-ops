@@ -79,6 +79,14 @@ describe("owner staging service (M4)", () => {
     });
     expect(applied.mission?.status).toBe(MissionStatus.RECOVERY_REQUIRED);
 
+    // Apply must refuse recovery-required missions.
+    const reapply = svc.applyStaging({
+      missionId: seeded.mission.missionId,
+      nowIso: "2026-11-20T17:02:30.000Z",
+    });
+    expect(reapply.ok).toBe(false);
+    expect(reapply.note).toMatch(/recoverStaging/i);
+
     const recovered = svc.recoverStaging({
       missionId: seeded.mission.missionId,
       nowIso: "2026-11-20T17:03:00.000Z",
@@ -86,12 +94,57 @@ describe("owner staging service (M4)", () => {
     expect(recovered.ok).toBe(true);
     expect(recovered.mission?.status).toBe(MissionStatus.ACCEPTED_PENDING);
 
+    // Recovery on non-UNKNOWN state must not corrupt the mission.
+    const badRecover = svc.recoverStaging({
+      missionId: seeded.mission.missionId,
+      nowIso: "2026-11-20T17:03:30.000Z",
+    });
+    expect(badRecover.ok).toBe(false);
+    expect(badRecover.mission?.status).toBe(MissionStatus.ACCEPTED_PENDING);
+
     const verified = svc.verifyStaging({
       missionId: seeded.mission.missionId,
       nowIso: "2026-11-20T17:04:00.000Z",
     });
     expect(verified.matched).toBe(true);
     expect(verified.mission?.status).toBe(MissionStatus.VERIFIED);
+  });
+
+  it("supports request-revision then revise-and-resubmit", async () => {
+    const svc = makeService();
+    const seeded = await svc.seedDemo("2026-11-20T19:00:00.000Z");
+    const requested = svc.reviewMission({
+      missionId: seeded.mission.missionId,
+      decision: ReviewDecision.REQUEST_REVISION,
+      nowIso: "2026-11-20T19:01:00.000Z",
+    });
+    expect(requested.mission?.status).toBe(MissionStatus.DRAFT);
+    const revised = svc.reviseMission({
+      missionId: seeded.mission.missionId,
+      desiredFields: {
+        title: "Revised title",
+        metaDescription: "Revised meta",
+        h1: "Revised h1",
+        bodyExcerpt: "Revised body",
+      },
+      nowIso: "2026-11-20T19:02:00.000Z",
+    });
+    expect(revised.ok).toBe(true);
+    expect(revised.mission?.status).toBe(MissionStatus.NEEDS_REVIEW);
+    expect(revised.mission?.desiredFields.title).toBe("Revised title");
+  });
+
+  it("snapshots from the registered staging CMS page", async () => {
+    const svc = makeService();
+    const site = svc.registerSite({
+      pilotPageTitle: "Custom pilot title",
+      nowIso: "2026-11-20T20:00:00.000Z",
+    });
+    const evidence = await svc.captureEvidence({
+      siteId: site.siteId,
+      nowIso: "2026-11-20T20:01:00.000Z",
+    });
+    expect(evidence.snapshot.title).toBe("Custom pilot title");
   });
 
   it("labels GSC/GA4 measurements as FIXTURE without credentials", async () => {

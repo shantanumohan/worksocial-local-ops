@@ -259,6 +259,8 @@ export function sitesPage(apiOrigin: string): string {
     <input id="domain" value="fixture.worksocial.local" />
     <label for="path">Pilot page path</label>
     <input id="path" value="/pilot" />
+    <label for="site-select">Selected site</label>
+    <select id="site-select"><option value="">— none —</option></select>
     <div class="row">
       <button id="btn-register" type="button">Register pilot site</button>
       <button id="btn-capture" type="button" class="secondary">Capture page + GSC/GA4 evidence</button>
@@ -276,7 +278,6 @@ export function sitesPage(apiOrigin: string): string {
 </main>
 <script>
 ${apiBootScript(apiOrigin)}
-  let selectedSiteId = null;
   async function refresh() {
     if (!(await ensureSession())) return;
     const res = await api('/owner/sites');
@@ -284,6 +285,13 @@ ${apiBootScript(apiOrigin)}
     const body = await res.json();
     const tbody = document.getElementById('rows');
     tbody.replaceChildren();
+    const select = document.getElementById('site-select');
+    const prior = select.value;
+    select.replaceChildren();
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = '— none —';
+    select.appendChild(empty);
     const list = body.sites || [];
     if (!list.length) {
       const tr = document.createElement('tr');
@@ -293,8 +301,11 @@ ${apiBootScript(apiOrigin)}
       tr.appendChild(td); tbody.appendChild(tr);
       return;
     }
-    selectedSiteId = list[0].siteId;
     for (const s of list) {
+      const opt = document.createElement('option');
+      opt.value = s.siteId;
+      opt.textContent = s.displayName + ' (' + s.domain + ')';
+      select.appendChild(opt);
       const tr = document.createElement('tr');
       textCell(tr, s.displayName);
       textCell(tr, s.domain);
@@ -303,6 +314,9 @@ ${apiBootScript(apiOrigin)}
       textCell(tr, s.sourceBindingLabel);
       tbody.appendChild(tr);
     }
+    // Prefer prior selection, else newest site (last appended).
+    if (prior && list.some(s => s.siteId === prior)) select.value = prior;
+    else select.value = list[list.length - 1].siteId;
   }
   document.getElementById('btn-register').onclick = async () => {
     const res = await api('/owner/sites', {
@@ -320,8 +334,9 @@ ${apiBootScript(apiOrigin)}
     refresh();
   };
   document.getElementById('btn-capture').onclick = async () => {
+    const selectedSiteId = document.getElementById('site-select').value;
     if (!selectedSiteId) {
-      document.getElementById('note').textContent = 'Register a site first';
+      document.getElementById('note').textContent = 'Select a site first';
       return;
     }
     const res = await api('/owner/collectors/capture', {
@@ -357,6 +372,8 @@ export function missionsPage(apiOrigin: string): string {
   <section>
     <h2>Missions</h2>
     <p class="muted">Owner-safe mission cards. Create a pilot staging improvement after a site exists.</p>
+    <label for="mission-site">Target site</label>
+    <select id="mission-site"><option value="">— none —</option></select>
     <div class="row">
       <button id="btn-create" type="button">Create pilot mission</button>
       <button id="btn-refresh" type="button" class="secondary">Refresh</button>
@@ -410,7 +427,22 @@ ${apiBootScript(apiOrigin)}
     if (!missionsRes.ok) { location.href = '/login'; return; }
     const missionsBody = await missionsRes.json();
     const sitesBody = await sitesRes.json();
-    window.__sites = sitesBody.sites || [];
+    const sites = sitesBody.sites || [];
+    const siteSelect = document.getElementById('mission-site');
+    const priorSite = siteSelect.value;
+    siteSelect.replaceChildren();
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = '— none —';
+    siteSelect.appendChild(empty);
+    for (const s of sites) {
+      const opt = document.createElement('option');
+      opt.value = s.siteId;
+      opt.textContent = s.displayName + ' (' + s.domain + ')';
+      siteSelect.appendChild(opt);
+    }
+    if (priorSite && sites.some(s => s.siteId === priorSite)) siteSelect.value = priorSite;
+    else if (sites.length) siteSelect.value = sites[sites.length - 1].siteId;
     const tbody = document.getElementById('rows');
     tbody.replaceChildren();
     const list = missionsBody.missions || [];
@@ -439,14 +471,14 @@ ${apiBootScript(apiOrigin)}
     }
   }
   document.getElementById('btn-create').onclick = async () => {
-    const sites = window.__sites || [];
-    if (!sites.length) {
-      document.getElementById('note').textContent = 'Register a site first';
+    const siteId = document.getElementById('mission-site').value;
+    if (!siteId) {
+      document.getElementById('note').textContent = 'Select a site first';
       return;
     }
     const res = await api('/owner/missions', {
       method:'POST', headers:{'content-type':'application/json'},
-      body: JSON.stringify({ siteId: sites[0].siteId })
+      body: JSON.stringify({ siteId })
     });
     const body = await res.json();
     document.getElementById('note').textContent = res.ok
@@ -531,9 +563,31 @@ ${apiBootScript(apiOrigin)}
       };
       if (item.status === 'NEEDS_REVIEW') {
         addBtn('Approve exact', () => act('/owner/review', item.missionId, { decision: 'APPROVE_EXACT' }));
+        addBtn('Request revision', () => act('/owner/review', item.missionId, { decision: 'REQUEST_REVISION' }));
         addBtn('Reject', () => act('/owner/review', item.missionId, { decision: 'REJECT' }));
       }
-      if (item.status === 'APPROVED' || item.status === 'RECOVERY_REQUIRED') {
+      if (item.status === 'DRAFT') {
+        addBtn('Resubmit revision', async () => {
+          const title = prompt('Revised title', item.desiredTitle);
+          if (!title) return;
+          const res = await api('/owner/missions/revise', {
+            method:'POST', headers:{'content-type':'application/json'},
+            body: JSON.stringify({
+              missionId: item.missionId,
+              desiredFields: {
+                title,
+                metaDescription: 'Revised meta for staging.',
+                h1: title,
+                bodyExcerpt: 'Revised body excerpt for staging.',
+              }
+            })
+          });
+          const body = await res.json();
+          document.getElementById('note').textContent = body.reason || body.error || (res.ok ? 'ok' : 'failed');
+          refresh();
+        });
+      }
+      if (item.status === 'APPROVED') {
         addBtn('Apply staging', () => act('/owner/staging/apply', item.missionId));
       }
       if (item.status === 'ACCEPTED_PENDING') {

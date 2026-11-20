@@ -266,6 +266,9 @@ export type ContentState = {
   variantQaVerdicts: VariantQaVerdict[];
   /** Verified distribution SUCCESS/FAILURE outcomes for learning-worker. */
   releaseOutcomes: WritePathOutcomeEvidence[];
+  /** Durable fixture remote ledgers for independent read-back (survive restart). */
+  fixtureCanonicalLedger: Record<string, Record<string, string>>;
+  fixtureVariantLedger: Record<string, Record<string, string>>;
   liveCmsPublishWiring: "NOT_WIRED";
   liveGbpWiring: "NOT_WIRED";
   liveSocialWiring: "NOT_WIRED";
@@ -283,6 +286,8 @@ export function emptyContentState(nowIso: string): ContentState {
     qaVerdicts: [],
     variantQaVerdicts: [],
     releaseOutcomes: [],
+    fixtureCanonicalLedger: {},
+    fixtureVariantLedger: {},
     liveCmsPublishWiring: "NOT_WIRED",
     liveGbpWiring: "NOT_WIRED",
     liveSocialWiring: "NOT_WIRED",

@@ -212,8 +212,28 @@ export function createSeoService(
   options: SeoServiceOptions = {},
 ): SeoService {
   const gateway = options.gateway ?? createActionGateway();
-  /** Fixture CMS remote ledger — written on accepted release, read on verify. */
-  const fixtureRemoteLedger = new Map<string, Record<string, string>>();
+
+  const putFixtureLedger = (
+    proposalId: string,
+    fields: Record<string, string>,
+    nowIso: string,
+  ) => {
+    store.update((state) => ({
+      ...state,
+      fixtureRemoteLedger: {
+        ...state.fixtureRemoteLedger,
+        [proposalId]: { ...fields },
+      },
+      updatedAtIso: nowIso,
+    }));
+  };
+
+  const readFixtureLedger = (
+    proposalId: string,
+  ): Record<string, string> | null => {
+    const row = store.read().fixtureRemoteLedger[proposalId];
+    return row ? { ...row } : null;
+  };
 
   return {
     gateway,
@@ -614,10 +634,8 @@ export function createSeoService(
         updatedAtIso: nowIso,
       };
       store.upsertProposal(pending);
-      // Record what the fixture remote would show after apply (independent of browser).
-      fixtureRemoteLedger.set(proposal.proposalId, {
-        ...proposal.proposedFields,
-      });
+      // Durable fixture remote ledger — survives API restart.
+      putFixtureLedger(proposal.proposalId, proposal.proposedFields, nowIso);
       details.push(
         "Left ACCEPTED_PENDING / RELEASED_PENDING — call independentReadBack then verifyPilotRelease",
       );
@@ -654,7 +672,7 @@ export function createSeoService(
           reason: `Proposal status is ${proposal.status}; independent read requires RELEASED_PENDING`,
         };
       }
-      const observed = fixtureRemoteLedger.get(input.proposalId);
+      const observed = readFixtureLedger(input.proposalId);
       if (!observed) {
         return {
           ok: false,
@@ -665,11 +683,10 @@ export function createSeoService(
             "Fixture remote ledger empty for proposal — release may not have applied",
         };
       }
-      // Return a copy so callers cannot mutate the ledger / alias proposedFields.
       return {
         ok: true,
         proposalId: input.proposalId,
-        observedFields: { ...observed },
+        observedFields: observed,
         source: "fixture_remote_ledger" as const,
         reason: "Independent fixture remote read-back",
       };

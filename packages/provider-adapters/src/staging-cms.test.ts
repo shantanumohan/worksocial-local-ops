@@ -114,4 +114,19 @@ describe("collectors (NEXT-14)", () => {
     expect(ga4.measurementMode).toBe("FIXTURE");
     expect(ga4.observation.kind).toBe("ga4");
   });
+
+  it("rejects private live snapshot URLs before fetch", async () => {
+    const snap = await capturePageSnapshot({
+      snapshotId: "snap-ssrf",
+      siteId: "site-pilot",
+      pagePath: "/pilot",
+      nowIso: now,
+      preferLive: true,
+      liveUrl: "http://127.0.0.1/latest/meta-data/",
+      allowedOrigins: ["example.com"],
+    });
+    expect(snap.usedLiveFetch).toBe(false);
+    expect(snap.measurementMode).toBe("FIXTURE");
+    expect(snap.note).toMatch(/refused|failed|https|hostname|allowlist/i);
+  });
 });
