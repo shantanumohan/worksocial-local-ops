@@ -52,7 +52,7 @@ jobs:
         run: |
           set +e
           failed=0
-          for suite in test:workflow test:security test:eval recovery:rehearse release:evidence; do
+          for suite in test:security test:eval recovery:rehearse release:evidence; do
             echo "::group::stub $suite (must exit non-zero)"
             pnpm "$suite"
             code=$?
@@ -108,6 +108,9 @@ jobs:
       - name: Database suite (restart + uniqueness races)
         run: pnpm test:database
 
-  # Stub/incomplete suites (workflow/security/eval/recovery/release) are NOT
+      - name: Workflow suite (LOCAL_DURABLE mission + Temporal NOT_WIRED probe)
+        run: pnpm test:workflow
+
+  # Stub/incomplete suites (security/eval/recovery/release) are NOT
   # required green checks — they must fail (see assert step above).
-  # test:database is implemented for M2 durable execution and is required above.
+  # test:database and test:workflow are implemented for M2 and required above.

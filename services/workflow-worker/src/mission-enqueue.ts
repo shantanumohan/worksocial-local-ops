@@ -8,7 +8,7 @@ import type { JobEnvelope } from "@worksocial/contracts";
 import { JobEnvelopeSchema } from "@worksocial/contracts";
 import type { ClaudeRunner, RoleJobResult } from "@worksocial/claude-runner";
 
-export type TemporalWiringStatus = "NOT_WIRED" | "FIXTURE";
+export type TemporalWiringStatus = "NOT_WIRED" | "LOCAL_DURABLE" | "FIXTURE";
 
 export type MissionEnqueueRequest = {
   envelope: JobEnvelope;
@@ -64,6 +64,18 @@ export function createMissionEnqueueService(options: {
           temporalStatus: "NOT_WIRED",
           detail:
             "Temporal runtime not bound on this host. Mission executed in-process via claude-runner; durable Temporal workflow ID is advisory only.",
+          workflowId: parsed.data.workflowId,
+          run,
+        };
+      }
+
+      if (temporalStatus === "LOCAL_DURABLE") {
+        const run = await options.runner.enqueue(enqueueArgs);
+        return {
+          accepted: true,
+          temporalStatus: "LOCAL_DURABLE",
+          detail:
+            "LOCAL_DURABLE: Postgres-backed mission durability (enqueue/leases/effect boundaries). Temporal cluster remains NOT_WIRED.",
           workflowId: parsed.data.workflowId,
           run,
         };

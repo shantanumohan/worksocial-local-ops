@@ -1,7 +1,14 @@
 # workflow
 
-Placeholder suite — **not implemented**.
+Implemented for M2 / NEXT-10 local durable missions.
 
-`pnpm test:workflow` invokes `scripts/stub-test.ts` and exits **non-zero** (`INCOMPLETE`). It must never satisfy required CI or release checks.
+```bash
+pnpm test:workflow
+# with Postgres:
+export DATABASE_URL=postgres://worksocial:worksocial@127.0.0.1:5432/worksocial_test
+pnpm test:workflow
+```
 
-Temporal durable workflow tests belong here later. Not production-activated. External effects: none.
+Temporal self-host remains **NOT_WIRED** (see `docs/product/temporal-binding.md`).
+Crash/restart at effect boundaries is proven via Postgres `LOCAL_DURABLE`.
+External effects: none.

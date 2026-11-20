@@ -18,7 +18,8 @@
   },
   "dependencies": {
     "@worksocial/claude-runner": "workspace:*",
-    "@worksocial/contracts": "workspace:*"
+    "@worksocial/contracts": "workspace:*",
+    "@worksocial/persistence": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "22.10.2",

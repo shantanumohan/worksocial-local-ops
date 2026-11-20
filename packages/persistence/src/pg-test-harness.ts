@@ -35,6 +35,18 @@ export async function createMigratedTestPool(): Promise<PgPool> {
 }
 
 export async function truncateDurableTables(pool: PgPool): Promise<void> {
+  // mission_workflows lands in 014; truncate only when present so 013-only DBs work.
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'core' AND table_name = 'mission_workflows'
+      ) THEN
+        EXECUTE 'TRUNCATE TABLE core.mission_workflows';
+      END IF;
+    END $$;
+  `);
   await pool.query(`
     TRUNCATE TABLE
       core.execution_receipts,

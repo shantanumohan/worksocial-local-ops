@@ -401,6 +401,9 @@ importers:
       '@worksocial/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@worksocial/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
     devDependencies:
       '@types/node':
         specifier: 22.10.2

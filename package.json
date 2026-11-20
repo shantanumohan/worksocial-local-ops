@@ -19,7 +19,7 @@
     "test:acceptance-matrix": "tsx scripts/validate-acceptance-matrix.ts",
     "test:unit": "pnpm build:local && pnpm --filter @worksocial/domain --filter @worksocial/ml --filter @worksocial/persistence --filter @worksocial/supervisor --filter @worksocial/action-gateway --filter @worksocial/credential-broker --filter @worksocial/claude-runner --filter @worksocial/workflow-worker --filter @worksocial/learning-worker --filter @worksocial/probes --filter @worksocial/knowledge --filter @worksocial/seo --filter @worksocial/content --filter @worksocial/inbox --filter @worksocial/repair --filter @worksocial/api test",
     "test:database": "pnpm build:local && tsx scripts/run-database-tests.ts",
-    "test:workflow": "tsx scripts/stub-test.ts test:workflow",
+    "test:workflow": "pnpm build:local && tsx scripts/run-workflow-tests.ts",
     "test:contract": "pnpm build:local && pnpm --filter @worksocial/contract-tests test",
     "test:e2e": "pnpm build:local && pnpm --filter @worksocial/e2e-lite-tests test",
     "test:security": "tsx scripts/stub-test.ts test:security",
