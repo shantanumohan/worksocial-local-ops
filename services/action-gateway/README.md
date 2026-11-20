@@ -8,4 +8,12 @@ Sole mutation authority stub (R1-02 + R1-03):
 - Stub apply yields `ACCEPTED_PENDING` — never auto-`VERIFIED`
 - No live providers; independent of Claude runner credentials
 
-Run unit tests: `pnpm --filter @worksocial/action-gateway test`
+## Fixture vs durable Postgres
+
+| Path | Persistence | Use |
+|---|---|---|
+| `createActionGateway()` | In-memory ledger + decisions Map | Offline unit/contract tests |
+| `@worksocial/persistence` `createPgDurableExecutionService` | Postgres jobs/effects/receipts/budgets/fake-provider | M2 restart-safe accept → verify without a second apply |
+
+Run unit tests: `pnpm --filter @worksocial/action-gateway test`  
+Durable suite: `pnpm test:database` (requires `DATABASE_URL`)

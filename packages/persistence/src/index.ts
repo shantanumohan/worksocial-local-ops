@@ -150,3 +150,96 @@ export {
   defaultRepairStateDir,
   type RepairStore,
 } from "./repair-store.js";
+
+export {
+  createPgPool,
+  resolveDatabaseUrl,
+  withTransaction,
+  type PgPool,
+  type PgClient,
+  type PgQueryable,
+  type CreatePgPoolOptions,
+} from "./pg/client.js";
+
+export {
+  runMigrations,
+  listMigrationFiles,
+  appliedMigrations,
+  ensureMigrationTable,
+  defaultMigrationsDir,
+  type MigrationResult,
+} from "./pg/migrate.js";
+
+export type {
+  JobStatus,
+  DurableJobRecord,
+  EffectAttemptPhase,
+  EffectAttemptStatus,
+  EffectAttemptRecord,
+  DurableEffectIntent,
+  DurableGatewayDecision,
+  ExecutionReceiptKind,
+  ExecutionReceiptVerdict,
+  ExecutionReceipt,
+  DurableBudgetAccount,
+  DurableBudgetReservation,
+  OutboxEvent,
+  FakeProviderEffect,
+  JobInsertInput,
+  EffectIntentInput,
+} from "./execution-types.js";
+
+export {
+  createMemoryJobStore,
+  createPgJobStore,
+  newJobId,
+  type JobStore,
+} from "./job-store.js";
+
+export {
+  createMemoryEffectStore,
+  createPgEffectStore,
+  type EffectStore,
+} from "./effect-store.js";
+
+export {
+  createMemoryBudgetStore,
+  createPgBudgetStore,
+  type BudgetStore,
+  type BudgetReserveResult,
+  type BudgetSettleResult,
+} from "./budget-store.js";
+
+export {
+  createMemoryReceiptStore,
+  createPgReceiptStore,
+  type ReceiptStore,
+  type ReceiptInsertInput,
+} from "./receipt-store.js";
+
+export {
+  createMemoryFakeProviderStore,
+  createPgFakeProviderStore,
+  type FakeProviderStore,
+  type FakeProviderApplyInput,
+  type FakeProviderApplyResult,
+} from "./fake-provider-store.js";
+
+export {
+  createMemoryGatewayDecisionStore,
+  createPgGatewayDecisionStore,
+  type GatewayDecisionStore,
+} from "./gateway-decision-store.js";
+
+export {
+  createMemoryDurableStores,
+  createPgDurableStores,
+  createDurableExecutionService,
+  createPgDurableExecutionService,
+  type DurableExecutionStores,
+  type DurableExecutionService,
+  type AcceptPendingInput,
+  type AcceptPendingResult,
+  type VerifyIndependentInput,
+  type VerifyIndependentResult,
+} from "./durable-execution.js";

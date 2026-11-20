@@ -28,7 +28,8 @@ GitHub Actions workflow `.github/workflows/ci.yml` runs:
 3. `pnpm test:unit` — offline domain/services
 4. `pnpm test:contract` — offline contracts
 5. `pnpm test:e2e` — fixture e2e-lite (not browser product acceptance)
-6. Assert stubs (`test:database`, `test:workflow`, `test:security`, `test:eval`, `recovery:rehearse`, `release:evidence`) **exit non-zero**
+6. `pnpm db:migrate` + `pnpm test:database` — Postgres durable execution (M2; service container)
+7. Assert remaining stubs (`test:workflow`, `test:security`, `test:eval`, `recovery:rehearse`, `release:evidence`) **exit non-zero**
 
 Placeholder/stub suites must never exit 0 as release passes. Product acceptance cases remain `NOT_RUN` until executed with redacted evidence in their declared environment (fixture ≠ sandbox ≠ authorized production).
 
