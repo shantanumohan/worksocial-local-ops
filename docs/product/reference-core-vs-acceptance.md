@@ -23,5 +23,6 @@ Feature status labels (v6) remain the only honest completion vocabulary:
 ## Related artifacts
 
 - Condensed v6 baseline: `docs/product/WorkSocial_Operations_v6_implementation_baseline.md`
+- Acceptance catalog (narrative): `docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md`
 - Acceptance matrix stub: `tests/acceptance-matrix-v6.json`
 - v5 package: `docs/v5/`
