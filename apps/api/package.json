@@ -33,6 +33,7 @@
     "@worksocial/owner-staging": "workspace:*",
     "@worksocial/lead-capture": "workspace:*",
     "@worksocial/evaluation-worker": "workspace:*",
+    "@worksocial/soak": "workspace:*",
     "@worksocial/probes": "workspace:*",
     "@worksocial/provider-adapters": "workspace:*",
     "@worksocial/workflow-worker": "workspace:*"

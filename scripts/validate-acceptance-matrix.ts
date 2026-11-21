@@ -3,10 +3,11 @@
  * - exactly 159 IDs (T-F01–26, T-US-001–060, T-X001–073)
  * - every matrix ID has a definition-shaped catalog entry (heading / list item / table row)
  * - every catalog definition ID appears in the matrix
- * - every case status is NOT_RUN; flow levels/requirements are cleanly parsed
+ * - statuses are NOT_RUN | ACCEPTED | BLOCKED (never silently VERIFIED for live)
+ * - ACCEPTED requires evidenceArtifactId + resultEnvironment fixture|sandbox + on-disk artifact
  * - ChatGPT Ads transport/entitlement gate retained on T-F07 / T-US-013 / T-US-014
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -20,17 +21,30 @@ type MatrixCase = {
   fixtureClass?: string;
   requirements?: string[];
   definitionShape?: string;
+  evidenceArtifactId?: string | null;
+  resultEnvironment?: string | null;
 };
 
 type Matrix = {
   cases: MatrixCase[];
-  totals: { all: number; flows: number; userStories: number; experience: number };
+  totals: {
+    all: number;
+    flows: number;
+    userStories: number;
+    experience: number;
+    notRun?: number;
+    accepted?: number;
+  };
   sourceDocument?: string;
 };
+
+const ALLOWED_STATUSES = new Set(["NOT_RUN", "ACCEPTED", "BLOCKED", "FAILED"]);
+const ACCEPTED_ENVS = new Set(["fixture", "sandbox"]);
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const matrixPath = resolve(root, "tests/acceptance-matrix-v6.json");
 const catalogPath = resolve(root, "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md");
+const evidenceDir = resolve(root, "tests/acceptance-evidence/fixture");
 
 const expectedIds = [
   ...Array.from({ length: 26 }, (_, i) => `T-F${String(i + 1).padStart(2, "0")}`),
@@ -84,9 +98,66 @@ if (matrixIds.length !== new Set(matrixIds).size) {
   errors.push("matrix contains duplicate ids");
 }
 
+let acceptedCount = 0;
+let notRunCount = 0;
+
 for (const c of matrix.cases) {
-  if (c.status !== "NOT_RUN") {
-    errors.push(`${c.id} status must be NOT_RUN, got ${c.status}`);
+  if (c.status.toUpperCase() === "VERIFIED") {
+    errors.push(
+      `${c.id} status VERIFIED is forbidden — never silently VERIFIED for live; use ACCEPTED with evidence or NOT_RUN`,
+    );
+  }
+  if (!ALLOWED_STATUSES.has(c.status)) {
+    errors.push(`${c.id} status must be NOT_RUN|ACCEPTED|BLOCKED|FAILED, got ${c.status}`);
+  }
+  if (c.status === "NOT_RUN") notRunCount += 1;
+  if (c.status === "ACCEPTED") {
+    acceptedCount += 1;
+    if (!c.evidenceArtifactId || !String(c.evidenceArtifactId).trim()) {
+      errors.push(`${c.id} ACCEPTED requires evidenceArtifactId`);
+    }
+    if (!c.resultEnvironment || !ACCEPTED_ENVS.has(c.resultEnvironment)) {
+      errors.push(
+        `${c.id} ACCEPTED requires resultEnvironment fixture|sandbox, got ${JSON.stringify(c.resultEnvironment)}`,
+      );
+    }
+    if (c.evidenceArtifactId) {
+      const evidencePath = resolve(evidenceDir, `${c.evidenceArtifactId}.json`);
+      if (!existsSync(evidencePath)) {
+        errors.push(
+          `${c.id} ACCEPTED evidence missing at tests/acceptance-evidence/fixture/${c.evidenceArtifactId}.json — run pnpm release:evidence`,
+        );
+      } else {
+        try {
+          const art = JSON.parse(readFileSync(evidencePath, "utf8")) as {
+            artifactId?: string;
+            caseId?: string;
+            environment?: string;
+            redacted?: boolean;
+            liveProviderSuccessClaimed?: boolean;
+          };
+          if (art.artifactId !== c.evidenceArtifactId) {
+            errors.push(`${c.id} evidence artifactId mismatch`);
+          }
+          if (art.caseId !== c.id) {
+            errors.push(`${c.id} evidence caseId mismatch`);
+          }
+          if (art.environment !== c.resultEnvironment) {
+            errors.push(`${c.id} evidence environment mismatch`);
+          }
+          if (art.redacted !== true) {
+            errors.push(`${c.id} evidence must be redacted`);
+          }
+          if (art.liveProviderSuccessClaimed === true) {
+            errors.push(`${c.id} evidence must not claim live provider success`);
+          }
+        } catch (err) {
+          errors.push(
+            `${c.id} evidence artifact unreadable: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
+      }
+    }
   }
   if (!c.title || !c.title.trim()) {
     errors.push(`${c.id} missing title (unresolvable definition)`);
@@ -122,11 +193,21 @@ for (const c of matrix.cases) {
   }
 }
 
+if (matrix.totals.notRun !== undefined && matrix.totals.notRun !== notRunCount) {
+  errors.push(`totals.notRun expected ${notRunCount}, got ${matrix.totals.notRun}`);
+}
+if (matrix.totals.accepted !== undefined && matrix.totals.accepted !== acceptedCount) {
+  errors.push(`totals.accepted expected ${acceptedCount}, got ${matrix.totals.accepted}`);
+}
+
 const adsGateIds = ["T-F07", "T-US-013", "T-US-014"];
 for (const id of adsGateIds) {
   const c = matrix.cases.find((x) => x.id === id);
   if (!c?.gates?.includes("chatgpt_ads_transport_entitlement")) {
     errors.push(`${id} must retain chatgpt_ads_transport_entitlement gate`);
+  }
+  if (c && c.status === "ACCEPTED") {
+    errors.push(`${id} ChatGPT Ads case must not be ACCEPTED without transport/entitlement`);
   }
 }
 
@@ -161,7 +242,9 @@ console.log(
       status: "PASS",
       cases: matrix.cases.length,
       catalogDefinitions: catalogDefs.size,
-      allNotRun: true,
+      notRun: notRunCount,
+      accepted: acceptedCount,
+      allNotRun: notRunCount === 159,
       chatgptAdsGates: adsGateIds,
       sourceDocument: matrix.sourceDocument ?? "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
     },

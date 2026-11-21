@@ -1,0 +1,190 @@
+/**
+ * File-backed soak / acceptance evidence store (M9 / NEXT-20).
+ * Schema companion: database/migrations/021_m9_soak_acceptance.sql.
+ */
+
+import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import {
+  emptySoakAcceptanceState,
+  type AcceptanceCaseEvidenceRecord,
+  type RedactedEvidenceArtifact,
+  type SoakAcceptanceState,
+  type SoakRunRecord,
+} from "@worksocial/domain";
+
+export type SoakStore = {
+  readonly stateDir: string;
+  read(): SoakAcceptanceState;
+  write(state: SoakAcceptanceState): void;
+  update(mutator: (current: SoakAcceptanceState) => SoakAcceptanceState): SoakAcceptanceState;
+  addRun(run: SoakRunRecord): SoakAcceptanceState;
+  addArtifact(artifact: RedactedEvidenceArtifact): SoakAcceptanceState;
+  upsertCase(record: AcceptanceCaseEvidenceRecord): SoakAcceptanceState;
+  listRuns(limit?: number): SoakRunRecord[];
+  listArtifacts(limit?: number): RedactedEvidenceArtifact[];
+  listCases(limit?: number): AcceptanceCaseEvidenceRecord[];
+  status(): {
+    runCount: number;
+    artifactCount: number;
+    acceptedCount: number;
+    notRunCount: number;
+    pilotGateLast: SoakRunRecord["pilotGate"] | null;
+    liveWiring: SoakAcceptanceState["liveWiring"];
+    chatgptAdsWiring: "NOT_WIRED";
+    r1CompleteClaimed: false;
+    honestNote: string;
+  };
+};
+
+function atomicWriteJson(filePath: string, value: unknown): void {
+  mkdirSync(dirname(filePath), { recursive: true });
+  const tmp = `${filePath}.${process.pid}.tmp`;
+  writeFileSync(tmp, JSON.stringify(value, null, 2), "utf8");
+  renameSync(tmp, filePath);
+}
+
+function readJsonFile<T>(filePath: string): T | null {
+  if (!existsSync(filePath)) {
+    return null;
+  }
+  return JSON.parse(readFileSync(filePath, "utf8")) as T;
+}
+
+export function defaultSoakStateDir(baseDir: string): string {
+  return join(baseDir, "soak");
+}
+
+export function createFileSoakStore(stateDir: string): SoakStore {
+  const soakDir = join(stateDir, "soak");
+  const statePath = join(soakDir, "soak-state.json");
+  const evidenceDir = join(soakDir, "evidence");
+
+  const read = (): SoakAcceptanceState => {
+    const existing = readJsonFile<SoakAcceptanceState>(statePath);
+    if (!existing || existing.version !== 1) {
+      return emptySoakAcceptanceState(new Date().toISOString());
+    }
+    const base = emptySoakAcceptanceState(existing.updatedAtIso);
+    return {
+      ...base,
+      ...existing,
+      runs: existing.runs ?? [],
+      artifacts: existing.artifacts ?? [],
+      caseLedger: existing.caseLedger ?? [],
+      liveWiring: {
+        cms: "NOT_WIRED",
+        gsc: "NOT_WIRED",
+        ga4: "NOT_WIRED",
+        zoho: "NOT_WIRED",
+        temporal: "NOT_WIRED",
+      },
+      chatgptAdsWiring: "NOT_WIRED",
+    };
+  };
+
+  const write = (state: SoakAcceptanceState): void => {
+    mkdirSync(evidenceDir, { recursive: true });
+    atomicWriteJson(statePath, {
+      ...state,
+      liveWiring: {
+        cms: "NOT_WIRED",
+        gsc: "NOT_WIRED",
+        ga4: "NOT_WIRED",
+        zoho: "NOT_WIRED",
+        temporal: "NOT_WIRED",
+      },
+      chatgptAdsWiring: "NOT_WIRED",
+      updatedAtIso: state.updatedAtIso,
+    } satisfies SoakAcceptanceState);
+  };
+
+  const update = (
+    mutator: (current: SoakAcceptanceState) => SoakAcceptanceState,
+  ): SoakAcceptanceState => {
+    const next = mutator(read());
+    write(next);
+    return next;
+  };
+
+  return {
+    stateDir,
+
+    read,
+    write,
+    update,
+
+    addRun(run) {
+      return update((current) => ({
+        ...current,
+        updatedAtIso: run.endedAtIso,
+        runs: [...current.runs, run].slice(-100),
+        caseLedger: mergeCaseLedger(current.caseLedger, run.caseResults),
+      }));
+    },
+
+    addArtifact(artifact) {
+      mkdirSync(evidenceDir, { recursive: true });
+      const artifactPath = join(evidenceDir, `${artifact.artifactId}.json`);
+      atomicWriteJson(artifactPath, artifact);
+      return update((current) => ({
+        ...current,
+        updatedAtIso: artifact.createdAtIso,
+        artifacts: [
+          ...current.artifacts.filter((a) => a.artifactId !== artifact.artifactId),
+          artifact,
+        ].slice(-200),
+      }));
+    },
+
+    upsertCase(record) {
+      return update((current) => ({
+        ...current,
+        updatedAtIso: record.updatedAtIso,
+        caseLedger: mergeCaseLedger(current.caseLedger, [record]),
+      }));
+    },
+
+    listRuns(limit = 50) {
+      return read().runs.slice(-limit);
+    },
+
+    listArtifacts(limit = 100) {
+      return read().artifacts.slice(-limit);
+    },
+
+    listCases(limit = 200) {
+      return read().caseLedger.slice(0, limit);
+    },
+
+    status() {
+      const state = read();
+      const acceptedCount = state.caseLedger.filter((c) => c.status === "ACCEPTED").length;
+      const notRunCount = state.caseLedger.filter((c) => c.status === "NOT_RUN").length;
+      const last = state.runs[state.runs.length - 1] ?? null;
+      return {
+        runCount: state.runs.length,
+        artifactCount: state.artifacts.length,
+        acceptedCount,
+        notRunCount,
+        pilotGateLast: last?.pilotGate ?? null,
+        liveWiring: state.liveWiring,
+        chatgptAdsWiring: "NOT_WIRED",
+        r1CompleteClaimed: false,
+        honestNote:
+          "M9 soak / acceptance evidence harness. Fixture proofs only. Live CMS/GSC/GA4/Zoho/Temporal NOT_WIRED. ChatGPT Ads access-blocked. ACCEPTED requires redacted evidence; never silently VERIFIED for live. Short CI soaks do not satisfy the 72h pilot gate. Not R1-complete.",
+      };
+    },
+  };
+}
+
+function mergeCaseLedger(
+  existing: AcceptanceCaseEvidenceRecord[],
+  incoming: AcceptanceCaseEvidenceRecord[],
+): AcceptanceCaseEvidenceRecord[] {
+  const byId = new Map(existing.map((c) => [c.caseId, c]));
+  for (const row of incoming) {
+    byId.set(row.caseId, row);
+  }
+  return [...byId.values()].sort((a, b) => a.caseId.localeCompare(b.caseId));
+}

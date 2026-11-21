@@ -13,6 +13,7 @@ import {
   repairPage,
   analysisPage,
   evalPage,
+  soakPage,
 } from "./pages.js";
 import {
   activationPage,
@@ -38,9 +39,9 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
         status: "running",
         productionActivated: false,
         identity:
-          "M8 analysis/eval + M6 canonical publish + M7 inbox + M5 lead-capture + M4 owner staging + R1-02–R1-10 console pages",
+          "M9 soak/acceptance + M8 analysis/eval + M6–M7 + M4 owner staging + R1-02–R1-10 console pages",
         message:
-          "Progressive console: activation → connections → sites → missions → review → evidence + analysis + eval. Not full React routes. Not R1-complete.",
+          "Progressive console: activation → connections → sites → missions → review → evidence + analysis + eval + soak. Not full React routes. Not R1-complete.",
       });
       res.writeHead(200, { "content-type": "application/json" });
       res.end(body);
@@ -158,6 +159,12 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
     if (url.pathname === "/eval") {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       res.end(evalPage(options.apiOrigin));
+      return;
+    }
+
+    if (url.pathname === "/soak") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(soakPage(options.apiOrigin));
       return;
     }
 

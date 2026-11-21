@@ -2,7 +2,7 @@
   "catalog": "WorkSocial product acceptance v6",
   "version": "6.0",
   "sourceDocument": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-  "note": "159 cases \u2014 all NOT_RUN. Machine-readable index aligned to full catalog definitions. Fixture, sandbox, and authorized-production results must remain distinguishable. ChatGPT Ads (T-F07 / T-US-013 / T-US-014) stays access-blocked without verified local transport/entitlement. Implemented offline suites are not production acceptance.",
+  "note": "159 cases \u2014 statuses are NOT_RUN until executed with redacted evidence, or ACCEPTED only with real fixture/sandbox evidence artifacts. Never silently VERIFIED for live. Fixture, sandbox, and authorized-production results must remain distinguishable. ChatGPT Ads (T-F07 / T-US-013 / T-US-014) stays access-blocked without verified local transport/entitlement. Implemented offline suites are not production acceptance. Not R1-complete.",
   "invariants": {
     "fixtureSandboxAuthorizedProductionDistinct": true,
     "acceptanceNotVerified": true,
@@ -14,7 +14,8 @@
     "userStories": 60,
     "experience": 73,
     "all": 159,
-    "notRun": 159
+    "notRun": 155,
+    "accepted": 4
   },
   "cases": [
     {
@@ -1231,13 +1232,16 @@
       "kind": "user_story",
       "level": "behavior_acceptance",
       "title": "Unknown remote effects reconciled before resume.",
-      "status": "NOT_RUN",
+      "status": "ACCEPTED",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
       "family": "failure_gate",
       "gates": [],
       "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-      "definitionShape": "list_item"
+      "definitionShape": "list_item",
+      "resultEnvironment": "fixture",
+      "evidenceArtifactId": "art-fixture-t-us-048",
+      "evidenceNote": "Fixture soak/recovery evidence only \u2014 not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-US-049",
@@ -1570,12 +1574,15 @@
       "level": "platform_security_resilience",
       "title": "Approval wait survives restart",
       "focus": "Resume wait; no slot hold",
-      "status": "NOT_RUN",
+      "status": "ACCEPTED",
       "environment": "fixture_or_integration",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
       "gates": [],
       "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-      "definitionShape": "table_row"
+      "definitionShape": "table_row",
+      "resultEnvironment": "fixture",
+      "evidenceArtifactId": "art-fixture-t-x014",
+      "evidenceNote": "Fixture soak/recovery evidence only \u2014 not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X015",
@@ -1648,12 +1655,15 @@
       "level": "platform_security_resilience",
       "title": "Timeout after provider acceptance",
       "focus": "Unknown \u2192 reconcile; no resend",
-      "status": "NOT_RUN",
+      "status": "ACCEPTED",
       "environment": "fixture_or_integration",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
       "gates": [],
       "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-      "definitionShape": "table_row"
+      "definitionShape": "table_row",
+      "resultEnvironment": "fixture",
+      "evidenceArtifactId": "art-fixture-t-x020",
+      "evidenceNote": "Fixture soak/recovery evidence only \u2014 not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X021",
@@ -2246,12 +2256,15 @@
       "level": "platform_security_resilience",
       "title": "Backup omits remote receipt",
       "focus": "Reconcile; no duplicate",
-      "status": "NOT_RUN",
+      "status": "ACCEPTED",
       "environment": "fixture_or_integration",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
       "gates": [],
       "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-      "definitionShape": "table_row"
+      "definitionShape": "table_row",
+      "resultEnvironment": "fixture",
+      "evidenceArtifactId": "art-fixture-t-x066",
+      "evidenceNote": "Fixture soak/recovery evidence only \u2014 not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X067",

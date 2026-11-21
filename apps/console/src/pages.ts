@@ -2284,6 +2284,87 @@ export function analysisPage(apiOrigin: string): string {
 </html>`;
 }
 
+export function soakPage(apiOrigin: string): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WorkSocial — Soak / acceptance evidence</title>
+  <style>
+    :root { --ink:#1b2a22; --panel:#fff; --accent:#2f6b4f; --warn:#8a5a00; }
+    body { margin:0; font-family:"IBM Plex Sans","Segoe UI",sans-serif; background:linear-gradient(180deg,#e7efe9,#f6f3ec); color:var(--ink); }
+    header { padding:1.25rem 1.5rem; border-bottom:1px solid #c9d6cc; background:rgba(255,255,255,.7); }
+    h1 { font-family:"IBM Plex Serif",Georgia,serif; margin:0; font-size:1.45rem; }
+    main { max-width:960px; margin:0 auto; padding:1.5rem; display:grid; gap:1rem; }
+    section { background:var(--panel); border:1px solid #c9d6cc; padding:1rem 1.1rem; }
+    .muted { color:#405248; } .warn { color:var(--warn); }
+    button { background:var(--accent); color:#fff; border:0; padding:.5rem .85rem; cursor:pointer; margin-right:.4rem; }
+    pre { background:#f3f6f3; padding:.75rem; overflow:auto; font-size:.8rem; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>WorkSocial</h1>
+  <p class="muted" id="who">Checking session…</p>
+  <p class="muted"><a href="/eval">Eval</a> · <a href="/soak">Soak</a> · <a href="/evidence">Evidence</a> · <a href="/authority">Authority</a></p>
+</header>
+<main>
+  <section>
+    <h2>R1 soak / acceptance evidence (M9)</h2>
+    <p class="muted">Fixture crash-restart, no-duplicate-effects, job continuity, and reconcile proofs. Redacted ACCEPTED evidence only.</p>
+    <p class="warn">Live CMS/GSC/GA4/Zoho/Temporal <strong>NOT_WIRED</strong>. ChatGPT Ads <strong>access-blocked</strong>. 72h pilot gate is separate — short runs stay <strong>NOT_MET</strong>. Not R1-complete. Never silently VERIFIED for live.</p>
+    <button id="btn-run" type="button">Run fixture soak</button>
+    <button id="btn-report" type="button">Owner report</button>
+    <button id="btn-cases" type="button">Case ledger</button>
+    <p class="muted" id="note"></p>
+  </section>
+  <section>
+    <h2>Status</h2>
+    <pre id="status">Loading…</pre>
+  </section>
+  <section>
+    <h2>Output</h2>
+    <pre id="out">—</pre>
+  </section>
+</main>
+<script>
+  const API = ${JSON.stringify(apiOrigin)};
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ origin: window.location.origin }, opts.headers || {});
+    const csrf = sessionStorage.getItem('ws_csrf');
+    if (opts.method && opts.method !== 'GET' && csrf) headers['x-csrf-token'] = csrf;
+    return fetch(API + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+  }
+  async function refresh() {
+    const session = await api('/auth/session');
+    if (!session.ok) { location.href = '/login'; return; }
+    const s = await session.json();
+    sessionStorage.setItem('ws_csrf', s.csrfToken);
+    document.getElementById('who').textContent = s.username + ' · ' + s.role;
+    const res = await api('/soak/status');
+    document.getElementById('status').textContent = JSON.stringify(await res.json(), null, 2);
+  }
+  document.getElementById('btn-run').onclick = async () => {
+    const res = await api('/soak/run', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.note || '';
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-report').onclick = async () => {
+    const res = await api('/soak/report');
+    document.getElementById('out').textContent = JSON.stringify(await res.json(), null, 2);
+  };
+  document.getElementById('btn-cases').onclick = async () => {
+    const res = await api('/soak/cases');
+    document.getElementById('out').textContent = JSON.stringify(await res.json(), null, 2);
+  };
+  refresh();
+</script>
+</body>
+</html>`;
+}
+
 export function evalPage(apiOrigin: string): string {
   return `<!doctype html>
 <html lang="en">

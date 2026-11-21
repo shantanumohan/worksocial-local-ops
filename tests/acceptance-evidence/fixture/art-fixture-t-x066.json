@@ -1,0 +1,14 @@
+{
+  "artifactId": "art-fixture-t-x066",
+  "caseId": "T-X066",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X066 (Backup omits remote receipt)\nproof=no_duplicate_effects applyCount=1 :: First apply created=true | Retry providerCreated=false applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "no_duplicate_effects"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x066.json",
+  "createdAtIso": "2026-11-21T19:05:00.000Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE"
+}

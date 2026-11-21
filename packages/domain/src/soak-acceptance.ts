@@ -1,0 +1,363 @@
+/**
+ * M9 / NEXT-20 — R1 soak / acceptance evidence harness (domain).
+ *
+ * Fixture ≠ sandbox ≠ authorized production.
+ * Catalog cases may be NOT_RUN or ACCEPTED (with real evidence only).
+ * Never silently VERIFIED for live. ChatGPT Ads stays blocked without transport.
+ * 72h pilot gate is explicit — short CI soaks prove mechanics, not R1-complete.
+ * Pure types + validators. No network I/O.
+ */
+
+import {
+  AnalyticsEnvironment,
+  evaluateChatGptAdsAccess,
+} from "./analytics.js";
+
+/** Declared execution environment for acceptance evidence. */
+export const AcceptanceEnvironment = {
+  FIXTURE: "fixture",
+  SANDBOX: "sandbox",
+  AUTHORIZED_PRODUCTION: "authorized_production",
+} as const;
+
+export type AcceptanceEnvironmentValue =
+  (typeof AcceptanceEnvironment)[keyof typeof AcceptanceEnvironment];
+
+/**
+ * Product-case execution status for the matrix / evidence ledger.
+ * VERIFIED is intentionally absent — live/prod verification is never silent.
+ */
+export const AcceptanceCaseStatus = {
+  NOT_RUN: "NOT_RUN",
+  ACCEPTED: "ACCEPTED",
+  FAILED: "FAILED",
+  BLOCKED: "BLOCKED",
+} as const;
+
+export type AcceptanceCaseStatusValue =
+  (typeof AcceptanceCaseStatus)[keyof typeof AcceptanceCaseStatus];
+
+/** Forbidden matrix/evidence status for live claims without explicit auth evidence. */
+export const FORBIDDEN_SILENT_LIVE_STATUS = "VERIFIED" as const;
+
+export const SoakProofKind = {
+  CRASH_RESTART: "crash_restart",
+  NO_DUPLICATE_EFFECTS: "no_duplicate_effects",
+  JOB_CONTINUITY: "job_continuity",
+  UNKNOWN_REMOTE_RECONCILE: "unknown_remote_reconcile",
+} as const;
+
+export type SoakProofKindValue =
+  (typeof SoakProofKind)[keyof typeof SoakProofKind];
+
+export const PilotGateStatus = {
+  NOT_MET: "NOT_MET",
+  MET: "MET",
+  BLOCKED: "BLOCKED",
+} as const;
+
+export type PilotGateStatusValue =
+  (typeof PilotGateStatus)[keyof typeof PilotGateStatus];
+
+/** Default R1 pilot soak window (72 hours). */
+export const PILOT_SOAK_REQUIRED_MS = 72 * 60 * 60 * 1000;
+
+/** Catalog cases the fixture soak/evidence harness can exercise offline. */
+export const SOAK_FIXTURE_CASE_IDS = [
+  "T-X014",
+  "T-X020",
+  "T-X066",
+  "T-US-048",
+] as const;
+
+export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
+
+export const SOAK_RELATED_CASE_IDS: readonly string[] = [
+  ...SOAK_FIXTURE_CASE_IDS,
+  "T-F24",
+  "T-US-047",
+  "T-F07",
+  "T-US-013",
+] as const;
+
+export type RedactedEvidenceArtifact = {
+  artifactId: string;
+  caseId: string;
+  environment: AcceptanceEnvironmentValue;
+  /** Always redacted — never includes secrets, tokens, or raw PII. */
+  redacted: true;
+  summary: string;
+  proofKinds: SoakProofKindValue[];
+  /** Relative path or logical ref inside the evidence store. */
+  evidenceRef: string;
+  createdAtIso: string;
+  /** Explicit: fixture proofs are not live provider success. */
+  liveProviderSuccessClaimed: false;
+  externalEffects: "NONE";
+};
+
+export type AcceptanceCaseEvidenceRecord = {
+  caseId: string;
+  status: AcceptanceCaseStatusValue;
+  environment: AcceptanceEnvironmentValue;
+  artifactId: string | null;
+  reasons: string[];
+  updatedAtIso: string;
+};
+
+export type SoakProofRecord = {
+  proofId: string;
+  kind: SoakProofKindValue;
+  passed: boolean;
+  details: string[];
+  /** Apply attempts observed for the business key (must be 1 when no-dup). */
+  applyAttemptCount: number | null;
+  operationId: string | null;
+  createdAtIso: string;
+  fixtureOnly: true;
+};
+
+export type SoakRunRecord = {
+  runId: string;
+  startedAtIso: string;
+  endedAtIso: string;
+  durationMs: number;
+  environment: AcceptanceEnvironmentValue;
+  proofs: SoakProofRecord[];
+  caseResults: AcceptanceCaseEvidenceRecord[];
+  pilotGate: PilotGateEvaluation;
+  chatgptAds: {
+    allowed: false;
+    wiring: "NOT_WIRED";
+    reason: string;
+  };
+  liveWiring: {
+    cms: "NOT_WIRED";
+    gsc: "NOT_WIRED";
+    ga4: "NOT_WIRED";
+    zoho: "NOT_WIRED";
+    temporal: "NOT_WIRED";
+  };
+  r1CompleteClaimed: false;
+  externalEffects: "NONE";
+  honestNote: string;
+};
+
+export type PilotGateEvaluation = {
+  status: PilotGateStatusValue;
+  requiredMs: number;
+  observedMs: number;
+  proofsRequired: SoakProofKindValue[];
+  proofsPassed: SoakProofKindValue[];
+  reasons: string[];
+};
+
+export type SoakAcceptanceState = {
+  version: 1;
+  updatedAtIso: string;
+  runs: SoakRunRecord[];
+  artifacts: RedactedEvidenceArtifact[];
+  caseLedger: AcceptanceCaseEvidenceRecord[];
+  liveWiring: SoakRunRecord["liveWiring"];
+  chatgptAdsWiring: "NOT_WIRED";
+};
+
+export function emptySoakAcceptanceState(nowIso: string): SoakAcceptanceState {
+  return {
+    version: 1,
+    updatedAtIso: nowIso,
+    runs: [],
+    artifacts: [],
+    caseLedger: [],
+    liveWiring: {
+      cms: "NOT_WIRED",
+      gsc: "NOT_WIRED",
+      ga4: "NOT_WIRED",
+      zoho: "NOT_WIRED",
+      temporal: "NOT_WIRED",
+    },
+    chatgptAdsWiring: "NOT_WIRED",
+  };
+}
+
+export function isAllowedAcceptanceStatus(
+  status: string,
+): status is AcceptanceCaseStatusValue {
+  return (
+    status === AcceptanceCaseStatus.NOT_RUN ||
+    status === AcceptanceCaseStatus.ACCEPTED ||
+    status === AcceptanceCaseStatus.FAILED ||
+    status === AcceptanceCaseStatus.BLOCKED
+  );
+}
+
+/**
+ * ACCEPTED requires a real evidence artifact and a non-production environment
+ * for fixture harness results. VERIFIED is always rejected here.
+ */
+export function validateAcceptanceCaseStatus(input: {
+  status: string;
+  environment?: string | null;
+  evidenceArtifactId?: string | null;
+}): { ok: true } | { ok: false; reasons: string[] } {
+  const reasons: string[] = [];
+  if (statusLooksVerified(input.status)) {
+    reasons.push(
+      "VERIFIED is forbidden in the acceptance matrix/evidence ledger without an explicit authorized-production evidence package — never silently VERIFIED for live",
+    );
+  }
+  if (!isAllowedAcceptanceStatus(input.status)) {
+    reasons.push(`Unsupported acceptance status: ${input.status}`);
+  }
+  if (input.status === AcceptanceCaseStatus.ACCEPTED) {
+    if (!input.evidenceArtifactId || !String(input.evidenceArtifactId).trim()) {
+      reasons.push("ACCEPTED requires evidenceArtifactId with real evidence");
+    }
+    const env = input.environment ?? "";
+    if (
+      env !== AcceptanceEnvironment.FIXTURE &&
+      env !== AcceptanceEnvironment.SANDBOX
+    ) {
+      reasons.push(
+        `ACCEPTED harness results require environment fixture|sandbox, got ${JSON.stringify(env)}`,
+      );
+    }
+  }
+  return reasons.length === 0 ? { ok: true } : { ok: false, reasons };
+}
+
+function statusLooksVerified(status: string): boolean {
+  return status.toUpperCase() === FORBIDDEN_SILENT_LIVE_STATUS;
+}
+
+export function evaluatePilotGate(input: {
+  startedAtIso: string;
+  endedAtIso: string;
+  proofs: readonly SoakProofRecord[];
+  requiredMs?: number;
+}): PilotGateEvaluation {
+  const requiredMs = input.requiredMs ?? PILOT_SOAK_REQUIRED_MS;
+  const start = Date.parse(input.startedAtIso);
+  const end = Date.parse(input.endedAtIso);
+  const observedMs =
+    Number.isFinite(start) && Number.isFinite(end) ? Math.max(0, end - start) : 0;
+
+  const proofsRequired = [
+    SoakProofKind.CRASH_RESTART,
+    SoakProofKind.NO_DUPLICATE_EFFECTS,
+    SoakProofKind.JOB_CONTINUITY,
+    SoakProofKind.UNKNOWN_REMOTE_RECONCILE,
+  ] as const;
+
+  const proofsPassed = proofsRequired.filter((kind) =>
+    input.proofs.some((p) => p.kind === kind && p.passed),
+  );
+
+  const reasons: string[] = [];
+  if (observedMs < requiredMs) {
+    reasons.push(
+      `Soak duration ${observedMs}ms < required ${requiredMs}ms (72h pilot gate)`,
+    );
+  }
+  for (const kind of proofsRequired) {
+    if (!proofsPassed.includes(kind)) {
+      reasons.push(`Missing passing soak proof: ${kind}`);
+    }
+  }
+
+  if (reasons.length > 0) {
+    return {
+      status: PilotGateStatus.NOT_MET,
+      requiredMs,
+      observedMs,
+      proofsRequired: [...proofsRequired],
+      proofsPassed: [...proofsPassed],
+      reasons,
+    };
+  }
+
+  return {
+    status: PilotGateStatus.MET,
+    requiredMs,
+    observedMs,
+    proofsRequired: [...proofsRequired],
+    proofsPassed: [...proofsPassed],
+    reasons: ["72h soak window and required recovery proofs satisfied"],
+  };
+}
+
+export function redactEvidenceSummary(raw: string): string {
+  return raw
+    .replace(
+      /(password|secret|token|api[_-]?key|authorization)\s*[:=]\s*\S+/gi,
+      "$1=[REDACTED]",
+    )
+    .replace(/Bearer\s+[A-Za-z0-9._\-]+/gi, "Bearer [REDACTED]")
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[REDACTED_EMAIL]");
+}
+
+export function buildRedactedArtifact(input: {
+  artifactId: string;
+  caseId: string;
+  environment: AcceptanceEnvironmentValue;
+  summary: string;
+  proofKinds: SoakProofKindValue[];
+  evidenceRef: string;
+  createdAtIso: string;
+}): RedactedEvidenceArtifact {
+  if (input.environment === AcceptanceEnvironment.AUTHORIZED_PRODUCTION) {
+    throw new Error(
+      "Fixture/sandbox evidence compiler must not emit authorized_production artifacts",
+    );
+  }
+  return {
+    artifactId: input.artifactId,
+    caseId: input.caseId,
+    environment: input.environment,
+    redacted: true,
+    summary: redactEvidenceSummary(input.summary),
+    proofKinds: input.proofKinds,
+    evidenceRef: input.evidenceRef,
+    createdAtIso: input.createdAtIso,
+    liveProviderSuccessClaimed: false,
+    externalEffects: "NONE",
+  };
+}
+
+export function soakChatGptAdsBlocked(): {
+  allowed: false;
+  wiring: "NOT_WIRED";
+  reason: string;
+} {
+  const decision = evaluateChatGptAdsAccess({
+    localTransportVerified: false,
+    entitlementVerified: false,
+    authVerified: false,
+    projectEnvironment: AnalyticsEnvironment.FIXTURE,
+    requestedEnvironment: AnalyticsEnvironment.LIVE,
+  });
+  return {
+    allowed: false,
+    wiring: "NOT_WIRED",
+    reason:
+      decision.reasons.join("; ") ||
+      "ChatGPT Ads access-blocked without verified local transport and entitlement",
+  };
+}
+
+export function mapProofToFixtureCases(
+  kind: SoakProofKindValue,
+): SoakFixtureCaseId[] {
+  switch (kind) {
+    case SoakProofKind.CRASH_RESTART:
+      return ["T-X014"];
+    case SoakProofKind.UNKNOWN_REMOTE_RECONCILE:
+      return ["T-US-048", "T-X020"];
+    case SoakProofKind.NO_DUPLICATE_EFFECTS:
+      return ["T-X066"];
+    case SoakProofKind.JOB_CONTINUITY:
+      return ["T-X014"];
+    default:
+      return [];
+  }
+}

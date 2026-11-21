@@ -24,6 +24,7 @@
     { "path": "../../services/repair" },
     { "path": "../../services/owner-staging" },
     { "path": "../../services/lead-capture" },
-    { "path": "../../services/evaluation-worker" }
+    { "path": "../../services/evaluation-worker" },
+    { "path": "../../services/soak" }
   ]
 }

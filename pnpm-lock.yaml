@@ -74,6 +74,9 @@ importers:
       '@worksocial/seo':
         specifier: workspace:*
         version: link:../../services/seo
+      '@worksocial/soak':
+        specifier: workspace:*
+        version: link:../../services/soak
       '@worksocial/workflow-worker':
         specifier: workspace:*
         version: link:../../services/workflow-worker
@@ -456,6 +459,25 @@ importers:
         specifier: 2.1.8
         version: 2.1.8(@types/node@22.10.2)
 
+  services/soak:
+    dependencies:
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@worksocial/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
+    devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)
+
   services/supervisor:
     dependencies:
       '@worksocial/persistence':
@@ -550,6 +572,9 @@ importers:
       '@worksocial/seo':
         specifier: workspace:*
         version: link:../../services/seo
+      '@worksocial/soak':
+        specifier: workspace:*
+        version: link:../../services/soak
     devDependencies:
       typescript:
         specifier: 5.7.2
@@ -590,6 +615,9 @@ importers:
       '@worksocial/seo':
         specifier: workspace:*
         version: link:../../services/seo
+      '@worksocial/soak':
+        specifier: workspace:*
+        version: link:../../services/soak
     devDependencies:
       '@types/node':
         specifier: 22.10.2
