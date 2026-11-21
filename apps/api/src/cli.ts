@@ -35,37 +35,51 @@ const heartbeat = {
   wiringStatus: "identity-wired" as const,
 };
 
-const { server } = startApiServer({
-  stateDir,
-  port,
-  consolePort,
-  ...(process.env.WORKSOCIAL_OWNER_PASSWORD
-    ? { ownerPassword: process.env.WORKSOCIAL_OWNER_PASSWORD }
-    : {}),
-});
+async function main(): Promise<void> {
+  const { server, temporalEnqueueStatus } = await startApiServer({
+    stateDir,
+    port,
+    consolePort,
+    ...(process.env.WORKSOCIAL_OWNER_PASSWORD
+      ? { ownerPassword: process.env.WORKSOCIAL_OWNER_PASSWORD }
+      : {}),
+  });
 
-let stopping = false;
-function shutdown(signal: string): void {
-  if (stopping) {
-    return;
+  let stopping = false;
+  function shutdown(signal: string): void {
+    if (stopping) {
+      return;
+    }
+    stopping = true;
+    writeServiceHeartbeat(heartbeat, "stopped", `api stopped after ${signal}`);
+    server.close(() => process.exit(0));
   }
-  stopping = true;
-  writeServiceHeartbeat(heartbeat, "stopped", `api stopped after ${signal}`);
-  server.close(() => process.exit(0));
+
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
+
+  server.listen(port, "127.0.0.1", () => {
+    startHeartbeatLoop(
+      heartbeat,
+      `api identity/authority listening on 127.0.0.1:${port}; mission enqueue=${temporalEnqueueStatus}`,
+    );
+  });
+
+  server.on("error", (err) => {
+    writeServiceHeartbeat(
+      heartbeat,
+      "unhealthy",
+      `api failed to listen: ${(err as Error).message}`,
+    );
+    process.exit(1);
+  });
 }
 
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT", () => shutdown("SIGINT"));
-
-server.listen(port, "127.0.0.1", () => {
-  startHeartbeatLoop(heartbeat, `api identity/authority listening on 127.0.0.1:${port}`);
-});
-
-server.on("error", (err) => {
+main().catch((err) => {
   writeServiceHeartbeat(
     heartbeat,
     "unhealthy",
-    `api failed to listen: ${(err as Error).message}`,
+    `api failed to start: ${(err as Error).message}`,
   );
   process.exit(1);
 });

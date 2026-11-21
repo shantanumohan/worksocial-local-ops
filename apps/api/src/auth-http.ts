@@ -110,9 +110,12 @@ import {
 } from "@worksocial/claude-runner";
 import {
   createMissionEnqueueService,
+  createTemporalMissionClient,
   probeTemporalConnection,
   runtimeTemporalLabel,
   type MissionEnqueueService,
+  type TemporalMissionClient,
+  type TemporalWiringStatus,
 } from "@worksocial/workflow-worker";
 import {
   createLearningWorker,
@@ -271,6 +274,8 @@ export type ApiRuntime = {
   soak: SoakService;
   runner: ClaudeRunner;
   missions: MissionEnqueueService;
+  /** Bound when TEMPORAL_ADDRESS frontend is reachable; closed on API shutdown. */
+  temporalClient: TemporalMissionClient | null;
   gateway: ActionGateway;
   broker: CredentialBroker;
   apiOrigin: string;
@@ -433,6 +438,9 @@ export function createApiRuntime(options: {
   consolePort: number;
   ownerPassword?: string;
   workspaceRoot?: string;
+  /** Test/injection override; production uses bindTemporalMissionEnqueue. */
+  temporalStatus?: TemporalWiringStatus;
+  temporalClient?: TemporalMissionClient | null;
 }): ApiRuntime {
   const store = createFileAuthorityStore(options.stateDir);
   const mappingStore = createFileProductionMappingStore(options.stateDir);
@@ -488,7 +496,13 @@ export function createApiRuntime(options: {
     workspaceRoot,
     forceFixture: process.env.WORKSOCIAL_CLAUDE_FIXTURE !== "0",
   });
-  const missions = createMissionEnqueueService({ runner });
+  const temporalClient = options.temporalClient ?? null;
+  const temporalStatus = options.temporalStatus ?? "NOT_WIRED";
+  const missions = createMissionEnqueueService({
+    runner,
+    temporalStatus,
+    temporalClient,
+  });
   return {
     store,
     mappingStore,
@@ -517,11 +531,59 @@ export function createApiRuntime(options: {
     soak,
     runner,
     missions,
+    temporalClient,
     gateway,
     broker: createCredentialBroker(),
     apiOrigin: `http://127.0.0.1:${options.apiPort}`,
     consoleOrigin: `http://127.0.0.1:${options.consolePort}`,
     sessionTtlMs: 8 * 60 * 60 * 1000,
+  };
+}
+
+/**
+ * When TEMPORAL_ADDRESS frontend is reachable, bind a Temporal client so
+ * mission enqueue starts durableMissionWorkflow instead of in-process Claude.
+ * Leaves NOT_WIRED when unset or unreachable (honest).
+ */
+export async function bindTemporalMissionEnqueue(
+  runtime: ApiRuntime,
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<{ temporalStatus: TemporalWiringStatus; detail: string }> {
+  const probe = await probeTemporalConnection(env, { timeoutMs: 5_000 });
+  const label = runtimeTemporalLabel(probe);
+
+  if (label !== "TEMPORAL" || !probe.address) {
+    runtime.missions = createMissionEnqueueService({
+      runner: runtime.runner,
+      temporalStatus: "NOT_WIRED",
+      temporalClient: null,
+    });
+    if (runtime.temporalClient) {
+      await runtime.temporalClient.close().catch(() => undefined);
+    }
+    runtime.temporalClient = null;
+    return {
+      temporalStatus: "NOT_WIRED",
+      detail: probe.detail,
+    };
+  }
+
+  const client = await createTemporalMissionClient({
+    address: probe.address,
+    namespace: probe.namespace ?? "default",
+  });
+  if (runtime.temporalClient && runtime.temporalClient !== client) {
+    await runtime.temporalClient.close().catch(() => undefined);
+  }
+  runtime.temporalClient = client;
+  runtime.missions = createMissionEnqueueService({
+    runner: runtime.runner,
+    temporalStatus: "TEMPORAL",
+    temporalClient: client,
+  });
+  return {
+    temporalStatus: "TEMPORAL",
+    detail: `API mission enqueue bound to Temporal at ${probe.address} (ns=${probe.namespace ?? "default"}).`,
   };
 }
 
@@ -1868,6 +1930,7 @@ export async function handleApiRequest(
           temporalStatus: mission.temporalStatus,
           detail: mission.detail,
           workflowId: mission.workflowId,
+          temporalRunId: mission.temporalRunId ?? null,
         },
         run: run
           ? {

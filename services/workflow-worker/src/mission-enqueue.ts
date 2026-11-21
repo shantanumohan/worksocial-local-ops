@@ -36,8 +36,8 @@ export type MissionEnqueueService = {
 
 /**
  * Creates a mission enqueue facade.
- * TEMPORAL path uses the Temporal client when provided; otherwise falls back
- * to in-process Claude runner with an honest TEMPORAL-unavailable detail.
+ * TEMPORAL path starts a Temporal workflow only when a client is bound.
+ * Without a client, refuses to claim TEMPORAL while running Claude in-process.
  */
 export function createMissionEnqueueService(options: {
   runner: ClaudeRunner;
@@ -69,15 +69,14 @@ export function createMissionEnqueueService(options: {
 
       if (temporalStatus === "TEMPORAL") {
         if (!temporalClient) {
-          // Cluster reported wired but client not injected — stay honest.
-          const run = await options.runner.enqueue(enqueueArgs);
+          // Do not claim TEMPORAL while executing Claude in-process.
           return {
-            accepted: true,
-            temporalStatus: "TEMPORAL",
+            accepted: false,
+            temporalStatus: "NOT_WIRED",
             detail:
-              "Temporal status TEMPORAL but client not bound in this process; executed via claude-runner. Worker slot should own workflow starts.",
+              "Temporal label TEMPORAL requires a bound Temporal client. Refusing in-process Claude fallback that would mislabel durability. Bind createTemporalMissionClient when TEMPORAL_ADDRESS is reachable.",
             workflowId: parsed.data.workflowId,
-            run,
+            run: null,
             temporalRunId: null,
           };
         }

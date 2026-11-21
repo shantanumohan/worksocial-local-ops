@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ActionClass, LocalRole, OperatingMode } from "@worksocial/domain";
 import {
   createDemoPublishGrant,
@@ -13,6 +13,7 @@ import {
   proveFixtureSeoWritePath,
   SEO_PILOT_WRITE_PATH_ID,
 } from "@worksocial/seo";
+import type { TemporalMissionClient } from "@worksocial/workflow-worker";
 import { createApiRuntime, handleApiRequest } from "./auth-http.js";
 
 const dirs: string[] = [];
@@ -241,6 +242,89 @@ describe("api identity HTTP", () => {
       const afterBody = (await after.json()) as { decision: { code: string } };
       expect(afterBody.decision.code).toBe("GRANT_MISSING");
     });
+  });
+
+  it("starts Temporal workflow when temporalClient is bound on API runtime", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "ws-api-temporal-"));
+    dirs.push(dir);
+
+    const startMission = vi.fn(async () => ({
+      workflowId: "mission-api-temporal",
+      runId: "run-temporal-1",
+    }));
+    const temporalClient = {
+      startMission,
+      close: vi.fn(async () => undefined),
+    } as unknown as TemporalMissionClient;
+
+    const runtime = createApiRuntime({
+      stateDir: dir,
+      apiPort: 0,
+      consolePort: 8788,
+      ownerPassword: "test-password",
+      temporalStatus: "TEMPORAL",
+      temporalClient,
+    });
+    expect(runtime.missions.temporalStatus).toBe("TEMPORAL");
+
+    const server = createServer((req, res) => {
+      void handleApiRequest(runtime, req, res);
+    });
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
+    const addr = server.address();
+    if (!addr || typeof addr === "string") {
+      throw new Error("no address");
+    }
+    const base = `http://127.0.0.1:${addr.port}`;
+    runtime.apiOrigin = base;
+    runtime.consoleOrigin = base;
+
+    try {
+      const login = await fetch(`${base}/auth/login`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: base,
+        },
+        body: JSON.stringify({ username: "owner", password: "test-password" }),
+      });
+      expect(login.status).toBe(200);
+      const loginBody = (await login.json()) as { csrfToken: string };
+      const cookieHeader = (
+        login.headers.getSetCookie?.()[0] ?? login.headers.get("set-cookie")!
+      ).split(";")[0]!;
+
+      const runRes = await fetch(`${base}/roles/run`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: base,
+          cookie: cookieHeader,
+          "x-csrf-token": loginBody.csrfToken,
+        },
+        body: JSON.stringify({ roleId: "A01" }),
+      });
+      expect(runRes.status).toBe(200);
+      const body = (await runRes.json()) as {
+        mission: {
+          accepted: boolean;
+          temporalStatus: string;
+          temporalRunId: string | null;
+        };
+        run: unknown;
+      };
+      expect(body.mission.accepted).toBe(true);
+      expect(body.mission.temporalStatus).toBe("TEMPORAL");
+      expect(body.mission.temporalRunId).toBe("run-temporal-1");
+      expect(body.run).toBeNull();
+      expect(startMission).toHaveBeenCalledOnce();
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        server.close((err) => (err ? reject(err) : resolve())),
+      );
+    }
   });
 
   it("binds gateway actorRole from session so operators cannot use admin policy (F05)", async () => {

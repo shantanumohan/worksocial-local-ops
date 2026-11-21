@@ -23,6 +23,21 @@ When Temporal is bound (`TEMPORAL`), the same effect boundary runs inside Tempor
 activities on task queue `worksocial-missions`. History + worker restart replace
 in-process resume; apply attempts stay idempotent on `operationId`.
 
+## API mission enqueue
+
+On API start, `bindTemporalMissionEnqueue` probes the frontend. When reachable it
+binds `createTemporalMissionClient` so role/mission POST starts
+`durableMissionWorkflow` (run is null; `temporalRunId` returned). When unset or
+unreachable, enqueue stays `NOT_WIRED` and runs Claude in-process — honestly.
+
+TEMPORAL without a bound client is refused (no Claude path labeled TEMPORAL).
+
+## Temporal worker activity stores
+
+`worker-main.ts` prefers Postgres (`DATABASE_URL` / `WORKSOCIAL_DATABASE_URL`) via
+`createPgDurableMissionRuntime` — same stores as LOCAL_DURABLE. Memory stores
+require `WORKSOCIAL_TEMPORAL_ALLOW_MEMORY=1` (tests / explicit escape).
+
 ## Packages
 
 `@temporalio/client`, `@temporalio/worker`, `@temporalio/workflow`, `@temporalio/activity`
@@ -34,6 +49,7 @@ are packaged in `@worksocial/workflow-worker`. SDK dependency label: **PRESENT**
 docker compose -f deploy/temporal/docker-compose.yml up -d
 export TEMPORAL_ADDRESS=127.0.0.1:7233
 export TEMPORAL_NAMESPACE=default
+export DATABASE_URL=postgres://...   # required for durable Temporal activity stores
 pnpm local:start   # temporal-worker slot runs real worker when address is set
 ```
 
@@ -48,6 +64,7 @@ Without Docker, `pnpm test:workflow` uses `@temporalio/testing` `createLocal()`
 
 `/roles/status` and `/roles/evaluate-fixture` call `probeTemporalConnection`.
 They report `TEMPORAL` only when the frontend is reachable — never when it is not.
+API mission enqueue uses the same probe at process start via `bindTemporalMissionEnqueue`.
 
 ## Still NOT_WIRED (intentionally)
 

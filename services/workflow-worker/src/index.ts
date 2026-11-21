@@ -22,6 +22,7 @@ export {
 export {
   createDurableMissionRuntime,
   createMemoryDurableMissionRuntime,
+  createPgDurableMissionRuntime,
   type DurableMissionRuntime,
 } from "./durable-mission.js";
 
@@ -42,6 +43,13 @@ export {
   createTemporalMissionWorker,
   type CreateTemporalWorkerOptions,
 } from "./temporal/worker.js";
+
+export {
+  createTemporalWorkerMissionStores,
+  resolveTemporalWorkerStoreKind,
+  type TemporalWorkerMissionStores,
+  type TemporalWorkerStoreKind,
+} from "./temporal/worker-stores.js";
 
 export type {
   TemporalMissionInput,

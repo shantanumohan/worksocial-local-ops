@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { randomBytes } from "node:crypto";
 import { createClaudeRunner } from "@worksocial/claude-runner";
 import { createMissionEnqueueService } from "./mission-enqueue.js";
+import type { TemporalMissionClient } from "./temporal/client.js";
 
 function uuid(): string {
   const bytes = randomBytes(16);
@@ -75,5 +76,85 @@ describe("mission enqueue (Temporal NOT_WIRED)", () => {
     expect(result.accepted).toBe(true);
     expect(result.temporalStatus).toBe("LOCAL_DURABLE");
     expect(result.detail).toMatch(/LOCAL_DURABLE/);
+  });
+
+  it("starts Temporal workflow when client is bound", async () => {
+    const runner = createClaudeRunner({
+      workspaceRoot: process.cwd(),
+      forceFixture: true,
+    });
+    const startMission = vi.fn(async () => ({
+      workflowId: "mission-wf-temporal",
+      runId: "run-abc",
+    }));
+    const temporalClient = {
+      startMission,
+    } as unknown as TemporalMissionClient;
+    const service = createMissionEnqueueService({
+      runner,
+      temporalStatus: "TEMPORAL",
+      temporalClient,
+    });
+    expect(service.temporalStatus).toBe("TEMPORAL");
+
+    const result = await service.enqueue({
+      envelope: {
+        jobId: uuid(),
+        roleId: "A01",
+        workflowId: "wf-temporal",
+        siteId: "worksocial",
+        assetId: "mission-1",
+        trigger: "owner_goal",
+        policyVersion: "r1-04",
+        inputArtifactIds: [],
+        capabilityGrantId: "fixture-grant",
+        sourceRevision: "rev",
+        maxAttempts: 1,
+        deadlineSeconds: 60,
+        idempotencyKey: `mission/${uuid()}`,
+        expectedOutcome: "plan",
+      },
+    });
+
+    expect(result.accepted).toBe(true);
+    expect(result.temporalStatus).toBe("TEMPORAL");
+    expect(result.run).toBeNull();
+    expect(result.temporalRunId).toBe("run-abc");
+    expect(startMission).toHaveBeenCalledOnce();
+  });
+
+  it("refuses TEMPORAL without a bound client (no Claude mislabel)", async () => {
+    const runner = createClaudeRunner({
+      workspaceRoot: process.cwd(),
+      forceFixture: true,
+    });
+    const enqueueSpy = vi.spyOn(runner, "enqueue");
+    const service = createMissionEnqueueService({
+      runner,
+      temporalStatus: "TEMPORAL",
+      temporalClient: null,
+    });
+    const result = await service.enqueue({
+      envelope: {
+        jobId: uuid(),
+        roleId: "A01",
+        workflowId: "wf-no-client",
+        siteId: "worksocial",
+        assetId: "mission-1",
+        trigger: "owner_goal",
+        policyVersion: "r1-04",
+        inputArtifactIds: [],
+        capabilityGrantId: "fixture-grant",
+        sourceRevision: "rev",
+        maxAttempts: 1,
+        deadlineSeconds: 60,
+        idempotencyKey: `mission/${uuid()}`,
+        expectedOutcome: "plan",
+      },
+    });
+    expect(result.accepted).toBe(false);
+    expect(result.temporalStatus).toBe("NOT_WIRED");
+    expect(result.run).toBeNull();
+    expect(enqueueSpy).not.toHaveBeenCalled();
   });
 });

@@ -5,8 +5,6 @@
 import { randomBytes } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
-  createPgDurableExecutionService,
-  createPgMissionWorkflowStore,
   createPgPool,
   resolveDatabaseUrl,
   runMigrations,
@@ -14,7 +12,7 @@ import {
 } from "@worksocial/persistence";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createDurableMissionRuntime } from "./durable-mission.js";
+import { createPgDurableMissionRuntime } from "./durable-mission.js";
 
 const hasPg = Boolean(resolveDatabaseUrl());
 const describePg = hasPg ? describe : describe.skip;
@@ -73,10 +71,7 @@ describePg("durable mission (postgres restart)", () => {
     const digest = `digest-${workflowId}`;
     const operationId = `op-${workflowId}`;
 
-    const runtimeA = createDurableMissionRuntime({
-      missions: createPgMissionWorkflowStore(pool),
-      execution: createPgDurableExecutionService(pool),
-    });
+    const runtimeA = createPgDurableMissionRuntime({ pool });
     expect(runtimeA.temporal.status).toBe("NOT_WIRED");
     expect(runtimeA.temporalLabel).toBe("LOCAL_DURABLE");
 
@@ -116,10 +111,7 @@ describePg("durable mission (postgres restart)", () => {
     expect(accepted.workflow.phase).toBe("effect_pending");
 
     // New runtime instance = process restart.
-    const runtimeB = createDurableMissionRuntime({
-      missions: createPgMissionWorkflowStore(pool),
-      execution: createPgDurableExecutionService(pool),
-    });
+    const runtimeB = createPgDurableMissionRuntime({ pool });
     const resumed = await runtimeB.resumeAfterRestart({
       workflowId,
       observedDigest: digest,
