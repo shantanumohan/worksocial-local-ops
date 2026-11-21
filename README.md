@@ -33,7 +33,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - **`services/claude-runner`** — pinned CLI adapter, output validation, timeouts/budgets, bounded queue, **fixture/offline mode** when CLI absent; **no permission bypass**.
 - **Independent review gate** — author cannot self-approve; A25 issues verdicts; effects still go through gateway + grants.
 - **Delegation bounds** — typed task requests only; uncontrolled recursion denied (`MAX_DELEGATION_DEPTH`).
-- **`services/workflow-worker`** — mission enqueue; Temporal label is **`NOT_WIRED`** until a frontend is reachable, then **`TEMPORAL`** (see `docs/product/temporal-binding.md`). Unbound path stays in-process / `LOCAL_DURABLE`.
+- **`services/workflow-worker`** — mission enqueue; Temporal label is **`NOT_WIRED`** until a frontend is reachable, then **`TEMPORAL`** (frontend reachability only — not worker polling; see `docs/product/temporal-binding.md`). Unbound API path stays in-process **`NOT_WIRED`**. Separate **`LOCAL_DURABLE`** mission path uses Postgres/file stores without Temporal orchestration.
 - **Console `/roles` + API `/roles/*`** — role status, last-run evidence, fixture evaluate-all.
 - **Role outcomes** — SUCCESS/FAILURE labels for learning-worker consumption.
 - SQL `005_role_runtime.sql` companion schema (file-backed store until Postgres is bound).
@@ -148,7 +148,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - **Console** — `/activation`, `/connections`, `/sites`, `/missions`, `/review`, `/evidence` wired to typed `/owner/*` APIs; safe text rendering (no raw ID/JSON as primary UI).
 - **Collectors** — page snapshot + deterministic checks; GSC/GA4 adapters labeled **FIXTURE** (or LIVE capability when credentials exist). Provenance preserved.
 - **Staging CMS simulator** — apply → independent read-back → UNKNOWN_REMOTE_OUTCOME recovery. Acceptance ≠ verified. F12 verify cheat removed (no desired→observed copy in the browser).
-- SQL `016_owner_staging.sql` companion schema; Temporal follows binding probe (default unbound). Not an R1-complete claim.
+- SQL `016_owner_staging.sql` companion schema; **Temporal remains `NOT_WIRED`** on the owner-staging surface until that service probes binding (hard-coded today). Not an R1-complete claim.
 
 ### R1-10 Bounded repair and release
 - **Incidents / tickets / proposals / attempts / test evidence** with isolated worktree + asset lease.
