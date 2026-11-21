@@ -155,7 +155,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - **Console** — `/activation`, `/connections`, `/sites`, `/missions`, `/review`, `/evidence` wired to typed `/owner/*` APIs; safe text rendering (no raw ID/JSON as primary UI).
 - **Collectors** — page snapshot + deterministic checks; GSC/GA4 adapters labeled **FIXTURE** (or LIVE capability when credentials exist). Provenance preserved.
 - **Staging CMS simulator** — apply → independent read-back → UNKNOWN_REMOTE_OUTCOME recovery. Acceptance ≠ verified. F12 verify cheat removed (no desired→observed copy in the browser).
-- SQL `016_owner_staging.sql` companion schema; **Temporal remains `NOT_WIRED`** on the owner-staging surface until that service probes binding (hard-coded today). Not an R1-complete claim.
+- SQL `016_owner_staging.sql` companion schema; Temporal label on `/owner/status` follows the binding probe (default unbound = `NOT_WIRED`; reachable frontend = `TEMPORAL`). Frontend reachability only — staging CMS remains simulator. Not an R1-complete claim.
 
 ### R1-10 Bounded repair and release
 - **Incidents / tickets / proposals / attempts / test evidence** with isolated worktree + asset lease.

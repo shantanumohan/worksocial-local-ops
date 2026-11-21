@@ -3,4 +3,7 @@
 export {
   createOwnerStagingService,
   type OwnerStagingService,
+  type OwnerStagingServiceOptions,
+  type OwnerStagingTemporalWiring,
+  type ProbeOwnerStagingTemporal,
 } from "./service.js";

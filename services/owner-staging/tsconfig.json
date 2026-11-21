@@ -9,6 +9,7 @@
   "references": [
     { "path": "../../packages/domain" },
     { "path": "../../packages/persistence" },
-    { "path": "../../packages/provider-adapters" }
+    { "path": "../../packages/provider-adapters" },
+    { "path": "../workflow-worker" }
   ]
 }

@@ -5,7 +5,11 @@ import { afterEach, describe, expect, it } from "vitest";
 import { MissionStatus, ReviewDecision } from "@worksocial/domain";
 import { createFileOwnerStagingStore } from "@worksocial/persistence";
 import { createStagingCmsSimulator } from "@worksocial/provider-adapters";
-import { createOwnerStagingService } from "./service.js";
+import {
+  createOwnerStagingService,
+  type OwnerStagingTemporalWiring,
+  type ProbeOwnerStagingTemporal,
+} from "./service.js";
 
 const dirs: string[] = [];
 
@@ -15,17 +19,22 @@ afterEach(() => {
   }
 });
 
-function makeService() {
+function makeService(options?: {
+  probeTemporalWiring?: ProbeOwnerStagingTemporal;
+  env?: NodeJS.ProcessEnv;
+}) {
   const dir = mkdtempSync(join(tmpdir(), "ws-owner-staging-"));
   dirs.push(dir);
   const store = createFileOwnerStagingStore(dir);
   const cms = createStagingCmsSimulator();
-  return createOwnerStagingService(store, cms);
+  return createOwnerStagingService(store, cms, options);
 }
 
 describe("owner staging service (M4)", () => {
   it("runs activation → mission → review → apply → independent verify", async () => {
-    const svc = makeService();
+    const svc = makeService({
+      probeTemporalWiring: async () => "NOT_WIRED",
+    });
     const seeded = await svc.seedDemo("2026-11-20T16:00:00.000Z");
     expect(seeded.connections).toHaveLength(3);
     expect(seeded.mission.status).toBe(MissionStatus.NEEDS_REVIEW);
@@ -60,12 +69,16 @@ describe("owner staging service (M4)", () => {
 
     const evidence = svc.listEvidence();
     expect(evidence.some((e) => e.kind === "independent_read")).toBe(true);
-    expect(svc.status().r1CompleteClaim).toBe(false);
-    expect(svc.status().temporalWiring).toBe("NOT_WIRED");
+    const status = await svc.status();
+    expect(status.r1CompleteClaim).toBe(false);
+    expect(status.temporalWiring).toBe("NOT_WIRED");
+    expect(status.temporalProbeScope).toBe("FRONTEND_REACHABILITY");
   });
 
   it("recovers UNKNOWN_REMOTE_OUTCOME then verifies", async () => {
-    const svc = makeService();
+    const svc = makeService({
+      probeTemporalWiring: async () => "NOT_WIRED",
+    });
     const seeded = await svc.seedDemo("2026-11-20T17:00:00.000Z");
     svc.reviewMission({
       missionId: seeded.mission.missionId,
@@ -111,7 +124,9 @@ describe("owner staging service (M4)", () => {
   });
 
   it("supports request-revision then revise-and-resubmit", async () => {
-    const svc = makeService();
+    const svc = makeService({
+      probeTemporalWiring: async () => "NOT_WIRED",
+    });
     const seeded = await svc.seedDemo("2026-11-20T19:00:00.000Z");
     const requested = svc.reviewMission({
       missionId: seeded.mission.missionId,
@@ -135,7 +150,9 @@ describe("owner staging service (M4)", () => {
   });
 
   it("snapshots from the registered staging CMS page", async () => {
-    const svc = makeService();
+    const svc = makeService({
+      probeTemporalWiring: async () => "NOT_WIRED",
+    });
     const site = svc.registerSite({
       pilotPageTitle: "Custom pilot title",
       nowIso: "2026-11-20T20:00:00.000Z",
@@ -148,7 +165,9 @@ describe("owner staging service (M4)", () => {
   });
 
   it("labels GSC/GA4 measurements as FIXTURE without credentials", async () => {
-    const svc = makeService();
+    const svc = makeService({
+      probeTemporalWiring: async () => "NOT_WIRED",
+    });
     const site = svc.registerSite({
       nowIso: "2026-11-20T18:00:00.000Z",
     });
@@ -159,5 +178,62 @@ describe("owner staging service (M4)", () => {
     expect(evidence.snapshot.measurementMode).toBe("FIXTURE");
     expect(evidence.gsc.measurementMode).toBe("FIXTURE");
     expect(evidence.ga4.measurementMode).toBe("FIXTURE");
+  });
+});
+
+describe("owner staging Temporal status honesty", () => {
+  it("reports NOT_WIRED when the default probe sees no TEMPORAL_ADDRESS", async () => {
+    const svc = makeService({ env: {} });
+    const status = await svc.status();
+    expect(status.temporalWiring).toBe("NOT_WIRED");
+    expect(status.temporalProbeScope).toBe("FRONTEND_REACHABILITY");
+    expect(status.r1CompleteClaim).toBe(false);
+  });
+
+  it("surfaces TEMPORAL when the shared probe reports a reachable frontend", async () => {
+    const calls: Array<NodeJS.ProcessEnv | undefined> = [];
+    const probe: ProbeOwnerStagingTemporal = async (env) => {
+      calls.push(env);
+      return "TEMPORAL";
+    };
+    const svc = makeService({
+      env: { TEMPORAL_ADDRESS: "127.0.0.1:7233" },
+      probeTemporalWiring: probe,
+    });
+    const status = await svc.status();
+    expect(status.temporalWiring).toBe("TEMPORAL");
+    expect(status.temporalProbeScope).toBe("FRONTEND_REACHABILITY");
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.TEMPORAL_ADDRESS).toBe("127.0.0.1:7233");
+  });
+
+  it("does not hard-code NOT_WIRED when probe returns other labels", async () => {
+    const labels: OwnerStagingTemporalWiring[] = [
+      "TEMPORAL",
+      "LOCAL_DURABLE",
+      "FIXTURE",
+      "NOT_WIRED",
+    ];
+    for (const label of labels) {
+      const svc = makeService({
+        probeTemporalWiring: () => label,
+      });
+      const status = await svc.status();
+      expect(status.temporalWiring).toBe(label);
+    }
+  });
+
+  it("keeps READY_TO_BIND as NOT_WIRED via runtimeTemporalLabel (default probe)", async () => {
+    // Address set but frontend unreachable / not dialed as TEMPORAL → honesty stays NOT_WIRED.
+    // Use an unused loopback port so Connection.connect fails quickly without a cluster.
+    const svc = makeService({
+      env: {
+        TEMPORAL_ADDRESS: "127.0.0.1:1",
+        TEMPORAL_NAMESPACE: "default",
+      },
+    });
+    const status = await svc.status();
+    expect(status.temporalWiring).toBe("NOT_WIRED");
+    expect(status.temporalProbeScope).toBe("FRONTEND_REACHABILITY");
   });
 });

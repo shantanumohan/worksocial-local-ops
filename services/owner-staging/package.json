@@ -20,7 +20,8 @@
   "dependencies": {
     "@worksocial/domain": "workspace:*",
     "@worksocial/persistence": "workspace:*",
-    "@worksocial/provider-adapters": "workspace:*"
+    "@worksocial/provider-adapters": "workspace:*",
+    "@worksocial/workflow-worker": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "22.10.2",

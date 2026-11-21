@@ -82,9 +82,12 @@ Locally without Docker the suite **skips honestly** unless
 - `probeTemporalConnection(env)` — dials frontend; upgrades to `TEMPORAL` on success
 - `runtimeTemporalLabel(report)` — console/API honesty label
 
-`/roles/status` and `/roles/evaluate-fixture` call `probeTemporalConnection`.
+`/roles/status`, `/roles/evaluate-fixture`, and `/owner/status` call
+`probeTemporalConnection` (owner-staging via `@worksocial/owner-staging`).
 They report `TEMPORAL` only when the frontend is reachable — never when it is not.
 They do **not** check whether a worker is polling `worksocial-missions` (workflows may still queue).
+`/owner/status` Temporal honesty is frontend reachability only — M4 staging CMS
+missions do **not** enqueue on Temporal.
 API mission enqueue uses the same probe at process start via `bindTemporalMissionEnqueue`.
 Unbound API enqueue is in-process **`NOT_WIRED`**, not `LOCAL_DURABLE`.
 

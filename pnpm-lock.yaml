@@ -417,6 +417,9 @@ importers:
       '@worksocial/provider-adapters':
         specifier: workspace:*
         version: link:../../packages/provider-adapters
+      '@worksocial/workflow-worker':
+        specifier: workspace:*
+        version: link:../workflow-worker
     devDependencies:
       '@types/node':
         specifier: 22.10.2
