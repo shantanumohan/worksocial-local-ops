@@ -34,7 +34,7 @@ describe("e2e-lite: M9 soak acceptance", () => {
 
     const report = soak.ownerReport();
     expect(report.latestRun?.runId).toBe(result.run.runId);
-    expect(report.acceptedCases.length).toBe(10);
+    expect(report.acceptedCases.length).toBe(11);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X066")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-F24")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-US-047")).toBe(true);
@@ -42,6 +42,7 @@ describe("e2e-lite: M9 soak acceptance", () => {
     expect(report.acceptedCases.some((c) => c.caseId === "T-X002")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X018")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-US-054")).toBe(true);
+    expect(report.acceptedCases.some((c) => c.caseId === "T-X073")).toBe(true);
     expect(
       report.acceptedCases.every((c) => String(c.status).toUpperCase() !== "VERIFIED"),
     ).toBe(true);
