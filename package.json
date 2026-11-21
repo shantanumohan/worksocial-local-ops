@@ -25,7 +25,7 @@
     "test:contract": "pnpm build:local && pnpm --filter @worksocial/contract-tests test",
     "test:e2e": "pnpm build:local && pnpm --filter @worksocial/e2e-lite-tests test",
     "test:soak": "pnpm build:local && pnpm --filter @worksocial/soak test",
-    "test:security": "tsx scripts/stub-test.ts test:security",
+    "test:security": "pnpm build:local && tsx scripts/run-security-tests.ts",
     "test:eval": "pnpm build:local && tsx scripts/run-eval-tests.ts",
     "recovery:rehearse": "pnpm build:local && tsx scripts/run-soak-recovery.ts",
     "release:evidence": "pnpm build:local && tsx scripts/run-release-evidence.ts"

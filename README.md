@@ -200,7 +200,7 @@ docs/{adrs,runbooks,product,contracts,v5}
 
 ## Toolchain (pinned)
 
-See `docs/product/toolchain.md`. Node `.nvmrc` (`20.18.1`), pnpm `9.15.0` via `packageManager`, TypeScript `5.7.2`, Vitest `2.1.8`. CI: `.github/workflows/ci.yml` runs implemented suites only; stub suites must exit non-zero.
+See `docs/product/toolchain.md`. Node `.nvmrc` (`20.18.1`), pnpm `9.15.0` via `packageManager`, TypeScript `5.7.2`, Vitest `2.1.8`. CI: `.github/workflows/ci.yml` runs implemented suites (including `test:eval` + `test:security` gate regressions).
 
 ## Developer commands
 
@@ -215,7 +215,7 @@ pnpm test:e2e                 # offline e2e-lite including M9 soak (not browser 
 pnpm test:database | test:workflow   # M2 durable suites
 pnpm recovery:rehearse | release:evidence | test:soak            # M9 fixture soak + evidence
 pnpm test:eval                                                   # AA-20 offline EVAL_ONLY isolation (not live/catalog VERIFIED)
-pnpm test:security                                               # stub — exit 1 / INCOMPLETE
+pnpm test:security                                               # ownership / auth / lease gates (not pen-test / not catalog VERIFIED)
 ```
 
 VS Code tasks: **WorkSocial: Start / Stop / Diagnostics / Test Local Operations** → supervisor CLI.
