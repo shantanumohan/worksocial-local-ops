@@ -6,7 +6,9 @@
  * competing-supervisor / singleton host lease (T-US-002 / T-X002),
  * self-approval rejected / independent A25 (T-X018 / T-US-054),
  * offboard ACTIVE_TOKEN residual incomplete-until-revoked (T-X073),
- * emergency stop at commit (T-US-060).
+ * emergency stop at commit (T-US-060),
+ * forged browser role ignored (T-X005),
+ * cross-workspace reference denied (T-X006).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -37,6 +39,8 @@ import { proofCompetingSupervisorLease } from "./competing-supervisor-proof.js";
 import { proofSelfApprovalRejected } from "./self-approval-proof.js";
 import { proofOffboardActiveTokenResidual } from "./offboard-active-token-proof.js";
 import { proofEmergencyStopAtCommit } from "./emergency-stop-proof.js";
+import { proofForgedBrowserRoleIgnored } from "./forged-browser-role-proof.js";
+import { proofCrossWorkspaceReferenceDenied } from "./cross-workspace-reference-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -531,7 +535,8 @@ function failProof(
  * feeds fixture ACCEPTED for T-X066 only; recover/rotate feeds T-F24/T-US-047;
  * competing-supervisor lease feeds T-US-002/T-X002; self-approval feeds
  * T-X018/T-US-054; offboard ACTIVE_TOKEN residual feeds T-X073; emergency
- * stop feeds T-US-060.
+ * stop feeds T-US-060; forged browser role feeds T-X005; cross-workspace
+ * reference feeds T-X006.
  */
 export async function runSoakRecoveryHarness(input: {
   stateDir: string;
@@ -559,6 +564,8 @@ export async function runSoakRecoveryHarness(input: {
     await proofOffboardActiveTokenResidual(durableDir, nowPlus(nowIso, 80_000)),
   );
   proofs.push(proofEmergencyStopAtCommit(nowPlus(nowIso, 90_000)));
+  proofs.push(proofForgedBrowserRoleIgnored(nowPlus(nowIso, 100_000)));
+  proofs.push(proofCrossWorkspaceReferenceDenied(nowPlus(nowIso, 110_000)));
 
   const allPassed = proofs.every((p) => p.passed);
   return {
@@ -575,6 +582,8 @@ export async function runSoakRecoveryHarness(input: {
       "T-X018/T-US-054 fixture ACCEPTED via self_approval_rejected only — not live VERIFIED",
       "T-X073 fixture ACCEPTED via offboard_active_token_residual only — incomplete until live revoke; not live VERIFIED",
       "T-US-060 fixture ACCEPTED via emergency_stop_at_commit only — not live VERIFIED",
+      "T-X005 fixture ACCEPTED via forged_browser_role_ignored only — not live VERIFIED",
+      "T-X006 fixture ACCEPTED via cross_workspace_reference_denied only — not live VERIFIED",
     ],
   };
 }

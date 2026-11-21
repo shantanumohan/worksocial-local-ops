@@ -52,6 +52,8 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-054": "Independent approval enforced (no ordinary self-approval)",
   "T-X073": "Offboarding retains active token — incomplete until revoked",
   "T-US-060": "Emergency stop checked at commit time",
+  "T-X005": "Forged browser role — payload role ignored",
+  "T-X006": "Cross-workspace object reference — deny without leak",
 };
 
 function relatedProofsForCase(
@@ -198,6 +200,8 @@ export function compileAcceptanceEvidence(
     "T-X018/T-US-054 fixture ACCEPTED only via SELF_APPROVAL_REJECTED (independent A25)",
     "T-X073 fixture ACCEPTED only via OFFBOARD_ACTIVE_TOKEN_RESIDUAL (incomplete until live revoke)",
     "T-US-060 fixture ACCEPTED only via EMERGENCY_STOP_AT_COMMIT (outbound stop at commit)",
+    "T-X005 fixture ACCEPTED only via FORGED_BROWSER_ROLE_IGNORED (payload role ignored)",
+    "T-X006 fixture ACCEPTED only via CROSS_WORKSPACE_REFERENCE_DENIED (deny without leak)",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

@@ -189,6 +189,18 @@ describe("soak-acceptance domain", () => {
     expect(expectedProofsForFixtureCase("T-US-060")).toEqual([
       SoakProofKind.EMERGENCY_STOP_AT_COMMIT,
     ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.FORGED_BROWSER_ROLE_IGNORED),
+    ).toEqual(["T-X005"]);
+    expect(expectedProofsForFixtureCase("T-X005")).toEqual([
+      SoakProofKind.FORGED_BROWSER_ROLE_IGNORED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CROSS_WORKSPACE_REFERENCE_DENIED),
+    ).toEqual(["T-X006"]);
+    expect(expectedProofsForFixtureCase("T-X006")).toEqual([
+      SoakProofKind.CROSS_WORKSPACE_REFERENCE_DENIED,
+    ]);
   });
 
   it("builds unique per-run artifact ids", () => {

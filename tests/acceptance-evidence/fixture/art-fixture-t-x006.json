@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x006",
+  "caseId": "T-X006",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X006 (Cross-workspace object reference — deny without leak)\nproof=cross_workspace_reference_denied applyCount=1 :: In-workspace channel/account/asset reference allowed | Foreign channel substitution denied GRANT_MISSING without leak | Foreign account substitution denied GRANT_MISSING without leak | Foreign asset substitution denied GRANT_MISSING without leak | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "cross_workspace_reference_denied"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x006.json",
+  "createdAtIso": "2026-11-21T22:53:33.274Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x006-ca1db3ed75fb"
+}
