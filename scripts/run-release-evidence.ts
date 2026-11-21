@@ -94,7 +94,7 @@ async function main(): Promise<void> {
       cases: stableCaseResults,
       artifacts: stableArtifacts,
       uniqueRunArtifacts: artifacts,
-      note: "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated; T-X029 via explicit rebind; T-US-057 via cross-workspace resource substitution; T-US-024 via agent cannot widen grant; T-US-042/T-X057 via repair weaken test rejected; T-US-044/T-X053 via takeover cancels unsent; T-US-018/T-X037 via EVAL_ONLY operational tool forbidden; T-X058 via repair attempt limit escalated; T-X069 via imported doc quarantined; T-X038 via eval no-grounding; T-X039/T-US-058 via metric denominators honest. Not R1-complete.",
+      note: "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated; T-X029 via explicit rebind; T-US-057 via cross-workspace resource substitution; T-US-024 via agent cannot widen grant; T-US-042/T-X057 via repair weaken test rejected; T-US-044/T-X053 via takeover cancels unsent; T-US-018/T-X037 via EVAL_ONLY operational tool forbidden; T-X058 via repair attempt limit escalated; T-X069 via imported doc quarantined; T-X038 via eval no-grounding; T-X039/T-US-058 via metric denominators honest; T-US-046/T-X048 via hard search constraints. Not R1-complete.",
     };
     writeFileSync(ledgerPath, JSON.stringify(ledger, null, 2), "utf8");
 
@@ -196,6 +196,12 @@ async function main(): Promise<void> {
     const hasUs058Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-US-058",
     );
+    const hasUs046Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-US-046",
+    );
+    const hasTx048Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-X048",
+    );
     const expectedAccepted = [
       "T-F24",
       "T-US-002",
@@ -204,6 +210,7 @@ async function main(): Promise<void> {
       "T-US-036",
       "T-US-042",
       "T-US-044",
+      "T-US-046",
       "T-US-047",
       "T-US-048",
       "T-US-054",
@@ -221,6 +228,7 @@ async function main(): Promise<void> {
       "T-X037",
       "T-X038",
       "T-X039",
+      "T-X048",
       "T-X053",
       "T-X057",
       "T-X058",
@@ -265,7 +273,9 @@ async function main(): Promise<void> {
         hasTx038Accepted &&
         hasTx039Accepted &&
         hasUs058Accepted &&
-        accepted.length === 30 &&
+        hasUs046Accepted &&
+        hasTx048Accepted &&
+        accepted.length === 32 &&
         JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
@@ -280,7 +290,7 @@ async function main(): Promise<void> {
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X039/T-US-058 metric denominators fixture ACCEPTED. Live VERIFIED forbidden. Not R1-complete.",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-US-046/T-X048 hard search constraints fixture ACCEPTED. Live VERIFIED forbidden. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {

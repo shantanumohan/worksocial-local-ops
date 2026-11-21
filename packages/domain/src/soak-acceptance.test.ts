@@ -283,6 +283,15 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.METRIC_DENOMINATORS_HONEST),
     ).toEqual(["T-X039", "T-US-058"]);
+    expect(expectedProofsForFixtureCase("T-US-046")).toEqual([
+      SoakProofKind.HARD_SEARCH_CONSTRAINTS_NO_INVENTION,
+    ]);
+    expect(expectedProofsForFixtureCase("T-X048")).toEqual([
+      SoakProofKind.HARD_SEARCH_CONSTRAINTS_NO_INVENTION,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.HARD_SEARCH_CONSTRAINTS_NO_INVENTION),
+    ).toEqual(["T-US-046", "T-X048"]);
   });
 
   it("builds unique per-run artifact ids", () => {

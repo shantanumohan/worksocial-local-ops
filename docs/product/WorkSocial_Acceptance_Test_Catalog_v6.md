@@ -672,7 +672,7 @@ Required evidence:
 
 Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixture ACCEPTED below | Environment fixture_or_sandbox; live evidence separately authorized.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-018, T-US-024, T-US-036, T-US-042, T-US-044, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-018, T-US-024, T-US-036, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060.
 
 ### Happy-path / documented flow completions
 - **T-US-001** Create a trusted local workspace (F01/SC-02) — blockers and next actions.
@@ -725,7 +725,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 - **T-US-040** Thank-you without Zoho record fails at CRM.
 - **T-US-042** Repair cannot weaken protected tests. *(fixture ACCEPTED — repair weaken test rejected proof; not sandbox/prod VERIFIED)*
 - **T-US-044** Takeover cancels unsent agent replies. *(fixture ACCEPTED — takeover cancels unsent proof; not sandbox/prod VERIFIED)*
-- **T-US-046** Hard search constraints enforced; no invented availability.
+- **T-US-046** Hard search constraints enforced; no invented availability *(fixture ACCEPTED)*.
 - **T-US-048** Unknown remote effects reconciled before resume. *(fixture ACCEPTED — soak unknown-remote reconcile proof; not sandbox/prod VERIFIED)*
 - **T-US-050** Owner brief groups root cause; actionable.
 - **T-US-052** Mocked connector ≠ production-ready.
@@ -746,7 +746,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X037, T-X038, T-X039, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X037, T-X038, T-X039, T-X048, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073.
 
 **T-X066** is fixture ACCEPTED only via the backup / omit-receipt / post-restore reconcile proof (`BACKUP_OMIT_RECEIPT`). Retry-only no-duplicate-effects does **not** satisfy this case. Not sandbox/prod VERIFIED.
 
@@ -783,6 +783,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 **T-X038** is fixture ACCEPTED only via the eval no-grounding fail closed proof (`EVAL_NO_GROUNDING_FAIL_CLOSED`). Not sandbox/prod VERIFIED.
 
 **T-X039** / **T-US-058** are fixture ACCEPTED only via the metric denominators honest proof (`METRIC_DENOMINATORS_HONEST`). Not sandbox/prod VERIFIED.
+
+**T-US-046** / **T-X048** are fixture ACCEPTED only via the hard search constraints no invention proof (`HARD_SEARCH_CONSTRAINTS_NO_INVENTION`). Not sandbox/prod VERIFIED.
 
 Shared evidence for each: actual state before/after; instrumented provider call count or read-back; correlated redacted logs/traces; no unauthorized external effect.
 
@@ -837,7 +839,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X045 | Partial campaign destinations | Per-destination states |
 | T-X046 | Unsupported blog destination | No fake publication |
 | T-X047 | Layout-specific capacity mismatch | Filter correctly |
-| T-X048 | Unknown price or availability | No invention |
+| T-X048 | Unknown price or availability | No invention *(fixture ACCEPTED)* |
 | T-X049 | Thank-you but no CRM record | Fail at delivery |
 | T-X050 | Public synthetic flag abuse | Server grant required |
 | T-X051 | Wrong Zoho organization | Identity mismatch blocks |
@@ -869,8 +871,8 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | Family | Count | Status |
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
-| T-US (behavior_acceptance) | 60 | 48 NOT_RUN + 12 fixture ACCEPTED (T-US-002, T-US-018, T-US-024, T-US-036, T-US-042, T-US-044, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060) |
-| T-X (platform/security/resilience) | 73 | 56 NOT_RUN + 17 fixture ACCEPTED (T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X037, T-X038, T-X039, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073) |
-| **Total** | **159** | **129 NOT_RUN + 30 fixture ACCEPTED** |
+| T-US (behavior_acceptance) | 60 | 47 NOT_RUN + 13 fixture ACCEPTED (T-US-002, T-US-018, T-US-024, T-US-036, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060) |
+| T-X (platform/security/resilience) | 73 | 55 NOT_RUN + 18 fixture ACCEPTED (T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X037, T-X038, T-X039, T-X048, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073) |
+| **Total** | **159** | **127 NOT_RUN + 32 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.
