@@ -1,6 +1,11 @@
 /**
  * Owner staging workflow service (M4 / NEXT-13–15).
  * Orchestrates activation, collectors, missions, review, staging CMS.
+ *
+ * Temporal honesty: `/owner/status` uses the same binding probe as
+ * `/roles/status` (frontend reachability). That label does not mean M4
+ * missions enqueue on Temporal — staging CMS remains simulator/fixture.
+ * External effects: NONE.
  */
 
 import { randomBytes } from "node:crypto";
@@ -39,6 +44,10 @@ import {
   stagingCmsLiveAvailable,
   type StagingCmsSimulator,
 } from "@worksocial/provider-adapters";
+import {
+  probeTemporalConnection,
+  runtimeTemporalLabel,
+} from "@worksocial/workflow-worker";
 
 function id(prefix: string): string {
   return `${prefix}_${randomBytes(6).toString("hex")}`;
@@ -52,14 +61,48 @@ const DEFAULT_DESIRED: StagingPageFields = {
     "Updated staging copy for the pilot page. Simulator only — not a live CMS publish.",
 };
 
+/** Runtime Temporal labels shared with roles/API honesty. */
+export type OwnerStagingTemporalWiring =
+  | "NOT_WIRED"
+  | "LOCAL_DURABLE"
+  | "FIXTURE"
+  | "TEMPORAL";
+
+/**
+ * Injectable Temporal probe for tests. Default dials the frontend via
+ * `probeTemporalConnection` (same path as `/roles/status`).
+ */
+export type ProbeOwnerStagingTemporal = (
+  env?: NodeJS.ProcessEnv,
+) =>
+  | OwnerStagingTemporalWiring
+  | Promise<OwnerStagingTemporalWiring>;
+
+export type OwnerStagingServiceOptions = {
+  probeTemporalWiring?: ProbeOwnerStagingTemporal;
+  /** Env snapshot for the default probe (defaults to process.env). */
+  env?: NodeJS.ProcessEnv;
+};
+
+async function defaultProbeOwnerStagingTemporal(
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<OwnerStagingTemporalWiring> {
+  const report = await probeTemporalConnection(env, { timeoutMs: 3_000 });
+  return runtimeTemporalLabel(report);
+}
+
 export type OwnerStagingService = {
-  status(): ReturnType<OwnerStagingStore["status"]> & {
-    collectorCredentials: ReturnType<typeof collectorCredentialHints>;
-    stagingCmsMode: "SIMULATOR" | "LIVE_UNAVAILABLE";
-    liveCmsAvailable: boolean;
-    temporalWiring: "NOT_WIRED";
-    r1CompleteClaim: false;
-  };
+  status(): Promise<
+    ReturnType<OwnerStagingStore["status"]> & {
+      collectorCredentials: ReturnType<typeof collectorCredentialHints>;
+      stagingCmsMode: "SIMULATOR" | "LIVE_UNAVAILABLE";
+      liveCmsAvailable: boolean;
+      temporalWiring: OwnerStagingTemporalWiring;
+      /** Frontend reachability only — not an M4 Temporal enqueue claim. */
+      temporalProbeScope: "FRONTEND_REACHABILITY";
+      r1CompleteClaim: false;
+    }
+  >;
   readState(): OwnerStagingState;
   getActivation(): {
     checklist: OwnerStagingState["activation"];
@@ -188,20 +231,27 @@ export type OwnerStagingService = {
 export function createOwnerStagingService(
   store: OwnerStagingStore,
   cms: StagingCmsSimulator = createStagingCmsSimulator(),
+  options: OwnerStagingServiceOptions = {},
 ): OwnerStagingService {
+  const env = options.env ?? process.env;
+  const probeTemporalWiring =
+    options.probeTemporalWiring ?? defaultProbeOwnerStagingTemporal;
+
   const pushEvidence = (item: OwnerEvidenceItem) => {
     store.addEvidence(item);
   };
 
   const service: OwnerStagingService = {
-    status() {
+    async status() {
       const base = store.status();
+      const temporalWiring = await probeTemporalWiring(env);
       return {
         ...base,
         collectorCredentials: collectorCredentialHints(),
         stagingCmsMode: cms.mode,
         liveCmsAvailable: stagingCmsLiveAvailable(),
-        temporalWiring: "NOT_WIRED",
+        temporalWiring,
+        temporalProbeScope: "FRONTEND_REACHABILITY",
         r1CompleteClaim: false,
       };
     },
@@ -840,7 +890,7 @@ export function createOwnerStagingService(
         notes: [
           "Demo seeded with fixture connections, pilot site, and reviewable mission.",
           "Approve exact revision → apply staging → independent verify.",
-          "Temporal remains NOT_WIRED. Not R1-complete.",
+          "Temporal label comes from the binding probe (frontend reachability); staging CMS stays simulator. Not R1-complete.",
         ],
       };
     },

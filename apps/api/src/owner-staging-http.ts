@@ -84,7 +84,7 @@ export async function handleOwnerStagingRequest(input: {
       json(res, 401, { error: result.code, reason: result.reason }, cors);
       return true;
     }
-    json(res, 200, staging.status(), cors);
+    json(res, 200, await staging.status(), cors);
     return true;
   }
 
