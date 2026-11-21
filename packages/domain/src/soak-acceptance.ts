@@ -87,6 +87,14 @@ export const SoakProofKind = {
   APPROVED_PAYLOAD_EDIT_INVALIDATED: "approved_payload_edit_invalidated",
   /** Token identity maps to a different account — explicit rebind required (T-X029). */
   EXPLICIT_ACCOUNT_REBIND: "explicit_account_rebind",
+  /**
+   * Cross-workspace resource substitution rejected (T-US-057).
+   */
+  CROSS_WORKSPACE_RESOURCE_SUBSTITUTION: "cross_workspace_resource_substitution",
+  /**
+   * Agent cannot widen its own grant (T-US-024).
+   */
+  AGENT_CANNOT_WIDEN_GRANT: "agent_cannot_widen_grant",
 } as const;
 
 export type SoakProofKindValue =
@@ -137,6 +145,8 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X006 requires CROSS_WORKSPACE_REFERENCE_DENIED (deny without leak).
  * T-X019 / T-US-036 require APPROVED_PAYLOAD_EDIT_INVALIDATED (digest/revision).
  * T-X029 requires EXPLICIT_ACCOUNT_REBIND (not same-account local rotate).
+ * T-US-057 requires CROSS_WORKSPACE_RESOURCE_SUBSTITUTION.
+ * T-US-024 requires AGENT_CANNOT_WIDEN_GRANT.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -157,6 +167,8 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X019",
   "T-US-036",
   "T-X029",
+  "T-US-057",
+  "T-US-024",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -527,6 +539,10 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.APPROVED_PAYLOAD_EDIT_INVALIDATED];
     case "T-X029":
       return [SoakProofKind.EXPLICIT_ACCOUNT_REBIND];
+    case "T-US-057":
+      return [SoakProofKind.CROSS_WORKSPACE_RESOURCE_SUBSTITUTION];
+    case "T-US-024":
+      return [SoakProofKind.AGENT_CANNOT_WIDEN_GRANT];
     default:
       return [];
   }
@@ -569,6 +585,10 @@ export function mapProofToFixtureCases(
       return ["T-X019", "T-US-036"];
     case SoakProofKind.EXPLICIT_ACCOUNT_REBIND:
       return ["T-X029"];
+    case SoakProofKind.CROSS_WORKSPACE_RESOURCE_SUBSTITUTION:
+      return ["T-US-057"];
+    case SoakProofKind.AGENT_CANNOT_WIDEN_GRANT:
+      return ["T-US-024"];
     default:
       return [];
   }

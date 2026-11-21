@@ -3,13 +3,13 @@
   "caseId": "T-X018",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X018 (Self-approval rejected)\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-99ce2640 reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X018 (Self-approval rejected)\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-5b3031fe reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "self_approval_rejected"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x018.json",
-  "createdAtIso": "2026-11-21T23:01:17.355Z",
+  "createdAtIso": "2026-11-21T23:06:23.877Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x018-d5ee07445ae8"
+  "uniqueSourceArtifactId": "art-fixture-t-x018-47f42efa6b47"
 }

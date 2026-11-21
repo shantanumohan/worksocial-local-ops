@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-024",
+  "caseId": "T-US-024",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-024 (Agent cannot widen its own grant)\nproof=agent_cannot_widen_grant applyCount=1 :: A01 forbids self_grant_capability | A23 forbids widen_oauth_scope | Operator denied policy/grant management; administrator allowed | Standing authority denies ACCESS_OR_POLICY_CHANGE (cannot self-widen) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "agent_cannot_widen_grant"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-024.json",
+  "createdAtIso": "2026-11-21T23:06:23.877Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-024-47f42efa6b47"
+}

@@ -217,6 +217,18 @@ describe("soak-acceptance domain", () => {
     expect(expectedProofsForFixtureCase("T-US-036")).toEqual([
       SoakProofKind.APPROVED_PAYLOAD_EDIT_INVALIDATED,
     ]);
+    expect(expectedProofsForFixtureCase("T-US-057")).toEqual([
+      SoakProofKind.CROSS_WORKSPACE_RESOURCE_SUBSTITUTION,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CROSS_WORKSPACE_RESOURCE_SUBSTITUTION),
+    ).toEqual(["T-US-057"]);
+    expect(expectedProofsForFixtureCase("T-US-024")).toEqual([
+      SoakProofKind.AGENT_CANNOT_WIDEN_GRANT,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.AGENT_CANNOT_WIDEN_GRANT),
+    ).toEqual(["T-US-024"]);
   });
 
   it("builds unique per-run artifact ids", () => {
