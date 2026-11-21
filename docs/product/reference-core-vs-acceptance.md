@@ -1,6 +1,6 @@
 # Reference-core tests ≠ production acceptance
 
-**Status:** documentation note for M0 baseline / WP01–WP02  
+**Status:** documentation note for M0 baseline / WP01–WP02 (see also `v6-wp-sequencing.md` for WP01–WP16 band alignment)  
 **Spec:** WorkSocial Operations v6.0 (17 November 2026)
 
 ## Validation boundary

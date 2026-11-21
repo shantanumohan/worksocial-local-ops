@@ -33,7 +33,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - **`services/claude-runner`** — pinned CLI adapter, output validation, timeouts/budgets, bounded queue, **fixture/offline mode** when CLI absent; **no permission bypass**.
 - **Independent review gate** — author cannot self-approve; A25 issues verdicts; effects still go through gateway + grants.
 - **Delegation bounds** — typed task requests only; uncontrolled recursion denied (`MAX_DELEGATION_DEPTH`).
-- **`services/workflow-worker`** — mission enqueue with honest **`NOT_WIRED`** Temporal status; in-process runner execution.
+- **`services/workflow-worker`** — mission enqueue; Temporal label is **`NOT_WIRED`** until a frontend is reachable, then **`TEMPORAL`** (see `docs/product/temporal-binding.md`). Unbound path stays in-process / `LOCAL_DURABLE`.
 - **Console `/roles` + API `/roles/*`** — role status, last-run evidence, fixture evaluate-all.
 - **Role outcomes** — SUCCESS/FAILURE labels for learning-worker consumption.
 - SQL `005_role_runtime.sql` companion schema (file-backed store until Postgres is bound).
@@ -60,7 +60,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 ### M5 / NEXT-16 lead capture + bounded repair
 - **`services/lead-capture`** — browser/form harness → fixture Zoho CRM → field verify → cleanup; synthetic excluded from commerce totals.
 - **Delivery failure → incident → bounded repair → re-verify**; weaken-test / protected-path proposals fail closed.
-- **M1 gateway** authorize + **M2 durable** accept/verify (`LOCAL_DURABLE`); **Temporal stays `NOT_WIRED`**.
+- **M1 gateway** authorize + **M2 durable** accept/verify (`LOCAL_DURABLE`); Temporal optional when bound (default `NOT_WIRED`).
 - Console `/monitoring` surfaces last SUCCESS, current FAILURE, artifact refs, correlated submission↔CRM, repair state.
 - API `/lead-capture/*` — status, journeys, run-journey, cleanup, open-incident-from-failure, run-bounded-repair.
 - SQL `017_lead_capture.sql` companion schema; **live Zoho NOT_WIRED**; **R1-complete not claimed**.
@@ -102,7 +102,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - **A25 review binding** — `POST /content/bind-review` reuses M3 binding invariants (exact revision + evidence package; edits invalidate).
 - **Multi-destination distribute** — `POST /content/distribute` owned-site (staging CMS simulator + content fixture) → GBP fixture → LinkedIn fixture; per-destination format, claims/QA, receipt, independent read-back, durable accept/verify (LOCAL_DURABLE).
 - **Partial failure recovery** — `POST /content/recover-distribution` re-applies only unfinished destinations; verified destinations are never re-applied. Stable `biz-content:…` operation keys.
-- SQL `019_canonical_publish.sql` companion schema. **External effects NONE.** Temporal remains **NOT_WIRED**. Not an R1-complete claim.
+- SQL `019_canonical_publish.sql` companion schema. **External effects NONE.** Missions may use Temporal when bound; slice shipped before Temporal CI bind — see `docs/product/temporal-binding.md`. Not an R1-complete claim.
 
 ### R1-09 / M7 (NEXT-18) Customer response / after-hours
 - **Unified inbox domain** — conversations, messages, leases, response policy, handoffs, qualified leads, booking evidence, webhook events, ownership ledger.
@@ -114,14 +114,14 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - **No reservation without booking evidence** — recommendation / tour request / booking link ≠ confirmation.
 - **Learning hooks** — SUCCESS/FAILURE send/lead outcomes (`fixtureOnly` when fixture).
 - Console `/inbox` — conversation list, chronological timeline, ownership badge, takeover control.
-- SQL `011_inbox.sql` + `018_inbox_m7.sql` companions; **live inbox / Zoho remain `NOT_WIRED`**. **Temporal NOT_WIRED**. Not an R1-complete claim.
+- SQL `011_inbox.sql` + `018_inbox_m7.sql` companions; **live inbox / Zoho remain `NOT_WIRED`**. Temporal follows binding probe (default unbound). Not an R1-complete claim.
 
 ### M8 Grounded search, analytics, evaluation (NEXT-19)
 - **Grounded semantic search** — public hits cite **SUPPORTED** facts only; UNKNOWN / no-result / clarify stay honest; judgment + remediation ledger (T-F23 shaped).
 - **Analytics read path** — GSC/GA4 **FIXTURE** samples; credentials-without-query → **UNAVAILABLE**; live query transport **NOT_WIRED**. Fixture ≠ sandbox ≠ live. Omitted GSC rows → UNKNOWN (not zero). GA4 debug validation ≠ measured receipt.
 - **Isolated EVAL_ONLY worker (AA-20)** — Claude/Gemini fixture adjudication; no publish/CRM/customer-message tools; separate eval budget; live fleet **NOT_WIRED**; learning cannot expand effects; ChatGPT Ads **access-blocked** without verified local transport/entitlement.
 - Console `/analysis` + `/eval`; APIs `/analysis/*` + `/eval/*` + `/seo/judge-search`.
-- SQL `020_m8_search_analytics_eval.sql` companion; **Temporal NOT_WIRED**. Catalog cases remain **NOT_RUN** unless later fixture evidence is attached. Not an R1-complete claim.
+- SQL `020_m8_search_analytics_eval.sql` companion; Temporal follows binding probe. Catalog cases remain **NOT_RUN** unless fixture evidence is attached (matrix may mark a few fixture **ACCEPTED** — never silent live **VERIFIED**). Not an R1-complete claim.
 
 ### AA-19 review analysis + paid-media proposals (F16 / F19)
 
@@ -142,13 +142,13 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - **Acceptance evidence compiler** — selected catalog cases (T-X014 / T-X020 / T-US-048) may become **ACCEPTED** only with the complete expected proof set and redacted fixture artifacts (`pnpm release:evidence`). **T-X066** stays **NOT_RUN** until a backup/omit-receipt proof exists. Never silently **VERIFIED** for live.
 - **72h pilot gate** — duration from **server-recorded** start/heartbeat/end only (client claim dates rejected); short CI soaks stay `pilotGate=NOT_MET`. Owner Windows 72h soak documented in `docs/runbooks/m9-soak-acceptance.md`.
 - Console `/soak`; APIs `/soak/status` · `/soak/run` · `/soak/report` · `/soak/cases`.
-- SQL `021_m9_soak_acceptance.sql` companion; live CMS/GSC/GA4/Zoho/Temporal **NOT_WIRED**. ChatGPT Ads **access-blocked**. **Not R1-complete.**
+- SQL `021_m9_soak_acceptance.sql` companion; live CMS/GSC/GA4/Zoho **NOT_WIRED**; Temporal prod/Windows still **NOT_WIRED** (local bind optional). ChatGPT Ads **access-blocked**. **Not R1-complete.**
 
 ### M4 Owner staging workflow (NEXT-13–15)
 - **Console** — `/activation`, `/connections`, `/sites`, `/missions`, `/review`, `/evidence` wired to typed `/owner/*` APIs; safe text rendering (no raw ID/JSON as primary UI).
 - **Collectors** — page snapshot + deterministic checks; GSC/GA4 adapters labeled **FIXTURE** (or LIVE capability when credentials exist). Provenance preserved.
 - **Staging CMS simulator** — apply → independent read-back → UNKNOWN_REMOTE_OUTCOME recovery. Acceptance ≠ verified. F12 verify cheat removed (no desired→observed copy in the browser).
-- SQL `016_owner_staging.sql` companion schema; **Temporal remains NOT_WIRED**. Not an R1-complete claim.
+- SQL `016_owner_staging.sql` companion schema; Temporal follows binding probe (default unbound). Not an R1-complete claim.
 
 ### R1-10 Bounded repair and release
 - **Incidents / tickets / proposals / attempts / test evidence** with isolated worktree + asset lease.
@@ -163,7 +163,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 
 | Area | Status |
 |------|--------|
-| Temporal runtime / durable workflows | **stub** — `NOT_WIRED` (in-process enqueue only) |
+| Temporal runtime / durable workflows | **bindable** — default **`NOT_WIRED`** without `TEMPORAL_ADDRESS`; CI compose + SDK prove wired path; prod mTLS / Windows Temporal still **NOT_WIRED** (see `docs/product/temporal-binding.md`) |
 | Live Claude Code CLI fleet | optional; default **fixture** (`WORKSOCIAL_CLAUDE_FIXTURE` unset/`1`) |
 | Full console React routes (v5 25 screens) | progressive HTML: activation → connections → sites → missions → review → evidence (+ prior diagnostic pages). Not full React. |
 | Live OAuth / provider connections | **excluded** — fixture/NOT_WIRED scaffolds; GSC/GA4 LIVE only with credentials |
@@ -255,7 +255,9 @@ Supervisor refuses to run when the resolved state dir is under OneDrive-style sy
 ## Specs in-repo
 
 - `docs/product/WorkSocial_Operations_v6_implementation_baseline.md`
+- `docs/product/v6-wp-sequencing.md` — WP01–WP16 band ↔ landed vs open (honesty index)
 - `docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md`
+- `docs/product/temporal-binding.md`
 - `docs/WorkSocial_Local_30_Agent_Operating_System_v3.md`
 - `docs/v5/*` — see `docs/v5/README.md`
 - `docs/product/ml-learning-from-outcomes.md` — owner requirement; local multi-model learning slice
