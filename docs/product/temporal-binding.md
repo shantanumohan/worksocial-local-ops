@@ -93,6 +93,6 @@ API mission enqueue uses the same probe at process start via `bindTemporalMissio
 | Live CMS / Zoho / GSC / GA4 / GBP / social / inbox | NOT_WIRED |
 | Production-activated Temporal namespace / mTLS | NOT_WIRED |
 | Windows host Temporal service (AA-12) | NOT_WIRED |
-| 159 acceptance cases | NOT_RUN (do not claim VERIFIED) |
+| Product acceptance cases | Mostly NOT_RUN; a few fixture ACCEPTED with evidence only — never silent live VERIFIED |
 
 External effects: none (simulator / fixture only). R1 is not complete.
