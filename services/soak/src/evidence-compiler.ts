@@ -72,6 +72,8 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-058": "Synthetic excluded from business denominators",
   "T-US-046": "Hard search constraints enforced; no invented availability",
   "T-X048": "Unknown price or availability — no invention",
+  "T-US-010": "Missing GSC rows ≠ zero demand",
+  "T-X033": "Omitted GSC rows — Unknown ≠ zero",
 };
 
 function relatedProofsForCase(
@@ -231,6 +233,7 @@ export function compileAcceptanceEvidence(
     "T-X038 fixture ACCEPTED only via EVAL_NO_GROUNDING_FAIL_CLOSED",
     "T-X039/T-US-058 fixture ACCEPTED only via METRIC_DENOMINATORS_HONEST",
     "T-US-046/T-X048 fixture ACCEPTED only via HARD_SEARCH_CONSTRAINTS_NO_INVENTION",
+    "T-US-010/T-X033 fixture ACCEPTED only via GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

@@ -29,7 +29,7 @@ describe("soak service (M9)", () => {
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(24);
+    expect(result.proofs).toHaveLength(25);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(result.proofs.every((p) => p.applyAttemptCount === 1)).toBe(true);
     expect(
@@ -123,9 +123,14 @@ describe("soak service (M9)", () => {
         (p) => p.kind === SoakProofKind.HARD_SEARCH_CONSTRAINTS_NO_INVENTION,
       ),
     ).toBe(true);
+    expect(
+      result.proofs.some(
+        (p) => p.kind === SoakProofKind.GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO,
+      ),
+    ).toBe(true);
   });
 
-  it("compiles fixture ACCEPTED for complete proof sets including T-US-046/T-X048", async () => {
+  it("compiles fixture ACCEPTED for complete proof sets including T-US-010/T-X033", async () => {
     const harness = await runSoakRecoveryHarness({
       stateDir: dir,
       nowIso: "2026-11-21T18:00:00.000Z",
@@ -143,6 +148,7 @@ describe("soak service (M9)", () => {
     expect(accepted.map((c) => c.caseId).sort()).toEqual([
       "T-F24",
       "T-US-002",
+      "T-US-010",
       "T-US-018",
       "T-US-024",
       "T-US-036",
@@ -163,6 +169,7 @@ describe("soak service (M9)", () => {
       "T-X019",
       "T-X020",
       "T-X029",
+      "T-X033",
       "T-X037",
       "T-X038",
       "T-X039",
@@ -286,7 +293,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(32);
+    expect(soak.ownerReport().acceptedCases.length).toBe(34);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {

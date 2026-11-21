@@ -292,6 +292,15 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.HARD_SEARCH_CONSTRAINTS_NO_INVENTION),
     ).toEqual(["T-US-046", "T-X048"]);
+    expect(expectedProofsForFixtureCase("T-US-010")).toEqual([
+      SoakProofKind.GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO,
+    ]);
+    expect(expectedProofsForFixtureCase("T-X033")).toEqual([
+      SoakProofKind.GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO),
+    ).toEqual(["T-US-010", "T-X033"]);
   });
 
   it("builds unique per-run artifact ids", () => {

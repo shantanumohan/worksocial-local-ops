@@ -129,6 +129,10 @@ export const SoakProofKind = {
    * Hard search constraints; unknown price/availability not invented (T-US-046 / T-X048).
    */
   HARD_SEARCH_CONSTRAINTS_NO_INVENTION: "hard_search_constraints_no_invention",
+  /**
+   * Omitted/missing GSC rows are UNKNOWN demand, never invent zero (T-US-010 / T-X033).
+   */
+  GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO: "gsc_omitted_rows_unknown_not_zero",
 } as const;
 
 export type SoakProofKindValue =
@@ -189,6 +193,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X038 requires EVAL_NO_GROUNDING_FAIL_CLOSED.
  * T-X039 / T-US-058 require METRIC_DENOMINATORS_HONEST.
  * T-US-046 / T-X048 require HARD_SEARCH_CONSTRAINTS_NO_INVENTION.
+ * T-US-010 / T-X033 require GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -224,6 +229,8 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-058",
   "T-US-046",
   "T-X048",
+  "T-US-010",
+  "T-X033",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -624,6 +631,10 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.HARD_SEARCH_CONSTRAINTS_NO_INVENTION];
     case "T-X048":
       return [SoakProofKind.HARD_SEARCH_CONSTRAINTS_NO_INVENTION];
+    case "T-US-010":
+      return [SoakProofKind.GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO];
+    case "T-X033":
+      return [SoakProofKind.GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO];
     default:
       return [];
   }
@@ -686,6 +697,8 @@ export function mapProofToFixtureCases(
       return ["T-X039", "T-US-058"];
     case SoakProofKind.HARD_SEARCH_CONSTRAINTS_NO_INVENTION:
       return ["T-US-046", "T-X048"];
+    case SoakProofKind.GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO:
+      return ["T-US-010", "T-X033"];
     default:
       return [];
   }
