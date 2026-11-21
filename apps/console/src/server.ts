@@ -14,6 +14,7 @@ import {
   analysisPage,
   evalPage,
   soakPage,
+  recoveryPage,
 } from "./pages.js";
 import {
   activationPage,
@@ -165,6 +166,12 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
     if (url.pathname === "/soak") {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       res.end(soakPage(options.apiOrigin));
+      return;
+    }
+
+    if (url.pathname === "/recovery") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(recoveryPage(options.apiOrigin));
       return;
     }
 

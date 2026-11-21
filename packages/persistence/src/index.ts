@@ -312,3 +312,9 @@ export {
   defaultSoakStateDir,
   type SoakStore,
 } from "./soak-store.js";
+
+export {
+  createFileRecoveryStore,
+  defaultRecoveryStateDir,
+  type RecoveryStore,
+} from "./recovery-store.js";
