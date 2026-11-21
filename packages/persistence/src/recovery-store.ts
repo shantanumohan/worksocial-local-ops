@@ -91,8 +91,9 @@ export function createFileRecoveryStore(stateDir: string): RecoveryStore {
       liveWiring: {
         hostRecovery: existing.liveWiring?.hostRecovery ?? "fixture",
         providerRecovery: existing.liveWiring?.providerRecovery ?? "fixture",
-        credentialRotation: "NOT_WIRED",
-        offboarding: "NOT_WIRED",
+        credentialRotation: "fixture",
+        offboarding: "fixture",
+        liveProviderRevocation: "NOT_WIRED",
       },
       liveRecoveryClaim: existing.liveRecoveryClaim ?? "NOT_RUN",
       chatgptAdsWiring: "NOT_WIRED",
@@ -107,8 +108,9 @@ export function createFileRecoveryStore(stateDir: string): RecoveryStore {
       liveWiring: {
         hostRecovery: state.liveWiring.hostRecovery,
         providerRecovery: state.liveWiring.providerRecovery,
-        credentialRotation: "NOT_WIRED",
-        offboarding: "NOT_WIRED",
+        credentialRotation: "fixture",
+        offboarding: "fixture",
+        liveProviderRevocation: "NOT_WIRED",
       },
       chatgptAdsWiring: "NOT_WIRED",
       productionActivated: false,
@@ -224,7 +226,7 @@ export function createFileRecoveryStore(stateDir: string): RecoveryStore {
         productionActivated: false as const,
         externalEffects: "NONE" as const,
         honestNote:
-          "Fixture recovery evidence only. Distinguishes STALE_OBSERVATION / ACTIVE_INCIDENT / UNKNOWN_REMOTE_OUTCOME. Live recovery NOT_RUN; never silently VERIFIED. Credential rotation and offboarding remain NOT_WIRED.",
+          "Fixture recovery evidence only. Distinguishes STALE_OBSERVATION / ACTIVE_INCIDENT / UNKNOWN_REMOTE_OUTCOME. Live recovery NOT_RUN; never silently VERIFIED. Local credential revoke/rotate/offboard are fixture paths (/credentials); live provider revocation remains NOT_WIRED.",
       };
     },
   };

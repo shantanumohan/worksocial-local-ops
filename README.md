@@ -134,8 +134,15 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 
 - Classifies **STALE_OBSERVATION** vs **ACTIVE_INCIDENT** vs **UNKNOWN_REMOTE_OUTCOME** for host/provider outage and queued work (fixture-only).
 - Console `/recovery`; APIs `/recovery/status` · `/recovery/inspect` · `/recovery/run` · timeline / queued-work / capability-stops.
-- Live recovery stays **NOT_RUN** — never silently VERIFIED. Credential rotation / offboarding **NOT_WIRED**. External effects **NONE**.
+- Live recovery stays **NOT_RUN** — never silently VERIFIED. Local credential revoke/rotate/offboard are **fixture** paths (`/credentials`); live provider revocation **NOT_WIRED**. External effects **NONE**.
 - Runbook: `docs/runbooks/recovery-evidence.md`. Complements M9 soak; does not close product T-F24 alone.
+
+### WP10 credential rotation / offboarding (F24)
+
+- Console `/credentials`; APIs `/credentials/status` · seed · lease · revoke · rotate · offboard · audit · live-revoke.
+- Local revoke marks connections **REVOKED**, denies new leases/effects, cancels eligible queued work, retains redacted audit.
+- Live provider revoke stays **NOT_WIRED** (residual obligation on offboarding manifest). External effects **NONE**. Catalog **NOT_RUN**.
+- Runbook: `docs/runbooks/credential-rotation.md`.
 
 ### M9 R1 soak / acceptance evidence (NEXT-20)
 - **Soak / recovery harness** — crash-restart, no duplicate effects, job continuity, unknown-remote reconcile on file-durable LOCAL_DURABLE stores (`pnpm recovery:rehearse`).

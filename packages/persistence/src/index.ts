@@ -331,3 +331,9 @@ export {
   defaultPaidMediaStateDir,
   type PaidMediaStore,
 } from "./paid-media-store.js";
+
+export {
+  createFileCredentialRotationStore,
+  defaultCredentialRotationStateDir,
+  type CredentialRotationStore,
+} from "./credential-rotation-store.js";

@@ -27,6 +27,7 @@
     { "path": "services/evaluation-worker" },
     { "path": "services/soak" },
     { "path": "services/recovery" },
-    { "path": "services/paid-media" }
+    { "path": "services/paid-media" },
+    { "path": "services/credential-rotation" }
   ]
 }

@@ -285,8 +285,12 @@ export type RecoveryEvidenceState = {
   liveWiring: {
     hostRecovery: "NOT_WIRED" | "fixture";
     providerRecovery: "NOT_WIRED" | "fixture";
-    credentialRotation: "NOT_WIRED";
-    offboarding: "NOT_WIRED";
+    /** Local fixture revoke/rotate path — see /credentials. */
+    credentialRotation: "fixture";
+    /** Local offboarding manifest path — see /credentials. */
+    offboarding: "fixture";
+    /** Live remote provider token revoke remains NOT_WIRED. */
+    liveProviderRevocation: "NOT_WIRED";
   };
   liveRecoveryClaim: LiveRecoveryClaimValue;
   chatgptAdsWiring: "NOT_WIRED";
@@ -307,8 +311,9 @@ export function emptyRecoveryEvidenceState(
     liveWiring: {
       hostRecovery: "fixture",
       providerRecovery: "fixture",
-      credentialRotation: "NOT_WIRED",
-      offboarding: "NOT_WIRED",
+      credentialRotation: "fixture",
+      offboarding: "fixture",
+      liveProviderRevocation: "NOT_WIRED",
     },
     liveRecoveryClaim: LiveRecoveryClaim.NOT_RUN,
     chatgptAdsWiring: "NOT_WIRED",

@@ -1,6 +1,6 @@
 # Database migrations
 
-Ordered SQL under `migrations/` (`001_…` … `025_…`).
+Ordered SQL under `migrations/` (`001_…` … `026_…`).
 
 ```bash
 export DATABASE_URL=postgres://worksocial:worksocial@127.0.0.1:5432/worksocial
@@ -30,5 +30,9 @@ EVAL_ONLY runs, and analytics observation provenance.
 redacted acceptance evidence artifacts, and the case ledger (file-backed until Postgres cutover).
 `022_m9_pilot_observations.sql` records server-clock pilot start/heartbeat/end
 observations used for the 72h gate (client claim dates rejected).
+`024_recovery_evidence.sql` is the WP10 companion for recovery timeline/queued work.
+`025_paid_media_proposals.sql` is the AA-19 companion for analysis/paid-media proposals.
+`026_credential_rotation.sql` is the WP10 companion for local credential revoke/rotate/offboard
+(file-backed until Postgres cutover; live provider revoke NOT_WIRED).
 Runner: `pnpm db:migrate` (`packages/persistence` `runMigrations`).
 External effects: none (simulator only).

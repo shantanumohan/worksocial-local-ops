@@ -36,6 +36,7 @@
     "@worksocial/soak": "workspace:*",
     "@worksocial/recovery": "workspace:*",
     "@worksocial/paid-media": "workspace:*",
+    "@worksocial/credential-rotation": "workspace:*",
     "@worksocial/probes": "workspace:*",
     "@worksocial/provider-adapters": "workspace:*",
     "@worksocial/workflow-worker": "workspace:*"

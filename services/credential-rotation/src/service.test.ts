@@ -1,0 +1,148 @@
+import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { EffectState } from "@worksocial/domain";
+import { createCredentialBroker } from "@worksocial/credential-broker";
+import { createFileCredentialRotationStore } from "@worksocial/persistence";
+import { createCredentialRotationService } from "./service.js";
+
+describe("credential-rotation service", () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "ws-cred-rot-"));
+  });
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function service() {
+    return createCredentialRotationService({
+      store: createFileCredentialRotationStore(dir),
+      broker: createCredentialBroker(),
+    });
+  }
+
+  it("revoke → cancel eligible queued → audit retained; live revoke NOT_WIRED", () => {
+    const svc = service();
+    const seeded = svc.seedFixture({
+      nowIso: "2026-11-21T22:00:00.000Z",
+      withQueuedWork: true,
+    });
+
+    const leaseBefore = svc.requestLease({
+      connectionId: seeded.connection.connectionId,
+      requestedScopes: ["publish"],
+      nowIso: "2026-11-21T22:00:30.000Z",
+    });
+    expect(leaseBefore.ok).toBe(true);
+
+    const revoked = svc.revoke({
+      connectionId: seeded.connection.connectionId,
+      approvedBy: "admin",
+      nowIso: "2026-11-21T22:01:00.000Z",
+    });
+    expect(revoked.ok).toBe(true);
+    if (!revoked.ok) throw new Error("expected revoke");
+
+    expect(revoked.connection.status).toBe("REVOKED");
+    expect(revoked.auditRetained).toBe(true);
+    expect(revoked.externalEffects).toBe("NONE");
+    expect(revoked.liveProviderRevoke.code).toBe(
+      "LIVE_PROVIDER_REVOKE_NOT_WIRED",
+    );
+
+    const cancelled = revoked.cancelResults.filter((r) => r.cancelled);
+    const retained = revoked.cancelResults.filter((r) => r.retainedForReconcile);
+    expect(cancelled.length).toBeGreaterThanOrEqual(2);
+    expect(retained.length).toBeGreaterThanOrEqual(1);
+
+    const leaseAfter = svc.requestLease({
+      connectionId: seeded.connection.connectionId,
+      requestedScopes: ["publish"],
+      nowIso: "2026-11-21T22:02:00.000Z",
+    });
+    expect(leaseAfter).toMatchObject({ ok: false, code: "CONNECTION_REVOKED" });
+
+    const effect = svc.requestEffect({
+      connectionId: seeded.connection.connectionId,
+    });
+    expect(effect).toMatchObject({ ok: false, code: "CONNECTION_REVOKED" });
+
+    const queue = svc.listQueuedWork(seeded.connection.connectionId);
+    expect(
+      queue.some((w) => w.effectState === EffectState.CANCELLED),
+    ).toBe(true);
+    expect(
+      queue.some(
+        (w) => w.effectState === EffectState.UNKNOWN_REMOTE_OUTCOME,
+      ),
+    ).toBe(true);
+
+    const audit = svc.listAudit();
+    expect(audit.some((a) => a.kind === "REVOKED")).toBe(true);
+    expect(audit.some((a) => a.kind === "QUEUED_CANCELLED")).toBe(true);
+    expect(audit.some((a) => a.kind === "LIVE_PROVIDER_REVOKE_NOT_WIRED")).toBe(
+      true,
+    );
+    expect(audit.every((a) => a.redacted)).toBe(true);
+    expect(JSON.stringify(audit)).not.toMatch(/fixture-secret/);
+
+    const status = svc.status();
+    expect(status.liveWiring.liveProviderRevocation).toBe("NOT_WIRED");
+    expect(status.catalogClaim).toBe("NOT_RUN");
+    expect(status.externalEffects).toBe("NONE");
+    expect(status.relatedCaseIds).toContain("T-F24");
+  });
+
+  it("rotate switches reference locally without live provider revoke", () => {
+    const svc = service();
+    const seeded = svc.seedFixture({
+      nowIso: "2026-11-21T22:00:00.000Z",
+      withQueuedWork: false,
+    });
+    const rotated = svc.rotate({
+      connectionId: seeded.connection.connectionId,
+      approvedBy: "admin",
+      secretMaterial: "rotated-secret-material",
+      nowIso: "2026-11-21T22:10:00.000Z",
+    });
+    expect(rotated.ok).toBe(true);
+    if (!rotated.ok) throw new Error("expected rotate");
+    expect(rotated.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(rotated.rotation.secretsExported).toBe(false);
+    expect(rotated.connection.referenceId).not.toBe(seeded.referenceId);
+    expect(JSON.stringify(rotated.rotation)).not.toContain(
+      "rotated-secret-material",
+    );
+  });
+
+  it("offboard produces manifest with provider-revoke residual NOT_WIRED", () => {
+    const svc = service();
+    const seeded = svc.seedFixture({
+      nowIso: "2026-11-21T22:00:00.000Z",
+    });
+    const result = svc.offboard({
+      connectionId: seeded.connection.connectionId,
+      approvedBy: "admin",
+      nowIso: "2026-11-21T22:20:00.000Z",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected offboard");
+    expect(result.manifest.auditRetained).toBe(true);
+    expect(result.manifest.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(result.catalogClaim).toBe("NOT_RUN");
+    expect(
+      result.manifest.residualObligations.some(
+        (o) =>
+          o.kind === "PROVIDER_REVOKE" && o.status === "BLOCKED_NOT_WIRED",
+      ),
+    ).toBe(true);
+
+    const live = svc.liveProviderRevoke({
+      connectionId: seeded.connection.connectionId,
+    });
+    expect(live.code).toBe("LIVE_PROVIDER_REVOKE_NOT_WIRED");
+  });
+});

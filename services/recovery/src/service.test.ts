@@ -61,7 +61,9 @@ describe("recovery service fixture scenarios", () => {
 
     const status = service.status();
     expect(status.externalEffects).toBe("NONE");
-    expect(status.liveWiring.credentialRotation).toBe("NOT_WIRED");
+    expect(status.liveWiring.credentialRotation).toBe("fixture");
+    expect(status.liveWiring.offboarding).toBe("fixture");
+    expect(status.liveWiring.liveProviderRevocation).toBe("NOT_WIRED");
     expect(status.chatgptAdsWiring).toBe("NOT_WIRED");
   });
 

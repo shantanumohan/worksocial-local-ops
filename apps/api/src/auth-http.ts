@@ -72,6 +72,7 @@ import {
   createFileSoakStore,
   createFileRecoveryStore,
   createFilePaidMediaStore,
+  createFileCredentialRotationStore,
   createFileProbeStore,
   createFileProductionMappingStore,
   createFileRepairStore,
@@ -91,6 +92,7 @@ import {
   type SoakStore,
   type RecoveryStore,
   type PaidMediaStore,
+  type CredentialRotationStore,
   type PolicyDecisionRecord,
   type ContentStore,
   type InboxStore,
@@ -175,6 +177,7 @@ import { handleEvaluationAndAnalyticsRequest } from "./evaluation-http.js";
 import { handleSoakRequest } from "./soak-http.js";
 import { handleRecoveryRequest } from "./recovery-http.js";
 import { handlePaidMediaRequest } from "./paid-media-http.js";
+import { handleCredentialRotationRequest } from "./credential-rotation-http.js";
 import {
   createEvaluationWorker,
   type EvaluationService,
@@ -188,6 +191,10 @@ import {
   createRecoveryService,
   type RecoveryService,
 } from "@worksocial/recovery";
+import {
+  createCredentialRotationService,
+  type CredentialRotationService,
+} from "@worksocial/credential-rotation";
 
 function factLabelsFromKnowledge(
   knowledge: KnowledgeService,
@@ -295,6 +302,8 @@ export type ApiRuntime = {
   recovery: RecoveryService;
   paidMediaStore: PaidMediaStore;
   paidMedia: PaidMediaService;
+  credentialRotationStore: CredentialRotationStore;
+  credentialRotation: CredentialRotationService;
   runner: ClaudeRunner;
   missions: MissionEnqueueService;
   /** Bound when TEMPORAL_ADDRESS frontend is reachable; closed on API shutdown. */
@@ -523,6 +532,14 @@ export function createApiRuntime(options: {
   const recovery = createRecoveryService(recoveryStore);
   const paidMediaStore = createFilePaidMediaStore(options.stateDir);
   const paidMedia = createPaidMediaService(paidMediaStore);
+  const broker = createCredentialBroker();
+  const credentialRotationStore = createFileCredentialRotationStore(
+    options.stateDir,
+  );
+  const credentialRotation = createCredentialRotationService({
+    store: credentialRotationStore,
+    broker,
+  });
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
@@ -573,11 +590,13 @@ export function createApiRuntime(options: {
     recovery,
     paidMediaStore,
     paidMedia,
+    credentialRotationStore,
+    credentialRotation,
     runner,
     missions,
     temporalClient,
     gateway,
-    broker: createCredentialBroker(),
+    broker,
     apiOrigin: `http://127.0.0.1:${options.apiPort}`,
     consoleOrigin: `http://127.0.0.1:${options.consolePort}`,
     sessionTtlMs: 8 * 60 * 60 * 1000,
@@ -780,7 +799,7 @@ export async function handleApiRequest(
         identity:
           "M9 soak/acceptance evidence + M8 grounded-search/analytics/eval + M6–M7 + R1-02–R1-10",
         message:
-          "API surface includes AA-19 paid-media proposals + analysis hypotheses, WP10 recovery evidence, AA-20 EVAL_ONLY isolation, M9 soak/acceptance, M8 analysis, M6 canonical publish. Live CMS/GBP/social/inbox/Zoho/GSC/GA4/Ads/eval-fleet NOT_WIRED. ChatGPT Ads ACCESS_BLOCKED. Catalog ACCEPTED only with fixture evidence; never silently VERIFIED for live. Not R1-complete.",
+          "API surface includes WP10 credential revoke/rotate/offboard fixture honesty, AA-19 paid-media proposals + analysis hypotheses, WP10 recovery evidence, AA-20 EVAL_ONLY isolation, M9 soak/acceptance, M8 analysis, M6 canonical publish. Live CMS/GBP/social/inbox/Zoho/GSC/GA4/Ads/eval-fleet/provider-revoke NOT_WIRED. ChatGPT Ads ACCESS_BLOCKED. Catalog ACCEPTED only with fixture evidence; never silently VERIFIED for live. Not R1-complete.",
       },
       cors,
     );
@@ -4373,6 +4392,20 @@ export async function handleApiRequest(
     requireSession: (r, opts) => requireSession(runtime, r, opts),
   });
   if (paidMediaHandled) return;
+
+  const credentialsHandled = await handleCredentialRotationRequest({
+    credentials: runtime.credentialRotation,
+    req,
+    res,
+    url,
+    method,
+    cors,
+    json,
+    readBody,
+    parseJsonObjectBody,
+    requireSession: (r, opts) => requireSession(runtime, r, opts),
+  });
+  if (credentialsHandled) return;
 
   const inboxHandled = await handleInboxRequest({
     inbox: runtime.inbox,

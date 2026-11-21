@@ -35,6 +35,9 @@ importers:
       '@worksocial/credential-broker':
         specifier: workspace:*
         version: link:../../services/credential-broker
+      '@worksocial/credential-rotation':
+        specifier: workspace:*
+        version: link:../../services/credential-rotation
       '@worksocial/domain':
         specifier: workspace:*
         version: link:../../packages/domain
@@ -263,6 +266,28 @@ importers:
         version: 2.1.8(@types/node@22.10.2)(terser@5.51.4)
 
   services/credential-broker:
+    devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)(terser@5.51.4)
+
+  services/credential-rotation:
+    dependencies:
+      '@worksocial/credential-broker':
+        specifier: workspace:*
+        version: link:../credential-broker
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@worksocial/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
     devDependencies:
       '@types/node':
         specifier: 22.10.2
@@ -602,6 +627,9 @@ importers:
       '@worksocial/credential-broker':
         specifier: workspace:*
         version: link:../../services/credential-broker
+      '@worksocial/credential-rotation':
+        specifier: workspace:*
+        version: link:../../services/credential-rotation
       '@worksocial/domain':
         specifier: workspace:*
         version: link:../../packages/domain

@@ -135,4 +135,76 @@ describe("credential-broker isolation", () => {
     );
     expect(reveal).toMatchObject({ ok: false, code: "HANDLE_EXPIRED" });
   });
+
+  it("revokes reference and denies subsequent mint/reveal (WP10)", () => {
+    const broker = createCredentialBroker();
+    const ref = broker.putReference(
+      "cms",
+      ["publish"],
+      "to-revoke",
+      "2026-11-21T22:00:00.000Z",
+    );
+    const mintBefore = broker.mintScopedHandle({
+      principal: "action-gateway",
+      referenceId: ref.referenceId,
+      requestedScopes: ["publish"],
+      nowIso: "2026-11-21T22:00:00.000Z",
+    });
+    expect(mintBefore.ok).toBe(true);
+
+    const revoked = broker.revokeReference(
+      ref.referenceId,
+      "2026-11-21T22:01:00.000Z",
+    );
+    expect(revoked.ok).toBe(true);
+    if (revoked.ok) {
+      expect(revoked.reference.status).toBe("REVOKED");
+    }
+
+    const mintAfter = broker.mintScopedHandle({
+      principal: "action-gateway",
+      referenceId: ref.referenceId,
+      requestedScopes: ["publish"],
+      nowIso: "2026-11-21T22:02:00.000Z",
+    });
+    expect(mintAfter).toMatchObject({ ok: false, code: "REFERENCE_REVOKED" });
+
+    if (mintBefore.ok) {
+      const reveal = broker.revealForPrincipal(
+        mintBefore.handle.handleId,
+        "action-gateway",
+        "2026-11-21T22:02:00.000Z",
+      );
+      expect(reveal).toMatchObject({ ok: false, code: "REFERENCE_REVOKED" });
+    }
+
+    const live = broker.attemptLiveProviderRevoke(ref.referenceId);
+    expect(live.code).toBe("LIVE_PROVIDER_REVOKE_NOT_WIRED");
+    expect(live.externalEffects).toBe("NONE");
+  });
+
+  it("rotates locally without claiming live provider revoke", () => {
+    const broker = createCredentialBroker();
+    const old = broker.putReference(
+      "zoho",
+      ["crm_write"],
+      "old-secret",
+      "2026-11-21T22:00:00.000Z",
+    );
+    const rotated = broker.rotateReference({
+      oldReferenceId: old.referenceId,
+      secretMaterial: "new-secret",
+      nowIso: "2026-11-21T22:05:00.000Z",
+    });
+    expect(rotated.ok).toBe(true);
+    if (!rotated.ok) throw new Error("expected rotate");
+    expect(rotated.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(rotated.oldReference.status).toBe("REVOKED");
+    expect(rotated.oldReference.rotatedToReferenceId).toBe(
+      rotated.newReference.referenceId,
+    );
+    expect(rotated.newReference.status).toBe("ACTIVE");
+    expect(JSON.stringify(broker.listReferences())).not.toContain("old-secret");
+    expect(JSON.stringify(broker.listReferences())).not.toContain("new-secret");
+  });
 });
