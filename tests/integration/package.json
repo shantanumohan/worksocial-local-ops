@@ -1,0 +1,20 @@
+{
+  "name": "@worksocial/integration-tests",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:temporal-compose": "vitest run --config vitest.temporal-compose.config.ts"
+  },
+  "dependencies": {
+    "@worksocial/api": "workspace:*",
+    "@worksocial/persistence": "workspace:*",
+    "@worksocial/workflow-worker": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "typescript": "5.7.2",
+    "vitest": "2.1.8"
+  }
+}

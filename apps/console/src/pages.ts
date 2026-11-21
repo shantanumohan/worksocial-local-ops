@@ -346,7 +346,7 @@ export function rolesPage(apiOrigin: string): string {
   <section>
     <h2>Thirty-role Claude runtime (R1-04)</h2>
     <p class="muted">A01–A30 role contracts with bounded fixture evaluations. Reasoning proposes; gateway authorizes.</p>
-    <p class="warn">Default execution is fixture/offline. Temporal mission enqueue is <strong>NOT_WIRED</strong>. No blanket permission bypass.</p>
+    <p class="warn" id="temporal-warn">Checking Temporal mission wiring…</p>
     <div class="row">
       <button id="btn-eval" type="button">Evaluate all 30 (fixture)</button>
       <button id="btn-run-a01" type="button">Run A01</button>
@@ -388,7 +388,11 @@ export function rolesPage(apiOrigin: string): string {
     document.getElementById('cli').textContent = state.cli && state.cli.available
       ? (state.cli.version || 'detected')
       : (state.cli && state.cli.reason) || 'fixture';
-    document.getElementById('temporal').textContent = state.temporalWiring || 'NOT_WIRED';
+    const tw = state.temporalWiring || 'NOT_WIRED';
+    document.getElementById('temporal').textContent = tw;
+    document.getElementById('temporal-warn').textContent = tw === 'TEMPORAL'
+      ? 'Default execution is fixture/offline. Temporal mission enqueue is TEMPORAL (frontend reachable). Live CMS/Zoho/GSC remain NOT_WIRED. No blanket permission bypass.'
+      : 'Default execution is fixture/offline. Temporal mission enqueue is NOT_WIRED. No blanket permission bypass.';
     const byId = {};
     for (const c of state.contracts || []) byId[c.roleId] = c;
     const tbody = document.getElementById('roles');
@@ -488,7 +492,7 @@ export function monitoringPage(apiOrigin: string): string {
   <section>
     <h2>Monitoring and lead capture (R1-05 + M5)</h2>
     <p class="muted">HTTP/DOM probes, form→CRM canaries, and M5 journeys: browser → verify → cleanup. Synthetic leads never enter commercial totals.</p>
-    <p class="warn">Fixture mode is real offline evidence. Live Zoho is <strong>NOT_WIRED</strong>. Temporal <strong>NOT_WIRED</strong>. Catalog cases stay NOT_RUN. Not R1-complete.</p>
+    <p class="warn" id="temporal-warn">Fixture mode is real offline evidence. Live Zoho is <strong>NOT_WIRED</strong>. Checking Temporal… Catalog cases stay NOT_RUN. Not R1-complete.</p>
     <div class="row">
       <button id="btn-http" type="button">Run fixture HTTP</button>
       <button id="btn-dom" type="button">Run fixture DOM</button>
@@ -565,6 +569,18 @@ export function monitoringPage(apiOrigin: string): string {
     if (lead.currentFailure && lead.currentFailure.journeyId) {
       lastFailedJourneyId = lead.currentFailure.journeyId;
     }
+    let clusterTemporal = 'NOT_WIRED';
+    try {
+      const rolesStateRes = await api('/roles/state');
+      if (rolesStateRes.ok) {
+        const rolesState = await rolesStateRes.json();
+        clusterTemporal = rolesState.temporalWiring || 'NOT_WIRED';
+      }
+    } catch (_) { /* keep NOT_WIRED */ }
+    document.getElementById('temporal-warn').textContent =
+      clusterTemporal === 'TEMPORAL'
+        ? 'Fixture mode is real offline evidence. Live Zoho is NOT_WIRED. Temporal cluster TEMPORAL (mission path). Lead-capture product surface stays fixture. Catalog cases stay NOT_RUN. Not R1-complete.'
+        : 'Fixture mode is real offline evidence. Live Zoho is NOT_WIRED. Temporal cluster NOT_WIRED. Catalog cases stay NOT_RUN. Not R1-complete.';
     fillRows('lead-status-rows', [
       ['Last SUCCESS', lead.lastSuccess ? (lead.lastSuccess.atIso + ' · ' + lead.lastSuccess.correlationId) : 'none'],
       ['Current FAILURE', lead.currentFailure ? (lead.currentFailure.stage + ': ' + (lead.currentFailure.details || []).join('; ')) : 'none'],
@@ -573,7 +589,8 @@ export function monitoringPage(apiOrigin: string): string {
       ['Synthetic excluded', String((lead.commerce && lead.commerce.syntheticExcludedCount) || 0)],
       ['Live Zoho', lead.liveZohoWiring || 'NOT_WIRED'],
       ['Playwright', lead.playwrightWiring || 'FIXTURE'],
-      ['Temporal', lead.temporalWiring || 'NOT_WIRED'],
+      ['Temporal (cluster probe)', clusterTemporal],
+      ['Temporal (lead-capture surface)', lead.temporalWiring || 'NOT_WIRED'],
       ['R1-complete claim', String(lead.r1CompleteClaim === true)],
     ]);
     fillRows('status-rows', [
@@ -1255,7 +1272,7 @@ export function contentPage(apiOrigin: string): string {
   <section>
     <h2>Content and distribution (M6 / R1-08)</h2>
     <p class="muted">Versioned canonical authoring, claim/source QA, A25 review binding, owned-site + GBP + LinkedIn fixture distribute with per-destination verification.</p>
-    <p class="warn">Live CMS / GBP / social are <strong>NOT_WIRED</strong>. External effects <strong>NONE</strong>. Gateway acceptance ≠ verified. Temporal remains NOT_WIRED. Not R1-complete. Set Authority mode to <strong>operate</strong>.</p>
+    <p class="warn" id="temporal-warn">Live CMS / GBP / social are NOT_WIRED. External effects NONE. Gateway acceptance ≠ verified. Checking Temporal… Not R1-complete. Set Authority mode to operate.</p>
     <div class="row">
       <button id="btn-seed" type="button">Seed fixtures</button>
       <button id="btn-refresh" type="button">Refresh</button>
@@ -1359,12 +1376,25 @@ export function contentPage(apiOrigin: string): string {
     const vars = await varsRes.json();
     const rcpts = await rcptsRes.json();
     const runs = await runsRes.json();
+    let clusterTemporal = 'NOT_WIRED';
+    try {
+      const rolesStateRes = await api('/roles/state');
+      if (rolesStateRes.ok) {
+        const rolesState = await rolesStateRes.json();
+        clusterTemporal = rolesState.temporalWiring || 'NOT_WIRED';
+      }
+    } catch (_) { /* keep */ }
+    document.getElementById('temporal-warn').textContent =
+      'Live CMS / GBP / social are NOT_WIRED. External effects NONE. Gateway acceptance ≠ verified. Temporal cluster ' +
+      clusterTemporal +
+      '. Not R1-complete. Set Authority mode to operate.';
     const tbody = document.getElementById('status-rows');
     tbody.replaceChildren();
     const rows = [
       ['Live CMS', status.liveCmsPublishWiring],
       ['Live GBP', status.liveGbpWiring],
       ['Live social', status.liveSocialWiring],
+      ['Temporal (cluster probe)', clusterTemporal],
       ['Campaigns', String(status.campaignCount ?? 0)],
       ['Articles', String(status.articleCount ?? 0)],
       ['Variants', String(status.variantCount ?? 0)],
@@ -1717,7 +1747,7 @@ export function inboxPage(apiOrigin: string): string {
   <section>
     <h2>Inbox and after-hours (M7 / NEXT-18)</h2>
     <p class="muted">Fixture webhook intake, SUPPORTED-fact replies (draft → queued → sent → delivered), CRM lead coalesce, ownership versioning, human takeover.</p>
-    <p class="warn">Live inbox providers and live Zoho are <strong>NOT_WIRED</strong>. Temporal stays <strong>NOT_WIRED</strong>. Takeover cancels every unsent agent response. Duplicate webhooks coalesce. External effects: none.</p>
+    <p class="warn" id="temporal-warn">Live inbox providers and live Zoho are NOT_WIRED. Checking Temporal… Takeover cancels every unsent agent response. Duplicate webhooks coalesce. External effects: none.</p>
     <div class="row">
       <button id="btn-seed" type="button">Seed fixtures</button>
       <button id="btn-ensure-map" type="button">Ensure fixture mapping</button>
@@ -1838,11 +1868,24 @@ export function inboxPage(apiOrigin: string): string {
     if (!statusRes.ok) { location.href = '/login'; return; }
     const status = await statusRes.json();
     const convs = await convRes.json();
+    let clusterTemporal = 'NOT_WIRED';
+    try {
+      const rolesStateRes = await api('/roles/state');
+      if (rolesStateRes.ok) {
+        const rolesState = await rolesStateRes.json();
+        clusterTemporal = rolesState.temporalWiring || 'NOT_WIRED';
+      }
+    } catch (_) { /* keep */ }
+    document.getElementById('temporal-warn').textContent =
+      'Live inbox providers and live Zoho are NOT_WIRED. Temporal cluster ' +
+      clusterTemporal +
+      '. Takeover cancels every unsent agent response. Duplicate webhooks coalesce. External effects: none.';
     const tbody = document.getElementById('status-rows');
     tbody.replaceChildren();
     const rows = [
       ['Live inbox', status.liveInboxWiring],
       ['Live CRM lead', status.liveCrmLeadWiring],
+      ['Temporal (cluster probe)', clusterTemporal],
       ['Conversations', String(status.conversationCount ?? 0)],
       ['Messages', String(status.messageCount ?? 0)],
       ['Queued', String(status.queuedCount ?? 0)],
@@ -2312,7 +2355,7 @@ export function soakPage(apiOrigin: string): string {
   <section>
     <h2>R1 soak / acceptance evidence (M9)</h2>
     <p class="muted">Fixture crash-restart, no-duplicate-effects, job continuity, and reconcile proofs. Redacted ACCEPTED for T-X014 / T-X020 / T-US-048 only (complete proof sets). T-X066 stays NOT_RUN.</p>
-    <p class="warn">Live CMS/GSC/GA4/Zoho/Temporal <strong>NOT_WIRED</strong>. ChatGPT Ads <strong>access-blocked</strong>. 72h pilot gate uses <strong>server-recorded</strong> start/heartbeat/end only — client claim dates rejected; short runs stay <strong>NOT_MET</strong>. Not R1-complete. Never silently VERIFIED for live.</p>
+    <p class="warn" id="temporal-warn">Live CMS/GSC/GA4/Zoho remain NOT_WIRED. Checking Temporal… ChatGPT Ads access-blocked. 72h pilot gate uses server-recorded start/heartbeat/end only — client claim dates rejected; short runs stay NOT_MET. Not R1-complete. Never silently VERIFIED for live.</p>
     <button id="btn-pilot-start" type="button">Pilot start (server clock)</button>
     <button id="btn-pilot-hb" type="button">Pilot heartbeat</button>
     <button id="btn-run" type="button">Run fixture soak</button>
@@ -2343,6 +2386,18 @@ export function soakPage(apiOrigin: string): string {
     const s = await session.json();
     sessionStorage.setItem('ws_csrf', s.csrfToken);
     document.getElementById('who').textContent = s.username + ' · ' + s.role;
+    let clusterTemporal = 'NOT_WIRED';
+    try {
+      const rolesStateRes = await api('/roles/state');
+      if (rolesStateRes.ok) {
+        const rolesState = await rolesStateRes.json();
+        clusterTemporal = rolesState.temporalWiring || 'NOT_WIRED';
+      }
+    } catch (_) { /* keep */ }
+    document.getElementById('temporal-warn').textContent =
+      'Live CMS/GSC/GA4/Zoho remain NOT_WIRED. Temporal cluster ' +
+      clusterTemporal +
+      '. ChatGPT Ads access-blocked. 72h pilot gate uses server-recorded start/heartbeat/end only — client claim dates rejected; short runs stay NOT_MET. Not R1-complete. Never silently VERIFIED for live.';
     const res = await api('/soak/status');
     document.getElementById('status').textContent = JSON.stringify(await res.json(), null, 2);
   }
@@ -2405,7 +2460,7 @@ export function evalPage(apiOrigin: string): string {
   <section>
     <h2>Evaluation lab (M8 EVAL_ONLY)</h2>
     <p class="muted">Claude / Gemini fixture adjudication. Separate eval budget. No publish / CRM / customer-message tools.</p>
-    <p class="warn">Live model fleet <strong>NOT_WIRED</strong>. ChatGPT Ads <strong>access-blocked</strong>. Temporal <strong>NOT_WIRED</strong>. Catalog cases stay NOT_RUN.</p>
+    <p class="warn" id="temporal-warn">Live model fleet NOT_WIRED. ChatGPT Ads access-blocked. Checking Temporal… Catalog cases stay NOT_RUN.</p>
     <button id="btn-seed" type="button">Seed fixtures</button>
     <button id="btn-run" type="button">Run golden suite</button>
     <button id="btn-ads" type="button">Probe ChatGPT Ads</button>
@@ -2435,6 +2490,18 @@ export function evalPage(apiOrigin: string): string {
     const s = await session.json();
     sessionStorage.setItem('ws_csrf', s.csrfToken);
     document.getElementById('who').textContent = s.username + ' · ' + s.role;
+    let clusterTemporal = 'NOT_WIRED';
+    try {
+      const rolesStateRes = await api('/roles/state');
+      if (rolesStateRes.ok) {
+        const rolesState = await rolesStateRes.json();
+        clusterTemporal = rolesState.temporalWiring || 'NOT_WIRED';
+      }
+    } catch (_) { /* keep */ }
+    document.getElementById('temporal-warn').textContent =
+      'Live model fleet NOT_WIRED. ChatGPT Ads access-blocked. Temporal cluster ' +
+      clusterTemporal +
+      '. Catalog cases stay NOT_RUN.';
     const res = await api('/eval/status');
     document.getElementById('status').textContent = JSON.stringify(await res.json(), null, 2);
   }

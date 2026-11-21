@@ -39,6 +39,8 @@ Compose: `deploy/temporal/docker-compose.yml`.
    `WORKSOCIAL_TEMPORAL_ALLOW_MEMORY=1`
 4. Crash/restart proven via `@temporalio/testing` local server (`pnpm test:workflow`)
 5. History replay via `Worker.runReplayHistory`
+6. Live compose e2e (CI): `pnpm test:temporal-compose` against
+   `deploy/temporal/docker-compose.yml` — API → Temporal → PG
 
 API: `bindTemporalMissionEnqueue` injects `createTemporalMissionClient` when the
 frontend is reachable so missions start Temporal workflows (not in-process Claude).

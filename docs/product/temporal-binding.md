@@ -56,6 +56,22 @@ pnpm local:start   # temporal-worker slot runs real worker when address is set
 Without Docker, `pnpm test:workflow` uses `@temporalio/testing` `createLocal()`
 (embedded test server) to prove crash/restart / replay / single apply.
 
+## CI compose path
+
+GitHub Actions job `temporal-compose` starts `deploy/temporal/docker-compose.yml`
+(`temporalio/auto-setup`) plus app Postgres, then runs:
+
+```bash
+WORKSOCIAL_TEMPORAL_COMPOSE_REQUIRED=1 pnpm test:temporal-compose
+```
+
+That suite proves **API → Temporal → PG**: `/roles/run` starts
+`durableMissionWorkflow`, worker activities write Postgres, outcome `VERIFIED`
+with a single apply. Fixture effects only.
+
+Locally without Docker the suite **skips honestly** unless
+`WORKSOCIAL_TEMPORAL_COMPOSE_REQUIRED=1`.
+
 ## Probe API
 
 - `probeTemporalBinding(env)` — sync env/SDK probe

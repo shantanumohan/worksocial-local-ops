@@ -91,7 +91,7 @@ export function activationPage(apiOrigin: string): string {
   <section>
     <h2>Activation guide</h2>
     <p class="muted">First-time owner path: trusted workspace → connections → pilot site → read-and-draft. Fixture connections are honest — not live providers.</p>
-    <p class="warn">Temporal remains NOT_WIRED. This is not an R1-complete claim. External effects: fixture/simulator only.</p>
+    <p class="warn" id="temporal-warn">Checking Temporal wiring… This is not an R1-complete claim. External effects: fixture/simulator only.</p>
     <div class="row">
       <button id="btn-start" type="button">Start activation</button>
       <button id="btn-seed" type="button" class="secondary">Seed full demo journey</button>
@@ -112,6 +112,18 @@ export function activationPage(apiOrigin: string): string {
 ${apiBootScript(apiOrigin)}
   async function refresh() {
     if (!(await ensureSession())) return;
+    let clusterTemporal = 'NOT_WIRED';
+    try {
+      const rolesStateRes = await api('/roles/state');
+      if (rolesStateRes.ok) {
+        const rolesState = await rolesStateRes.json();
+        clusterTemporal = rolesState.temporalWiring || 'NOT_WIRED';
+      }
+    } catch (_) { /* keep */ }
+    document.getElementById('temporal-warn').textContent =
+      clusterTemporal === 'TEMPORAL'
+        ? 'Temporal cluster TEMPORAL (mission path reachable). This is not an R1-complete claim. External effects: fixture/simulator only.'
+        : 'Temporal cluster NOT_WIRED. This is not an R1-complete claim. External effects: fixture/simulator only.';
     const res = await api('/owner/activation');
     if (!res.ok) { location.href = '/login'; return; }
     const body = await res.json();
