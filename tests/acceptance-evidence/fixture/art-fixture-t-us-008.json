@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-008",
+  "caseId": "T-US-008",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-008 (GA4 debug validation ≠ measured receipt)\nproof=ga4_debug_not_delivered_conversion applyCount=1 :: Debug validation success → debugOk; deliveredConversionClaimed=false | Debug validation reject → debugOk=false; still no delivered conversion claim | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "ga4_debug_not_delivered_conversion"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-008.json",
+  "createdAtIso": "2026-11-21T23:49:21.456Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-008-4cc729288438"
+}

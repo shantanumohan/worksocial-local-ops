@@ -301,6 +301,15 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO),
     ).toEqual(["T-US-010", "T-X033"]);
+    expect(expectedProofsForFixtureCase("T-US-008")).toEqual([
+      SoakProofKind.GA4_DEBUG_NOT_DELIVERED_CONVERSION,
+    ]);
+    expect(expectedProofsForFixtureCase("T-X032")).toEqual([
+      SoakProofKind.GA4_DEBUG_NOT_DELIVERED_CONVERSION,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.GA4_DEBUG_NOT_DELIVERED_CONVERSION),
+    ).toEqual(["T-US-008", "T-X032"]);
   });
 
   it("builds unique per-run artifact ids", () => {
