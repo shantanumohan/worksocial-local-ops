@@ -3,6 +3,7 @@
  * Fixture ≠ sandbox ≠ prod. Ads blocked. No silent live VERIFIED.
  * T-X066 fixture ACCEPTED only via BACKUP_OMIT_RECEIPT (not live VERIFIED).
  * T-F24 / T-US-047 fixture ACCEPTED only via RECOVER_ROTATE_RECONCILE.
+ * T-US-002 / T-X002 fixture ACCEPTED only via COMPETING_SUPERVISOR_LEASE.
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -63,6 +64,8 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X066");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-F24");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-US-047");
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-US-002");
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X002");
 
     const soak = createSoakService(createFileSoakStore(dir));
     const run = await soak.runFixtureSoak({
@@ -82,6 +85,12 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(tf24?.environment).toBe(AcceptanceEnvironment.FIXTURE);
     expect(
       run.run.caseResults.find((c) => c.caseId === "T-US-047")?.status,
+    ).toBe(AcceptanceCaseStatus.ACCEPTED);
+    expect(
+      run.run.caseResults.find((c) => c.caseId === "T-US-002")?.status,
+    ).toBe(AcceptanceCaseStatus.ACCEPTED);
+    expect(
+      run.run.caseResults.find((c) => c.caseId === "T-X002")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
   });
 

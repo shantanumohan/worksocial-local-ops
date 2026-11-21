@@ -672,7 +672,7 @@ Required evidence:
 
 Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixture ACCEPTED below | Environment fixture_or_sandbox; live evidence separately authorized.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-048.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-047, T-US-048.
 
 ### Happy-path / documented flow completions
 - **T-US-001** Create a trusted local workspace (F01/SC-02) — blockers and next actions.
@@ -703,7 +703,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 - **T-US-051** Design/release readiness (F26/SC-23) — release acceptance packet.
 
 ### Failure / gate cases (evidence: blocking decision, preserved inputs, current state, recovery path)
-- **T-US-002** Competing supervisors refused; no duplicate leases.
+- **T-US-002** Competing supervisors refused; no duplicate leases. *(fixture ACCEPTED — competing-supervisor / singleton host-lease proof; not sandbox/prod VERIFIED)*
 - **T-US-004** Unsafe folders / unresolved facts blocked; safe facts usable.
 - **T-US-006** Unbound URL: analysis ok, write blocked.
 - **T-US-008** GA4 debug validation ≠ measured receipt.
@@ -746,18 +746,20 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X014, T-X020, T-X066, T-F24, T-US-047.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X014, T-X020, T-X066, T-F24, T-US-002, T-US-047.
 
 **T-X066** is fixture ACCEPTED only via the backup / omit-receipt / post-restore reconcile proof (`BACKUP_OMIT_RECEIPT`). Retry-only no-duplicate-effects does **not** satisfy this case. Not sandbox/prod VERIFIED.
 
 **T-F24 / T-US-047** are fixture ACCEPTED only via the recover / rotate / reconcile / offboard proof (`RECOVER_ROTATE_RECONCILE`) with the complete F24 evidence set (health timeline, capability stop, rotation record without secrets, reconciliation receipts, recovery test, offboarding manifest + residual obligations). Live provider revoke remains **NOT_WIRED**; never silently VERIFIED for live.
+
+**T-US-002 / T-X002** are fixture ACCEPTED only via the competing-supervisor / singleton host-lease proof (`COMPETING_SUPERVISOR_LEASE`) — second live generation refused, dead-holder reclaim allowed, ownership kill auth fail-closed. Not sandbox/prod VERIFIED.
 
 Shared evidence for each: actual state before/after; instrumented provider call count or read-back; correlated redacted logs/traces; no unauthorized external effect.
 
 | ID | Title | Focus |
 |---|---|---|
 | T-X001 | Host sleeps during scheduled monitoring | Coverage gap honest; coalesce |
-| T-X002 | Two supervisors start together | Single host lease |
+| T-X002 | Two supervisors start together | Single host lease *(fixture ACCEPTED — competing-supervisor lease proof; not sandbox/prod VERIFIED)* |
 | T-X003 | Symlink escape after root verification | Write denied outside root |
 | T-X004 | Disk full during evidence write | No partial completed manifest |
 | T-X005 | Forged browser role | Payload role ignored |
@@ -835,8 +837,8 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | Family | Count | Status |
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
-| T-US (behavior_acceptance) | 60 | 58 NOT_RUN + 2 fixture ACCEPTED (T-US-047, T-US-048) |
-| T-X (platform/security/resilience) | 73 | 70 NOT_RUN + 3 fixture ACCEPTED (T-X014, T-X020, T-X066) |
-| **Total** | **159** | **153 NOT_RUN + 6 fixture ACCEPTED** |
+| T-US (behavior_acceptance) | 60 | 57 NOT_RUN + 3 fixture ACCEPTED (T-US-002, T-US-047, T-US-048) |
+| T-X (platform/security/resilience) | 73 | 69 NOT_RUN + 4 fixture ACCEPTED (T-X002, T-X014, T-X020, T-X066) |
+| **Total** | **159** | **151 NOT_RUN + 8 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

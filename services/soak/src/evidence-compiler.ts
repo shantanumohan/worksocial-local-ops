@@ -46,6 +46,8 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X066": "Backup omits remote receipt",
   "T-F24": "Recover, rotate access and reconcile",
   "T-US-047": "Recover/rotate/reconcile — offboarding manifest",
+  "T-US-002": "Competing supervisors refused; no duplicate leases",
+  "T-X002": "Two supervisors start together — single host lease",
 };
 
 function relatedProofsForCase(
@@ -188,6 +190,7 @@ export function compileAcceptanceEvidence(
     `Compiled ${artifacts.length} redacted artifact(s); ACCEPTED=${caseResults.filter((c) => c.status === "ACCEPTED").length}`,
     "T-X066 fixture ACCEPTED only via BACKUP_OMIT_RECEIPT (not retry-only no-dup)",
     "T-F24/T-US-047 fixture ACCEPTED only via RECOVER_ROTATE_RECONCILE (complete F24 evidence set)",
+    "T-US-002/T-X002 fixture ACCEPTED only via COMPETING_SUPERVISOR_LEASE (singleton host lease)",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
