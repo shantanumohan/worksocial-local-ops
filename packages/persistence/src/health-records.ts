@@ -67,7 +67,7 @@ export function defaultHeartbeat(
     lastHeartbeatAt: nowIso,
     detail:
       serviceId === "temporal-worker"
-        ? "Temporal worker slot is a stub process — Temporal is NOT_WIRED in R1-01."
+        ? "Temporal worker slot defaults to stub until TEMPORAL_ADDRESS binds a real worker (then wiringStatus becomes temporal-wired)."
         : `${serviceId} process slot is stopped.`,
     productionActivated: false,
   };

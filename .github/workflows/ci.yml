@@ -117,7 +117,78 @@ jobs:
       - name: Workflow suite (LOCAL_DURABLE + Temporal local test-server crash/restart)
         run: pnpm test:workflow
 
+  temporal-compose:
+    name: temporal compose e2e (API → Temporal → PG)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: worksocial
+          POSTGRES_PASSWORD: worksocial
+          POSTGRES_DB: worksocial_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U worksocial -d worksocial_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://worksocial:worksocial@localhost:5432/worksocial_test
+      TEMPORAL_ADDRESS: 127.0.0.1:7233
+      TEMPORAL_NAMESPACE: default
+      WORKSOCIAL_TEMPORAL_COMPOSE_REQUIRED: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (pinned)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable Corepack / pnpm (packageManager)
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.0 --activate
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Migrate app Postgres
+        run: pnpm db:migrate
+
+      - name: Start Temporal auto-setup (compose)
+        run: docker compose -f deploy/temporal/docker-compose.yml up -d
+
+      - name: Wait for Temporal frontend (SDK dial)
+        run: |
+          set -e
+          pnpm build:local
+          for i in $(seq 1 90); do
+            if pnpm exec tsx -e "
+              import { Connection } from '@temporalio/client';
+              const c = await Connection.connect({ address: '127.0.0.1:7233', connectTimeout: 2000 });
+              await c.close();
+              console.log('Temporal SDK dial ok');
+            "; then
+              exit 0
+            fi
+            echo "waiting for Temporal SDK dial ($i/90)…"
+            sleep 2
+          done
+          echo "::error::Temporal frontend did not accept SDK connections on 127.0.0.1:7233"
+          docker compose -f deploy/temporal/docker-compose.yml ps || true
+          docker compose -f deploy/temporal/docker-compose.yml logs || true
+          exit 1
+
+      - name: Compose e2e (API → Temporal → PG)
+        run: pnpm test:temporal-compose
+
   # Stub/incomplete suites (security/eval) are NOT required green checks —
   # they must fail (see assert step above).
   # recovery:rehearse + release:evidence are implemented for M9 and required above.
   # test:database and test:workflow are implemented for M2 and required above.
+  # test:temporal-compose is required via the temporal-compose job (Docker auto-setup).

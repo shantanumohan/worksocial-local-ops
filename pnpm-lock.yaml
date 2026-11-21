@@ -644,6 +644,28 @@ importers:
         specifier: 2.1.8
         version: 2.1.8(@types/node@22.10.2)(terser@5.51.4)
 
+  tests/integration:
+    dependencies:
+      '@worksocial/api':
+        specifier: workspace:*
+        version: link:../../apps/api
+      '@worksocial/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
+      '@worksocial/workflow-worker':
+        specifier: workspace:*
+        version: link:../../services/workflow-worker
+    devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)(terser@5.51.4)
+
 packages:
 
   '@esbuild/aix-ppc64@0.21.5':

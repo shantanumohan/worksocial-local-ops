@@ -30,8 +30,9 @@ GitHub Actions workflow `.github/workflows/ci.yml` runs:
 5. `pnpm test:e2e` — fixture e2e-lite (not browser product acceptance)
 6. `pnpm db:migrate` + `pnpm test:database` — Postgres durable execution (M2; service container)
 7. `pnpm test:workflow` — LOCAL_DURABLE mission + Temporal binding probe + Temporal local test-server crash/restart/replay
-8. `pnpm recovery:rehearse` + `pnpm release:evidence` — M9 fixture soak + evidence (must exit 0)
-9. Assert remaining stubs (`test:security`, `test:eval`) **exit non-zero**
+8. `pnpm test:temporal-compose` — CI Docker `temporalio/auto-setup` + API→Temporal→PG e2e (honest skip locally without Temporal)
+9. `pnpm recovery:rehearse` + `pnpm release:evidence` — M9 fixture soak + evidence (must exit 0)
+10. Assert remaining stubs (`test:security`, `test:eval`) **exit non-zero**
 
 Placeholder/stub suites (`test:security`, `test:eval`) must never exit 0 as release passes. Product acceptance cases remain `NOT_RUN` until executed with redacted evidence in their declared environment (fixture ≠ sandbox ≠ authorized production). M9 currently marks **3** cases fixture **ACCEPTED** (T-X014, T-X020, T-US-048); **T-X066** stays **NOT_RUN**.
 
