@@ -62,6 +62,11 @@ export const SoakProofKind = {
    * Self-approval rejected; independent A25 approval required (T-X018 / T-US-054).
    */
   SELF_APPROVAL_REJECTED: "self_approval_rejected",
+  /**
+   * Offboarding retains ACTIVE_TOKEN residual until live revoke (T-X073).
+   * Incomplete until revoked — never claims live provider revoke complete.
+   */
+  OFFBOARD_ACTIVE_TOKEN_RESIDUAL: "offboard_active_token_residual",
 } as const;
 
 export type SoakProofKindValue =
@@ -106,6 +111,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F24 / T-US-047 require RECOVER_ROTATE_RECONCILE (complete F24 evidence set).
  * T-US-002 / T-X002 require COMPETING_SUPERVISOR_LEASE (singleton host lease).
  * T-X018 / T-US-054 require SELF_APPROVAL_REJECTED (independent A25).
+ * T-X073 requires OFFBOARD_ACTIVE_TOKEN_RESIDUAL (incomplete until live revoke).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -119,6 +125,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X002",
   "T-X018",
   "T-US-054",
+  "T-X073",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -475,6 +482,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.SELF_APPROVAL_REJECTED];
     case "T-US-054":
       return [SoakProofKind.SELF_APPROVAL_REJECTED];
+    case "T-X073":
+      return [SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL];
     default:
       return [];
   }
@@ -505,6 +514,8 @@ export function mapProofToFixtureCases(
       return ["T-US-002", "T-X002"];
     case SoakProofKind.SELF_APPROVAL_REJECTED:
       return ["T-X018", "T-US-054"];
+    case SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL:
+      return ["T-X073"];
     default:
       return [];
   }

@@ -746,7 +746,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X014, T-X018, T-X020, T-X066, T-F24, T-US-002, T-US-047, T-US-054.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X014, T-X018, T-X020, T-X066, T-X073, T-F24, T-US-002, T-US-047, T-US-054.
 
 **T-X066** is fixture ACCEPTED only via the backup / omit-receipt / post-restore reconcile proof (`BACKUP_OMIT_RECEIPT`). Retry-only no-duplicate-effects does **not** satisfy this case. Not sandbox/prod VERIFIED.
 
@@ -755,6 +755,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 **T-US-002 / T-X002** are fixture ACCEPTED only via the competing-supervisor / singleton host-lease proof (`COMPETING_SUPERVISOR_LEASE`) — second live generation refused, dead-holder reclaim allowed, ownership kill auth fail-closed. Not sandbox/prod VERIFIED.
 
 **T-X018 / T-US-054** are fixture ACCEPTED only via the self-approval rejected / independent A25 proof (`SELF_APPROVAL_REJECTED`) — ordinary self-approval cannot bind or approve; independent reviewer required. Not sandbox/prod VERIFIED.
+
+**T-X073** is fixture ACCEPTED only via the offboard ACTIVE_TOKEN residual proof (`OFFBOARD_ACTIVE_TOKEN_RESIDUAL`) — offboarding remains incomplete until live provider revoke is wired/performed (`ACTIVE_TOKEN` + `PROVIDER_REVOKE` residuals `BLOCKED_NOT_WIRED`). Live revoke stays **NOT_WIRED**; never silently VERIFIED for live.
 
 Shared evidence for each: actual state before/after; instrumented provider call count or read-back; correlated redacted logs/traces; no unauthorized external effect.
 
@@ -832,7 +834,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X070 | Validated payload not collected | Separate failure states |
 | T-X071 | Local host offline public discovery | Honest unavailability |
 | T-X072 | Customer data leaks into evaluation | Redaction blocks |
-| T-X073 | Offboarding retains active token | Incomplete until revoked |
+| T-X073 | Offboarding retains active token | Incomplete until revoked *(fixture ACCEPTED — offboard ACTIVE_TOKEN residual; live revoke NOT_WIRED; not sandbox/prod VERIFIED)* |
 
 ## Counts
 
@@ -840,7 +842,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
 | T-US (behavior_acceptance) | 60 | 56 NOT_RUN + 4 fixture ACCEPTED (T-US-002, T-US-047, T-US-048, T-US-054) |
-| T-X (platform/security/resilience) | 73 | 68 NOT_RUN + 5 fixture ACCEPTED (T-X002, T-X014, T-X018, T-X020, T-X066) |
-| **Total** | **159** | **149 NOT_RUN + 10 fixture ACCEPTED** |
+| T-X (platform/security/resilience) | 73 | 67 NOT_RUN + 6 fixture ACCEPTED (T-X002, T-X014, T-X018, T-X020, T-X066, T-X073) |
+| **Total** | **159** | **148 NOT_RUN + 11 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

@@ -12,10 +12,11 @@ Fixture (LOCAL_DURABLE) proofs:
 6. Recover → capability stop → rotate (no secrets) → reconcile → offboard (**T-F24** / **T-US-047**)
 7. Competing supervisors / singleton host lease — second live generation refused; dead-holder reclaim; ownership fail-closed (**T-US-002** / **T-X002**)
 8. Self-approval rejected; independent A25 required (**T-X018** / **T-US-054**)
+9. Offboard ACTIVE_TOKEN residual — incomplete until live revoke (**T-X073**)
 
 Acceptance evidence compiler marks selected catalog cases **ACCEPTED** only when the **complete expected proof set** passes with **no failed related proofs**, and only with redacted fixture artifacts. It never silently marks live **VERIFIED**.
 
-Honest fixture ACCEPTED cases: **T-X014**, **T-X020**, **T-US-048**, **T-X066**, **T-F24**, **T-US-047**, **T-US-002**, **T-X002**, **T-X018**, **T-US-054**.
+Honest fixture ACCEPTED cases: **T-X014**, **T-X020**, **T-US-048**, **T-X066**, **T-F24**, **T-US-047**, **T-US-002**, **T-X002**, **T-X018**, **T-US-054**, **T-X073**.
 
 **T-X066** maps only to `BACKUP_OMIT_RECEIPT`. Retry-only `NO_DUPLICATE_EFFECTS` does not satisfy T-X066.
 
@@ -24,6 +25,8 @@ Honest fixture ACCEPTED cases: **T-X014**, **T-X020**, **T-US-048**, **T-X066**,
 **T-US-002 / T-X002** map only to `COMPETING_SUPERVISOR_LEASE`.
 
 **T-X018 / T-US-054** map only to `SELF_APPROVAL_REJECTED`.
+
+**T-X073** maps only to `OFFBOARD_ACTIVE_TOKEN_RESIDUAL` (incomplete until live revoke; not a live revoke success claim).
 
 ## Commands
 
@@ -63,3 +66,4 @@ Suggested owner Windows flow (state off OneDrive):
 | T-F24 / T-US-047 | Fixture ACCEPTED via recover/rotate/reconcile proof only |
 | T-US-002 / T-X002 | Fixture ACCEPTED via competing-supervisor / host-lease proof only |
 | T-X018 / T-US-054 | Fixture ACCEPTED via self-approval rejected / independent A25 proof only |
+| T-X073 | Fixture ACCEPTED via offboard ACTIVE_TOKEN residual only (live revoke NOT_WIRED) |
