@@ -61,4 +61,17 @@ describe("evaluation-worker service", () => {
     expect(svc.attemptTool("publish").allowed).toBe(false);
     expect(svc.attemptTool("judge_answer").allowed).toBe(true);
   });
+
+  it("connectProvider returns ok envelope for fixture connections", () => {
+    const store = createFileEvaluationStore(dir);
+    const svc = createEvaluationService(store);
+    const connected = svc.connectProvider({
+      provider: EvalProvider.CLAUDE,
+      nowIso: now,
+    });
+    expect(connected.ok).toBe(true);
+    if (!connected.ok) return;
+    expect(connected.connection.fixtureOnly).toBe(true);
+    expect(connected.connection.operationalFallback).toBe(false);
+  });
 });

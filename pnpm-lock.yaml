@@ -676,6 +676,34 @@ importers:
         specifier: 2.1.8
         version: 2.1.8(@types/node@22.10.2)(terser@5.51.4)
 
+  tests/eval:
+    dependencies:
+      '@worksocial/credential-broker':
+        specifier: workspace:*
+        version: link:../../services/credential-broker
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@worksocial/evaluation-worker':
+        specifier: workspace:*
+        version: link:../../services/evaluation-worker
+      '@worksocial/ml':
+        specifier: workspace:*
+        version: link:../../packages/ml
+      '@worksocial/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
+    devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)(terser@5.51.4)
+
   tests/integration:
     dependencies:
       '@worksocial/api':

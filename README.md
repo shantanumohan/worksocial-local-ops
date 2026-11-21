@@ -119,7 +119,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 ### M8 Grounded search, analytics, evaluation (NEXT-19)
 - **Grounded semantic search** — public hits cite **SUPPORTED** facts only; UNKNOWN / no-result / clarify stay honest; judgment + remediation ledger (T-F23 shaped).
 - **Analytics read path** — GSC/GA4 **FIXTURE** samples; credentials-without-query → **UNAVAILABLE**; live query transport **NOT_WIRED**. Fixture ≠ sandbox ≠ live. Omitted GSC rows → UNKNOWN (not zero). GA4 debug validation ≠ measured receipt.
-- **Isolated EVAL_ONLY worker** — Claude/Gemini fixture adjudication; no publish/CRM/customer-message tools; separate eval budget; ChatGPT Ads **access-blocked** without verified local transport/entitlement.
+- **Isolated EVAL_ONLY worker (AA-20)** — Claude/Gemini fixture adjudication; no publish/CRM/customer-message tools; separate eval budget; live fleet **NOT_WIRED**; learning cannot expand effects; ChatGPT Ads **access-blocked** without verified local transport/entitlement.
 - Console `/analysis` + `/eval`; APIs `/analysis/*` + `/eval/*` + `/seo/judge-search`.
 - SQL `020_m8_search_analytics_eval.sql` companion; **Temporal NOT_WIRED**. Catalog cases remain **NOT_RUN** unless later fixture evidence is attached. Not an R1-complete claim.
 
@@ -172,7 +172,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 | Live Zoho after-hours lead write | **NOT_WIRED** — fixture CRM receipt only (R1-09) |
 | Live CMS bounded repair | **NOT_WIRED** — fixture canary apply/verify only (R1-10) |
 | Live GSC / GA4 query transport | **NOT_WIRED** — fixture / UNAVAILABLE collectors only (M8) |
-| Live Claude/Gemini eval fleet | **NOT_WIRED** — EVAL_ONLY fixture adjudication (M8) |
+| Live Claude/Gemini eval fleet | **NOT_WIRED** — EVAL_ONLY fixture adjudication (M8/AA-20); `pnpm test:eval` proves isolation offline |
 | ChatGPT Ads | **access-blocked / NOT_WIRED** without verified local transport + entitlement (M8) |
 | 72h R1 pilot soak on owner host | **NOT_MET** in CI — requires documented ≥72h owner soak (M9) |
 
@@ -207,7 +207,8 @@ pnpm test:contract            # … + m9 soak/acceptance + …
 pnpm test:e2e                 # offline e2e-lite including M9 soak (not browser product acceptance)
 pnpm test:database | test:workflow   # M2 durable suites
 pnpm recovery:rehearse | release:evidence | test:soak            # M9 fixture soak + evidence
-pnpm test:security | test:eval                                   # stubs — exit 1 / INCOMPLETE
+pnpm test:eval                                                   # AA-20 offline EVAL_ONLY isolation (not live/catalog VERIFIED)
+pnpm test:security                                               # stub — exit 1 / INCOMPLETE
 ```
 
 VS Code tasks: **WorkSocial: Start / Stop / Diagnostics / Test Local Operations** → supervisor CLI.

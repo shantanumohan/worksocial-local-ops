@@ -1,9 +1,15 @@
-/** M8 / NEXT-19 isolated evaluation worker — EVAL_ONLY Claude/Gemini fixtures. */
+/** AA-20 / M8 isolated evaluation worker — EVAL_ONLY Claude/Gemini fixtures. */
 
 export {
   createEvaluationService,
   type EvaluationService,
 } from "./service.js";
+
+export {
+  createEvaluationWorker,
+  EVALUATION_WORKER_PRINCIPAL,
+  type EvaluationWorker,
+} from "./worker.js";
 
 export {
   EVAL_GOLDEN_SUITE_ID,

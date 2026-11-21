@@ -6,6 +6,7 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import {
+  FIXED_EVALUATION_ISOLATION,
   emptyEvaluationState,
   type EvalConnectionRecord,
   type EvalRunRecord,
@@ -33,6 +34,7 @@ export type EvaluationStore = {
     budgetSettledMinor: number;
     liveEvalWiring: EvaluationState["liveEvalWiring"];
     chatgptAdsWiring: EvaluationState["chatgptAdsWiring"];
+    isolation: EvaluationState["isolation"];
     honestNote: string;
   };
 };
@@ -74,6 +76,7 @@ export function createFileEvaluationStore(stateDir: string): EvaluationStore {
       budget: existing.budget ?? base.budget,
       liveEvalWiring: "NOT_WIRED",
       chatgptAdsWiring: "NOT_WIRED",
+      isolation: { ...FIXED_EVALUATION_ISOLATION },
     };
   };
 
@@ -82,6 +85,7 @@ export function createFileEvaluationStore(stateDir: string): EvaluationStore {
       ...state,
       liveEvalWiring: "NOT_WIRED",
       chatgptAdsWiring: "NOT_WIRED",
+      isolation: { ...FIXED_EVALUATION_ISOLATION },
     });
   };
 
@@ -155,8 +159,9 @@ export function createFileEvaluationStore(stateDir: string): EvaluationStore {
         budgetSettledMinor: state.budget.settledMinor,
         liveEvalWiring: state.liveEvalWiring,
         chatgptAdsWiring: state.chatgptAdsWiring,
+        isolation: state.isolation,
         honestNote:
-          "M8/NEXT-19 isolated EVAL_ONLY worker. Claude/Gemini fixture adjudication only — no publish/CRM/customer-message tools. Separate eval budget. ChatGPT Ads NOT_WIRED / access-blocked. Live model fleet NOT_WIRED. Temporal NOT_WIRED. Catalog cases remain NOT_RUN.",
+          "AA-20/M8 isolated EVAL_ONLY worker. Claude/Gemini fixture adjudication only — no publish/CRM/customer-message tools. Separate eval budget. ChatGPT Ads NOT_WIRED / access-blocked. Live model fleet NOT_WIRED. Learning cannot expand effects. Temporal NOT_WIRED. Catalog cases remain NOT_RUN.",
       };
     },
   };

@@ -5,7 +5,10 @@ import {
   EvalCapability,
   EvalProvider,
   EvalToolClass,
+  EVALUATION_WORKER_PRINCIPAL,
+  FIXED_EVALUATION_ISOLATION,
   adjudicateGroundedEvalCase,
+  assertEvaluationWorkerIsolation,
   createEvalConnection,
   emptyEvaluationState,
   evaluateEvalToolAttempt,
@@ -16,6 +19,22 @@ import {
 const now = "2026-11-21T18:00:00.000Z";
 
 describe("evaluation — EVAL_ONLY isolation", () => {
+  it("asserts fixed isolation context (no gateway write / effect credentials)", () => {
+    expect(() =>
+      assertEvaluationWorkerIsolation(FIXED_EVALUATION_ISOLATION),
+    ).not.toThrow();
+    expect(FIXED_EVALUATION_ISOLATION.principal).toBe(
+      EVALUATION_WORKER_PRINCIPAL,
+    );
+    expect(FIXED_EVALUATION_ISOLATION.learningCannotExpandEffects).toBe(true);
+    expect(() =>
+      assertEvaluationWorkerIsolation({
+        ...FIXED_EVALUATION_ISOLATION,
+        hasActionGatewayWritePrincipal: true as unknown as false,
+      }),
+    ).toThrow(/action-gateway write principal/i);
+  });
+
   it("creates connections as EVAL_ONLY with no operational fallback", () => {
     const conn = createEvalConnection({
       connectionId: "eval-claude-1",
@@ -25,6 +44,13 @@ describe("evaluation — EVAL_ONLY isolation", () => {
     });
     expect(conn.capability).toBe(EvalCapability.EVAL_ONLY);
     expect(conn.operationalFallback).toBe(false);
+  });
+
+  it("empty state pins live fleet NOT_WIRED and isolation flags", () => {
+    const state = emptyEvaluationState(now);
+    expect(state.liveEvalWiring).toBe("NOT_WIRED");
+    expect(state.chatgptAdsWiring).toBe("NOT_WIRED");
+    expect(state.isolation).toEqual(FIXED_EVALUATION_ISOLATION);
   });
 
   it("blocks publish / CRM / customer-message tools (T-X037)", () => {
