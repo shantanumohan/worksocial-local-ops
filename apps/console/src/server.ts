@@ -12,6 +12,7 @@ import {
   inboxPage,
   repairPage,
   analysisPage,
+  paidPage,
   evalPage,
   soakPage,
   recoveryPage,
@@ -40,9 +41,9 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
         status: "running",
         productionActivated: false,
         identity:
-          "M9 soak/acceptance + M8 analysis/eval + M6–M7 + M4 owner staging + R1-02–R1-10 console pages",
+          "AA-19 paid-media + M9 soak/acceptance + M8 analysis/eval + M6–M7 + M4 owner staging + R1-02–R1-10 console pages",
         message:
-          "Progressive console: activation → connections → sites → missions → review → evidence + analysis + eval + soak. Not full React routes. Not R1-complete.",
+          "Progressive console: activation → connections → sites → missions → review → evidence + analysis + paid + eval + soak. Not full React routes. Not R1-complete.",
       });
       res.writeHead(200, { "content-type": "application/json" });
       res.end(body);
@@ -154,6 +155,12 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
     if (url.pathname === "/analysis") {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       res.end(analysisPage(options.apiOrigin));
+      return;
+    }
+
+    if (url.pathname === "/paid") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(paidPage(options.apiOrigin));
       return;
     }
 

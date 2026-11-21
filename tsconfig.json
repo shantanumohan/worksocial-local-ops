@@ -26,6 +26,7 @@
     { "path": "services/lead-capture" },
     { "path": "services/evaluation-worker" },
     { "path": "services/soak" },
-    { "path": "services/recovery" }
+    { "path": "services/recovery" },
+    { "path": "services/paid-media" }
   ]
 }

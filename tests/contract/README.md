@@ -8,5 +8,6 @@ Focused offline contracts (no live providers):
 - `thirty-role-runtime.contract.test.ts` — 30 roles; fixture evaluations; no uncontrolled recursion; self-approval denied; permission bypass refused
 - `learning-worker.contract.test.ts` — multi-model registry; fixture exclusion; authority non-bypass; learning-worker isolation; offline train/predict
 - `evaluation-worker.contract.test.ts` — AA-20 EVAL_ONLY isolation; LIVE_NOT_WIRED; broker deny; Ads blocked; learning cannot expand effects
+- `paid-media-proposals.contract.test.ts` — AA-19 analysis hypotheses + Google Ads fixture proposals; ChatGPT Ads ACCESS_BLOCKED; live execute NOT_WIRED; external effects NONE
 
 Run: `pnpm test:contract`

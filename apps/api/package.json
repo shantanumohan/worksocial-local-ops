@@ -35,6 +35,7 @@
     "@worksocial/evaluation-worker": "workspace:*",
     "@worksocial/soak": "workspace:*",
     "@worksocial/recovery": "workspace:*",
+    "@worksocial/paid-media": "workspace:*",
     "@worksocial/probes": "workspace:*",
     "@worksocial/provider-adapters": "workspace:*",
     "@worksocial/workflow-worker": "workspace:*"
