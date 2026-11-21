@@ -31,8 +31,7 @@ describe("soak service (M9)", () => {
     expect(result.allPassed).toBe(true);
     expect(result.proofs).toHaveLength(14);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
-    expect(result.proofs.every((p) => p.applyAttemptCount === 1)).toBe(true);
-    expect(
+    expect(result.proofs.every((p) => p.applyAttemptCount === 1)).toBe(true);    expect(
       result.proofs.some((p) => p.kind === SoakProofKind.BACKUP_OMIT_RECEIPT),
     ).toBe(true);
     expect(

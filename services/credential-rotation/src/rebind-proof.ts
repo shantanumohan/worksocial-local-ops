@@ -185,13 +185,16 @@ export async function runExplicitAccountRebindProof(input: {
     );
 
     const durableRebinds = await svc.listRebinds();
-    if (durableRebinds.length !== 1) {
+    const thisRebind = durableRebinds.filter(
+      (r) => r.rebindId === rebound.rebind.rebindId,
+    );
+    if (thisRebind.length !== 1) {
       return failProof(
         operationId,
         input.nowIso,
         measuredApplyAttempts,
         details.concat([
-          `Expected exactly one durable rebind record; got ${durableRebinds.length}`,
+          `Expected exactly one durable rebind record for rebindId=${rebound.rebind.rebindId}; matched=${thisRebind.length} total=${durableRebinds.length}`,
         ]),
       );
     }

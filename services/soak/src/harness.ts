@@ -576,7 +576,6 @@ export async function runSoakRecoveryHarness(input: {
       nowIso: nowPlus(nowIso, 130_000),
     }),
   );
-
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,

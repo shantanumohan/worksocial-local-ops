@@ -89,6 +89,7 @@ export async function proofRecoverRotateReconcile(
     connectionId: seeded.connection.connectionId,
     approvedBy: "fixture-admin",
     secretMaterial: "rotated-secret-material-do-not-leak",
+    observedAccountLabel: seeded.connection.accountLabel,
     nowIso: nowPlus(nowIso, 300),
   });
   if (!rotated.ok) {
