@@ -46,6 +46,8 @@ export const SoakProofKind = {
   NO_DUPLICATE_EFFECTS: "no_duplicate_effects",
   JOB_CONTINUITY: "job_continuity",
   UNKNOWN_REMOTE_RECONCILE: "unknown_remote_reconcile",
+  /** Backup restore that omitted the remote receipt; reconcile before retry. */
+  BACKUP_OMIT_RECEIPT: "backup_omit_receipt",
 } as const;
 
 export type SoakProofKindValue =
@@ -86,21 +88,21 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
 
 /**
  * Catalog cases the fixture soak/evidence harness can honestly ACCEPTED offline.
- * T-X066 (backup omits remote receipt) is intentionally excluded until a real
- * backup/omit-receipt/reconcile proof exists — retry-only no-dup is not enough.
+ * T-X066 requires BACKUP_OMIT_RECEIPT (not retry-only NO_DUPLICATE_EFFECTS).
+ * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
   "T-X014",
   "T-X020",
   "T-US-048",
+  "T-X066",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
 
-/** Related catalog IDs including pending (NOT_RUN) backup case T-X066. */
+/** Related catalog IDs (fixture ACCEPTED set + adjacent recovery/ads cases). */
 export const SOAK_RELATED_CASE_IDS: readonly string[] = [
   ...SOAK_FIXTURE_CASE_IDS,
-  "T-X066",
   "T-F24",
   "T-US-047",
   "T-F07",
@@ -437,6 +439,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.UNKNOWN_REMOTE_RECONCILE];
     case "T-US-048":
       return [SoakProofKind.UNKNOWN_REMOTE_RECONCILE];
+    case "T-X066":
+      return [SoakProofKind.BACKUP_OMIT_RECEIPT];
     default:
       return [];
   }
@@ -444,8 +448,8 @@ export function expectedProofsForFixtureCase(
 
 /**
  * Map a proof kind to catalog cases it honestly exercises.
- * NO_DUPLICATE_EFFECTS is intentionally unmapped: T-X066 requires a backup /
- * omit-receipt / post-restore reconcile exercise that the retry-only proof does not perform.
+ * NO_DUPLICATE_EFFECTS stays unmapped: T-X066 requires BACKUP_OMIT_RECEIPT
+ * (backup / omit-receipt / post-restore reconcile), not retry-only no-dup.
  */
 export function mapProofToFixtureCases(
   kind: SoakProofKindValue,
@@ -459,6 +463,8 @@ export function mapProofToFixtureCases(
       return [];
     case SoakProofKind.JOB_CONTINUITY:
       return ["T-X014"];
+    case SoakProofKind.BACKUP_OMIT_RECEIPT:
+      return ["T-X066"];
     default:
       return [];
   }

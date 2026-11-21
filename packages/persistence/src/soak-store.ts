@@ -208,7 +208,7 @@ export function createFileSoakStore(stateDir: string): SoakStore {
         chatgptAdsWiring: "NOT_WIRED",
         r1CompleteClaimed: false,
         honestNote:
-          "M9 soak / acceptance evidence harness. Fixture proofs only. Live CMS/GSC/GA4/Zoho/Temporal NOT_WIRED. ChatGPT Ads access-blocked. ACCEPTED requires redacted evidence and complete proof set; never silently VERIFIED for live. Pilot gate uses server-recorded observations only. T-X066 remains NOT_RUN until backup/omit-receipt proof. Short CI soaks do not satisfy the 72h pilot gate. Not R1-complete.",
+          "M9 soak / acceptance evidence harness. Fixture proofs only. Live CMS/GSC/GA4/Zoho/Temporal NOT_WIRED. ChatGPT Ads access-blocked. ACCEPTED requires redacted evidence and complete proof set; never silently VERIFIED for live. Pilot gate uses server-recorded observations only. T-X066 fixture ACCEPTED via backup/omit-receipt proof (not live VERIFIED). Short CI soaks do not satisfy the 72h pilot gate. Not R1-complete.",
       };
     },
   };

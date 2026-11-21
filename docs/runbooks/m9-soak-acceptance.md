@@ -8,12 +8,13 @@ Fixture (LOCAL_DURABLE) proofs:
 2. Idempotent retry does not create duplicate provider effects
 3. Job rows survive process restart via durable idempotency keys
 4. Unknown-remote reconcile reads the provider ledger before verify
+5. Backup that omits the remote receipt → restore → reconcile from remote SoR → no duplicate apply (**T-X066**)
 
 Acceptance evidence compiler marks selected catalog cases **ACCEPTED** only when the **complete expected proof set** passes with **no failed related proofs**, and only with redacted fixture artifacts. It never silently marks live **VERIFIED**.
 
-Honest fixture ACCEPTED cases: **T-X014**, **T-X020**, **T-US-048**.
+Honest fixture ACCEPTED cases: **T-X014**, **T-X020**, **T-US-048**, **T-X066**.
 
-**T-X066** (Backup omits remote receipt) stays **NOT_RUN** until a real backup / omit-receipt / post-restore reconcile proof exists. Retry-only no-duplicate-effects does not map to T-X066.
+**T-X066** maps only to `BACKUP_OMIT_RECEIPT`. Retry-only `NO_DUPLICATE_EFFECTS` does not satisfy T-X066.
 
 ## Commands
 
@@ -26,7 +27,7 @@ pnpm test:soak                  # unit/contract soak package
 
 ## 72h pilot gate (owner host)
 
-Short CI soaks leave `pilotGate=NOT_MET`. A real R1 pilot gate requires a continuous ≥72h window with server-recorded start / heartbeat / end observations and all four proofs still passing.
+Short CI soaks leave `pilotGate=NOT_MET`. A real R1 pilot gate requires a continuous ≥72h window with server-recorded start / heartbeat / end observations and the four core recovery proofs still passing (crash-restart, no-dup, job continuity, unknown-remote reconcile). The backup/omit-receipt proof feeds T-X066 fixture ACCEPTED; it is not a substitute for the 72h pilot window.
 
 **Client-supplied `startedAtIso` / `endedAtIso` claim dates are rejected.** Duration is derived only from server-recorded observations.
 
@@ -49,4 +50,4 @@ Suggested owner Windows flow (state off OneDrive):
 | authorized production | Distinct; not claimed by this harness |
 | VERIFIED (live) | Forbidden without explicit authorized-production evidence package |
 | ChatGPT Ads | Access-blocked without transport + entitlement |
-| T-X066 | NOT_RUN until backup/omit-receipt proof |
+| T-X066 | Fixture ACCEPTED via backup/omit-receipt proof only |

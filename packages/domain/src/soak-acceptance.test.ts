@@ -136,13 +136,19 @@ describe("soak-acceptance domain", () => {
     expect(forgedAsObs.reasons.some((r) => /gap/i.test(r))).toBe(true);
   });
 
-  it("does not map NO_DUPLICATE_EFFECTS to T-X066 (backup case stays unmapped)", () => {
+  it("maps BACKUP_OMIT_RECEIPT to T-X066; NO_DUPLICATE_EFFECTS stays unmapped", () => {
     expect(mapProofToFixtureCases(SoakProofKind.NO_DUPLICATE_EFFECTS)).toEqual(
       [],
     );
+    expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
+      "T-X066",
+    ]);
     expect(expectedProofsForFixtureCase("T-X014")).toEqual([
       SoakProofKind.CRASH_RESTART,
       SoakProofKind.JOB_CONTINUITY,
+    ]);
+    expect(expectedProofsForFixtureCase("T-X066")).toEqual([
+      SoakProofKind.BACKUP_OMIT_RECEIPT,
     ]);
   });
 

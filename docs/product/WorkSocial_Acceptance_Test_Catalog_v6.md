@@ -746,9 +746,9 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X014, T-X020.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X014, T-X020, T-X066.
 
-**Explicitly NOT_RUN pending true exercise:** T-X066 (Backup omits remote receipt) — retry-only no-duplicate-effects proof does **not** satisfy this case; requires backup / omit-receipt / post-restore reconcile.
+**T-X066** is fixture ACCEPTED only via the backup / omit-receipt / post-restore reconcile proof (`BACKUP_OMIT_RECEIPT`). Retry-only no-duplicate-effects does **not** satisfy this case. Not sandbox/prod VERIFIED.
 
 Shared evidence for each: actual state before/after; instrumented provider call count or read-back; correlated redacted logs/traces; no unauthorized external effect.
 
@@ -819,7 +819,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X063 | Indirect prompt-injection exfiltration | Boundary denies |
 | T-X064 | SSRF redirect and DNS rebind | Blocked every hop |
 | T-X065 | Worker reads browser auth state | OS deny |
-| T-X066 | Backup omits remote receipt | Reconcile; no duplicate *(NOT_RUN — needs backup/omit-receipt proof)* |
+| T-X066 | Backup omits remote receipt | Reconcile; no duplicate *(fixture ACCEPTED — backup/omit-receipt proof; not sandbox/prod VERIFIED)* |
 | T-X067 | Incompatible workflow upgrade | Blocked or compatible retained |
 | T-X068 | Thirty alerts one outage | Grouped incident |
 | T-X069 | Imported document becomes instructions | Quarantined as data |
@@ -834,7 +834,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | NOT_RUN |
 | T-US (behavior_acceptance) | 60 | 59 NOT_RUN + 1 fixture ACCEPTED (T-US-048) |
-| T-X (platform/security/resilience) | 73 | 71 NOT_RUN + 2 fixture ACCEPTED (T-X014, T-X020); T-X066 remains NOT_RUN |
-| **Total** | **159** | **156 NOT_RUN + 3 fixture ACCEPTED** |
+| T-X (platform/security/resilience) | 73 | 70 NOT_RUN + 3 fixture ACCEPTED (T-X014, T-X020, T-X066) |
+| **Total** | **159** | **155 NOT_RUN + 4 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

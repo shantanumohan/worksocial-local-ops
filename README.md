@@ -146,7 +146,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 
 ### M9 R1 soak / acceptance evidence (NEXT-20)
 - **Soak / recovery harness** — crash-restart, no duplicate effects, job continuity, unknown-remote reconcile on file-durable LOCAL_DURABLE stores (`pnpm recovery:rehearse`).
-- **Acceptance evidence compiler** — selected catalog cases (T-X014 / T-X020 / T-US-048) may become **ACCEPTED** only with the complete expected proof set and redacted fixture artifacts (`pnpm release:evidence`). **T-X066** stays **NOT_RUN** until a backup/omit-receipt proof exists. Never silently **VERIFIED** for live.
+- **Acceptance evidence compiler** — selected catalog cases (T-X014 / T-X020 / T-US-048 / T-X066) may become **ACCEPTED** only with the complete expected proof set and redacted fixture artifacts (`pnpm release:evidence`). **T-X066** requires the backup/omit-receipt proof (not retry-only no-dup). Never silently **VERIFIED** for live.
 - **72h pilot gate** — duration from **server-recorded** start/heartbeat/end only (client claim dates rejected); short CI soaks stay `pilotGate=NOT_MET`. Owner Windows 72h soak documented in `docs/runbooks/m9-soak-acceptance.md`.
 - Console `/soak`; APIs `/soak/status` · `/soak/run` · `/soak/report` · `/soak/cases`.
 - SQL `021_m9_soak_acceptance.sql` companion; live CMS/GSC/GA4/Zoho **NOT_WIRED**; Temporal prod/Windows still **NOT_WIRED** (local bind optional). ChatGPT Ads **access-blocked**. **Not R1-complete.**
