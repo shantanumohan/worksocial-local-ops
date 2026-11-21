@@ -1,11 +1,11 @@
 {
-  "compiledAtIso": "2026-11-21T19:05:00.000Z",
+  "compiledAtIso": "2026-11-21T19:58:59.011Z",
   "environment": "fixture",
   "r1CompleteClaimed": false,
   "pilotGate": {
     "status": "NOT_MET",
     "requiredMs": 259200000,
-    "observedMs": 300000,
+    "observedMs": 9,
     "proofsRequired": [
       "crash_restart",
       "no_duplicate_effects",
@@ -19,8 +19,9 @@
       "unknown_remote_reconcile"
     ],
     "reasons": [
-      "Soak duration 300000ms < required 259200000ms (72h pilot gate)"
-    ]
+      "Soak duration 9ms < required 259200000ms (72h pilot gate)"
+    ],
+    "serverObservationsOnly": true
   },
   "chatgptAds": {
     "allowed": false,
@@ -42,10 +43,11 @@
       "environment": "fixture",
       "artifactId": "art-fixture-t-x014",
       "reasons": [
-        "Fixture evidence compiled from 2 soak proof(s)",
+        "Fixture evidence compiled from complete proof set (2)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T19:05:00.000Z"
+      "updatedAtIso": "2026-11-21T19:58:59.011Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x014-b9ced36d3282"
     },
     {
       "caseId": "T-X020",
@@ -53,21 +55,11 @@
       "environment": "fixture",
       "artifactId": "art-fixture-t-x020",
       "reasons": [
-        "Fixture evidence compiled from 1 soak proof(s)",
+        "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T19:05:00.000Z"
-    },
-    {
-      "caseId": "T-X066",
-      "status": "ACCEPTED",
-      "environment": "fixture",
-      "artifactId": "art-fixture-t-x066",
-      "reasons": [
-        "Fixture evidence compiled from 1 soak proof(s)",
-        "Not sandbox-verified; not production-canary-verified"
-      ],
-      "updatedAtIso": "2026-11-21T19:05:00.000Z"
+      "updatedAtIso": "2026-11-21T19:58:59.011Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x020-b9ced36d3282"
     },
     {
       "caseId": "T-US-048",
@@ -75,10 +67,11 @@
       "environment": "fixture",
       "artifactId": "art-fixture-t-us-048",
       "reasons": [
-        "Fixture evidence compiled from 1 soak proof(s)",
+        "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T19:05:00.000Z"
+      "updatedAtIso": "2026-11-21T19:58:59.011Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-048-b9ced36d3282"
     }
   ],
   "artifacts": [
@@ -87,58 +80,92 @@
       "caseId": "T-X014",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X014 (Approval wait survives restart)\nproof=crash_restart applyCount=1 :: Accepted ACCEPTED_PENDING applyCount=1 | Rehydrated ACCEPTED_PENDING after restart | Verified matched=true applyCount=1\nproof=job_continuity applyCount=1 :: Job job-bb44be4f5d03e073 recorded | After restart created=false sameJob=true\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X014 (Approval wait survives restart)\nproof=crash_restart applyCount=1 :: Accepted ACCEPTED_PENDING applyCount=1 | Rehydrated ACCEPTED_PENDING after restart | Verified matched=true applyCount=1\nproof=job_continuity applyCount=1 :: Job job-831aca3d6826e871 recorded | After restart created=false sameJob=true\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "crash_restart",
         "job_continuity"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x014.json",
-      "createdAtIso": "2026-11-21T19:05:00.000Z",
+      "createdAtIso": "2026-11-21T19:58:59.011Z",
       "liveProviderSuccessClaimed": false,
-      "externalEffects": "NONE"
+      "externalEffects": "NONE",
+      "uniqueSourceArtifactId": "art-fixture-t-x014-b9ced36d3282"
     },
     {
       "artifactId": "art-fixture-t-x020",
       "caseId": "T-X020",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X020 (Timeout after provider acceptance)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-a919364a without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X020 (Timeout after provider acceptance)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-2b598027 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "unknown_remote_reconcile"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x020.json",
-      "createdAtIso": "2026-11-21T19:05:00.000Z",
+      "createdAtIso": "2026-11-21T19:58:59.011Z",
       "liveProviderSuccessClaimed": false,
-      "externalEffects": "NONE"
-    },
-    {
-      "artifactId": "art-fixture-t-x066",
-      "caseId": "T-X066",
-      "environment": "fixture",
-      "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X066 (Backup omits remote receipt)\nproof=no_duplicate_effects applyCount=1 :: First apply created=true | Retry providerCreated=false applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
-        "no_duplicate_effects"
-      ],
-      "evidenceRef": "soak/evidence/art-fixture-t-x066.json",
-      "createdAtIso": "2026-11-21T19:05:00.000Z",
-      "liveProviderSuccessClaimed": false,
-      "externalEffects": "NONE"
+      "externalEffects": "NONE",
+      "uniqueSourceArtifactId": "art-fixture-t-x020-b9ced36d3282"
     },
     {
       "artifactId": "art-fixture-t-us-048",
       "caseId": "T-US-048",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-US-048 (Unknown remote effects reconciled before resume)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-a919364a without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-048 (Unknown remote effects reconciled before resume)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-2b598027 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "unknown_remote_reconcile"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-048.json",
-      "createdAtIso": "2026-11-21T19:05:00.000Z",
+      "createdAtIso": "2026-11-21T19:58:59.011Z",
+      "liveProviderSuccessClaimed": false,
+      "externalEffects": "NONE",
+      "uniqueSourceArtifactId": "art-fixture-t-us-048-b9ced36d3282"
+    }
+  ],
+  "uniqueRunArtifacts": [
+    {
+      "artifactId": "art-fixture-t-x014-b9ced36d3282",
+      "caseId": "T-X014",
+      "environment": "fixture",
+      "redacted": true,
+      "summary": "Fixture ACCEPTED for T-X014 (Approval wait survives restart)\nproof=crash_restart applyCount=1 :: Accepted ACCEPTED_PENDING applyCount=1 | Rehydrated ACCEPTED_PENDING after restart | Verified matched=true applyCount=1\nproof=job_continuity applyCount=1 :: Job job-831aca3d6826e871 recorded | After restart created=false sameJob=true\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "proofKinds": [
+        "crash_restart",
+        "job_continuity"
+      ],
+      "evidenceRef": "soak/evidence/art-fixture-t-x014-b9ced36d3282.json",
+      "createdAtIso": "2026-11-21T19:58:59.011Z",
+      "liveProviderSuccessClaimed": false,
+      "externalEffects": "NONE"
+    },
+    {
+      "artifactId": "art-fixture-t-x020-b9ced36d3282",
+      "caseId": "T-X020",
+      "environment": "fixture",
+      "redacted": true,
+      "summary": "Fixture ACCEPTED for T-X020 (Timeout after provider acceptance)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-2b598027 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "proofKinds": [
+        "unknown_remote_reconcile"
+      ],
+      "evidenceRef": "soak/evidence/art-fixture-t-x020-b9ced36d3282.json",
+      "createdAtIso": "2026-11-21T19:58:59.011Z",
+      "liveProviderSuccessClaimed": false,
+      "externalEffects": "NONE"
+    },
+    {
+      "artifactId": "art-fixture-t-us-048-b9ced36d3282",
+      "caseId": "T-US-048",
+      "environment": "fixture",
+      "redacted": true,
+      "summary": "Fixture ACCEPTED for T-US-048 (Unknown remote effects reconciled before resume)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-2b598027 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "proofKinds": [
+        "unknown_remote_reconcile"
+      ],
+      "evidenceRef": "soak/evidence/art-fixture-t-us-048-b9ced36d3282.json",
+      "createdAtIso": "2026-11-21T19:58:59.011Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     }
   ],
-  "note": "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. Not R1-complete."
+  "note": "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 NOT_RUN until backup proof. Not R1-complete."
 }

@@ -1,6 +1,7 @@
 /**
  * Contract: M9 soak proofs + evidence compiler honesty.
  * Fixture ≠ sandbox ≠ prod. Ads blocked. No silent live VERIFIED.
+ * T-X066 stays NOT_RUN until backup/omit-receipt proof exists.
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -40,6 +41,7 @@ describe("contract: M9 soak / acceptance evidence", () => {
     const compiled = compileAcceptanceEvidence({
       proofs: harness.proofs,
       nowIso: "2026-11-21T19:01:00.000Z",
+      runId: "soak-contract-1",
     });
     expect(compiled.chatgptAds.allowed).toBe(false);
     expect(compiled.blockedLiveVerified).toBe(true);
@@ -57,15 +59,20 @@ describe("contract: M9 soak / acceptance evidence", () => {
       expect(check.ok).toBe(true);
     }
 
+    expect(SOAK_FIXTURE_CASE_IDS).not.toContain("T-X066");
+
     const soak = createSoakService(createFileSoakStore(dir));
     const run = await soak.runFixtureSoak({
-      startedAtIso: "2026-11-21T19:00:00.000Z",
-      endedAtIso: "2026-11-21T19:05:00.000Z",
+      harnessNowIso: "2026-11-21T19:00:00.000Z",
     });
     expect(run.ok).toBe(true);
     expect(run.run.pilotGate.status).toBe(PilotGateStatus.NOT_MET);
+    expect(run.run.pilotGate.serverObservationsOnly).toBe(true);
     expect(run.run.r1CompleteClaimed).toBe(false);
     expect(run.run.liveWiring.cms).toBe("NOT_WIRED");
+    expect(
+      run.run.caseResults.every((c) => c.caseId !== "T-X066"),
+    ).toBe(true);
   });
 
   it("rejects silent VERIFIED status for live claims", () => {

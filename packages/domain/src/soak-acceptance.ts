@@ -5,6 +5,7 @@
  * Catalog cases may be NOT_RUN or ACCEPTED (with real evidence only).
  * Never silently VERIFIED for live. ChatGPT Ads stays blocked without transport.
  * 72h pilot gate is explicit — short CI soaks prove mechanics, not R1-complete.
+ * Pilot duration uses server-recorded start/heartbeat/end observations only.
  * Pure types + validators. No network I/O.
  */
 
@@ -59,21 +60,47 @@ export const PilotGateStatus = {
 export type PilotGateStatusValue =
   (typeof PilotGateStatus)[keyof typeof PilotGateStatus];
 
+export const PilotObservationKind = {
+  START: "start",
+  HEARTBEAT: "heartbeat",
+  END: "end",
+} as const;
+
+export type PilotObservationKindValue =
+  (typeof PilotObservationKind)[keyof typeof PilotObservationKind];
+
+/**
+ * Server-recorded pilot soak observation. Callers must never supply claim dates —
+ * only the host clock may mint `recordedAtIso`.
+ */
+export type PilotGateObservation = {
+  kind: PilotObservationKindValue;
+  recordedAtIso: string;
+};
+
 /** Default R1 pilot soak window (72 hours). */
 export const PILOT_SOAK_REQUIRED_MS = 72 * 60 * 60 * 1000;
 
-/** Catalog cases the fixture soak/evidence harness can exercise offline. */
+/** Max gap between consecutive server observations for continuity (6 hours). */
+export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
+
+/**
+ * Catalog cases the fixture soak/evidence harness can honestly ACCEPTED offline.
+ * T-X066 (backup omits remote receipt) is intentionally excluded until a real
+ * backup/omit-receipt/reconcile proof exists — retry-only no-dup is not enough.
+ */
 export const SOAK_FIXTURE_CASE_IDS = [
   "T-X014",
   "T-X020",
-  "T-X066",
   "T-US-048",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
 
+/** Related catalog IDs including pending (NOT_RUN) backup case T-X066. */
 export const SOAK_RELATED_CASE_IDS: readonly string[] = [
   ...SOAK_FIXTURE_CASE_IDS,
+  "T-X066",
   "T-F24",
   "T-US-047",
   "T-F07",
@@ -126,6 +153,8 @@ export type SoakRunRecord = {
   proofs: SoakProofRecord[];
   caseResults: AcceptanceCaseEvidenceRecord[];
   pilotGate: PilotGateEvaluation;
+  /** Server-recorded observations used for this run's gate evaluation. */
+  pilotObservations: PilotGateObservation[];
   chatgptAds: {
     allowed: false;
     wiring: "NOT_WIRED";
@@ -150,6 +179,8 @@ export type PilotGateEvaluation = {
   proofsRequired: SoakProofKindValue[];
   proofsPassed: SoakProofKindValue[];
   reasons: string[];
+  /** True when duration came from server observations (never client claim dates). */
+  serverObservationsOnly: true;
 };
 
 export type SoakAcceptanceState = {
@@ -158,6 +189,8 @@ export type SoakAcceptanceState = {
   runs: SoakRunRecord[];
   artifacts: RedactedEvidenceArtifact[];
   caseLedger: AcceptanceCaseEvidenceRecord[];
+  /** Active pilot window observations (server clock only). */
+  pilotObservations: PilotGateObservation[];
   liveWiring: SoakRunRecord["liveWiring"];
   chatgptAdsWiring: "NOT_WIRED";
 };
@@ -169,6 +202,7 @@ export function emptySoakAcceptanceState(nowIso: string): SoakAcceptanceState {
     runs: [],
     artifacts: [],
     caseLedger: [],
+    pilotObservations: [],
     liveWiring: {
       cms: "NOT_WIRED",
       gsc: "NOT_WIRED",
@@ -230,17 +264,19 @@ function statusLooksVerified(status: string): boolean {
   return status.toUpperCase() === FORBIDDEN_SILENT_LIVE_STATUS;
 }
 
+/**
+ * Evaluate the 72h pilot gate from **server-recorded** observations only.
+ * Client-supplied startedAtIso/endedAtIso claim dates must never be passed here.
+ */
 export function evaluatePilotGate(input: {
-  startedAtIso: string;
-  endedAtIso: string;
+  observations: readonly PilotGateObservation[];
   proofs: readonly SoakProofRecord[];
   requiredMs?: number;
+  maxObservationGapMs?: number;
 }): PilotGateEvaluation {
   const requiredMs = input.requiredMs ?? PILOT_SOAK_REQUIRED_MS;
-  const start = Date.parse(input.startedAtIso);
-  const end = Date.parse(input.endedAtIso);
-  const observedMs =
-    Number.isFinite(start) && Number.isFinite(end) ? Math.max(0, end - start) : 0;
+  const maxGap =
+    input.maxObservationGapMs ?? DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS;
 
   const proofsRequired = [
     SoakProofKind.CRASH_RESTART,
@@ -254,11 +290,49 @@ export function evaluatePilotGate(input: {
   );
 
   const reasons: string[] = [];
-  if (observedMs < requiredMs) {
-    reasons.push(
-      `Soak duration ${observedMs}ms < required ${requiredMs}ms (72h pilot gate)`,
+  const sorted = [...input.observations]
+    .filter((o) => Number.isFinite(Date.parse(o.recordedAtIso)))
+    .sort(
+      (a, b) => Date.parse(a.recordedAtIso) - Date.parse(b.recordedAtIso),
     );
+
+  const start = sorted.find((o) => o.kind === PilotObservationKind.START);
+  const end = [...sorted]
+    .reverse()
+    .find((o) => o.kind === PilotObservationKind.END);
+
+  let observedMs = 0;
+  if (!start || !end) {
+    reasons.push(
+      "Pilot gate requires server-recorded start and end observations (client claim dates ignored)",
+    );
+  } else {
+    const startMs = Date.parse(start.recordedAtIso);
+    const endMs = Date.parse(end.recordedAtIso);
+    observedMs = Math.max(0, endMs - startMs);
+
+    const window = sorted.filter((o) => {
+      const t = Date.parse(o.recordedAtIso);
+      return t >= startMs && t <= endMs;
+    });
+    for (let i = 1; i < window.length; i++) {
+      const gap =
+        Date.parse(window[i]!.recordedAtIso) -
+        Date.parse(window[i - 1]!.recordedAtIso);
+      if (gap > maxGap) {
+        reasons.push(
+          `Observation gap ${gap}ms exceeds max ${maxGap}ms — soak continuity broken`,
+        );
+      }
+    }
+
+    if (observedMs < requiredMs) {
+      reasons.push(
+        `Soak duration ${observedMs}ms < required ${requiredMs}ms (72h pilot gate)`,
+      );
+    }
   }
+
   for (const kind of proofsRequired) {
     if (!proofsPassed.includes(kind)) {
       reasons.push(`Missing passing soak proof: ${kind}`);
@@ -273,6 +347,7 @@ export function evaluatePilotGate(input: {
       proofsRequired: [...proofsRequired],
       proofsPassed: [...proofsPassed],
       reasons,
+      serverObservationsOnly: true,
     };
   }
 
@@ -282,7 +357,10 @@ export function evaluatePilotGate(input: {
     observedMs,
     proofsRequired: [...proofsRequired],
     proofsPassed: [...proofsPassed],
-    reasons: ["72h soak window and required recovery proofs satisfied"],
+    reasons: [
+      "72h soak window and required recovery proofs satisfied via server observations",
+    ],
+    serverObservationsOnly: true,
   };
 }
 
@@ -345,6 +423,30 @@ export function soakChatGptAdsBlocked(): {
   };
 }
 
+/**
+ * Proof kinds required before a fixture case may be ACCEPTED.
+ * Incomplete or failed related proofs leave the case NOT_RUN / FAILED.
+ */
+export function expectedProofsForFixtureCase(
+  caseId: SoakFixtureCaseId,
+): SoakProofKindValue[] {
+  switch (caseId) {
+    case "T-X014":
+      return [SoakProofKind.CRASH_RESTART, SoakProofKind.JOB_CONTINUITY];
+    case "T-X020":
+      return [SoakProofKind.UNKNOWN_REMOTE_RECONCILE];
+    case "T-US-048":
+      return [SoakProofKind.UNKNOWN_REMOTE_RECONCILE];
+    default:
+      return [];
+  }
+}
+
+/**
+ * Map a proof kind to catalog cases it honestly exercises.
+ * NO_DUPLICATE_EFFECTS is intentionally unmapped: T-X066 requires a backup /
+ * omit-receipt / post-restore reconcile exercise that the retry-only proof does not perform.
+ */
 export function mapProofToFixtureCases(
   kind: SoakProofKindValue,
 ): SoakFixtureCaseId[] {
@@ -354,10 +456,26 @@ export function mapProofToFixtureCases(
     case SoakProofKind.UNKNOWN_REMOTE_RECONCILE:
       return ["T-US-048", "T-X020"];
     case SoakProofKind.NO_DUPLICATE_EFFECTS:
-      return ["T-X066"];
+      return [];
     case SoakProofKind.JOB_CONTINUITY:
       return ["T-X014"];
     default:
       return [];
   }
+}
+
+/** Stable matrix/publish alias for a case (separate from per-run unique artifact IDs). */
+export function stableFixtureEvidenceArtifactId(caseId: string): string {
+  return `art-fixture-${caseId.toLowerCase()}`;
+}
+
+/** Per-run unique artifact ID so historical SoakRunRecord refs keep provenance. */
+export function uniqueFixtureEvidenceArtifactId(
+  caseId: string,
+  runId: string,
+): string {
+  const short =
+    runId.replace(/^soak-/, "").replace(/[^a-zA-Z0-9]/g, "").slice(0, 12) ||
+    "run";
+  return `art-fixture-${caseId.toLowerCase()}-${short}`;
 }

@@ -5,13 +5,35 @@ import {
   FORBIDDEN_SILENT_LIVE_STATUS,
   PILOT_SOAK_REQUIRED_MS,
   PilotGateStatus,
+  PilotObservationKind,
   SoakProofKind,
   buildRedactedArtifact,
   evaluatePilotGate,
+  expectedProofsForFixtureCase,
+  mapProofToFixtureCases,
   redactEvidenceSummary,
   soakChatGptAdsBlocked,
+  uniqueFixtureEvidenceArtifactId,
   validateAcceptanceCaseStatus,
 } from "./soak-acceptance.js";
+
+function allProofs(ended: string) {
+  return [
+    SoakProofKind.CRASH_RESTART,
+    SoakProofKind.NO_DUPLICATE_EFFECTS,
+    SoakProofKind.JOB_CONTINUITY,
+    SoakProofKind.UNKNOWN_REMOTE_RECONCILE,
+  ].map((kind, i) => ({
+    proofId: `p-${i}`,
+    kind,
+    passed: true,
+    details: ["ok"],
+    applyAttemptCount: 1,
+    operationId: `op-${i}`,
+    createdAtIso: ended,
+    fixtureOnly: true as const,
+  }));
+}
 
 describe("soak-acceptance domain", () => {
   it("rejects VERIFIED and ACCEPTED without evidence", () => {
@@ -46,53 +68,89 @@ describe("soak-acceptance domain", () => {
     expect(ok).toEqual({ ok: true });
   });
 
-  it("keeps 72h pilot gate unmet for short soaks even when proofs pass", () => {
+  it("keeps 72h pilot gate unmet for short server observations even when proofs pass", () => {
     const started = "2026-11-21T00:00:00.000Z";
     const ended = "2026-11-21T00:05:00.000Z";
-    const proofs = [
-      SoakProofKind.CRASH_RESTART,
-      SoakProofKind.NO_DUPLICATE_EFFECTS,
-      SoakProofKind.JOB_CONTINUITY,
-      SoakProofKind.UNKNOWN_REMOTE_RECONCILE,
-    ].map((kind, i) => ({
-      proofId: `p-${i}`,
-      kind,
-      passed: true,
-      details: ["ok"],
-      applyAttemptCount: 1,
-      operationId: `op-${i}`,
-      createdAtIso: ended,
-      fixtureOnly: true as const,
-    }));
-
-    const gate = evaluatePilotGate({ startedAtIso: started, endedAtIso: ended, proofs });
+    const gate = evaluatePilotGate({
+      observations: [
+        { kind: PilotObservationKind.START, recordedAtIso: started },
+        { kind: PilotObservationKind.HEARTBEAT, recordedAtIso: "2026-11-21T00:02:00.000Z" },
+        { kind: PilotObservationKind.END, recordedAtIso: ended },
+      ],
+      proofs: allProofs(ended),
+    });
     expect(gate.status).toBe(PilotGateStatus.NOT_MET);
     expect(gate.requiredMs).toBe(PILOT_SOAK_REQUIRED_MS);
     expect(gate.observedMs).toBe(5 * 60 * 1000);
+    expect(gate.serverObservationsOnly).toBe(true);
     expect(gate.reasons.some((r) => /72h/.test(r))).toBe(true);
   });
 
-  it("meets pilot gate only after 72h and all proofs", () => {
+  it("meets pilot gate only after server-recorded 72h window with continuity and all proofs", () => {
     const started = "2026-11-18T00:00:00.000Z";
     const ended = "2026-11-21T00:00:00.000Z";
-    const proofs = [
-      SoakProofKind.CRASH_RESTART,
-      SoakProofKind.NO_DUPLICATE_EFFECTS,
-      SoakProofKind.JOB_CONTINUITY,
-      SoakProofKind.UNKNOWN_REMOTE_RECONCILE,
-    ].map((kind, i) => ({
-      proofId: `p-${i}`,
-      kind,
-      passed: true,
-      details: ["ok"],
-      applyAttemptCount: 1,
-      operationId: `op-${i}`,
-      createdAtIso: ended,
-      fixtureOnly: true as const,
-    }));
-    const gate = evaluatePilotGate({ startedAtIso: started, endedAtIso: ended, proofs });
+    const startMs = Date.parse(started);
+    const observations = [
+      { kind: PilotObservationKind.START, recordedAtIso: started },
+      // Heartbeats every 6h inclusive so continuity gaps stay within the default max.
+      ...Array.from({ length: 11 }, (_, i) => ({
+        kind: PilotObservationKind.HEARTBEAT,
+        recordedAtIso: new Date(startMs + (i + 1) * 6 * 60 * 60 * 1000).toISOString(),
+      })),
+      { kind: PilotObservationKind.END, recordedAtIso: ended },
+    ];
+    const gate = evaluatePilotGate({
+      observations,
+      proofs: allProofs(ended),
+    });
     expect(gate.status).toBe(PilotGateStatus.MET);
     expect(gate.observedMs).toBe(PILOT_SOAK_REQUIRED_MS);
+    expect(gate.serverObservationsOnly).toBe(true);
+  });
+
+  it("does not treat client-forged claim-date pairs as MET without server observations", () => {
+    // Simulate what a forged POST body used to do: pass 72h-apart claim dates.
+    // evaluatePilotGate no longer accepts those fields — empty/short server obs stay NOT_MET.
+    const forgedStart = "2026-11-18T00:00:00.000Z";
+    const forgedEnd = "2026-11-21T00:00:00.000Z";
+    const gate = evaluatePilotGate({
+      observations: [],
+      proofs: allProofs(forgedEnd),
+    });
+    expect(gate.status).toBe(PilotGateStatus.NOT_MET);
+    expect(gate.observedMs).toBe(0);
+    expect(gate.reasons.some((r) => /server-recorded/i.test(r))).toBe(true);
+
+    // Even constructing observations from forged strings is only valid when the
+    // service itself minted them via server clock — HTTP rejects claim dates.
+    const forgedAsObs = evaluatePilotGate({
+      observations: [
+        { kind: PilotObservationKind.START, recordedAtIso: forgedStart },
+        { kind: PilotObservationKind.END, recordedAtIso: forgedEnd },
+      ],
+      proofs: allProofs(forgedEnd),
+      // Huge gap without heartbeats breaks continuity
+      maxObservationGapMs: 6 * 60 * 60 * 1000,
+    });
+    expect(forgedAsObs.status).toBe(PilotGateStatus.NOT_MET);
+    expect(forgedAsObs.reasons.some((r) => /gap/i.test(r))).toBe(true);
+  });
+
+  it("does not map NO_DUPLICATE_EFFECTS to T-X066 (backup case stays unmapped)", () => {
+    expect(mapProofToFixtureCases(SoakProofKind.NO_DUPLICATE_EFFECTS)).toEqual(
+      [],
+    );
+    expect(expectedProofsForFixtureCase("T-X014")).toEqual([
+      SoakProofKind.CRASH_RESTART,
+      SoakProofKind.JOB_CONTINUITY,
+    ]);
+  });
+
+  it("builds unique per-run artifact ids", () => {
+    const a = uniqueFixtureEvidenceArtifactId("T-X014", "soak-abcdef123456");
+    const b = uniqueFixtureEvidenceArtifactId("T-X014", "soak-zzz999888777");
+    expect(a).not.toBe(b);
+    expect(a).toMatch(/^art-fixture-t-x014-/);
   });
 
   it("redacts secrets and blocks ChatGPT Ads", () => {

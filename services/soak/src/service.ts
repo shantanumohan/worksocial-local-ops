@@ -1,13 +1,16 @@
 /**
  * M9 / NEXT-20 soak service — recovery harness + evidence compiler + owner report.
+ * Pilot gate duration uses server-recorded observations only (never client claim dates).
  */
 
 import { randomUUID } from "node:crypto";
 import {
   AcceptanceEnvironment,
   PILOT_SOAK_REQUIRED_MS,
+  PilotObservationKind,
   SOAK_RELATED_CASE_IDS,
   evaluatePilotGate,
+  type PilotGateObservation,
   type SoakRunRecord,
 } from "@worksocial/domain";
 import type { SoakStore } from "@worksocial/persistence";
@@ -24,14 +27,24 @@ export type SoakService = {
   listArtifacts(limit?: number): ReturnType<SoakStore["listArtifacts"]>;
   listCases(limit?: number): ReturnType<SoakStore["listCases"]>;
   /**
+   * Record a server-clock pilot observation (start|heartbeat|end).
+   * Client claim dates are never accepted.
+   */
+  recordPilotObservation(kind: "start" | "heartbeat" | "end"): {
+    observation: PilotGateObservation;
+    observations: PilotGateObservation[];
+  };
+  listPilotObservations(): PilotGateObservation[];
+  /**
    * Run fixture soak proofs + compile acceptance evidence.
    * Short runs leave pilotGate NOT_MET (72h required for MET).
+   * Client-supplied startedAtIso/endedAtIso are not accepted for the gate.
    */
   runFixtureSoak(input?: {
-    nowIso?: string;
-    /** Override endedAt for pilot-gate evaluation (owner 72h soak). */
-    endedAtIso?: string;
-    startedAtIso?: string;
+    /** Deterministic clock for durable harness proofs only — not used for pilot gate. */
+    harnessNowIso?: string;
+    /** Test-only server clock injection (still server-side; never request body dates). */
+    now?: () => Date;
   }): Promise<{
     ok: boolean;
     run: SoakRunRecord;
@@ -68,16 +81,81 @@ export function createSoakService(store: SoakStore): SoakService {
       return store.listCases(limit);
     },
 
+    recordPilotObservation(kind) {
+      const observation: PilotGateObservation = {
+        kind:
+          kind === "start"
+            ? PilotObservationKind.START
+            : kind === "end"
+              ? PilotObservationKind.END
+              : PilotObservationKind.HEARTBEAT,
+        recordedAtIso: new Date().toISOString(),
+      };
+      const observations = store.appendPilotObservation(observation);
+      return { observation, observations };
+    },
+
+    listPilotObservations() {
+      return store.listPilotObservations();
+    },
+
     async runFixtureSoak(input = {}) {
-      const startedAtIso = input.startedAtIso ?? input.nowIso ?? new Date().toISOString();
+      const clock = input.now ?? (() => new Date());
+      const runId = `soak-${randomUUID()}`;
+
+      const serverStartedAtIso = clock().toISOString();
+      const runStartObs: PilotGateObservation = {
+        kind: PilotObservationKind.START,
+        recordedAtIso: serverStartedAtIso,
+      };
+
+      // Heartbeat the durable pilot window (if any) with server clock only.
+      store.appendPilotObservation({
+        kind: PilotObservationKind.HEARTBEAT,
+        recordedAtIso: serverStartedAtIso,
+      });
+
       const harness = await runSoakRecoveryHarness({
         stateDir: store.stateDir,
-        nowIso: startedAtIso,
+        nowIso: input.harnessNowIso ?? serverStartedAtIso,
       });
-      const endedAtIso = input.endedAtIso ?? new Date().toISOString();
+
+      const serverEndedAtIso = clock().toISOString();
+      const runEndObs: PilotGateObservation = {
+        kind: PilotObservationKind.END,
+        recordedAtIso: serverEndedAtIso,
+      };
+      store.appendPilotObservation({
+        kind: PilotObservationKind.HEARTBEAT,
+        recordedAtIso: serverEndedAtIso,
+      });
+
+      const windowObs = store.listPilotObservations();
+      const windowHasStart = windowObs.some(
+        (o) => o.kind === PilotObservationKind.START,
+      );
+
+      /**
+       * Gate observations:
+       * - If an owner-started pilot window exists (server start recorded earlier),
+       *   evaluate that window plus this run's end.
+       * - Otherwise use only this run's server start/end (short CI → NOT_MET).
+       * Client claim dates are never consulted.
+       */
+      const gateObservations: PilotGateObservation[] = windowHasStart
+        ? [
+            ...windowObs,
+            {
+              kind: PilotObservationKind.END,
+              recordedAtIso: serverEndedAtIso,
+            },
+          ]
+        : [runStartObs, runEndObs];
+
       const compiled = compileAcceptanceEvidence({
         proofs: harness.proofs,
-        nowIso: endedAtIso,
+        nowIso: serverEndedAtIso,
+        runId,
       });
 
       for (const artifact of compiled.artifacts) {
@@ -85,20 +163,23 @@ export function createSoakService(store: SoakStore): SoakService {
       }
 
       const pilotGate = evaluatePilotGate({
-        startedAtIso,
-        endedAtIso,
+        observations: gateObservations,
         proofs: harness.proofs,
       });
 
       const run: SoakRunRecord = {
-        runId: `soak-${randomUUID()}`,
-        startedAtIso,
-        endedAtIso,
-        durationMs: Math.max(0, Date.parse(endedAtIso) - Date.parse(startedAtIso)),
+        runId,
+        startedAtIso: serverStartedAtIso,
+        endedAtIso: serverEndedAtIso,
+        durationMs: Math.max(
+          0,
+          Date.parse(serverEndedAtIso) - Date.parse(serverStartedAtIso),
+        ),
         environment: AcceptanceEnvironment.FIXTURE,
         proofs: harness.proofs,
         caseResults: compiled.caseResults,
         pilotGate,
+        pilotObservations: gateObservations,
         chatgptAds: compiled.chatgptAds,
         liveWiring: {
           cms: "NOT_WIRED",
@@ -110,7 +191,7 @@ export function createSoakService(store: SoakStore): SoakService {
         r1CompleteClaimed: false,
         externalEffects: "NONE",
         honestNote:
-          "Fixture soak only. Pilot gate requires 72h continuous window. Live providers NOT_WIRED. Not R1-complete.",
+          "Fixture soak only. Pilot gate uses server-recorded observations only (client claim dates ignored). Live providers NOT_WIRED. T-X066 remains NOT_RUN until backup proof. Not R1-complete.",
       };
 
       store.addRun(run);
@@ -125,6 +206,7 @@ export function createSoakService(store: SoakStore): SoakService {
           `ACCEPTED cases=${compiled.caseResults.filter((c) => c.status === "ACCEPTED").length}`,
           "External effects: NONE",
           "R1-complete: not claimed",
+          "Client startedAtIso/endedAtIso claim dates ignored for MET",
         ].join(". "),
       };
     },
@@ -142,7 +224,7 @@ export function createSoakService(store: SoakStore): SoakService {
         note:
           latestRun == null
             ? "No soak runs yet — run fixture soak (recovery:rehearse / POST /soak/run)."
-            : `Latest pilotGate=${latestRun.pilotGate.status}; r1CompleteClaimed=false; ChatGPT Ads blocked; live NOT_WIRED.`,
+            : `Latest pilotGate=${latestRun.pilotGate.status}; r1CompleteClaimed=false; ChatGPT Ads blocked; live NOT_WIRED; T-X066 NOT_RUN until backup proof.`,
       };
     },
   };

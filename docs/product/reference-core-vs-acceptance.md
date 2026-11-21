@@ -7,10 +7,10 @@
 
 - Offline **reference-core** / domain unit tests and implemented CI suites (`check`, `test:unit`, `test:contract`, `test:e2e`) prove pure policy and fixture behavior without network or credentials.
 - Passing those suites **does not** constitute production acceptance, sandbox verification, or canary verification. **R1 is not claimed complete** by this baseline.
-- Product acceptance is defined in `docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md` and indexed by `tests/acceptance-matrix-v6.json` (**159** cases: T-F01–T-F26, T-US-001–T-US-060, T-X001–T-X073). Every case remains `NOT_RUN` until executed in its declared environment with redacted evidence.
+- Product acceptance is defined in `docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md` and indexed by `tests/acceptance-matrix-v6.json` (**159** cases: T-F01–T-F26, T-US-001–T-US-060, T-X001–T-X073). Cases remain `NOT_RUN` until executed in their declared environment with redacted evidence; M9 fixture soak currently marks **3** cases `ACCEPTED` (T-X014, T-X020, T-US-048). **T-X066** stays `NOT_RUN` until a real backup/omit-receipt proof exists. Never silently `VERIFIED` for live.
 - Fixture, sandbox, and specifically authorized production results must remain distinguishable.
 - ChatGPT Ads (`T-F07` / `T-US-013` / `T-US-014`) stays access-blocked unless supported local transport, entitlement, and auth are verified.
-- Placeholder scripts (`pnpm test:database|workflow|security|eval`, `recovery:rehearse`, `release:evidence`) exit non-zero (`INCOMPLETE`) and **cannot** satisfy required checks.
+- Implemented M9 scripts (`pnpm recovery:rehearse`, `pnpm release:evidence`) exit **0** when fixture proofs and evidence compile honestly. Remaining stubs (`pnpm test:security`, `pnpm test:eval`) exit non-zero (`INCOMPLETE`) and **cannot** satisfy required checks.
 
 ## Experience contracts preserved from v5
 

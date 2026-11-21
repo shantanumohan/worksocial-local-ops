@@ -1,6 +1,6 @@
 # Database migrations
 
-Ordered SQL under `migrations/` (`001_…` … `021_…`).
+Ordered SQL under `migrations/` (`001_…` … `022_…`).
 
 ```bash
 export DATABASE_URL=postgres://worksocial:worksocial@127.0.0.1:5432/worksocial
@@ -26,5 +26,7 @@ until Postgres cutover).
 EVAL_ONLY runs, and analytics observation provenance (file-backed until Postgres cutover).
 `021_m9_soak_acceptance.sql` is the M9 companion for soak runs/proofs,
 redacted acceptance evidence artifacts, and the case ledger (file-backed until Postgres cutover).
+`022_m9_pilot_observations.sql` records server-clock pilot start/heartbeat/end
+observations used for the 72h gate (client claim dates rejected).
 Runner: `pnpm db:migrate` (`packages/persistence` `runMigrations`).
 External effects: none (simulator only).

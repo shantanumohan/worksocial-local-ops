@@ -23,18 +23,19 @@ describe("e2e-lite: M9 soak acceptance", () => {
   it("runs fixture soak and exposes honest owner report", async () => {
     const soak = createSoakService(createFileSoakStore(dir));
     const result = await soak.runFixtureSoak({
-      startedAtIso: "2026-11-21T20:00:00.000Z",
-      endedAtIso: "2026-11-21T20:02:00.000Z",
+      harnessNowIso: "2026-11-21T20:00:00.000Z",
     });
     expect(result.ok).toBe(true);
     expect(result.run.proofs.every((p) => p.passed)).toBe(true);
     expect(result.run.pilotGate.status).toBe(PilotGateStatus.NOT_MET);
+    expect(result.run.pilotGate.serverObservationsOnly).toBe(true);
     expect(result.run.chatgptAds.allowed).toBe(false);
     expect(result.run.externalEffects).toBe("NONE");
 
     const report = soak.ownerReport();
     expect(report.latestRun?.runId).toBe(result.run.runId);
-    expect(report.acceptedCases.length).toBeGreaterThanOrEqual(3);
+    expect(report.acceptedCases.length).toBe(3);
+    expect(report.acceptedCases.every((c) => c.caseId !== "T-X066")).toBe(true);
     expect(report.status.r1CompleteClaimed).toBe(false);
     expect(report.status.chatgptAdsWiring).toBe("NOT_WIRED");
     expect(report.note).toMatch(/pilotGate=NOT_MET/);
