@@ -17,7 +17,7 @@ Fixture (LOCAL_DURABLE) proofs:
 
 Acceptance evidence compiler marks selected catalog cases **ACCEPTED** only when the **complete expected proof set** passes with **no failed related proofs**, and only with redacted fixture artifacts. It never silently marks live **VERIFIED**.
 
-Honest fixture ACCEPTED cases: **T-X014**, **T-X020**, **T-US-048**, **T-X066**, **T-F24**, **T-US-047**, **T-US-002**, **T-X002**, **T-X018**, **T-US-054**, **T-X073**, **T-US-060**, **T-X005**, **T-X006**.
+Honest fixture ACCEPTED cases: **T-X014**, **T-X020**, **T-US-048**, **T-X066**, **T-F24**, **T-US-047**, **T-US-002**, **T-X002**, **T-X018**, **T-US-054**, **T-X073**, **T-US-060**, **T-X005**, **T-X006**, **T-X019**, **T-US-036**.
 
 **T-X066** maps only to `BACKUP_OMIT_RECEIPT`. Retry-only `NO_DUPLICATE_EFFECTS` does not satisfy T-X066.
 
@@ -34,6 +34,8 @@ Honest fixture ACCEPTED cases: **T-X014**, **T-X020**, **T-US-048**, **T-X066**,
 **T-X005** maps only to `FORGED_BROWSER_ROLE_IGNORED`.
 
 **T-X006** maps only to `CROSS_WORKSPACE_REFERENCE_DENIED`.
+
+**T-X019 / T-US-036** map only to `APPROVED_PAYLOAD_EDIT_INVALIDATED`.
 
 ## Commands
 

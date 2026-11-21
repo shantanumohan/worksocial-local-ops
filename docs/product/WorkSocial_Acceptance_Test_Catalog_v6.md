@@ -720,7 +720,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 - **T-US-030** Uncertain post: reconcile before retry.
 - **T-US-032** Exact financial boundaries preserved.
 - **T-US-034** Provider error ≠ bad answer or pass.
-- **T-US-036** Stale approval invalidated on revision change.
+- **T-US-036** Stale approval invalidated on revision change. *(fixture ACCEPTED — approved payload edit invalidated proof; not sandbox/prod VERIFIED)*
 - **T-US-038** Double-counted attribution avoided in unique outcomes.
 - **T-US-040** Thank-you without Zoho record fails at CRM.
 - **T-US-042** Repair cannot weaken protected tests.
@@ -746,7 +746,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X005, T-X006, T-X014, T-X018, T-X020, T-X066, T-X073, T-F24, T-US-002, T-US-047, T-US-054, T-US-060.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X066, T-X073, T-F24, T-US-002, T-US-036, T-US-047, T-US-054, T-US-060.
 
 **T-X066** is fixture ACCEPTED only via the backup / omit-receipt / post-restore reconcile proof (`BACKUP_OMIT_RECEIPT`). Retry-only no-duplicate-effects does **not** satisfy this case. Not sandbox/prod VERIFIED.
 
@@ -763,6 +763,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 **T-X005** is fixture ACCEPTED only via the forged browser role ignored proof (`FORGED_BROWSER_ROLE_IGNORED`) — session role binds; client payload `actorRole` cannot escalate. Not sandbox/prod VERIFIED.
 
 **T-X006** is fixture ACCEPTED only via the cross-workspace reference denied proof (`CROSS_WORKSPACE_REFERENCE_DENIED`) — foreign channel/account/asset substitution denied with generic `GRANT_MISSING` (no foreign-id leak). Not sandbox/prod VERIFIED.
+
+**T-X019 / T-US-036** are fixture ACCEPTED only via the approved payload edit invalidated proof (`APPROVED_PAYLOAD_EDIT_INVALIDATED`) — checksum digest conflict and revision change invalidate A25 binding; stale acceptance cannot ship. Not sandbox/prod VERIFIED.
 
 Shared evidence for each: actual state before/after; instrumented provider call count or read-back; correlated redacted logs/traces; no unauthorized external effect.
 
@@ -786,7 +788,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X016 | Stop before dispatch claim | No adapter mutation |
 | T-X017 | Stop after provider dispatch starts | Reconcile; no fake cancel |
 | T-X018 | Self-approval | Rejected *(fixture ACCEPTED — self-approval rejected / independent A25 proof; not sandbox/prod VERIFIED)* |
-| T-X019 | Approved payload edited | Digest conflict |
+| T-X019 | Approved payload edited | Digest conflict *(fixture ACCEPTED — approved payload edit invalidated proof; not sandbox/prod VERIFIED)* |
 | T-X020 | Timeout after provider acceptance | Unknown → reconcile; no resend *(fixture ACCEPTED)* |
 | T-X021 | Concurrent idempotent releases | One dispatch |
 | T-X022 | Idempotency key payload mismatch | Conflict |
@@ -849,6 +851,6 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
 | T-US (behavior_acceptance) | 60 | 55 NOT_RUN + 5 fixture ACCEPTED (T-US-002, T-US-047, T-US-048, T-US-054, T-US-060) |
 | T-X (platform/security/resilience) | 73 | 67 NOT_RUN + 6 fixture ACCEPTED (T-X002, T-X014, T-X018, T-X020, T-X066, T-X073) |
-| **Total** | **159** | **145 NOT_RUN + 14 fixture ACCEPTED** |
+| **Total** | **159** | **143 NOT_RUN + 16 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

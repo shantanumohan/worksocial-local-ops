@@ -8,7 +8,8 @@
  * offboard ACTIVE_TOKEN residual incomplete-until-revoked (T-X073),
  * emergency stop at commit (T-US-060),
  * forged browser role ignored (T-X005),
- * cross-workspace reference denied (T-X006).
+ * cross-workspace reference denied (T-X006),
+ * approved payload edit / stale approval invalidated (T-X019 / T-US-036).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -41,6 +42,7 @@ import { proofOffboardActiveTokenResidual } from "./offboard-active-token-proof.
 import { proofEmergencyStopAtCommit } from "./emergency-stop-proof.js";
 import { proofForgedBrowserRoleIgnored } from "./forged-browser-role-proof.js";
 import { proofCrossWorkspaceReferenceDenied } from "./cross-workspace-reference-proof.js";
+import { proofApprovedPayloadEditInvalidated } from "./approved-payload-edit-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -536,7 +538,7 @@ function failProof(
  * competing-supervisor lease feeds T-US-002/T-X002; self-approval feeds
  * T-X018/T-US-054; offboard ACTIVE_TOKEN residual feeds T-X073; emergency
  * stop feeds T-US-060; forged browser role feeds T-X005; cross-workspace
- * reference feeds T-X006.
+ * reference feeds T-X006; approved payload edit feeds T-X019/T-US-036.
  */
 export async function runSoakRecoveryHarness(input: {
   stateDir: string;
@@ -566,6 +568,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofEmergencyStopAtCommit(nowPlus(nowIso, 90_000)));
   proofs.push(proofForgedBrowserRoleIgnored(nowPlus(nowIso, 100_000)));
   proofs.push(proofCrossWorkspaceReferenceDenied(nowPlus(nowIso, 110_000)));
+  proofs.push(proofApprovedPayloadEditInvalidated(nowPlus(nowIso, 120_000)));
 
   const allPassed = proofs.every((p) => p.passed);
   return {
@@ -584,6 +587,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-060 fixture ACCEPTED via emergency_stop_at_commit only — not live VERIFIED",
       "T-X005 fixture ACCEPTED via forged_browser_role_ignored only — not live VERIFIED",
       "T-X006 fixture ACCEPTED via cross_workspace_reference_denied only — not live VERIFIED",
+      "T-X019/T-US-036 fixture ACCEPTED via approved_payload_edit_invalidated only — not live VERIFIED",
     ],
   };
 }

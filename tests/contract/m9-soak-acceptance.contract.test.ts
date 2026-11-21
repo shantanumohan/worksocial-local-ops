@@ -9,6 +9,7 @@
  * T-US-060 fixture ACCEPTED only via EMERGENCY_STOP_AT_COMMIT.
  * T-X005 fixture ACCEPTED only via FORGED_BROWSER_ROLE_IGNORED.
  * T-X006 fixture ACCEPTED only via CROSS_WORKSPACE_REFERENCE_DENIED.
+ * T-X019/T-US-036 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED.
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -77,6 +78,8 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-US-060");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X005");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X006");
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X019");
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-US-036");
 
     const soak = createSoakService(createFileSoakStore(dir));
     const run = await soak.runFixtureSoak({

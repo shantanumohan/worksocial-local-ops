@@ -2,7 +2,7 @@
   "catalog": "WorkSocial product acceptance v6",
   "version": "6.0",
   "sourceDocument": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-  "note": "159 cases \u2014 145 NOT_RUN + 14 fixture ACCEPTED (T-X014, T-X020, T-US-048, T-X066, T-F24, T-US-047, T-US-002, T-X002, T-X018, T-US-054, T-X073, T-US-060, T-X005, T-X006) with redacted evidence and complete proof sets. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied \u2014 never silently VERIFIED for live. Fixture, sandbox, and authorized-production results must remain distinguishable. ChatGPT Ads (T-F07 / T-US-013 / T-US-014) stays access-blocked without verified local transport/entitlement. Pilot gate uses server-recorded observations only. Not R1-complete.",
+  "note": "159 cases \u2014 143 NOT_RUN + 16 fixture ACCEPTED (T-X014, T-X020, T-US-048, T-X066, T-F24, T-US-047, T-US-002, T-X002, T-X018, T-US-054, T-X073, T-US-060, T-X005, T-X006, T-X019, T-US-036) with redacted evidence and complete proof sets. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated \u2014 never silently VERIFIED for live. Fixture, sandbox, and authorized-production results must remain distinguishable. ChatGPT Ads (T-F07 / T-US-013 / T-US-014) stays access-blocked without verified local transport/entitlement. Pilot gate uses server-recorded observations only. Not R1-complete.",
   "invariants": {
     "fixtureSandboxAuthorizedProductionDistinct": true,
     "acceptanceNotVerified": true,
@@ -14,8 +14,8 @@
     "userStories": 60,
     "experience": 73,
     "all": 159,
-    "notRun": 145,
-    "accepted": 14
+    "notRun": 143,
+    "accepted": 16
   },
   "cases": [
     {
@@ -1082,13 +1082,16 @@
       "kind": "user_story",
       "level": "behavior_acceptance",
       "title": "Stale approval invalidated on revision change.",
-      "status": "NOT_RUN",
+      "status": "ACCEPTED",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
       "family": "failure_gate",
       "gates": [],
       "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-      "definitionShape": "list_item"
+      "definitionShape": "list_item",
+      "resultEnvironment": "fixture",
+      "evidenceArtifactId": "art-fixture-t-us-036",
+      "evidenceNote": "Fixture stale-approval invalidated on revision-change proof only \u2014 not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-US-037",
@@ -1669,12 +1672,15 @@
       "level": "platform_security_resilience",
       "title": "Approved payload edited",
       "focus": "Digest conflict",
-      "status": "NOT_RUN",
+      "status": "ACCEPTED",
       "environment": "fixture_or_integration",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
       "gates": [],
       "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-      "definitionShape": "table_row"
+      "definitionShape": "table_row",
+      "resultEnvironment": "fixture",
+      "evidenceArtifactId": "art-fixture-t-x019",
+      "evidenceNote": "Fixture approved-payload-edit / digest-conflict proof only \u2014 not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X020",
