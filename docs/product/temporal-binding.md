@@ -59,7 +59,8 @@ Without Docker, `pnpm test:workflow` uses `@temporalio/testing` `createLocal()`
 ## CI compose path
 
 GitHub Actions job `temporal-compose` starts `deploy/temporal/docker-compose.yml`
-(`temporalio/auto-setup`) plus app Postgres, then runs:
+(`temporalio/auto-setup`) plus app Postgres, waits via
+`scripts/wait-temporal-frontend.ts` (SDK dial — not inline `tsx -e`), then runs:
 
 ```bash
 WORKSOCIAL_TEMPORAL_COMPOSE_REQUIRED=1 pnpm test:temporal-compose
