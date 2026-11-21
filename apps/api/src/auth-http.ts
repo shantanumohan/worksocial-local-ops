@@ -70,9 +70,9 @@ import {
   createFileLeadCaptureStore,
   openEvaluationStore,
   createFileSoakStore,
-  createFileRecoveryStore,
+  openRecoveryStore,
   createFilePaidMediaStore,
-  createFileCredentialRotationStore,
+  openCredentialRotationStore,
   createFileProbeStore,
   createFileProductionMappingStore,
   createFileRepairStore,
@@ -91,8 +91,10 @@ import {
   type PgPool,
   type SoakStore,
   type RecoveryStore,
+  type RecoveryStoreBackend,
   type PaidMediaStore,
   type CredentialRotationStore,
+  type CredentialRotationStoreBackend,
   type PolicyDecisionRecord,
   type ContentStore,
   type InboxStore,
@@ -299,10 +301,16 @@ export type ApiRuntime = {
   soakStore: SoakStore;
   soak: SoakService;
   recoveryStore: RecoveryStore;
+  recoveryBackend: RecoveryStoreBackend;
+  /** Present when recoveryBackend is postgres; closed on API shutdown. */
+  recoveryPool: PgPool | null;
   recovery: RecoveryService;
   paidMediaStore: PaidMediaStore;
   paidMedia: PaidMediaService;
   credentialRotationStore: CredentialRotationStore;
+  credentialRotationBackend: CredentialRotationStoreBackend;
+  /** Present when credentialRotationBackend is postgres; closed on API shutdown. */
+  credentialRotationPool: PgPool | null;
   credentialRotation: CredentialRotationService;
   runner: ClaudeRunner;
   missions: MissionEnqueueService;
@@ -478,6 +486,12 @@ export function createApiRuntime(options: {
    * Tests should pass "file" or "memory" to avoid depending on a shared DB.
    */
   evaluationStoreMode?: "auto" | "file" | "memory";
+  /**
+   * Recovery / credential-rotation persistence modes (same semantics as evaluation).
+   * Default inherits evaluationStoreMode so offline unit tests stay file-backed.
+   */
+  recoveryStoreMode?: "auto" | "file" | "memory";
+  credentialRotationStoreMode?: "auto" | "file" | "memory";
 }): ApiRuntime {
   const store = createFileAuthorityStore(options.stateDir);
   const mappingStore = createFileProductionMappingStore(options.stateDir);
@@ -519,6 +533,9 @@ export function createApiRuntime(options: {
     repairStore,
   });
   const evaluationMode = options.evaluationStoreMode ?? "auto";
+  const recoveryMode = options.recoveryStoreMode ?? evaluationMode;
+  const credentialMode =
+    options.credentialRotationStoreMode ?? evaluationMode;
   const openedEvaluation = openEvaluationStore({
     stateDir: options.stateDir,
     ...(evaluationMode === "memory" ? { forceMemory: true } : {}),
@@ -528,14 +545,22 @@ export function createApiRuntime(options: {
   const evaluation = createEvaluationWorker(evaluationStore);
   const soakStore = createFileSoakStore(options.stateDir);
   const soak = createSoakService(soakStore);
-  const recoveryStore = createFileRecoveryStore(options.stateDir);
+  const openedRecovery = openRecoveryStore({
+    stateDir: options.stateDir,
+    ...(recoveryMode === "memory" ? { forceMemory: true } : {}),
+    ...(recoveryMode === "file" ? { forceFile: true } : {}),
+  });
+  const recoveryStore = openedRecovery.store;
   const recovery = createRecoveryService(recoveryStore);
   const paidMediaStore = createFilePaidMediaStore(options.stateDir);
   const paidMedia = createPaidMediaService(paidMediaStore);
   const broker = createCredentialBroker();
-  const credentialRotationStore = createFileCredentialRotationStore(
-    options.stateDir,
-  );
+  const openedCredentialRotation = openCredentialRotationStore({
+    stateDir: options.stateDir,
+    ...(credentialMode === "memory" ? { forceMemory: true } : {}),
+    ...(credentialMode === "file" ? { forceFile: true } : {}),
+  });
+  const credentialRotationStore = openedCredentialRotation.store;
   const credentialRotation = createCredentialRotationService({
     store: credentialRotationStore,
     broker,
@@ -587,10 +612,14 @@ export function createApiRuntime(options: {
     soakStore,
     soak,
     recoveryStore,
+    recoveryBackend: openedRecovery.backend,
+    recoveryPool: openedRecovery.pool,
     recovery,
     paidMediaStore,
     paidMedia,
     credentialRotationStore,
+    credentialRotationBackend: openedCredentialRotation.backend,
+    credentialRotationPool: openedCredentialRotation.pool,
     credentialRotation,
     runner,
     missions,

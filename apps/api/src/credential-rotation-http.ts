@@ -94,7 +94,7 @@ export async function handleCredentialRotationRequest(input: {
       res,
       200,
       {
-        ...credentials.status(),
+        ...(await credentials.status()),
         note: "Fixture credential revoke/rotate/offboard. Live provider revocation NOT_WIRED. External effects NONE. Catalog NOT_RUN.",
       },
       cors,
@@ -108,7 +108,7 @@ export async function handleCredentialRotationRequest(input: {
       json(res, 401, { error: session.code, reason: session.reason }, cors);
       return true;
     }
-    json(res, 200, { connections: credentials.listConnections() }, cors);
+    json(res, 200, { connections: await credentials.listConnections() }, cors);
     return true;
   }
 
@@ -122,7 +122,7 @@ export async function handleCredentialRotationRequest(input: {
     json(
       res,
       200,
-      { queuedWork: credentials.listQueuedWork(connectionId) },
+      { queuedWork: await credentials.listQueuedWork(connectionId) },
       cors,
     );
     return true;
@@ -134,7 +134,7 @@ export async function handleCredentialRotationRequest(input: {
       json(res, 401, { error: session.code, reason: session.reason }, cors);
       return true;
     }
-    json(res, 200, { audit: credentials.listAudit() }, cors);
+    json(res, 200, { audit: await credentials.listAudit() }, cors);
     return true;
   }
 
@@ -144,7 +144,7 @@ export async function handleCredentialRotationRequest(input: {
       json(res, 401, { error: session.code, reason: session.reason }, cors);
       return true;
     }
-    json(res, 200, { rotations: credentials.listRotations() }, cors);
+    json(res, 200, { rotations: await credentials.listRotations() }, cors);
     return true;
   }
 
@@ -154,7 +154,7 @@ export async function handleCredentialRotationRequest(input: {
       json(res, 401, { error: session.code, reason: session.reason }, cors);
       return true;
     }
-    json(res, 200, { manifests: credentials.listManifests() }, cors);
+    json(res, 200, { manifests: await credentials.listManifests() }, cors);
     return true;
   }
 
@@ -179,7 +179,7 @@ export async function handleCredentialRotationRequest(input: {
   if (method === "POST" && url.pathname === "/credentials/seed") {
     const body = await readBodyObject();
     if (!body.ok) return true;
-    const seeded = credentials.seedFixture({
+    const seeded = await credentials.seedFixture({
       ...(typeof body.value.connectionId === "string"
         ? { connectionId: body.value.connectionId }
         : {}),
@@ -220,7 +220,7 @@ export async function handleCredentialRotationRequest(input: {
       );
       return true;
     }
-    const result = credentials.requestLease({
+    const result = await credentials.requestLease({
       connectionId,
       requestedScopes: scopes.map(String),
     });
@@ -240,7 +240,7 @@ export async function handleCredentialRotationRequest(input: {
       );
       return true;
     }
-    const result = credentials.requestEffect({
+    const result = await credentials.requestEffect({
       connectionId: body.value.connectionId,
     });
     json(res, result.ok ? 200 : 403, result, cors);
@@ -259,7 +259,7 @@ export async function handleCredentialRotationRequest(input: {
       );
       return true;
     }
-    const result = credentials.revoke({
+    const result = await credentials.revoke({
       connectionId: body.value.connectionId,
       ...(typeof body.value.approvedBy === "string"
         ? { approvedBy: body.value.approvedBy }
@@ -288,7 +288,7 @@ export async function handleCredentialRotationRequest(input: {
       );
       return true;
     }
-    const result = credentials.rotate({
+    const result = await credentials.rotate({
       connectionId: body.value.connectionId,
       approvedBy: body.value.approvedBy,
       secretMaterial: body.value.secretMaterial,
@@ -310,7 +310,7 @@ export async function handleCredentialRotationRequest(input: {
       );
       return true;
     }
-    const result = credentials.offboard({
+    const result = await credentials.offboard({
       connectionId: body.value.connectionId,
       ...(typeof body.value.approvedBy === "string"
         ? { approvedBy: body.value.approvedBy }
@@ -332,7 +332,7 @@ export async function handleCredentialRotationRequest(input: {
       );
       return true;
     }
-    const result = credentials.liveProviderRevoke({
+    const result = await credentials.liveProviderRevoke({
       connectionId: body.value.connectionId,
     });
     json(res, 501, result, cors);

@@ -20,6 +20,10 @@ Local honesty for F24 step 3 (rotate) and step 6 (offboard):
 
 External effects: **NONE**.
 
+## Persistence
+
+When `DATABASE_URL` / `WORKSOCIAL_DATABASE_URL` is set, credential/revoke audit persists via `createPgCredentialRotationStore` (migrations `026` + `027`). Otherwise file/memory. PG persistence is not live VERIFIED.
+
 ## API / console
 
 - Console: `/credentials`

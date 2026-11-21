@@ -63,10 +63,10 @@ function runShell(input: {
   };
 }
 
-export function runHostOutageQueuedWork(
+export async function runHostOutageQueuedWork(
   store: RecoveryStore,
   nowIso: string,
-): ScenarioResult {
+): Promise<ScenarioResult> {
   const runId = `rec-${randomUUID()}`;
   const details: string[] = [];
   const work: QueuedWorkItem = {
@@ -77,7 +77,7 @@ export function runHostOutageQueuedWork(
     queuedAtIso: nowIso,
     summary: "CMS publish held while host outage confirmed",
   };
-  store.upsertQueuedWork([work]);
+  await store.upsertQueuedWork([work]);
   details.push(`Queued work ${work.workId} preserved (no external apply)`);
 
   const classified = classifyRecoveryObservation({
@@ -99,7 +99,7 @@ export function runHostOutageQueuedWork(
     queuedWorkCount: 1,
     evidenceRefs: [`fixture://${runId}/host-outage`],
   };
-  store.appendTimeline(event);
+  await store.appendTimeline(event);
 
   const stop = createCapabilityStop({
     stopId: `stop-host-${runId}`,
@@ -108,7 +108,7 @@ export function runHostOutageQueuedWork(
     reason: "Host outage — pause affected outbound only",
     stoppedAtIso: nowIso,
   });
-  store.upsertCapabilityStop(stop);
+  await store.upsertCapabilityStop(stop);
   details.push(
     `Capability stop ${stop.stopId}; unrelatedCapabilitiesAllowed=${stop.unrelatedCapabilitiesAllowed}`,
   );
@@ -124,7 +124,7 @@ export function runHostOutageQueuedWork(
     evidenceRef: `recovery/evidence/${runId}.json`,
     createdAtIso: nowIso,
   };
-  store.addArtifact(artifact);
+  await store.addArtifact(artifact);
 
   const run = runShell({
     runId,
@@ -142,14 +142,14 @@ export function runHostOutageQueuedWork(
     startedAtIso: nowIso,
     endedAtIso: nowIso,
   });
-  store.addRun(run);
+  await store.addRun(run);
   return { run, artifact, classification: run.classification };
 }
 
-export function runProviderOutageCapabilityStop(
+export async function runProviderOutageCapabilityStop(
   store: RecoveryStore,
   nowIso: string,
-): ScenarioResult {
+): Promise<ScenarioResult> {
   const runId = `rec-${randomUUID()}`;
   const details: string[] = [];
 
@@ -171,7 +171,7 @@ export function runProviderOutageCapabilityStop(
     queuedWorkCount: 0,
     evidenceRefs: [`fixture://${runId}/provider-outage`],
   };
-  store.appendTimeline(event);
+  await store.appendTimeline(event);
 
   const stop = createCapabilityStop({
     stopId: `stop-prov-${runId}`,
@@ -180,7 +180,7 @@ export function runProviderOutageCapabilityStop(
     reason: "Provider outage — stop GBP only",
     stoppedAtIso: nowIso,
   });
-  store.upsertCapabilityStop(stop);
+  await store.upsertCapabilityStop(stop);
   details.push(
     `Stopped gbp_publish; cms_publish remains allowed (unrelated)`,
   );
@@ -196,7 +196,7 @@ export function runProviderOutageCapabilityStop(
     evidenceRef: `recovery/evidence/${runId}.json`,
     createdAtIso: nowIso,
   };
-  store.addArtifact(artifact);
+  await store.addArtifact(artifact);
 
   const run = runShell({
     runId,
@@ -215,14 +215,14 @@ export function runProviderOutageCapabilityStop(
     startedAtIso: nowIso,
     endedAtIso: nowIso,
   });
-  store.addRun(run);
+  await store.addRun(run);
   return { run, artifact, classification: run.classification };
 }
 
-export function runStaleHeartbeatNotIncident(
+export async function runStaleHeartbeatNotIncident(
   store: RecoveryStore,
   nowIso: string,
-): ScenarioResult {
+): Promise<ScenarioResult> {
   const runId = `rec-${randomUUID()}`;
   const details: string[] = [];
   const staleObservedAt = new Date(
@@ -250,7 +250,7 @@ export function runStaleHeartbeatNotIncident(
     queuedWorkCount: 0,
     evidenceRefs: [`fixture://${runId}/stale-heartbeat`],
   };
-  store.appendTimeline(event);
+  await store.appendTimeline(event);
 
   const artifact: RecoveryEvidenceArtifact = {
     artifactId: `art-stale-${runId}`,
@@ -263,7 +263,7 @@ export function runStaleHeartbeatNotIncident(
     evidenceRef: `recovery/evidence/${runId}.json`,
     createdAtIso: nowIso,
   };
-  store.addArtifact(artifact);
+  await store.addArtifact(artifact);
 
   const passed =
     classified.classification ===
@@ -282,14 +282,14 @@ export function runStaleHeartbeatNotIncident(
     startedAtIso: nowIso,
     endedAtIso: nowIso,
   });
-  store.addRun(run);
+  await store.addRun(run);
   return { run, artifact, classification: run.classification };
 }
 
-export function runUnknownRemoteReconcile(
+export async function runUnknownRemoteReconcile(
   store: RecoveryStore,
   nowIso: string,
-): ScenarioResult {
+): Promise<ScenarioResult> {
   const runId = `rec-${randomUUID()}`;
   const details: string[] = [];
 
@@ -301,7 +301,7 @@ export function runUnknownRemoteReconcile(
     queuedAtIso: nowIso,
     summary: "Provider ack timeout — unknown remote; reconcile before retry",
   };
-  store.upsertQueuedWork([work]);
+  await store.upsertQueuedWork([work]);
 
   const classified = classifyRecoveryObservation({
     nowMs: nowFrom(nowIso),
@@ -325,7 +325,7 @@ export function runUnknownRemoteReconcile(
     queuedWorkCount: 1,
     evidenceRefs: [`fixture://${runId}/unknown-remote`],
   };
-  store.appendTimeline(event);
+  await store.appendTimeline(event);
 
   // Reconcile: read fixture ledger; do not re-apply.
   details.push(
@@ -343,7 +343,7 @@ export function runUnknownRemoteReconcile(
     evidenceRef: `recovery/evidence/${runId}.json`,
     createdAtIso: nowIso,
   };
-  store.addArtifact(artifact);
+  await store.addArtifact(artifact);
 
   const passed =
     classified.classification ===
@@ -363,15 +363,15 @@ export function runUnknownRemoteReconcile(
     startedAtIso: nowIso,
     endedAtIso: nowIso,
   });
-  store.addRun(run);
+  await store.addRun(run);
   return { run, artifact, classification: run.classification };
 }
 
-export function runRecoveryScenario(
+export async function runRecoveryScenario(
   store: RecoveryStore,
   scenarioId: RecoveryScenarioId,
   nowIso: string,
-): ScenarioResult {
+): Promise<ScenarioResult> {
   switch (scenarioId) {
     case "host_outage_queued_work":
       return runHostOutageQueuedWork(store, nowIso);

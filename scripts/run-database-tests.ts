@@ -1,5 +1,6 @@
 /**
- * Postgres durable-execution + evaluation-store suites (M2 / AA-21).
+ * Postgres durable-execution + evaluation/credential/recovery store suites
+ * (M2 / AA-21 / AA-48 PG cutover).
  * Requires DATABASE_URL or WORKSOCIAL_DATABASE_URL. Fails closed if unset.
  */
 
@@ -35,6 +36,8 @@ const persistenceDir = path.resolve(here, "../packages/persistence");
 const suites = [
   "src/durable-execution.pg.test.ts",
   "src/evaluation-store.pg.test.ts",
+  "src/credential-rotation-store.pg.test.ts",
+  "src/recovery-store.pg.test.ts",
 ];
 
 for (const suite of suites) {

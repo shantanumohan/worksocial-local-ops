@@ -25,6 +25,10 @@ Also exercises:
 
 External effects: **NONE**.
 
+## Persistence
+
+When `DATABASE_URL` / `WORKSOCIAL_DATABASE_URL` is set, recovery classifications persist via `createPgRecoveryStore` (migrations `024` + `027`). Otherwise file/memory. PG persistence is not live VERIFIED.
+
 ## API / console
 
 - Console: `/recovery` · credential honesty: `/credentials`

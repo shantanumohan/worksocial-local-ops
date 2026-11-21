@@ -13,16 +13,28 @@ import type { RecoveryStore } from "@worksocial/persistence";
 import { listActiveStops, runRecoveryScenario } from "./scenarios.js";
 
 export type RecoveryService = {
-  status(): ReturnType<RecoveryStore["status"]> & {
-    relatedCaseIds: readonly string[];
-    scenarioIds: readonly RecoveryScenarioId[];
-    principal: "recovery";
-  };
-  listTimeline(limit?: number): ReturnType<RecoveryStore["listTimeline"]>;
-  listQueuedWork(): ReturnType<RecoveryStore["listQueuedWork"]>;
-  listCapabilityStops(): ReturnType<RecoveryStore["listCapabilityStops"]>;
-  listRuns(limit?: number): ReturnType<RecoveryStore["listRuns"]>;
-  listArtifacts(limit?: number): ReturnType<RecoveryStore["listArtifacts"]>;
+  status(): Promise<
+    Awaited<ReturnType<RecoveryStore["status"]>> & {
+      relatedCaseIds: readonly string[];
+      scenarioIds: readonly RecoveryScenarioId[];
+      principal: "recovery";
+    }
+  >;
+  listTimeline(
+    limit?: number,
+  ): Promise<Awaited<ReturnType<RecoveryStore["listTimeline"]>>>;
+  listQueuedWork(): Promise<
+    Awaited<ReturnType<RecoveryStore["listQueuedWork"]>>
+  >;
+  listCapabilityStops(): Promise<
+    Awaited<ReturnType<RecoveryStore["listCapabilityStops"]>>
+  >;
+  listRuns(
+    limit?: number,
+  ): Promise<Awaited<ReturnType<RecoveryStore["listRuns"]>>>;
+  listArtifacts(
+    limit?: number,
+  ): Promise<Awaited<ReturnType<RecoveryStore["listArtifacts"]>>>;
   /**
    * Run one or all fixture recovery scenarios.
    * Never claims live VERIFIED; externalEffects always NONE.
@@ -30,28 +42,28 @@ export type RecoveryService = {
   runFixtureRecovery(input?: {
     scenarioId?: RecoveryScenarioId;
     nowIso?: string;
-  }): {
+  }): Promise<{
     ok: boolean;
-    results: ReturnType<typeof runRecoveryScenario>[];
+    results: Awaited<ReturnType<typeof runRecoveryScenario>>[];
     classCounts: ReturnType<typeof summarizeRecoveryClasses>;
     note: string;
-  };
-  inspection(): {
-    timeline: ReturnType<RecoveryStore["listTimeline"]>;
-    queuedWork: ReturnType<RecoveryStore["listQueuedWork"]>;
+  }>;
+  inspection(): Promise<{
+    timeline: Awaited<ReturnType<RecoveryStore["listTimeline"]>>;
+    queuedWork: Awaited<ReturnType<RecoveryStore["listQueuedWork"]>>;
     activeStops: ReturnType<typeof listActiveStops>;
     classCounts: ReturnType<typeof summarizeRecoveryClasses>;
     liveRecoveryClaim: "NOT_RUN";
     externalEffects: "NONE";
     note: string;
-  };
+  }>;
 };
 
 export function createRecoveryService(store: RecoveryStore): RecoveryService {
   return {
-    status() {
+    async status() {
       return {
-        ...store.status(),
+        ...(await store.status()),
         relatedCaseIds: RECOVERY_RELATED_CASE_IDS,
         scenarioIds: RECOVERY_FIXTURE_SCENARIO_IDS,
         principal: "recovery",
@@ -78,17 +90,18 @@ export function createRecoveryService(store: RecoveryStore): RecoveryService {
       return store.listArtifacts(limit);
     },
 
-    runFixtureRecovery(input = {}) {
+    async runFixtureRecovery(input = {}) {
       const nowIso = input.nowIso ?? new Date().toISOString();
       const scenarios: RecoveryScenarioId[] = input.scenarioId
         ? [input.scenarioId]
         : [...RECOVERY_FIXTURE_SCENARIO_IDS];
 
-      const results = scenarios.map((id) =>
-        runRecoveryScenario(store, id, nowIso),
-      );
+      const results = [];
+      for (const id of scenarios) {
+        results.push(await runRecoveryScenario(store, id, nowIso));
+      }
       const ok = results.every((r) => r.run.status === "PASSED");
-      const classCounts = summarizeRecoveryClasses(store.listTimeline());
+      const classCounts = summarizeRecoveryClasses(await store.listTimeline());
 
       return {
         ok,
@@ -100,15 +113,15 @@ export function createRecoveryService(store: RecoveryStore): RecoveryService {
       };
     },
 
-    inspection() {
-      const timeline = store.listTimeline();
+    async inspection() {
+      const timeline = await store.listTimeline();
       return {
         timeline,
-        queuedWork: store.listQueuedWork(),
-        activeStops: listActiveStops(store.listCapabilityStops()),
+        queuedWork: await store.listQueuedWork(),
+        activeStops: listActiveStops(await store.listCapabilityStops()),
         classCounts: summarizeRecoveryClasses(timeline),
-        liveRecoveryClaim: "NOT_RUN",
-        externalEffects: "NONE",
+        liveRecoveryClaim: "NOT_RUN" as const,
+        externalEffects: "NONE" as const,
         note: "Inspect host/provider outage and queued work. Stale observations are not active incidents. UNKNOWN_REMOTE_OUTCOME requires reconcile before retry.",
       };
     },

@@ -30,25 +30,31 @@ import type { CredentialBroker } from "@worksocial/credential-broker";
 import type { CredentialRotationStore } from "@worksocial/persistence";
 
 export type CredentialRotationService = {
-  status(): ReturnType<CredentialRotationStore["status"]> & {
-    relatedCaseIds: readonly string[];
-    principal: "credential-rotation";
-  };
-  listConnections(): Array<
-    FixtureCredentialConnection & {
-      statusView: ReturnType<typeof connectionStatusView>;
+  status(): Promise<
+    Awaited<ReturnType<CredentialRotationStore["status"]>> & {
+      relatedCaseIds: readonly string[];
+      principal: "credential-rotation";
     }
   >;
-  listQueuedWork(connectionId?: string): ReturnType<
-    CredentialRotationStore["listQueuedWork"]
+  listConnections(): Promise<
+    Array<
+      FixtureCredentialConnection & {
+        statusView: ReturnType<typeof connectionStatusView>;
+      }
+    >
   >;
-  listAudit(limit?: number): ReturnType<CredentialRotationStore["listAudit"]>;
-  listRotations(limit?: number): ReturnType<
-    CredentialRotationStore["listRotations"]
-  >;
-  listManifests(limit?: number): ReturnType<
-    CredentialRotationStore["listManifests"]
-  >;
+  listQueuedWork(
+    connectionId?: string,
+  ): Promise<Awaited<ReturnType<CredentialRotationStore["listQueuedWork"]>>>;
+  listAudit(
+    limit?: number,
+  ): Promise<Awaited<ReturnType<CredentialRotationStore["listAudit"]>>>;
+  listRotations(
+    limit?: number,
+  ): Promise<Awaited<ReturnType<CredentialRotationStore["listRotations"]>>>;
+  listManifests(
+    limit?: number,
+  ): Promise<Awaited<ReturnType<CredentialRotationStore["listManifests"]>>>;
   seedFixture(input?: {
     connectionId?: string;
     providerId?: string;
@@ -57,25 +63,25 @@ export type CredentialRotationService = {
     secretMaterial?: string;
     nowIso?: string;
     withQueuedWork?: boolean;
-  }): {
+  }): Promise<{
     connection: FixtureCredentialConnection;
     referenceId: string;
     queuedWorkIds: string[];
-  };
+  }>;
   requestLease(input: {
     connectionId: string;
     requestedScopes: string[];
     nowIso?: string;
     ttlMs?: number;
-  }): CredentialLeaseDecision & { auditEntryId: string | null };
+  }): Promise<CredentialLeaseDecision & { auditEntryId: string | null }>;
   requestEffect(input: {
     connectionId: string;
-  }): CredentialEffectDecision & { auditEntryId: string | null };
+  }): Promise<CredentialEffectDecision & { auditEntryId: string | null }>;
   revoke(input: {
     connectionId: string;
     approvedBy?: string;
     nowIso?: string;
-  }):
+  }): Promise<
     | {
         ok: true;
         connection: FixtureCredentialConnection;
@@ -84,13 +90,14 @@ export type CredentialRotationService = {
         auditRetained: true;
         externalEffects: "NONE";
       }
-    | { ok: false; code: string; reason: string };
+    | { ok: false; code: string; reason: string }
+  >;
   rotate(input: {
     connectionId: string;
     approvedBy: string;
     secretMaterial: string;
     nowIso?: string;
-  }):
+  }): Promise<
     | {
         ok: true;
         connection: FixtureCredentialConnection;
@@ -98,12 +105,13 @@ export type CredentialRotationService = {
         liveProviderRevoke: "NOT_WIRED";
         externalEffects: "NONE";
       }
-    | { ok: false; code: string; reason: string };
+    | { ok: false; code: string; reason: string }
+  >;
   offboard(input: {
     connectionId: string;
     approvedBy?: string;
     nowIso?: string;
-  }):
+  }): Promise<
     | {
         ok: true;
         connection: FixtureCredentialConnection;
@@ -113,12 +121,15 @@ export type CredentialRotationService = {
         externalEffects: "NONE";
         catalogClaim: "NOT_RUN";
       }
-    | { ok: false; code: string; reason: string };
+    | { ok: false; code: string; reason: string }
+  >;
   liveProviderRevoke(input: {
     connectionId: string;
-  }): ReturnType<typeof attemptLiveProviderRevoke> & {
-    connectionId: string;
-  };
+  }): Promise<
+    ReturnType<typeof attemptLiveProviderRevoke> & {
+      connectionId: string;
+    }
+  >;
 };
 
 export function createCredentialRotationService(input: {
@@ -127,17 +138,17 @@ export function createCredentialRotationService(input: {
 }): CredentialRotationService {
   const { store, broker } = input;
 
-  return {
-    status() {
+  const service: CredentialRotationService = {
+    async status() {
       return {
-        ...store.status(),
+        ...(await store.status()),
         relatedCaseIds: CREDENTIAL_ROTATION_RELATED_CASE_IDS,
         principal: "credential-rotation",
       };
     },
 
-    listConnections() {
-      return store.listConnections().map((c) => ({
+    async listConnections() {
+      return (await store.listConnections()).map((c) => ({
         ...c,
         statusView: connectionStatusView(c),
       }));
@@ -159,7 +170,7 @@ export function createCredentialRotationService(input: {
       return store.listManifests(limit);
     },
 
-    seedFixture(opts = {}) {
+    async seedFixture(opts = {}) {
       const nowIso = opts.nowIso ?? new Date().toISOString();
       const secret = opts.secretMaterial ?? `fixture-secret-${randomUUID()}`;
       const ref = broker.putReference(
@@ -176,8 +187,8 @@ export function createCredentialRotationService(input: {
         scopes: opts.scopes ?? ["publish"],
         nowIso,
       });
-      store.upsertConnection(connection);
-      store.appendAudit(
+      await store.upsertConnection(connection);
+      await store.appendAudit(
         createAuditEntry({
           entryId: `aud-${randomUUID()}`,
           kind: CredentialAuditKind.CONNECTION_SEEDED,
@@ -220,7 +231,7 @@ export function createCredentialRotationService(input: {
             summary: "Fixture URO — retained for reconcile on revoke",
           },
         ];
-        store.upsertQueuedWork(items);
+        await store.upsertQueuedWork(items);
         queuedWorkIds.push(...items.map((i) => i.workId));
       }
 
@@ -231,9 +242,9 @@ export function createCredentialRotationService(input: {
       };
     },
 
-    requestLease(req) {
+    async requestLease(req) {
       const nowIso = req.nowIso ?? new Date().toISOString();
-      const connection = store.getConnection(req.connectionId);
+      const connection = await store.getConnection(req.connectionId);
       const decision = evaluateCredentialLease({
         connection,
         requestedScopes: req.requestedScopes,
@@ -261,7 +272,7 @@ export function createCredentialRotationService(input: {
             nowIso,
             details: { code: mint.code },
           });
-          store.appendAudit(audit);
+          await store.appendAudit(audit);
           return {
             ok: false as const,
             code:
@@ -291,13 +302,13 @@ export function createCredentialRotationService(input: {
           ? { leaseId: decision.leaseId }
           : { code: decision.code },
       });
-      store.appendAudit(audit);
+      await store.appendAudit(audit);
       return { ...decision, auditEntryId: audit.entryId };
     },
 
-    requestEffect(req) {
+    async requestEffect(req) {
       const nowIso = new Date().toISOString();
-      const connection = store.getConnection(req.connectionId);
+      const connection = await store.getConnection(req.connectionId);
       const decision = evaluateSendTimeEffect({ connection });
       const audit = createAuditEntry({
         entryId: `aud-${randomUUID()}`,
@@ -312,13 +323,13 @@ export function createCredentialRotationService(input: {
         nowIso,
         details: decision.ok ? {} : { code: decision.code },
       });
-      store.appendAudit(audit);
+      await store.appendAudit(audit);
       return { ...decision, auditEntryId: audit.entryId };
     },
 
-    revoke(req) {
+    async revoke(req) {
       const nowIso = req.nowIso ?? new Date().toISOString();
-      const existing = store.getConnection(req.connectionId);
+      const existing = await store.getConnection(req.connectionId);
       if (!existing) {
         return {
           ok: false,
@@ -339,16 +350,16 @@ export function createCredentialRotationService(input: {
         nowIso,
         req.approvedBy ?? null,
       );
-      store.upsertConnection(revoked);
+      await store.upsertConnection(revoked);
       broker.revokeReference(existing.referenceId, nowIso);
 
-      const queued = store.listQueuedWork(existing.connectionId);
+      const queued = await store.listQueuedWork(existing.connectionId);
       const cancelResults = cancelEligibleQueuedWork(queued);
       const updatedQueue = applyQueuedCancelResults(queued, cancelResults);
-      store.upsertQueuedWork(updatedQueue);
+      await store.upsertQueuedWork(updatedQueue);
 
       for (const result of cancelResults) {
-        store.appendAudit(
+        await store.appendAudit(
           createAuditEntry({
             entryId: `aud-${randomUUID()}`,
             kind: result.cancelled
@@ -370,7 +381,7 @@ export function createCredentialRotationService(input: {
         );
       }
 
-      store.appendAudit(
+      await store.appendAudit(
         createAuditEntry({
           entryId: `aud-${randomUUID()}`,
           kind: CredentialAuditKind.REVOKED,
@@ -386,7 +397,7 @@ export function createCredentialRotationService(input: {
         connectionId: revoked.connectionId,
         referenceId: revoked.referenceId,
       });
-      store.appendAudit(
+      await store.appendAudit(
         createAuditEntry({
           entryId: `aud-${randomUUID()}`,
           kind: CredentialAuditKind.LIVE_PROVIDER_REVOKE_NOT_WIRED,
@@ -408,9 +419,9 @@ export function createCredentialRotationService(input: {
       };
     },
 
-    rotate(req) {
+    async rotate(req) {
       const nowIso = req.nowIso ?? new Date().toISOString();
-      const existing = store.getConnection(req.connectionId);
+      const existing = await store.getConnection(req.connectionId);
       if (!existing) {
         return {
           ok: false,
@@ -446,7 +457,7 @@ export function createCredentialRotationService(input: {
         rotatedToReferenceId: rotated.newReference.referenceId,
         approvedBy: req.approvedBy,
       };
-      store.upsertConnection(nextConnection);
+      await store.upsertConnection(nextConnection);
 
       const rotation = buildRotationRecord({
         rotationId: `rot-${randomUUID()}`,
@@ -456,8 +467,8 @@ export function createCredentialRotationService(input: {
         approvedBy: req.approvedBy,
         nowIso,
       });
-      store.addRotation(rotation);
-      store.appendAudit(
+      await store.addRotation(rotation);
+      await store.appendAudit(
         createAuditEntry({
           entryId: `aud-${randomUUID()}`,
           kind: CredentialAuditKind.ROTATED,
@@ -483,9 +494,9 @@ export function createCredentialRotationService(input: {
       };
     },
 
-    offboard(req) {
+    async offboard(req) {
       const nowIso = req.nowIso ?? new Date().toISOString();
-      const existing = store.getConnection(req.connectionId);
+      const existing = await store.getConnection(req.connectionId);
       if (!existing) {
         return {
           ok: false,
@@ -496,7 +507,7 @@ export function createCredentialRotationService(input: {
 
       let connection = existing;
       if (existing.status === CredentialConnectionStatus.ACTIVE) {
-        const revoked = this.revoke({
+        const revoked = await service.revoke({
           connectionId: existing.connectionId,
           ...(req.approvedBy !== undefined
             ? { approvedBy: req.approvedBy }
@@ -509,10 +520,12 @@ export function createCredentialRotationService(input: {
         connection = revoked.connection;
       }
 
-      const queued = store.listQueuedWork(connection.connectionId);
+      const queued = await store.listQueuedWork(connection.connectionId);
       const cancelResults = cancelEligibleQueuedWork(queued);
       // Queue already updated by revoke when we revoked above; ensure cancel applied.
-      store.upsertQueuedWork(applyQueuedCancelResults(queued, cancelResults));
+      await store.upsertQueuedWork(
+        applyQueuedCancelResults(queued, cancelResults),
+      );
 
       const manifest = buildOffboardingManifest({
         manifestId: `ob-${randomUUID()}`,
@@ -521,8 +534,8 @@ export function createCredentialRotationService(input: {
         hasActiveTokenResidual: true,
         nowIso,
       });
-      store.addManifest(manifest);
-      store.appendAudit(
+      await store.addManifest(manifest);
+      await store.appendAudit(
         createAuditEntry({
           entryId: `aud-${randomUUID()}`,
           kind: CredentialAuditKind.OFFBOARDED,
@@ -548,13 +561,13 @@ export function createCredentialRotationService(input: {
       };
     },
 
-    liveProviderRevoke(req) {
-      const connection = store.getConnection(req.connectionId);
+    async liveProviderRevoke(req) {
+      const connection = await store.getConnection(req.connectionId);
       const result = attemptLiveProviderRevoke({
         connectionId: req.connectionId,
         referenceId: connection?.referenceId ?? "unknown",
       });
-      store.appendAudit(
+      await store.appendAudit(
         createAuditEntry({
           entryId: `aud-${randomUUID()}`,
           kind: CredentialAuditKind.LIVE_PROVIDER_REVOKE_NOT_WIRED,
@@ -571,4 +584,6 @@ export function createCredentialRotationService(input: {
       return { ...result, connectionId: req.connectionId };
     },
   };
+
+  return service;
 }

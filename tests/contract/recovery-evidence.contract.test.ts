@@ -25,9 +25,9 @@ describe("contract: WP10 recovery evidence", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  it("separates stale observation, active incident, and unknown remote", () => {
+  it("separates stale observation, active incident, and unknown remote", async () => {
     const service = createRecoveryService(createFileRecoveryStore(dir));
-    const result = service.runFixtureRecovery({
+    const result = await service.runFixtureRecovery({
       nowIso: "2026-11-21T21:20:00.000Z",
     });
     expect(result.ok).toBe(true);
@@ -47,14 +47,14 @@ describe("contract: WP10 recovery evidence", () => {
       expect(r.artifact.redacted).toBe(true);
     }
 
-    const inspection = service.inspection();
+    const inspection = await service.inspection();
     expect(inspection.classCounts.ACTIVE_INCIDENT).toBeGreaterThanOrEqual(1);
     expect(inspection.classCounts.STALE_OBSERVATION).toBeGreaterThanOrEqual(1);
     expect(
       inspection.classCounts.UNKNOWN_REMOTE_OUTCOME,
     ).toBeGreaterThanOrEqual(1);
 
-    const status = service.status();
+    const status = await service.status();
     expect(status.liveWiring.credentialRotation).toBe("fixture");
     expect(status.liveWiring.offboarding).toBe("fixture");
     expect(status.liveWiring.liveProviderRevocation).toBe("NOT_WIRED");
