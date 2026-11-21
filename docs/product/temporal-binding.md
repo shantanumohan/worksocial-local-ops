@@ -60,8 +60,9 @@ Without Docker, `pnpm test:workflow` uses `@temporalio/testing` `createLocal()`
 
 GitHub Actions job `temporal-compose` starts `deploy/temporal/docker-compose.yml`
 (`temporalio/auto-setup`) plus app Postgres, waits via
-`services/workflow-worker/scripts/wait-temporal-frontend.ts` (SDK dial +
-`describeNamespace`, run from the package that declares `@temporalio/client`),
+`pnpm --filter @worksocial/workflow-worker run wait:temporal`
+(`services/workflow-worker/scripts/wait-temporal-frontend.ts` — SDK dial +
+`describeNamespace`; package declares `@temporalio/client`),
 then runs:
 
 ```bash

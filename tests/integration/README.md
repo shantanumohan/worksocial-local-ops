@@ -24,8 +24,8 @@ export TEMPORAL_ADDRESS=127.0.0.1:7233
 export TEMPORAL_NAMESPACE=default
 export DATABASE_URL=postgres://worksocial:worksocial@127.0.0.1:5432/worksocial_test
 
-# Optional readiness (frontend + namespace); CI runs this from workflow-worker
-pnpm --filter @worksocial/workflow-worker exec tsx scripts/wait-temporal-frontend.ts
+# Optional readiness (frontend + namespace); CI runs package script (SDK dep local)
+pnpm --filter @worksocial/workflow-worker run wait:temporal
 
 pnpm db:migrate
 pnpm test:temporal-compose

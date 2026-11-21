@@ -1,9 +1,12 @@
 /**
  * Poll Temporal until frontend dials AND the target namespace is registered.
- * Run from @worksocial/workflow-worker so @temporalio/client resolves under pnpm.
+ * Lives in @worksocial/workflow-worker (declares @temporalio/client) so pnpm
+ * can resolve the SDK — do not run this file from the monorepo root importer.
  *
- * Usage (from repo root):
- *   pnpm --filter @worksocial/workflow-worker exec tsx scripts/wait-temporal-frontend.ts
+ * Usage:
+ *   pnpm --filter @worksocial/workflow-worker run wait:temporal
+ *   # or, with cwd=services/workflow-worker:
+ *   pnpm run wait:temporal
  *
  * Env:
  *   TEMPORAL_ADDRESS (default 127.0.0.1:7233)

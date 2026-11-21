@@ -163,16 +163,19 @@ jobs:
       - name: Start Temporal auto-setup (compose)
         run: docker compose -f deploy/temporal/docker-compose.yml up -d
 
+      - name: Build (needed before Temporal wait / e2e)
+        run: pnpm build:local
+
       - name: Wait for Temporal frontend + namespace (SDK)
+        working-directory: services/workflow-worker
         run: |
           set -e
-          pnpm build:local
-          # Run inside workflow-worker so @temporalio/client resolves (pnpm).
-          # Script dials frontend AND describeNamespace (auto-setup registers async).
-          if ! pnpm --filter @worksocial/workflow-worker exec tsx scripts/wait-temporal-frontend.ts; then
+          # Script lives in this package (declares @temporalio/client) so pnpm
+          # resolution succeeds. Dials frontend AND describeNamespace.
+          if ! pnpm run wait:temporal; then
             echo "::error::Temporal frontend/namespace not ready at ${TEMPORAL_ADDRESS} ns=${TEMPORAL_NAMESPACE}"
-            docker compose -f deploy/temporal/docker-compose.yml ps || true
-            docker compose -f deploy/temporal/docker-compose.yml logs || true
+            docker compose -f ../../deploy/temporal/docker-compose.yml ps || true
+            docker compose -f ../../deploy/temporal/docker-compose.yml logs || true
             exit 1
           fi
 
