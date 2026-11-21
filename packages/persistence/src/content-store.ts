@@ -11,6 +11,9 @@ import {
   type ArticleQaVerdict,
   type CanonicalArticle,
   type ContentCampaign,
+  type ContentClaimBundle,
+  type ContentDistributionRunRecord,
+  type ContentReviewBindingRecord,
   type ContentState,
   type DestinationRegistryEntry,
   type DestinationVariant,
@@ -32,12 +35,18 @@ export type ContentStore = {
   addQaVerdict(verdict: ArticleQaVerdict): ContentState;
   addVariantQaVerdict(verdict: VariantQaVerdict): ContentState;
   addReleaseOutcome(outcome: WritePathOutcomeEvidence): ContentState;
+  upsertClaimBundle(bundle: ContentClaimBundle): ContentState;
+  upsertReviewBinding(binding: ContentReviewBindingRecord): ContentState;
+  upsertDistributionRun(run: ContentDistributionRunRecord): ContentState;
   listCampaigns(limit?: number): ContentCampaign[];
   listArticles(limit?: number): CanonicalArticle[];
   listVariants(limit?: number): DestinationVariant[];
   listReceipts(limit?: number): PublicationReceipt[];
   listQaVerdicts(limit?: number): ArticleQaVerdict[];
   listVariantQaVerdicts(limit?: number): VariantQaVerdict[];
+  listClaimBundles(limit?: number): ContentClaimBundle[];
+  listReviewBindings(limit?: number): ContentReviewBindingRecord[];
+  listDistributionRuns(limit?: number): ContentDistributionRunRecord[];
   status(): {
     campaignCount: number;
     articleCount: number;
@@ -47,6 +56,9 @@ export type ContentStore = {
     qaVerdictCount: number;
     variantQaVerdictCount: number;
     releaseOutcomeCount: number;
+    claimBundleCount: number;
+    reviewBindingCount: number;
+    distributionRunCount: number;
     liveCmsPublishWiring: ContentState["liveCmsPublishWiring"];
     liveGbpWiring: ContentState["liveGbpWiring"];
     liveSocialWiring: ContentState["liveSocialWiring"];
@@ -116,6 +128,9 @@ export function createFileContentStore(stateDir: string): ContentStore {
       releaseOutcomes: existing.releaseOutcomes ?? [],
       fixtureCanonicalLedger: existing.fixtureCanonicalLedger ?? {},
       fixtureVariantLedger: existing.fixtureVariantLedger ?? {},
+      claimBundles: existing.claimBundles ?? [],
+      reviewBindings: existing.reviewBindings ?? [],
+      distributionRuns: existing.distributionRuns ?? [],
       liveCmsPublishWiring: "NOT_WIRED",
       liveGbpWiring: "NOT_WIRED",
       liveSocialWiring: "NOT_WIRED",
@@ -212,6 +227,43 @@ export function createFileContentStore(stateDir: string): ContentStore {
         releaseOutcomes: [...state.releaseOutcomes, outcome].slice(-500),
         updatedAtIso: outcome.recordedAtIso,
       })),
+    upsertClaimBundle: (bundle) =>
+      update((state) => {
+        const others = state.claimBundles.filter(
+          (b) =>
+            !(
+              b.articleId === bundle.articleId &&
+              b.contentDigest === bundle.contentDigest
+            ),
+        );
+        return {
+          ...state,
+          claimBundles: [...others, bundle].slice(-500),
+          updatedAtIso: bundle.recordedAtIso,
+        };
+      }),
+    upsertReviewBinding: (binding) =>
+      update((state) => {
+        const others = state.reviewBindings.filter(
+          (b) => b.bindingId !== binding.bindingId,
+        );
+        return {
+          ...state,
+          reviewBindings: [...others, binding].slice(-500),
+          updatedAtIso: binding.updatedAtIso,
+        };
+      }),
+    upsertDistributionRun: (run) =>
+      update((state) => {
+        const others = state.distributionRuns.filter(
+          (r) => r.runId !== run.runId,
+        );
+        return {
+          ...state,
+          distributionRuns: [...others, run].slice(-200),
+          updatedAtIso: run.updatedAtIso,
+        };
+      }),
     listCampaigns: (limit = 100) => {
       const rows = read().campaigns;
       return rows.slice(Math.max(0, rows.length - limit));
@@ -236,6 +288,18 @@ export function createFileContentStore(stateDir: string): ContentStore {
       const rows = read().variantQaVerdicts;
       return rows.slice(Math.max(0, rows.length - limit));
     },
+    listClaimBundles: (limit = 100) => {
+      const rows = read().claimBundles;
+      return rows.slice(Math.max(0, rows.length - limit));
+    },
+    listReviewBindings: (limit = 100) => {
+      const rows = read().reviewBindings;
+      return rows.slice(Math.max(0, rows.length - limit));
+    },
+    listDistributionRuns: (limit = 100) => {
+      const rows = read().distributionRuns;
+      return rows.slice(Math.max(0, rows.length - limit));
+    },
     status: () => {
       const state = read();
       return {
@@ -247,11 +311,14 @@ export function createFileContentStore(stateDir: string): ContentStore {
         qaVerdictCount: state.qaVerdicts.length,
         variantQaVerdictCount: state.variantQaVerdicts.length,
         releaseOutcomeCount: state.releaseOutcomes.length,
+        claimBundleCount: state.claimBundles.length,
+        reviewBindingCount: state.reviewBindings.length,
+        distributionRunCount: state.distributionRuns.length,
         liveCmsPublishWiring: state.liveCmsPublishWiring,
         liveGbpWiring: state.liveGbpWiring,
         liveSocialWiring: state.liveSocialWiring,
         honestNote:
-          "Article pipeline, destination variants, and gateway-gated fixture distribution. Live CMS / GBP / social remain NOT_WIRED. Gateway acceptance ≠ verified. Released claims require SUPPORTED facts + independent per-variant QA.",
+          "M6 canonical authoring + claim/source QA + A25 binding + fixture CMS/GBP/LinkedIn distribution. Live CMS / GBP / social remain NOT_WIRED. Gateway acceptance ≠ verified. Released claims require SUPPORTED facts + independent per-variant QA. Partial failure recovery does not re-apply verified destinations.",
       };
     },
   };

@@ -12,7 +12,8 @@
     "@worksocial/persistence": "workspace:*",
     "@worksocial/probes": "workspace:*",
     "@worksocial/lead-capture": "workspace:*",
-    "@worksocial/inbox": "workspace:*"
+    "@worksocial/inbox": "workspace:*",
+    "@worksocial/content": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "22.10.2",

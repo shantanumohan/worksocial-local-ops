@@ -539,6 +539,100 @@ export function proveFixtureContentWritePaths(
 }
 
 /**
+ * M6: ensure CMS/GBP/LinkedIn/Facebook write paths exist for an authored
+ * article asset id (not only the golden pilot). Reuses fixture bindings.
+ */
+export function ensureContentMappingForArticle(
+  state: ProductionMappingState,
+  articleId: string,
+  nowIso: string,
+): {
+  state: ProductionMappingState;
+  writePathIds: ContentWritePathIds;
+} {
+  const base = createFixtureContentPilotMapping(nowIso);
+  let next = state;
+  // Ensure shared bindings exist.
+  for (const binding of base.state.bindings) {
+    if (!next.bindings.some((b) => b.bindingId === binding.bindingId)) {
+      next = {
+        ...next,
+        bindings: [...next.bindings, binding],
+        updatedAt: nowIso,
+      };
+    }
+  }
+
+  const writePathIds: ContentWritePathIds = {
+    cms: `wp-content-cms-${articleId}`,
+    gbp: `wp-content-gbp-${articleId}`,
+    linkedin: `wp-content-linkedin-${articleId}`,
+    facebook: `wp-content-facebook-${articleId}`,
+  };
+
+  const specs: Array<{
+    writePathId: string;
+    channelId: string;
+    operation: string;
+    bindingId: string;
+  }> = [
+    {
+      writePathId: writePathIds.cms,
+      channelId: "owned-site",
+      operation: "publish_article",
+      bindingId: CONTENT_PILOT_CMS_BINDING_ID,
+    },
+    {
+      writePathId: writePathIds.gbp,
+      channelId: "gbp",
+      operation: "publish_gbp_update",
+      bindingId: CONTENT_PILOT_GBP_BINDING_ID,
+    },
+    {
+      writePathId: writePathIds.linkedin,
+      channelId: "linkedin",
+      operation: "publish_social_post",
+      bindingId: CONTENT_PILOT_LINKEDIN_BINDING_ID,
+    },
+    {
+      writePathId: writePathIds.facebook,
+      channelId: "facebook",
+      operation: "publish_social_post",
+      bindingId: CONTENT_PILOT_FACEBOOK_BINDING_ID,
+    },
+  ];
+
+  for (const spec of specs) {
+    if (next.writePaths.some((p) => p.writePathId === spec.writePathId)) {
+      continue;
+    }
+    const path: PilotWritePath = {
+      writePathId: spec.writePathId,
+      channelId: spec.channelId,
+      assetId: articleId,
+      operation: spec.operation,
+      siteId: "worksocial-pilot",
+      bindingId: spec.bindingId,
+      formId: null,
+      bookingOwnershipId: null,
+      crmOwnershipId: null,
+      requiredEvidenceKinds: [...DEFAULT_PILOT_EVIDENCE_KINDS],
+      createdAtIso: nowIso,
+    };
+    next = {
+      ...next,
+      writePaths: [...next.writePaths, path],
+      updatedAt: nowIso,
+    };
+  }
+
+  for (const id of Object.values(writePathIds)) {
+    next = proveFixturePilotWritePath(next, id, nowIso);
+  }
+  return { state: next, writePathIds };
+}
+
+/**
  * Merge every missing content write path / binding independently.
  */
 export function upsertFixtureContentMapping(

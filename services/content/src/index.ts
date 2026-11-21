@@ -1,5 +1,9 @@
 export { createContentService, type ContentService } from "./service.js";
 export {
+  createCanonicalPublishOps,
+  type CanonicalPublishOps,
+} from "./canonical-publish-ops.js";
+export {
   CONTENT_PILOT_ARTICLE_ASSET_ID,
   CONTENT_PILOT_CMS_WRITE_PATH_ID,
   CONTENT_PILOT_GBP_WRITE_PATH_ID,
@@ -22,6 +26,7 @@ export {
   buildFixtureContentSeed,
   createFixtureContentPilotMapping,
   proveFixtureContentWritePaths,
+  ensureContentMappingForArticle,
   upsertFixtureContentMapping,
   invokeDestinationAdapter,
   fixtureCmsPublish,

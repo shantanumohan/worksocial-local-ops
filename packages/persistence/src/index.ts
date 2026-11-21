@@ -245,6 +245,11 @@ export {
 } from "./durable-execution.js";
 
 export {
+  createFileDurableStores,
+  defaultDurableStateDir,
+} from "./file-durable-stores.js";
+
+export {
   createMemoryMissionWorkflowStore,
   createPgMissionWorkflowStore,
   type MissionWorkflowStore,

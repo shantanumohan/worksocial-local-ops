@@ -1226,9 +1226,9 @@ export function contentPage(apiOrigin: string): string {
 </header>
 <main>
   <section>
-    <h2>Content and distribution (R1-08)</h2>
-    <p class="muted">Article pipeline, destination variants, gateway-gated CMS/GBP/social receipts.</p>
-    <p class="warn">Live CMS / GBP / social are <strong>NOT_WIRED</strong>. Gateway acceptance ≠ verified. Released claims require <strong>SUPPORTED</strong> facts. Canonical owned-site first; dependents wait for verified URL. Set Authority mode to <strong>operate</strong>.</p>
+    <h2>Content and distribution (M6 / R1-08)</h2>
+    <p class="muted">Versioned canonical authoring, claim/source QA, A25 review binding, owned-site + GBP + LinkedIn fixture distribute with per-destination verification.</p>
+    <p class="warn">Live CMS / GBP / social are <strong>NOT_WIRED</strong>. External effects <strong>NONE</strong>. Gateway acceptance ≠ verified. Temporal remains NOT_WIRED. Not R1-complete. Set Authority mode to <strong>operate</strong>.</p>
     <div class="row">
       <button id="btn-seed" type="button">Seed fixtures</button>
       <button id="btn-refresh" type="button">Refresh</button>
@@ -1243,14 +1243,50 @@ export function contentPage(apiOrigin: string): string {
     </table>
   </section>
   <section>
-    <h2>Release controls</h2>
+    <h2>Author draft (versioned)</h2>
+    <label for="camp-title">Campaign title</label>
+    <input id="camp-title" value="Local training rooms guide" />
+    <label for="camp-topic">Topic</label>
+    <input id="camp-topic" value="training-rooms" />
+    <label for="art-title">Article title</label>
+    <input id="art-title" value="How to book a training room" />
+    <label for="art-body">Article body</label>
+    <input id="art-body" value="Plan your next training day with verified capacity and hours." />
+    <label for="art-facts">Cited fact ids (comma-separated)</label>
+    <input id="art-facts" value="fixture-fact-hours" />
+    <div class="row">
+      <button id="btn-create-camp" type="button">Create campaign</button>
+      <button id="btn-create-art" type="button">Create article draft</button>
+      <button id="btn-edit-art" type="button">Edit article (bump version)</button>
+    </div>
+    <p class="muted">Campaign id: <span id="camp-id-label">—</span> · Article id: <span id="art-id-label">—</span></p>
+  </section>
+  <section>
+    <h2>Claim/source QA + A25 binding</h2>
+    <label for="claim-stmt">Claim statement</label>
+    <input id="claim-stmt" value="Open weekdays with verified hours" />
+    <label for="claim-source">Source ref</label>
+    <input id="claim-source" value="src-fixture-hours" />
+    <div class="row">
+      <button id="btn-claim-qa" type="button">Record claim/source QA</button>
+      <button id="btn-bind-review" type="button">Bind A25 review</button>
+      <button id="btn-record-qa" type="button">Record article QA (approve)</button>
+    </div>
+  </section>
+  <section>
+    <h2>Release / distribute</h2>
     <label for="art-id">Article id</label>
     <input id="art-id" placeholder="golden-art-training" />
     <label for="var-id">Variant id</label>
     <input id="var-id" placeholder="golden-var-gbp" />
+    <label for="run-id">Distribution run id</label>
+    <input id="run-id" placeholder="run-…" />
     <div class="row">
       <button id="btn-ensure-map" type="button">Ensure fixture mapping</button>
       <button id="btn-approve" type="button">Approve article</button>
+      <button id="btn-distribute" type="button">Distribute CMS+GBP+LinkedIn</button>
+      <button id="btn-distribute-fail" type="button">Distribute (force GBP fail)</button>
+      <button id="btn-recover" type="button">Recover partial run</button>
       <button id="btn-release-cms" type="button">Release canonical (gateway)</button>
       <button id="btn-verify-cms" type="button">Verify canonical</button>
       <button id="btn-release-var" type="button">Release variant</button>
@@ -1260,12 +1296,15 @@ export function contentPage(apiOrigin: string): string {
     <pre id="out">—</pre>
   </section>
   <section>
-    <h2>Campaigns / articles / variants / receipts</h2>
+    <h2>Campaigns / articles / variants / receipts / runs</h2>
     <pre id="ledger">Loading…</pre>
   </section>
 </main>
 <script>
   const API = ${JSON.stringify(apiOrigin)};
+  let lastCampaignId = '';
+  let lastArticleId = '';
+  let lastRunId = '';
   async function api(path, opts = {}) {
     const headers = Object.assign({ origin: window.location.origin }, opts.headers || {});
     const csrf = sessionStorage.getItem('ws_csrf');
@@ -1278,12 +1317,13 @@ export function contentPage(apiOrigin: string): string {
     const s = await session.json();
     sessionStorage.setItem('ws_csrf', s.csrfToken);
     document.getElementById('who').textContent = s.username + ' · ' + s.role + ' · local session';
-    const [statusRes, campsRes, artsRes, varsRes, rcptsRes] = await Promise.all([
+    const [statusRes, campsRes, artsRes, varsRes, rcptsRes, runsRes] = await Promise.all([
       api('/content/status'),
       api('/content/campaigns'),
       api('/content/articles'),
       api('/content/variants'),
       api('/content/receipts'),
+      api('/content/distribution-runs'),
     ]);
     if (!statusRes.ok) { location.href = '/login'; return; }
     const status = await statusRes.json();
@@ -1291,6 +1331,7 @@ export function contentPage(apiOrigin: string): string {
     const arts = await artsRes.json();
     const vars = await varsRes.json();
     const rcpts = await rcptsRes.json();
+    const runs = await runsRes.json();
     const tbody = document.getElementById('status-rows');
     tbody.replaceChildren();
     const rows = [
@@ -1301,6 +1342,9 @@ export function contentPage(apiOrigin: string): string {
       ['Articles', String(status.articleCount ?? 0)],
       ['Variants', String(status.variantCount ?? 0)],
       ['Receipts', String(status.receiptCount ?? 0)],
+      ['Claim bundles', String(status.claimBundleCount ?? 0)],
+      ['Review bindings', String(status.reviewBindingCount ?? 0)],
+      ['Distribution runs', String(status.distributionRunCount ?? 0)],
       ['Release outcomes', String(status.releaseOutcomeCount ?? 0)],
     ];
     for (const [k, v] of rows) {
@@ -1321,15 +1365,28 @@ export function contentPage(apiOrigin: string): string {
       articles: arts.articles || [],
       variants: vars.variants || [],
       receipts: rcpts.receipts || [],
+      distributionRuns: runs.runs || [],
     }, null, 2);
-    document.getElementById('note').textContent = status.note || status.honestNote || '';
+    document.getElementById('note').textContent = status.m6Note || status.note || status.honestNote || '';
     const firstArt = (arts.articles || [])[0];
     if (firstArt && !document.getElementById('art-id').value) {
       document.getElementById('art-id').value = firstArt.articleId;
+      lastArticleId = firstArt.articleId;
+      document.getElementById('art-id-label').textContent = firstArt.articleId;
+    }
+    const firstCamp = (camps.campaigns || [])[0];
+    if (firstCamp) {
+      lastCampaignId = firstCamp.campaignId;
+      document.getElementById('camp-id-label').textContent = firstCamp.campaignId;
     }
     const firstVar = (vars.variants || [])[0];
     if (firstVar && !document.getElementById('var-id').value) {
       document.getElementById('var-id').value = firstVar.variantId;
+    }
+    const firstRun = (runs.runs || [])[0];
+    if (firstRun && !document.getElementById('run-id').value) {
+      document.getElementById('run-id').value = firstRun.runId;
+      lastRunId = firstRun.runId;
     }
   }
   document.getElementById('btn-seed').onclick = async () => {
@@ -1337,6 +1394,151 @@ export function contentPage(apiOrigin: string): string {
     const res = await api('/content/seed-fixtures', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
     const body = await res.json();
     document.getElementById('note').textContent = body.note || (res.ok ? 'Seeded' : (body.error || 'failed'));
+    refresh();
+  };
+  document.getElementById('btn-create-camp').onclick = async () => {
+    const res = await api('/content/create-campaign', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({
+        title: document.getElementById('camp-title').value,
+        topic: document.getElementById('camp-topic').value,
+        audienceNeed: 'local teams booking rooms',
+        practicalValue: 'verified capacity and hours',
+        intendedAction: 'book a tour',
+        sourceFactIds: document.getElementById('art-facts').value.split(',').map(s => s.trim()).filter(Boolean),
+        destinationIds: ['dest-cms','dest-gbp','dest-linkedin']
+      })
+    });
+    const body = await res.json();
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    if (body.campaign) {
+      lastCampaignId = body.campaign.campaignId;
+      document.getElementById('camp-id-label').textContent = lastCampaignId;
+    }
+    document.getElementById('note').textContent = body.note || body.error || (res.ok ? 'Campaign created' : 'failed');
+    refresh();
+  };
+  document.getElementById('btn-create-art').onclick = async () => {
+    if (!lastCampaignId) { document.getElementById('note').textContent = 'Create a campaign first'; return; }
+    const facts = document.getElementById('art-facts').value.split(',').map(s => s.trim()).filter(Boolean);
+    const res = await api('/content/create-article', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({
+        campaignId: lastCampaignId,
+        title: document.getElementById('art-title').value,
+        body: document.getElementById('art-body').value,
+        authorId: 'author-a13',
+        citedFactIds: facts
+      })
+    });
+    const body = await res.json();
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    if (body.article) {
+      lastArticleId = body.article.articleId;
+      document.getElementById('art-id').value = lastArticleId;
+      document.getElementById('art-id-label').textContent = lastArticleId;
+    }
+    document.getElementById('note').textContent = body.note || (body.reasons||[]).join('; ') || body.error || (res.ok ? 'Draft created' : 'failed');
+    refresh();
+  };
+  document.getElementById('btn-edit-art').onclick = async () => {
+    const articleId = document.getElementById('art-id').value || lastArticleId;
+    const facts = document.getElementById('art-facts').value.split(',').map(s => s.trim()).filter(Boolean);
+    const res = await api('/content/edit-article', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({
+        articleId,
+        title: document.getElementById('art-title').value,
+        body: document.getElementById('art-body').value + ' (edited)',
+        citedFactIds: facts
+      })
+    });
+    const body = await res.json();
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    document.getElementById('note').textContent = body.note || (body.reasons||[]).join('; ') || body.error || (res.ok ? 'Edited' : 'failed');
+    refresh();
+  };
+  document.getElementById('btn-claim-qa').onclick = async () => {
+    const articleId = document.getElementById('art-id').value || lastArticleId;
+    const factId = document.getElementById('art-facts').value.split(',')[0].trim() || 'fixture-fact-hours';
+    const res = await api('/content/record-claim-qa', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({
+        articleId,
+        claims: [{
+          claimId: 'claim-1',
+          factId,
+          sourceRef: document.getElementById('claim-source').value,
+          statement: document.getElementById('claim-stmt').value
+        }]
+      })
+    });
+    const body = await res.json();
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    document.getElementById('note').textContent = body.note || (body.reasons||[]).join('; ') || body.error || (res.ok ? 'Claim QA ok' : 'failed');
+    refresh();
+  };
+  document.getElementById('btn-bind-review').onclick = async () => {
+    const articleId = document.getElementById('art-id').value || lastArticleId;
+    const res = await api('/content/bind-review', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ articleId, authorRoleId: 'A13' })
+    });
+    const body = await res.json();
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    document.getElementById('note').textContent = body.note || body.reason || body.error || (res.ok ? 'Bound' : 'failed');
+    refresh();
+  };
+  document.getElementById('btn-record-qa').onclick = async () => {
+    const articleId = document.getElementById('art-id').value || lastArticleId;
+    const res = await api('/content/record-qa', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ articleId, approved: true, summary: 'Console independent QA' })
+    });
+    const body = await res.json();
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    document.getElementById('note').textContent = body.note || body.error || (res.ok ? 'QA recorded' : 'failed');
+    refresh();
+  };
+  document.getElementById('btn-distribute').onclick = async () => {
+    const articleId = document.getElementById('art-id').value || lastArticleId;
+    const res = await api('/content/distribute', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ articleId })
+    });
+    const body = await res.json();
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    if (body.run) {
+      lastRunId = body.run.runId;
+      document.getElementById('run-id').value = lastRunId;
+    }
+    document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
+    refresh();
+  };
+  document.getElementById('btn-distribute-fail').onclick = async () => {
+    const articleId = document.getElementById('art-id').value || lastArticleId;
+    const res = await api('/content/distribute', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ articleId, forceGbpFailure: true })
+    });
+    const body = await res.json();
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    if (body.run) {
+      lastRunId = body.run.runId;
+      document.getElementById('run-id').value = lastRunId;
+    }
+    document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
+    refresh();
+  };
+  document.getElementById('btn-recover').onclick = async () => {
+    const runId = document.getElementById('run-id').value || lastRunId;
+    const res = await api('/content/recover-distribution', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ runId })
+    });
+    const body = await res.json();
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    document.getElementById('note').textContent = (body.note || '') + ' · ' + (body.details || []).join('; ');
     refresh();
   };
   document.getElementById('btn-ensure-map').onclick = async () => {
@@ -1367,7 +1569,6 @@ export function contentPage(apiOrigin: string): string {
   };
   document.getElementById('btn-verify-cms').onclick = async () => {
     const articleId = document.getElementById('art-id').value;
-    // F12 fix: independent fixture read-back — never copy desired fields from the browser ledger.
     const readRes = await api('/content/independent-read-back', {
       method:'POST', headers:{'content-type':'application/json'},
       body: JSON.stringify({ kind: 'canonical', articleId })

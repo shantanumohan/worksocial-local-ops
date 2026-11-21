@@ -254,6 +254,46 @@ export type VariantQaVerdict = {
   decidedAtIso: string;
 };
 
+export type ContentClaimBundle = {
+  articleId: string;
+  contentDigest: string;
+  claims: Array<{
+    claimId: string;
+    factId: string;
+    sourceRef: string;
+    statement: string;
+  }>;
+  recordedAtIso: string;
+};
+
+export type ContentReviewBindingRecord = {
+  bindingId: string;
+  articleId: string;
+  contentDigest: string;
+  version: number;
+  evidencePackageDigest: string;
+  proposalId: string;
+  authorRoleId: string;
+  reviewerRoleId: "A25";
+  status: string;
+  bindingJson: Record<string, unknown>;
+  createdAtIso: string;
+  updatedAtIso: string;
+};
+
+export type ContentDistributionRunRecord = {
+  runId: string;
+  campaignId: string;
+  articleId: string;
+  status: string;
+  destinationIds: string[];
+  attempts: Array<Record<string, unknown>>;
+  businessIdempotencyKey: string;
+  fixtureOnly: boolean;
+  createdAtIso: string;
+  updatedAtIso: string;
+};
+
 export type ContentState = {
   version: 1;
   updatedAtIso: string;
@@ -269,6 +309,12 @@ export type ContentState = {
   /** Durable fixture remote ledgers for independent read-back (survive restart). */
   fixtureCanonicalLedger: Record<string, Record<string, string>>;
   fixtureVariantLedger: Record<string, Record<string, string>>;
+  /** M6 claim/source bundles keyed by articleId (latest digest wins). */
+  claimBundles: ContentClaimBundle[];
+  /** M6 A25 review bindings for canonical revisions. */
+  reviewBindings: ContentReviewBindingRecord[];
+  /** M6 multi-destination distribution runs with partial-failure tracking. */
+  distributionRuns: ContentDistributionRunRecord[];
   liveCmsPublishWiring: "NOT_WIRED";
   liveGbpWiring: "NOT_WIRED";
   liveSocialWiring: "NOT_WIRED";
@@ -288,6 +334,9 @@ export function emptyContentState(nowIso: string): ContentState {
     releaseOutcomes: [],
     fixtureCanonicalLedger: {},
     fixtureVariantLedger: {},
+    claimBundles: [],
+    reviewBindings: [],
+    distributionRuns: [],
     liveCmsPublishWiring: "NOT_WIRED",
     liveGbpWiring: "NOT_WIRED",
     liveSocialWiring: "NOT_WIRED",
