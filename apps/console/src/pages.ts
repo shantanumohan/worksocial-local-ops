@@ -2311,8 +2311,10 @@ export function soakPage(apiOrigin: string): string {
 <main>
   <section>
     <h2>R1 soak / acceptance evidence (M9)</h2>
-    <p class="muted">Fixture crash-restart, no-duplicate-effects, job continuity, and reconcile proofs. Redacted ACCEPTED evidence only.</p>
-    <p class="warn">Live CMS/GSC/GA4/Zoho/Temporal <strong>NOT_WIRED</strong>. ChatGPT Ads <strong>access-blocked</strong>. 72h pilot gate is separate — short runs stay <strong>NOT_MET</strong>. Not R1-complete. Never silently VERIFIED for live.</p>
+    <p class="muted">Fixture crash-restart, no-duplicate-effects, job continuity, and reconcile proofs. Redacted ACCEPTED for T-X014 / T-X020 / T-US-048 only (complete proof sets). T-X066 stays NOT_RUN.</p>
+    <p class="warn">Live CMS/GSC/GA4/Zoho/Temporal <strong>NOT_WIRED</strong>. ChatGPT Ads <strong>access-blocked</strong>. 72h pilot gate uses <strong>server-recorded</strong> start/heartbeat/end only — client claim dates rejected; short runs stay <strong>NOT_MET</strong>. Not R1-complete. Never silently VERIFIED for live.</p>
+    <button id="btn-pilot-start" type="button">Pilot start (server clock)</button>
+    <button id="btn-pilot-hb" type="button">Pilot heartbeat</button>
     <button id="btn-run" type="button">Run fixture soak</button>
     <button id="btn-report" type="button">Owner report</button>
     <button id="btn-cases" type="button">Case ledger</button>
@@ -2344,6 +2346,16 @@ export function soakPage(apiOrigin: string): string {
     const res = await api('/soak/status');
     document.getElementById('status').textContent = JSON.stringify(await res.json(), null, 2);
   }
+  document.getElementById('btn-pilot-start').onclick = async () => {
+    const res = await api('/soak/pilot/start', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    document.getElementById('out').textContent = JSON.stringify(await res.json(), null, 2);
+    refresh();
+  };
+  document.getElementById('btn-pilot-hb').onclick = async () => {
+    const res = await api('/soak/pilot/heartbeat', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    document.getElementById('out').textContent = JSON.stringify(await res.json(), null, 2);
+    refresh();
+  };
   document.getElementById('btn-run').onclick = async () => {
     const res = await api('/soak/run', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
     const body = await res.json();

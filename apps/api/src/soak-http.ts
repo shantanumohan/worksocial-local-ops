@@ -1,5 +1,6 @@
 /**
  * M9 / NEXT-20 HTTP routes — soak / recovery + acceptance evidence report.
+ * Pilot gate timestamps are server-recorded only; client claim dates are ignored.
  */
 
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -74,7 +75,7 @@ export async function handleSoakRequest(input: {
       200,
       {
         ...soak.status(),
-        note: "Fixture soak harness. 72h pilot gate separate from short CI proofs. Not R1-complete.",
+        note: "Fixture soak harness. 72h pilot gate uses server-recorded observations only. Client claim dates ignored. Not R1-complete.",
       },
       cors,
     );
@@ -102,7 +103,66 @@ export async function handleSoakRequest(input: {
       200,
       {
         cases: soak.listCases(),
-        note: "ACCEPTED = fixture evidence only. NOT_RUN until evidence. Never silently VERIFIED for live.",
+        note: "ACCEPTED = fixture evidence only with complete proof set. T-X066 stays NOT_RUN until backup proof. Never silently VERIFIED for live.",
+      },
+      cors,
+    );
+    return true;
+  }
+
+  if (method === "GET" && url.pathname === "/soak/pilot/observations") {
+    const session = requireSession(req, { requireCsrf: false });
+    if (!session.ok) {
+      json(res, 401, { error: session.code, reason: session.reason }, cors);
+      return true;
+    }
+    json(
+      res,
+      200,
+      {
+        observations: soak.listPilotObservations(),
+        note: "Server-recorded start/heartbeat/end only. Client startedAtIso/endedAtIso claim dates are never accepted.",
+      },
+      cors,
+    );
+    return true;
+  }
+
+  if (method === "POST" && url.pathname === "/soak/pilot/start") {
+    const session = requireSession(req, csrfOpts);
+    if (!session.ok) {
+      json(res, 401, { error: session.code, reason: session.reason }, cors);
+      return true;
+    }
+    // Drain body if present; ignore any client claim dates.
+    await readBody(req);
+    const result = soak.recordPilotObservation("start");
+    json(
+      res,
+      200,
+      {
+        ...result,
+        note: "Pilot window started with server clock. Client claim dates ignored.",
+      },
+      cors,
+    );
+    return true;
+  }
+
+  if (method === "POST" && url.pathname === "/soak/pilot/heartbeat") {
+    const session = requireSession(req, csrfOpts);
+    if (!session.ok) {
+      json(res, 401, { error: session.code, reason: session.reason }, cors);
+      return true;
+    }
+    await readBody(req);
+    const result = soak.recordPilotObservation("heartbeat");
+    json(
+      res,
+      200,
+      {
+        ...result,
+        note: "Pilot heartbeat recorded with server clock.",
       },
       cors,
     );
@@ -116,19 +176,31 @@ export async function handleSoakRequest(input: {
       return true;
     }
     const raw = await readBody(req);
-    const parsed = raw.trim() ? parseJsonObjectBody(raw) : { ok: true as const, value: {} };
+    const parsed = raw.trim()
+      ? parseJsonObjectBody(raw)
+      : { ok: true as const, value: {} };
     if (!parsed.ok) {
       json(res, 400, { error: "INVALID_JSON", reason: parsed.error }, cors);
       return true;
     }
-    const opts: { startedAtIso?: string; endedAtIso?: string } = {};
-    if (typeof parsed.value.startedAtIso === "string") {
-      opts.startedAtIso = parsed.value.startedAtIso;
+    // Explicitly reject client duration claim dates for the pilot gate.
+    if (
+      "startedAtIso" in parsed.value ||
+      "endedAtIso" in parsed.value
+    ) {
+      json(
+        res,
+        400,
+        {
+          error: "CLIENT_DURATION_CLAIMS_REJECTED",
+          reason:
+            "startedAtIso/endedAtIso claim dates are not accepted. Use POST /soak/pilot/start and /soak/pilot/heartbeat; gate duration is derived from server-recorded observations only.",
+        },
+        cors,
+      );
+      return true;
     }
-    if (typeof parsed.value.endedAtIso === "string") {
-      opts.endedAtIso = parsed.value.endedAtIso;
-    }
-    const result = await soak.runFixtureSoak(opts);
+    const result = await soak.runFixtureSoak({});
     json(
       res,
       result.ok ? 200 : 500,

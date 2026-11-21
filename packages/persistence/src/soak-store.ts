@@ -1,6 +1,7 @@
 /**
  * File-backed soak / acceptance evidence store (M9 / NEXT-20).
- * Schema companion: database/migrations/021_m9_soak_acceptance.sql.
+ * Schema companion: database/migrations/021_m9_soak_acceptance.sql
+ * (+ 022 for pilot observations).
  */
 
 import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from "node:fs";
@@ -8,6 +9,7 @@ import { dirname, join } from "node:path";
 import {
   emptySoakAcceptanceState,
   type AcceptanceCaseEvidenceRecord,
+  type PilotGateObservation,
   type RedactedEvidenceArtifact,
   type SoakAcceptanceState,
   type SoakRunRecord,
@@ -24,12 +26,17 @@ export type SoakStore = {
   listRuns(limit?: number): SoakRunRecord[];
   listArtifacts(limit?: number): RedactedEvidenceArtifact[];
   listCases(limit?: number): AcceptanceCaseEvidenceRecord[];
+  listPilotObservations(): PilotGateObservation[];
+  /** Append a server-recorded observation. Resets the window when kind=start. */
+  appendPilotObservation(observation: PilotGateObservation): PilotGateObservation[];
+  resetPilotObservations(): PilotGateObservation[];
   status(): {
     runCount: number;
     artifactCount: number;
     acceptedCount: number;
     notRunCount: number;
     pilotGateLast: SoakRunRecord["pilotGate"] | null;
+    pilotObservationCount: number;
     liveWiring: SoakAcceptanceState["liveWiring"];
     chatgptAdsWiring: "NOT_WIRED";
     r1CompleteClaimed: false;
@@ -72,6 +79,7 @@ export function createFileSoakStore(stateDir: string): SoakStore {
       runs: existing.runs ?? [],
       artifacts: existing.artifacts ?? [],
       caseLedger: existing.caseLedger ?? [],
+      pilotObservations: existing.pilotObservations ?? [],
       liveWiring: {
         cms: "NOT_WIRED",
         gsc: "NOT_WIRED",
@@ -127,6 +135,7 @@ export function createFileSoakStore(stateDir: string): SoakStore {
       mkdirSync(evidenceDir, { recursive: true });
       const artifactPath = join(evidenceDir, `${artifact.artifactId}.json`);
       atomicWriteJson(artifactPath, artifact);
+      // Keep all unique artifact IDs — do not overwrite by case.
       return update((current) => ({
         ...current,
         updatedAtIso: artifact.createdAtIso,
@@ -157,6 +166,32 @@ export function createFileSoakStore(stateDir: string): SoakStore {
       return read().caseLedger.slice(0, limit);
     },
 
+    listPilotObservations() {
+      return read().pilotObservations;
+    },
+
+    appendPilotObservation(observation) {
+      const next = update((current) => {
+        const base =
+          observation.kind === "start" ? [] : current.pilotObservations;
+        return {
+          ...current,
+          updatedAtIso: observation.recordedAtIso,
+          pilotObservations: [...base, observation].slice(-500),
+        };
+      });
+      return next.pilotObservations;
+    },
+
+    resetPilotObservations() {
+      const next = update((current) => ({
+        ...current,
+        updatedAtIso: new Date().toISOString(),
+        pilotObservations: [],
+      }));
+      return next.pilotObservations;
+    },
+
     status() {
       const state = read();
       const acceptedCount = state.caseLedger.filter((c) => c.status === "ACCEPTED").length;
@@ -168,11 +203,12 @@ export function createFileSoakStore(stateDir: string): SoakStore {
         acceptedCount,
         notRunCount,
         pilotGateLast: last?.pilotGate ?? null,
+        pilotObservationCount: state.pilotObservations.length,
         liveWiring: state.liveWiring,
         chatgptAdsWiring: "NOT_WIRED",
         r1CompleteClaimed: false,
         honestNote:
-          "M9 soak / acceptance evidence harness. Fixture proofs only. Live CMS/GSC/GA4/Zoho/Temporal NOT_WIRED. ChatGPT Ads access-blocked. ACCEPTED requires redacted evidence; never silently VERIFIED for live. Short CI soaks do not satisfy the 72h pilot gate. Not R1-complete.",
+          "M9 soak / acceptance evidence harness. Fixture proofs only. Live CMS/GSC/GA4/Zoho/Temporal NOT_WIRED. ChatGPT Ads access-blocked. ACCEPTED requires redacted evidence and complete proof set; never silently VERIFIED for live. Pilot gate uses server-recorded observations only. T-X066 remains NOT_RUN until backup/omit-receipt proof. Short CI soaks do not satisfy the 72h pilot gate. Not R1-complete.",
       };
     },
   };

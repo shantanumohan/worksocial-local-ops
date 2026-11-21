@@ -9,7 +9,11 @@ Fixture (LOCAL_DURABLE) proofs:
 3. Job rows survive process restart via durable idempotency keys
 4. Unknown-remote reconcile reads the provider ledger before verify
 
-Acceptance evidence compiler marks selected catalog cases **ACCEPTED** only with redacted fixture artifacts. It never silently marks live **VERIFIED**.
+Acceptance evidence compiler marks selected catalog cases **ACCEPTED** only when the **complete expected proof set** passes with **no failed related proofs**, and only with redacted fixture artifacts. It never silently marks live **VERIFIED**.
+
+Honest fixture ACCEPTED cases: **T-X014**, **T-X020**, **T-US-048**.
+
+**T-X066** (Backup omits remote receipt) stays **NOT_RUN** until a real backup / omit-receipt / post-restore reconcile proof exists. Retry-only no-duplicate-effects does not map to T-X066.
 
 ## Commands
 
@@ -22,28 +26,27 @@ pnpm test:soak                  # unit/contract soak package
 
 ## 72h pilot gate (owner host)
 
-Short CI soaks leave `pilotGate=NOT_MET`. A real R1 pilot gate requires a continuous ≥72h window with all four proofs still passing.
+Short CI soaks leave `pilotGate=NOT_MET`. A real R1 pilot gate requires a continuous ≥72h window with server-recorded start / heartbeat / end observations and all four proofs still passing.
+
+**Client-supplied `startedAtIso` / `endedAtIso` claim dates are rejected.** Duration is derived only from server-recorded observations.
 
 Suggested owner Windows flow (state off OneDrive):
 
 1. Set `WORKSOCIAL_STATE_DIR` to a local non-synced disk path.
 2. Start the stack (`pnpm local:start`) and leave the host available for 72h.
-3. At start and end (or via scheduled task), run:
-
-```bash
-pnpm recovery:rehearse
-```
-
-4. To evaluate the gate with measured timestamps, call `POST /soak/run` with `startedAtIso` / `endedAtIso` spanning ≥72h, or use the soak service with those overrides.
-5. Review `/soak` console report — `pilotGate` must be `MET` only when duration and proofs qualify.
-6. Live CMS / GSC / GA4 / Zoho / Temporal remain **NOT_WIRED** until separately connected. Do not claim R1-complete from fixture evidence alone.
+3. At start: `POST /soak/pilot/start` (server clock).
+4. Periodically (≤6h gap): `POST /soak/pilot/heartbeat`.
+5. Run proofs during the window: `pnpm recovery:rehearse` or `POST /soak/run` (empty body — no claim dates).
+6. Review `/soak` console report — `pilotGate` must be `MET` only when server-observed duration, continuity, and proofs qualify.
+7. Live CMS / GSC / GA4 / Zoho / Temporal remain **NOT_WIRED** until separately connected. Do not claim R1-complete from fixture evidence alone.
 
 ## Honesty
 
 | Label | Meaning |
 |-------|---------|
-| fixture ACCEPTED | Offline evidence artifact exists |
+| fixture ACCEPTED | Offline evidence artifact exists with complete proof set |
 | sandbox | Distinct; not claimed by this harness |
 | authorized production | Distinct; not claimed by this harness |
 | VERIFIED (live) | Forbidden without explicit authorized-production evidence package |
 | ChatGPT Ads | Access-blocked without transport + entitlement |
+| T-X066 | NOT_RUN until backup/omit-receipt proof |

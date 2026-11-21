@@ -670,7 +670,9 @@ Required evidence:
 
 ## Behavior acceptance (T-US-001–T-US-060)
 
-Each case: Level behavior_acceptance | Status NOT_RUN | Environment fixture_or_sandbox; live evidence separately authorized.
+Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixture ACCEPTED below | Environment fixture_or_sandbox; live evidence separately authorized.
+
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-048.
 
 ### Happy-path / documented flow completions
 - **T-US-001** Create a trusted local workspace (F01/SC-02) — blockers and next actions.
@@ -724,7 +726,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN | Environment fixture_or_s
 - **T-US-042** Repair cannot weaken protected tests.
 - **T-US-044** Takeover cancels unsent agent replies.
 - **T-US-046** Hard search constraints enforced; no invented availability.
-- **T-US-048** Unknown remote effects reconciled before resume.
+- **T-US-048** Unknown remote effects reconciled before resume. *(fixture ACCEPTED — soak unknown-remote reconcile proof; not sandbox/prod VERIFIED)*
 - **T-US-050** Owner brief groups root cause; actionable.
 - **T-US-052** Mocked connector ≠ production-ready.
 
@@ -742,7 +744,11 @@ Each case: Level behavior_acceptance | Status NOT_RUN | Environment fixture_or_s
 
 ## Platform / security / resilience probes (T-X001–T-X073)
 
-Level as labeled | Status: NOT_RUN | Environment: fixture/integration; live only when separately approved.
+Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
+
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X014, T-X020.
+
+**Explicitly NOT_RUN pending true exercise:** T-X066 (Backup omits remote receipt) — retry-only no-duplicate-effects proof does **not** satisfy this case; requires backup / omit-receipt / post-restore reconcile.
 
 Shared evidence for each: actual state before/after; instrumented provider call count or read-back; correlated redacted logs/traces; no unauthorized external effect.
 
@@ -761,13 +767,13 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X011 | Output bomb | Bounded/quarantined |
 | T-X012 | Orphan worker on deadline | Process tree stopped |
 | T-X013 | Replay historical workflow | No repeated external I/O |
-| T-X014 | Approval wait survives restart | Resume wait; no slot hold |
+| T-X014 | Approval wait survives restart | Resume wait; no slot hold *(fixture ACCEPTED)* |
 | T-X015 | DST recurring schedule | No unintended duplicates |
 | T-X016 | Stop before dispatch claim | No adapter mutation |
 | T-X017 | Stop after provider dispatch starts | Reconcile; no fake cancel |
 | T-X018 | Self-approval | Rejected |
 | T-X019 | Approved payload edited | Digest conflict |
-| T-X020 | Timeout after provider acceptance | Unknown → reconcile; no resend |
+| T-X020 | Timeout after provider acceptance | Unknown → reconcile; no resend *(fixture ACCEPTED)* |
 | T-X021 | Concurrent idempotent releases | One dispatch |
 | T-X022 | Idempotency key payload mismatch | Conflict |
 | T-X023 | Eventual consistency false not-found | No unsafe retry |
@@ -813,7 +819,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X063 | Indirect prompt-injection exfiltration | Boundary denies |
 | T-X064 | SSRF redirect and DNS rebind | Blocked every hop |
 | T-X065 | Worker reads browser auth state | OS deny |
-| T-X066 | Backup omits remote receipt | Reconcile; no duplicate |
+| T-X066 | Backup omits remote receipt | Reconcile; no duplicate *(NOT_RUN — needs backup/omit-receipt proof)* |
 | T-X067 | Incompatible workflow upgrade | Blocked or compatible retained |
 | T-X068 | Thirty alerts one outage | Grouped incident |
 | T-X069 | Imported document becomes instructions | Quarantined as data |
@@ -827,6 +833,8 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | Family | Count | Status |
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | NOT_RUN |
-| T-US (behavior_acceptance) | 60 | NOT_RUN |
-| T-X (platform/security/resilience) | 73 | NOT_RUN |
-| **Total** | **159** | **NOT_RUN** |
+| T-US (behavior_acceptance) | 60 | 59 NOT_RUN + 1 fixture ACCEPTED (T-US-048) |
+| T-X (platform/security/resilience) | 73 | 71 NOT_RUN + 2 fixture ACCEPTED (T-X014, T-X020); T-X066 remains NOT_RUN |
+| **Total** | **159** | **156 NOT_RUN + 3 fixture ACCEPTED** |
+
+Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

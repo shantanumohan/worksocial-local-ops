@@ -21,8 +21,7 @@ async function main(): Promise<void> {
   const dir = mkdtempSync(join(tmpdir(), "ws-recovery-rehearse-"));
   try {
     const soak = createSoakService(createFileSoakStore(dir));
-    const startedAtIso = new Date().toISOString();
-    const result = await soak.runFixtureSoak({ startedAtIso });
+    const result = await soak.runFixtureSoak({});
     const report = {
       suite: "recovery:rehearse",
       status: result.ok ? "PASS" : "FAIL",
@@ -42,14 +41,14 @@ async function main(): Promise<void> {
       chatgptAds: result.run.chatgptAds,
       note: result.note,
       message:
-        "Fixture soak recovery rehearsal. Pilot gate requires 72h for MET. Not R1-complete.",
+        "Fixture soak recovery rehearsal. Pilot gate uses server observations; 72h required for MET. Not R1-complete.",
     };
     if (!result.ok) {
       console.error(JSON.stringify(report, null, 2));
-      process.exit(1);
+      process.exitCode = 1;
+      return;
     }
     console.log(JSON.stringify(report, null, 2));
-    process.exit(0);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -67,5 +66,5 @@ main().catch((err) => {
       2,
     ),
   );
-  process.exit(1);
+  process.exitCode = 1;
 });
