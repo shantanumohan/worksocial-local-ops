@@ -7,6 +7,7 @@
 
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { resolveWorkSocialStateDir } from "@worksocial/persistence";
 import { probeTemporalConnection } from "../temporal-binding.js";
 import { createTemporalMissionWorker } from "./worker.js";
 import { createTemporalWorkerMissionStores } from "./worker-stores.js";
@@ -20,7 +21,7 @@ function argValue(name: string): string | undefined {
 }
 
 const stateDir =
-  argValue("--state-dir") ?? process.env.WORKSOCIAL_STATE_DIR ?? ".worksocial/local-state";
+  argValue("--state-dir") ?? process.env.WORKSOCIAL_STATE_DIR ?? resolveWorkSocialStateDir();
 const generationId =
   argValue("--generation") ?? process.env.WORKSOCIAL_GENERATION ?? `gen-${process.pid}`;
 const hostId = argValue("--host-id") ?? process.env.WORKSOCIAL_HOST_ID ?? "local";

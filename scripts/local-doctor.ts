@@ -6,13 +6,31 @@ import { createChildProcessSpawner } from "../services/supervisor/src/process-ma
 
 async function main(): Promise<number> {
   const config = loadSupervisorConfig();
+  if (config.hostPaths.stateDirOnSyncPath) {
+    console.error(
+      JSON.stringify(
+        {
+          ok: false,
+          command: "doctor",
+          message:
+            "Refusing doctor: state dir is under a consumer sync path (e.g. OneDrive). Set WORKSOCIAL_STATE_DIR to a local non-synced disk.",
+          stateDir: config.stateDir,
+          notes: config.hostPaths.notes,
+          productionActivated: false,
+        },
+        null,
+        2,
+      ),
+    );
+    return 1;
+  }
   mkdirSync(config.stateDir, { recursive: true });
   const store = createFileLocalStateStore(config.stateDir);
   const result = await runSupervisorCommand(
     "doctor",
     store,
     config,
-    createChildProcessSpawner(),
+    createChildProcessSpawner(config.stateDir),
   );
   console.log(JSON.stringify(result, null, 2));
   return result.ok ? 0 : 1;

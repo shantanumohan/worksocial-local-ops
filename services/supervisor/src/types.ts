@@ -9,6 +9,7 @@ import type {
 export type SupervisorCommand =
   | "start"
   | "stop"
+  | "recover"
   | "doctor"
   | "diagnostics"
   | "health"

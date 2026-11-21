@@ -13,6 +13,7 @@
     "local:doctor": "pnpm build:local && tsx scripts/local-doctor.ts",
     "local:start": "pnpm build:local && tsx services/supervisor/src/cli.ts start",
     "local:stop": "pnpm build:local && tsx services/supervisor/src/cli.ts stop",
+    "local:recover": "pnpm build:local && tsx services/supervisor/src/cli.ts recover",
     "local:health": "pnpm build:local && tsx services/supervisor/src/cli.ts health",
     "check": "tsc -b --pretty false",
     "db:migrate": "pnpm --filter @worksocial/persistence build && tsx scripts/migrate.ts",

@@ -2,6 +2,7 @@
  * Supervisor-managed API process slot with R1-02 identity/authority HTTP.
  */
 
+import { resolveWorkSocialStateDir } from "@worksocial/persistence";
 import { startApiServer } from "./server.js";
 import { startHeartbeatLoop, writeServiceHeartbeat } from "./slot-heartbeat.js";
 
@@ -14,7 +15,7 @@ function argValue(name: string): string | undefined {
 }
 
 const stateDir =
-  argValue("--state-dir") ?? process.env.WORKSOCIAL_STATE_DIR ?? ".worksocial/local-state";
+  argValue("--state-dir") ?? process.env.WORKSOCIAL_STATE_DIR ?? resolveWorkSocialStateDir();
 const generationId =
   argValue("--generation") ?? process.env.WORKSOCIAL_GENERATION ?? `gen-${process.pid}`;
 const hostId = argValue("--host-id") ?? process.env.WORKSOCIAL_HOST_ID ?? "local";

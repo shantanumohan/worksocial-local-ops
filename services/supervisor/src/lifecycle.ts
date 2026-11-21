@@ -6,6 +6,7 @@ import {
   assertDurableRootsOffSync,
   createEmptyRegistry,
   releaseHostLease,
+  renewHostLease,
   registerStorageRoot,
   type LocalStateStore,
   type ServiceHeartbeatRecord,
@@ -82,7 +83,8 @@ function seedExampleRootsIfRequested(
     }
     let registry = createEmptyRegistry();
     const workspace = join(config.repoRoot);
-    const localData = join(config.stateDir, "durable-example");
+    // Durable examples stay under dataHome (off checkout / OneDrive), not under the repo.
+    const durableBase = join(config.dataHome, "durable-example");
     const pairs: Array<Parameters<typeof registerStorageRoot>[1]> = [
       "source",
       "working",
@@ -96,7 +98,7 @@ function seedExampleRootsIfRequested(
     for (const kind of pairs) {
       const path =
         kind === "database" || kind === "temporal" || kind === "secrets"
-          ? join(localData, kind)
+          ? join(durableBase, kind)
           : join(workspace, ".worksocial", "example-roots", kind);
       const result = registerStorageRoot(registry, kind, path, {
         denyPatterns: config.syncDenyPatterns,
@@ -238,6 +240,8 @@ async function startAll(
     holderPid: process.pid,
     generationId,
     ttlMs: config.leaseTtlMs,
+    // Reclaim when prior supervisor PID is dead even if TTL has not elapsed.
+    isHolderAlive: (pid) => spawner.isAlive(pid),
   });
 
   if (!leaseResult.ok) {
@@ -353,6 +357,78 @@ async function startAll(
   };
 }
 
+/**
+ * Honest host recovery after supervisor CLI / process restart:
+ * - If lease held and required slots healthy → adopt (renew lease holderPid; do not kill children)
+ * - Else reclaim dead/expired lease, stop orphans, start fresh
+ */
+async function recoverAll(
+  store: LocalStateStore,
+  config: SupervisorConfig,
+  spawner: ProcessSpawner,
+): Promise<SupervisorResult> {
+  seedExampleRootsIfRequested(store, config);
+
+  const syncErrors = assertDurableRootsOffSync(store.read().storageRoots, {
+    denyPatterns: config.syncDenyPatterns,
+  });
+  if (syncErrors.length > 0) {
+    return {
+      ok: false,
+      command: "recover",
+      message: "Refusing recover: durable storage roots violate sync-path policy.",
+      productionActivated: false,
+      storageErrors: syncErrors,
+      stubs: stubsNote(),
+    };
+  }
+
+  let health = collectHealth(store, config, spawner);
+  const lease = store.read().hostLease;
+  const canAdopt =
+    health.leaseHeld &&
+    managedSlotsReady(health) &&
+    lease !== null &&
+    lease.hostId === config.hostId;
+
+  if (canAdopt && lease) {
+    const renewed = renewHostLease(lease, {
+      hostId: config.hostId,
+      holderPid: process.pid,
+      generationId: lease.generationId,
+      ttlMs: config.leaseTtlMs,
+    });
+    if (renewed.ok) {
+      store.update((current) => ({
+        ...current,
+        hostLease: renewed.lease,
+        updatedAt: new Date().toISOString(),
+      }));
+      health = collectHealth(store, config, spawner);
+      return {
+        ok: true,
+        command: "recover",
+        message: `Adopted live generation=${lease.generationId}; host lease renewed for pid ${process.pid} without restarting slots.`,
+        productionActivated: false,
+        lease: renewed.lease,
+        health,
+        heartbeats: store.read().heartbeats,
+        stubs: stubsNote(),
+      };
+    }
+  }
+
+  // Dead holder / expired lease / unhealthy slots → clean restart.
+  const started = await startAll(store, config, spawner);
+  return {
+    ...started,
+    command: "recover",
+    message: started.ok
+      ? `Recovery restart OK — ${started.message}`
+      : `Recovery restart failed — ${started.message}`,
+  };
+}
+
 export async function runSupervisorCommand(
   command: SupervisorCommand,
   store: LocalStateStore,
@@ -362,6 +438,9 @@ export async function runSupervisorCommand(
   switch (command) {
     case "start":
       return startAll(store, config, spawner);
+
+    case "recover":
+      return recoverAll(store, config, spawner);
 
     case "stop": {
       await stopAll(store, config, spawner);
@@ -397,10 +476,11 @@ export async function runSupervisorCommand(
 
     case "health": {
       const health = collectHealth(store, config, spawner);
+      const c = health.components;
       return {
         ok: health.overall === "healthy" || health.overall === "stopped",
         command: "health",
-        message: `Host health overall=${health.overall}`,
+        message: `Host health overall=${health.overall} host=${c.host.status} api=${c.api.status} console=${c.console.status} temporal=${c.temporal.status}`,
         productionActivated: false,
         health,
         lease: store.read().hostLease,
@@ -416,22 +496,32 @@ export async function runSupervisorCommand(
       }
       await stopAll(store, config, spawner);
       const second = await startAll(store, config, spawner);
+      if (!second.ok) {
+        return {
+          ...second,
+          command: "test-local",
+          message: "Restart round-trip failed on second start.",
+        };
+      }
+      // Simulate supervisor process exit: leave slots running, reclaim via recover adopt path
+      // is covered separately; here verify recover after stop+start remains healthy.
+      const recovered = await recoverAll(store, config, spawner);
       const doctor = runDoctor(store, config, spawner);
       const result: SupervisorResult = {
-        ok: second.ok && doctor.ok,
+        ok: recovered.ok && doctor.ok,
         command: "test-local",
-        message: second.ok
-          ? "Restart round-trip OK (start → stop → start); doctor attached."
-          : "Restart round-trip failed.",
+        message: recovered.ok
+          ? "Restart round-trip OK (start → stop → start → recover); doctor attached."
+          : "Restart/recover round-trip failed.",
         productionActivated: false,
         doctor,
         stubs: stubsNote(),
       };
-      if (second.lease !== undefined) {
-        result.lease = second.lease;
+      if (recovered.lease !== undefined) {
+        result.lease = recovered.lease;
       }
-      if (second.health !== undefined) {
-        result.health = second.health;
+      if (recovered.health !== undefined) {
+        result.health = recovered.health;
       }
       return result;
     }

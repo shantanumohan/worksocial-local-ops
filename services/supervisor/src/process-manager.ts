@@ -2,6 +2,8 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import {
+  composeOwnershipProbes,
+  createHeartbeatFileOwnershipProbe,
   defaultOwnershipProbe,
   verifyProcessOwnership,
   type ProcessOwnershipProbe,
@@ -177,10 +179,21 @@ async function signalAndWait(pid: number, signal: NodeJS.Signals): Promise<void>
  * Default spawner: detached child processes (survive VS Code/terminal close).
  * API/console expose loopback health HTTP.
  * temporal-worker is a stub unless TEMPORAL_ADDRESS is set (then real Temporal worker).
+ *
+ * Ownership: Linux /proc preferred; heartbeat-file fallback when stateDir is provided
+ * (needed on hosts without /proc so stop/recover remains possible).
  */
 export function createChildProcessSpawner(
-  ownershipProbe: ProcessOwnershipProbe = defaultOwnershipProbe(),
+  ownershipProbeOrStateDir?: ProcessOwnershipProbe | string,
 ): ProcessSpawner {
+  const ownershipProbe: ProcessOwnershipProbe =
+    typeof ownershipProbeOrStateDir === "string"
+      ? composeOwnershipProbes(
+          defaultOwnershipProbe(),
+          createHeartbeatFileOwnershipProbe(ownershipProbeOrStateDir),
+        )
+      : (ownershipProbeOrStateDir ?? defaultOwnershipProbe());
+
   return {
     start(request) {
       const entry = slotEntrypoint(request.config.repoRoot, request.serviceId);

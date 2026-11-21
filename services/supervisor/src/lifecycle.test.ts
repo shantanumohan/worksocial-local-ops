@@ -38,6 +38,8 @@ describe("supervisor lifecycle", () => {
       hostId: "test-host",
       seedExampleRoots: false,
     };
+    // Ensure dataHome mirrors temp layout for seed tests.
+    config.dataHome = stateDir;
     return { store, spawner, config, stateDir };
   }
 
@@ -181,5 +183,68 @@ describe("supervisor lifecycle", () => {
       generationId: realGeneration,
     });
     await runSupervisorCommand("stop", store, config, spawner);
+  });
+
+  it("recover restarts after crash when slots are dead but lease remains", async () => {
+    const { store, spawner, config } = setup();
+    const first = await runSupervisorCommand("start", store, config, spawner);
+    expect(first.ok).toBe(true);
+    // Simulate hard crash: children gone, lease still present with dead holder.
+    for (const [pid, meta] of [...spawner.running.entries()]) {
+      await spawner.stopOwned({
+        pid,
+        serviceId: meta.serviceId,
+        generationId: meta.generationId,
+      });
+    }
+    store.update((state) => ({
+      ...state,
+      hostLease: state.hostLease
+        ? {
+            ...state.hostLease,
+            holderPid: 1,
+            // Keep TTL alive so recovery must handle non-expired dead holder.
+            expiresAt: new Date(Date.now() + 60_000).toISOString(),
+          }
+        : null,
+      heartbeats: state.heartbeats.map((h) => ({
+        ...h,
+        status: h.serviceId === "temporal-worker" ? "stub" : "unhealthy",
+        pid: null,
+        detail: "crashed",
+      })),
+    }));
+    const recovered = await runSupervisorCommand("recover", store, config, spawner);
+    expect(recovered.ok).toBe(true);
+    expect(recovered.message).toMatch(/Recovery restart OK/i);
+    expect(spawner.running.size).toBe(3);
+    expect(store.read().hostLease?.holderPid).toBe(process.pid);
+  });
+
+  it("recover adopts a healthy live generation without killing slots", async () => {
+    const { store, spawner, config } = setup();
+    const started = await runSupervisorCommand("start", store, config, spawner);
+    expect(started.ok).toBe(true);
+    const genBefore = store.read().hostLease?.generationId;
+    const pidsBefore = [...spawner.running.keys()].sort();
+    const recovered = await runSupervisorCommand("recover", store, config, spawner);
+    expect(recovered.ok).toBe(true);
+    expect(recovered.message).toMatch(/Adopted live generation/i);
+    expect(store.read().hostLease?.generationId).toBe(genBefore);
+    expect([...spawner.running.keys()].sort()).toEqual(pidsBefore);
+    expect(recovered.health?.components.host.status).toBe("up");
+    expect(recovered.health?.components.api.status).toBe("up");
+    expect(recovered.health?.components.temporal.status).toBe("stub");
+  });
+
+  it("health message distinguishes host vs api/console/temporal planes", async () => {
+    const { store, spawner, config } = setup();
+    await runSupervisorCommand("start", store, config, spawner);
+    const health = await runSupervisorCommand("health", store, config, spawner);
+    expect(health.message).toMatch(/host=up/);
+    expect(health.message).toMatch(/api=up/);
+    expect(health.message).toMatch(/console=up/);
+    expect(health.message).toMatch(/temporal=stub/);
+    expect(health.health?.components.temporal.wiringStatus).toBe("stub");
   });
 });

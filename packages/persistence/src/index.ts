@@ -46,9 +46,12 @@ export {
 export {
   DEFAULT_HEARTBEAT_STALE_MS,
   DEFAULT_SERVICE_SLOTS,
+  buildHostHealthComponents,
   defaultHeartbeat,
   isHeartbeatStale,
   summarizeHostHealth,
+  type HostComponentStatus,
+  type HostHealthComponents,
   type HostHealthSnapshot,
   type ServiceHealthStatus,
   type ServiceHeartbeatRecord,
@@ -64,8 +67,23 @@ export {
 } from "./local-state-store.js";
 
 export {
+  resolveDefaultDurableRoots,
+  resolveHostPaths,
+  resolveWorkSocialDataHome,
+  resolveWorkSocialStateDir,
+  type HostPathPlatform,
+  type ResolveHostPathsInput,
+  type ResolvedHostPaths,
+} from "./host-paths.js";
+
+export {
+  composeOwnershipProbes,
+  createHeartbeatFileOwnershipProbe,
   defaultOwnershipProbe,
+  describeOwnershipCapability,
+  isProcOwnershipAvailable,
   verifyProcessOwnership,
+  type OwnershipProbeCapability,
   type ProcessOwnershipClaim,
   type ProcessOwnershipProbe,
 } from "./process-ownership.js";

@@ -122,4 +122,40 @@ describe("host-lease", () => {
     );
     expect(released.released).toBe(true);
   });
+
+  it("reclaims a non-expired lease when the holder PID is dead", () => {
+    const first = acquireHostLease(
+      null,
+      { hostId: "host-a", holderPid: 100, generationId: "gen-1", ttlMs: 60_000 },
+      clockAt(1_000),
+    );
+    expect(first.ok).toBe(true);
+    if (!first.ok) {
+      return;
+    }
+    const denied = acquireHostLease(
+      first.lease,
+      { hostId: "host-a", holderPid: 200, generationId: "gen-2", ttlMs: 60_000 },
+      clockAt(2_000),
+    );
+    expect(denied.ok).toBe(false);
+
+    const reclaimed = acquireHostLease(
+      first.lease,
+      {
+        hostId: "host-a",
+        holderPid: 200,
+        generationId: "gen-2",
+        ttlMs: 60_000,
+        isHolderAlive: (pid) => pid !== 100,
+      },
+      clockAt(2_000),
+    );
+    expect(reclaimed.ok).toBe(true);
+    if (reclaimed.ok) {
+      expect(reclaimed.reclaimed).toBe(true);
+      expect(reclaimed.lease.generationId).toBe("gen-2");
+      expect(reclaimed.lease.holderPid).toBe(200);
+    }
+  });
 });

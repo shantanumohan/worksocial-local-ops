@@ -56,6 +56,8 @@ export function isLeaseHeldByGeneration(
 /**
  * Acquire or reclaim the singleton host lease.
  * Same hostId+generation renews; expired leases are reclaimable; live foreign leases deny.
+ * When `isHolderAlive` reports the prior holder PID dead, a non-expired lease is reclaimable
+ * (honest host recovery after supervisor process restart / crash).
  */
 export function acquireHostLease(
   current: HostLeaseRecord | null | undefined,
@@ -65,6 +67,8 @@ export function acquireHostLease(
     generationId: string;
     leaseId?: string;
     ttlMs?: number;
+    /** Optional liveness probe for the recorded holder pid (crash recovery). */
+    isHolderAlive?: (pid: number) => boolean;
   },
   clock: HostLeaseClock = systemClock,
 ): HostLeaseAcquireResult {
@@ -91,17 +95,23 @@ export function acquireHostLease(
     current !== undefined &&
     current.hostId === hostId &&
     current.generationId === generationId;
+  const holderDead =
+    current !== null &&
+    current !== undefined &&
+    input.isHolderAlive !== undefined &&
+    !input.isHolderAlive(current.holderPid);
+  const reclaimable = expired || holderDead;
 
-  if (!expired && !sameGeneration && current) {
+  if (!reclaimable && !sameGeneration && current) {
     return {
       ok: false,
       reason: "LEASE_HELD",
-      message: `Host lease held by host=${current.hostId} generation=${current.generationId} until ${current.expiresAt}.`,
+      message: `Host lease held by host=${current.hostId} generation=${current.generationId} holderPid=${current.holderPid} until ${current.expiresAt}.`,
       holder: current,
     };
   }
 
-  const reclaimed = Boolean(current && expired && !sameGeneration);
+  const reclaimed = Boolean(current && reclaimable && !sameGeneration);
   const acquiredAt = sameGeneration && current ? current.acquiredAt : toIso(now);
   const lease: HostLeaseRecord = {
     leaseId:

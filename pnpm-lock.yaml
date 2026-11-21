@@ -92,6 +92,10 @@ importers:
         version: 2.1.8(@types/node@22.10.2)(terser@5.51.4)
 
   apps/console:
+    dependencies:
+      '@worksocial/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
     devDependencies:
       '@types/node':
         specifier: 22.10.2
