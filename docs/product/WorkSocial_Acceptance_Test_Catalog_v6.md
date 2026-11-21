@@ -672,7 +672,7 @@ Required evidence:
 
 Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixture ACCEPTED below | Environment fixture_or_sandbox; live evidence separately authorized.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-018, T-US-024, T-US-036, T-US-042, T-US-044, T-US-047, T-US-048, T-US-054, T-US-057, T-US-060.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-018, T-US-024, T-US-036, T-US-042, T-US-044, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060.
 
 ### Happy-path / documented flow completions
 - **T-US-001** Create a trusted local workspace (F01/SC-02) — blockers and next actions.
@@ -736,7 +736,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 - **T-US-055** Complete keyboard journey with reduced motion.
 - **T-US-056** Honest outage; durable hosted contact path.
 - **T-US-057** Cross-workspace resource substitution rejected. *(fixture ACCEPTED — cross-workspace resource substitution proof; not sandbox/prod VERIFIED)*
-- **T-US-058** Synthetic excluded from business denominators.
+- **T-US-058** Synthetic excluded from business denominators *(fixture ACCEPTED)*.
 - **T-US-059** Shared briefs redacted; private evidence retained.
 - **T-US-060** Emergency stop checked at commit time. *(fixture ACCEPTED — emergency-stop / outbound-stop at commit proof; not sandbox/prod VERIFIED)*
 
@@ -746,7 +746,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X037, T-X038, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X037, T-X038, T-X039, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073.
 
 **T-X066** is fixture ACCEPTED only via the backup / omit-receipt / post-restore reconcile proof (`BACKUP_OMIT_RECEIPT`). Retry-only no-duplicate-effects does **not** satisfy this case. Not sandbox/prod VERIFIED.
 
@@ -781,6 +781,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 **T-X069** is fixture ACCEPTED only via the imported doc quarantined as data proof (`IMPORTED_DOC_QUARANTINED_AS_DATA`). Not sandbox/prod VERIFIED.
 
 **T-X038** is fixture ACCEPTED only via the eval no-grounding fail closed proof (`EVAL_NO_GROUNDING_FAIL_CLOSED`). Not sandbox/prod VERIFIED.
+
+**T-X039** / **T-US-058** are fixture ACCEPTED only via the metric denominators honest proof (`METRIC_DENOMINATORS_HONEST`). Not sandbox/prod VERIFIED.
 
 Shared evidence for each: actual state before/after; instrumented provider call count or read-back; correlated redacted logs/traces; no unauthorized external effect.
 
@@ -826,7 +828,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X036 | Recent Ads conversion blank | Pending; no false zero |
 | T-X037 | Gemini tries operational tool | No effect *(fixture ACCEPTED)* |
 | T-X038 | Grounding configured but unused | No grounded pass *(fixture ACCEPTED)* |
-| T-X039 | Provider error vs answer failure | Separate denominators |
+| T-X039 | Provider error vs answer failure | Separate denominators *(fixture ACCEPTED)* |
 | T-X040 | Low-sample trend spike | Insufficient evidence |
 | T-X041 | Incomparable trend indices | Reject/label |
 | T-X042 | Schema differs from page | Gate fails |
@@ -867,8 +869,8 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | Family | Count | Status |
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
-| T-US (behavior_acceptance) | 60 | 49 NOT_RUN + 11 fixture ACCEPTED (T-US-002, T-US-018, T-US-024, T-US-036, T-US-042, T-US-044, T-US-047, T-US-048, T-US-054, T-US-057, T-US-060) |
-| T-X (platform/security/resilience) | 73 | 57 NOT_RUN + 16 fixture ACCEPTED (T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X037, T-X038, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073) |
-| **Total** | **159** | **131 NOT_RUN + 28 fixture ACCEPTED** |
+| T-US (behavior_acceptance) | 60 | 48 NOT_RUN + 12 fixture ACCEPTED (T-US-002, T-US-018, T-US-024, T-US-036, T-US-042, T-US-044, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060) |
+| T-X (platform/security/resilience) | 73 | 56 NOT_RUN + 17 fixture ACCEPTED (T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X037, T-X038, T-X039, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073) |
+| **Total** | **159** | **129 NOT_RUN + 30 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

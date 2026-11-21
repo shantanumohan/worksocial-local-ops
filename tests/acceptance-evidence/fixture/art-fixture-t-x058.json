@@ -8,8 +8,8 @@
     "repair_attempt_limit_escalated"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x058.json",
-  "createdAtIso": "2026-11-21T23:28:00.128Z",
+  "createdAtIso": "2026-11-21T23:34:22.909Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x058-a8672ce731a6"
+  "uniqueSourceArtifactId": "art-fixture-t-x058-fd5d79367c71"
 }

@@ -17,7 +17,8 @@
  * EVAL_ONLY operational tool forbidden (T-US-018 / T-X037),
  * repair attempt limit escalated (T-X058),
  * imported doc quarantined as data (T-X069),
- * eval no-grounding fail closed (T-X038).
+ * eval no-grounding fail closed (T-X038),
+ * metric denominators honest (T-X039 / T-US-058).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -60,6 +61,7 @@ import { proofEvalOnlyOperationalToolForbidden } from "./eval-only-operational-t
 import { proofRepairAttemptLimitEscalated } from "./repair-attempt-limit-proof.js";
 import { proofImportedDocQuarantinedAsData } from "./imported-doc-quarantine-proof.js";
 import { proofEvalNoGroundingFailClosed } from "./eval-no-grounding-proof.js";
+import { proofMetricDenominatorsHonest } from "./metric-denominators-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -560,7 +562,8 @@ function failProof(
  * repair weaken test feeds T-US-042/T-X057; takeover cancel feeds T-US-044/T-X053;
  * EVAL_ONLY operational tool forbid feeds T-US-018/T-X037;
  * repair attempt limit feeds T-X058;
- * imported-doc quarantine feeds T-X069; eval no-grounding feeds T-X038.
+ * imported-doc quarantine feeds T-X069; eval no-grounding feeds T-X038;
+ * metric denominators honest feeds T-X039/T-US-058.
  */
 export async function runSoakRecoveryHarness(input: {
   stateDir: string;
@@ -605,6 +608,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofRepairAttemptLimitEscalated(nowPlus(nowIso, 190_000)));
   proofs.push(proofImportedDocQuarantinedAsData(nowPlus(nowIso, 200_000)));
   proofs.push(proofEvalNoGroundingFailClosed(nowPlus(nowIso, 210_000)));
+  proofs.push(proofMetricDenominatorsHonest(nowPlus(nowIso, 220_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -631,6 +635,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X058 fixture ACCEPTED via repair_attempt_limit_escalated only — not live VERIFIED",
       "T-X069 fixture ACCEPTED via imported_doc_quarantined_as_data only — not live VERIFIED",
       "T-X038 fixture ACCEPTED via eval_no_grounding_fail_closed only — not live VERIFIED",
+      "T-X039/T-US-058 fixture ACCEPTED via metric_denominators_honest only — not live VERIFIED",
     ],
   };
 }

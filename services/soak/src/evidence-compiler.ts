@@ -68,6 +68,8 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X058": "Third automatic repair attempt — escalate",
   "T-X069": "Imported document quarantined as data",
   "T-X038": "Grounded eval without grounding — fail closed",
+  "T-X039": "Provider error vs answer failure — separate denominators",
+  "T-US-058": "Synthetic excluded from business denominators",
 };
 
 function relatedProofsForCase(
@@ -225,6 +227,7 @@ export function compileAcceptanceEvidence(
     "T-X058 fixture ACCEPTED only via REPAIR_ATTEMPT_LIMIT_ESCALATED",
     "T-X069 fixture ACCEPTED only via IMPORTED_DOC_QUARANTINED_AS_DATA",
     "T-X038 fixture ACCEPTED only via EVAL_NO_GROUNDING_FAIL_CLOSED",
+    "T-X039/T-US-058 fixture ACCEPTED only via METRIC_DENOMINATORS_HONEST",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
