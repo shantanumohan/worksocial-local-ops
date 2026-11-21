@@ -136,19 +136,28 @@ describe("soak-acceptance domain", () => {
     expect(forgedAsObs.reasons.some((r) => /gap/i.test(r))).toBe(true);
   });
 
-  it("maps BACKUP_OMIT_RECEIPT to T-X066; NO_DUPLICATE_EFFECTS stays unmapped", () => {
+  it("maps BACKUP_OMIT_RECEIPT to T-X066; RECOVER_ROTATE_RECONCILE to T-F24/T-US-047; NO_DUPLICATE_EFFECTS stays unmapped", () => {
     expect(mapProofToFixtureCases(SoakProofKind.NO_DUPLICATE_EFFECTS)).toEqual(
       [],
     );
     expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
       "T-X066",
     ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.RECOVER_ROTATE_RECONCILE),
+    ).toEqual(["T-F24", "T-US-047"]);
     expect(expectedProofsForFixtureCase("T-X014")).toEqual([
       SoakProofKind.CRASH_RESTART,
       SoakProofKind.JOB_CONTINUITY,
     ]);
     expect(expectedProofsForFixtureCase("T-X066")).toEqual([
       SoakProofKind.BACKUP_OMIT_RECEIPT,
+    ]);
+    expect(expectedProofsForFixtureCase("T-F24")).toEqual([
+      SoakProofKind.RECOVER_ROTATE_RECONCILE,
+    ]);
+    expect(expectedProofsForFixtureCase("T-US-047")).toEqual([
+      SoakProofKind.RECOVER_ROTATE_RECONCILE,
     ]);
   });
 

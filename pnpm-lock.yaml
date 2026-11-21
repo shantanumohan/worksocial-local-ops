@@ -537,12 +537,21 @@ importers:
 
   services/soak:
     dependencies:
+      '@worksocial/credential-broker':
+        specifier: workspace:*
+        version: link:../credential-broker
+      '@worksocial/credential-rotation':
+        specifier: workspace:*
+        version: link:../credential-rotation
       '@worksocial/domain':
         specifier: workspace:*
         version: link:../../packages/domain
       '@worksocial/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence
+      '@worksocial/recovery':
+        specifier: workspace:*
+        version: link:../recovery
     devDependencies:
       '@types/node':
         specifier: 22.10.2

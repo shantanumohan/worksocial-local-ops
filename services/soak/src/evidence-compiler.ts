@@ -44,6 +44,8 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X020": "Timeout after provider acceptance",
   "T-US-048": "Unknown remote effects reconciled before resume",
   "T-X066": "Backup omits remote receipt",
+  "T-F24": "Recover, rotate access and reconcile",
+  "T-US-047": "Recover/rotate/reconcile — offboarding manifest",
 };
 
 function relatedProofsForCase(
@@ -185,6 +187,7 @@ export function compileAcceptanceEvidence(
   details.push(
     `Compiled ${artifacts.length} redacted artifact(s); ACCEPTED=${caseResults.filter((c) => c.status === "ACCEPTED").length}`,
     "T-X066 fixture ACCEPTED only via BACKUP_OMIT_RECEIPT (not retry-only no-dup)",
+    "T-F24/T-US-047 fixture ACCEPTED only via RECOVER_ROTATE_RECONCILE (complete F24 evidence set)",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

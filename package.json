@@ -9,7 +9,7 @@
     "pnpm": "9.15.0"
   },
   "scripts": {
-    "build:local": "tsc -b packages/contracts packages/domain packages/ml packages/persistence packages/provider-adapters services/action-gateway services/credential-broker services/claude-runner services/workflow-worker services/learning-worker services/probes services/knowledge services/seo services/content services/inbox services/repair services/owner-staging services/lead-capture services/evaluation-worker services/soak services/recovery services/paid-media services/credential-rotation apps/api apps/console services/supervisor --pretty false",
+    "build:local": "tsc -b packages/contracts packages/domain packages/ml packages/persistence packages/provider-adapters services/action-gateway services/credential-broker services/claude-runner services/workflow-worker services/learning-worker services/probes services/knowledge services/seo services/content services/inbox services/repair services/owner-staging services/lead-capture services/evaluation-worker services/recovery services/paid-media services/credential-rotation services/soak apps/api apps/console services/supervisor --pretty false",
     "local:doctor": "pnpm build:local && tsx scripts/local-doctor.ts",
     "local:start": "pnpm build:local && tsx services/supervisor/src/cli.ts start",
     "local:stop": "pnpm build:local && tsx services/supervisor/src/cli.ts stop",

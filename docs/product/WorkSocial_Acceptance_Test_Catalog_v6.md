@@ -590,7 +590,7 @@ Required evidence:
 - Evaluation comparison.
 
 ### T-F24 - Recover, rotate access and reconcile
-Level: full_stack_e2e | Status: NOT_RUN
+Level: full_stack_e2e | Status: ACCEPTED (fixture only — recover/rotate/reconcile proof; not sandbox/prod VERIFIED)
 Requirements: RQ-001, RQ-007, RQ-010, RQ-013, RQ-030, RQ-031, RQ-036 | Flows: F24 | Screens: SC-18
 Environment: controlled_local_stack_then_authorized_canary_where_required
 
@@ -698,7 +698,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 - **T-US-041** Diagnose/repair defect (F21/SC-21) — verified resolution or handoff.
 - **T-US-043** After-hours + takeover (F22/SC-17) — acknowledged handoff.
 - **T-US-045** Semantic search / no-result (F23/SC-11) — evaluation comparison.
-- **T-US-047** Recover/rotate/reconcile (F24/SC-18) — offboarding manifest.
+- **T-US-047** Recover/rotate/reconcile (F24/SC-18) — offboarding manifest. *(fixture ACCEPTED — recover/rotate/reconcile proof; not sandbox/prod VERIFIED)*
 - **T-US-049** Daily owner review (F25/SC-01) — reviewed operating knowledge.
 - **T-US-051** Design/release readiness (F26/SC-23) — release acceptance packet.
 
@@ -746,9 +746,11 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X014, T-X020, T-X066.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X014, T-X020, T-X066, T-F24, T-US-047.
 
 **T-X066** is fixture ACCEPTED only via the backup / omit-receipt / post-restore reconcile proof (`BACKUP_OMIT_RECEIPT`). Retry-only no-duplicate-effects does **not** satisfy this case. Not sandbox/prod VERIFIED.
+
+**T-F24 / T-US-047** are fixture ACCEPTED only via the recover / rotate / reconcile / offboard proof (`RECOVER_ROTATE_RECONCILE`) with the complete F24 evidence set (health timeline, capability stop, rotation record without secrets, reconciliation receipts, recovery test, offboarding manifest + residual obligations). Live provider revoke remains **NOT_WIRED**; never silently VERIFIED for live.
 
 Shared evidence for each: actual state before/after; instrumented provider call count or read-back; correlated redacted logs/traces; no unauthorized external effect.
 
@@ -832,9 +834,9 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 
 | Family | Count | Status |
 |---|---:|---|
-| T-F (full_stack_e2e) | 26 | NOT_RUN |
-| T-US (behavior_acceptance) | 60 | 59 NOT_RUN + 1 fixture ACCEPTED (T-US-048) |
+| T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
+| T-US (behavior_acceptance) | 60 | 58 NOT_RUN + 2 fixture ACCEPTED (T-US-047, T-US-048) |
 | T-X (platform/security/resilience) | 73 | 70 NOT_RUN + 3 fixture ACCEPTED (T-X014, T-X020, T-X066) |
-| **Total** | **159** | **155 NOT_RUN + 4 fixture ACCEPTED** |
+| **Total** | **159** | **153 NOT_RUN + 6 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.
