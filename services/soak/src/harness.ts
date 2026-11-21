@@ -3,7 +3,8 @@
  * durable job/effect continuity, unknown-remote reconcile,
  * backup/omit-receipt post-restore reconcile (T-X066),
  * recover/rotate/reconcile/offboard (T-F24 / T-US-047),
- * competing-supervisor / singleton host lease (T-US-002 / T-X002).
+ * competing-supervisor / singleton host lease (T-US-002 / T-X002),
+ * self-approval rejected / independent A25 (T-X018 / T-US-054).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -31,6 +32,7 @@ import {
 } from "@worksocial/persistence";
 import { proofRecoverRotateReconcile } from "./recover-rotate-proof.js";
 import { proofCompetingSupervisorLease } from "./competing-supervisor-proof.js";
+import { proofSelfApprovalRejected } from "./self-approval-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -516,12 +518,14 @@ function failProof(
 
 /**
  * Run soak proofs (incl. T-X066 backup/omit-receipt, T-F24/T-US-047
- * recover/rotate/reconcile, and T-US-002/T-X002 competing-supervisor lease)
- * against a dedicated durable state directory.
+ * recover/rotate/reconcile, T-US-002/T-X002 competing-supervisor lease,
+ * and T-X018/T-US-054 self-approval rejected) against a dedicated durable
+ * state directory.
  * Safe for CI and documented 72h owner soak wrappers.
  * Pilot gate still requires the original four recovery proofs; backup proof
  * feeds fixture ACCEPTED for T-X066 only; recover/rotate feeds T-F24/T-US-047;
- * competing-supervisor lease feeds T-US-002/T-X002.
+ * competing-supervisor lease feeds T-US-002/T-X002; self-approval feeds
+ * T-X018/T-US-054.
  */
 export async function runSoakRecoveryHarness(input: {
   stateDir: string;
@@ -544,6 +548,7 @@ export async function runSoakRecoveryHarness(input: {
     await proofRecoverRotateReconcile(durableDir, nowPlus(nowIso, 50_000)),
   );
   proofs.push(proofCompetingSupervisorLease(nowPlus(nowIso, 60_000)));
+  proofs.push(proofSelfApprovalRejected(nowPlus(nowIso, 70_000)));
 
   const allPassed = proofs.every((p) => p.passed);
   return {
@@ -557,6 +562,7 @@ export async function runSoakRecoveryHarness(input: {
       "Live CMS/GSC/GA4/Zoho/Temporal remain NOT_WIRED",
       "T-F24/T-US-047 fixture ACCEPTED via recover_rotate_reconcile only — not live VERIFIED",
       "T-US-002/T-X002 fixture ACCEPTED via competing_supervisor_lease only — not live VERIFIED",
+      "T-X018/T-US-054 fixture ACCEPTED via self_approval_rejected only — not live VERIFIED",
     ],
   };
 }

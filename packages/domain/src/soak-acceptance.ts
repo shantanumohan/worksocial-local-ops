@@ -58,6 +58,10 @@ export const SoakProofKind = {
    * Second live generation refused; dead-holder reclaim allowed; ownership fail-closed.
    */
   COMPETING_SUPERVISOR_LEASE: "competing_supervisor_lease",
+  /**
+   * Self-approval rejected; independent A25 approval required (T-X018 / T-US-054).
+   */
+  SELF_APPROVAL_REJECTED: "self_approval_rejected",
 } as const;
 
 export type SoakProofKindValue =
@@ -101,6 +105,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X066 requires BACKUP_OMIT_RECEIPT (not retry-only NO_DUPLICATE_EFFECTS).
  * T-F24 / T-US-047 require RECOVER_ROTATE_RECONCILE (complete F24 evidence set).
  * T-US-002 / T-X002 require COMPETING_SUPERVISOR_LEASE (singleton host lease).
+ * T-X018 / T-US-054 require SELF_APPROVAL_REJECTED (independent A25).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -112,6 +117,8 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-047",
   "T-US-002",
   "T-X002",
+  "T-X018",
+  "T-US-054",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -464,6 +471,10 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.COMPETING_SUPERVISOR_LEASE];
     case "T-X002":
       return [SoakProofKind.COMPETING_SUPERVISOR_LEASE];
+    case "T-X018":
+      return [SoakProofKind.SELF_APPROVAL_REJECTED];
+    case "T-US-054":
+      return [SoakProofKind.SELF_APPROVAL_REJECTED];
     default:
       return [];
   }
@@ -492,6 +503,8 @@ export function mapProofToFixtureCases(
       return ["T-F24", "T-US-047"];
     case SoakProofKind.COMPETING_SUPERVISOR_LEASE:
       return ["T-US-002", "T-X002"];
+    case SoakProofKind.SELF_APPROVAL_REJECTED:
+      return ["T-X018", "T-US-054"];
     default:
       return [];
   }

@@ -136,7 +136,7 @@ describe("soak-acceptance domain", () => {
     expect(forgedAsObs.reasons.some((r) => /gap/i.test(r))).toBe(true);
   });
 
-  it("maps BACKUP_OMIT_RECEIPT to T-X066; RECOVER_ROTATE_RECONCILE to T-F24/T-US-047; COMPETING_SUPERVISOR_LEASE to T-US-002/T-X002; NO_DUPLICATE_EFFECTS stays unmapped", () => {
+  it("maps BACKUP_OMIT_RECEIPT to T-X066; RECOVER_ROTATE_RECONCILE to T-F24/T-US-047; COMPETING_SUPERVISOR_LEASE to T-US-002/T-X002; SELF_APPROVAL_REJECTED to T-X018/T-US-054; NO_DUPLICATE_EFFECTS stays unmapped", () => {
     expect(mapProofToFixtureCases(SoakProofKind.NO_DUPLICATE_EFFECTS)).toEqual(
       [],
     );
@@ -149,6 +149,9 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.COMPETING_SUPERVISOR_LEASE),
     ).toEqual(["T-US-002", "T-X002"]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.SELF_APPROVAL_REJECTED),
+    ).toEqual(["T-X018", "T-US-054"]);
     expect(expectedProofsForFixtureCase("T-X014")).toEqual([
       SoakProofKind.CRASH_RESTART,
       SoakProofKind.JOB_CONTINUITY,
@@ -167,6 +170,12 @@ describe("soak-acceptance domain", () => {
     ]);
     expect(expectedProofsForFixtureCase("T-X002")).toEqual([
       SoakProofKind.COMPETING_SUPERVISOR_LEASE,
+    ]);
+    expect(expectedProofsForFixtureCase("T-X018")).toEqual([
+      SoakProofKind.SELF_APPROVAL_REJECTED,
+    ]);
+    expect(expectedProofsForFixtureCase("T-US-054")).toEqual([
+      SoakProofKind.SELF_APPROVAL_REJECTED,
     ]);
   });
 
