@@ -14,7 +14,8 @@
  * agent cannot widen grant (T-US-024),
  * repair weaken test rejected (T-US-042 / T-X057),
  * takeover cancels unsent replies (T-US-044 / T-X053),
- * EVAL_ONLY operational tool forbidden (T-US-018 / T-X037).
+ * EVAL_ONLY operational tool forbidden (T-US-018 / T-X037),
+ * repair attempt limit escalated (T-X058).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -54,6 +55,7 @@ import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js"
 import { proofRepairWeakenTestRejected } from "./repair-weaken-test-proof.js";
 import { proofTakeoverCancelsUnsentReplies } from "./takeover-cancel-unsent-proof.js";
 import { proofEvalOnlyOperationalToolForbidden } from "./eval-only-operational-tool-proof.js";
+import { proofRepairAttemptLimitEscalated } from "./repair-attempt-limit-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -552,7 +554,8 @@ function failProof(
  * reference feeds T-X006; approved payload edit feeds T-X019/T-US-036; explicit rebind feeds T-X029;
  * cross-workspace substitution feeds T-US-057; agent cannot widen grant feeds T-US-024;
  * repair weaken test feeds T-US-042/T-X057; takeover cancel feeds T-US-044/T-X053;
- * EVAL_ONLY operational tool forbid feeds T-US-018/T-X037.
+ * EVAL_ONLY operational tool forbid feeds T-US-018/T-X037;
+ * repair attempt limit feeds T-X058.
  */
 export async function runSoakRecoveryHarness(input: {
   stateDir: string;
@@ -594,6 +597,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofRepairWeakenTestRejected(nowPlus(nowIso, 160_000)));
   proofs.push(proofTakeoverCancelsUnsentReplies(nowPlus(nowIso, 170_000)));
   proofs.push(proofEvalOnlyOperationalToolForbidden(nowPlus(nowIso, 180_000)));
+  proofs.push(proofRepairAttemptLimitEscalated(nowPlus(nowIso, 190_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -617,6 +621,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-042/T-X057 fixture ACCEPTED via repair_weaken_test_rejected only — not live VERIFIED",
       "T-US-044/T-X053 fixture ACCEPTED via takeover_cancels_unsent_replies only — not live VERIFIED",
       "T-US-018/T-X037 fixture ACCEPTED via eval_only_operational_tool_forbidden only — not live VERIFIED",
+      "T-X058 fixture ACCEPTED via repair_attempt_limit_escalated only — not live VERIFIED",
     ],
   };
 }

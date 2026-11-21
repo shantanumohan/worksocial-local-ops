@@ -29,7 +29,7 @@ v6 does not publish sixteen separate titles. Tracker tasks may still use histori
 ## Acceptance matrix (do not invent VERIFIED)
 
 - Machine index: `tests/acceptance-matrix-v6.json`
-- Typical counts on current main: **140 NOT_RUN**, **25 fixture ACCEPTED** (`T-US-048`, `T-X014`, `T-X020`, `T-X066`, `T-F24`, `T-US-047`, `T-US-002`, `T-X002`, `T-X018`, `T-US-054`, `T-X073`, `T-US-060`, `T-X005`, `T-X006`, `T-X019`, `T-US-036`, `T-X029 / T-US-057 / T-US-024, T-US-042, T-US-044, T-X053, T-X057`), **0 VERIFIED**
+- Typical counts on current main: **140 NOT_RUN**, **26 fixture ACCEPTED** (`T-US-048`, `T-X014`, `T-X020`, `T-X066`, `T-F24`, `T-US-047`, `T-US-002`, `T-X002`, `T-X018`, `T-US-054`, `T-X073`, `T-US-060`, `T-X005`, `T-X006`, `T-X019`, `T-US-036`, `T-X029 / T-US-057 / T-US-024, T-US-042, T-US-044, T-X053, T-X057`), **0 VERIFIED**
 - Fixture ACCEPTED ≠ sandbox-verified ≠ production-canary-verified
 - Catalog: `WorkSocial_Acceptance_Test_Catalog_v6.md`
 

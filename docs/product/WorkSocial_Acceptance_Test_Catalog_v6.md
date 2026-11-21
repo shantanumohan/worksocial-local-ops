@@ -746,7 +746,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X037, T-X053, T-X057, T-X066, T-X073.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X037, T-X053, T-X057, T-X058, T-X066, T-X073.
 
 **T-X066** is fixture ACCEPTED only via the backup / omit-receipt / post-restore reconcile proof (`BACKUP_OMIT_RECEIPT`). Retry-only no-duplicate-effects does **not** satisfy this case. Not sandbox/prod VERIFIED.
 
@@ -775,6 +775,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 **T-US-044** / **T-X053** are fixture ACCEPTED only via the takeover cancels unsent replies proof (`TAKEOVER_CANCELS_UNSENT_REPLIES`). Not sandbox/prod VERIFIED.
 
 **T-US-018** / **T-X037** are fixture ACCEPTED only via the EVAL_ONLY operational tool forbidden proof (`EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN`). Not sandbox/prod VERIFIED.
+
+**T-X058** is fixture ACCEPTED only via the repair attempt limit escalated proof (`REPAIR_ATTEMPT_LIMIT_ESCALATED`). Not sandbox/prod VERIFIED.
 
 Shared evidence for each: actual state before/after; instrumented provider call count or read-back; correlated redacted logs/traces; no unauthorized external effect.
 
@@ -839,7 +841,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X055 | Unknown policy question | Escalate without promise |
 | T-X056 | Automated response loop | Bounded; handoff |
 | T-X057 | Repair disables failing test | Rejected *(fixture ACCEPTED)* |
-| T-X058 | Third automatic repair attempt | Escalate |
+| T-X058 | Third automatic repair attempt | Escalate *(fixture ACCEPTED)* |
 | T-X059 | Duplicate platform attribution | One booking; separate claims |
 | T-X060 | Currency/timezone mismatch | No silent sum |
 | T-X061 | Keyboard review and focus restore | A11y |
@@ -862,7 +864,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
 | T-US (behavior_acceptance) | 60 | 49 NOT_RUN + 11 fixture ACCEPTED (T-US-002, T-US-018, T-US-024, T-US-036, T-US-042, T-US-044, T-US-047, T-US-048, T-US-054, T-US-057, T-US-060) |
-| T-X (platform/security/resilience) | 73 | 60 NOT_RUN + 13 fixture ACCEPTED (T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X037, T-X053, T-X057, T-X066, T-X073) |
-| **Total** | **159** | **134 NOT_RUN + 25 fixture ACCEPTED** |
+| T-X (platform/security/resilience) | 73 | 59 NOT_RUN + 14 fixture ACCEPTED (T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X037, T-X053, T-X057, T-X058, T-X066, T-X073) |
+| **Total** | **159** | **133 NOT_RUN + 26 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.
