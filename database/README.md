@@ -1,6 +1,6 @@
 # Database migrations
 
-Ordered SQL under `migrations/` (`001_…` … `019_…`).
+Ordered SQL under `migrations/` (`001_…` … `020_…`).
 
 ```bash
 export DATABASE_URL=postgres://worksocial:worksocial@127.0.0.1:5432/worksocial
@@ -22,5 +22,7 @@ events, ownership versioning, and lead coalesce keys (file-backed until Postgres
 `019_canonical_publish.sql` is the M6 companion for claim/source records,
 content review bindings, and multi-destination distribution runs (file-backed
 until Postgres cutover).
+`020_m8_search_analytics_eval.sql` is the M8 companion for search judgments,
+EVAL_ONLY runs, and analytics observation provenance (file-backed until Postgres cutover).
 Runner: `pnpm db:migrate` (`packages/persistence` `runMigrations`).
 External effects: none (simulator only).

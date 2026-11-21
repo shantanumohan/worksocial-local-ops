@@ -128,7 +128,23 @@ export const R1_03_ADAPTERS: readonly AdapterDescriptor[] = [
     status: AdapterStatus.FIXTURE,
     capabilities: ["fixture_analytics", "live_if_credentials"],
     notes:
-      "M4 / NEXT-14 GA4 collector. FIXTURE by default; LIVE only when WORKSOCIAL_GA4_* credentials exist. Preserves measurement provenance.",
+      "M4 / NEXT-14 + M8 GA4 collector. FIXTURE by default; credentials without query → UNAVAILABLE; LIVE query transport NOT_WIRED. Debug ≠ measured receipt.",
+  },
+  {
+    adapterId: "chatgpt-ads",
+    providerId: "chatgpt-ads",
+    status: AdapterStatus.NOT_WIRED,
+    capabilities: [],
+    notes:
+      "M8 ChatGPT Ads — access-blocked without verified local transport and entitlement. Live spend/mutations NOT_WIRED.",
+  },
+  {
+    adapterId: "evaluation-claude-gemini",
+    providerId: "evaluation",
+    status: AdapterStatus.FIXTURE,
+    capabilities: ["eval_only_fixture_adjudication", "isolated_eval_budget"],
+    notes:
+      "M8 EVAL_ONLY Claude/Gemini fixture evaluation. No publish/CRM/customer-message tools. Live model fleet NOT_WIRED.",
   },
   {
     adapterId: "seo-fixture-pages",
@@ -267,6 +283,7 @@ export {
   readGscObservations,
   readGa4Observations,
   collectorCredentialHints,
+  readAnalyticsFixtureBundle,
   type PageSnapshotCollectorInput,
   type PageSnapshotCollectorResult,
   type MeasurementCollectorResult,

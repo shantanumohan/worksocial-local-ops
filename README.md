@@ -116,6 +116,13 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - Console `/inbox` — conversation list, chronological timeline, ownership badge, takeover control.
 - SQL `011_inbox.sql` + `018_inbox_m7.sql` companions; **live inbox / Zoho remain `NOT_WIRED`**. **Temporal NOT_WIRED**. Not an R1-complete claim.
 
+### M8 Grounded search, analytics, evaluation (NEXT-19)
+- **Grounded semantic search** — public hits cite **SUPPORTED** facts only; UNKNOWN / no-result / clarify stay honest; judgment + remediation ledger (T-F23 shaped).
+- **Analytics read path** — GSC/GA4 **FIXTURE** samples; credentials-without-query → **UNAVAILABLE**; live query transport **NOT_WIRED**. Fixture ≠ sandbox ≠ live. Omitted GSC rows → UNKNOWN (not zero). GA4 debug validation ≠ measured receipt.
+- **Isolated EVAL_ONLY worker** — Claude/Gemini fixture adjudication; no publish/CRM/customer-message tools; separate eval budget; ChatGPT Ads **access-blocked** without verified local transport/entitlement.
+- Console `/analysis` + `/eval`; APIs `/analysis/*` + `/eval/*` + `/seo/judge-search`.
+- SQL `020_m8_search_analytics_eval.sql` companion; **Temporal NOT_WIRED**. Catalog cases remain **NOT_RUN**. Not an R1-complete claim.
+
 ### M4 Owner staging workflow (NEXT-13–15)
 - **Console** — `/activation`, `/connections`, `/sites`, `/missions`, `/review`, `/evidence` wired to typed `/owner/*` APIs; safe text rendering (no raw ID/JSON as primary UI).
 - **Collectors** — page snapshot + deterministic checks; GSC/GA4 adapters labeled **FIXTURE** (or LIVE capability when credentials exist). Provenance preserved.
@@ -150,6 +157,9 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 | Live inbox providers (email/webchat/SMS) | **NOT_WIRED** — fixture ingest/send only (R1-09) |
 | Live Zoho after-hours lead write | **NOT_WIRED** — fixture CRM receipt only (R1-09) |
 | Live CMS bounded repair | **NOT_WIRED** — fixture canary apply/verify only (R1-10) |
+| Live GSC / GA4 query transport | **NOT_WIRED** — fixture / UNAVAILABLE collectors only (M8) |
+| Live Claude/Gemini eval fleet | **NOT_WIRED** — EVAL_ONLY fixture adjudication (M8) |
+| ChatGPT Ads | **access-blocked / NOT_WIRED** without verified local transport + entitlement (M8) |
 
 Status labels stay honest: fixture / stub / `NOT_RUN` ≠ sandbox-verified or production-canary-verified.
 

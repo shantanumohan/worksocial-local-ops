@@ -89,7 +89,7 @@ export function authorityPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/analysis">Analysis</a> · <a href="/eval">Eval</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -199,7 +199,7 @@ export function mappingPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/analysis">Analysis</a> · <a href="/eval">Eval</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -340,7 +340,7 @@ export function rolesPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/analysis">Analysis</a> · <a href="/eval">Eval</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -482,7 +482,7 @@ export function monitoringPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/analysis">Analysis</a> · <a href="/eval">Eval</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -687,7 +687,7 @@ export function learningPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/analysis">Analysis</a> · <a href="/eval">Eval</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -819,7 +819,7 @@ export function knowledgePage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/analysis">Analysis</a> · <a href="/eval">Eval</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -1005,7 +1005,7 @@ export function seoPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/analysis">Analysis</a> · <a href="/eval">Eval</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -1026,11 +1026,21 @@ export function seoPage(apiOrigin: string): string {
     </table>
   </section>
   <section>
-    <h2>Semantic search</h2>
+    <h2>Semantic search (M8 grounded)</h2>
+    <p class="muted">Citations require <strong>SUPPORTED</strong> facts. UNKNOWN / no-result stay honest — never invent eligibility.</p>
     <label for="search-q">Query</label>
     <input id="search-q" value="Meeting for 8 with a display in Jersey City" />
     <div class="row">
       <button id="btn-search" type="button">Search fixture catalog</button>
+    </div>
+    <label for="judge-label">Judgment</label>
+    <select id="judge-label">
+      <option value="relevant">relevant</option>
+      <option value="wrong">wrong</option>
+      <option value="no_match">no_match</option>
+    </select>
+    <div class="row">
+      <button id="btn-judge" type="button">Record judgment</button>
     </div>
     <pre id="search-out">—</pre>
   </section>
@@ -1115,6 +1125,7 @@ export function seoPage(apiOrigin: string): string {
     document.getElementById('note').textContent = body.note || (res.ok ? 'Seeded' : (body.error || 'failed'));
     refresh();
   };
+  let lastQueryId = '';
   document.getElementById('btn-search').onclick = async () => {
     const rawQuery = document.getElementById('search-q').value;
     const res = await api('/seo/search', {
@@ -1123,6 +1134,22 @@ export function seoPage(apiOrigin: string): string {
       body: JSON.stringify({ rawQuery })
     });
     const body = await res.json();
+    lastQueryId = body.result?.queryId || '';
+    document.getElementById('search-out').textContent = JSON.stringify(body, null, 2);
+  };
+  document.getElementById('btn-judge').onclick = async () => {
+    if (!lastQueryId) {
+      document.getElementById('note').textContent = 'Run a search first';
+      return;
+    }
+    const label = document.getElementById('judge-label').value;
+    const res = await api('/seo/judge-search', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ queryId: lastQueryId, label, createRemediation: label !== 'relevant' })
+    });
+    const body = await res.json();
+    document.getElementById('note').textContent = res.ok ? ('Judged ' + label) : (body.error || 'failed');
     document.getElementById('search-out').textContent = JSON.stringify(body, null, 2);
   };
   document.getElementById('btn-ensure-map').onclick = async () => {
@@ -1222,7 +1249,7 @@ export function contentPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/analysis">Analysis</a> · <a href="/eval">Eval</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -1684,7 +1711,7 @@ export function inboxPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/analysis">Analysis</a> · <a href="/eval">Eval</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -2035,7 +2062,7 @@ export function repairPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/roles">Roles</a> · <a href="/mapping">Production mapping</a> · <a href="/monitoring">Monitoring</a> · <a href="/knowledge">Knowledge</a> · <a href="/seo">SEO &amp; search</a> · <a href="/analysis">Analysis</a> · <a href="/eval">Eval</a> · <a href="/content">Content</a> · <a href="/inbox">Inbox</a> · <a href="/repair">Repair</a> · <a href="/learning">Learning</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
@@ -2179,6 +2206,166 @@ export function repairPage(apiOrigin: string): string {
     refresh();
   };
   document.getElementById('btn-refresh').onclick = () => refresh();
+  refresh();
+</script>
+</body>
+</html>`;
+}
+
+export function analysisPage(apiOrigin: string): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WorkSocial — Analysis</title>
+  <style>
+    :root { --ink:#1b2a22; --panel:#fff; --accent:#2f6b4f; --warn:#8a5a00; }
+    body { margin:0; font-family:"IBM Plex Sans","Segoe UI",sans-serif; background:linear-gradient(180deg,#e7efe9,#f6f3ec); color:var(--ink); }
+    header { padding:1.25rem 1.5rem; border-bottom:1px solid #c9d6cc; background:rgba(255,255,255,.7); }
+    h1 { font-family:"IBM Plex Serif",Georgia,serif; margin:0; font-size:1.45rem; }
+    main { max-width:960px; margin:0 auto; padding:1.5rem; display:grid; gap:1rem; }
+    section { background:var(--panel); border:1px solid #c9d6cc; padding:1rem 1.1rem; }
+    .muted { color:#405248; } .warn { color:var(--warn); }
+    button { background:var(--accent); color:#fff; border:0; padding:.5rem .85rem; cursor:pointer; margin-right:.4rem; }
+    pre { background:#f3f6f3; padding:.75rem; overflow:auto; font-size:.8rem; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>WorkSocial</h1>
+  <p class="muted" id="who">Checking session…</p>
+  <p class="muted"><a href="/seo">SEO</a> · <a href="/analysis">Analysis</a> · <a href="/eval">Eval</a> · <a href="/authority">Authority</a></p>
+</header>
+<main>
+  <section>
+    <h2>Measurement / analysis (M8)</h2>
+    <p class="muted">GSC/GA4 fixture read path. <strong>FIXTURE ≠ SANDBOX ≠ LIVE</strong>. No invented live KPIs.</p>
+    <p class="warn">Live GSC/GA4 query transport is <strong>NOT_WIRED</strong>. Omitted GSC rows are UNKNOWN — not zero. GA4 debug ≠ measured receipt. ChatGPT Ads access-blocked.</p>
+    <button id="btn-read" type="button">Read fixture analytics</button>
+    <button id="btn-refresh" type="button">Refresh status</button>
+    <p class="muted" id="note"></p>
+  </section>
+  <section>
+    <h2>Status</h2>
+    <pre id="status">Loading…</pre>
+  </section>
+  <section>
+    <h2>Read result</h2>
+    <pre id="out">—</pre>
+  </section>
+</main>
+<script>
+  const API = ${JSON.stringify(apiOrigin)};
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ origin: window.location.origin }, opts.headers || {});
+    const csrf = sessionStorage.getItem('ws_csrf');
+    if (opts.method && opts.method !== 'GET' && csrf) headers['x-csrf-token'] = csrf;
+    return fetch(API + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+  }
+  async function refresh() {
+    const session = await api('/auth/session');
+    if (!session.ok) { location.href = '/login'; return; }
+    const s = await session.json();
+    sessionStorage.setItem('ws_csrf', s.csrfToken);
+    document.getElementById('who').textContent = s.username + ' · ' + s.role;
+    const res = await api('/analysis/status');
+    document.getElementById('status').textContent = JSON.stringify(await res.json(), null, 2);
+  }
+  document.getElementById('btn-read').onclick = async () => {
+    const res = await api('/analysis/read', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.note || '';
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+  };
+  document.getElementById('btn-refresh').onclick = () => refresh();
+  refresh();
+</script>
+</body>
+</html>`;
+}
+
+export function evalPage(apiOrigin: string): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WorkSocial — Evaluation lab</title>
+  <style>
+    :root { --ink:#1b2a22; --panel:#fff; --accent:#2f6b4f; --warn:#8a5a00; }
+    body { margin:0; font-family:"IBM Plex Sans","Segoe UI",sans-serif; background:linear-gradient(180deg,#e7efe9,#f6f3ec); color:var(--ink); }
+    header { padding:1.25rem 1.5rem; border-bottom:1px solid #c9d6cc; background:rgba(255,255,255,.7); }
+    h1 { font-family:"IBM Plex Serif",Georgia,serif; margin:0; font-size:1.45rem; }
+    main { max-width:960px; margin:0 auto; padding:1.5rem; display:grid; gap:1rem; }
+    section { background:var(--panel); border:1px solid #c9d6cc; padding:1rem 1.1rem; }
+    .muted { color:#405248; } .warn { color:var(--warn); }
+    button { background:var(--accent); color:#fff; border:0; padding:.5rem .85rem; cursor:pointer; margin-right:.4rem; }
+    pre { background:#f3f6f3; padding:.75rem; overflow:auto; font-size:.8rem; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>WorkSocial</h1>
+  <p class="muted" id="who">Checking session…</p>
+  <p class="muted"><a href="/seo">SEO</a> · <a href="/analysis">Analysis</a> · <a href="/eval">Eval</a> · <a href="/authority">Authority</a></p>
+</header>
+<main>
+  <section>
+    <h2>Evaluation lab (M8 EVAL_ONLY)</h2>
+    <p class="muted">Claude / Gemini fixture adjudication. Separate eval budget. No publish / CRM / customer-message tools.</p>
+    <p class="warn">Live model fleet <strong>NOT_WIRED</strong>. ChatGPT Ads <strong>access-blocked</strong>. Temporal <strong>NOT_WIRED</strong>. Catalog cases stay NOT_RUN.</p>
+    <button id="btn-seed" type="button">Seed fixtures</button>
+    <button id="btn-run" type="button">Run golden suite</button>
+    <button id="btn-ads" type="button">Probe ChatGPT Ads</button>
+    <button id="btn-tool" type="button">Try publish tool (must block)</button>
+    <p class="muted" id="note"></p>
+  </section>
+  <section>
+    <h2>Status</h2>
+    <pre id="status">Loading…</pre>
+  </section>
+  <section>
+    <h2>Output</h2>
+    <pre id="out">—</pre>
+  </section>
+</main>
+<script>
+  const API = ${JSON.stringify(apiOrigin)};
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ origin: window.location.origin }, opts.headers || {});
+    const csrf = sessionStorage.getItem('ws_csrf');
+    if (opts.method && opts.method !== 'GET' && csrf) headers['x-csrf-token'] = csrf;
+    return fetch(API + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+  }
+  async function refresh() {
+    const session = await api('/auth/session');
+    if (!session.ok) { location.href = '/login'; return; }
+    const s = await session.json();
+    sessionStorage.setItem('ws_csrf', s.csrfToken);
+    document.getElementById('who').textContent = s.username + ' · ' + s.role;
+    const res = await api('/eval/status');
+    document.getElementById('status').textContent = JSON.stringify(await res.json(), null, 2);
+  }
+  document.getElementById('btn-seed').onclick = async () => {
+    const res = await api('/eval/seed-fixtures', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.note || '';
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-run').onclick = async () => {
+    const res = await api('/eval/run-suite', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ provider:'claude' }) });
+    const body = await res.json();
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-ads').onclick = async () => {
+    const res = await api('/eval/chatgpt-ads');
+    document.getElementById('out').textContent = JSON.stringify(await res.json(), null, 2);
+  };
+  document.getElementById('btn-tool').onclick = async () => {
+    const res = await api('/eval/attempt-tool', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ tool:'publish' }) });
+    document.getElementById('out').textContent = JSON.stringify(await res.json(), null, 2);
+  };
   refresh();
 </script>
 </body>

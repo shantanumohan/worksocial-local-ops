@@ -23,6 +23,7 @@
     { "path": "../../services/inbox" },
     { "path": "../../services/repair" },
     { "path": "../../services/owner-staging" },
-    { "path": "../../services/lead-capture" }
+    { "path": "../../services/lead-capture" },
+    { "path": "../../services/evaluation-worker" }
   ]
 }

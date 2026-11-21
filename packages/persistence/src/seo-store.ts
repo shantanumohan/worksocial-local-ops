@@ -9,6 +9,8 @@ import {
   emptySeoState,
   type PageAuditRecord,
   type SchemaValidationResult,
+  type SearchJudgmentRecord,
+  type SearchRemediationTask,
   type SemanticSearchIndex,
   type SemanticSearchResult,
   type SeoChangeProposal,
@@ -26,16 +28,21 @@ export type SeoStore = {
   addSchemaValidation(result: SchemaValidationResult): SeoState;
   setSearchIndex(index: SemanticSearchIndex): SeoState;
   addSearchResult(result: SemanticSearchResult): SeoState;
+  addSearchJudgment(judgment: SearchJudgmentRecord): SeoState;
+  addSearchRemediation(task: SearchRemediationTask): SeoState;
   addReleaseOutcome(outcome: WritePathOutcomeEvidence): SeoState;
   listAudits(limit?: number): PageAuditRecord[];
   listProposals(limit?: number): SeoChangeProposal[];
   listSchemaValidations(limit?: number): SchemaValidationResult[];
+  listSearchJudgments(limit?: number): SearchJudgmentRecord[];
+  listSearchRemediations(limit?: number): SearchRemediationTask[];
   status(): {
     auditCount: number;
     proposalCount: number;
     schemaValidationCount: number;
     searchIndexVersion: number | null;
     searchResultCount: number;
+    searchJudgmentCount: number;
     releaseOutcomeCount: number;
     liveCmsPublishWiring: SeoState["liveCmsPublishWiring"];
     honestNote: string;
@@ -76,6 +83,8 @@ export function createFileSeoStore(stateDir: string): SeoStore {
       schemaValidations: existing.schemaValidations ?? [],
       searchIndex: existing.searchIndex ?? null,
       searchResults: existing.searchResults ?? [],
+      searchJudgments: existing.searchJudgments ?? [],
+      searchRemediations: existing.searchRemediations ?? [],
       releaseOutcomes: existing.releaseOutcomes ?? [],
       fixtureRemoteLedger: existing.fixtureRemoteLedger ?? {},
       liveCmsPublishWiring: "NOT_WIRED",
@@ -139,6 +148,18 @@ export function createFileSeoStore(stateDir: string): SeoStore {
         searchResults: [...state.searchResults, result].slice(-500),
         updatedAtIso: result.createdAtIso,
       })),
+    addSearchJudgment: (judgment) =>
+      update((state) => ({
+        ...state,
+        searchJudgments: [...state.searchJudgments, judgment].slice(-500),
+        updatedAtIso: judgment.createdAtIso,
+      })),
+    addSearchRemediation: (task) =>
+      update((state) => ({
+        ...state,
+        searchRemediations: [...state.searchRemediations, task].slice(-500),
+        updatedAtIso: task.createdAtIso,
+      })),
     addReleaseOutcome: (outcome) =>
       update((state) => ({
         ...state,
@@ -157,6 +178,14 @@ export function createFileSeoStore(stateDir: string): SeoStore {
       const rows = read().schemaValidations;
       return rows.slice(Math.max(0, rows.length - limit));
     },
+    listSearchJudgments: (limit = 100) => {
+      const rows = read().searchJudgments;
+      return rows.slice(Math.max(0, rows.length - limit));
+    },
+    listSearchRemediations: (limit = 100) => {
+      const rows = read().searchRemediations;
+      return rows.slice(Math.max(0, rows.length - limit));
+    },
     status: () => {
       const state = read();
       return {
@@ -165,10 +194,11 @@ export function createFileSeoStore(stateDir: string): SeoStore {
         schemaValidationCount: state.schemaValidations.length,
         searchIndexVersion: state.searchIndex?.version ?? null,
         searchResultCount: state.searchResults.length,
+        searchJudgmentCount: state.searchJudgments.length,
         releaseOutcomeCount: state.releaseOutcomes.length,
         liveCmsPublishWiring: state.liveCmsPublishWiring,
         honestNote:
-          "Page audits, SEO proposals, schema validation, and fixture semantic search. Live CMS publish remains NOT_WIRED. Gateway acceptance ≠ verified. Schema truth requires SUPPORTED facts only — never HYPOTHESIS.",
+          "M8 grounded search cites SUPPORTED facts only. Judged retrieval + remediation ledger. Live CMS publish remains NOT_WIRED. Gateway acceptance ≠ verified. Schema truth requires SUPPORTED facts — never HYPOTHESIS.",
       };
     },
   };

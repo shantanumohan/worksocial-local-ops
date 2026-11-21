@@ -415,6 +415,39 @@ describe("seo domain — semantic search", () => {
     expect(result.hits).toHaveLength(0);
     expect(result.noMatchReason).toMatch(/unresolved|Clarify|abstain/i);
   });
+
+  it("cites SUPPORTED facts only and abstains on UNKNOWN/HYPOTHESIS (M8)", () => {
+    const labels = new Map([
+      ["fact-capacity-8", SupportLabel.SUPPORTED],
+      ["fact-capacity-20", SupportLabel.HYPOTHESIS],
+    ]);
+    const grounded = runSemanticSearch({
+      queryId: "q-m8-g",
+      rawQuery: "Meeting room for 8 in Jersey City with display",
+      index,
+      createdAtIso: now,
+      factLabels: labels,
+      bookingHandoffUrl: "https://fixture.worksocial.local/book",
+    });
+    expect(grounded.hits).toHaveLength(1);
+    expect(grounded.answerStatus).toBe("grounded");
+    expect(grounded.hits[0]?.supportedFactIds).toEqual(["fact-capacity-8"]);
+    expect(grounded.hits[0]?.citations.every((c) => !c.includes("hypothesis"))).toBe(
+      true,
+    );
+    expect(grounded.bookingHandoffUrl).toMatch(/^https:/);
+
+    const hypOnly = runSemanticSearch({
+      queryId: "q-m8-h",
+      rawQuery: "Training room for 20 in Jersey City with video",
+      index,
+      createdAtIso: now,
+      factLabels: labels,
+    });
+    expect(hypOnly.hits).toHaveLength(0);
+    expect(hypOnly.answerStatus).toMatch(/no_result|unknown/);
+    expect(hypOnly.bookingHandoffUrl).toBeNull();
+  });
 });
 
 describe("seo domain — release learning hooks", () => {

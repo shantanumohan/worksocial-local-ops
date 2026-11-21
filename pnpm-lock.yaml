@@ -38,6 +38,9 @@ importers:
       '@worksocial/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@worksocial/evaluation-worker':
+        specifier: workspace:*
+        version: link:../../services/evaluation-worker
       '@worksocial/inbox':
         specifier: workspace:*
         version: link:../../services/inbox
@@ -259,10 +262,23 @@ importers:
         version: 2.1.8(@types/node@22.10.2)
 
   services/evaluation-worker:
+    dependencies:
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@worksocial/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
     devDependencies:
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
       typescript:
         specifier: 5.7.2
         version: 5.7.2
+      vitest:
+        specifier: 2.1.8
+        version: 2.1.8(@types/node@22.10.2)
 
   services/inbox:
     dependencies:
@@ -501,6 +517,9 @@ importers:
       '@worksocial/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@worksocial/evaluation-worker':
+        specifier: workspace:*
+        version: link:../../services/evaluation-worker
       '@worksocial/inbox':
         specifier: workspace:*
         version: link:../../services/inbox
@@ -522,6 +541,9 @@ importers:
       '@worksocial/probes':
         specifier: workspace:*
         version: link:../../services/probes
+      '@worksocial/provider-adapters':
+        specifier: workspace:*
+        version: link:../../packages/provider-adapters
       '@worksocial/repair':
         specifier: workspace:*
         version: link:../../services/repair
@@ -547,6 +569,9 @@ importers:
       '@worksocial/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@worksocial/evaluation-worker':
+        specifier: workspace:*
+        version: link:../../services/evaluation-worker
       '@worksocial/inbox':
         specifier: workspace:*
         version: link:../../services/inbox
@@ -559,6 +584,12 @@ importers:
       '@worksocial/probes':
         specifier: workspace:*
         version: link:../../services/probes
+      '@worksocial/provider-adapters':
+        specifier: workspace:*
+        version: link:../../packages/provider-adapters
+      '@worksocial/seo':
+        specifier: workspace:*
+        version: link:../../services/seo
     devDependencies:
       '@types/node':
         specifier: 22.10.2

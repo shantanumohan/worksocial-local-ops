@@ -68,6 +68,7 @@ import {
   createFileKnowledgeStore,
   createFileOwnerStagingStore,
   createFileLeadCaptureStore,
+  createFileEvaluationStore,
   createFileProbeStore,
   createFileProductionMappingStore,
   createFileRepairStore,
@@ -81,6 +82,7 @@ import {
   type LearningStore,
   type OwnerStagingStore,
   type LeadCaptureStore,
+  type EvaluationStore,
   type PolicyDecisionRecord,
   type ContentStore,
   type InboxStore,
@@ -156,6 +158,11 @@ import { handleOwnerStagingRequest } from "./owner-staging-http.js";
 import { handleLeadCaptureRequest } from "./lead-capture-http.js";
 import { handleInboxRequest } from "./inbox-http.js";
 import { handleCanonicalPublishRequest } from "./content-http.js";
+import { handleEvaluationAndAnalyticsRequest } from "./evaluation-http.js";
+import {
+  createEvaluationService,
+  type EvaluationService,
+} from "@worksocial/evaluation-worker";
 
 function factLabelsFromKnowledge(
   knowledge: KnowledgeService,
@@ -252,6 +259,8 @@ export type ApiRuntime = {
   ownerStaging: OwnerStagingService;
   leadCaptureStore: LeadCaptureStore;
   leadCapture: LeadCaptureService;
+  evaluationStore: EvaluationStore;
+  evaluation: EvaluationService;
   runner: ClaudeRunner;
   missions: MissionEnqueueService;
   gateway: ActionGateway;
@@ -456,6 +465,8 @@ export function createApiRuntime(options: {
     gateway,
     repairStore,
   });
+  const evaluationStore = createFileEvaluationStore(options.stateDir);
+  const evaluation = createEvaluationService(evaluationStore);
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
@@ -490,6 +501,8 @@ export function createApiRuntime(options: {
     ownerStaging,
     leadCaptureStore,
     leadCapture,
+    evaluationStore,
+    evaluation,
     runner,
     missions,
     gateway,
@@ -647,9 +660,9 @@ export async function handleApiRequest(
         status: "running",
         productionActivated: false,
         identity:
-          "M6 canonical publish + M5 lead-capture + R1-02–R1-10 auth + mapping + roles + learning + probes + knowledge + SEO/search + content/distribution + inbox/after-hours + bounded-repair",
+          "M8 grounded-search/analytics/eval + M6 canonical publish + M7 inbox + M5 lead-capture + R1-02–R1-10 auth/mapping/roles/learning/probes/knowledge/SEO/content/repair",
         message:
-          "API surface includes bounded repair, after-hours inbox/takeover, content pipeline, SEO/search. Live CMS/GBP/social/inbox/Zoho NOT_WIRED. No live SERP/Trends.",
+          "API surface includes M8 EVAL_ONLY eval, analysis fixtures, grounded search, M6 canonical publish. Live CMS/GBP/social/inbox/Zoho/GSC/GA4/Ads/eval-fleet NOT_WIRED. No live SERP/Trends. Catalog NOT_RUN.",
       },
       cors,
     );
@@ -3218,7 +3231,13 @@ export async function handleApiRequest(
       json(res, 400, { error: "MISSING_QUERY" }, cors);
       return;
     }
-    const search = runtime.seo.semanticSearch({ rawQuery });
+    // M8: grounded retrieval — SUPPORTED facts only via knowledge labels.
+    runtime.knowledge.seedFixtures();
+    const search = runtime.seo.semanticSearch({
+      rawQuery,
+      factLabels: factLabelsFromKnowledge(runtime.knowledge),
+      bookingHandoffUrl: "https://fixture.worksocial.local/book",
+    });
     if (!search.ok) {
       json(res, 400, search, cors);
       return;
@@ -4151,6 +4170,22 @@ export async function handleApiRequest(
   }
 
   // --- M7 / NEXT-18 after-hours inbox ---
+  const evalHandled = await handleEvaluationAndAnalyticsRequest({
+    evaluation: runtime.evaluation,
+    seo: runtime.seo,
+    knowledge: runtime.knowledge,
+    req,
+    res,
+    url,
+    method,
+    cors,
+    json,
+    readBody,
+    parseJsonObjectBody,
+    requireSession: (r, opts) => requireSession(runtime, r, opts),
+  });
+  if (evalHandled) return;
+
   const inboxHandled = await handleInboxRequest({
     inbox: runtime.inbox,
     knowledge: runtime.knowledge,
