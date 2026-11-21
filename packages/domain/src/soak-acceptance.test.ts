@@ -310,6 +310,12 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.GA4_DEBUG_NOT_DELIVERED_CONVERSION),
     ).toEqual(["T-US-008", "T-X032"]);
+    expect(expectedProofsForFixtureCase("T-X031")).toEqual([
+      SoakProofKind.GA4_WRONG_PROPERTY_KIND_REFUSED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.GA4_WRONG_PROPERTY_KIND_REFUSED),
+    ).toEqual(["T-X031"]);
   });
 
   it("builds unique per-run artifact ids", () => {

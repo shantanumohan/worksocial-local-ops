@@ -76,6 +76,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X033": "Omitted GSC rows — Unknown ≠ zero",
   "T-US-008": "GA4 debug validation ≠ measured receipt",
   "T-X032": "GA4 debug validation success only — not delivered conversion",
+  "T-X031": "Wrong GA4 property kind — refuse bind",
 };
 
 function relatedProofsForCase(
@@ -237,6 +238,7 @@ export function compileAcceptanceEvidence(
     "T-US-046/T-X048 fixture ACCEPTED only via HARD_SEARCH_CONSTRAINTS_NO_INVENTION",
     "T-US-010/T-X033 fixture ACCEPTED only via GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO",
     "T-US-008/T-X032 fixture ACCEPTED only via GA4_DEBUG_NOT_DELIVERED_CONVERSION",
+    "T-X031 fixture ACCEPTED only via GA4_WRONG_PROPERTY_KIND_REFUSED",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

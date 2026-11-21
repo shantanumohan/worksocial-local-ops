@@ -137,6 +137,10 @@ export const SoakProofKind = {
    * GA4 debug validation is not a delivered conversion (T-US-008 / T-X032).
    */
   GA4_DEBUG_NOT_DELIVERED_CONVERSION: "ga4_debug_not_delivered_conversion",
+  /**
+   * Wrong GA4 property kind refused (T-X031).
+   */
+  GA4_WRONG_PROPERTY_KIND_REFUSED: "ga4_wrong_property_kind_refused",
 } as const;
 
 export type SoakProofKindValue =
@@ -199,6 +203,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-046 / T-X048 require HARD_SEARCH_CONSTRAINTS_NO_INVENTION.
  * T-US-010 / T-X033 require GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO.
  * T-US-008 / T-X032 require GA4_DEBUG_NOT_DELIVERED_CONVERSION.
+ * T-X031 requires GA4_WRONG_PROPERTY_KIND_REFUSED.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -238,6 +243,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X033",
   "T-US-008",
   "T-X032",
+  "T-X031",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -646,6 +652,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.GA4_DEBUG_NOT_DELIVERED_CONVERSION];
     case "T-X032":
       return [SoakProofKind.GA4_DEBUG_NOT_DELIVERED_CONVERSION];
+    case "T-X031":
+      return [SoakProofKind.GA4_WRONG_PROPERTY_KIND_REFUSED];
     default:
       return [];
   }
@@ -712,6 +720,8 @@ export function mapProofToFixtureCases(
       return ["T-US-010", "T-X033"];
     case SoakProofKind.GA4_DEBUG_NOT_DELIVERED_CONVERSION:
       return ["T-US-008", "T-X032"];
+    case SoakProofKind.GA4_WRONG_PROPERTY_KIND_REFUSED:
+      return ["T-X031"];
     default:
       return [];
   }
