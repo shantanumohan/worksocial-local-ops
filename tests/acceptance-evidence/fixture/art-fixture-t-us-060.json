@@ -8,8 +8,8 @@
     "emergency_stop_at_commit"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-060.json",
-  "createdAtIso": "2026-11-21T22:46:37.935Z",
+  "createdAtIso": "2026-11-21T22:53:33.274Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-060-223b4849a2d1"
+  "uniqueSourceArtifactId": "art-fixture-t-us-060-ca1db3ed75fb"
 }

@@ -746,7 +746,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X014, T-X018, T-X020, T-X066, T-X073, T-F24, T-US-002, T-US-047, T-US-054.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X005, T-X006, T-X014, T-X018, T-X020, T-X066, T-X073, T-F24, T-US-002, T-US-047, T-US-054, T-US-060.
 
 **T-X066** is fixture ACCEPTED only via the backup / omit-receipt / post-restore reconcile proof (`BACKUP_OMIT_RECEIPT`). Retry-only no-duplicate-effects does **not** satisfy this case. Not sandbox/prod VERIFIED.
 
@@ -758,6 +758,12 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X073** is fixture ACCEPTED only via the offboard ACTIVE_TOKEN residual proof (`OFFBOARD_ACTIVE_TOKEN_RESIDUAL`) — offboarding remains incomplete until live provider revoke is wired/performed (`ACTIVE_TOKEN` + `PROVIDER_REVOKE` residuals `BLOCKED_NOT_WIRED`). Live revoke stays **NOT_WIRED**; never silently VERIFIED for live.
 
+**T-US-060** is fixture ACCEPTED only via the emergency-stop / outbound-stop at commit proof (`EMERGENCY_STOP_AT_COMMIT`). Not sandbox/prod VERIFIED.
+
+**T-X005** is fixture ACCEPTED only via the forged browser role ignored proof (`FORGED_BROWSER_ROLE_IGNORED`) — session role binds; client payload `actorRole` cannot escalate. Not sandbox/prod VERIFIED.
+
+**T-X006** is fixture ACCEPTED only via the cross-workspace reference denied proof (`CROSS_WORKSPACE_REFERENCE_DENIED`) — foreign channel/account/asset substitution denied with generic `GRANT_MISSING` (no foreign-id leak). Not sandbox/prod VERIFIED.
+
 Shared evidence for each: actual state before/after; instrumented provider call count or read-back; correlated redacted logs/traces; no unauthorized external effect.
 
 | ID | Title | Focus |
@@ -766,8 +772,8 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X002 | Two supervisors start together | Single host lease *(fixture ACCEPTED — competing-supervisor lease proof; not sandbox/prod VERIFIED)* |
 | T-X003 | Symlink escape after root verification | Write denied outside root |
 | T-X004 | Disk full during evidence write | No partial completed manifest |
-| T-X005 | Forged browser role | Payload role ignored |
-| T-X006 | Cross-workspace object reference | Deny without leak |
+| T-X005 | Forged browser role | Payload role ignored *(fixture ACCEPTED — forged browser role ignored proof; not sandbox/prod VERIFIED)* |
+| T-X006 | Cross-workspace object reference | Deny without leak *(fixture ACCEPTED — cross-workspace reference denied proof; not sandbox/prod VERIFIED)* |
 | T-X007 | Wrong CMS environment | No production op |
 | T-X008 | Fact changes after review | Stale; no publish |
 | T-X009 | CLI error despite exit 0 | Job fails |
@@ -843,6 +849,6 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
 | T-US (behavior_acceptance) | 60 | 55 NOT_RUN + 5 fixture ACCEPTED (T-US-002, T-US-047, T-US-048, T-US-054, T-US-060) |
 | T-X (platform/security/resilience) | 73 | 67 NOT_RUN + 6 fixture ACCEPTED (T-X002, T-X014, T-X018, T-X020, T-X066, T-X073) |
-| **Total** | **159** | **147 NOT_RUN + 12 fixture ACCEPTED** |
+| **Total** | **159** | **145 NOT_RUN + 14 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.
