@@ -211,7 +211,15 @@ describeCompose("temporal compose e2e (API → Temporal → PG)", () => {
     const wf = await stores.runtime.getWorkflow(body.mission.workflowId);
     expect(wf?.phase).toBe("succeeded");
     expect(wf?.temporalWiring).toBe("TEMPORAL");
-    expect(wf?.applyAttemptCount).toBe(1);
+    expect(wf?.operationId).toBeTruthy();
+    // applyAttemptCount is not a mission_workflows column — prove single apply
+    // via Temporal result (above) + effect_attempts rows.
+    const applyAttempts = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM core.effect_attempts
+       WHERE operation_id = $1 AND phase = 'apply' AND status = 'succeeded'`,
+      [wf!.operationId],
+    );
+    expect(Number(applyAttempts.rows[0]?.n ?? 0)).toBe(1);
   }, 180_000);
 });
 
