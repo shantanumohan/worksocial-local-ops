@@ -219,8 +219,11 @@ export function summarizeHostHealth(
     overall = "stopped";
   } else if (anyUnhealthy || (leaseHeld && !anyRunning && !allStopped)) {
     overall = "degraded";
-  } else if (anyRunning) {
+  } else if (anyRunning && leaseHeld) {
+    // Running slots without an active host lease are degraded — recover should restart.
     overall = "healthy";
+  } else if (anyRunning && !leaseHeld) {
+    overall = "degraded";
   } else if (allStopped) {
     overall = "stopped";
   } else {

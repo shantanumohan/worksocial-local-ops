@@ -34,7 +34,7 @@ Supervisor CLI is not a long-running daemon. Managed slots are **detached** chil
 | Command | Behavior |
 |---------|----------|
 | `pnpm local:start` | Stop owned slots → acquire/reclaim lease → start api/console/temporal-worker |
-| `pnpm local:recover` | If lease held and api+console healthy → **adopt** (renew holder PID, do not kill). Else clean restart |
+| `pnpm local:recover` | If lease held, api+console healthy, and (when `TEMPORAL_ADDRESS` set) temporal worker live/`temporal-wired` → **adopt**. Else clean restart |
 | `pnpm local:stop` | Ownership-verified stop of managed PIDs; release lease |
 | `pnpm local:health` | Plane-separated status: host / api / console / temporal |
 | `pnpm local:doctor` | Storage, ownership probe, and plane checks |
@@ -45,9 +45,10 @@ Lease reclaim: a non-expired lease whose `holderPid` is dead is reclaimable (`is
 
 | Probe | When | Strength |
 |-------|------|----------|
-| Linux `/proc/<pid>/{cmdline,environ}` | `/proc` present | Preferred |
-| Heartbeat JSON under state dir | Fallback (e.g. no `/proc`) | Weaker local claim |
-| Empty probe | Neither available | **Deny kill** (fail-closed) |
+| Same-session spawn map | This supervisor CLI started the child | Safe for that CLI lifetime |
+| Linux `/proc/<pid>/{cmdline,environ}` | `/proc` present | Preferred OS identity |
+| Heartbeat JSON under state dir | Health/status only | **Never** authorizes SIGTERM/SIGKILL (PID-reuse hazard) |
+| Empty probe / no session map | Cross-CLI stop without `/proc` | **Deny kill** (fail-closed) |
 
 Windows full host lifecycle / AgenticArmyWS service bind is **AA-12**, not claimed by this slice.
 

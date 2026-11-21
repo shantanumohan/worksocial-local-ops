@@ -23,6 +23,25 @@ import type { SupervisorCommand, SupervisorResult } from "./types.js";
 const MANAGED_SLOTS: ServiceSlotId[] = ["api", "console", "temporal-worker"];
 const REQUIRED_READY: ServiceSlotId[] = ["api", "console"];
 
+function temporalAddressConfigured(): boolean {
+  return Boolean(process.env.TEMPORAL_ADDRESS?.trim());
+}
+
+/** When Temporal is configured, adopt only if the worker slot is live and wired. */
+function temporalReadyForAdopt(
+  health: ReturnType<typeof collectHealth>,
+): boolean {
+  if (!temporalAddressConfigured()) {
+    return true;
+  }
+  const temporal = health.services.find((s) => s.serviceId === "temporal-worker");
+  return (
+    temporal?.wiringStatus === "temporal-wired" &&
+    temporal.pid !== null &&
+    (temporal.status === "running" || temporal.status === "starting")
+  );
+}
+
 type HeartbeatFile = {
   pid?: number | null;
   generationId?: string | null;
@@ -388,6 +407,7 @@ async function recoverAll(
   const canAdopt =
     health.leaseHeld &&
     managedSlotsReady(health) &&
+    temporalReadyForAdopt(health) &&
     lease !== null &&
     lease.hostId === config.hostId;
 

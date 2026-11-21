@@ -5,7 +5,7 @@ Local control-plane persistence helpers:
 - Storage-root registry + sync-path policy (R1-01)
 - Safe host path defaults outside the checkout (`resolveHostPaths` / XDG / LocalAppData) (AA-33)
 - Host lease + dead-holder reclaim + plane-separated health (R1-01 / AA-33)
-- Process ownership probes (`/proc` + heartbeat-file fallback)
+- Process ownership probes (`/proc` for kill auth; heartbeat files are health-only)
 - File-backed supervisor state (R1-01)
 - File-backed **authority store** — users, sessions, standing policies, grants, stop switch, audit (R1-02)
 - File-backed **production mapping store** — bindings, forms, booking/CRM ownership, journeys, read evidence, labeled write-path outcomes (R1-03)

@@ -44,7 +44,7 @@ async function main(): Promise<number> {
   }
   mkdirSync(config.stateDir, { recursive: true });
   const store = createFileLocalStateStore(config.stateDir);
-  const spawner = createChildProcessSpawner(config.stateDir);
+  const spawner = createChildProcessSpawner();
 
   const result = await runSupervisorCommand(arg, store, config, spawner);
   console.log(JSON.stringify(result, null, 2));

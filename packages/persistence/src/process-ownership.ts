@@ -3,12 +3,14 @@
  * Guards against PID reuse after a crash.
  *
  * Preferred probe: Linux `/proc/<pid>/{cmdline,environ}`.
- * Fallback: heartbeat JSON written by the slot under the state dir (weaker; used when
- * `/proc` is unavailable — e.g. Windows). Empty probe → deny kill (fail-closed).
+ * Empty probe → deny kill (fail-closed).
+ *
+ * Do NOT authorize kill from persisted heartbeat JSON alone: after a crash the
+ * file can outlive the process, and a reused PID would pass a stale claim.
+ * Same-process spawn maps (supervisor spawner session) are the non-/proc path.
  */
 
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
 import type { ServiceSlotId } from "./health-records.js";
 
 export type ProcessOwnershipClaim = {
@@ -27,7 +29,10 @@ export type ProcessOwnershipProbe = {
 export type OwnershipProbeCapability = {
   /** Linux /proc cmdline+environ available. */
   procAvailable: boolean;
-  /** Heartbeat-file fallback configured. */
+  /**
+   * Always false for kill authorization — heartbeat files are not live process identity.
+   * Kept for doctor/API shape compatibility.
+   */
   heartbeatFallback: boolean;
   /** Honest platform note. */
   detail: string;
@@ -55,25 +60,22 @@ export function isProcOwnershipAvailable(): boolean {
 }
 
 export function describeOwnershipCapability(
-  heartbeatFallback: boolean,
+  _heartbeatFallbackIgnored: boolean = false,
 ): OwnershipProbeCapability {
   const procAvailable = isProcOwnershipAvailable();
   if (procAvailable) {
     return {
       procAvailable: true,
-      heartbeatFallback,
+      heartbeatFallback: false,
       detail:
-        "Linux /proc ownership probe available; heartbeat-file fallback " +
-        (heartbeatFallback ? "also configured" : "not configured") +
-        ".",
+        "Linux /proc ownership probe available for stop/recover kills. Heartbeat files are health signals only — not kill authorization (PID-reuse safe).",
     };
   }
   return {
     procAvailable: false,
-    heartbeatFallback,
-    detail: heartbeatFallback
-      ? "Linux /proc unavailable — using heartbeat-file ownership claims (weaker than /proc; Windows host bind AA-12 still NOT_WIRED)."
-      : "No ownership probe available — stopOwned denies kill (fail-closed). Windows AgenticArmyWS bind is AA-12 / out of scope.",
+    heartbeatFallback: false,
+    detail:
+      "Linux /proc unavailable — stopOwned denies kill unless this supervisor session spawned the PID (fail-closed). Heartbeat files must not authorize SIGTERM. Windows AgenticArmyWS bind is AA-12 / out of scope.",
   };
 }
 
@@ -85,64 +87,6 @@ export function defaultOwnershipProbe(): ProcessOwnershipProbe {
     };
   }
   return {};
-}
-
-type HeartbeatOwnershipFile = {
-  pid?: number | null;
-  serviceId?: string;
-  generationId?: string | null;
-};
-
-/**
- * Weaker ownership probe: trust our own heartbeat-<service>.json files under stateDir.
- * Used when /proc is unavailable so stop/recover can still verify generation+service.
- */
-export function createHeartbeatFileOwnershipProbe(
-  stateDir: string,
-): ProcessOwnershipProbe {
-  const lookup = (pid: number): HeartbeatOwnershipFile | null => {
-    if (!existsSync(stateDir)) {
-      return null;
-    }
-    let names: string[];
-    try {
-      names = readdirSync(stateDir).filter(
-        (n) => n.startsWith("heartbeat-") && n.endsWith(".json"),
-      );
-    } catch {
-      return null;
-    }
-    for (const name of names) {
-      try {
-        const parsed = JSON.parse(
-          readFileSync(join(stateDir, name), "utf8"),
-        ) as HeartbeatOwnershipFile;
-        if (parsed.pid === pid) {
-          return parsed;
-        }
-      } catch {
-        /* skip corrupt */
-      }
-    }
-    return null;
-  };
-
-  return {
-    readCommandLine: (pid) => {
-      const hit = lookup(pid);
-      if (!hit?.serviceId || !hit.generationId) {
-        return null;
-      }
-      return `worksocial-heartbeat --service ${hit.serviceId} --generation ${hit.generationId}`;
-    },
-    readEnviron: (pid) => {
-      const hit = lookup(pid);
-      if (!hit?.serviceId || !hit.generationId) {
-        return null;
-      }
-      return `WORKSOCIAL_SERVICE_ID=${hit.serviceId}\0WORKSOCIAL_GENERATION=${hit.generationId}\0`;
-    },
-  };
 }
 
 export function composeOwnershipProbes(
@@ -171,7 +115,9 @@ export function composeOwnershipProbes(
 }
 
 /**
- * Returns true only when the live process still advertises our service + generation.
+ * Returns true only when the live process still advertises our service + generation
+ * via an OS ownership probe (/proc cmdline/environ). Heartbeat files must not be
+ * passed as the probe for kill authorization.
  */
 export function verifyProcessOwnership(
   claim: ProcessOwnershipClaim,
@@ -182,8 +128,7 @@ export function verifyProcessOwnership(
   const haystack = `${cmdline ?? ""}\n${environ ?? ""}`;
 
   if (!haystack.trim()) {
-    // No OS identity available (e.g. unsupported platform without heartbeat fallback):
-    // deny kill for safety.
+    // No OS identity available — deny kill for safety (PID-reuse fail-closed).
     return false;
   }
 

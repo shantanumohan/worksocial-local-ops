@@ -247,4 +247,27 @@ describe("supervisor lifecycle", () => {
     expect(health.message).toMatch(/temporal=stub/);
     expect(health.health?.components.temporal.wiringStatus).toBe("stub");
   });
+
+  it("recover refuses adopt when TEMPORAL_ADDRESS is set but temporal slot is not wired/live", async () => {
+    const { store, spawner, config } = setup();
+    const started = await runSupervisorCommand("start", store, config, spawner);
+    expect(started.ok).toBe(true);
+    const genBefore = store.read().hostLease?.generationId;
+    const previous = process.env.TEMPORAL_ADDRESS;
+    process.env.TEMPORAL_ADDRESS = "127.0.0.1:7233";
+    try {
+      // API/console still healthy with lease, but temporal remains stub from start without wiring.
+      const recovered = await runSupervisorCommand("recover", store, config, spawner);
+      expect(recovered.ok).toBe(true);
+      expect(recovered.message).toMatch(/Recovery restart OK/i);
+      expect(store.read().hostLease?.generationId).not.toBe(genBefore);
+      expect(spawner.running.size).toBe(3);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.TEMPORAL_ADDRESS;
+      } else {
+        process.env.TEMPORAL_ADDRESS = previous;
+      }
+    }
+  });
 });

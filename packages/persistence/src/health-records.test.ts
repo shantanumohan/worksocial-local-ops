@@ -65,4 +65,31 @@ describe("host health components", () => {
     expect(components.api.status).toBe("down");
     expect(components.temporal.status).toBe("stub");
   });
+
+  it("reports degraded (not healthy) when slots run without an active lease", () => {
+    const services = [
+      {
+        ...defaultHeartbeat("api"),
+        status: "running" as const,
+        wiringStatus: "identity-wired" as const,
+        pid: 11,
+        generationId: "g1",
+        lastHeartbeatAt: new Date().toISOString(),
+        detail: "api up",
+      },
+      {
+        ...defaultHeartbeat("console"),
+        status: "running" as const,
+        wiringStatus: "process-managed" as const,
+        pid: 12,
+        generationId: "g1",
+        lastHeartbeatAt: new Date().toISOString(),
+        detail: "console up",
+      },
+      defaultHeartbeat("temporal-worker"),
+    ];
+    const snap = summarizeHostHealth("host-a", services, false, new Date().toISOString());
+    expect(snap.components.host.status).toBe("down");
+    expect(snap.overall).toBe("degraded");
+  });
 });

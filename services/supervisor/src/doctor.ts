@@ -52,10 +52,10 @@ export function runDoctor(
     message: `Data home ${config.dataHome}; durable suggestions database=${config.hostPaths.durableRoots.database} temporal=${config.hostPaths.durableRoots.temporal} secrets=${config.hostPaths.durableRoots.secrets}`,
   });
 
-  const ownership = describeOwnershipCapability(true);
+  const ownership = describeOwnershipCapability(false);
   checks.push({
     id: "process-ownership",
-    status: ownership.procAvailable || ownership.heartbeatFallback ? "pass" : "warn",
+    status: ownership.procAvailable ? "pass" : "warn",
     message: ownership.detail,
   });
 

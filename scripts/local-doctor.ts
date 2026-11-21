@@ -30,7 +30,7 @@ async function main(): Promise<number> {
     "doctor",
     store,
     config,
-    createChildProcessSpawner(config.stateDir),
+    createChildProcessSpawner(),
   );
   console.log(JSON.stringify(result, null, 2));
   return result.ok ? 0 : 1;

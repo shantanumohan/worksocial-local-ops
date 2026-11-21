@@ -78,7 +78,6 @@ export {
 
 export {
   composeOwnershipProbes,
-  createHeartbeatFileOwnershipProbe,
   defaultOwnershipProbe,
   describeOwnershipCapability,
   isProcOwnershipAvailable,

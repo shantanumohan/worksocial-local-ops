@@ -9,7 +9,7 @@ Owns local service lifecycle for WorkSocial operations (R1-01 / AA-33 host recov
 - Doctor + plane-separated health (host vs api vs console vs temporal)
 - Safe default state dir **outside the git checkout** (XDG / LocalAppData); sync-path refuse
 - Storage-root sync-path policy enforcement before start
-- Ownership-verified stop: Linux `/proc` preferred; heartbeat-file fallback
+- Ownership-verified stop: same-session spawn map + Linux `/proc` (heartbeat files never authorize kill)
 - VS Code / `pnpm local:*` entry via `src/cli.ts`
 
 ## Honest stubs / not wired
