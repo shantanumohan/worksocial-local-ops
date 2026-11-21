@@ -74,6 +74,8 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X048": "Unknown price or availability — no invention",
   "T-US-010": "Missing GSC rows ≠ zero demand",
   "T-X033": "Omitted GSC rows — Unknown ≠ zero",
+  "T-US-008": "GA4 debug validation ≠ measured receipt",
+  "T-X032": "GA4 debug validation success only — not delivered conversion",
 };
 
 function relatedProofsForCase(
@@ -234,6 +236,7 @@ export function compileAcceptanceEvidence(
     "T-X039/T-US-058 fixture ACCEPTED only via METRIC_DENOMINATORS_HONEST",
     "T-US-046/T-X048 fixture ACCEPTED only via HARD_SEARCH_CONSTRAINTS_NO_INVENTION",
     "T-US-010/T-X033 fixture ACCEPTED only via GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO",
+    "T-US-008/T-X032 fixture ACCEPTED only via GA4_DEBUG_NOT_DELIVERED_CONVERSION",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

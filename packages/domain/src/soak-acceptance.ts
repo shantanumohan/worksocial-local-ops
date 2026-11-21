@@ -133,6 +133,10 @@ export const SoakProofKind = {
    * Omitted/missing GSC rows are UNKNOWN demand, never invent zero (T-US-010 / T-X033).
    */
   GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO: "gsc_omitted_rows_unknown_not_zero",
+  /**
+   * GA4 debug validation is not a delivered conversion (T-US-008 / T-X032).
+   */
+  GA4_DEBUG_NOT_DELIVERED_CONVERSION: "ga4_debug_not_delivered_conversion",
 } as const;
 
 export type SoakProofKindValue =
@@ -194,6 +198,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X039 / T-US-058 require METRIC_DENOMINATORS_HONEST.
  * T-US-046 / T-X048 require HARD_SEARCH_CONSTRAINTS_NO_INVENTION.
  * T-US-010 / T-X033 require GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO.
+ * T-US-008 / T-X032 require GA4_DEBUG_NOT_DELIVERED_CONVERSION.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -231,6 +236,8 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X048",
   "T-US-010",
   "T-X033",
+  "T-US-008",
+  "T-X032",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -635,6 +642,10 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO];
     case "T-X033":
       return [SoakProofKind.GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO];
+    case "T-US-008":
+      return [SoakProofKind.GA4_DEBUG_NOT_DELIVERED_CONVERSION];
+    case "T-X032":
+      return [SoakProofKind.GA4_DEBUG_NOT_DELIVERED_CONVERSION];
     default:
       return [];
   }
@@ -699,6 +710,8 @@ export function mapProofToFixtureCases(
       return ["T-US-046", "T-X048"];
     case SoakProofKind.GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO:
       return ["T-US-010", "T-X033"];
+    case SoakProofKind.GA4_DEBUG_NOT_DELIVERED_CONVERSION:
+      return ["T-US-008", "T-X032"];
     default:
       return [];
   }

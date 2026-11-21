@@ -20,7 +20,8 @@
  * eval no-grounding fail closed (T-X038),
  * metric denominators honest (T-X039 / T-US-058),
  * hard search constraints no invention (T-US-046 / T-X048),
- * GSC omitted rows unknown not zero (T-US-010 / T-X033).
+ * GSC omitted rows unknown not zero (T-US-010 / T-X033),
+ * GA4 debug not delivered conversion (T-US-008 / T-X032).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -66,6 +67,7 @@ import { proofEvalNoGroundingFailClosed } from "./eval-no-grounding-proof.js";
 import { proofMetricDenominatorsHonest } from "./metric-denominators-proof.js";
 import { proofHardSearchConstraintsNoInvention } from "./hard-search-constraints-proof.js";
 import { proofGscOmittedRowsUnknownNotZero } from "./gsc-omitted-rows-proof.js";
+import { proofGa4DebugNotDeliveredConversion } from "./ga4-debug-not-delivered-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -569,7 +571,8 @@ function failProof(
  * imported-doc quarantine feeds T-X069; eval no-grounding feeds T-X038;
  * metric denominators honest feeds T-X039/T-US-058;
  * hard search constraints feeds T-US-046/T-X048;
- * GSC omitted rows feeds T-US-010/T-X033.
+ * GSC omitted rows feeds T-US-010/T-X033;
+ * GA4 debug not delivered feeds T-US-008/T-X032.
  */
 export async function runSoakRecoveryHarness(input: {
   stateDir: string;
@@ -617,6 +620,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofMetricDenominatorsHonest(nowPlus(nowIso, 220_000)));
   proofs.push(proofHardSearchConstraintsNoInvention(nowPlus(nowIso, 230_000)));
   proofs.push(proofGscOmittedRowsUnknownNotZero(nowPlus(nowIso, 240_000)));
+  proofs.push(proofGa4DebugNotDeliveredConversion(nowPlus(nowIso, 250_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -646,6 +650,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X039/T-US-058 fixture ACCEPTED via metric_denominators_honest only — not live VERIFIED",
       "T-US-046/T-X048 fixture ACCEPTED via hard_search_constraints_no_invention only — not live VERIFIED",
       "T-US-010/T-X033 fixture ACCEPTED via gsc_omitted_rows_unknown_not_zero only — not live VERIFIED",
+      "T-US-008/T-X032 fixture ACCEPTED via ga4_debug_not_delivered_conversion only — not live VERIFIED",
     ],
   };
 }
