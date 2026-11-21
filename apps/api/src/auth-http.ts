@@ -68,7 +68,7 @@ import {
   createFileKnowledgeStore,
   createFileOwnerStagingStore,
   createFileLeadCaptureStore,
-  createFileEvaluationStore,
+  openEvaluationStore,
   createFileSoakStore,
   createFileRecoveryStore,
   createFileProbeStore,
@@ -85,6 +85,8 @@ import {
   type OwnerStagingStore,
   type LeadCaptureStore,
   type EvaluationStore,
+  type EvaluationStoreBackend,
+  type PgPool,
   type SoakStore,
   type RecoveryStore,
   type PolicyDecisionRecord,
@@ -276,6 +278,9 @@ export type ApiRuntime = {
   leadCaptureStore: LeadCaptureStore;
   leadCapture: LeadCaptureService;
   evaluationStore: EvaluationStore;
+  evaluationBackend: EvaluationStoreBackend;
+  /** Present when evaluationBackend is postgres; closed on API shutdown. */
+  evaluationPool: PgPool | null;
   evaluation: EvaluationService;
   soakStore: SoakStore;
   soak: SoakService;
@@ -450,6 +455,11 @@ export function createApiRuntime(options: {
   /** Test/injection override; production uses bindTemporalMissionEnqueue. */
   temporalStatus?: TemporalWiringStatus;
   temporalClient?: TemporalMissionClient | null;
+  /**
+   * Evaluation persistence: auto = Postgres when DATABASE_URL set, else file.
+   * Tests should pass "file" or "memory" to avoid depending on a shared DB.
+   */
+  evaluationStoreMode?: "auto" | "file" | "memory";
 }): ApiRuntime {
   const store = createFileAuthorityStore(options.stateDir);
   const mappingStore = createFileProductionMappingStore(options.stateDir);
@@ -490,7 +500,13 @@ export function createApiRuntime(options: {
     gateway,
     repairStore,
   });
-  const evaluationStore = createFileEvaluationStore(options.stateDir);
+  const evaluationMode = options.evaluationStoreMode ?? "auto";
+  const openedEvaluation = openEvaluationStore({
+    stateDir: options.stateDir,
+    ...(evaluationMode === "memory" ? { forceMemory: true } : {}),
+    ...(evaluationMode === "file" ? { forceFile: true } : {}),
+  });
+  const evaluationStore = openedEvaluation.store;
   const evaluation = createEvaluationWorker(evaluationStore);
   const soakStore = createFileSoakStore(options.stateDir);
   const soak = createSoakService(soakStore);
@@ -537,6 +553,8 @@ export function createApiRuntime(options: {
     leadCaptureStore,
     leadCapture,
     evaluationStore,
+    evaluationBackend: openedEvaluation.backend,
+    evaluationPool: openedEvaluation.pool,
     evaluation,
     soakStore,
     soak,

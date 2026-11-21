@@ -24,13 +24,13 @@ describe("evaluation-worker isolation (AA-20)", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  it("exposes isolation flags and never holds effect credentials", () => {
+  it("exposes isolation flags and never holds effect credentials", async () => {
     const worker = createEvaluationWorker(createFileEvaluationStore(dir));
     expect(worker.principal).toBe("evaluation-worker");
     expect(worker.hasActionGatewayWritePrincipal).toBe(false);
     expect(worker.hasProductionEffectCredentials).toBe(false);
     expect(worker.learningCannotExpandEffects).toBe(true);
-    const status = worker.status();
+    const status = await worker.status();
     expect(status.isolation).toEqual({
       principal: "evaluation-worker",
       hasActionGatewayWritePrincipal: false,
@@ -41,10 +41,10 @@ describe("evaluation-worker isolation (AA-20)", () => {
     expect(status.chatgptAdsWiring).toBe("NOT_WIRED");
   });
 
-  it("refuses live suite mode with LIVE_NOT_WIRED (no network)", () => {
+  it("refuses live suite mode with LIVE_NOT_WIRED (no network)", async () => {
     const worker = createEvaluationWorker(createFileEvaluationStore(dir));
-    worker.seedFixtures(now);
-    const live = worker.runSuite({
+    await worker.seedFixtures(now);
+    const live = await worker.runSuite({
       suiteId: EVAL_GOLDEN_SUITE_ID,
       mode: EvalRunMode.LIVE,
       nowIso: now,
@@ -56,9 +56,9 @@ describe("evaluation-worker isolation (AA-20)", () => {
     expect(live.run?.results).toEqual([]);
   });
 
-  it("refuses non-fixture connections as LIVE_NOT_WIRED", () => {
+  it("refuses non-fixture connections as LIVE_NOT_WIRED", async () => {
     const worker = createEvaluationWorker(createFileEvaluationStore(dir));
-    const refused = worker.connectProvider({
+    const refused = await worker.connectProvider({
       provider: EvalProvider.CLAUDE,
       fixtureOnly: false,
       nowIso: now,
@@ -68,10 +68,10 @@ describe("evaluation-worker isolation (AA-20)", () => {
     expect(refused.code).toBe("LIVE_NOT_WIRED");
   });
 
-  it("exhausts isolated eval budget without touching operational pool", () => {
+  it("exhausts isolated eval budget without touching operational pool", async () => {
     const worker = createEvaluationWorker(createFileEvaluationStore(dir));
-    worker.seedFixtures(now);
-    const exhausted = worker.runSuite({
+    await worker.seedFixtures(now);
+    const exhausted = await worker.runSuite({
       suiteId: EVAL_GOLDEN_SUITE_ID,
       reserveMinor: DEFAULT_EVAL_BUDGET_LIMIT_MINOR + 1,
       nowIso: now,
@@ -82,11 +82,11 @@ describe("evaluation-worker isolation (AA-20)", () => {
     expect(exhausted.run?.status).toBe("budget_exhausted");
   });
 
-  it("runs fixture suite for Claude and Gemini offline", () => {
+  it("runs fixture suite for Claude and Gemini offline", async () => {
     const worker = createEvaluationWorker(createFileEvaluationStore(dir));
-    worker.seedFixtures(now);
+    await worker.seedFixtures(now);
     for (const provider of [EvalProvider.CLAUDE, EvalProvider.GEMINI] as const) {
-      const run = worker.runSuite({
+      const run = await worker.runSuite({
         suiteId: EVAL_GOLDEN_SUITE_ID,
         provider,
         mode: EvalRunMode.FIXTURE,

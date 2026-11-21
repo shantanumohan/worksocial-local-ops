@@ -20,14 +20,14 @@ describe("evaluation-worker service", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  it("seeds EVAL_ONLY connections and runs grounded suite", () => {
+  it("seeds EVAL_ONLY connections and runs grounded suite", async () => {
     const store = createFileEvaluationStore(dir);
     const svc = createEvaluationService(store);
-    const seed = svc.seedFixtures(now);
+    const seed = await svc.seedFixtures(now);
     expect(seed.connections).toHaveLength(2);
     expect(seed.suite.suiteId).toBe(EVAL_GOLDEN_SUITE_ID);
 
-    const run = svc.runSuite({
+    const run = await svc.runSuite({
       suiteId: EVAL_GOLDEN_SUITE_ID,
       provider: EvalProvider.CLAUDE,
       nowIso: now,
@@ -53,19 +53,22 @@ describe("evaluation-worker service", () => {
     expect(run.run.chatgptAdsDecision.allowed).toBe(false);
   });
 
-  it("keeps Ads blocked and forbids operational tools", () => {
+  it("keeps Ads blocked and forbids operational tools", async () => {
     const store = createFileEvaluationStore(dir);
     const svc = createEvaluationService(store);
     expect(svc.chatgptAdsStatus().allowed).toBe(false);
     expect(svc.chatgptAdsStatus().wiring).toBe("NOT_WIRED");
     expect(svc.attemptTool("publish").allowed).toBe(false);
     expect(svc.attemptTool("judge_answer").allowed).toBe(true);
+    const status = await svc.status();
+    expect(status.backend).toBe("file");
+    expect(status.liveEvalWiring).toBe("NOT_WIRED");
   });
 
-  it("connectProvider returns ok envelope for fixture connections", () => {
+  it("connectProvider returns ok envelope for fixture connections", async () => {
     const store = createFileEvaluationStore(dir);
     const svc = createEvaluationService(store);
-    const connected = svc.connectProvider({
+    const connected = await svc.connectProvider({
       provider: EvalProvider.CLAUDE,
       nowIso: now,
     });

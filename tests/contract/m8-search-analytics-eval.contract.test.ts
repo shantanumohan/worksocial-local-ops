@@ -124,11 +124,11 @@ describe("contract: M8 EVAL_ONLY worker", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  it("runs golden suite with blocked tools, no-grounding, and Ads blocked", () => {
+  it("runs golden suite with blocked tools, no-grounding, and Ads blocked", async () => {
     const store = createFileEvaluationStore(dir);
     const evaluation = createEvaluationService(store);
-    evaluation.seedFixtures(now);
-    const run = evaluation.runSuite({
+    await evaluation.seedFixtures(now);
+    const run = await evaluation.runSuite({
       suiteId: EVAL_GOLDEN_SUITE_ID,
       provider: EvalProvider.GEMINI,
       nowIso: now,

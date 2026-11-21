@@ -1,5 +1,5 @@
 /**
- * AA-20 isolated evaluation worker.
+ * AA-20 / AA-21 isolated evaluation worker.
  * Library worker (API-hosted) — no supervised fleet process slot.
  * EVAL_ONLY fixture adjudication; live fleet NOT_WIRED; learning cannot expand effects.
  */
@@ -42,9 +42,9 @@ export function createEvaluationWorker(
     hasProductionEffectCredentials: false,
     learningCannotExpandEffects: true,
     isolation,
-    status() {
+    async status() {
       assertEvaluationWorkerIsolation(isolation);
-      const status = service.status();
+      const status = await service.status();
       return {
         ...status,
         isolation,
@@ -54,15 +54,15 @@ export function createEvaluationWorker(
     listConnections: (limit) => service.listConnections(limit),
     listSuites: (limit) => service.listSuites(limit),
     listRuns: (limit) => service.listRuns(limit),
-    seedFixtures: (nowIso) => {
+    seedFixtures: async (nowIso) => {
       assertEvaluationWorkerIsolation(isolation);
       return service.seedFixtures(nowIso);
     },
-    connectProvider: (input) => {
+    connectProvider: async (input) => {
       assertEvaluationWorkerIsolation(isolation);
       return service.connectProvider(input);
     },
-    runSuite: (input) => {
+    runSuite: async (input) => {
       assertEvaluationWorkerIsolation(isolation);
       return service.runSuite(input);
     },

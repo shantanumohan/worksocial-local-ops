@@ -98,7 +98,7 @@ export async function handleEvaluationAndAnalyticsRequest(input: {
       json(res, 401, { error: session.code, reason: session.reason }, cors);
       return true;
     }
-    json(res, 200, evaluation.status(), cors);
+    json(res, 200, await evaluation.status(), cors);
     return true;
   }
 
@@ -108,7 +108,7 @@ export async function handleEvaluationAndAnalyticsRequest(input: {
       json(res, 401, { error: session.code, reason: session.reason }, cors);
       return true;
     }
-    json(res, 200, { connections: evaluation.listConnections(50) }, cors);
+    json(res, 200, { connections: await evaluation.listConnections(50) }, cors);
     return true;
   }
 
@@ -118,7 +118,7 @@ export async function handleEvaluationAndAnalyticsRequest(input: {
       json(res, 401, { error: session.code, reason: session.reason }, cors);
       return true;
     }
-    json(res, 200, { suites: evaluation.listSuites(50) }, cors);
+    json(res, 200, { suites: await evaluation.listSuites(50) }, cors);
     return true;
   }
 
@@ -128,7 +128,7 @@ export async function handleEvaluationAndAnalyticsRequest(input: {
       json(res, 401, { error: session.code, reason: session.reason }, cors);
       return true;
     }
-    json(res, 200, { runs: evaluation.listRuns(50) }, cors);
+    json(res, 200, { runs: await evaluation.listRuns(50) }, cors);
     return true;
   }
 
@@ -156,7 +156,7 @@ export async function handleEvaluationAndAnalyticsRequest(input: {
       json(res, 401, { error: session.code, reason: session.reason }, cors);
       return true;
     }
-    const seed = evaluation.seedFixtures();
+    const seed = await evaluation.seedFixtures();
     json(
       res,
       200,
@@ -186,7 +186,7 @@ export async function handleEvaluationAndAnalyticsRequest(input: {
       json(res, 400, { error: "INVALID_PROVIDER" }, cors);
       return true;
     }
-    const connected = evaluation.connectProvider({
+    const connected = await evaluation.connectProvider({
       provider,
       ...(typeof parsed.value.displayName === "string"
         ? { displayName: parsed.value.displayName }
@@ -234,7 +234,7 @@ export async function handleEvaluationAndAnalyticsRequest(input: {
     const provider =
       parsed.value.provider === "gemini" ? "gemini" : "claude";
     const mode = parsed.value.mode === "live" ? "live" : "fixture";
-    const result = evaluation.runSuite({
+    const result = await evaluation.runSuite({
       ...(typeof parsed.value.suiteId === "string"
         ? { suiteId: parsed.value.suiteId }
         : {}),

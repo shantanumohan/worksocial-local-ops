@@ -49,6 +49,10 @@ export async function startApiServer(options: ApiServerOptions): Promise<{
       void runtime.temporalClient.close().catch(() => undefined);
       runtime.temporalClient = null;
     }
+    if (runtime.evaluationPool) {
+      void runtime.evaluationPool.end().catch(() => undefined);
+      runtime.evaluationPool = null;
+    }
   });
 
   return {

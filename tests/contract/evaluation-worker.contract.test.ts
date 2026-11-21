@@ -1,5 +1,5 @@
 /**
- * Contract: AA-20 isolated EVAL_ONLY worker — fixture vs live boundaries,
+ * Contract: AA-20/AA-21 isolated EVAL_ONLY worker — fixture vs live boundaries,
  * no authority/effect expansion, broker deny, Ads blocked, catalog NOT_RUN.
  */
 import { describe, expect, it, afterEach } from "vitest";
@@ -38,14 +38,15 @@ afterEach(() => {
 });
 
 describe("contract: evaluation-worker isolation (AA-20)", () => {
-  it("pins isolation invariants matching FIXED_EVALUATION_ISOLATION", () => {
+  it("pins isolation invariants matching FIXED_EVALUATION_ISOLATION", async () => {
     assertEvaluationWorkerIsolation(FIXED_EVALUATION_ISOLATION);
     const dir = mkdtempSync(join(tmpdir(), "ws-eval-contract-"));
     dirs.push(dir);
     const worker = createEvaluationWorker(createFileEvaluationStore(dir));
     expect(worker.isolation).toEqual(FIXED_EVALUATION_ISOLATION);
-    expect(worker.status().isolation.learningCannotExpandEffects).toBe(true);
-    expect(worker.status().liveEvalWiring).toBe("NOT_WIRED");
+    const status = await worker.status();
+    expect(status.isolation.learningCannotExpandEffects).toBe(true);
+    expect(status.liveEvalWiring).toBe("NOT_WIRED");
   });
 
   it("denies evaluation-worker credential mint via broker", () => {
@@ -76,12 +77,12 @@ describe("contract: evaluation-worker isolation (AA-20)", () => {
     expect(worker.attemptTool(EvalToolClass.JUDGE_ANSWER).allowed).toBe(true);
   });
 
-  it("returns LIVE_NOT_WIRED for live mode without network I/O", () => {
+  it("returns LIVE_NOT_WIRED for live mode without network I/O", async () => {
     const dir = mkdtempSync(join(tmpdir(), "ws-eval-contract-"));
     dirs.push(dir);
     const worker = createEvaluationWorker(createFileEvaluationStore(dir));
-    worker.seedFixtures(now);
-    const live = worker.runSuite({
+    await worker.seedFixtures(now);
+    const live = await worker.runSuite({
       mode: EvalRunMode.LIVE,
       provider: EvalProvider.CLAUDE,
       nowIso: now,
@@ -91,12 +92,12 @@ describe("contract: evaluation-worker isolation (AA-20)", () => {
     expect(live.code).toBe("LIVE_NOT_WIRED");
   });
 
-  it("runs fixture golden suite with grounding and blocked-tool honesty", () => {
+  it("runs fixture golden suite with grounding and blocked-tool honesty", async () => {
     const dir = mkdtempSync(join(tmpdir(), "ws-eval-contract-"));
     dirs.push(dir);
     const worker = createEvaluationWorker(createFileEvaluationStore(dir));
-    worker.seedFixtures(now);
-    const run = worker.runSuite({
+    await worker.seedFixtures(now);
+    const run = await worker.runSuite({
       suiteId: EVAL_GOLDEN_SUITE_ID,
       provider: EvalProvider.GEMINI,
       mode: EvalRunMode.FIXTURE,
@@ -152,11 +153,11 @@ describe("contract: evaluation-worker isolation (AA-20)", () => {
     ).toThrow(/authority-expansion/i);
   });
 
-  it("does not claim catalog cases VERIFIED", () => {
+  it("does not claim catalog cases VERIFIED", async () => {
     const dir = mkdtempSync(join(tmpdir(), "ws-eval-contract-"));
     dirs.push(dir);
     const worker = createEvaluationWorker(createFileEvaluationStore(dir));
-    const status = worker.status();
+    const status = await worker.status();
     expect(status.acceptanceCaseIds.length).toBeGreaterThan(0);
     expect(status.honestNote).toMatch(/NOT_RUN/i);
     expect(status.liveEvalWiring).toBe("NOT_WIRED");

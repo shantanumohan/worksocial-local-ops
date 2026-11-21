@@ -1,5 +1,5 @@
 /**
- * Postgres durable-execution suite (M2 / NEXT-08–09).
+ * Postgres durable-execution + evaluation-store suites (M2 / AA-21).
  * Requires DATABASE_URL or WORKSOCIAL_DATABASE_URL. Fails closed if unset.
  */
 
@@ -32,15 +32,26 @@ if (!url) {
 const here = path.dirname(fileURLToPath(import.meta.url));
 const persistenceDir = path.resolve(here, "../packages/persistence");
 
-const result = spawnSync(
-  "pnpm",
-  ["exec", "vitest", "run", "src/durable-execution.pg.test.ts"],
-  {
-    cwd: persistenceDir,
-    env: process.env,
-    stdio: "inherit",
-    shell: process.platform === "win32",
-  },
-);
+const suites = [
+  "src/durable-execution.pg.test.ts",
+  "src/evaluation-store.pg.test.ts",
+];
 
-process.exit(result.status === null ? 1 : result.status);
+for (const suite of suites) {
+  const result = spawnSync(
+    "pnpm",
+    ["exec", "vitest", "run", suite],
+    {
+      cwd: persistenceDir,
+      env: process.env,
+      stdio: "inherit",
+      shell: process.platform === "win32",
+    },
+  );
+  const code = result.status === null ? 1 : result.status;
+  if (code !== 0) {
+    process.exit(code);
+  }
+}
+
+process.exit(0);

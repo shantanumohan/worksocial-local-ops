@@ -30,12 +30,12 @@ describe("e2e-lite: M8 search + analytics + eval", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  it("completes offline grounded search, analysis, and EVAL_ONLY journey", () => {
+  it("completes offline grounded search, analysis, and EVAL_ONLY journey", async () => {
     const seo = createSeoService(createFileSeoStore(dir));
     const evaluation = createEvaluationService(createFileEvaluationStore(dir));
 
     seo.seedFixtures(now);
-    evaluation.seedFixtures(now);
+    await evaluation.seedFixtures(now);
 
     const labels = new Map([
       ["fixture-fact-hours", SupportLabel.SUPPORTED],
@@ -65,7 +65,7 @@ describe("e2e-lite: M8 search + analytics + eval", () => {
     expect(ads.allowed).toBe(false);
     expect(ads.wiring).toBe("NOT_WIRED");
 
-    const run = evaluation.runSuite({
+    const run = await evaluation.runSuite({
       suiteId: EVAL_GOLDEN_SUITE_ID,
       provider: "claude",
       factLabels: labels,
@@ -75,6 +75,6 @@ describe("e2e-lite: M8 search + analytics + eval", () => {
     if (!run.ok) return;
     expect(run.run.results.length).toBeGreaterThanOrEqual(3);
     expect(run.run.settledMinor).toBeGreaterThan(0);
-    expect(evaluation.status().liveEvalWiring).toBe("NOT_WIRED");
+    expect((await evaluation.status()).liveEvalWiring).toBe("NOT_WIRED");
   });
 });
