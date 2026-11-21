@@ -1,8 +1,11 @@
 /**
- * R1-09 Customer response / after-hours operations.
+ * R1-09 / M7 (NEXT-18) Customer response / after-hours operations.
  *
  * Pure types + validators. No network I/O.
- * Takeover increments conversation version and blocks unsent agent replies.
+ * Takeover increments conversation version and blocks unsent agent replies
+ * (queued + draft messages + unqueued concierge drafts).
+ * Fixture webhook coalescing by providerEventId; lead coalesce by inbound key.
+ * Delivery is independent of adapter acceptance (sent ≠ delivered).
  * No reservation without booking evidence. Live inbox providers remain NOT_WIRED.
  */
 
@@ -55,6 +58,8 @@ export const MessageSendStatus = {
   DRAFT: "draft",
   QUEUED: "queued",
   SENT: "sent",
+  /** Independent fixture delivery receipt after adapter acceptance. */
+  DELIVERED: "delivered",
   CANCELLED: "cancelled",
   FAILED: "failed",
   BLOCKED_TAKEOVER: "blocked_takeover",
@@ -154,6 +159,8 @@ export type MessageRecord = {
   fixtureOnly: boolean;
   createdAtIso: string;
   sentAtIso: string | null;
+  /** Independent delivery observation (fixture simulator). */
+  deliveredAtIso: string | null;
 };
 
 export type ConciergeDraft = {
@@ -166,6 +173,8 @@ export type ConciergeDraft = {
   asksForHuman: boolean;
   bookingClaim: BookingClaimKindValue | null;
   createdAtIso: string;
+  /** Set when human takeover invalidates an unqueued draft. */
+  invalidatedAtIso: string | null;
 };
 
 export type QualifiedLead = {
@@ -184,7 +193,49 @@ export type QualifiedLead = {
   fixtureOnly: boolean;
   gatewayOperationId: string | null;
   writePathId: string | null;
+  /** Inbound message that sourced this lead (coalesce key with conversation). */
+  sourceInboundMessageId: string | null;
+  /** Fixture webhook event id when lead was created from coalesced intake. */
+  providerEventId: string | null;
   createdAtIso: string;
+};
+
+/** Durable fixture webhook envelope — coalesce by providerEventId. */
+export type InboxWebhookEvent = {
+  eventId: string;
+  providerEventId: string;
+  providerThreadId: string;
+  providerMessageId: string;
+  channel: InboxChannelValue;
+  body: string;
+  customerDisplayName: string;
+  customerEmail: string | null;
+  conversationId: string | null;
+  messageId: string | null;
+  coalesced: boolean;
+  fixtureOnly: boolean;
+  receivedAtIso: string;
+};
+
+export const OwnershipEventKind = {
+  LEASE: "lease",
+  TAKEOVER: "takeover",
+  HANDOFF: "handoff",
+} as const;
+
+export type OwnershipEventKindValue =
+  (typeof OwnershipEventKind)[keyof typeof OwnershipEventKind];
+
+/** First-class ownership / version audit for conversations. */
+export type OwnershipEvent = {
+  eventId: string;
+  conversationId: string;
+  kind: OwnershipEventKindValue;
+  fromVersion: number;
+  toVersion: number;
+  actorUserId: string | null;
+  detail: string;
+  atIso: string;
 };
 
 export type BookingEvidence = {
@@ -220,6 +271,8 @@ export type InboxState = {
   handoffs: HandoffRecord[];
   bookingEvidence: BookingEvidence[];
   sendOutcomes: WritePathOutcomeEvidence[];
+  webhookEvents: InboxWebhookEvent[];
+  ownershipEvents: OwnershipEvent[];
   liveInboxWiring: InboxAdapterStatusValue;
   liveCrmLeadWiring: InboxAdapterStatusValue;
   updatedAtIso: string;
@@ -250,6 +303,8 @@ export function emptyInboxState(nowIso: string): InboxState {
     handoffs: [],
     bookingEvidence: [],
     sendOutcomes: [],
+    webhookEvents: [],
+    ownershipEvents: [],
     liveInboxWiring: InboxAdapterStatus.NOT_WIRED,
     liveCrmLeadWiring: InboxAdapterStatus.NOT_WIRED,
     updatedAtIso: nowIso,
@@ -415,6 +470,7 @@ export function ingestInboundMessage(input: {
     fixtureOnly: input.fixtureOnly !== false,
     createdAtIso: input.nowIso,
     sentAtIso: input.nowIso,
+    deliveredAtIso: input.nowIso,
   };
 
   const conversation: ConversationRecord = {
@@ -598,6 +654,7 @@ export function prepareConciergeReply(input: {
       asksForHuman: false,
       bookingClaim,
       createdAtIso: input.nowIso,
+      invalidatedAtIso: null,
     },
     reasons: ["Draft grounded in SUPPORTED facts only"],
   };
@@ -638,6 +695,13 @@ export function queueOutboundReply(input: {
       reasons: ["Cannot queue — takeover or stale conversation version"],
     };
   }
+  if (input.draft.invalidatedAtIso) {
+    return {
+      ok: false,
+      code: "DRAFT_INVALIDATED",
+      reasons: ["Draft was invalidated by human takeover"],
+    };
+  }
   return {
     ok: true,
     message: {
@@ -655,6 +719,7 @@ export function queueOutboundReply(input: {
       fixtureOnly: input.fixtureOnly !== false,
       createdAtIso: input.nowIso,
       sentAtIso: null,
+      deliveredAtIso: null,
     },
   };
 }
@@ -747,17 +812,26 @@ export function evaluateOutboundSendGate(input: {
 }
 
 /**
- * Atomic human takeover: increments version, blocks agent send, cancels queued.
+ * Atomic human takeover: increments version, blocks agent send, cancels every
+ * unsent agent response (queued + draft message rows) and invalidates drafts.
  */
 export function applyConversationTakeover(input: {
   state: InboxState;
   conversationId: string;
   nowIso: string;
+  actorUserId?: string | null;
+  ownershipEventId?: string;
+  /** Defaults to takeover; handoff path should pass OwnershipEventKind.HANDOFF. */
+  ownershipKind?: OwnershipEventKindValue;
+  ownershipDetail?: string;
+  /** When set (e.g. handed_off), preserves that status instead of awaiting_human. */
+  preserveStatus?: ConversationStatusValue;
 }):
   | {
       ok: true;
       conversation: ConversationRecord;
       cancelledMessageIds: string[];
+      invalidatedDraftIds: string[];
       state: InboxState;
     }
   | { ok: false; code: string; reasons: string[] } {
@@ -773,12 +847,13 @@ export function applyConversationTakeover(input: {
   }
   const before = input.state.conversations[idx]!;
   const takeover = applyTakeover(toConversationState(before));
+  const ownershipKind = input.ownershipKind ?? OwnershipEventKind.TAKEOVER;
   const conversation: ConversationRecord = {
     ...before,
     version: takeover.conversation.version,
     humanOwned: takeover.conversation.humanOwned,
     agentSendAllowed: takeover.conversation.agentSendAllowed,
-    status: ConversationStatus.AWAITING_HUMAN,
+    status: input.preserveStatus ?? ConversationStatus.AWAITING_HUMAN,
     updatedAtIso: input.nowIso,
   };
 
@@ -786,7 +861,8 @@ export function applyConversationTakeover(input: {
   const messages = input.state.messages.map((m) => {
     if (
       m.conversationId === input.conversationId &&
-      m.sendStatus === MessageSendStatus.QUEUED
+      (m.sendStatus === MessageSendStatus.QUEUED ||
+        m.sendStatus === MessageSendStatus.DRAFT)
     ) {
       cancelledMessageIds.push(m.messageId);
       return {
@@ -797,17 +873,51 @@ export function applyConversationTakeover(input: {
     return m;
   });
 
+  const invalidatedDraftIds: string[] = [];
+  const drafts = input.state.drafts.map((d) => {
+    if (
+      d.conversationId === input.conversationId &&
+      d.invalidatedAtIso === null
+    ) {
+      invalidatedDraftIds.push(d.draftId);
+      return { ...d, invalidatedAtIso: input.nowIso };
+    }
+    return d;
+  });
+
   const conversations = [...input.state.conversations];
   conversations[idx] = conversation;
+
+  const defaultDetail =
+    ownershipKind === OwnershipEventKind.HANDOFF
+      ? `Handoff cancelled ${cancelledMessageIds.length} unsent message(s); invalidated ${invalidatedDraftIds.length} draft(s)`
+      : `Takeover cancelled ${cancelledMessageIds.length} unsent message(s); invalidated ${invalidatedDraftIds.length} draft(s)`;
+
+  const ownershipEvent: OwnershipEvent = {
+    eventId: input.ownershipEventId ?? `own-${input.conversationId}-${input.nowIso}`,
+    conversationId: input.conversationId,
+    kind: ownershipKind,
+    fromVersion: before.version,
+    toVersion: conversation.version,
+    actorUserId: input.actorUserId ?? null,
+    detail: input.ownershipDetail ?? defaultDetail,
+    atIso: input.nowIso,
+  };
 
   return {
     ok: true,
     conversation,
     cancelledMessageIds,
+    invalidatedDraftIds,
     state: {
       ...input.state,
       conversations,
       messages,
+      drafts,
+      ownershipEvents: [
+        ...(input.state.ownershipEvents ?? []),
+        ownershipEvent,
+      ].slice(-1000),
       updatedAtIso: input.nowIso,
     },
   };
@@ -853,6 +963,8 @@ export function createQualifiedLead(input: {
   qualification?: LeadQualificationValue;
   synthetic?: boolean;
   fixtureOnly?: boolean;
+  sourceInboundMessageId?: string | null;
+  providerEventId?: string | null;
   nowIso: string;
 }): QualifiedLead {
   return {
@@ -870,8 +982,368 @@ export function createQualifiedLead(input: {
     fixtureOnly: input.fixtureOnly !== false,
     gatewayOperationId: null,
     writePathId: null,
+    sourceInboundMessageId: input.sourceInboundMessageId ?? null,
+    providerEventId: input.providerEventId ?? null,
     createdAtIso: input.nowIso,
   };
+}
+
+/**
+ * Find an existing *successful* CRM lead for the same conversation + inbound
+ * message / event. Denied attempts (no crmRecordId) must remain retryable.
+ */
+export function findCoalescedLead(input: {
+  leads: readonly QualifiedLead[];
+  conversationId: string;
+  sourceInboundMessageId?: string | null;
+  providerEventId?: string | null;
+  correlationId?: string | null;
+}): QualifiedLead | null {
+  const successful = input.leads.filter(
+    (l) =>
+      l.conversationId === input.conversationId &&
+      l.crmRecordId != null &&
+      l.crmRecordId !== "",
+  );
+
+  const byInbound =
+    input.sourceInboundMessageId != null && input.sourceInboundMessageId !== ""
+      ? successful.find(
+          (l) => l.sourceInboundMessageId === input.sourceInboundMessageId,
+        )
+      : undefined;
+  if (byInbound) return byInbound;
+
+  const byEvent =
+    input.providerEventId != null && input.providerEventId !== ""
+      ? successful.find((l) => l.providerEventId === input.providerEventId)
+      : undefined;
+  if (byEvent) return byEvent;
+
+  const byCorr =
+    input.correlationId != null && input.correlationId !== ""
+      ? successful.find((l) => l.correlationId === input.correlationId)
+      : undefined;
+  return byCorr ?? null;
+}
+
+/**
+ * Durable fixture webhook intake with providerEventId coalesce.
+ * Duplicate events return the prior conversation/message without new rows.
+ */
+export function ingestFixtureWebhook(input: {
+  state: InboxState;
+  eventId: string;
+  providerEventId: string;
+  providerThreadId: string;
+  providerMessageId: string;
+  body: string;
+  customerDisplayName: string;
+  customerEmail?: string | null;
+  channel?: InboxChannelValue;
+  conversationId?: string;
+  messageId: string;
+  fixtureOnly?: boolean;
+  nowIso: string;
+}):
+  | {
+      ok: true;
+      conversation: ConversationRecord;
+      message: MessageRecord;
+      event: InboxWebhookEvent;
+      duplicate: boolean;
+      /** True when a new providerEventId row was appended (even if message coalesced). */
+      eventRecorded: boolean;
+      state: InboxState;
+    }
+  | { ok: false; code: string; reasons: string[] } {
+  const prior = (input.state.webhookEvents ?? []).find(
+    (e) => e.providerEventId === input.providerEventId,
+  );
+  if (prior) {
+    const conversation =
+      input.state.conversations.find(
+        (c) => c.conversationId === prior.conversationId,
+      ) ??
+      input.state.conversations.find(
+        (c) => c.providerThreadId === input.providerThreadId,
+      );
+    const message =
+      input.state.messages.find((m) => m.messageId === prior.messageId) ??
+      input.state.messages.find(
+        (m) =>
+          m.providerMessageId === input.providerMessageId &&
+          m.conversationId === prior.conversationId,
+      );
+    if (conversation && message) {
+      const coalesced: InboxWebhookEvent = {
+        ...prior,
+        coalesced: true,
+        receivedAtIso: prior.receivedAtIso,
+      };
+      return {
+        ok: true,
+        conversation,
+        message,
+        event: coalesced,
+        duplicate: true,
+        eventRecorded: false,
+        state: input.state,
+      };
+    }
+  }
+
+  const byId = input.conversationId
+    ? (input.state.conversations.find(
+        (c) => c.conversationId === input.conversationId,
+      ) ?? null)
+    : null;
+  const byThread =
+    input.state.conversations.find(
+      (c) => c.providerThreadId === input.providerThreadId,
+    ) ?? null;
+
+  if (
+    byId &&
+    byThread &&
+    byId.conversationId !== byThread.conversationId
+  ) {
+    return {
+      ok: false,
+      code: "CONFLICTING_CONVERSATION_IDS",
+      reasons: [
+        `conversationId ${byId.conversationId} != providerThread ${byThread.conversationId}`,
+      ],
+    };
+  }
+
+  let conversation = byId ?? byThread;
+  let workingState = input.state;
+
+  if (!conversation) {
+    conversation = createConversation({
+      conversationId: input.conversationId ?? `conv-${input.providerEventId}`,
+      providerThreadId: input.providerThreadId,
+      channel: input.channel ?? InboxChannel.FIXTURE,
+      customerDisplayName: input.customerDisplayName,
+      customerEmail: input.customerEmail ?? null,
+      fixtureOnly: input.fixtureOnly !== false,
+      nowIso: input.nowIso,
+    });
+    workingState = {
+      ...workingState,
+      conversations: [...workingState.conversations, conversation],
+    };
+  } else {
+    // Refresh missing customer identity from later durable webhook fields.
+    const nextEmail =
+      conversation.customerEmail ?? input.customerEmail ?? null;
+    const nextName =
+      conversation.customerDisplayName.trim() !== ""
+        ? conversation.customerDisplayName
+        : input.customerDisplayName;
+    if (
+      nextEmail !== conversation.customerEmail ||
+      nextName !== conversation.customerDisplayName
+    ) {
+      conversation = {
+        ...conversation,
+        customerEmail: nextEmail,
+        customerDisplayName: nextName,
+        updatedAtIso: input.nowIso,
+      };
+      workingState = {
+        ...workingState,
+        conversations: workingState.conversations.map((c) =>
+          c.conversationId === conversation!.conversationId
+            ? conversation!
+            : c,
+        ),
+      };
+    }
+  }
+
+  const ingested = ingestInboundMessage({
+    state: workingState,
+    conversation,
+    messageId: input.messageId,
+    providerMessageId: input.providerMessageId,
+    body: input.body,
+    fixtureOnly: input.fixtureOnly !== false,
+    nowIso: input.nowIso,
+  });
+
+  const event: InboxWebhookEvent = {
+    eventId: input.eventId,
+    providerEventId: input.providerEventId,
+    providerThreadId: input.providerThreadId,
+    providerMessageId: input.providerMessageId,
+    channel: input.channel ?? InboxChannel.FIXTURE,
+    body: input.body,
+    customerDisplayName: input.customerDisplayName,
+    customerEmail: input.customerEmail ?? null,
+    conversationId: ingested.conversation.conversationId,
+    messageId: ingested.message.messageId,
+    coalesced: ingested.duplicate,
+    fixtureOnly: input.fixtureOnly !== false,
+    receivedAtIso: input.nowIso,
+  };
+
+  // Even when inbound message deduped, record the new webhook event id.
+  const alreadyLogged = (ingested.state.webhookEvents ?? []).some(
+    (e) => e.providerEventId === input.providerEventId,
+  );
+  const state: InboxState = alreadyLogged
+    ? ingested.state
+    : {
+        ...ingested.state,
+        webhookEvents: [...(ingested.state.webhookEvents ?? []), event].slice(
+          -2000,
+        ),
+        updatedAtIso: input.nowIso,
+      };
+
+  return {
+    ok: true,
+    conversation: ingested.conversation,
+    message: ingested.message,
+    event,
+    duplicate: ingested.duplicate || alreadyLogged,
+    eventRecorded: !alreadyLogged,
+    state,
+  };
+}
+
+/**
+ * Mark an accepted (sent) outbound as delivered via independent fixture read-back.
+ * Acceptance ≠ delivery — caller must confirm after adapter ack.
+ */
+export function confirmOutboundDelivery(input: {
+  message: MessageRecord;
+  nowIso: string;
+}):
+  | { ok: true; message: MessageRecord }
+  | { ok: false; code: string; reasons: string[] } {
+  if (input.message.direction !== MessageDirection.OUTBOUND) {
+    return {
+      ok: false,
+      code: "NOT_OUTBOUND",
+      reasons: ["Only outbound messages can be delivery-confirmed"],
+    };
+  }
+  if (input.message.sendStatus === MessageSendStatus.DELIVERED) {
+    return { ok: true, message: input.message };
+  }
+  if (input.message.sendStatus !== MessageSendStatus.SENT) {
+    return {
+      ok: false,
+      code: "NOT_SENT",
+      reasons: [
+        `Delivery requires sent status; current=${input.message.sendStatus}`,
+      ],
+    };
+  }
+  return {
+    ok: true,
+    message: {
+      ...input.message,
+      sendStatus: MessageSendStatus.DELIVERED,
+      deliveredAtIso: input.nowIso,
+    },
+  };
+}
+
+/** Chronological timeline rows for console / API. */
+export function buildConversationTimeline(input: {
+  conversation: ConversationRecord;
+  messages: readonly MessageRecord[];
+  drafts?: readonly ConciergeDraft[];
+  leads?: readonly QualifiedLead[];
+  handoffs?: readonly HandoffRecord[];
+  ownershipEvents?: readonly OwnershipEvent[];
+}): Array<{
+  atIso: string;
+  kind: string;
+  id: string;
+  summary: string;
+  meta?: Record<string, string | number | boolean | null>;
+}> {
+  const rows: Array<{
+    atIso: string;
+    kind: string;
+    id: string;
+    summary: string;
+    meta?: Record<string, string | number | boolean | null>;
+  }> = [];
+
+  for (const m of input.messages) {
+    if (m.conversationId !== input.conversation.conversationId) continue;
+    rows.push({
+      atIso: m.sentAtIso ?? m.createdAtIso,
+      kind: m.direction === MessageDirection.INBOUND ? "inbound" : "outbound",
+      id: m.messageId,
+      summary: m.body.slice(0, 160),
+      meta: {
+        sender: m.sender,
+        sendStatus: m.sendStatus,
+        preparedAtVersion: m.preparedAtVersion,
+        deliveredAtIso: m.deliveredAtIso,
+      },
+    });
+  }
+  for (const d of input.drafts ?? []) {
+    if (d.conversationId !== input.conversation.conversationId) continue;
+    rows.push({
+      atIso: d.invalidatedAtIso ?? d.createdAtIso,
+      kind: d.invalidatedAtIso ? "draft_invalidated" : "draft",
+      id: d.draftId,
+      summary: d.body.slice(0, 160),
+      meta: {
+        preparedAtVersion: d.preparedAtVersion,
+        invalidated: d.invalidatedAtIso !== null,
+      },
+    });
+  }
+  for (const l of input.leads ?? []) {
+    if (l.conversationId !== input.conversation.conversationId) continue;
+    rows.push({
+      atIso: l.createdAtIso,
+      kind: "lead",
+      id: l.leadId,
+      summary: `Qualified lead ${l.email} (synthetic=${l.synthetic})`,
+      meta: {
+        crmRecordId: l.crmRecordId,
+        sourceInboundMessageId: l.sourceInboundMessageId,
+        providerEventId: l.providerEventId,
+      },
+    });
+  }
+  for (const h of input.handoffs ?? []) {
+    if (h.conversationId !== input.conversation.conversationId) continue;
+    rows.push({
+      atIso: h.acknowledgedAtIso ?? h.createdAtIso,
+      kind: h.acknowledged ? "handoff_acked" : "handoff",
+      id: h.handoffId,
+      summary: h.reason,
+      meta: { nextOwner: h.nextOwner, acknowledged: h.acknowledged },
+    });
+  }
+  for (const o of input.ownershipEvents ?? []) {
+    if (o.conversationId !== input.conversation.conversationId) continue;
+    rows.push({
+      atIso: o.atIso,
+      kind: `ownership_${o.kind}`,
+      id: o.eventId,
+      summary: o.detail,
+      meta: {
+        fromVersion: o.fromVersion,
+        toVersion: o.toVersion,
+        actorUserId: o.actorUserId,
+      },
+    });
+  }
+
+  return rows.sort((a, b) => a.atIso.localeCompare(b.atIso));
 }
 
 export function createHandoff(input: {
@@ -976,7 +1448,8 @@ export function countSentAgentMessages(
       m.conversationId === conversationId &&
       m.direction === MessageDirection.OUTBOUND &&
       m.sender === "agent" &&
-      m.sendStatus === MessageSendStatus.SENT,
+      (m.sendStatus === MessageSendStatus.SENT ||
+        m.sendStatus === MessageSendStatus.DELIVERED),
   ).length;
 }
 
@@ -1007,14 +1480,17 @@ export function detectDuplicateOutbound(input: {
     }
     if (
       m.sendStatus !== MessageSendStatus.SENT &&
+      m.sendStatus !== MessageSendStatus.DELIVERED &&
       m.sendStatus !== MessageSendStatus.QUEUED
     ) {
       return false;
     }
+    // Prefer delivery/send time so long-queued then-delivered replies stay
+    // inside the suppression window after confirmDelivery.
     const stamp =
-      m.sendStatus === MessageSendStatus.SENT && m.sentAtIso
-        ? m.sentAtIso
-        : m.createdAtIso;
+      m.sendStatus === MessageSendStatus.QUEUED
+        ? m.createdAtIso
+        : (m.deliveredAtIso ?? m.sentAtIso ?? m.createdAtIso);
     const ts = Date.parse(stamp);
     if (Number.isNaN(ts)) return false;
     return nowMs - ts <= input.windowSec * 1000;
@@ -1026,6 +1502,8 @@ export const INBOX_RELATED_CASE_IDS = [
   "T-I01", // conversation version + queued-send cancellation
   "T-I02", // fixture lead logging + Zoho path
   "T-I03", // no reservation without booking evidence
+  "T-US-043", // after-hours + takeover (M7)
+  "T-US-044", // duplicate inbound coalesce (M7)
 ] as const;
 
 // Re-export OutcomeEvidenceSource for callers that build inbox outcomes.

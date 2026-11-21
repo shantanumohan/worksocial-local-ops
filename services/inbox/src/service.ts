@@ -1,7 +1,8 @@
 /**
- * Inbox service: after-hours concierge, gateway-gated send, takeover,
- * fixture Zoho lead logging, and morning handoff.
- * Live inbox providers remain NOT_WIRED.
+ * Inbox service: M7/NEXT-18 after-hours concierge, fixture webhook intake,
+ * gateway-gated send + delivery confirm, takeover, fixture Zoho lead logging
+ * with coalesce, and morning handoff.
+ * Live inbox providers remain NOT_WIRED. Temporal may stay NOT_WIRED.
  */
 
 import { randomUUID } from "node:crypto";
@@ -18,6 +19,8 @@ import {
   acknowledgeHandoff,
   acquireConversationLease,
   applyConversationTakeover,
+  buildConversationTimeline,
+  confirmOutboundDelivery,
   countSentAgentMessages,
   createConversation,
   createHandoff,
@@ -25,6 +28,8 @@ import {
   defaultResponsePolicy,
   detectDuplicateOutbound,
   evaluateOutboundSendGate,
+  findCoalescedLead,
+  ingestFixtureWebhook,
   ingestInboundMessage,
   listInboxOutcomesForLearning,
   prepareConciergeReply,
@@ -37,8 +42,11 @@ import {
   type ConversationRecord,
   type FactSupportLookup,
   type HandoffRecord,
+  type InboxWebhookEvent,
   type MessageRecord,
   type OperatingModeValue,
+  type OwnershipEvent,
+  OwnershipEventKind,
   type ProductionMappingState,
   type QualifiedLead,
   type ResponsePolicy,
@@ -86,6 +94,20 @@ export type InboxService = {
   listMessages(conversationId?: string, limit?: number): MessageRecord[];
   listLeads(limit?: number): QualifiedLead[];
   listHandoffs(limit?: number): HandoffRecord[];
+  listWebhookEvents(limit?: number): InboxWebhookEvent[];
+  listOwnershipEvents(
+    conversationId?: string,
+    limit?: number,
+  ): OwnershipEvent[];
+  getTimeline(
+    conversationId: string,
+  ):
+    | {
+        ok: true;
+        conversation: ConversationRecord;
+        timeline: ReturnType<typeof buildConversationTimeline>;
+      }
+    | { ok: false; code: string; reasons: string[] };
   getPolicy(): ResponsePolicy | null;
   setPolicy(policy: ResponsePolicy): ResponsePolicy;
   seedFixtures(nowIso?: string): {
@@ -110,6 +132,24 @@ export type InboxService = {
   }): {
     conversation: ConversationRecord;
     message: MessageRecord;
+    duplicate: boolean;
+  };
+  /** Fixture webhook simulator with providerEventId coalesce. */
+  ingestFixtureWebhook(input: {
+    providerEventId: string;
+    providerThreadId: string;
+    providerMessageId: string;
+    body: string;
+    customerDisplayName: string;
+    customerEmail?: string | null;
+    conversationId?: string;
+    channel?: ConversationRecord["channel"];
+    fixtureOnly?: boolean;
+    nowIso?: string;
+  }): {
+    conversation: ConversationRecord;
+    message: MessageRecord;
+    event: InboxWebhookEvent;
     duplicate: boolean;
   };
   draftReply(input: {
@@ -144,6 +184,17 @@ export type InboxService = {
     liveInboxWiring: "NOT_WIRED" | "FIXTURE";
     details: string[];
   };
+  /** Independent delivery receipt after adapter acceptance (sent → delivered). */
+  confirmDelivery(input: {
+    messageId: string;
+    nowIso?: string;
+  }):
+    | {
+        ok: true;
+        message: MessageRecord;
+        outcome: WritePathOutcomeEvidence;
+      }
+    | { ok: false; code: string; reasons: string[] };
   takeOver(input: {
     conversationId: string;
     actorUserId?: string | null;
@@ -153,6 +204,7 @@ export type InboxService = {
         ok: true;
         conversation: ConversationRecord;
         cancelledMessageIds: string[];
+        invalidatedDraftIds: string[];
         actorUserId: string | null;
       }
     | { ok: false; code: string; reasons: string[] };
@@ -163,6 +215,9 @@ export type InboxService = {
     locationNeed?: string | null;
     dateNeed?: string | null;
     sizeNeed?: string | null;
+    sourceInboundMessageId?: string | null;
+    providerEventId?: string | null;
+    correlationId?: string | null;
     authority: InboxAuthorityInput;
     productionMapping: ProductionMappingState;
     preferLive?: boolean;
@@ -173,6 +228,7 @@ export type InboxService = {
     gatewayDecision: GatewayDecisionRecord | null;
     outcome: WritePathOutcomeEvidence | null;
     liveCrmLeadWiring: "NOT_WIRED" | "FIXTURE";
+    coalesced: boolean;
     details: string[];
   };
   createMorningHandoff(input: {
@@ -230,6 +286,40 @@ export function createInboxService(
 
     listHandoffs(limit) {
       return store.listHandoffs(limit);
+    },
+
+    listWebhookEvents(limit) {
+      return store.listWebhookEvents(limit);
+    },
+
+    listOwnershipEvents(conversationId, limit) {
+      return store.listOwnershipEvents(conversationId, limit);
+    },
+
+    getTimeline(conversationId) {
+      const state = store.read();
+      const conversation =
+        state.conversations.find((c) => c.conversationId === conversationId) ??
+        null;
+      if (!conversation) {
+        return {
+          ok: false as const,
+          code: "CONVERSATION_NOT_FOUND",
+          reasons: [`Unknown conversation ${conversationId}`],
+        };
+      }
+      return {
+        ok: true as const,
+        conversation,
+        timeline: buildConversationTimeline({
+          conversation,
+          messages: state.messages,
+          drafts: state.drafts,
+          leads: state.leads,
+          handoffs: state.handoffs,
+          ownershipEvents: state.ownershipEvents,
+        }),
+      };
     },
 
     getPolicy() {
@@ -368,6 +458,68 @@ export function createInboxService(
       };
     },
 
+    ingestFixtureWebhook(input) {
+      const nowIso = input.nowIso ?? new Date().toISOString();
+      const result = ingestFixtureWebhook({
+        state: store.read(),
+        eventId: `evt-${randomUUID()}`,
+        providerEventId: input.providerEventId,
+        providerThreadId: input.providerThreadId,
+        providerMessageId: input.providerMessageId,
+        body: input.body,
+        customerDisplayName: input.customerDisplayName,
+        customerEmail: input.customerEmail ?? null,
+        channel: input.channel ?? "fixture",
+        ...(input.conversationId !== undefined
+          ? { conversationId: input.conversationId }
+          : {}),
+        messageId: `msg-${randomUUID()}`,
+        fixtureOnly: input.fixtureOnly !== false,
+        nowIso,
+      });
+      if (!result.ok) {
+        throw new Error(`${result.code}: ${result.reasons.join("; ")}`);
+      }
+
+      // Persist when message is new OR when a new providerEventId was recorded
+      // against an already-seen providerMessageId.
+      if (!result.duplicate || result.eventRecorded) {
+        const leaseOwner = `inbox-webhook-${process.pid}`;
+        const leaseExpiresAtIso = new Date(
+          Date.parse(nowIso) + 5 * 60 * 1000,
+        ).toISOString();
+        const leased = acquireConversationLease({
+          conversation: result.conversation,
+          leaseOwner,
+          leaseExpiresAtIso,
+          nowIso,
+        });
+        if (leased.ok) {
+          store.write({
+            ...result.state,
+            conversations: result.state.conversations.map((c) =>
+              c.conversationId === leased.conversation.conversationId
+                ? leased.conversation
+                : c,
+            ),
+          });
+          return {
+            conversation: leased.conversation,
+            message: result.message,
+            event: result.event,
+            duplicate: result.duplicate,
+          };
+        }
+        store.write(result.state);
+      }
+      return {
+        conversation: result.conversation,
+        message: result.message,
+        event: result.event,
+        duplicate: result.duplicate,
+      };
+    },
+
     draftReply(input) {
       const nowIso = input.nowIso ?? new Date().toISOString();
       const state = store.read();
@@ -452,6 +604,13 @@ export function createInboxService(
           ok: false,
           code: "DRAFT_NOT_FOUND",
           reasons: [`Unknown draft ${input.draftId}`],
+        };
+      }
+      if (draft.invalidatedAtIso) {
+        return {
+          ok: false,
+          code: "DRAFT_INVALIDATED",
+          reasons: ["Draft was invalidated by human takeover"],
         };
       }
       const policy = state.responsePolicy ?? defaultResponsePolicy(nowIso);
@@ -740,21 +899,26 @@ export function createInboxService(
         gatewayOperationId: operationId,
         providerMessageId: adapter.remoteId,
         sentAtIso: nowIso,
+        deliveredAtIso: null,
       };
       store.upsertMessage(sent);
+      details.push(
+        "Adapter accepted send (sent). Delivery requires independent confirmDelivery — acceptance ≠ delivered.",
+      );
 
+      // Acceptance ≠ verified delivery — learning SUCCESS waits for confirmDelivery.
       const outcome = buildInboxSendOutcome({
         outcomeId: `out-${randomUUID()}`,
         conversationId: conversation.conversationId,
         messageId: message.messageId,
         writePathId: INBOX_REPLY_WRITE_PATH_ID,
         operationId,
-        decision: InboxOutcomeDecision.SUCCESS,
+        decision: InboxOutcomeDecision.UNKNOWN,
         source: OutcomeEvidenceSource.FIXTURE,
         fixtureOnly: true,
-        summary: adapter.summary,
+        summary: `${adapter.summary} (accepted_pending — delivery not yet confirmed)`,
         recordedAtIso: nowIso,
-        featureHints: { remoteId: adapter.remoteId },
+        featureHints: { remoteId: adapter.remoteId, delivery: "accepted_pending" },
       });
       store.addSendOutcome(outcome);
 
@@ -767,12 +931,48 @@ export function createInboxService(
       };
     },
 
+    confirmDelivery(input) {
+      const nowIso = input.nowIso ?? new Date().toISOString();
+      const state = store.read();
+      const message =
+        state.messages.find((m) => m.messageId === input.messageId) ?? null;
+      if (!message) {
+        return {
+          ok: false as const,
+          code: "MESSAGE_NOT_FOUND",
+          reasons: [`Unknown message ${input.messageId}`],
+        };
+      }
+      const confirmed = confirmOutboundDelivery({ message, nowIso });
+      if (!confirmed.ok) return confirmed;
+      store.upsertMessage(confirmed.message);
+      const outcome = buildInboxSendOutcome({
+        outcomeId: `out-${randomUUID()}`,
+        conversationId: confirmed.message.conversationId,
+        messageId: confirmed.message.messageId,
+        writePathId: INBOX_REPLY_WRITE_PATH_ID,
+        operationId:
+          confirmed.message.gatewayOperationId ??
+          `inbox-delivered-${randomUUID()}`,
+        decision: InboxOutcomeDecision.SUCCESS,
+        source: OutcomeEvidenceSource.FIXTURE,
+        fixtureOnly: true,
+        summary: "Independent fixture delivery confirmed (sent → delivered)",
+        recordedAtIso: nowIso,
+        featureHints: { delivery: "delivered" },
+      });
+      store.addSendOutcome(outcome);
+      return { ok: true as const, message: confirmed.message, outcome };
+    },
+
     takeOver(input) {
       const nowIso = input.nowIso ?? new Date().toISOString();
       const result = applyConversationTakeover({
         state: store.read(),
         conversationId: input.conversationId,
         nowIso,
+        actorUserId: input.actorUserId ?? null,
+        ownershipEventId: `own-${randomUUID()}`,
       });
       if (!result.ok) return result;
       store.write(result.state);
@@ -780,6 +980,7 @@ export function createInboxService(
         ok: true,
         conversation: result.conversation,
         cancelledMessageIds: result.cancelledMessageIds,
+        invalidatedDraftIds: result.invalidatedDraftIds,
         actorUserId: input.actorUserId ?? null,
       };
     },
@@ -797,7 +998,8 @@ export function createInboxService(
           lead: null,
           gatewayDecision: null,
           outcome: null,
-          liveCrmLeadWiring: "NOT_WIRED",
+          liveCrmLeadWiring: "NOT_WIRED" as const,
+          coalesced: false,
           details: [`Unknown conversation ${input.conversationId}`],
         };
       }
@@ -817,7 +1019,47 @@ export function createInboxService(
           lead: null,
           gatewayDecision: null,
           outcome: null,
-          liveCrmLeadWiring: "NOT_WIRED",
+          liveCrmLeadWiring: "NOT_WIRED" as const,
+          coalesced: false,
+          details,
+        };
+      }
+
+      const sourceInboundMessageId =
+        input.sourceInboundMessageId ??
+        [...state.messages]
+          .reverse()
+          .find(
+            (m) =>
+              m.conversationId === conversation.conversationId &&
+              m.direction === "inbound",
+          )?.messageId ??
+        null;
+      const providerEventId =
+        input.providerEventId ??
+        [...state.webhookEvents]
+          .reverse()
+          .find((e) => e.conversationId === conversation.conversationId)
+          ?.providerEventId ??
+        null;
+
+      const existing = findCoalescedLead({
+        leads: state.leads,
+        conversationId: conversation.conversationId,
+        sourceInboundMessageId,
+        providerEventId,
+        correlationId: input.correlationId ?? null,
+      });
+      if (existing) {
+        details.push(
+          `Lead coalesce: returning existing lead ${existing.leadId} for inbound/event key`,
+        );
+        return {
+          lead: existing,
+          gatewayDecision: null,
+          outcome: null,
+          liveCrmLeadWiring: "NOT_WIRED" as const,
+          coalesced: true,
           details,
         };
       }
@@ -828,7 +1070,8 @@ export function createInboxService(
           lead: null,
           gatewayDecision: null,
           outcome: null,
-          liveCrmLeadWiring: "NOT_WIRED",
+          liveCrmLeadWiring: "NOT_WIRED" as const,
+          coalesced: false,
           details: [
             "CONTACT_EMAIL_REQUIRED: qualified lead logging needs a real customer email",
           ],
@@ -839,7 +1082,7 @@ export function createInboxService(
       const lead = createQualifiedLead({
         leadId: `lead-${randomUUID()}`,
         conversation,
-        correlationId: `corr-${randomUUID()}`,
+        correlationId: input.correlationId ?? `corr-${randomUUID()}`,
         email,
         displayName,
         locationNeed: input.locationNeed ?? null,
@@ -847,6 +1090,8 @@ export function createInboxService(
         sizeNeed: input.sizeNeed ?? null,
         synthetic: true,
         fixtureOnly: true,
+        sourceInboundMessageId,
+        providerEventId,
         nowIso,
       });
 
@@ -899,12 +1144,17 @@ export function createInboxService(
           recordedAtIso: nowIso,
         });
         store.addSendOutcome(outcome);
-        store.addLead({ ...lead, gatewayOperationId: operationId });
+        // Do not persist a denied lead — coalesce must only short-circuit
+        // successful CRM writes so retries remain possible after authority restores.
+        details.push(
+          "Denied lead not persisted; retry after authority restore is allowed",
+        );
         return {
-          lead,
+          lead: null,
           gatewayDecision: submitted.decision,
           outcome,
-          liveCrmLeadWiring: "NOT_WIRED",
+          liveCrmLeadWiring: "NOT_WIRED" as const,
+          coalesced: false,
           details,
         };
       }
@@ -945,6 +1195,7 @@ export function createInboxService(
         gatewayDecision: submitted.decision,
         outcome,
         liveCrmLeadWiring: InboxAdapterStatus.NOT_WIRED,
+        coalesced: false,
         details,
       };
     },
@@ -975,7 +1226,7 @@ export function createInboxService(
         requestedAction: input.requestedAction ?? "Morning follow-up",
         nowIso,
       });
-      // Increment version so stale agent sends are blocked, but keep handed_off.
+      // Increment version so stale agent sends are blocked; audit as handoff.
       const takeover = applyConversationTakeover({
         state: {
           ...state,
@@ -985,23 +1236,18 @@ export function createInboxService(
         },
         conversationId: conversation.conversationId,
         nowIso,
+        ownershipEventId: `own-${randomUUID()}`,
+        ownershipKind: OwnershipEventKind.HANDOFF,
+        ownershipDetail: `Morning handoff to ${handoff.nextOwner}: ${handoff.reason}`,
+        preserveStatus: ConversationStatus.HANDED_OFF,
       });
       if (takeover.ok) {
-        const preserved: ConversationRecord = {
-          ...takeover.conversation,
-          status: ConversationStatus.HANDED_OFF,
-        };
-        store.write({
-          ...takeover.state,
-          conversations: takeover.state.conversations.map((c) =>
-            c.conversationId === preserved.conversationId ? preserved : c,
-          ),
-        });
+        store.write(takeover.state);
         store.addHandoff(handoff);
         return {
           ok: true,
           handoff,
-          conversation: preserved,
+          conversation: takeover.conversation,
         };
       }
       store.upsertConversation(handed);

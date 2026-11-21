@@ -161,6 +161,7 @@ export function buildGoldenInbound(nowIso: string): {
     fixtureOnly: true,
     createdAtIso: nowIso,
     sentAtIso: nowIso,
+    deliveredAtIso: nowIso,
   };
   return {
     conversation,

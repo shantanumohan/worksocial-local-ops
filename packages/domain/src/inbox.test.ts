@@ -7,6 +7,7 @@ import {
   LeadQualification,
   MessageSendStatus,
   applyConversationTakeover,
+  confirmOutboundDelivery,
   countAgentMessages,
   createConversation,
   createHandoff,
@@ -16,6 +17,8 @@ import {
   emptyInboxState,
   evaluateBookingClaim,
   evaluateOutboundSendGate,
+  findCoalescedLead,
+  ingestFixtureWebhook,
   ingestInboundMessage,
   prepareConciergeReply,
   queueOutboundReply,
@@ -148,9 +151,12 @@ describe("inbox domain", () => {
     expect(takeover.conversation.humanOwned).toBe(true);
     expect(takeover.conversation.agentSendAllowed).toBe(false);
     expect(takeover.cancelledMessageIds).toEqual(["out-1"]);
+    expect(takeover.invalidatedDraftIds).toEqual(["d1"]);
     expect(takeover.state.messages[0]!.sendStatus).toBe(
       MessageSendStatus.BLOCKED_TAKEOVER,
     );
+    expect(takeover.state.drafts[0]!.invalidatedAtIso).toBe(now);
+    expect(takeover.state.ownershipEvents).toHaveLength(1);
 
     const sendGate = evaluateOutboundSendGate({
       conversation: takeover.conversation,
@@ -314,6 +320,7 @@ describe("inbox domain", () => {
       fixtureOnly: true,
       createdAtIso: now,
       sentAtIso: now,
+      deliveredAtIso: null,
     };
     expect(
       detectDuplicateOutbound({
@@ -325,5 +332,195 @@ describe("inbox domain", () => {
       }),
     ).toBe(true);
     expect(countAgentMessages([msg], "c1")).toBe(1);
+  });
+
+  it("coalesces duplicate fixture webhooks by providerEventId", () => {
+    let state = emptyInboxState(now);
+    const first = ingestFixtureWebhook({
+      state,
+      eventId: "e1",
+      providerEventId: "wh-1",
+      providerThreadId: "thr-wh",
+      providerMessageId: "pm-1",
+      body: "Need a room Friday",
+      customerDisplayName: "Alex",
+      customerEmail: "alex@example.com",
+      messageId: "m-wh-1",
+      nowIso: now,
+    });
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    expect(first.duplicate).toBe(false);
+    expect(first.state.messages).toHaveLength(1);
+    expect(first.state.webhookEvents).toHaveLength(1);
+
+    const second = ingestFixtureWebhook({
+      state: first.state,
+      eventId: "e2",
+      providerEventId: "wh-1",
+      providerThreadId: "thr-wh",
+      providerMessageId: "pm-1",
+      body: "Need a room Friday",
+      customerDisplayName: "Alex",
+      customerEmail: "alex@example.com",
+      messageId: "m-wh-2",
+      nowIso: now,
+    });
+    expect(second.ok).toBe(true);
+    if (!second.ok) return;
+    expect(second.duplicate).toBe(true);
+    expect(second.message.messageId).toBe(first.message.messageId);
+    expect(second.state.messages).toHaveLength(1);
+    expect(second.state.webhookEvents).toHaveLength(1);
+  });
+
+  it("records a new providerEventId when providerMessageId already exists", () => {
+    const first = ingestFixtureWebhook({
+      state: emptyInboxState(now),
+      eventId: "e1",
+      providerEventId: "wh-1",
+      providerThreadId: "thr-wh",
+      providerMessageId: "pm-shared",
+      body: "Need a room Friday",
+      customerDisplayName: "Alex",
+      messageId: "m-wh-1",
+      nowIso: now,
+    });
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+
+    const second = ingestFixtureWebhook({
+      state: first.state,
+      eventId: "e2",
+      providerEventId: "wh-2",
+      providerThreadId: "thr-wh",
+      providerMessageId: "pm-shared",
+      body: "Need a room Friday",
+      customerDisplayName: "Alex",
+      customerEmail: "alex@example.com",
+      messageId: "m-wh-2",
+      nowIso: now,
+    });
+    expect(second.ok).toBe(true);
+    if (!second.ok) return;
+    expect(second.duplicate).toBe(true);
+    expect(second.eventRecorded).toBe(true);
+    expect(second.state.messages).toHaveLength(1);
+    expect(second.state.webhookEvents).toHaveLength(2);
+    expect(second.conversation.customerEmail).toBe("alex@example.com");
+  });
+
+  it("coalesces leads by inbound message / event key only after CRM success", () => {
+    const conversation = createConversation({
+      conversationId: "c1",
+      providerThreadId: "thr-1",
+      channel: InboxChannel.FIXTURE,
+      customerDisplayName: "Alex",
+      customerEmail: "alex@example.com",
+      nowIso: now,
+    });
+    const denied = createQualifiedLead({
+      leadId: "lead-denied",
+      conversation,
+      correlationId: "corr-denied",
+      email: "alex@example.com",
+      displayName: "Alex",
+      sourceInboundMessageId: "m1",
+      providerEventId: "wh-1",
+      nowIso: now,
+    });
+    expect(
+      findCoalescedLead({
+        leads: [denied],
+        conversationId: "c1",
+        sourceInboundMessageId: "m1",
+      }),
+    ).toBeNull();
+
+    const lead = { ...denied, leadId: "lead-1", crmRecordId: "zoho-fixture-1" };
+    expect(
+      findCoalescedLead({
+        leads: [lead],
+        conversationId: "c1",
+        sourceInboundMessageId: "m1",
+      })?.leadId,
+    ).toBe("lead-1");
+    expect(
+      findCoalescedLead({
+        leads: [lead],
+        conversationId: "c1",
+        providerEventId: "wh-1",
+      })?.leadId,
+    ).toBe("lead-1");
+    expect(
+      findCoalescedLead({
+        leads: [lead],
+        conversationId: "c1",
+        sourceInboundMessageId: "other",
+      }),
+    ).toBeNull();
+  });
+
+  it("rejects conflicting conversationId vs providerThreadId on webhook ingest", () => {
+    let state = emptyInboxState(now);
+    const a = createConversation({
+      conversationId: "conv-a",
+      providerThreadId: "thr-a",
+      channel: InboxChannel.FIXTURE,
+      customerDisplayName: "A",
+      nowIso: now,
+    });
+    const b = createConversation({
+      conversationId: "conv-b",
+      providerThreadId: "thr-b",
+      channel: InboxChannel.FIXTURE,
+      customerDisplayName: "B",
+      nowIso: now,
+    });
+    state = { ...state, conversations: [a, b] };
+    const conflict = ingestFixtureWebhook({
+      state,
+      eventId: "e-conflict",
+      providerEventId: "wh-conflict",
+      providerThreadId: "thr-b",
+      providerMessageId: "pm-conflict",
+      body: "hello",
+      customerDisplayName: "A",
+      conversationId: "conv-a",
+      messageId: "m-conflict",
+      nowIso: now,
+    });
+    expect(conflict.ok).toBe(false);
+    if (!conflict.ok) expect(conflict.code).toBe("CONFLICTING_CONVERSATION_IDS");
+  });
+
+  it("confirms delivery only after sent", () => {
+    const queued = {
+      messageId: "out-1",
+      conversationId: "c1",
+      providerMessageId: null,
+      direction: "outbound" as const,
+      body: "Hello",
+      sender: "agent" as const,
+      preparedAtVersion: 1,
+      sendStatus: MessageSendStatus.QUEUED,
+      citedFactIds: [],
+      gatewayOperationId: null,
+      bookingClaim: null,
+      fixtureOnly: true,
+      createdAtIso: now,
+      sentAtIso: null,
+      deliveredAtIso: null,
+    };
+    const denied = confirmOutboundDelivery({ message: queued, nowIso: now });
+    expect(denied.ok).toBe(false);
+
+    const sent = { ...queued, sendStatus: MessageSendStatus.SENT, sentAtIso: now };
+    const ok = confirmOutboundDelivery({ message: sent, nowIso: now });
+    expect(ok.ok).toBe(true);
+    if (ok.ok) {
+      expect(ok.message.sendStatus).toBe(MessageSendStatus.DELIVERED);
+      expect(ok.message.deliveredAtIso).toBe(now);
+    }
   });
 });
