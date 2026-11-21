@@ -320,6 +320,17 @@ describe("api identity HTTP", () => {
       expect(body.mission.temporalRunId).toBe("run-temporal-1");
       expect(body.run).toBeNull();
       expect(startMission).toHaveBeenCalledOnce();
+
+      const stateRes = await fetch(`${base}/roles/state`, {
+        headers: { origin: base, cookie: cookieHeader },
+      });
+      expect(stateRes.status).toBe(200);
+      const state = (await stateRes.json()) as {
+        temporalEnqueueStatus: string;
+        temporalWiring: string;
+      };
+      // Bound enqueue mode (what /roles/run uses) — independent of live probe.
+      expect(state.temporalEnqueueStatus).toBe("TEMPORAL");
     } finally {
       await new Promise<void>((resolve, reject) =>
         server.close((err) => (err ? reject(err) : resolve())),

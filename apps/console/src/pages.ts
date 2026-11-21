@@ -388,11 +388,20 @@ export function rolesPage(apiOrigin: string): string {
     document.getElementById('cli').textContent = state.cli && state.cli.available
       ? (state.cli.version || 'detected')
       : (state.cli && state.cli.reason) || 'fixture';
-    const tw = state.temporalWiring || 'NOT_WIRED';
-    document.getElementById('temporal').textContent = tw;
-    document.getElementById('temporal-warn').textContent = tw === 'TEMPORAL'
-      ? 'Default execution is fixture/offline. Temporal mission enqueue is TEMPORAL (frontend reachable). Live CMS/Zoho/GSC remain NOT_WIRED. No blanket permission bypass.'
-      : 'Default execution is fixture/offline. Temporal mission enqueue is NOT_WIRED. No blanket permission bypass.';
+    const probeTw = state.temporalWiring || 'NOT_WIRED';
+    const enqueueTw = state.temporalEnqueueStatus || 'NOT_WIRED';
+    document.getElementById('temporal').textContent =
+      'probe ' + probeTw + ' · enqueue ' + enqueueTw;
+    document.getElementById('temporal-warn').textContent =
+      enqueueTw === 'TEMPORAL'
+        ? 'Default execution is fixture/offline. Temporal mission enqueue is TEMPORAL (bound at API start). Cluster probe: ' +
+          probeTw +
+          '. Live CMS/Zoho/GSC remain NOT_WIRED. No blanket permission bypass.'
+        : 'Default execution is fixture/offline. Temporal mission enqueue is ' +
+          enqueueTw +
+          ' (bound at API start). Cluster probe: ' +
+          probeTw +
+          '. Live CMS/Zoho/GSC remain NOT_WIRED. No blanket permission bypass.';
     const byId = {};
     for (const c of state.contracts || []) byId[c.roleId] = c;
     const tbody = document.getElementById('roles');

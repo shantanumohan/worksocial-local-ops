@@ -163,26 +163,21 @@ jobs:
       - name: Start Temporal auto-setup (compose)
         run: docker compose -f deploy/temporal/docker-compose.yml up -d
 
-      - name: Wait for Temporal frontend (SDK dial)
+      - name: Build (needed before Temporal wait / e2e)
+        run: pnpm build:local
+
+      - name: Wait for Temporal frontend + namespace (SDK)
+        working-directory: services/workflow-worker
         run: |
           set -e
-          pnpm build:local
-          for i in $(seq 1 90); do
-            if pnpm exec tsx -e "
-              import { Connection } from '@temporalio/client';
-              const c = await Connection.connect({ address: '127.0.0.1:7233', connectTimeout: 2000 });
-              await c.close();
-              console.log('Temporal SDK dial ok');
-            "; then
-              exit 0
-            fi
-            echo "waiting for Temporal SDK dial ($i/90)…"
-            sleep 2
-          done
-          echo "::error::Temporal frontend did not accept SDK connections on 127.0.0.1:7233"
-          docker compose -f deploy/temporal/docker-compose.yml ps || true
-          docker compose -f deploy/temporal/docker-compose.yml logs || true
-          exit 1
+          # Script lives in this package (declares @temporalio/client) so pnpm
+          # resolution succeeds. Dials frontend AND describeNamespace.
+          if ! pnpm run wait:temporal; then
+            echo "::error::Temporal frontend/namespace not ready at ${TEMPORAL_ADDRESS} ns=${TEMPORAL_NAMESPACE}"
+            docker compose -f ../../deploy/temporal/docker-compose.yml ps || true
+            docker compose -f ../../deploy/temporal/docker-compose.yml logs || true
+            exit 1
+          fi
 
       - name: Compose e2e (API → Temporal → PG)
         run: pnpm test:temporal-compose

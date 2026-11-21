@@ -1697,6 +1697,9 @@ export async function handleApiRequest(
       timeoutMs: 1_500,
     });
     const temporalWiring = runtimeTemporalLabel(temporalProbe);
+    // Bound at API start via bindTemporalMissionEnqueue — may differ from a
+    // fresh probe if Temporal became reachable after process start.
+    const temporalEnqueueStatus = runtime.missions.temporalStatus;
     json(
       res,
       200,
@@ -1714,6 +1717,7 @@ export async function handleApiRequest(
         recentRuns: state.runs.slice(0, 20),
         learningOutcomes: state.outcomes.slice(0, 20),
         temporalWiring,
+        temporalEnqueueStatus,
         temporalProbe: {
           status: temporalProbe.status,
           address: temporalProbe.address,
@@ -1723,7 +1727,7 @@ export async function handleApiRequest(
         cli,
         budget: runtime.runner.getBudgetAccount(),
         honestLabelsNote:
-          "Fixture ≠ sandbox ≠ live. Temporal TEMPORAL only when frontend reachable. Live CMS/Zoho/GSC stay NOT_WIRED. permissionBypassUsed is always false.",
+          "Fixture ≠ sandbox ≠ live. temporalWiring = live frontend probe; temporalEnqueueStatus = mode bound at API start for /roles/run. Live CMS/Zoho/GSC stay NOT_WIRED. permissionBypassUsed is always false.",
       },
       cors,
     );
