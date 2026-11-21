@@ -31,8 +31,9 @@ function withPutReferenceCounter(broker: CredentialBroker): {
       count += 1;
       return broker.putReference(providerId, scopes, secretMaterial, nowIso);
     },
-    mintScopedHandle: (input) => broker.mintScopedHandle(input),
-    revealForPrincipal: (input) => broker.revealForPrincipal(input),
+    mintScopedHandle: (request) => broker.mintScopedHandle(request),
+    revealForPrincipal: (handleId, principal, nowIso) =>
+      broker.revealForPrincipal(handleId, principal, nowIso),
     revokeReference: (referenceId, nowIso) =>
       broker.revokeReference(referenceId, nowIso),
     rotateReference: (input) => {
