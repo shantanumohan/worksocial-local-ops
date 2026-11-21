@@ -70,6 +70,8 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X038": "Grounded eval without grounding — fail closed",
   "T-X039": "Provider error vs answer failure — separate denominators",
   "T-US-058": "Synthetic excluded from business denominators",
+  "T-US-046": "Hard search constraints enforced; no invented availability",
+  "T-X048": "Unknown price or availability — no invention",
 };
 
 function relatedProofsForCase(
@@ -228,6 +230,7 @@ export function compileAcceptanceEvidence(
     "T-X069 fixture ACCEPTED only via IMPORTED_DOC_QUARANTINED_AS_DATA",
     "T-X038 fixture ACCEPTED only via EVAL_NO_GROUNDING_FAIL_CLOSED",
     "T-X039/T-US-058 fixture ACCEPTED only via METRIC_DENOMINATORS_HONEST",
+    "T-US-046/T-X048 fixture ACCEPTED only via HARD_SEARCH_CONSTRAINTS_NO_INVENTION",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

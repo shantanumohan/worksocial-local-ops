@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x048",
+  "caseId": "T-X048",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X048 (Unknown price or availability — no invention)\nproof=hard_search_constraints_no_invention applyCount=1 :: Unknown constraints → UNKNOWN no-match (no invented hits) | Hard constraints filter before ranking → room-20 only | Price bound preserved as unresolved (not invented free) | Unresolved price/negation → CLARIFY abstain (no invention) | Negation preserved; not inverted into required amenity | priceKnown=false entry retains null priceLabel (no invention) | Grounded answer may attach booking handoff URL | HYPOTHESIS-only → no hits and no invented booking handoff | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "hard_search_constraints_no_invention"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x048.json",
+  "createdAtIso": "2026-11-21T23:39:41.349Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x048-6e2c5a4edb80"
+}
