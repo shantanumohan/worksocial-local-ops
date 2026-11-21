@@ -70,6 +70,7 @@ import {
   createFileLeadCaptureStore,
   createFileEvaluationStore,
   createFileSoakStore,
+  createFileRecoveryStore,
   createFileProbeStore,
   createFileProductionMappingStore,
   createFileRepairStore,
@@ -85,6 +86,7 @@ import {
   type LeadCaptureStore,
   type EvaluationStore,
   type SoakStore,
+  type RecoveryStore,
   type PolicyDecisionRecord,
   type ContentStore,
   type InboxStore,
@@ -167,11 +169,16 @@ import { handleInboxRequest } from "./inbox-http.js";
 import { handleCanonicalPublishRequest } from "./content-http.js";
 import { handleEvaluationAndAnalyticsRequest } from "./evaluation-http.js";
 import { handleSoakRequest } from "./soak-http.js";
+import { handleRecoveryRequest } from "./recovery-http.js";
 import {
   createEvaluationService,
   type EvaluationService,
 } from "@worksocial/evaluation-worker";
 import { createSoakService, type SoakService } from "@worksocial/soak";
+import {
+  createRecoveryService,
+  type RecoveryService,
+} from "@worksocial/recovery";
 
 function factLabelsFromKnowledge(
   knowledge: KnowledgeService,
@@ -272,6 +279,8 @@ export type ApiRuntime = {
   evaluation: EvaluationService;
   soakStore: SoakStore;
   soak: SoakService;
+  recoveryStore: RecoveryStore;
+  recovery: RecoveryService;
   runner: ClaudeRunner;
   missions: MissionEnqueueService;
   /** Bound when TEMPORAL_ADDRESS frontend is reachable; closed on API shutdown. */
@@ -485,6 +494,8 @@ export function createApiRuntime(options: {
   const evaluation = createEvaluationService(evaluationStore);
   const soakStore = createFileSoakStore(options.stateDir);
   const soak = createSoakService(soakStore);
+  const recoveryStore = createFileRecoveryStore(options.stateDir);
+  const recovery = createRecoveryService(recoveryStore);
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
@@ -529,6 +540,8 @@ export function createApiRuntime(options: {
     evaluation,
     soakStore,
     soak,
+    recoveryStore,
+    recovery,
     runner,
     missions,
     temporalClient,
@@ -736,7 +749,7 @@ export async function handleApiRequest(
         identity:
           "M9 soak/acceptance evidence + M8 grounded-search/analytics/eval + M6–M7 + R1-02–R1-10",
         message:
-          "API surface includes M9 soak/recovery + acceptance evidence, M8 EVAL_ONLY/analysis, M6 canonical publish. Live CMS/GBP/social/inbox/Zoho/GSC/GA4/Ads/eval-fleet/Temporal NOT_WIRED. Catalog ACCEPTED only with fixture evidence; never silently VERIFIED for live. Not R1-complete.",
+          "API surface includes WP10 recovery evidence (stale/incident/URO), M9 soak/acceptance, M8 EVAL_ONLY/analysis, M6 canonical publish. Live CMS/GBP/social/inbox/Zoho/GSC/GA4/Ads/eval-fleet NOT_WIRED. Catalog ACCEPTED only with fixture evidence; never silently VERIFIED for live. Not R1-complete.",
       },
       cors,
     );
@@ -4301,6 +4314,20 @@ export async function handleApiRequest(
     requireSession: (r, opts) => requireSession(runtime, r, opts),
   });
   if (soakHandled) return;
+
+  const recoveryHandled = await handleRecoveryRequest({
+    recovery: runtime.recovery,
+    req,
+    res,
+    url,
+    method,
+    cors,
+    json,
+    readBody,
+    parseJsonObjectBody,
+    requireSession: (r, opts) => requireSession(runtime, r, opts),
+  });
+  if (recoveryHandled) return;
 
   const inboxHandled = await handleInboxRequest({
     inbox: runtime.inbox,

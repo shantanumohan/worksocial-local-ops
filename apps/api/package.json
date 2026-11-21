@@ -34,6 +34,7 @@
     "@worksocial/lead-capture": "workspace:*",
     "@worksocial/evaluation-worker": "workspace:*",
     "@worksocial/soak": "workspace:*",
+    "@worksocial/recovery": "workspace:*",
     "@worksocial/probes": "workspace:*",
     "@worksocial/provider-adapters": "workspace:*",
     "@worksocial/workflow-worker": "workspace:*"

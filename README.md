@@ -123,6 +123,13 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - Console `/analysis` + `/eval`; APIs `/analysis/*` + `/eval/*` + `/seo/judge-search`.
 - SQL `020_m8_search_analytics_eval.sql` companion; **Temporal NOT_WIRED**. Catalog cases remain **NOT_RUN** unless later fixture evidence is attached. Not an R1-complete claim.
 
+### WP10 recovery evidence (F24)
+
+- Classifies **STALE_OBSERVATION** vs **ACTIVE_INCIDENT** vs **UNKNOWN_REMOTE_OUTCOME** for host/provider outage and queued work (fixture-only).
+- Console `/recovery`; APIs `/recovery/status` · `/recovery/inspect` · `/recovery/run` · timeline / queued-work / capability-stops.
+- Live recovery stays **NOT_RUN** — never silently VERIFIED. Credential rotation / offboarding **NOT_WIRED**. External effects **NONE**.
+- Runbook: `docs/runbooks/recovery-evidence.md`. Complements M9 soak; does not close product T-F24 alone.
+
 ### M9 R1 soak / acceptance evidence (NEXT-20)
 - **Soak / recovery harness** — crash-restart, no duplicate effects, job continuity, unknown-remote reconcile on file-durable LOCAL_DURABLE stores (`pnpm recovery:rehearse`).
 - **Acceptance evidence compiler** — selected catalog cases (T-X014 / T-X020 / T-US-048) may become **ACCEPTED** only with the complete expected proof set and redacted fixture artifacts (`pnpm release:evidence`). **T-X066** stays **NOT_RUN** until a backup/omit-receipt proof exists. Never silently **VERIFIED** for live.
@@ -175,7 +182,7 @@ Status labels stay honest: fixture / stub / `NOT_RUN` / fixture-`ACCEPTED` ≠ s
 
 ```
 apps/console, apps/api
-services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-broker,learning-worker,probes,knowledge,seo,content,inbox,repair,owner-staging,evaluation-worker,soak}
+services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-broker,learning-worker,probes,knowledge,seo,content,inbox,repair,owner-staging,evaluation-worker,soak,recovery}
 packages/{contracts,domain,ml,persistence,provider-adapters,observability,ui}
 database/migrations
 tests/{unit,integration,contract,workflow,e2e,security,eval,soak}
