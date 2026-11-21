@@ -94,7 +94,7 @@ async function main(): Promise<void> {
       cases: stableCaseResults,
       artifacts: stableArtifacts,
       uniqueRunArtifacts: artifacts,
-      note: "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated; T-X029 via explicit rebind; T-US-057 via cross-workspace resource substitution; T-US-024 via agent cannot widen grant; T-US-042/T-X057 via repair weaken test rejected; T-US-044/T-X053 via takeover cancels unsent; T-US-018/T-X037 via EVAL_ONLY operational tool forbidden; T-X058 via repair attempt limit escalated; T-X069 via imported doc quarantined; T-X038 via eval no-grounding; T-X039/T-US-058 via metric denominators honest; T-US-046/T-X048 via hard search constraints; T-US-010/T-X033 via GSC omitted rows; T-US-008/T-X032 via GA4 debug not delivered; T-X031 via wrong property kind. Not R1-complete.",
+      note: "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated; T-X029 via explicit rebind; T-US-057 via cross-workspace resource substitution; T-US-024 via agent cannot widen grant; T-US-042/T-X057 via repair weaken test rejected; T-US-044/T-X053 via takeover cancels unsent; T-US-018/T-X037 via EVAL_ONLY operational tool forbidden; T-X058 via repair attempt limit escalated; T-X069 via imported doc quarantined; T-X038 via eval no-grounding; T-X039/T-US-058 via metric denominators honest; T-US-046/T-X048 via hard search constraints; T-US-010/T-X033 via GSC omitted rows; T-US-008/T-X032 via GA4 debug not delivered; T-X031 via wrong property kind; T-US-040/T-X049 via thank-you without CRM. Not R1-complete.",
     };
     writeFileSync(ledgerPath, JSON.stringify(ledger, null, 2), "utf8");
 
@@ -217,6 +217,12 @@ async function main(): Promise<void> {
     const hasTx031Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-X031",
     );
+    const hasUs040Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-US-040",
+    );
+    const hasTx049Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-X049",
+    );
     const expectedAccepted = [
       "T-F24",
       "T-US-002",
@@ -225,6 +231,7 @@ async function main(): Promise<void> {
       "T-US-018",
       "T-US-024",
       "T-US-036",
+      "T-US-040",
       "T-US-042",
       "T-US-044",
       "T-US-046",
@@ -249,6 +256,7 @@ async function main(): Promise<void> {
       "T-X038",
       "T-X039",
       "T-X048",
+      "T-X049",
       "T-X053",
       "T-X057",
       "T-X058",
@@ -300,7 +308,9 @@ async function main(): Promise<void> {
         hasUs008Accepted &&
         hasTx032Accepted &&
         hasTx031Accepted &&
-        accepted.length === 37 &&
+        hasUs040Accepted &&
+        hasTx049Accepted &&
+        accepted.length === 39 &&
         JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
@@ -315,7 +325,7 @@ async function main(): Promise<void> {
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X031 wrong GA4 property kind fixture ACCEPTED. Live VERIFIED forbidden. Not R1-complete.",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-US-040/T-X049 thank-you without CRM fixture ACCEPTED. Live VERIFIED forbidden. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {

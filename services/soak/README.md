@@ -5,7 +5,7 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | Concern | Status |
 |---------|--------|
 | Crash-restart / no duplicate effects | **real** (file-durable LOCAL_DURABLE) |
-| Acceptance evidence compiler | **real** (fixture ACCEPTED for T-X014 / T-X020 / T-US-048 / T-X029 / T-US-057 / T-US-024 / T-US-042 / T-X057 / T-US-044 / T-X053 / T-US-008 / T-US-010 / T-US-018 / T-US-046 / T-US-058 / T-X031 / T-X032 / T-X033 / T-X037 / T-X038 / T-X039 / T-X048 / T-X058 / T-X069 / T-X066 / T-F24 / T-US-047 / T-US-002 / T-X002 / T-X018 / T-US-054 / T-X073 / T-US-060 / T-X005 / T-X006 / T-X019 / T-US-036 with complete proof sets) |
+| Acceptance evidence compiler | **real** (fixture ACCEPTED for T-X014 / T-X020 / T-US-048 / T-X029 / T-US-057 / T-US-024 / T-US-042 / T-X057 / T-US-044 / T-X053 / T-US-008 / T-US-010 / T-US-018 / T-US-040 / T-US-046 / T-US-058 / T-X031 / T-X032 / T-X033 / T-X037 / T-X038 / T-X039 / T-X048 / T-X049 / T-X058 / T-X069 / T-X066 / T-F24 / T-US-047 / T-US-002 / T-X002 / T-X018 / T-US-054 / T-X073 / T-US-060 / T-X005 / T-X006 / T-X019 / T-US-036 with complete proof sets) |
 | T-X066 backup/omit-receipt | Fixture **ACCEPTED** via `BACKUP_OMIT_RECEIPT` (not retry-only no-dup; not live VERIFIED) |
 | T-F24 / T-US-047 recover/rotate/reconcile | Fixture **ACCEPTED** via `RECOVER_ROTATE_RECONCILE` (complete F24 evidence; live revoke NOT_WIRED; not live VERIFIED) |
 | T-US-002 / T-X002 competing-supervisor lease | Fixture **ACCEPTED** via `COMPETING_SUPERVISOR_LEASE` (singleton host lease; not live VERIFIED) |
@@ -29,6 +29,7 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-US-010 / T-X033 GSC omitted rows | Fixture **ACCEPTED** via `GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO` (not live VERIFIED) |
 | T-US-008 / T-X032 GA4 debug not delivered | Fixture **ACCEPTED** via `GA4_DEBUG_NOT_DELIVERED_CONVERSION` (not live VERIFIED) |
 | T-X031 wrong GA4 property kind | Fixture **ACCEPTED** via `GA4_WRONG_PROPERTY_KIND_REFUSED` (not live VERIFIED) |
+| T-US-040 / T-X049 thank-you without CRM | Fixture **ACCEPTED** via `THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY` (not live VERIFIED) |
 | 72h pilot gate | server-recorded start/heartbeat/end only — short CI soaks stay **NOT_MET**; client claim dates rejected |
 | Live CMS / GSC / GA4 / Zoho / Temporal | **NOT_WIRED** |
 | ChatGPT Ads | **access-blocked** |
