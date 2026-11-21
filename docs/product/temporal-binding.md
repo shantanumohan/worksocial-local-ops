@@ -6,8 +6,8 @@
 |---|---|
 | `NOT_WIRED` | No reachable Temporal frontend (default honesty) |
 | `READY_TO_BIND` | `TEMPORAL_ADDRESS` + SDK present; connection not yet proven |
-| `TEMPORAL` | SDK connected to a reachable Temporal frontend |
-| `LOCAL_DURABLE` | Postgres/file mission durability without Temporal orchestration |
+| `TEMPORAL` | SDK connected to a reachable Temporal frontend (**reachability only** — does not certify a polling `worksocial-missions` worker) |
+| `LOCAL_DURABLE` | Postgres/file mission durability without Temporal orchestration (distinct from unbound API in-process `NOT_WIRED`) |
 | `FIXTURE` | Explicit fixture-only stub |
 
 Local durable mission semantics (`LOCAL_DURABLE`) use PostgreSQL/file stores:
@@ -84,7 +84,9 @@ Locally without Docker the suite **skips honestly** unless
 
 `/roles/status` and `/roles/evaluate-fixture` call `probeTemporalConnection`.
 They report `TEMPORAL` only when the frontend is reachable — never when it is not.
+They do **not** check whether a worker is polling `worksocial-missions` (workflows may still queue).
 API mission enqueue uses the same probe at process start via `bindTemporalMissionEnqueue`.
+Unbound API enqueue is in-process **`NOT_WIRED`**, not `LOCAL_DURABLE`.
 
 ## Still NOT_WIRED (intentionally)
 

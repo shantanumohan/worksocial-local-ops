@@ -57,22 +57,8 @@ jobs:
       - name: Eval isolation suite (AA-20 offline; not live fleet / not catalog VERIFIED)
         run: pnpm test:eval
 
-      - name: Assert remaining placeholder suites cannot pass release gates
-        run: |
-          set +e
-          failed=0
-          for suite in test:security; do
-            echo "::group::stub $suite (must exit non-zero)"
-            pnpm "$suite"
-            code=$?
-            echo "exit=$code"
-            echo "::endgroup::"
-            if [ "$code" -eq 0 ]; then
-              echo "::error::Stub suite $suite exited 0 — placeholders must not satisfy required checks"
-              failed=1
-            fi
-          done
-          exit $failed
+      - name: Security gate suite (ownership / auth / lease; not pen-test / not catalog VERIFIED)
+        run: pnpm test:security
 
   database-durable:
     name: postgres durable execution
@@ -185,8 +171,8 @@ jobs:
       - name: Compose e2e (API → Temporal → PG)
         run: pnpm test:temporal-compose
 
-  # Stub/incomplete suites (security/eval) are NOT required green checks —
-  # they must fail (see assert step above).
+  # test:eval + test:security are implemented offline suites and required above
+  # (fixture isolation / auth-ownership gates — not live fleet, pen-test, or catalog VERIFIED).
   # recovery:rehearse + release:evidence are implemented for M9 and required above.
   # test:database and test:workflow are implemented for M2 and required above.
   # test:temporal-compose is required via the temporal-compose job (Docker auto-setup).

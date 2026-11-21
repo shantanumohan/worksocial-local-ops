@@ -24,7 +24,7 @@ v6 does not publish sixteen separate titles. Tracker tasks may still use histori
 | WP06–09 | Mapping, knowledge, SEO/search, content/distribution | Live CMS / GBP / social / SERP / Trends / GSC-GA4 query |
 | WP10–12 | Probes/canary, inbox/takeover, bounded repair | Live Zoho / inbox / CMS repair |
 | WP13–14 | Paid-media + analysis fixtures (**AA-19** #37); EVAL_ONLY worker + PG eval store (#35–#36) | Live ads execute **NOT_WIRED**; ChatGPT Ads ACCESS_BLOCKED without local transport+entitlement |
-| WP15–16 | Soak harness, recovery evidence (#27–#28, #34) | Live recovery NOT_RUN; 72h soak NOT_MET; **156/159** catalog cases NOT_RUN |
+| WP15–16 | Soak harness, recovery evidence (#27–#28, #34); offline security gate suite (`pnpm test:security` — ownership/auth/lease) | Pen-test / AA-48 credential-rotation / Windows host still open; live recovery NOT_RUN; 72h soak NOT_MET; **156/159** catalog cases NOT_RUN |
 
 ## Acceptance matrix (do not invent VERIFIED)
 
@@ -37,8 +37,8 @@ v6 does not publish sixteen separate titles. Tracker tasks may still use histori
 
 See `temporal-binding.md`. Summary:
 
-- Unreachable / unset frontend → runtime label **`NOT_WIRED`** (in-process / LOCAL_DURABLE paths)
-- Reachable frontend + worker → **`TEMPORAL`** (CI compose job proves API → Temporal → PG with fixture effects)
+- Unreachable / unset frontend → API enqueue label **`NOT_WIRED`** (in-process Claude path; not the separate `LOCAL_DURABLE` store path)
+- Reachable frontend → label **`TEMPORAL`** means **frontend reachability only** (probe does not certify a polling worker). CI compose separately proves API → Temporal → PG with a worker + fixture effects
 - Production mTLS namespace and Windows Temporal service remain **NOT_WIRED**
 
 ## Related
