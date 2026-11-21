@@ -31,7 +31,8 @@ describe("soak service (M9)", () => {
     expect(result.allPassed).toBe(true);
     expect(result.proofs).toHaveLength(14);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
-    expect(result.proofs.every((p) => p.applyAttemptCount === 1)).toBe(true);    expect(
+    expect(result.proofs.every((p) => p.applyAttemptCount === 1)).toBe(true);
+    expect(
       result.proofs.some((p) => p.kind === SoakProofKind.BACKUP_OMIT_RECEIPT),
     ).toBe(true);
     expect(
@@ -241,10 +242,10 @@ describe("soak service (M9)", () => {
     expect(secondIds.length).toBeGreaterThan(0);
     for (const id of firstIds) {
       expect(secondIds).not.toContain(id);
-    }
+  }
     const stored = soak.listArtifacts(200).map((a) => a.artifactId);
     for (const id of [...firstIds, ...secondIds]) {
       expect(stored).toContain(id);
-    }
+  }
   });
 });

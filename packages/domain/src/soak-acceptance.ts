@@ -136,9 +136,8 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X005 requires FORGED_BROWSER_ROLE_IGNORED (payload role ignored).
  * T-X006 requires CROSS_WORKSPACE_REFERENCE_DENIED (deny without leak).
  * T-X019 / T-US-036 require APPROVED_PAYLOAD_EDIT_INVALIDATED (digest/revision).
- * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
- */
  * T-X029 requires EXPLICIT_ACCOUNT_REBIND (not same-account local rotate).
+ * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
   "T-X014",
