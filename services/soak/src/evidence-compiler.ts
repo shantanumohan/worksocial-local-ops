@@ -63,6 +63,8 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X057": "Repair disables failing test — rejected",
   "T-US-044": "Takeover cancels unsent agent replies",
   "T-X053": "Takeover races queued reply — version invalidates send",
+  "T-US-018": "Gemini never used for publish/CRM/customer reply",
+  "T-X037": "Gemini tries operational tool — no effect",
 };
 
 function relatedProofsForCase(
@@ -216,6 +218,7 @@ export function compileAcceptanceEvidence(
     "T-US-024 fixture ACCEPTED only via AGENT_CANNOT_WIDEN_GRANT",
     "T-US-042/T-X057 fixture ACCEPTED only via REPAIR_WEAKEN_TEST_REJECTED",
     "T-US-044/T-X053 fixture ACCEPTED only via TAKEOVER_CANCELS_UNSENT_REPLIES",
+    "T-US-018/T-X037 fixture ACCEPTED only via EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

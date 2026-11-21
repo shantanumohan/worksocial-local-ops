@@ -103,6 +103,11 @@ export const SoakProofKind = {
    * Takeover cancels unsent agent replies (T-US-044 / T-X053).
    */
   TAKEOVER_CANCELS_UNSENT_REPLIES: "takeover_cancels_unsent_replies",
+  /**
+   * EVAL_ONLY forbids operational tools (T-US-018 / T-X037).
+   * Gemini/Claude cannot publish / CRM-write / customer-message / ads-mutate.
+   */
+  EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN: "eval_only_operational_tool_forbidden",
 } as const;
 
 export type SoakProofKindValue =
@@ -157,6 +162,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-024 requires AGENT_CANNOT_WIDEN_GRANT.
  * T-US-042 / T-X057 require REPAIR_WEAKEN_TEST_REJECTED.
  * T-US-044 / T-X053 require TAKEOVER_CANCELS_UNSENT_REPLIES.
+ * T-US-018 / T-X037 require EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -183,6 +189,8 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X057",
   "T-US-044",
   "T-X053",
+  "T-US-018",
+  "T-X037",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -565,6 +573,10 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.TAKEOVER_CANCELS_UNSENT_REPLIES];
     case "T-X053":
       return [SoakProofKind.TAKEOVER_CANCELS_UNSENT_REPLIES];
+    case "T-US-018":
+      return [SoakProofKind.EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN];
+    case "T-X037":
+      return [SoakProofKind.EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN];
     default:
       return [];
   }
@@ -615,6 +627,8 @@ export function mapProofToFixtureCases(
       return ["T-US-042", "T-X057"];
     case SoakProofKind.TAKEOVER_CANCELS_UNSENT_REPLIES:
       return ["T-US-044", "T-X053"];
+    case SoakProofKind.EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN:
+      return ["T-US-018", "T-X037"];
     default:
       return [];
   }
