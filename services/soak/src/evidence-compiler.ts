@@ -57,6 +57,8 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X019": "Approved payload edited — digest conflict",
   "T-US-036": "Stale approval invalidated on revision change",
   "T-X029": "Token rotates to different account",
+  "T-US-057": "Cross-workspace resource substitution rejected",
+  "T-US-024": "Agent cannot widen its own grant",
 };
 
 function relatedProofsForCase(
@@ -206,6 +208,8 @@ export function compileAcceptanceEvidence(
     "T-X005 fixture ACCEPTED only via FORGED_BROWSER_ROLE_IGNORED (payload role ignored)",
     "T-X006 fixture ACCEPTED only via CROSS_WORKSPACE_REFERENCE_DENIED (deny without leak)",
     "T-X019/T-US-036 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED (digest/revision)",
+    "T-US-057 fixture ACCEPTED only via CROSS_WORKSPACE_RESOURCE_SUBSTITUTION",
+    "T-US-024 fixture ACCEPTED only via AGENT_CANNOT_WIDEN_GRANT",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

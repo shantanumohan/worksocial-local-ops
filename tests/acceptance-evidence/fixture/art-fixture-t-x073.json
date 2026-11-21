@@ -3,13 +3,13 @@
   "caseId": "T-X073",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X073 (Offboarding retains active token — incomplete until revoked)\nproof=offboard_active_token_residual applyCount=1 :: Pre-offboard lease granted leaseId=lease-008d0015-30e2-4073-8181-be15acf009a6 | ACTIVE_TOKEN residual BLOCKED_NOT_WIRED summary=T-X073: provider-side token may still be active until live revoke is wired/performed | PROVIDER_REVOKE residual BLOCKED_NOT_WIRED | Offboarding incomplete-until-revoked: manifest=ob-1511bbdc-eb40-4c7b-b267-2958e963640b catalogClaim=NOT_RUN auditRetained=true secretsExported=false | Post-offboard lease denied CONNECTION_REVOKED | liveProviderRevoke=NOT_WIRED — T-X073 incomplete until external revoke | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X073 (Offboarding retains active token — incomplete until revoked)\nproof=offboard_active_token_residual applyCount=1 :: Pre-offboard lease granted leaseId=lease-6e6f0689-21b8-42b4-8ddb-75455cc1e84c | ACTIVE_TOKEN residual BLOCKED_NOT_WIRED summary=T-X073: provider-side token may still be active until live revoke is wired/performed | PROVIDER_REVOKE residual BLOCKED_NOT_WIRED | Offboarding incomplete-until-revoked: manifest=ob-6a03b333-2f43-44a8-b172-ff5a42c9ff7c catalogClaim=NOT_RUN auditRetained=true secretsExported=false | Post-offboard lease denied CONNECTION_REVOKED | liveProviderRevoke=NOT_WIRED — T-X073 incomplete until external revoke | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "offboard_active_token_residual"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x073.json",
-  "createdAtIso": "2026-11-21T23:01:17.355Z",
+  "createdAtIso": "2026-11-21T23:06:23.877Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x073-d5ee07445ae8"
+  "uniqueSourceArtifactId": "art-fixture-t-x073-47f42efa6b47"
 }

@@ -672,7 +672,7 @@ Required evidence:
 
 Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixture ACCEPTED below | Environment fixture_or_sandbox; live evidence separately authorized.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-047, T-US-048, T-US-054, T-US-060.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X066, T-X073, T-F24, T-US-002, T-US-024, T-US-036, T-US-047, T-US-054, T-US-057, T-US-060.
 
 ### Happy-path / documented flow completions
 - **T-US-001** Create a trusted local workspace (F01/SC-02) — blockers and next actions.
@@ -714,7 +714,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 - **T-US-018** Gemini never used for publish/CRM/customer reply.
 - **T-US-020** Synthetic leads classified; no commerce pollution.
 - **T-US-022** Unsupported destination capabilities respected.
-- **T-US-024** Agent cannot widen its own grant.
+- **T-US-024** Agent cannot widen its own grant. *(fixture ACCEPTED — agent cannot widen grant proof; not sandbox/prod VERIFIED)*
 - **T-US-026** Missed schedules coalesce; no burst republish.
 - **T-US-028** Prefer one useful page update over keyword proliferation.
 - **T-US-030** Uncertain post: reconcile before retry.
@@ -735,7 +735,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 - **T-US-054** Independent approval enforced (no ordinary self-approval). *(fixture ACCEPTED — self-approval rejected / independent A25 proof; not sandbox/prod VERIFIED)*
 - **T-US-055** Complete keyboard journey with reduced motion.
 - **T-US-056** Honest outage; durable hosted contact path.
-- **T-US-057** Cross-workspace resource substitution rejected.
+- **T-US-057** Cross-workspace resource substitution rejected. *(fixture ACCEPTED — cross-workspace resource substitution proof; not sandbox/prod VERIFIED)*
 - **T-US-058** Synthetic excluded from business denominators.
 - **T-US-059** Shared briefs redacted; private evidence retained.
 - **T-US-060** Emergency stop checked at commit time. *(fixture ACCEPTED — emergency-stop / outbound-stop at commit proof; not sandbox/prod VERIFIED)*
@@ -765,6 +765,10 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 **T-X006** is fixture ACCEPTED only via the cross-workspace reference denied proof (`CROSS_WORKSPACE_REFERENCE_DENIED`) — foreign channel/account/asset substitution denied with generic `GRANT_MISSING` (no foreign-id leak). Not sandbox/prod VERIFIED.
 
 **T-X019 / T-US-036** are fixture ACCEPTED only via the approved payload edit invalidated proof (`APPROVED_PAYLOAD_EDIT_INVALIDATED`) — checksum digest conflict and revision change invalidate A25 binding; stale acceptance cannot ship. Not sandbox/prod VERIFIED.
+
+**T-US-057** is fixture ACCEPTED only via the cross-workspace resource substitution proof (`CROSS_WORKSPACE_RESOURCE_SUBSTITUTION`). Not sandbox/prod VERIFIED.
+
+**T-US-024** is fixture ACCEPTED only via the agent cannot widen grant proof (`AGENT_CANNOT_WIDEN_GRANT`). Not sandbox/prod VERIFIED.
 
 Shared evidence for each: actual state before/after; instrumented provider call count or read-back; correlated redacted logs/traces; no unauthorized external effect.
 
@@ -853,6 +857,6 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
 | T-US (behavior_acceptance) | 60 | 54 NOT_RUN + 6 fixture ACCEPTED (T-US-002, T-US-036, T-US-047, T-US-048, T-US-054, T-US-060) |
 | T-X (platform/security/resilience) | 73 | 63 NOT_RUN + 10 fixture ACCEPTED (T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X066, T-X073) |
-| **Total** | **159** | **142 NOT_RUN + 17 fixture ACCEPTED** |
+| **Total** | **159** | **140 NOT_RUN + 19 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.
