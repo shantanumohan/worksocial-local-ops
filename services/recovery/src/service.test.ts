@@ -19,9 +19,9 @@ describe("recovery service fixture scenarios", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  it("runs all scenarios and distinguishes the three classes", () => {
+  it("runs all scenarios and distinguishes the three classes", async () => {
     const service = createRecoveryService(createFileRecoveryStore(dir));
-    const result = service.runFixtureRecovery({
+    const result = await service.runFixtureRecovery({
       nowIso: "2026-11-21T21:10:00.000Z",
     });
     expect(result.ok).toBe(true);
@@ -54,12 +54,12 @@ describe("recovery service fixture scenarios", () => {
     expect(result.classCounts.STALE_OBSERVATION).toBeGreaterThanOrEqual(1);
     expect(result.classCounts.UNKNOWN_REMOTE_OUTCOME).toBeGreaterThanOrEqual(1);
 
-    const inspection = service.inspection();
+    const inspection = await service.inspection();
     expect(inspection.liveRecoveryClaim).toBe("NOT_RUN");
     expect(inspection.queuedWork.length).toBeGreaterThanOrEqual(1);
     expect(inspection.activeStops.length).toBeGreaterThanOrEqual(1);
 
-    const status = service.status();
+    const status = await service.status();
     expect(status.externalEffects).toBe("NONE");
     expect(status.liveWiring.credentialRotation).toBe("fixture");
     expect(status.liveWiring.offboarding).toBe("fixture");
@@ -67,14 +67,14 @@ describe("recovery service fixture scenarios", () => {
     expect(status.chatgptAdsWiring).toBe("NOT_WIRED");
   });
 
-  it("capability stop is scoped — unrelated outbound remains allowed", () => {
+  it("capability stop is scoped — unrelated outbound remains allowed", async () => {
     const service = createRecoveryService(createFileRecoveryStore(dir));
-    const result = service.runFixtureRecovery({
+    const result = await service.runFixtureRecovery({
       scenarioId: "provider_outage_capability_stop",
       nowIso: "2026-11-21T21:11:00.000Z",
     });
     expect(result.ok).toBe(true);
-    const stops = service.listCapabilityStops();
+    const stops = await service.listCapabilityStops();
     expect(stops).toHaveLength(1);
     expect(stops[0]?.capabilityId).toBe("gbp_publish");
     expect(stops[0]?.unrelatedCapabilitiesAllowed).toBe(true);

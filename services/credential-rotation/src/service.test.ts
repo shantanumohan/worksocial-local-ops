@@ -24,21 +24,21 @@ describe("credential-rotation service", () => {
     });
   }
 
-  it("revoke → cancel eligible queued → audit retained; live revoke NOT_WIRED", () => {
+  it("revoke → cancel eligible queued → audit retained; live revoke NOT_WIRED", async () => {
     const svc = service();
-    const seeded = svc.seedFixture({
+    const seeded = await svc.seedFixture({
       nowIso: "2026-11-21T22:00:00.000Z",
       withQueuedWork: true,
     });
 
-    const leaseBefore = svc.requestLease({
+    const leaseBefore = await svc.requestLease({
       connectionId: seeded.connection.connectionId,
       requestedScopes: ["publish"],
       nowIso: "2026-11-21T22:00:30.000Z",
     });
     expect(leaseBefore.ok).toBe(true);
 
-    const revoked = svc.revoke({
+    const revoked = await svc.revoke({
       connectionId: seeded.connection.connectionId,
       approvedBy: "admin",
       nowIso: "2026-11-21T22:01:00.000Z",
@@ -58,19 +58,19 @@ describe("credential-rotation service", () => {
     expect(cancelled.length).toBeGreaterThanOrEqual(2);
     expect(retained.length).toBeGreaterThanOrEqual(1);
 
-    const leaseAfter = svc.requestLease({
+    const leaseAfter = await svc.requestLease({
       connectionId: seeded.connection.connectionId,
       requestedScopes: ["publish"],
       nowIso: "2026-11-21T22:02:00.000Z",
     });
     expect(leaseAfter).toMatchObject({ ok: false, code: "CONNECTION_REVOKED" });
 
-    const effect = svc.requestEffect({
+    const effect = await svc.requestEffect({
       connectionId: seeded.connection.connectionId,
     });
     expect(effect).toMatchObject({ ok: false, code: "CONNECTION_REVOKED" });
 
-    const queue = svc.listQueuedWork(seeded.connection.connectionId);
+    const queue = await svc.listQueuedWork(seeded.connection.connectionId);
     expect(
       queue.some((w) => w.effectState === EffectState.CANCELLED),
     ).toBe(true);
@@ -80,7 +80,7 @@ describe("credential-rotation service", () => {
       ),
     ).toBe(true);
 
-    const audit = svc.listAudit();
+    const audit = await svc.listAudit();
     expect(audit.some((a) => a.kind === "REVOKED")).toBe(true);
     expect(audit.some((a) => a.kind === "QUEUED_CANCELLED")).toBe(true);
     expect(audit.some((a) => a.kind === "LIVE_PROVIDER_REVOKE_NOT_WIRED")).toBe(
@@ -89,20 +89,20 @@ describe("credential-rotation service", () => {
     expect(audit.every((a) => a.redacted)).toBe(true);
     expect(JSON.stringify(audit)).not.toMatch(/fixture-secret/);
 
-    const status = svc.status();
+    const status = await svc.status();
     expect(status.liveWiring.liveProviderRevocation).toBe("NOT_WIRED");
     expect(status.catalogClaim).toBe("NOT_RUN");
     expect(status.externalEffects).toBe("NONE");
     expect(status.relatedCaseIds).toContain("T-F24");
   });
 
-  it("rotate switches reference locally without live provider revoke", () => {
+  it("rotate switches reference locally without live provider revoke", async () => {
     const svc = service();
-    const seeded = svc.seedFixture({
+    const seeded = await svc.seedFixture({
       nowIso: "2026-11-21T22:00:00.000Z",
       withQueuedWork: false,
     });
-    const rotated = svc.rotate({
+    const rotated = await svc.rotate({
       connectionId: seeded.connection.connectionId,
       approvedBy: "admin",
       secretMaterial: "rotated-secret-material",
@@ -118,12 +118,12 @@ describe("credential-rotation service", () => {
     );
   });
 
-  it("offboard produces manifest with provider-revoke residual NOT_WIRED", () => {
+  it("offboard produces manifest with provider-revoke residual NOT_WIRED", async () => {
     const svc = service();
-    const seeded = svc.seedFixture({
+    const seeded = await svc.seedFixture({
       nowIso: "2026-11-21T22:00:00.000Z",
     });
-    const result = svc.offboard({
+    const result = await svc.offboard({
       connectionId: seeded.connection.connectionId,
       approvedBy: "admin",
       nowIso: "2026-11-21T22:20:00.000Z",
@@ -140,7 +140,7 @@ describe("credential-rotation service", () => {
       ),
     ).toBe(true);
 
-    const live = svc.liveProviderRevoke({
+    const live = await svc.liveProviderRevoke({
       connectionId: seeded.connection.connectionId,
     });
     expect(live.code).toBe("LIVE_PROVIDER_REVOKE_NOT_WIRED");

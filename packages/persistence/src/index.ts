@@ -322,8 +322,15 @@ export {
 
 export {
   createFileRecoveryStore,
+  createMemoryRecoveryStore,
+  createPgRecoveryStore,
   defaultRecoveryStateDir,
+  openRecoveryStore,
   type RecoveryStore,
+  type RecoveryStoreBackend,
+  type RecoveryStoreStatus,
+  type OpenRecoveryStoreOptions,
+  type OpenRecoveryStoreResult,
 } from "./recovery-store.js";
 
 export {
@@ -334,6 +341,13 @@ export {
 
 export {
   createFileCredentialRotationStore,
+  createMemoryCredentialRotationStore,
+  createPgCredentialRotationStore,
   defaultCredentialRotationStateDir,
+  openCredentialRotationStore,
   type CredentialRotationStore,
+  type CredentialRotationStoreBackend,
+  type CredentialRotationStoreStatus,
+  type OpenCredentialRotationStoreOptions,
+  type OpenCredentialRotationStoreResult,
 } from "./credential-rotation-store.js";

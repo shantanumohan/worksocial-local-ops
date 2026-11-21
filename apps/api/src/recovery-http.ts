@@ -85,7 +85,7 @@ export async function handleRecoveryRequest(input: {
       res,
       200,
       {
-        ...recovery.status(),
+        ...(await recovery.status()),
         note: "Fixture recovery evidence. Live recovery NOT_RUN; never silently VERIFIED. External effects NONE.",
       },
       cors,
@@ -99,7 +99,7 @@ export async function handleRecoveryRequest(input: {
       json(res, 401, { error: session.code, reason: session.reason }, cors);
       return true;
     }
-    json(res, 200, recovery.inspection(), cors);
+    json(res, 200, await recovery.inspection(), cors);
     return true;
   }
 
@@ -113,7 +113,7 @@ export async function handleRecoveryRequest(input: {
       res,
       200,
       {
-        timeline: recovery.listTimeline(),
+        timeline: await recovery.listTimeline(),
         note: "Health timeline distinguishes STALE_OBSERVATION / ACTIVE_INCIDENT / UNKNOWN_REMOTE_OUTCOME.",
       },
       cors,
@@ -131,7 +131,7 @@ export async function handleRecoveryRequest(input: {
       res,
       200,
       {
-        queuedWork: recovery.listQueuedWork(),
+        queuedWork: await recovery.listQueuedWork(),
         note: "Queued work preserved during outage — no duplicate external apply.",
       },
       cors,
@@ -149,7 +149,7 @@ export async function handleRecoveryRequest(input: {
       res,
       200,
       {
-        capabilityStops: recovery.listCapabilityStops(),
+        capabilityStops: await recovery.listCapabilityStops(),
         note: "Capability-level stop only. Unrelated healthy workstreams remain allowed.",
       },
       cors,
@@ -167,7 +167,7 @@ export async function handleRecoveryRequest(input: {
       res,
       200,
       {
-        runs: recovery.listRuns(),
+        runs: await recovery.listRuns(),
         note: "Fixture recovery runs only. liveRecoveryVerified is always false.",
       },
       cors,
@@ -218,7 +218,7 @@ export async function handleRecoveryRequest(input: {
         );
         return true;
       }
-      const result = recovery.runFixtureRecovery({
+      const result = await recovery.runFixtureRecovery({
         scenarioId: parsed.value.scenarioId,
       });
       json(
@@ -233,7 +233,7 @@ export async function handleRecoveryRequest(input: {
       );
       return true;
     }
-    const result = recovery.runFixtureRecovery({});
+    const result = await recovery.runFixtureRecovery({});
     json(
       res,
       result.ok ? 200 : 500,

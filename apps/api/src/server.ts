@@ -53,6 +53,14 @@ export async function startApiServer(options: ApiServerOptions): Promise<{
       void runtime.evaluationPool.end().catch(() => undefined);
       runtime.evaluationPool = null;
     }
+    if (runtime.recoveryPool) {
+      void runtime.recoveryPool.end().catch(() => undefined);
+      runtime.recoveryPool = null;
+    }
+    if (runtime.credentialRotationPool) {
+      void runtime.credentialRotationPool.end().catch(() => undefined);
+      runtime.credentialRotationPool = null;
+    }
   });
 
   return {
