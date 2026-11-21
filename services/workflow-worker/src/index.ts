@@ -1,4 +1,4 @@
-/** @worksocial/workflow-worker — mission enqueue + durable local workflows (Temporal NOT_WIRED). */
+/** @worksocial/workflow-worker — mission enqueue + durable local workflows + Temporal wiring. */
 
 export {
   createMissionEnqueueService,
@@ -10,9 +10,13 @@ export {
 
 export {
   probeTemporalBinding,
+  probeTemporalConnection,
   runtimeTemporalLabel,
+  temporalSdkPresent,
+  TEMPORAL_TASK_QUEUE,
   type TemporalBindingStatus,
   type TemporalBindingReport,
+  type TemporalSdkDependency,
 } from "./temporal-binding.js";
 
 export {
@@ -28,5 +32,21 @@ export {
   type EvidenceMissionResult,
   type EvidenceMissionRuntime,
 } from "./evidence-mission.js";
+
+export {
+  createTemporalMissionClient,
+  type TemporalMissionClient,
+} from "./temporal/client.js";
+
+export {
+  createTemporalMissionWorker,
+  type CreateTemporalWorkerOptions,
+} from "./temporal/worker.js";
+
+export type {
+  TemporalMissionInput,
+  TemporalMissionResult,
+  TemporalMissionEnvelope,
+} from "./temporal/types.js";
 
 export const packageName = "@worksocial/workflow-worker" as const;

@@ -114,7 +114,7 @@ jobs:
       - name: Database suite (restart + uniqueness races)
         run: pnpm test:database
 
-      - name: Workflow suite (LOCAL_DURABLE mission + Temporal NOT_WIRED probe)
+      - name: Workflow suite (LOCAL_DURABLE + Temporal local test-server crash/restart)
         run: pnpm test:workflow
 
   # Stub/incomplete suites (security/eval) are NOT required green checks —

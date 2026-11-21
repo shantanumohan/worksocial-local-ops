@@ -110,6 +110,8 @@ import {
 } from "@worksocial/claude-runner";
 import {
   createMissionEnqueueService,
+  probeTemporalConnection,
+  runtimeTemporalLabel,
   type MissionEnqueueService,
 } from "@worksocial/workflow-worker";
 import {
@@ -1629,6 +1631,10 @@ export async function handleApiRequest(
     }
     const state = runtime.roleRuntimeStore.read();
     const cli = await runtime.runner.detectCli();
+    const temporalProbe = await probeTemporalConnection(process.env, {
+      timeoutMs: 1_500,
+    });
+    const temporalWiring = runtimeTemporalLabel(temporalProbe);
     json(
       res,
       200,
@@ -1645,11 +1651,17 @@ export async function handleApiRequest(
         roles: state.roles,
         recentRuns: state.runs.slice(0, 20),
         learningOutcomes: state.outcomes.slice(0, 20),
-        temporalWiring: state.temporalWiring,
+        temporalWiring,
+        temporalProbe: {
+          status: temporalProbe.status,
+          address: temporalProbe.address,
+          detail: temporalProbe.detail,
+          sdkDependency: temporalProbe.sdkDependency,
+        },
         cli,
         budget: runtime.runner.getBudgetAccount(),
         honestLabelsNote:
-          "Fixture / NOT_WIRED ≠ live Claude fleet. permissionBypassUsed is always false. Outcome labels feed learning-worker proposals under review.",
+          "Fixture ≠ sandbox ≠ live. Temporal TEMPORAL only when frontend reachable. Live CMS/Zoho/GSC stay NOT_WIRED. permissionBypassUsed is always false.",
       },
       cors,
     );
@@ -1692,12 +1704,22 @@ export async function handleApiRequest(
         run.outcome,
       );
     }
+    const temporalProbe = await probeTemporalConnection(process.env, {
+      timeoutMs: 1_500,
+    });
+    const temporalStatus = runtimeTemporalLabel(temporalProbe);
     json(
       res,
       200,
       {
         evaluated: results.length,
-        temporalStatus: "NOT_WIRED",
+        temporalStatus,
+        temporalProbe: {
+          status: temporalProbe.status,
+          address: temporalProbe.address,
+          detail: temporalProbe.detail,
+          sdkDependency: temporalProbe.sdkDependency,
+        },
         results: results.map((r) => ({
           roleId: r.roleId,
           status: r.status,
@@ -1707,7 +1729,10 @@ export async function handleApiRequest(
           costMinor: r.costMinor,
           costKind: r.costKind,
         })),
-        note: "Offline fixture evaluation for all 30 roles. Temporal remains NOT_WIRED.",
+        note:
+          temporalStatus === "TEMPORAL"
+            ? "Offline fixture evaluation for all 30 roles. Temporal cluster reachable (TEMPORAL); this evaluate path remains fixture. Live CMS/Zoho/GSC NOT_WIRED."
+            : "Offline fixture evaluation for all 30 roles. Temporal remains NOT_WIRED.",
       },
       cors,
     );

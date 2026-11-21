@@ -9,7 +9,8 @@ export type ServiceWiringStatus =
   | "process-managed"
   | "identity-wired"
   | "stub"
-  | "NOT_WIRED";
+  | "NOT_WIRED"
+  | "temporal-wired";
 
 export type ServiceHealthStatus =
   | "stopped"

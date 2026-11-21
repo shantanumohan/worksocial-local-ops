@@ -40,6 +40,14 @@ function heartbeatSlotScript(repoRoot: string): string {
   return join(repoRoot, "services/supervisor/src/slots/heartbeat-slot.ts");
 }
 
+function temporalWorkerScript(repoRoot: string): string {
+  return join(repoRoot, "services/workflow-worker/src/temporal/worker-main.ts");
+}
+
+function temporalAddressConfigured(): boolean {
+  return Boolean(process.env.TEMPORAL_ADDRESS?.trim());
+}
+
 function apiCliScript(repoRoot: string): string {
   return join(repoRoot, "apps/api/src/cli.ts");
 }
@@ -54,6 +62,9 @@ function slotEntrypoint(repoRoot: string, serviceId: ServiceSlotId): string {
   }
   if (serviceId === "console") {
     return consoleCliScript(repoRoot);
+  }
+  if (serviceId === "temporal-worker" && temporalAddressConfigured()) {
+    return temporalWorkerScript(repoRoot);
   }
   return heartbeatSlotScript(repoRoot);
 }
@@ -99,6 +110,20 @@ function buildArgs(request: SpawnRequest): string[] {
       String(leaseTtlMs),
       "--port",
       String(config.consolePort),
+    ];
+  }
+
+  if (serviceId === "temporal-worker" && temporalAddressConfigured()) {
+    return [
+      entry,
+      "--state-dir",
+      config.stateDir,
+      "--generation",
+      generationId,
+      "--host-id",
+      hostId,
+      "--lease-ttl-ms",
+      String(leaseTtlMs),
     ];
   }
 
@@ -150,7 +175,8 @@ async function signalAndWait(pid: number, signal: NodeJS.Signals): Promise<void>
 
 /**
  * Default spawner: detached child processes (survive VS Code/terminal close).
- * API/console expose loopback health HTTP; temporal-worker is an honest stub slot.
+ * API/console expose loopback health HTTP.
+ * temporal-worker is a stub unless TEMPORAL_ADDRESS is set (then real Temporal worker).
  */
 export function createChildProcessSpawner(
   ownershipProbe: ProcessOwnershipProbe = defaultOwnershipProbe(),

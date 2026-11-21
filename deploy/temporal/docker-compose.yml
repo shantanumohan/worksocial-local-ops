@@ -1,0 +1,49 @@
+# Local Temporal auto-setup for WorkSocial durable missions.
+# Usage:
+#   docker compose -f deploy/temporal/docker-compose.yml up -d
+#   export TEMPORAL_ADDRESS=127.0.0.1:7233
+#   export TEMPORAL_NAMESPACE=default
+#   pnpm local:start
+#
+# UI: http://127.0.0.1:8233
+# External effects: none — orchestration only. Live CMS/Zoho/GSC stay NOT_WIRED.
+
+services:
+  temporal:
+    image: temporalio/auto-setup:1.25.2
+    ports:
+      - "7233:7233"
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=temporal-db
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    depends_on:
+      - temporal-db
+    volumes:
+      - ./dynamicconfig:/etc/temporal/config/dynamicconfig
+
+  temporal-db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_USER: temporal
+    ports:
+      - "5433:5432"
+    volumes:
+      - temporal-pg-data:/var/lib/postgresql/data
+
+  temporal-ui:
+    image: temporalio/ui:2.31.2
+    ports:
+      - "8233:8080"
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    depends_on:
+      - temporal
+
+volumes:
+  temporal-pg-data:
