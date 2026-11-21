@@ -19,7 +19,8 @@ Compose: `deploy/temporal/docker-compose.yml`.
 
 ## Durable mission (LOCAL_DURABLE)
 
-`createDurableMissionRuntime` / `createMemoryDurableMissionRuntime`:
+`createDurableMissionRuntime` / `createMemoryDurableMissionRuntime` /
+`createPgDurableMissionRuntime`:
 
 1. Enqueue workflow + job **before** effect ack
 2. Claim lease
@@ -34,8 +35,13 @@ Compose: `deploy/temporal/docker-compose.yml`.
 
 1. Same effect boundary as LOCAL_DURABLE (idempotent `operationId`)
 2. Worker polls task queue `worksocial-missions`
-3. Crash/restart proven via `@temporalio/testing` local server (`pnpm test:workflow`)
-4. History replay via `Worker.runReplayHistory`
+3. Activity stores: Postgres when `DATABASE_URL` set; memory only with
+   `WORKSOCIAL_TEMPORAL_ALLOW_MEMORY=1`
+4. Crash/restart proven via `@temporalio/testing` local server (`pnpm test:workflow`)
+5. History replay via `Worker.runReplayHistory`
+
+API: `bindTemporalMissionEnqueue` injects `createTemporalMissionClient` when the
+frontend is reachable so missions start Temporal workflows (not in-process Claude).
 
 Supervisor: when `TEMPORAL_ADDRESS` is set, the `temporal-worker` slot runs
 `src/temporal/worker-main.ts` instead of the stub heartbeat.

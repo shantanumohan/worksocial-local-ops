@@ -1,18 +1,26 @@
 import { createServer, type Server } from "node:http";
-import { createApiRuntime, handleApiRequest, type ApiRuntime } from "./auth-http.js";
+import {
+  bindTemporalMissionEnqueue,
+  createApiRuntime,
+  handleApiRequest,
+  type ApiRuntime,
+} from "./auth-http.js";
 
 export type ApiServerOptions = {
   stateDir: string;
   port: number;
   consolePort: number;
   ownerPassword?: string;
+  /** Skip Temporal client bind (tests / offline). Default: probe and bind. */
+  skipTemporalBind?: boolean;
 };
 
-export function startApiServer(options: ApiServerOptions): {
+export async function startApiServer(options: ApiServerOptions): Promise<{
   server: Server;
   runtime: ApiRuntime;
   port: number;
-} {
+  temporalEnqueueStatus: string;
+}> {
   const runtime = createApiRuntime({
     stateDir: options.stateDir,
     apiPort: options.port,
@@ -22,6 +30,12 @@ export function startApiServer(options: ApiServerOptions): {
       : {}),
   });
 
+  let temporalEnqueueStatus = "NOT_WIRED";
+  if (!options.skipTemporalBind) {
+    const bound = await bindTemporalMissionEnqueue(runtime);
+    temporalEnqueueStatus = bound.temporalStatus;
+  }
+
   const server = createServer((req, res) => {
     void handleApiRequest(runtime, req, res).catch((err: unknown) => {
       const message = err instanceof Error ? err.message : String(err);
@@ -30,5 +44,17 @@ export function startApiServer(options: ApiServerOptions): {
     });
   });
 
-  return { server, runtime, port: options.port };
+  server.on("close", () => {
+    if (runtime.temporalClient) {
+      void runtime.temporalClient.close().catch(() => undefined);
+      runtime.temporalClient = null;
+    }
+  });
+
+  return {
+    server,
+    runtime,
+    port: options.port,
+    temporalEnqueueStatus,
+  };
 }

@@ -1,16 +1,15 @@
 /**
  * Process entry for the supervisor temporal-worker slot when TEMPORAL_ADDRESS is set.
  * Writes heartbeats and runs a Temporal worker against worksocial-missions.
+ * Activity stores: Postgres when DATABASE_URL set; memory only with escape hatch.
  * External effects: none (simulator durable path only).
  */
 
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import {
-  createMemoryDurableMissionRuntime,
-} from "../durable-mission.js";
 import { probeTemporalConnection } from "../temporal-binding.js";
 import { createTemporalMissionWorker } from "./worker.js";
+import { createTemporalWorkerMissionStores } from "./worker-stores.js";
 
 function argValue(name: string): string | undefined {
   const idx = process.argv.indexOf(name);
@@ -133,29 +132,44 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const runtime = createMemoryDurableMissionRuntime({
-    temporalLabelOverride: "TEMPORAL",
-  });
+  let stores;
+  try {
+    stores = createTemporalWorkerMissionStores({
+      temporalLabelOverride: "TEMPORAL",
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    tick("unhealthy", "NOT_WIRED", message);
+    process.exit(1);
+  }
+
   const worker = await createTemporalMissionWorker({
     address,
     namespace,
-    runtime,
+    runtime: stores.runtime,
   });
 
+  const storeLabel = stores.storeKind === "postgres" ? "PG" : "memory";
   tick(
     "running",
     "temporal-wired",
-    `Temporal worker polling ${address} ns=${namespace} queue=worksocial-missions. External effects NONE.`,
+    `Temporal worker polling ${address} ns=${namespace} queue=worksocial-missions stores=${storeLabel}. ${stores.detail} External effects NONE.`,
   );
   setInterval(() => {
     tick(
       "running",
       "temporal-wired",
-      `Temporal worker alive at ${address} (ns=${namespace}).`,
+      `Temporal worker alive at ${address} (ns=${namespace}) stores=${storeLabel}.`,
     );
   }, 2_000);
 
-  await worker.run();
+  try {
+    await worker.run();
+  } finally {
+    if (stores.pool) {
+      await stores.pool.end().catch(() => undefined);
+    }
+  }
 }
 
 main().catch((err) => {

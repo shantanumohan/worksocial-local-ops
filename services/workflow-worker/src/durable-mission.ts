@@ -20,10 +20,13 @@ import {
   createDurableExecutionService,
   createMemoryDurableStores,
   createMemoryMissionWorkflowStore,
+  createPgDurableExecutionService,
+  createPgMissionWorkflowStore,
   newJobId,
   type DurableExecutionService,
   type MissionWorkflowStore,
   type MissionWorkflowRecord,
+  type PgPool,
 } from "@worksocial/persistence";
 import {
   probeTemporalBinding,
@@ -555,6 +558,22 @@ export function createMemoryDurableMissionRuntime(options?: {
     execution: createDurableExecutionService(stores),
     ...(options?.temporalEnv ? { temporalEnv: options.temporalEnv } : {}),
     ...(options?.temporalLabelOverride
+      ? { temporalLabelOverride: options.temporalLabelOverride }
+      : {}),
+  });
+}
+
+/** Postgres-backed durable mission runtime (LOCAL_DURABLE or Temporal activities). */
+export function createPgDurableMissionRuntime(options: {
+  pool: PgPool;
+  temporalEnv?: NodeJS.ProcessEnv;
+  temporalLabelOverride?: "NOT_WIRED" | "LOCAL_DURABLE" | "FIXTURE" | "TEMPORAL";
+}): DurableMissionRuntime {
+  return createDurableMissionRuntime({
+    missions: createPgMissionWorkflowStore(options.pool),
+    execution: createPgDurableExecutionService(options.pool),
+    ...(options.temporalEnv ? { temporalEnv: options.temporalEnv } : {}),
+    ...(options.temporalLabelOverride
       ? { temporalLabelOverride: options.temporalLabelOverride }
       : {}),
   });
