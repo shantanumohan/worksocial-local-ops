@@ -1,10 +1,13 @@
 /**
- * WP10 / F24 HTTP — credential revoke / rotate / offboard honesty.
- * Live provider revoke stays NOT_WIRED; external effects NONE; catalog NOT_RUN.
+ * WP10 / F24 HTTP — credential revoke / rotate / rebind / offboard honesty.
+ * T-X029: different-account tokens require explicit rebind (not silent rotate).
+ * Rebind approval is derived from the authenticated administrator session.
+ * Live provider revoke stays NOT_WIRED; external effects NONE.
  */
 
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { CredentialRotationService } from "@worksocial/credential-rotation";
+import { isLocalRole, roleMayPerform } from "@worksocial/domain";
 
 type JsonFn = (
   res: ServerResponse,
@@ -37,12 +40,14 @@ const PATHS = [
   "/credentials/queued-work",
   "/credentials/audit",
   "/credentials/rotations",
+  "/credentials/rebinds",
   "/credentials/manifests",
   "/credentials/seed",
   "/credentials/lease",
   "/credentials/effect",
   "/credentials/revoke",
   "/credentials/rotate",
+  "/credentials/rebind",
   "/credentials/offboard",
   "/credentials/live-revoke",
 ] as const;
@@ -95,7 +100,7 @@ export async function handleCredentialRotationRequest(input: {
       200,
       {
         ...(await credentials.status()),
-        note: "Fixture credential revoke/rotate/offboard. Live provider revocation NOT_WIRED. External effects NONE. Catalog NOT_RUN.",
+        note: "Fixture credential revoke/rotate/rebind/offboard. Different-account tokens require explicit rebind (T-X029). Live provider revocation NOT_WIRED. External effects NONE. Broader catalog NOT_RUN.",
       },
       cors,
     );
@@ -148,6 +153,16 @@ export async function handleCredentialRotationRequest(input: {
     return true;
   }
 
+  if (method === "GET" && url.pathname === "/credentials/rebinds") {
+    const session = requireSession(req, { requireCsrf: false });
+    if (!session.ok) {
+      json(res, 401, { error: session.code, reason: session.reason }, cors);
+      return true;
+    }
+    json(res, 200, { rebinds: await credentials.listRebinds() }, cors);
+    return true;
+  }
+
   if (method === "GET" && url.pathname === "/credentials/manifests") {
     const session = requireSession(req, { requireCsrf: false });
     if (!session.ok) {
@@ -159,7 +174,11 @@ export async function handleCredentialRotationRequest(input: {
   }
 
   async function readBodyObject(): Promise<
-    | { ok: true; value: Record<string, unknown> }
+    | {
+        ok: true;
+        value: Record<string, unknown>;
+        session: { role: string; userId: string; csrfToken?: string };
+      }
     | { ok: false }
   > {
     const session = requireSession(req, csrfOpts);
@@ -173,7 +192,7 @@ export async function handleCredentialRotationRequest(input: {
       json(res, 400, { error: "INVALID_JSON", reason: parsed.error }, cors);
       return { ok: false };
     }
-    return { ok: true, value: parsed.value };
+    return { ok: true, value: parsed.value, session: session.session };
   }
 
   if (method === "POST" && url.pathname === "/credentials/seed") {
@@ -273,16 +292,33 @@ export async function handleCredentialRotationRequest(input: {
     const body = await readBodyObject();
     if (!body.ok) return true;
     if (
+      !isLocalRole(body.session.role) ||
+      !roleMayPerform(body.session.role, "manage_standing_policies")
+    ) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason: "Credential rotate requires administrator manage_standing_policies",
+        },
+        cors,
+      );
+      return true;
+    }
+    if (
       typeof body.value.connectionId !== "string" ||
-      typeof body.value.approvedBy !== "string" ||
-      typeof body.value.secretMaterial !== "string"
+      typeof body.value.secretMaterial !== "string" ||
+      typeof body.value.observedAccountLabel !== "string" ||
+      body.value.observedAccountLabel.trim() === ""
     ) {
       json(
         res,
         400,
         {
           error: "INVALID_BODY",
-          reason: "connectionId, approvedBy, and secretMaterial required",
+          reason:
+            "connectionId, secretMaterial, and non-empty observedAccountLabel required (T-X029)",
         },
         cors,
       );
@@ -290,10 +326,60 @@ export async function handleCredentialRotationRequest(input: {
     }
     const result = await credentials.rotate({
       connectionId: body.value.connectionId,
-      approvedBy: body.value.approvedBy,
+      approvedBy: body.session.userId,
       secretMaterial: body.value.secretMaterial,
+      observedAccountLabel: body.value.observedAccountLabel,
     });
     // Never echo secretMaterial back.
+    json(res, result.ok ? 200 : 400, result, cors);
+    return true;
+  }
+
+  if (method === "POST" && url.pathname === "/credentials/rebind") {
+    const body = await readBodyObject();
+    if (!body.ok) return true;
+    if (
+      !isLocalRole(body.session.role) ||
+      !roleMayPerform(body.session.role, "manage_standing_policies")
+    ) {
+      json(
+        res,
+        403,
+        {
+          error: "FORBIDDEN",
+          reason: "Credential rebind requires administrator manage_standing_policies",
+        },
+        cors,
+      );
+      return true;
+    }
+    if (
+      typeof body.value.connectionId !== "string" ||
+      typeof body.value.newAccountLabel !== "string" ||
+      typeof body.value.secretMaterial !== "string"
+    ) {
+      json(
+        res,
+        400,
+        {
+          error: "INVALID_BODY",
+          reason:
+            "connectionId, newAccountLabel, and secretMaterial required for explicit rebind (T-X029)",
+        },
+        cors,
+      );
+      return true;
+    }
+    const result = await credentials.rebind({
+      connectionId: body.value.connectionId,
+      newAccountLabel: body.value.newAccountLabel,
+      approvedBy: body.session.userId,
+      secretMaterial: body.value.secretMaterial,
+      ...(typeof body.value.newConnectionId === "string"
+        ? { newConnectionId: body.value.newConnectionId }
+        : {}),
+    });
+    // Never echo secretMaterial back. approvedBy is session-derived.
     json(res, result.ok ? 200 : 400, result, cors);
     return true;
   }

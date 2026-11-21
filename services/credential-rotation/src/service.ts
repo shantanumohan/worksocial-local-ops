@@ -12,18 +12,23 @@ import {
   applyQueuedCancelResults,
   attemptLiveProviderRevoke,
   buildOffboardingManifest,
+  buildRebindRecord,
   buildRotationRecord,
   cancelEligibleQueuedWork,
   connectionStatusView,
   createAuditEntry,
   evaluateCredentialLease,
+  evaluateExplicitRebind,
   evaluateSendTimeEffect,
+  evaluateSilentRotateAllowed,
   markConnectionRevoked,
+  markConnectionRotatedAway,
   seedFixtureConnection,
   type CredentialLeaseDecision,
   type CredentialEffectDecision,
   type FixtureCredentialConnection,
   type OffboardingManifest,
+  type CredentialRebindRecord,
   type CredentialRotationRecord,
 } from "@worksocial/domain";
 import type { CredentialBroker } from "@worksocial/credential-broker";
@@ -52,6 +57,9 @@ export type CredentialRotationService = {
   listRotations(
     limit?: number,
   ): Promise<Awaited<ReturnType<CredentialRotationStore["listRotations"]>>>;
+  listRebinds(
+    limit?: number,
+  ): Promise<Awaited<ReturnType<CredentialRotationStore["listRebinds"]>>>;
   listManifests(
     limit?: number,
   ): Promise<Awaited<ReturnType<CredentialRotationStore["listManifests"]>>>;
@@ -96,6 +104,8 @@ export type CredentialRotationService = {
     connectionId: string;
     approvedBy: string;
     secretMaterial: string;
+    /** Required non-empty identity proof — blank cannot authorize silent rotate (T-X029). */
+    observedAccountLabel: string;
     nowIso?: string;
   }): Promise<
     | {
@@ -104,6 +114,31 @@ export type CredentialRotationService = {
         rotation: CredentialRotationRecord;
         liveProviderRevoke: "NOT_WIRED";
         externalEffects: "NONE";
+      }
+    | { ok: false; code: string; reason: string }
+  >;
+  /**
+   * Explicit different-account rebind (T-X029).
+   * Old connection → ROTATED_AWAY; new connection for the new account.
+   * Never treats different-account tokens as transparent refresh.
+   */
+  rebind(input: {
+    connectionId: string;
+    newAccountLabel: string;
+    approvedBy: string;
+    secretMaterial: string;
+    nowIso?: string;
+    newConnectionId?: string;
+  }): Promise<
+    | {
+        ok: true;
+        oldConnection: FixtureCredentialConnection;
+        newConnection: FixtureCredentialConnection;
+        rebind: CredentialRebindRecord;
+        cancelResults: ReturnType<typeof cancelEligibleQueuedWork>;
+        liveProviderRevoke: "NOT_WIRED";
+        externalEffects: "NONE";
+        catalogCaseId: "T-X029";
       }
     | { ok: false; code: string; reason: string }
   >;
@@ -164,6 +199,10 @@ export function createCredentialRotationService(input: {
 
     listRotations(limit) {
       return store.listRotations(limit);
+    },
+
+    listRebinds(limit) {
+      return store.listRebinds(limit);
     },
 
     listManifests(limit) {
@@ -437,6 +476,33 @@ export function createCredentialRotationService(input: {
         };
       }
 
+      const silent = evaluateSilentRotateAllowed({
+        previousAccountLabel: existing.accountLabel,
+        observedAccountLabel: req.observedAccountLabel,
+      });
+      if (!silent.ok) {
+        await store.appendAudit(
+          createAuditEntry({
+            entryId: `aud-${randomUUID()}`,
+            kind: CredentialAuditKind.REBIND_REQUIRED,
+            connectionId: existing.connectionId,
+            referenceId: existing.referenceId,
+            summary: silent.reason,
+            nowIso,
+            details: {
+              code: silent.code,
+              previousAccountLabel: existing.accountLabel,
+              observedAccountLabel: req.observedAccountLabel ?? null,
+            },
+          }),
+        );
+        return {
+          ok: false,
+          code: silent.code,
+          reason: silent.reason,
+        };
+      }
+
       const rotated = broker.rotateReference({
         oldReferenceId: existing.referenceId,
         secretMaterial: req.secretMaterial,
@@ -480,6 +546,7 @@ export function createCredentialRotationService(input: {
             oldReferenceId: rotated.oldReference.referenceId,
             newReferenceId: rotated.newReference.referenceId,
             approvedBy: req.approvedBy,
+            sameAccount: true,
             liveProviderRevoke: "NOT_WIRED",
           },
         }),
@@ -491,6 +558,165 @@ export function createCredentialRotationService(input: {
         rotation,
         liveProviderRevoke: "NOT_WIRED",
         externalEffects: "NONE",
+      };
+    },
+
+    async rebind(req) {
+      const nowIso = req.nowIso ?? new Date().toISOString();
+      const existing = await store.getConnection(req.connectionId);
+      const decision = evaluateExplicitRebind({
+        connection: existing,
+        newAccountLabel: req.newAccountLabel,
+        approvedBy: req.approvedBy,
+      });
+      if (!decision.ok) {
+        if (
+          decision.code === "SAME_ACCOUNT" ||
+          decision.code === "APPROVAL_REQUIRED"
+        ) {
+          await store.appendAudit(
+            createAuditEntry({
+              entryId: `aud-${randomUUID()}`,
+              kind: CredentialAuditKind.REBIND_REQUIRED,
+              connectionId: existing?.connectionId ?? null,
+              referenceId: existing?.referenceId ?? null,
+              summary: decision.reason,
+              nowIso,
+              details: { code: decision.code },
+            }),
+          );
+        }
+        return {
+          ok: false,
+          code: decision.code,
+          reason: decision.reason,
+        };
+      }
+      if (!existing) {
+        return {
+          ok: false,
+          code: "CONNECTION_MISSING",
+          reason: "Unknown credential connection",
+        };
+      }
+
+      let newConnectionId = req.newConnectionId?.trim() || `conn-${randomUUID()}`;
+      if (newConnectionId === existing.connectionId) {
+        return {
+          ok: false,
+          code: "CONNECTION_ID_COLLISION",
+          reason:
+            "Successor connectionId must differ from the connection being rebound",
+        };
+      }
+      const colliding = await store.getConnection(newConnectionId);
+      if (colliding) {
+        return {
+          ok: false,
+          code: "CONNECTION_ID_COLLISION",
+          reason: `Successor connectionId '${newConnectionId}' already exists`,
+        };
+      }
+
+      const newRef = broker.putReference(
+        existing.providerId,
+        existing.scopes,
+        req.secretMaterial,
+        nowIso,
+      );
+      broker.revokeReference(existing.referenceId, nowIso);
+
+      const oldRotatedAway = markConnectionRotatedAway(
+        existing,
+        nowIso,
+        req.approvedBy,
+        newRef.referenceId,
+      );
+      await store.upsertConnection(oldRotatedAway);
+
+      const queued = await store.listQueuedWork(existing.connectionId);
+      const cancelResults = cancelEligibleQueuedWork(queued);
+      await store.upsertQueuedWork(
+        applyQueuedCancelResults(queued, cancelResults),
+      );
+
+      for (const result of cancelResults) {
+        await store.appendAudit(
+          createAuditEntry({
+            entryId: `aud-${randomUUID()}`,
+            kind: result.cancelled
+              ? CredentialAuditKind.QUEUED_CANCELLED
+              : result.retainedForReconcile
+                ? CredentialAuditKind.QUEUED_RETAINED_POST_APPLY
+                : CredentialAuditKind.QUEUED_CANCELLED,
+            connectionId: existing.connectionId,
+            referenceId: existing.referenceId,
+            summary: `${result.workId}: ${result.reason}`,
+            nowIso,
+            details: {
+              workId: result.workId,
+              fromState: result.fromState,
+              toState: result.toState,
+              cancelled: result.cancelled,
+            },
+          }),
+        );
+      }
+
+      const newConnection = seedFixtureConnection({
+        connectionId: newConnectionId,
+        providerId: existing.providerId,
+        referenceId: newRef.referenceId,
+        accountLabel: decision.newAccountLabel,
+        scopes: existing.scopes,
+        nowIso,
+      });
+      await store.upsertConnection({
+        ...newConnection,
+        approvedBy: req.approvedBy,
+      });
+      const rebind = buildRebindRecord({
+        rebindId: `reb-${randomUUID()}`,
+        oldConnectionId: existing.connectionId,
+        newConnectionId: newConnection.connectionId,
+        oldAccountLabel: decision.oldAccountLabel,
+        newAccountLabel: decision.newAccountLabel,
+        oldReferenceId: existing.referenceId,
+        newReferenceId: newRef.referenceId,
+        approvedBy: req.approvedBy,
+        nowIso,
+      });
+      await store.addRebind(rebind);
+      await store.appendAudit(
+        createAuditEntry({
+          entryId: `aud-${randomUUID()}`,
+          kind: CredentialAuditKind.REBOUND,
+          connectionId: newConnection.connectionId,
+          referenceId: newRef.referenceId,
+          summary: rebind.summary,
+          nowIso,
+          details: {
+            rebindId: rebind.rebindId,
+            oldConnectionId: existing.connectionId,
+            newConnectionId: newConnection.connectionId,
+            oldAccountLabel: decision.oldAccountLabel,
+            newAccountLabel: decision.newAccountLabel,
+            catalogCaseId: "T-X029",
+            liveProviderRevoke: "NOT_WIRED",
+            externalEffects: "NONE",
+          },
+        }),
+      );
+
+      return {
+        ok: true,
+        oldConnection: oldRotatedAway,
+        newConnection: { ...newConnection, approvedBy: req.approvedBy },
+        rebind,
+        cancelResults,
+        liveProviderRevoke: "NOT_WIRED",
+        externalEffects: "NONE",
+        catalogCaseId: "T-X029",
       };
     },
 

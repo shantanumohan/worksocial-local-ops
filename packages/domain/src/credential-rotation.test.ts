@@ -4,15 +4,21 @@ import { ConnectionState, WriteReadiness } from "./connection-status.js";
 import {
   attemptLiveProviderRevoke,
   buildOffboardingManifest,
+  buildRebindRecord,
   buildRotationRecord,
   cancelEligibleQueuedWork,
   applyQueuedCancelResults,
+  classifyAccountTokenChange,
   connectionStatusView,
   createAuditEntry,
   evaluateCredentialLease,
+  evaluateExplicitRebind,
   evaluateSendTimeEffect,
+  evaluateSilentRotateAllowed,
   markConnectionRevoked,
+  markConnectionRotatedAway,
   seedFixtureConnection,
+  AccountTokenChange,
   CredentialConnectionStatus,
   CredentialAuditKind,
   ResidualObligationStatus,
@@ -144,6 +150,7 @@ describe("credential rotation / revoke honesty", () => {
       nowIso: NOW,
     });
     expect(record.secretsExported).toBe(false);
+    expect(record.sameAccount).toBe(true);
     expect(record.liveProviderRevoke).toBe("NOT_WIRED");
     // Opaque reference ids only — never raw vault material.
     expect(JSON.stringify(record)).not.toMatch(
@@ -159,6 +166,106 @@ describe("credential rotation / revoke honesty", () => {
     expect(live.ok).toBe(false);
     expect(live.code).toBe("LIVE_PROVIDER_REVOKE_NOT_WIRED");
     expect(live.externalEffects).toBe("NONE");
+  });
+
+  it("T-X029: different-account token requires explicit rebind; silent rotate denied", () => {
+    expect(
+      classifyAccountTokenChange({
+        previousAccountLabel: "fixture-account-alpha",
+        observedAccountLabel: "fixture-account-beta",
+      }),
+    ).toBe(AccountTokenChange.DIFFERENT_ACCOUNT);
+
+    expect(
+      classifyAccountTokenChange({
+        previousAccountLabel: "Fixture-Account-Alpha",
+        observedAccountLabel: "fixture-account-alpha",
+      }),
+    ).toBe(AccountTokenChange.SAME_ACCOUNT);
+
+    const silent = evaluateSilentRotateAllowed({
+      previousAccountLabel: "fixture-account-alpha",
+      observedAccountLabel: "fixture-account-beta",
+    });
+    expect(silent).toMatchObject({ ok: false, code: "REBIND_REQUIRED" });
+
+    const sameOk = evaluateSilentRotateAllowed({
+      previousAccountLabel: "fixture-account-alpha",
+      observedAccountLabel: "fixture-account-alpha",
+    });
+    expect(sameOk.ok).toBe(true);
+
+    const noClaim = evaluateSilentRotateAllowed({
+      previousAccountLabel: "fixture-account-alpha",
+      observedAccountLabel: undefined,
+    });
+    expect(noClaim).toMatchObject({
+      ok: false,
+      code: "ACCOUNT_IDENTITY_REQUIRED",
+    });
+
+    const blankClaim = evaluateSilentRotateAllowed({
+      previousAccountLabel: "fixture-account-alpha",
+      observedAccountLabel: "   ",
+    });
+    expect(blankClaim).toMatchObject({
+      ok: false,
+      code: "ACCOUNT_IDENTITY_REQUIRED",
+    });
+
+    const conn = activeConnection();
+    const rebindOk = evaluateExplicitRebind({
+      connection: conn,
+      newAccountLabel: "fixture-account-beta",
+      approvedBy: "admin",
+    });
+    expect(rebindOk).toMatchObject({
+      ok: true,
+      change: AccountTokenChange.DIFFERENT_ACCOUNT,
+    });
+
+    const sameDenied = evaluateExplicitRebind({
+      connection: conn,
+      newAccountLabel: "fixture-cms",
+      approvedBy: "admin",
+    });
+    expect(sameDenied).toMatchObject({ ok: false, code: "SAME_ACCOUNT" });
+
+    const rotatedAway = markConnectionRotatedAway(
+      conn,
+      NOW,
+      "admin",
+      "cred-new",
+    );
+    expect(rotatedAway.status).toBe(CredentialConnectionStatus.ROTATED_AWAY);
+    expect(rotatedAway.rotatedToReferenceId).toBe("cred-new");
+    expect(
+      evaluateCredentialLease({
+        connection: rotatedAway,
+        requestedScopes: ["publish"],
+        leaseId: "lease-x",
+        nowIso: NOW,
+      }),
+    ).toMatchObject({ ok: false, code: "CONNECTION_ROTATED_AWAY" });
+
+    const record = buildRebindRecord({
+      rebindId: "reb-1",
+      oldConnectionId: "conn-1",
+      newConnectionId: "conn-2",
+      oldAccountLabel: "fixture-account-alpha",
+      newAccountLabel: "fixture-account-beta",
+      oldReferenceId: "cred-old",
+      newReferenceId: "cred-new",
+      approvedBy: "admin",
+      nowIso: NOW,
+    });
+    expect(record.explicitRebind).toBe(true);
+    expect(record.silentRefreshRejected).toBe(true);
+    expect(record.catalogCaseId).toBe("T-X029");
+    expect(record.externalEffects).toBe("NONE");
+    expect(record.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(record.secretsExported).toBe(false);
+    expect(JSON.stringify(record)).not.toMatch(/super-secret|raw-token/i);
   });
 
   it("offboarding retains audit obligations and flags provider revoke residual", () => {

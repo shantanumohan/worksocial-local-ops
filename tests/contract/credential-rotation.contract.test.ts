@@ -1,6 +1,7 @@
 /**
  * Contract: WP10 / F24 credential revoke → cancel queued → audit retained.
- * Live provider revoke stays NOT_WIRED. External effects NONE. Catalog NOT_RUN.
+ * T-X029: different-account token → explicit rebind (not silent rotate).
+ * Live provider revoke stays NOT_WIRED. External effects NONE.
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -95,5 +96,55 @@ describe("contract: WP10 credential rotation / offboarding", () => {
     expect(live.ok).toBe(false);
     expect(live.code).toBe("LIVE_PROVIDER_REVOKE_NOT_WIRED");
     expect(live.externalEffects).toBe("NONE");
+  });
+
+  it("T-X029: silent different-account rotate denied; explicit rebind succeeds", async () => {
+    const service = createCredentialRotationService({
+      store: createFileCredentialRotationStore(dir),
+      broker: createCredentialBroker(),
+    });
+    const seeded = await service.seedFixture({
+      accountLabel: "acct-a",
+      nowIso: "2026-11-21T22:00:00.000Z",
+      withQueuedWork: true,
+    });
+
+    const blank = await service.rotate({
+      connectionId: seeded.connection.connectionId,
+      approvedBy: "admin",
+      secretMaterial: "blank",
+      observedAccountLabel: "",
+      nowIso: "2026-11-21T22:00:30.000Z",
+    });
+    expect(blank).toMatchObject({
+      ok: false,
+      code: "ACCOUNT_IDENTITY_REQUIRED",
+    });
+
+    const silent = await service.rotate({
+      connectionId: seeded.connection.connectionId,
+      approvedBy: "admin",
+      secretMaterial: "nope",
+      observedAccountLabel: "acct-b",
+      nowIso: "2026-11-21T22:01:00.000Z",
+    });
+    expect(silent).toMatchObject({ ok: false, code: "REBIND_REQUIRED" });
+
+    const rebound = await service.rebind({
+      connectionId: seeded.connection.connectionId,
+      newAccountLabel: "acct-b",
+      approvedBy: "admin",
+      secretMaterial: "rebind-ok",
+      nowIso: "2026-11-21T22:02:00.000Z",
+    });
+    expect(rebound.ok).toBe(true);
+    if (!rebound.ok) throw new Error("expected rebind");
+    expect(rebound.catalogCaseId).toBe("T-X029");
+    expect(rebound.oldConnection.status).toBe("ROTATED_AWAY");
+    expect(rebound.newConnection.accountLabel).toBe("acct-b");
+    expect(rebound.externalEffects).toBe("NONE");
+    expect(rebound.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(rebound.rebind.secretsExported).toBe(false);
+    expect(JSON.stringify(rebound)).not.toContain("rebind-ok");
   });
 });

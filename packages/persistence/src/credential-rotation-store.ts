@@ -2,6 +2,7 @@
  * Credential rotation / offboarding store (WP10 / F24 / AA-48 PG cutover).
  * Schema: database/migrations/026_credential_rotation.sql
  *          + 027_credential_recovery_state.sql
+ *          + 028_credential_rebind.sql (T-X029)
  *
  * Backends:
  * - memory — fixture/unit fallback
@@ -9,6 +10,7 @@
  * - postgres — when DATABASE_URL / WORKSOCIAL_DATABASE_URL set
  *
  * Live provider revocation stays NOT_WIRED. External effects: NONE. Catalog: NOT_RUN.
+ * T-X029 fixture ACCEPTED only via explicit rebind evidence — not live VERIFIED.
  */
 
 import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from "node:fs";
@@ -17,6 +19,7 @@ import {
   emptyCredentialRotationState,
   type CredentialAuditEntry,
   type CredentialQueuedWorkItem,
+  type CredentialRebindRecord,
   type CredentialRotationRecord,
   type CredentialRotationState,
   type FixtureCredentialConnection,
@@ -40,6 +43,7 @@ export type CredentialRotationStoreStatus = {
   queuedWorkCount: number;
   auditCount: number;
   rotationCount: number;
+  rebindCount: number;
   manifestCount: number;
   liveWiring: CredentialRotationState["liveWiring"];
   catalogClaim: "NOT_RUN";
@@ -67,6 +71,7 @@ export type CredentialRotationStore = {
   addRotation(
     record: CredentialRotationRecord,
   ): Promise<CredentialRotationState>;
+  addRebind(record: CredentialRebindRecord): Promise<CredentialRotationState>;
   addManifest(manifest: OffboardingManifest): Promise<CredentialRotationState>;
   getConnection(
     connectionId: string,
@@ -75,12 +80,13 @@ export type CredentialRotationStore = {
   listQueuedWork(connectionId?: string): Promise<CredentialQueuedWorkItem[]>;
   listAudit(limit?: number): Promise<CredentialAuditEntry[]>;
   listRotations(limit?: number): Promise<CredentialRotationRecord[]>;
+  listRebinds(limit?: number): Promise<CredentialRebindRecord[]>;
   listManifests(limit?: number): Promise<OffboardingManifest[]>;
   status(): Promise<CredentialRotationStoreStatus>;
 };
 
 const HONEST_NOTE =
-  "Fixture credential revoke/rotate/offboard only. Live provider revocation NOT_WIRED. External effects NONE. Catalog NOT_RUN. PG persistence ≠ live VERIFIED.";
+  "Fixture credential revoke/rotate/rebind/offboard only. Different-account tokens require explicit rebind (T-X029). Live provider revocation NOT_WIRED. External effects NONE. Broader catalog NOT_RUN. PG persistence ≠ live VERIFIED.";
 
 function atomicWriteJson(filePath: string, value: unknown): void {
   mkdirSync(dirname(filePath), { recursive: true });
@@ -99,9 +105,11 @@ function readJsonFile<T>(filePath: string): T | null {
 function sealedState(state: CredentialRotationState): CredentialRotationState {
   return {
     ...state,
+    rebinds: state.rebinds ?? [],
     liveWiring: {
       localRevoke: "fixture",
       localRotation: "fixture",
+      localRebind: "fixture",
       offboardingManifest: "fixture",
       liveProviderRevocation: "NOT_WIRED",
     },
@@ -127,6 +135,7 @@ function normalizeState(
     queuedWork: raw.queuedWork ?? [],
     audit: raw.audit ?? [],
     rotations: raw.rotations ?? [],
+    rebinds: raw.rebinds ?? [],
     offboardingManifests: raw.offboardingManifests ?? [],
   });
 }
@@ -145,6 +154,7 @@ function statusFromState(
     queuedWorkCount: state.queuedWork.length,
     auditCount: state.audit.length,
     rotationCount: state.rotations.length,
+    rebindCount: state.rebinds.length,
     manifestCount: state.offboardingManifests.length,
     liveWiring: state.liveWiring,
     catalogClaim: "NOT_RUN",
@@ -219,6 +229,12 @@ function createStateBackedStore(input: {
         rotations: [...state.rotations, record],
         updatedAtIso: record.createdAtIso,
       })),
+    addRebind: (record) =>
+      update((state) => ({
+        ...state,
+        rebinds: [...state.rebinds, record],
+        updatedAtIso: record.createdAtIso,
+      })),
     addManifest: (manifest) =>
       update((state) => ({
         ...state,
@@ -237,6 +253,7 @@ function createStateBackedStore(input: {
     },
     listAudit: async (limit = 100) => (await read()).audit.slice(-limit),
     listRotations: async (limit = 50) => (await read()).rotations.slice(-limit),
+    listRebinds: async (limit = 50) => (await read()).rebinds.slice(-limit),
     listManifests: async (limit = 50) =>
       (await read()).offboardingManifests.slice(-limit),
     status: async () => statusFromState(backend, await read()),
@@ -370,8 +387,31 @@ function rowToRotation(
     newReferenceId: String(row.new_reference_id),
     approvedBy: String(row.approved_by),
     localSwitchComplete: true,
+    sameAccount: true,
     liveProviderRevoke: "NOT_WIRED",
     secretsExported: false,
+    createdAtIso: asIso(row.created_at_iso, new Date().toISOString()),
+    summary: String(row.summary),
+  };
+}
+
+function rowToRebind(row: Record<string, unknown>): CredentialRebindRecord {
+  return {
+    rebindId: String(row.rebind_id),
+    oldConnectionId: String(row.old_connection_id),
+    newConnectionId: String(row.new_connection_id),
+    oldAccountLabel: String(row.old_account_label),
+    newAccountLabel: String(row.new_account_label),
+    oldReferenceId: String(row.old_reference_id),
+    newReferenceId: String(row.new_reference_id),
+    approvedBy: String(row.approved_by),
+    explicitRebind: true,
+    silentRefreshRejected: true,
+    localSwitchComplete: true,
+    liveProviderRevoke: "NOT_WIRED",
+    secretsExported: false,
+    catalogCaseId: "T-X029",
+    externalEffects: "NONE",
     createdAtIso: asIso(row.created_at_iso, new Date().toISOString()),
     summary: String(row.summary),
   };
@@ -418,6 +458,9 @@ async function loadPgState(db: PgQueryable): Promise<CredentialRotationState> {
   const rotations = await db.query(
     `SELECT * FROM credential_rotations ORDER BY created_at_iso ASC`,
   );
+  const rebinds = await db.query(
+    `SELECT * FROM credential_rebinds ORDER BY created_at_iso ASC`,
+  );
   const manifests = await db.query(
     `SELECT * FROM credential_offboarding_manifests ORDER BY created_at_iso ASC`,
   );
@@ -439,12 +482,16 @@ async function loadPgState(db: PgQueryable): Promise<CredentialRotationState> {
     rotations: rotations.rows.map((r) =>
       rowToRotation(r as Record<string, unknown>),
     ),
+    rebinds: rebinds.rows.map((r) =>
+      rowToRebind(r as Record<string, unknown>),
+    ),
     offboardingManifests: manifests.rows.map((r) =>
       rowToManifest(r as Record<string, unknown>),
     ),
     liveWiring: {
       localRevoke: "fixture",
       localRotation: "fixture",
+      localRebind: "fixture",
       offboardingManifest: "fixture",
       liveProviderRevocation: "NOT_WIRED",
     },
@@ -470,6 +517,7 @@ async function replacePgState(
   await db.query(`DELETE FROM credential_queued_work`);
   await db.query(`DELETE FROM credential_audit_entries`);
   await db.query(`DELETE FROM credential_rotations`);
+  await db.query(`DELETE FROM credential_rebinds`);
   await db.query(`DELETE FROM credential_offboarding_manifests`);
   await db.query(`DELETE FROM credential_connections`);
 
@@ -550,6 +598,34 @@ async function replacePgState(
       [
         r.rotationId,
         r.connectionId,
+        r.oldReferenceId,
+        r.newReferenceId,
+        r.approvedBy,
+        r.createdAtIso,
+        r.summary,
+      ],
+    );
+  }
+
+  for (const r of sealed.rebinds) {
+    await db.query(
+      `INSERT INTO credential_rebinds (
+         rebind_id, old_connection_id, new_connection_id,
+         old_account_label, new_account_label, old_reference_id, new_reference_id,
+         approved_by, explicit_rebind, silent_refresh_rejected,
+         local_switch_complete, live_provider_revoke, secrets_exported,
+         catalog_case_id, external_effects, created_at_iso, summary
+       ) VALUES (
+         $1, $2, $3, $4, $5, $6, $7, $8,
+         true, true, true, 'NOT_WIRED', false, 'T-X029', 'NONE',
+         $9::timestamptz, $10
+       )`,
+      [
+        r.rebindId,
+        r.oldConnectionId,
+        r.newConnectionId,
+        r.oldAccountLabel,
+        r.newAccountLabel,
         r.oldReferenceId,
         r.newReferenceId,
         r.approvedBy,
@@ -665,6 +741,12 @@ export function createPgCredentialRotationStore(
         rotations: [...state.rotations, record],
         updatedAtIso: record.createdAtIso,
       })),
+    addRebind: (record) =>
+      update((state) => ({
+        ...state,
+        rebinds: [...state.rebinds, record],
+        updatedAtIso: record.createdAtIso,
+      })),
     addManifest: (manifest) =>
       update((state) => ({
         ...state,
@@ -683,6 +765,7 @@ export function createPgCredentialRotationStore(
     },
     listAudit: async (limit = 100) => (await read()).audit.slice(-limit),
     listRotations: async (limit = 50) => (await read()).rotations.slice(-limit),
+    listRebinds: async (limit = 50) => (await read()).rebinds.slice(-limit),
     listManifests: async (limit = 50) =>
       (await read()).offboardingManifests.slice(-limit),
     status: async () => statusFromState("postgres", await read()),

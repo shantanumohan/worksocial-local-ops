@@ -746,7 +746,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X066, T-X073, T-F24, T-US-002, T-US-036, T-US-047, T-US-054, T-US-060.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X066, T-X073, T-F24, T-US-002, T-US-036, T-US-047, T-US-048, T-US-054, T-US-060.
 
 **T-X066** is fixture ACCEPTED only via the backup / omit-receipt / post-restore reconcile proof (`BACKUP_OMIT_RECEIPT`). Retry-only no-duplicate-effects does **not** satisfy this case. Not sandbox/prod VERIFIED.
 
@@ -798,6 +798,8 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X026 | Concurrent final budget reservation | Cap enforced |
 | T-X027 | Unknown usage on cancelled request | Hold; not zero cost |
 | T-X028 | Actual cost exceeds estimate | Overrun visible |
+**T-X029** is fixture ACCEPTED only via the explicit different-account rebind proof (`EXPLICIT_ACCOUNT_REBIND`). Same-account local rotate does **not** satisfy this case. Not sandbox/prod VERIFIED.
+
 | T-X029 | Token rotates to different account | Explicit rebind |
 | T-X030 | Rate-limit with deadline | Bounded backoff |
 | T-X031 | Wrong GA4 property kind | Validation fails |
@@ -849,8 +851,8 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | Family | Count | Status |
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
-| T-US (behavior_acceptance) | 60 | 55 NOT_RUN + 5 fixture ACCEPTED (T-US-002, T-US-047, T-US-048, T-US-054, T-US-060) |
-| T-X (platform/security/resilience) | 73 | 67 NOT_RUN + 6 fixture ACCEPTED (T-X002, T-X014, T-X018, T-X020, T-X066, T-X073) |
-| **Total** | **159** | **143 NOT_RUN + 16 fixture ACCEPTED** |
+| T-US (behavior_acceptance) | 60 | 54 NOT_RUN + 6 fixture ACCEPTED (T-US-002, T-US-036, T-US-047, T-US-048, T-US-054, T-US-060) |
+| T-X (platform/security/resilience) | 73 | 63 NOT_RUN + 10 fixture ACCEPTED (T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X066, T-X073) |
+| **Total** | **159** | **142 NOT_RUN + 17 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.
