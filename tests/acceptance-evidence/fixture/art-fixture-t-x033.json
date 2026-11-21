@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x033",
+  "caseId": "T-X033",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X033 (Omitted GSC rows — Unknown ≠ zero)\nproof=gsc_omitted_rows_unknown_not_zero applyCount=1 :: Omitted GSC row → UNKNOWN demand (not zero) | Incomplete GSC clicks → UNKNOWN (not invented zero) | Complete fixture row → fixture demandLabel with measured clicks | NOT_WIRED GSC → unavailable (distinct from omitted UNKNOWN) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "gsc_omitted_rows_unknown_not_zero"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x033.json",
+  "createdAtIso": "2026-11-21T23:44:21.185Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x033-9bca063beaa3"
+}
