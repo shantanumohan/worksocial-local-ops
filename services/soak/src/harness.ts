@@ -1,11 +1,18 @@
 /**
  * Soak / recovery harness — crash-restart, no duplicate effects,
- * durable job/effect continuity, unknown-remote reconcile.
+ * durable job/effect continuity, unknown-remote reconcile,
+ * backup/omit-receipt post-restore reconcile (T-X066).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
 
 import { randomUUID } from "node:crypto";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import {
   SoakProofKind,
@@ -18,7 +25,18 @@ import {
   newJobId,
   type AcceptPendingInput,
   type DurableExecutionService,
+  type FakeProviderEffect,
 } from "@worksocial/persistence";
+
+type FileLedgerSnapshot = {
+  version: 1;
+  jobs: unknown[];
+  intents: unknown[];
+  attempts: unknown[];
+  decisions: unknown[];
+  receipts: unknown[];
+  providerEffects: FakeProviderEffect[];
+};
 
 export type SoakHarnessResult = {
   proofs: SoakProofRecord[];
@@ -300,6 +318,179 @@ async function proofUnknownRemoteReconcile(
   };
 }
 
+function readLedger(stateDir: string): FileLedgerSnapshot {
+  const ledgerPath = join(stateDir, "durable", "ledger.json");
+  if (!existsSync(ledgerPath)) {
+    throw new Error(`Missing ledger at ${ledgerPath}`);
+  }
+  return JSON.parse(readFileSync(ledgerPath, "utf8")) as FileLedgerSnapshot;
+}
+
+function writeLedger(stateDir: string, snap: FileLedgerSnapshot): void {
+  const ledgerPath = join(stateDir, "durable", "ledger.json");
+  mkdirSync(join(stateDir, "durable"), { recursive: true });
+  writeFileSync(ledgerPath, JSON.stringify(snap, null, 2), "utf8");
+}
+
+/**
+ * T-X066: backup omits remote receipt → restore → reconcile from remote
+ * system-of-record → verify / retry without a second apply.
+ * Distinct from NO_DUPLICATE_EFFECTS (retry-only idempotency).
+ */
+async function proofBackupOmitReceipt(
+  stateDir: string,
+  nowIso: string,
+): Promise<SoakProofRecord> {
+  const details: string[] = [];
+  const operationId = `soak-backup-${randomUUID()}`;
+  const bizKey = `biz-soak-backup-${operationId}`;
+  const digest = `digest-${operationId}`;
+  const jobId = newJobId();
+  const idem = `soak/backup/${operationId}`;
+  const primaryDir = join(stateDir, "backup-primary");
+  const restoreDir = join(stateDir, "backup-restore");
+  const remotePath = join(stateDir, "remote-provider-effects.json");
+  const omitBackupPath = join(stateDir, "omit-receipt-backup.json");
+
+  const primary = openService(primaryDir);
+  const accepted = await primary.acceptPending({
+    job: jobFields(operationId, jobId, idem),
+    operationId,
+    payloadDigest: digest,
+    businessIdempotencyKey: bizKey,
+    decision: decisionFields(
+      operationId,
+      digest,
+      nowIso,
+      "soak backup omit-receipt apply",
+    ),
+    nowIso,
+  });
+  details.push(
+    `Applied ACCEPTED_PENDING applyCount=${accepted.applyAttemptCount} remoteRef=${accepted.provider.remoteRef}`,
+  );
+
+  const full = readLedger(primaryDir);
+  if (full.providerEffects.length === 0 || full.receipts.length === 0) {
+    details.push("Primary ledger missing provider effect or receipt after apply");
+    return failProof(
+      SoakProofKind.BACKUP_OMIT_RECEIPT,
+      details,
+      accepted.applyAttemptCount,
+      operationId,
+      nowIso,
+    );
+  }
+
+  // Remote system of record still holds the effect (not part of the local backup).
+  writeFileSync(
+    remotePath,
+    JSON.stringify(full.providerEffects, null, 2),
+    "utf8",
+  );
+
+  // Backup intentionally omits remote receipt + local provider ledger copy.
+  const omitBackup: FileLedgerSnapshot = {
+    ...full,
+    providerEffects: [],
+    receipts: [],
+  };
+  writeFileSync(omitBackupPath, JSON.stringify(omitBackup, null, 2), "utf8");
+  details.push(
+    "Omit-receipt backup written (providerEffects=[] receipts=[]); remote ledger preserved separately",
+  );
+
+  writeLedger(restoreDir, omitBackup);
+
+  const afterRestore = openService(restoreDir);
+  const restoredDecision = await afterRestore.getDecision(operationId);
+  const omittedLocal = await afterRestore.stores.fakeProvider.getByOperation(
+    operationId,
+  );
+  const omittedReceipts = await afterRestore.stores.receipts.listForOperation(
+    operationId,
+  );
+  details.push(
+    `Post-restore decision=${restoredDecision?.outcome ?? "missing"} localProvider=${omittedLocal ? "present" : "omitted"} receipts=${omittedReceipts.length}`,
+  );
+
+  if (
+    restoredDecision?.outcome !== "ACCEPTED_PENDING" ||
+    omittedLocal !== undefined ||
+    omittedReceipts.length !== 0
+  ) {
+    details.push("Restore did not produce ACCEPTED_PENDING with omitted receipt");
+    return failProof(
+      SoakProofKind.BACKUP_OMIT_RECEIPT,
+      details,
+      accepted.applyAttemptCount,
+      operationId,
+      nowIso,
+    );
+  }
+
+  // Reconcile: rehydrate provider effects from remote SoR without a new apply.
+  const remoteEffects = JSON.parse(
+    readFileSync(remotePath, "utf8"),
+  ) as FakeProviderEffect[];
+  const restoredSnap = readLedger(restoreDir);
+  writeLedger(restoreDir, {
+    ...restoredSnap,
+    providerEffects: remoteEffects,
+  });
+  details.push(
+    `Reconciled remoteRef=${remoteEffects[0]?.remoteRef ?? "missing"} from remote SoR without re-apply`,
+  );
+
+  const reconciled = openService(restoreDir);
+  const applyBeforeVerify =
+    await reconciled.stores.effects.countApplyAttempts(operationId);
+  const verified = await reconciled.verifyIndependent({
+    operationId,
+    observedDigest: digest,
+    nowIso: nowPlus(nowIso, 2000),
+  });
+  details.push(
+    `Post-reconcile verified matched=${verified.matched} applyCount=${verified.applyAttemptCount}`,
+  );
+
+  const retry = await reconciled.acceptPending({
+    job: jobFields(operationId, jobId, idem),
+    operationId,
+    payloadDigest: digest,
+    businessIdempotencyKey: bizKey,
+    decision: decisionFields(
+      operationId,
+      digest,
+      nowPlus(nowIso, 2500),
+      "soak backup post-reconcile retry",
+    ),
+    nowIso: nowPlus(nowIso, 2500),
+  });
+  details.push(
+    `Post-reconcile retry providerCreated=${retry.providerCreated} applyCount=${retry.applyAttemptCount}`,
+  );
+
+  const passed =
+    applyBeforeVerify === 1 &&
+    verified.matched === true &&
+    verified.applyAttemptCount === 1 &&
+    verified.decision.outcome === "VERIFIED" &&
+    retry.providerCreated === false &&
+    retry.applyAttemptCount === 1;
+
+  return {
+    proofId: `proof-backup-${operationId}`,
+    kind: SoakProofKind.BACKUP_OMIT_RECEIPT,
+    passed,
+    details,
+    applyAttemptCount: verified.applyAttemptCount,
+    operationId,
+    createdAtIso: nowPlus(nowIso, 2500),
+    fixtureOnly: true,
+  };
+}
+
 function failProof(
   kind: SoakProofKindValue,
   details: string[],
@@ -320,8 +511,10 @@ function failProof(
 }
 
 /**
- * Run the four soak proofs against a dedicated durable state directory.
- * Safe for CI (seconds) and for a documented local 72h owner soak wrapper.
+ * Run soak proofs (incl. T-X066 backup/omit-receipt) against a dedicated
+ * durable state directory. Safe for CI and documented 72h owner soak wrappers.
+ * Pilot gate still requires the original four recovery proofs; backup proof
+ * feeds fixture ACCEPTED for T-X066 only.
  */
 export async function runSoakRecoveryHarness(input: {
   stateDir: string;
@@ -336,6 +529,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(await proofJobContinuity(durableDir, nowPlus(nowIso, 20_000)));
   proofs.push(
     await proofUnknownRemoteReconcile(durableDir, nowPlus(nowIso, 30_000)),
+  );
+  proofs.push(
+    await proofBackupOmitReceipt(durableDir, nowPlus(nowIso, 40_000)),
   );
 
   const allPassed = proofs.every((p) => p.passed);

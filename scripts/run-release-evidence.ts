@@ -94,7 +94,7 @@ async function main(): Promise<void> {
       cases: stableCaseResults,
       artifacts: stableArtifacts,
       uniqueRunArtifacts: artifacts,
-      note: "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 NOT_RUN until backup proof. Not R1-complete.",
+      note: "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 fixture ACCEPTED via backup/omit-receipt proof. Not R1-complete.",
     };
     writeFileSync(ledgerPath, JSON.stringify(ledger, null, 2), "utf8");
 
@@ -118,6 +118,10 @@ async function main(): Promise<void> {
     const hasTx066Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-X066",
     );
+    const expectedAccepted = ["T-X014", "T-X020", "T-US-048", "T-X066"].sort();
+    const acceptedIds = accepted
+      .map((c: { caseId: string }) => c.caseId)
+      .sort();
 
     const report = {
       suite: "release:evidence",
@@ -125,8 +129,9 @@ async function main(): Promise<void> {
         result.ok &&
         missingEvidence.length === 0 &&
         !hasVerified &&
-        !hasTx066Accepted &&
-        accepted.length === 3
+        hasTx066Accepted &&
+        accepted.length === 4 &&
+        JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
       implemented: true,
@@ -140,7 +145,7 @@ async function main(): Promise<void> {
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. T-X066 NOT_RUN. Live VERIFIED forbidden. Not R1-complete.",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. T-X066 fixture ACCEPTED (backup/omit-receipt). Live VERIFIED forbidden. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {

@@ -191,7 +191,7 @@ export function createSoakService(store: SoakStore): SoakService {
         r1CompleteClaimed: false,
         externalEffects: "NONE",
         honestNote:
-          "Fixture soak only. Pilot gate uses server-recorded observations only (client claim dates ignored). Live providers NOT_WIRED. T-X066 remains NOT_RUN until backup proof. Not R1-complete.",
+          "Fixture soak only. Pilot gate uses server-recorded observations only (client claim dates ignored). Live providers NOT_WIRED. T-X066 fixture ACCEPTED via backup/omit-receipt proof only — not live VERIFIED. Not R1-complete.",
       };
 
       store.addRun(run);
@@ -224,7 +224,7 @@ export function createSoakService(store: SoakStore): SoakService {
         note:
           latestRun == null
             ? "No soak runs yet — run fixture soak (recovery:rehearse / POST /soak/run)."
-            : `Latest pilotGate=${latestRun.pilotGate.status}; r1CompleteClaimed=false; ChatGPT Ads blocked; live NOT_WIRED; T-X066 NOT_RUN until backup proof.`,
+            : `Latest pilotGate=${latestRun.pilotGate.status}; r1CompleteClaimed=false; ChatGPT Ads blocked; live NOT_WIRED; T-X066 fixture ACCEPTED when backup/omit-receipt proof present (not live VERIFIED).`,
       };
     },
   };

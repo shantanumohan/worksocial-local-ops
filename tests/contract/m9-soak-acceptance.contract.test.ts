@@ -1,7 +1,7 @@
 /**
  * Contract: M9 soak proofs + evidence compiler honesty.
  * Fixture ≠ sandbox ≠ prod. Ads blocked. No silent live VERIFIED.
- * T-X066 stays NOT_RUN until backup/omit-receipt proof exists.
+ * T-X066 fixture ACCEPTED only via BACKUP_OMIT_RECEIPT (not live VERIFIED).
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -59,7 +59,7 @@ describe("contract: M9 soak / acceptance evidence", () => {
       expect(check.ok).toBe(true);
     }
 
-    expect(SOAK_FIXTURE_CASE_IDS).not.toContain("T-X066");
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X066");
 
     const soak = createSoakService(createFileSoakStore(dir));
     const run = await soak.runFixtureSoak({
@@ -70,9 +70,10 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(run.run.pilotGate.serverObservationsOnly).toBe(true);
     expect(run.run.r1CompleteClaimed).toBe(false);
     expect(run.run.liveWiring.cms).toBe("NOT_WIRED");
-    expect(
-      run.run.caseResults.every((c) => c.caseId !== "T-X066"),
-    ).toBe(true);
+    const tx066 = run.run.caseResults.find((c) => c.caseId === "T-X066");
+    expect(tx066?.status).toBe(AcceptanceCaseStatus.ACCEPTED);
+    expect(tx066?.environment).toBe(AcceptanceEnvironment.FIXTURE);
+    expect(String(tx066?.status).toUpperCase()).not.toBe("VERIFIED");
   });
 
   it("rejects silent VERIFIED status for live claims", () => {

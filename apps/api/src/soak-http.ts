@@ -103,7 +103,7 @@ export async function handleSoakRequest(input: {
       200,
       {
         cases: soak.listCases(),
-        note: "ACCEPTED = fixture evidence only with complete proof set. T-X066 stays NOT_RUN until backup proof. Never silently VERIFIED for live.",
+        note: "ACCEPTED = fixture evidence only with complete proof set. T-X066 fixture ACCEPTED via backup/omit-receipt. Never silently VERIFIED for live.",
       },
       cors,
     );

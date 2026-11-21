@@ -43,6 +43,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X014": "Approval wait survives restart",
   "T-X020": "Timeout after provider acceptance",
   "T-US-048": "Unknown remote effects reconciled before resume",
+  "T-X066": "Backup omits remote receipt",
 };
 
 function relatedProofsForCase(
@@ -181,10 +182,10 @@ export function compileAcceptanceEvidence(
     });
   }
 
-  // Explicit: T-X066 stays NOT_RUN — no backup/omit-receipt proof mapped.
   details.push(
     `Compiled ${artifacts.length} redacted artifact(s); ACCEPTED=${caseResults.filter((c) => c.status === "ACCEPTED").length}`,
-    "T-X066 left NOT_RUN until backup/omit-receipt/reconcile proof exists",
+    "T-X066 fixture ACCEPTED only via BACKUP_OMIT_RECEIPT (not retry-only no-dup)",
+    "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
   return {

@@ -34,8 +34,11 @@ describe("e2e-lite: M9 soak acceptance", () => {
 
     const report = soak.ownerReport();
     expect(report.latestRun?.runId).toBe(result.run.runId);
-    expect(report.acceptedCases.length).toBe(3);
-    expect(report.acceptedCases.every((c) => c.caseId !== "T-X066")).toBe(true);
+    expect(report.acceptedCases.length).toBe(4);
+    expect(report.acceptedCases.some((c) => c.caseId === "T-X066")).toBe(true);
+    expect(
+      report.acceptedCases.every((c) => String(c.status).toUpperCase() !== "VERIFIED"),
+    ).toBe(true);
     expect(report.status.r1CompleteClaimed).toBe(false);
     expect(report.status.chatgptAdsWiring).toBe("NOT_WIRED");
     expect(report.note).toMatch(/pilotGate=NOT_MET/);
