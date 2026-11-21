@@ -672,7 +672,7 @@ Required evidence:
 
 Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixture ACCEPTED below | Environment fixture_or_sandbox; live evidence separately authorized.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-047, T-US-048.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-047, T-US-048, T-US-054.
 
 ### Happy-path / documented flow completions
 - **T-US-001** Create a trusted local workspace (F01/SC-02) — blockers and next actions.
@@ -732,7 +732,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 ### Cross-cutting (T-US-053–T-US-060)
 - **T-US-053** Secrets never in browser assets.
-- **T-US-054** Independent approval enforced (no ordinary self-approval).
+- **T-US-054** Independent approval enforced (no ordinary self-approval). *(fixture ACCEPTED — self-approval rejected / independent A25 proof; not sandbox/prod VERIFIED)*
 - **T-US-055** Complete keyboard journey with reduced motion.
 - **T-US-056** Honest outage; durable hosted contact path.
 - **T-US-057** Cross-workspace resource substitution rejected.
@@ -746,13 +746,15 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X014, T-X020, T-X066, T-F24, T-US-002, T-US-047.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X014, T-X018, T-X020, T-X066, T-F24, T-US-002, T-US-047, T-US-054.
 
 **T-X066** is fixture ACCEPTED only via the backup / omit-receipt / post-restore reconcile proof (`BACKUP_OMIT_RECEIPT`). Retry-only no-duplicate-effects does **not** satisfy this case. Not sandbox/prod VERIFIED.
 
 **T-F24 / T-US-047** are fixture ACCEPTED only via the recover / rotate / reconcile / offboard proof (`RECOVER_ROTATE_RECONCILE`) with the complete F24 evidence set (health timeline, capability stop, rotation record without secrets, reconciliation receipts, recovery test, offboarding manifest + residual obligations). Live provider revoke remains **NOT_WIRED**; never silently VERIFIED for live.
 
 **T-US-002 / T-X002** are fixture ACCEPTED only via the competing-supervisor / singleton host-lease proof (`COMPETING_SUPERVISOR_LEASE`) — second live generation refused, dead-holder reclaim allowed, ownership kill auth fail-closed. Not sandbox/prod VERIFIED.
+
+**T-X018 / T-US-054** are fixture ACCEPTED only via the self-approval rejected / independent A25 proof (`SELF_APPROVAL_REJECTED`) — ordinary self-approval cannot bind or approve; independent reviewer required. Not sandbox/prod VERIFIED.
 
 Shared evidence for each: actual state before/after; instrumented provider call count or read-back; correlated redacted logs/traces; no unauthorized external effect.
 
@@ -775,7 +777,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X015 | DST recurring schedule | No unintended duplicates |
 | T-X016 | Stop before dispatch claim | No adapter mutation |
 | T-X017 | Stop after provider dispatch starts | Reconcile; no fake cancel |
-| T-X018 | Self-approval | Rejected |
+| T-X018 | Self-approval | Rejected *(fixture ACCEPTED — self-approval rejected / independent A25 proof; not sandbox/prod VERIFIED)* |
 | T-X019 | Approved payload edited | Digest conflict |
 | T-X020 | Timeout after provider acceptance | Unknown → reconcile; no resend *(fixture ACCEPTED)* |
 | T-X021 | Concurrent idempotent releases | One dispatch |
@@ -837,8 +839,8 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | Family | Count | Status |
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
-| T-US (behavior_acceptance) | 60 | 57 NOT_RUN + 3 fixture ACCEPTED (T-US-002, T-US-047, T-US-048) |
-| T-X (platform/security/resilience) | 73 | 69 NOT_RUN + 4 fixture ACCEPTED (T-X002, T-X014, T-X020, T-X066) |
-| **Total** | **159** | **151 NOT_RUN + 8 fixture ACCEPTED** |
+| T-US (behavior_acceptance) | 60 | 56 NOT_RUN + 4 fixture ACCEPTED (T-US-002, T-US-047, T-US-048, T-US-054) |
+| T-X (platform/security/resilience) | 73 | 68 NOT_RUN + 5 fixture ACCEPTED (T-X002, T-X014, T-X018, T-X020, T-X066) |
+| **Total** | **159** | **149 NOT_RUN + 10 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

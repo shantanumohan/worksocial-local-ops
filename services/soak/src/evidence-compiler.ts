@@ -48,6 +48,8 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-047": "Recover/rotate/reconcile — offboarding manifest",
   "T-US-002": "Competing supervisors refused; no duplicate leases",
   "T-X002": "Two supervisors start together — single host lease",
+  "T-X018": "Self-approval rejected",
+  "T-US-054": "Independent approval enforced (no ordinary self-approval)",
 };
 
 function relatedProofsForCase(
@@ -191,6 +193,7 @@ export function compileAcceptanceEvidence(
     "T-X066 fixture ACCEPTED only via BACKUP_OMIT_RECEIPT (not retry-only no-dup)",
     "T-F24/T-US-047 fixture ACCEPTED only via RECOVER_ROTATE_RECONCILE (complete F24 evidence set)",
     "T-US-002/T-X002 fixture ACCEPTED only via COMPETING_SUPERVISOR_LEASE (singleton host lease)",
+    "T-X018/T-US-054 fixture ACCEPTED only via SELF_APPROVAL_REJECTED (independent A25)",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

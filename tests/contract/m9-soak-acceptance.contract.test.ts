@@ -4,6 +4,7 @@
  * T-X066 fixture ACCEPTED only via BACKUP_OMIT_RECEIPT (not live VERIFIED).
  * T-F24 / T-US-047 fixture ACCEPTED only via RECOVER_ROTATE_RECONCILE.
  * T-US-002 / T-X002 fixture ACCEPTED only via COMPETING_SUPERVISOR_LEASE.
+ * T-X018 / T-US-054 fixture ACCEPTED only via SELF_APPROVAL_REJECTED.
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -66,6 +67,8 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-US-047");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-US-002");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X002");
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X018");
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-US-054");
 
     const soak = createSoakService(createFileSoakStore(dir));
     const run = await soak.runFixtureSoak({
@@ -91,6 +94,12 @@ describe("contract: M9 soak / acceptance evidence", () => {
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(
       run.run.caseResults.find((c) => c.caseId === "T-X002")?.status,
+    ).toBe(AcceptanceCaseStatus.ACCEPTED);
+    expect(
+      run.run.caseResults.find((c) => c.caseId === "T-X018")?.status,
+    ).toBe(AcceptanceCaseStatus.ACCEPTED);
+    expect(
+      run.run.caseResults.find((c) => c.caseId === "T-US-054")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
   });
 

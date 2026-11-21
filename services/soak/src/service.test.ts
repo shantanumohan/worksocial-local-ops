@@ -23,13 +23,13 @@ describe("soak service (M9)", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  it("passes crash-restart / no-dup / continuity / reconcile / backup-omit / recover-rotate / competing-supervisor proofs", async () => {
+  it("passes crash-restart / no-dup / continuity / reconcile / backup-omit / recover-rotate / competing-supervisor / self-approval proofs", async () => {
     const result = await runSoakRecoveryHarness({
       stateDir: dir,
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(7);
+    expect(result.proofs).toHaveLength(8);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(result.proofs.every((p) => p.applyAttemptCount === 1)).toBe(true);
     expect(
@@ -45,9 +45,12 @@ describe("soak service (M9)", () => {
         (p) => p.kind === SoakProofKind.COMPETING_SUPERVISOR_LEASE,
       ),
     ).toBe(true);
+    expect(
+      result.proofs.some((p) => p.kind === SoakProofKind.SELF_APPROVAL_REJECTED),
+    ).toBe(true);
   });
 
-  it("compiles fixture ACCEPTED for complete proof sets including T-US-002/T-X002", async () => {
+  it("compiles fixture ACCEPTED for complete proof sets including T-X018/T-US-054", async () => {
     const harness = await runSoakRecoveryHarness({
       stateDir: dir,
       nowIso: "2026-11-21T18:00:00.000Z",
@@ -67,8 +70,10 @@ describe("soak service (M9)", () => {
       "T-US-002",
       "T-US-047",
       "T-US-048",
+      "T-US-054",
       "T-X002",
       "T-X014",
+      "T-X018",
       "T-X020",
       "T-X066",
     ]);
@@ -184,7 +189,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(8);
+    expect(soak.ownerReport().acceptedCases.length).toBe(10);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {
