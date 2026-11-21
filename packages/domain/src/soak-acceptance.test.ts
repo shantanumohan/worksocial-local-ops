@@ -183,6 +183,12 @@ describe("soak-acceptance domain", () => {
     expect(expectedProofsForFixtureCase("T-X073")).toEqual([
       SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL,
     ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.EMERGENCY_STOP_AT_COMMIT),
+    ).toEqual(["T-US-060"]);
+    expect(expectedProofsForFixtureCase("T-US-060")).toEqual([
+      SoakProofKind.EMERGENCY_STOP_AT_COMMIT,
+    ]);
   });
 
   it("builds unique per-run artifact ids", () => {
