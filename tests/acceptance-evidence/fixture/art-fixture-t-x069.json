@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x069",
+  "caseId": "T-X069",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X069 (Imported document quarantined as data)\nproof=imported_doc_quarantined_as_data applyCount=1 :: Incoming import pending_classification; evidence not executable instruction | Quarantined import has null instructionVersion | TRUSTED_INSTRUCTION entry instructionEligible=true | UNTRUSTED_SOURCE imported doc instructionEligible=false (quarantined as data) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "imported_doc_quarantined_as_data"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x069.json",
+  "createdAtIso": "2026-11-21T23:28:00.128Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x069-a8672ce731a6"
+}

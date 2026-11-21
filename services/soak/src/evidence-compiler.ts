@@ -66,6 +66,8 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-018": "Gemini never used for publish/CRM/customer reply",
   "T-X037": "Gemini tries operational tool — no effect",
   "T-X058": "Third automatic repair attempt — escalate",
+  "T-X069": "Imported document quarantined as data",
+  "T-X038": "Grounded eval without grounding — fail closed",
 };
 
 function relatedProofsForCase(
@@ -221,6 +223,8 @@ export function compileAcceptanceEvidence(
     "T-US-044/T-X053 fixture ACCEPTED only via TAKEOVER_CANCELS_UNSENT_REPLIES",
     "T-US-018/T-X037 fixture ACCEPTED only via EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN",
     "T-X058 fixture ACCEPTED only via REPAIR_ATTEMPT_LIMIT_ESCALATED",
+    "T-X069 fixture ACCEPTED only via IMPORTED_DOC_QUARANTINED_AS_DATA",
+    "T-X038 fixture ACCEPTED only via EVAL_NO_GROUNDING_FAIL_CLOSED",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

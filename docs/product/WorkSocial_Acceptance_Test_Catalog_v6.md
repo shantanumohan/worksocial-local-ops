@@ -746,7 +746,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X037, T-X053, T-X057, T-X058, T-X066, T-X073.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X037, T-X038, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073.
 
 **T-X066** is fixture ACCEPTED only via the backup / omit-receipt / post-restore reconcile proof (`BACKUP_OMIT_RECEIPT`). Retry-only no-duplicate-effects does **not** satisfy this case. Not sandbox/prod VERIFIED.
 
@@ -777,6 +777,10 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 **T-US-018** / **T-X037** are fixture ACCEPTED only via the EVAL_ONLY operational tool forbidden proof (`EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN`). Not sandbox/prod VERIFIED.
 
 **T-X058** is fixture ACCEPTED only via the repair attempt limit escalated proof (`REPAIR_ATTEMPT_LIMIT_ESCALATED`). Not sandbox/prod VERIFIED.
+
+**T-X069** is fixture ACCEPTED only via the imported doc quarantined as data proof (`IMPORTED_DOC_QUARANTINED_AS_DATA`). Not sandbox/prod VERIFIED.
+
+**T-X038** is fixture ACCEPTED only via the eval no-grounding fail closed proof (`EVAL_NO_GROUNDING_FAIL_CLOSED`). Not sandbox/prod VERIFIED.
 
 Shared evidence for each: actual state before/after; instrumented provider call count or read-back; correlated redacted logs/traces; no unauthorized external effect.
 
@@ -821,7 +825,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X035 | Shared ad budget changed externally | Proposal invalidated |
 | T-X036 | Recent Ads conversion blank | Pending; no false zero |
 | T-X037 | Gemini tries operational tool | No effect *(fixture ACCEPTED)* |
-| T-X038 | Grounding configured but unused | No grounded pass |
+| T-X038 | Grounding configured but unused | No grounded pass *(fixture ACCEPTED)* |
 | T-X039 | Provider error vs answer failure | Separate denominators |
 | T-X040 | Low-sample trend spike | Insufficient evidence |
 | T-X041 | Incomparable trend indices | Reject/label |
@@ -852,7 +856,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X066 | Backup omits remote receipt | Reconcile; no duplicate *(fixture ACCEPTED — backup/omit-receipt proof; not sandbox/prod VERIFIED)* |
 | T-X067 | Incompatible workflow upgrade | Blocked or compatible retained |
 | T-X068 | Thirty alerts one outage | Grouped incident |
-| T-X069 | Imported document becomes instructions | Quarantined as data |
+| T-X069 | Imported document becomes instructions | Quarantined as data *(fixture ACCEPTED)* |
 | T-X070 | Validated payload not collected | Separate failure states |
 | T-X071 | Local host offline public discovery | Honest unavailability |
 | T-X072 | Customer data leaks into evaluation | Redaction blocks |
@@ -864,7 +868,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
 | T-US (behavior_acceptance) | 60 | 49 NOT_RUN + 11 fixture ACCEPTED (T-US-002, T-US-018, T-US-024, T-US-036, T-US-042, T-US-044, T-US-047, T-US-048, T-US-054, T-US-057, T-US-060) |
-| T-X (platform/security/resilience) | 73 | 59 NOT_RUN + 14 fixture ACCEPTED (T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X037, T-X053, T-X057, T-X058, T-X066, T-X073) |
-| **Total** | **159** | **133 NOT_RUN + 26 fixture ACCEPTED** |
+| T-X (platform/security/resilience) | 73 | 57 NOT_RUN + 16 fixture ACCEPTED (T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X037, T-X038, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073) |
+| **Total** | **159** | **131 NOT_RUN + 28 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.
