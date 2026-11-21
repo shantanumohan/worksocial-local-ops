@@ -168,8 +168,12 @@ describeCompose("temporal compose e2e (API → Temporal → PG)", () => {
       headers: { origin: baseUrl, cookie: cookieHeader },
     });
     expect(stateRes.status).toBe(200);
-    const state = (await stateRes.json()) as { temporalWiring: string };
+    const state = (await stateRes.json()) as {
+      temporalWiring: string;
+      temporalEnqueueStatus: string;
+    };
     expect(state.temporalWiring).toBe("TEMPORAL");
+    expect(state.temporalEnqueueStatus).toBe("TEMPORAL");
 
     const runRes = await fetch(`${baseUrl}/roles/run`, {
       method: "POST",

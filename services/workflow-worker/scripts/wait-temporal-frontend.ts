@@ -1,42 +1,51 @@
 /**
- * Poll Temporal frontend until SDK Connection.connect succeeds.
- * Used by CI temporal-compose job (avoid tsx -e top-level await / CJS eval).
+ * Poll Temporal until frontend dials AND the target namespace is registered.
+ * Run from @worksocial/workflow-worker so @temporalio/client resolves under pnpm.
  *
- * Usage:
- *   TEMPORAL_ADDRESS=127.0.0.1:7233 pnpm exec tsx scripts/wait-temporal-frontend.ts
+ * Usage (from repo root):
+ *   pnpm --filter @worksocial/workflow-worker exec tsx scripts/wait-temporal-frontend.ts
  *
  * Env:
  *   TEMPORAL_ADDRESS (default 127.0.0.1:7233)
+ *   TEMPORAL_NAMESPACE (default default)
  *   WORKSOCIAL_TEMPORAL_WAIT_ATTEMPTS (default 90)
- *   WORKSOCIAL_TEMPORAL_WAIT_MS (default 2000 between attempts)
- *   WORKSOCIAL_TEMPORAL_CONNECT_TIMEOUT_MS (default 2000 per dial)
+ *   WORKSOCIAL_TEMPORAL_WAIT_MS (default 2000)
+ *   WORKSOCIAL_TEMPORAL_CONNECT_TIMEOUT_MS (default 2000)
  */
 
 import { Connection } from "@temporalio/client";
 
 const address = process.env.TEMPORAL_ADDRESS?.trim() || "127.0.0.1:7233";
+const namespace = process.env.TEMPORAL_NAMESPACE?.trim() || "default";
 const attempts = Number(process.env.WORKSOCIAL_TEMPORAL_WAIT_ATTEMPTS ?? 90);
 const waitMs = Number(process.env.WORKSOCIAL_TEMPORAL_WAIT_MS ?? 2000);
 const connectTimeout = Number(
   process.env.WORKSOCIAL_TEMPORAL_CONNECT_TIMEOUT_MS ?? 2000,
 );
 
-async function dialOnce(): Promise<void> {
+async function probeReady(): Promise<void> {
   const connection = await Connection.connect({
     address,
     connectTimeout,
   });
-  await connection.close();
+  try {
+    // auto-setup registers the namespace asynchronously after SERVING;
+    // dial alone is not enough for workflow start / worker poll.
+    await connection.workflowService.describeNamespace({ namespace });
+  } finally {
+    await connection.close();
+  }
 }
 
 async function main(): Promise<void> {
   for (let i = 1; i <= attempts; i += 1) {
     try {
-      await dialOnce();
+      await probeReady();
       console.log(
         JSON.stringify({
           status: "READY",
           address,
+          namespace,
           attempt: i,
         }),
       );
@@ -47,6 +56,7 @@ async function main(): Promise<void> {
         JSON.stringify({
           status: "WAITING",
           address,
+          namespace,
           attempt: i,
           attempts,
           detail: message,
@@ -61,8 +71,10 @@ async function main(): Promise<void> {
     JSON.stringify({
       status: "FAILED",
       address,
+      namespace,
       attempts,
-      detail: "Temporal frontend did not accept SDK connections in time",
+      detail:
+        "Temporal frontend/namespace did not become ready for SDK use in time",
     }),
   );
   process.exit(1);
