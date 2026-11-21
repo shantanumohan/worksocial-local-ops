@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x029",
+  "caseId": "T-X029",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X029 (Token rotates to different account)\nproof=explicit_account_rebind applyCount=1 :: Seeded connection=conn-old-rebind-b2fada03 account=fixture-account-alpha | Silent different-account rotate denied (REBIND_REQUIRED) — not treated as transparent refresh | Explicit rebind complete old=conn-old-rebind-b2fada03→ROTATED_AWAY new=conn-new-rebind-b2fada03 account=fixture-account-beta | silentRefreshRejected=true catalogCaseId=T-X029 liveProviderRevoke=NOT_WIRED externalEffects=NONE | Old connection leases denied (CONNECTION_ROTATED_AWAY) | New connection lease granted leaseId=lease-f8319868-91d0-4fb3-b520-15e0fa28bf48 | Same-account rebind correctly denied (use rotate for same-account refresh) | Audit retained and redacted; no secret material in records | liveProviderRevocation=NOT_WIRED externalEffects=NONE — never silently VERIFIED for live\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "explicit_account_rebind"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x029.json",
+  "createdAtIso": "2026-11-21T22:18:11.810Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x029-618351fd2cac"
+}

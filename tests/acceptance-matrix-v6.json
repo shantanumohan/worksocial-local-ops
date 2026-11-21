@@ -2,7 +2,7 @@
   "catalog": "WorkSocial product acceptance v6",
   "version": "6.0",
   "sourceDocument": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-  "note": "159 cases \u2014 143 NOT_RUN + 16 fixture ACCEPTED (T-X014, T-X020, T-US-048, T-X066, T-F24, T-US-047, T-US-002, T-X002, T-X018, T-US-054, T-X073, T-US-060, T-X005, T-X006, T-X019, T-US-036) with redacted evidence and complete proof sets. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated \u2014 never silently VERIFIED for live. Fixture, sandbox, and authorized-production results must remain distinguishable. ChatGPT Ads (T-F07 / T-US-013 / T-US-014) stays access-blocked without verified local transport/entitlement. Pilot gate uses server-recorded observations only. Not R1-complete.",
+  "note": "159 cases \u2014 142 NOT_RUN + 17 fixture ACCEPTED (T-X014, T-X020, T-US-048, T-X029, T-X066, T-F24, T-US-047, T-US-002, T-X002, T-X018, T-US-054, T-X073, T-US-060, T-X005, T-X006, T-X019, T-US-036) with redacted evidence and complete proof sets. T-X066 via BACKUP_OMIT_RECEIPT; T-F24/T-US-047 via RECOVER_ROTATE_RECONCILE; T-US-002/T-X002 via COMPETING_SUPERVISOR_LEASE; T-X018/T-US-054 via SELF_APPROVAL_REJECTED; T-X073 via OFFBOARD_ACTIVE_TOKEN_RESIDUAL; T-US-060 via EMERGENCY_STOP_AT_COMMIT; T-X005 via FORGED_BROWSER_ROLE_IGNORED; T-X006 via CROSS_WORKSPACE_REFERENCE_DENIED; T-X019/T-US-036 via APPROVED_PAYLOAD_EDIT_INVALIDATED; T-X029 via EXPLICIT_ACCOUNT_REBIND. ACCEPTED \u2260 sandbox/prod VERIFIED.",
   "invariants": {
     "fixtureSandboxAuthorizedProductionDistinct": true,
     "acceptanceNotVerified": true,
@@ -14,8 +14,8 @@
     "userStories": 60,
     "experience": 73,
     "all": 159,
-    "notRun": 143,
-    "accepted": 16
+    "notRun": 142,
+    "accepted": 17
   },
   "cases": [
     {
@@ -1808,12 +1808,15 @@
       "level": "platform_security_resilience",
       "title": "Token rotates to different account",
       "focus": "Explicit rebind",
-      "status": "NOT_RUN",
+      "status": "ACCEPTED",
       "environment": "fixture_or_integration",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
       "gates": [],
       "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-      "definitionShape": "table_row"
+      "definitionShape": "table_row",
+      "resultEnvironment": "fixture",
+      "evidenceArtifactId": "art-fixture-t-x029",
+      "evidenceNote": "Fixture ACCEPTED via EXPLICIT_ACCOUNT_REBIND only. Same-account local rotate does not satisfy. Not sandbox/prod VERIFIED."
     },
     {
       "id": "T-X030",

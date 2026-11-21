@@ -3,8 +3,11 @@
  *
  * Revocation: mark connection revoked, deny new leases / send-time effects,
  * cancel eligible queued work, retain audit history.
+ * T-X029: token identity that maps to a *different* account requires explicit
+ * rebind — never treat as a transparent same-account refresh.
  * Live provider revoke stays NOT_WIRED — never invent remote token revocation.
- * External effects: NONE. Catalog cases remain NOT_RUN.
+ * External effects: NONE. Broader catalog (T-F24 / T-US-047 / T-X073) stay
+ * NOT_RUN here; T-X029 may be fixture ACCEPTED only via explicit rebind proof.
  */
 
 import {
@@ -47,11 +50,22 @@ export const CredentialAuditKind = {
   EFFECT_DENIED: "EFFECT_DENIED",
   REVOKED: "REVOKED",
   ROTATED: "ROTATED",
+  REBIND_REQUIRED: "REBIND_REQUIRED",
+  REBOUND: "REBOUND",
   QUEUED_CANCELLED: "QUEUED_CANCELLED",
   QUEUED_RETAINED_POST_APPLY: "QUEUED_RETAINED_POST_APPLY",
   OFFBOARDED: "OFFBOARDED",
   LIVE_PROVIDER_REVOKE_NOT_WIRED: "LIVE_PROVIDER_REVOKE_NOT_WIRED",
 } as const;
+
+/** Account identity change classification for rotate vs rebind (T-X029). */
+export const AccountTokenChange = {
+  SAME_ACCOUNT: "SAME_ACCOUNT",
+  DIFFERENT_ACCOUNT: "DIFFERENT_ACCOUNT",
+} as const;
+
+export type AccountTokenChangeValue =
+  (typeof AccountTokenChange)[keyof typeof AccountTokenChange];
 
 export type CredentialAuditKindValue =
   (typeof CredentialAuditKind)[keyof typeof CredentialAuditKind];
@@ -161,8 +175,34 @@ export type CredentialRotationRecord = {
   approvedBy: string;
   /** Fixture-only local switch — not live provider revoke. */
   localSwitchComplete: true;
+  /** Same-account local rotate only — not different-account rebind. */
+  sameAccount: true;
   liveProviderRevoke: "NOT_WIRED";
   secretsExported: false;
+  createdAtIso: string;
+  summary: string;
+};
+
+/**
+ * Explicit different-account rebind record (T-X029 fixture).
+ * Never claims live provider revoke or silent same-connection refresh.
+ */
+export type CredentialRebindRecord = {
+  rebindId: string;
+  oldConnectionId: string;
+  newConnectionId: string;
+  oldAccountLabel: string;
+  newAccountLabel: string;
+  oldReferenceId: string;
+  newReferenceId: string;
+  approvedBy: string;
+  explicitRebind: true;
+  silentRefreshRejected: true;
+  localSwitchComplete: true;
+  liveProviderRevoke: "NOT_WIRED";
+  secretsExported: false;
+  catalogCaseId: "T-X029";
+  externalEffects: "NONE";
   createdAtIso: string;
   summary: string;
 };
@@ -200,13 +240,16 @@ export type CredentialRotationState = {
   queuedWork: CredentialQueuedWorkItem[];
   audit: CredentialAuditEntry[];
   rotations: CredentialRotationRecord[];
+  rebinds: CredentialRebindRecord[];
   offboardingManifests: OffboardingManifest[];
   liveWiring: {
     localRevoke: "fixture";
     localRotation: "fixture";
+    localRebind: "fixture";
     offboardingManifest: "fixture";
     liveProviderRevocation: "NOT_WIRED";
   };
+  /** Broader F24/offboarding stay NOT_RUN; T-X029 ACCEPTED only via evidence compiler. */
   catalogClaim: "NOT_RUN";
   chatgptAdsWiring: "NOT_WIRED";
   productionActivated: false;
@@ -223,10 +266,12 @@ export function emptyCredentialRotationState(
     queuedWork: [],
     audit: [],
     rotations: [],
+    rebinds: [],
     offboardingManifests: [],
     liveWiring: {
       localRevoke: "fixture",
       localRotation: "fixture",
+      localRebind: "fixture",
       offboardingManifest: "fixture",
       liveProviderRevocation: "NOT_WIRED",
     },
@@ -435,11 +480,211 @@ export function buildRotationRecord(input: {
     newReferenceId: input.newReferenceId,
     approvedBy: input.approvedBy,
     localSwitchComplete: true,
+    sameAccount: true,
     liveProviderRevoke: "NOT_WIRED",
     secretsExported: false,
     createdAtIso: input.nowIso,
     summary:
-      "Local broker reference rotated (fixture). Old reference marked revoked. Live provider revoke NOT_WIRED — no secret export.",
+      "Local broker reference rotated (fixture, same account). Old reference marked revoked. Live provider revoke NOT_WIRED — no secret export. Different-account tokens require explicit rebind (T-X029).",
+  };
+}
+
+/** Normalize account labels for identity comparison. */
+export function normalizeAccountLabel(label: string): string {
+  return label.trim().toLowerCase();
+}
+
+/**
+ * Classify whether an observed token identity maps to the same account
+ * or a different one (T-X029).
+ */
+export function classifyAccountTokenChange(input: {
+  previousAccountLabel: string;
+  observedAccountLabel: string;
+}): AccountTokenChangeValue {
+  const prev = normalizeAccountLabel(input.previousAccountLabel);
+  const next = normalizeAccountLabel(input.observedAccountLabel);
+  if (!prev || !next) {
+    // Empty/unknown labels cannot prove same-account — treat as different
+    // so callers must use explicit rebind rather than silent refresh.
+    return AccountTokenChange.DIFFERENT_ACCOUNT;
+  }
+  return prev === next
+    ? AccountTokenChange.SAME_ACCOUNT
+    : AccountTokenChange.DIFFERENT_ACCOUNT;
+}
+
+/**
+ * Same-account rotate requires a non-empty observed account identity that
+ * matches the bound connection. Blank/missing identity cannot prove same-account
+ * and must not allow silent different-account bind (T-X029).
+ */
+export function evaluateSilentRotateAllowed(input: {
+  previousAccountLabel: string;
+  observedAccountLabel: string | null | undefined;
+}):
+  | { ok: true; change: "SAME_ACCOUNT" }
+  | {
+      ok: false;
+      code: "ACCOUNT_IDENTITY_REQUIRED" | "REBIND_REQUIRED";
+      change: "DIFFERENT_ACCOUNT" | null;
+      reason: string;
+    } {
+  if (
+    input.observedAccountLabel === null ||
+    input.observedAccountLabel === undefined ||
+    input.observedAccountLabel.trim() === ""
+  ) {
+    return {
+      ok: false,
+      code: "ACCOUNT_IDENTITY_REQUIRED",
+      change: null,
+      reason:
+        "Same-account rotate requires a non-empty observedAccountLabel proving token identity (T-X029); blank identity cannot authorize silent refresh",
+    };
+  }
+  const change = classifyAccountTokenChange({
+    previousAccountLabel: input.previousAccountLabel,
+    observedAccountLabel: input.observedAccountLabel,
+  });
+  if (change === AccountTokenChange.DIFFERENT_ACCOUNT) {
+    return {
+      ok: false,
+      code: "REBIND_REQUIRED",
+      change: AccountTokenChange.DIFFERENT_ACCOUNT,
+      reason:
+        "Token identity maps to a different account — explicit rebind required (T-X029); silent same-connection refresh denied",
+    };
+  }
+  return { ok: true, change: AccountTokenChange.SAME_ACCOUNT };
+}
+
+/**
+ * Mark the prior connection ROTATED_AWAY after an explicit different-account rebind.
+ * Denies leases/effects on the old connection; successor is a new connection.
+ */
+export function markConnectionRotatedAway(
+  connection: FixtureCredentialConnection,
+  nowIso: string,
+  approvedBy: string | null,
+  rotatedToReferenceId: string,
+): FixtureCredentialConnection {
+  return {
+    ...connection,
+    status: CredentialConnectionStatus.ROTATED_AWAY,
+    connectionState: ConnectionState.REVOKED,
+    writeReadiness: WriteReadiness.BLOCKED,
+    verificationState: VerificationState.NOT_VERIFIED,
+    revokedAtIso: nowIso,
+    approvedBy,
+    rotatedToReferenceId,
+  };
+}
+
+export function buildRebindRecord(input: {
+  rebindId: string;
+  oldConnectionId: string;
+  newConnectionId: string;
+  oldAccountLabel: string;
+  newAccountLabel: string;
+  oldReferenceId: string;
+  newReferenceId: string;
+  approvedBy: string;
+  nowIso: string;
+}): CredentialRebindRecord {
+  return {
+    rebindId: input.rebindId,
+    oldConnectionId: input.oldConnectionId,
+    newConnectionId: input.newConnectionId,
+    oldAccountLabel: input.oldAccountLabel,
+    newAccountLabel: input.newAccountLabel,
+    oldReferenceId: input.oldReferenceId,
+    newReferenceId: input.newReferenceId,
+    approvedBy: input.approvedBy,
+    explicitRebind: true,
+    silentRefreshRejected: true,
+    localSwitchComplete: true,
+    liveProviderRevoke: "NOT_WIRED",
+    secretsExported: false,
+    catalogCaseId: "T-X029",
+    externalEffects: "NONE",
+    createdAtIso: input.nowIso,
+    summary:
+      "Explicit different-account rebind (T-X029 fixture). Old connection ROTATED_AWAY; new connection bound. Silent refresh rejected. Live provider revoke NOT_WIRED. External effects NONE.",
+  };
+}
+
+/**
+ * Validate an explicit rebind request. Requires a different account label
+ * and non-empty approval — never invents same-account rebind as ACCEPTED proof.
+ */
+export function evaluateExplicitRebind(input: {
+  connection: FixtureCredentialConnection | null;
+  newAccountLabel: string;
+  approvedBy: string;
+}):
+  | {
+      ok: true;
+      oldAccountLabel: string;
+      newAccountLabel: string;
+      change: "DIFFERENT_ACCOUNT";
+    }
+  | {
+      ok: false;
+      code:
+        | "CONNECTION_MISSING"
+        | "CONNECTION_NOT_ACTIVE"
+        | "SAME_ACCOUNT"
+        | "APPROVAL_REQUIRED"
+        | "ACCOUNT_LABEL_REQUIRED";
+      reason: string;
+    } {
+  if (!input.connection) {
+    return {
+      ok: false,
+      code: "CONNECTION_MISSING",
+      reason: "Unknown credential connection",
+    };
+  }
+  if (input.connection.status !== CredentialConnectionStatus.ACTIVE) {
+    return {
+      ok: false,
+      code: "CONNECTION_NOT_ACTIVE",
+      reason: `Cannot rebind connection in status ${input.connection.status}`,
+    };
+  }
+  if (!input.approvedBy.trim()) {
+    return {
+      ok: false,
+      code: "APPROVAL_REQUIRED",
+      reason: "Explicit rebind requires approvedBy (T-X029)",
+    };
+  }
+  const newLabel = input.newAccountLabel.trim();
+  if (!newLabel) {
+    return {
+      ok: false,
+      code: "ACCOUNT_LABEL_REQUIRED",
+      reason: "Explicit rebind requires newAccountLabel (T-X029)",
+    };
+  }
+  const change = classifyAccountTokenChange({
+    previousAccountLabel: input.connection.accountLabel,
+    observedAccountLabel: newLabel,
+  });
+  if (change !== AccountTokenChange.DIFFERENT_ACCOUNT) {
+    return {
+      ok: false,
+      code: "SAME_ACCOUNT",
+      reason:
+        "Observed account matches the bound connection — use rotate for same-account local refresh, not rebind",
+    };
+  }
+  return {
+    ok: true,
+    oldAccountLabel: input.connection.accountLabel,
+    newAccountLabel: newLabel,
+    change: AccountTokenChange.DIFFERENT_ACCOUNT,
   };
 }
 

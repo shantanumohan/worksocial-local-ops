@@ -43,6 +43,7 @@ import { proofEmergencyStopAtCommit } from "./emergency-stop-proof.js";
 import { proofForgedBrowserRoleIgnored } from "./forged-browser-role-proof.js";
 import { proofCrossWorkspaceReferenceDenied } from "./cross-workspace-reference-proof.js";
 import { proofApprovedPayloadEditInvalidated } from "./approved-payload-edit-proof.js";
+import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -538,7 +539,7 @@ function failProof(
  * competing-supervisor lease feeds T-US-002/T-X002; self-approval feeds
  * T-X018/T-US-054; offboard ACTIVE_TOKEN residual feeds T-X073; emergency
  * stop feeds T-US-060; forged browser role feeds T-X005; cross-workspace
- * reference feeds T-X006; approved payload edit feeds T-X019/T-US-036.
+ * reference feeds T-X006; approved payload edit feeds T-X019/T-US-036; explicit rebind feeds T-X029.
  */
 export async function runSoakRecoveryHarness(input: {
   stateDir: string;
@@ -569,6 +570,12 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofForgedBrowserRoleIgnored(nowPlus(nowIso, 100_000)));
   proofs.push(proofCrossWorkspaceReferenceDenied(nowPlus(nowIso, 110_000)));
   proofs.push(proofApprovedPayloadEditInvalidated(nowPlus(nowIso, 120_000)));
+  proofs.push(
+    await runExplicitAccountRebindProof({
+      stateDir: join(input.stateDir, `credential-rebind-${randomUUID().slice(0, 8)}`),
+      nowIso: nowPlus(nowIso, 130_000),
+    }),
+  );
 
   const allPassed = proofs.every((p) => p.passed);
   return {

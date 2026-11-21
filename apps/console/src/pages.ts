@@ -2591,12 +2591,13 @@ export function credentialsPage(apiOrigin: string): string {
 </header>
 <main>
   <section>
-    <h2>Credential revoke / rotate / offboard (F24 · WP10)</h2>
-    <p class="muted">Local honesty: mark revoked, deny leases/effects, cancel eligible queued work, retain audit. Rotation records never export secrets.</p>
-    <p class="warn">Live provider token revoke stays <strong>NOT_WIRED</strong>. External effects NONE. Catalog T-F24 / T-US-047 / T-X073 remain NOT_RUN.</p>
+    <h2>Credential revoke / rotate / rebind / offboard (F24 · WP10)</h2>
+    <p class="muted">Local honesty: mark revoked, deny leases/effects, cancel eligible queued work, retain audit. Different-account tokens require <strong>explicit rebind</strong> (T-X029) — never a silent refresh. Rotation/rebind records never export secrets.</p>
+    <p class="warn">Live provider token revoke stays <strong>NOT_WIRED</strong>. External effects NONE. T-F24 / T-US-047 / T-X073 remain NOT_RUN; T-X029 fixture ACCEPTED only via evidence compiler.</p>
     <button id="btn-seed" type="button">Seed fixture connection</button>
     <button id="btn-revoke" type="button">Revoke (cancel queued)</button>
-    <button id="btn-rotate" type="button">Rotate locally</button>
+    <button id="btn-rotate" type="button">Rotate locally (same account)</button>
+    <button id="btn-rebind" type="button">Rebind different account (T-X029)</button>
     <button id="btn-offboard" type="button">Offboard manifest</button>
     <button id="btn-live" type="button" class="ghost">Try live provider revoke (NOT_WIRED)</button>
     <button id="btn-audit" type="button" class="ghost">Audit</button>
@@ -2654,11 +2655,15 @@ export function credentialsPage(apiOrigin: string): string {
     refresh();
   };
   async function needConnection() {
-    if (lastConnectionId) return lastConnectionId;
     const res = await api('/credentials/connections');
     const body = await res.json();
-    const first = (body.connections || [])[0];
-    lastConnectionId = first?.connectionId || null;
+    const connections = body.connections || [];
+    const active = connections.find((c) => c.status === 'ACTIVE');
+    if (lastConnectionId) {
+      const remembered = connections.find((c) => c.connectionId === lastConnectionId && c.status === 'ACTIVE');
+      if (remembered) return remembered.connectionId;
+    }
+    lastConnectionId = active?.connectionId || null;
     return lastConnectionId;
   }
   document.getElementById('btn-revoke').onclick = async () => {
@@ -2673,9 +2678,20 @@ export function credentialsPage(apiOrigin: string): string {
   document.getElementById('btn-rotate').onclick = async () => {
     const connectionId = await needConnection();
     if (!connectionId) { document.getElementById('note').textContent = 'Seed a connection first.'; return; }
-    const res = await api('/credentials/rotate', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ connectionId, approvedBy: 'admin', secretMaterial: 'console-rotate-' + Date.now() }) });
+    const accountLabel = (await api('/credentials/connections').then(r => r.json())).connections?.find(c => c.connectionId === connectionId)?.accountLabel || 'fixture-cms';
+    const res = await api('/credentials/rotate', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ connectionId, secretMaterial: 'console-rotate-' + Date.now(), observedAccountLabel: accountLabel }) });
     const body = await res.json();
-    document.getElementById('note').textContent = body.ok ? 'Local rotation complete; live provider revoke NOT_WIRED.' : (body.reason || body.code);
+    document.getElementById('note').textContent = body.ok ? 'Local same-account rotation complete; live provider revoke NOT_WIRED.' : (body.reason || body.code);
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-rebind').onclick = async () => {
+    const connectionId = await needConnection();
+    if (!connectionId) { document.getElementById('note').textContent = 'Seed a connection first.'; return; }
+    const res = await api('/credentials/rebind', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ connectionId, newAccountLabel: 'fixture-account-beta-' + Date.now(), secretMaterial: 'console-rebind-' + Date.now() }) });
+    const body = await res.json();
+    if (body.ok && body.newConnection?.connectionId) lastConnectionId = body.newConnection.connectionId;
+    document.getElementById('note').textContent = body.ok ? 'Explicit different-account rebind (T-X029); old connection ROTATED_AWAY; live NOT_WIRED.' : (body.reason || body.code);
     document.getElementById('out').textContent = JSON.stringify(body, null, 2);
     refresh();
   };
@@ -2733,7 +2749,7 @@ export function soakPage(apiOrigin: string): string {
 <main>
   <section>
     <h2>R1 soak / acceptance evidence (M9)</h2>
-    <p class="muted">Fixture crash-restart, no-duplicate-effects, job continuity, reconcile, and backup/omit-receipt proofs. Redacted ACCEPTED for T-X014 / T-X020 / T-US-048 / T-X066 (complete proof sets). Never silently VERIFIED for live.</p>
+    <p class="muted">Fixture crash-restart, no-duplicate-effects, job continuity, reconcile, backup/omit-receipt, and explicit-account-rebind proofs. Redacted ACCEPTED for T-X014 / T-X020 / T-US-048 / T-X029 / T-X066 (complete proof sets). Never silently VERIFIED for live.</p>
     <p class="warn" id="temporal-warn">Live CMS/GSC/GA4/Zoho remain NOT_WIRED. Checking Temporal… ChatGPT Ads access-blocked. 72h pilot gate uses server-recorded start/heartbeat/end only — client claim dates rejected; short runs stay NOT_MET. Not R1-complete. Never silently VERIFIED for live.</p>
     <button id="btn-pilot-start" type="button">Pilot start (server clock)</button>
     <button id="btn-pilot-hb" type="button">Pilot heartbeat</button>

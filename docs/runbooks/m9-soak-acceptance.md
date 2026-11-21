@@ -14,10 +14,14 @@ Fixture (LOCAL_DURABLE) proofs:
 8. Self-approval rejected; independent A25 required (**T-X018** / **T-US-054**)
 9. Offboard ACTIVE_TOKEN residual — incomplete until live revoke (**T-X073**)
 10. Emergency stop / outbound stop checked at commit (**T-US-060**)
+11. Forged browser role ignored (**T-X005**)
+12. Cross-workspace object reference denied (**T-X006**)
+13. Approved payload edit invalidated (**T-X019** / **T-US-036**)
+14. Different-account token → explicit rebind (**T-X029**)
 
 Acceptance evidence compiler marks selected catalog cases **ACCEPTED** only when the **complete expected proof set** passes with **no failed related proofs**, and only with redacted fixture artifacts. It never silently marks live **VERIFIED**.
 
-Honest fixture ACCEPTED cases: **T-X014**, **T-X020**, **T-US-048**, **T-X066**, **T-F24**, **T-US-047**, **T-US-002**, **T-X002**, **T-X018**, **T-US-054**, **T-X073**, **T-US-060**, **T-X005**, **T-X006**, **T-X019**, **T-US-036**.
+Honest fixture ACCEPTED cases: **T-X014**, **T-X020**, **T-US-048**, **T-X066**, **T-F24**, **T-US-047**, **T-US-002**, **T-X002**, **T-X018**, **T-US-054**, **T-X073**, **T-US-060**, **T-X005**, **T-X006**, **T-X019**, **T-US-036**, **T-X029**.
 
 **T-X066** maps only to `BACKUP_OMIT_RECEIPT`. Retry-only `NO_DUPLICATE_EFFECTS` does not satisfy T-X066.
 

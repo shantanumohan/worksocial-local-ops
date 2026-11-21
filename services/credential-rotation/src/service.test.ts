@@ -106,6 +106,7 @@ describe("credential-rotation service", () => {
       connectionId: seeded.connection.connectionId,
       approvedBy: "admin",
       secretMaterial: "rotated-secret-material",
+      observedAccountLabel: seeded.connection.accountLabel,
       nowIso: "2026-11-21T22:10:00.000Z",
     });
     expect(rotated.ok).toBe(true);
@@ -116,6 +117,74 @@ describe("credential-rotation service", () => {
     expect(JSON.stringify(rotated.rotation)).not.toContain(
       "rotated-secret-material",
     );
+  });
+
+  it("T-X029: blank observedAccountLabel cannot silent-rotate", async () => {
+    const svc = service();
+    const seeded = await svc.seedFixture({
+      accountLabel: "fixture-account-alpha",
+      nowIso: "2026-11-21T22:00:00.000Z",
+    });
+    const blank = await svc.rotate({
+      connectionId: seeded.connection.connectionId,
+      approvedBy: "admin",
+      secretMaterial: "blank-secret",
+      observedAccountLabel: "",
+      nowIso: "2026-11-21T22:05:00.000Z",
+    });
+    expect(blank).toMatchObject({
+      ok: false,
+      code: "ACCOUNT_IDENTITY_REQUIRED",
+    });
+  });
+
+  it("T-X029: explicit rebind + successor ID collision rejected", async () => {
+    const svc = service();
+    const seeded = await svc.seedFixture({
+      accountLabel: "fixture-account-alpha",
+      nowIso: "2026-11-21T22:00:00.000Z",
+      withQueuedWork: true,
+    });
+
+    const silent = await svc.rotate({
+      connectionId: seeded.connection.connectionId,
+      approvedBy: "admin",
+      secretMaterial: "nope",
+      observedAccountLabel: "fixture-account-beta",
+      nowIso: "2026-11-21T22:01:00.000Z",
+    });
+    expect(silent).toMatchObject({ ok: false, code: "REBIND_REQUIRED" });
+
+    const rebound = await svc.rebind({
+      connectionId: seeded.connection.connectionId,
+      newAccountLabel: "fixture-account-beta",
+      approvedBy: "admin",
+      secretMaterial: "rebind-secret",
+      nowIso: "2026-11-21T22:02:00.000Z",
+      newConnectionId: "conn-successor-1",
+    });
+    expect(rebound.ok).toBe(true);
+    if (!rebound.ok) throw new Error("expected rebind");
+    expect(rebound.catalogCaseId).toBe("T-X029");
+    expect(rebound.oldConnection.status).toBe("ROTATED_AWAY");
+    expect(rebound.newConnection.connectionId).toBe("conn-successor-1");
+    expect(rebound.externalEffects).toBe("NONE");
+
+    const sameId = await svc.rebind({
+      connectionId: rebound.newConnection.connectionId,
+      newAccountLabel: "fixture-account-gamma",
+      approvedBy: "admin",
+      secretMaterial: "collision-secret",
+      nowIso: "2026-11-21T22:03:00.000Z",
+      newConnectionId: rebound.newConnection.connectionId,
+    });
+    expect(sameId).toMatchObject({
+      ok: false,
+      code: "CONNECTION_ID_COLLISION",
+    });
+
+    const rebinds = await svc.listRebinds();
+    expect(rebinds).toHaveLength(1);
   });
 
   it("offboard produces manifest with provider-revoke residual NOT_WIRED", async () => {

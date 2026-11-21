@@ -186,6 +186,13 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.EMERGENCY_STOP_AT_COMMIT),
     ).toEqual(["T-US-060"]);
+
+    expect(expectedProofsForFixtureCase("T-X029")).toEqual([
+      SoakProofKind.EXPLICIT_ACCOUNT_REBIND,
+    ]);
+    expect(mapProofToFixtureCases(SoakProofKind.EXPLICIT_ACCOUNT_REBIND)).toEqual([
+      "T-X029",
+    ]);
     expect(expectedProofsForFixtureCase("T-US-060")).toEqual([
       SoakProofKind.EMERGENCY_STOP_AT_COMMIT,
     ]);

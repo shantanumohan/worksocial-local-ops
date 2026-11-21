@@ -103,7 +103,7 @@ export async function handleSoakRequest(input: {
       200,
       {
         cases: soak.listCases(),
-        note: "ACCEPTED = fixture evidence only with complete proof set. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile. Never silently VERIFIED for live.",
+        note: "ACCEPTED = fixture evidence only with complete proof set. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated; T-X029 via explicit rebind. Never silently VERIFIED for live.",
       },
       cors,
     );

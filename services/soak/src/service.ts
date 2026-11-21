@@ -191,7 +191,7 @@ export function createSoakService(store: SoakStore): SoakService {
         r1CompleteClaimed: false,
         externalEffects: "NONE",
         honestNote:
-          "Fixture soak only. Pilot gate uses server-recorded observations only (client claim dates ignored). Live providers NOT_WIRED. T-X066 fixture ACCEPTED via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile — not live VERIFIED. Not R1-complete.",
+          "Fixture soak only. Pilot gate uses server-recorded observations only (client claim dates ignored). Live providers NOT_WIRED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated; T-X029 via explicit rebind — not live VERIFIED. Not R1-complete.",
       };
 
       store.addRun(run);
@@ -224,7 +224,7 @@ export function createSoakService(store: SoakStore): SoakService {
         note:
           latestRun == null
             ? "No soak runs yet — run fixture soak (recovery:rehearse / POST /soak/run)."
-            : `Latest pilotGate=${latestRun.pilotGate.status}; r1CompleteClaimed=false; ChatGPT Ads blocked; live NOT_WIRED; T-X066 + T-F24/T-US-047 fixture ACCEPTED when required proofs present (not live VERIFIED).`,
+            : `Latest pilotGate=${latestRun.pilotGate.status}; r1CompleteClaimed=false; ChatGPT Ads blocked; live NOT_WIRED; T-X066 + T-F24/T-US-047 + T-US-002/T-X002 + T-X018/T-US-054 + T-X073 + T-US-060 + T-X005/T-X006 + T-X019/T-US-036 + T-X029 fixture ACCEPTED when required proofs present (not live VERIFIED).`,
       };
     },
   };

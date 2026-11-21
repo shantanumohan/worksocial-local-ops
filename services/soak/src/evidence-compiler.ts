@@ -56,6 +56,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X006": "Cross-workspace object reference — deny without leak",
   "T-X019": "Approved payload edited — digest conflict",
   "T-US-036": "Stale approval invalidated on revision change",
+  "T-X029": "Token rotates to different account",
 };
 
 function relatedProofsForCase(

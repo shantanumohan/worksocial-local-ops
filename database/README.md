@@ -1,6 +1,6 @@
 # Database migrations
 
-Ordered SQL under `migrations/` (`001_…` … `027_…`).
+Ordered SQL under `migrations/` (`001_…` … `028_…`).
 
 ```bash
 export DATABASE_URL=postgres://worksocial:worksocial@127.0.0.1:5432/worksocial
@@ -36,5 +36,7 @@ observations used for the 72h gate (client claim dates rejected).
 `026_credential_rotation.sql` is the WP10 companion for local credential revoke/rotate/offboard
 (used by `createPgCredentialRotationStore` when `DATABASE_URL` is set; live provider revoke NOT_WIRED).
 `027_credential_recovery_state.sql` adds singleton meta rows for credential/recovery PG cutover.
+`028_credential_rebind.sql` adds the T-X029 explicit different-account rebind table
+(used by `createPgCredentialRotationStore` when `DATABASE_URL` is set; fixture ACCEPTED only — live VERIFIED forbidden).
 Runner: `pnpm db:migrate` (`packages/persistence` `runMigrations`).
 External effects: none (simulator only).
