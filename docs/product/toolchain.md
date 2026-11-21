@@ -35,7 +35,7 @@ GitHub Actions workflow `.github/workflows/ci.yml` runs:
 10. `pnpm test:eval` — AA-20 offline EVAL_ONLY isolation suite (must exit 0; fixture ≠ live fleet; not catalog VERIFIED)
 11. `pnpm test:security` — offline ownership / auth / lease gate suite (must exit 0; not a pen-test or catalog VERIFIED)
 
-`pnpm test:security` is implemented for gates already in host+authority and **must exit 0** in CI. Passing it does **not** mean credential-rotation (AA-48), Windows host bind, live penetration testing, or the 159 acceptance cases are VERIFIED. `pnpm test:eval` is isolation-only — same honesty boundary for live fleet / Ads / catalog. Product acceptance cases remain `NOT_RUN` until executed with redacted evidence in their declared environment (fixture ≠ sandbox ≠ authorized production). M9 currently marks **14** cases fixture **ACCEPTED** (T-X014, T-X020, T-US-048, T-X066, T-F24, T-US-047, T-US-002, T-X002, T-X018, T-US-054, T-X073, T-US-060, T-X005, T-X006).
+`pnpm test:security` is implemented for gates already in host+authority and **must exit 0** in CI. Passing it does **not** mean credential-rotation (AA-48), Windows host bind, live penetration testing, or the 159 acceptance cases are VERIFIED. `pnpm test:eval` is isolation-only — same honesty boundary for live fleet / Ads / catalog. Product acceptance cases remain `NOT_RUN` until executed with redacted evidence in their declared environment (fixture ≠ sandbox ≠ authorized production). M9 currently marks **16** cases fixture **ACCEPTED** (T-X014, T-X020, T-US-048, T-X066, T-F24, T-US-047, T-US-002, T-X002, T-X018, T-US-054, T-X073, T-US-060, T-X005, T-X006, T-X019, T-US-036).
 
 ChatGPT Ads (`T-F07` / `T-US-013` / `T-US-014`) stays access-blocked without verified local transport and entitlement.
 

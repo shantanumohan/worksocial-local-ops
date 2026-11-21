@@ -80,6 +80,11 @@ export const SoakProofKind = {
    * Cross-workspace object reference denied without leak (T-X006).
    */
   CROSS_WORKSPACE_REFERENCE_DENIED: "cross_workspace_reference_denied",
+  /**
+   * Approved payload edited / stale approval invalidated (T-X019 / T-US-036).
+   * Digest conflict on edit; revision change invalidates binding.
+   */
+  APPROVED_PAYLOAD_EDIT_INVALIDATED: "approved_payload_edit_invalidated",
 } as const;
 
 export type SoakProofKindValue =
@@ -128,6 +133,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-060 requires EMERGENCY_STOP_AT_COMMIT (outbound stop at commit).
  * T-X005 requires FORGED_BROWSER_ROLE_IGNORED (payload role ignored).
  * T-X006 requires CROSS_WORKSPACE_REFERENCE_DENIED (deny without leak).
+ * T-X019 / T-US-036 require APPROVED_PAYLOAD_EDIT_INVALIDATED (digest/revision).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -145,6 +151,8 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-060",
   "T-X005",
   "T-X006",
+  "T-X019",
+  "T-US-036",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -509,6 +517,10 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.FORGED_BROWSER_ROLE_IGNORED];
     case "T-X006":
       return [SoakProofKind.CROSS_WORKSPACE_REFERENCE_DENIED];
+    case "T-X019":
+      return [SoakProofKind.APPROVED_PAYLOAD_EDIT_INVALIDATED];
+    case "T-US-036":
+      return [SoakProofKind.APPROVED_PAYLOAD_EDIT_INVALIDATED];
     default:
       return [];
   }
@@ -547,6 +559,8 @@ export function mapProofToFixtureCases(
       return ["T-X005"];
     case SoakProofKind.CROSS_WORKSPACE_REFERENCE_DENIED:
       return ["T-X006"];
+    case SoakProofKind.APPROVED_PAYLOAD_EDIT_INVALIDATED:
+      return ["T-X019", "T-US-036"];
     default:
       return [];
   }

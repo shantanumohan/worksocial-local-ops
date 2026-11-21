@@ -201,6 +201,15 @@ describe("soak-acceptance domain", () => {
     expect(expectedProofsForFixtureCase("T-X006")).toEqual([
       SoakProofKind.CROSS_WORKSPACE_REFERENCE_DENIED,
     ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.APPROVED_PAYLOAD_EDIT_INVALIDATED),
+    ).toEqual(["T-X019", "T-US-036"]);
+    expect(expectedProofsForFixtureCase("T-X019")).toEqual([
+      SoakProofKind.APPROVED_PAYLOAD_EDIT_INVALIDATED,
+    ]);
+    expect(expectedProofsForFixtureCase("T-US-036")).toEqual([
+      SoakProofKind.APPROVED_PAYLOAD_EDIT_INVALIDATED,
+    ]);
   });
 
   it("builds unique per-run artifact ids", () => {

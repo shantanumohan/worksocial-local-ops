@@ -54,6 +54,8 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-060": "Emergency stop checked at commit time",
   "T-X005": "Forged browser role — payload role ignored",
   "T-X006": "Cross-workspace object reference — deny without leak",
+  "T-X019": "Approved payload edited — digest conflict",
+  "T-US-036": "Stale approval invalidated on revision change",
 };
 
 function relatedProofsForCase(
@@ -202,6 +204,7 @@ export function compileAcceptanceEvidence(
     "T-US-060 fixture ACCEPTED only via EMERGENCY_STOP_AT_COMMIT (outbound stop at commit)",
     "T-X005 fixture ACCEPTED only via FORGED_BROWSER_ROLE_IGNORED (payload role ignored)",
     "T-X006 fixture ACCEPTED only via CROSS_WORKSPACE_REFERENCE_DENIED (deny without leak)",
+    "T-X019/T-US-036 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED (digest/revision)",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

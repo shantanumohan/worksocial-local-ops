@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-036",
+  "caseId": "T-US-036",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-036 (Stale approval invalidated on revision change)\nproof=approved_payload_edit_invalidated applyCount=1 :: Bound review validates against exact revision/digest | A25 accepted while digests matched | T-X019: payload checksum edit invalidated binding (digest conflict) | T-US-036: revision change invalidated stale approval binding | Verdict after payload edit rejected (stale binding) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "approved_payload_edit_invalidated"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-036.json",
+  "createdAtIso": "2026-11-21T22:57:08.798Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-036-65c27e0c9dd9"
+}

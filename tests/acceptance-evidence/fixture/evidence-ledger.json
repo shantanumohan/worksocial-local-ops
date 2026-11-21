@@ -1,11 +1,11 @@
 {
-  "compiledAtIso": "2026-11-21T22:53:33.274Z",
+  "compiledAtIso": "2026-11-21T22:57:08.798Z",
   "environment": "fixture",
   "r1CompleteClaimed": false,
   "pilotGate": {
     "status": "NOT_MET",
     "requiredMs": 259200000,
-    "observedMs": 24,
+    "observedMs": 20,
     "proofsRequired": [
       "crash_restart",
       "no_duplicate_effects",
@@ -19,7 +19,7 @@
       "unknown_remote_reconcile"
     ],
     "reasons": [
-      "Soak duration 24ms < required 259200000ms (72h pilot gate)"
+      "Soak duration 20ms < required 259200000ms (72h pilot gate)"
     ],
     "serverObservationsOnly": true
   },
@@ -46,8 +46,8 @@
         "Fixture evidence compiled from complete proof set (2)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T22:53:33.274Z",
-      "uniqueSourceArtifactId": "art-fixture-t-x014-ca1db3ed75fb"
+      "updatedAtIso": "2026-11-21T22:57:08.798Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x014-65c27e0c9dd9"
     },
     {
       "caseId": "T-X020",
@@ -58,8 +58,8 @@
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T22:53:33.274Z",
-      "uniqueSourceArtifactId": "art-fixture-t-x020-ca1db3ed75fb"
+      "updatedAtIso": "2026-11-21T22:57:08.798Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x020-65c27e0c9dd9"
     },
     {
       "caseId": "T-US-048",
@@ -70,8 +70,8 @@
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T22:53:33.274Z",
-      "uniqueSourceArtifactId": "art-fixture-t-us-048-ca1db3ed75fb"
+      "updatedAtIso": "2026-11-21T22:57:08.798Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-048-65c27e0c9dd9"
     },
     {
       "caseId": "T-X066",
@@ -82,8 +82,8 @@
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T22:53:33.274Z",
-      "uniqueSourceArtifactId": "art-fixture-t-x066-ca1db3ed75fb"
+      "updatedAtIso": "2026-11-21T22:57:08.798Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x066-65c27e0c9dd9"
     },
     {
       "caseId": "T-F24",
@@ -94,8 +94,8 @@
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T22:53:33.274Z",
-      "uniqueSourceArtifactId": "art-fixture-t-f24-ca1db3ed75fb"
+      "updatedAtIso": "2026-11-21T22:57:08.798Z",
+      "uniqueSourceArtifactId": "art-fixture-t-f24-65c27e0c9dd9"
     },
     {
       "caseId": "T-US-047",
@@ -106,8 +106,8 @@
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T22:53:33.274Z",
-      "uniqueSourceArtifactId": "art-fixture-t-us-047-ca1db3ed75fb"
+      "updatedAtIso": "2026-11-21T22:57:08.798Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-047-65c27e0c9dd9"
     },
     {
       "caseId": "T-US-002",
@@ -118,8 +118,8 @@
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T22:53:33.274Z",
-      "uniqueSourceArtifactId": "art-fixture-t-us-002-ca1db3ed75fb"
+      "updatedAtIso": "2026-11-21T22:57:08.798Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-002-65c27e0c9dd9"
     },
     {
       "caseId": "T-X002",
@@ -130,8 +130,8 @@
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T22:53:33.274Z",
-      "uniqueSourceArtifactId": "art-fixture-t-x002-ca1db3ed75fb"
+      "updatedAtIso": "2026-11-21T22:57:08.798Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x002-65c27e0c9dd9"
     },
     {
       "caseId": "T-X018",
@@ -142,8 +142,8 @@
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T22:53:33.274Z",
-      "uniqueSourceArtifactId": "art-fixture-t-x018-ca1db3ed75fb"
+      "updatedAtIso": "2026-11-21T22:57:08.798Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x018-65c27e0c9dd9"
     },
     {
       "caseId": "T-US-054",
@@ -154,8 +154,8 @@
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T22:53:33.274Z",
-      "uniqueSourceArtifactId": "art-fixture-t-us-054-ca1db3ed75fb"
+      "updatedAtIso": "2026-11-21T22:57:08.798Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-054-65c27e0c9dd9"
     },
     {
       "caseId": "T-X073",
@@ -166,8 +166,8 @@
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T22:53:33.274Z",
-      "uniqueSourceArtifactId": "art-fixture-t-x073-ca1db3ed75fb"
+      "updatedAtIso": "2026-11-21T22:57:08.798Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x073-65c27e0c9dd9"
     },
     {
       "caseId": "T-US-060",
@@ -178,8 +178,8 @@
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T22:53:33.274Z",
-      "uniqueSourceArtifactId": "art-fixture-t-us-060-ca1db3ed75fb"
+      "updatedAtIso": "2026-11-21T22:57:08.798Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-060-65c27e0c9dd9"
     },
     {
       "caseId": "T-X005",
@@ -190,8 +190,8 @@
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T22:53:33.274Z",
-      "uniqueSourceArtifactId": "art-fixture-t-x005-ca1db3ed75fb"
+      "updatedAtIso": "2026-11-21T22:57:08.798Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x005-65c27e0c9dd9"
     },
     {
       "caseId": "T-X006",
@@ -202,8 +202,32 @@
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-21T22:53:33.274Z",
-      "uniqueSourceArtifactId": "art-fixture-t-x006-ca1db3ed75fb"
+      "updatedAtIso": "2026-11-21T22:57:08.798Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x006-65c27e0c9dd9"
+    },
+    {
+      "caseId": "T-X019",
+      "status": "ACCEPTED",
+      "environment": "fixture",
+      "artifactId": "art-fixture-t-x019",
+      "reasons": [
+        "Fixture evidence compiled from complete proof set (1)",
+        "Not sandbox-verified; not production-canary-verified"
+      ],
+      "updatedAtIso": "2026-11-21T22:57:08.798Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x019-65c27e0c9dd9"
+    },
+    {
+      "caseId": "T-US-036",
+      "status": "ACCEPTED",
+      "environment": "fixture",
+      "artifactId": "art-fixture-t-us-036",
+      "reasons": [
+        "Fixture evidence compiled from complete proof set (1)",
+        "Not sandbox-verified; not production-canary-verified"
+      ],
+      "updatedAtIso": "2026-11-21T22:57:08.798Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-036-65c27e0c9dd9"
     }
   ],
   "artifacts": [
@@ -212,166 +236,166 @@
       "caseId": "T-X014",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X014 (Approval wait survives restart)\nproof=crash_restart applyCount=1 :: Accepted ACCEPTED_PENDING applyCount=1 | Rehydrated ACCEPTED_PENDING after restart | Verified matched=true applyCount=1\nproof=job_continuity applyCount=1 :: Job job-229e2f27b555c85b recorded | After restart created=false sameJob=true\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X014 (Approval wait survives restart)\nproof=crash_restart applyCount=1 :: Accepted ACCEPTED_PENDING applyCount=1 | Rehydrated ACCEPTED_PENDING after restart | Verified matched=true applyCount=1\nproof=job_continuity applyCount=1 :: Job job-7d6cee1d6c28cc63 recorded | After restart created=false sameJob=true\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "crash_restart",
         "job_continuity"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x014.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-x014-ca1db3ed75fb"
+      "uniqueSourceArtifactId": "art-fixture-t-x014-65c27e0c9dd9"
     },
     {
       "artifactId": "art-fixture-t-x020",
       "caseId": "T-X020",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X020 (Timeout after provider acceptance)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-733e1290 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X020 (Timeout after provider acceptance)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-e3915754 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "unknown_remote_reconcile"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x020.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-x020-ca1db3ed75fb"
+      "uniqueSourceArtifactId": "art-fixture-t-x020-65c27e0c9dd9"
     },
     {
       "artifactId": "art-fixture-t-us-048",
       "caseId": "T-US-048",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-US-048 (Unknown remote effects reconciled before resume)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-733e1290 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-048 (Unknown remote effects reconciled before resume)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-e3915754 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "unknown_remote_reconcile"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-048.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-us-048-ca1db3ed75fb"
+      "uniqueSourceArtifactId": "art-fixture-t-us-048-65c27e0c9dd9"
     },
     {
       "artifactId": "art-fixture-t-x066",
       "caseId": "T-X066",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X066 (Backup omits remote receipt)\nproof=backup_omit_receipt applyCount=1 :: Applied ACCEPTED_PENDING applyCount=1 remoteRef=remote-079e8761 | Omit-receipt backup written (providerEffects=[] receipts=[]); remote ledger preserved separately | Post-restore decision=ACCEPTED_PENDING localProvider=omitted receipts=0 | Reconciled remoteRef=remote-079e8761 from remote SoR without re-apply | Post-reconcile verified matched=true applyCount=1 | Post-reconcile retry providerCreated=false applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X066 (Backup omits remote receipt)\nproof=backup_omit_receipt applyCount=1 :: Applied ACCEPTED_PENDING applyCount=1 remoteRef=remote-90f42d97 | Omit-receipt backup written (providerEffects=[] receipts=[]); remote ledger preserved separately | Post-restore decision=ACCEPTED_PENDING localProvider=omitted receipts=0 | Reconciled remoteRef=remote-90f42d97 from remote SoR without re-apply | Post-reconcile verified matched=true applyCount=1 | Post-reconcile retry providerCreated=false applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "backup_omit_receipt"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x066.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-x066-ca1db3ed75fb"
+      "uniqueSourceArtifactId": "art-fixture-t-x066-65c27e0c9dd9"
     },
     {
       "artifactId": "art-fixture-t-f24",
       "caseId": "T-F24",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-F24 (Recover, rotate access and reconcile)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-d2504e29-b777-482e-9dc8-7e19f4029dde classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-d2504e29-b777-482e-9dc8-7e19f4029dde,stop-prov-rec-85cd8fa1-99a4-49b9-9621-58e811f731c4 | Rotation record rot-04245ea7-9dc5-454b-94be-6ad030d70a5a localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-d8bb1b77-0c08-4649-bea7-f9f3651fc7df classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-82d19a00-f9ca-403e-bb68-d89a797e428a residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-F24 (Recover, rotate access and reconcile)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-41a34603-f6fb-4fc7-819d-a5d7c964aafe classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-41a34603-f6fb-4fc7-819d-a5d7c964aafe,stop-prov-rec-6095a519-3f60-4d2b-a382-d91fc95ae798 | Rotation record rot-4735ec29-c908-4d3b-9864-663ca4ddd111 localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-be38356d-78a0-47f4-be02-b6ff241a02fb classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-d44f28e9-6237-41f1-b7f1-109c970245d5 residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "recover_rotate_reconcile"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-f24.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-f24-ca1db3ed75fb"
+      "uniqueSourceArtifactId": "art-fixture-t-f24-65c27e0c9dd9"
     },
     {
       "artifactId": "art-fixture-t-us-047",
       "caseId": "T-US-047",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-US-047 (Recover/rotate/reconcile — offboarding manifest)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-d2504e29-b777-482e-9dc8-7e19f4029dde classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-d2504e29-b777-482e-9dc8-7e19f4029dde,stop-prov-rec-85cd8fa1-99a4-49b9-9621-58e811f731c4 | Rotation record rot-04245ea7-9dc5-454b-94be-6ad030d70a5a localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-d8bb1b77-0c08-4649-bea7-f9f3651fc7df classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-82d19a00-f9ca-403e-bb68-d89a797e428a residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-047 (Recover/rotate/reconcile — offboarding manifest)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-41a34603-f6fb-4fc7-819d-a5d7c964aafe classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-41a34603-f6fb-4fc7-819d-a5d7c964aafe,stop-prov-rec-6095a519-3f60-4d2b-a382-d91fc95ae798 | Rotation record rot-4735ec29-c908-4d3b-9864-663ca4ddd111 localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-be38356d-78a0-47f4-be02-b6ff241a02fb classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-d44f28e9-6237-41f1-b7f1-109c970245d5 residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "recover_rotate_reconcile"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-047.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-us-047-ca1db3ed75fb"
+      "uniqueSourceArtifactId": "art-fixture-t-us-047-65c27e0c9dd9"
     },
     {
       "artifactId": "art-fixture-t-us-002",
       "caseId": "T-US-002",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-US-002 (Competing supervisors refused; no duplicate leases)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-d82749aa scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-d82749aa | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-464722c7 reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-002 (Competing supervisors refused; no duplicate leases)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-c03b713a scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-c03b713a | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-4c3bc297 reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "competing_supervisor_lease"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-002.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-us-002-ca1db3ed75fb"
+      "uniqueSourceArtifactId": "art-fixture-t-us-002-65c27e0c9dd9"
     },
     {
       "artifactId": "art-fixture-t-x002",
       "caseId": "T-X002",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X002 (Two supervisors start together — single host lease)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-d82749aa scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-d82749aa | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-464722c7 reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X002 (Two supervisors start together — single host lease)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-c03b713a scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-c03b713a | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-4c3bc297 reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "competing_supervisor_lease"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x002.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-x002-ca1db3ed75fb"
+      "uniqueSourceArtifactId": "art-fixture-t-x002-65c27e0c9dd9"
     },
     {
       "artifactId": "art-fixture-t-x018",
       "caseId": "T-X018",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X018 (Self-approval rejected)\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-14365d14 reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X018 (Self-approval rejected)\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-fbdfea32 reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "self_approval_rejected"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x018.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-x018-ca1db3ed75fb"
+      "uniqueSourceArtifactId": "art-fixture-t-x018-65c27e0c9dd9"
     },
     {
       "artifactId": "art-fixture-t-us-054",
       "caseId": "T-US-054",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-US-054 (Independent approval enforced (no ordinary self-approval))\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-14365d14 reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-054 (Independent approval enforced (no ordinary self-approval))\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-fbdfea32 reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "self_approval_rejected"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-054.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-us-054-ca1db3ed75fb"
+      "uniqueSourceArtifactId": "art-fixture-t-us-054-65c27e0c9dd9"
     },
     {
       "artifactId": "art-fixture-t-x073",
       "caseId": "T-X073",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X073 (Offboarding retains active token — incomplete until revoked)\nproof=offboard_active_token_residual applyCount=1 :: Pre-offboard lease granted leaseId=lease-b98e025d-29e8-462f-8b48-5c70f12abd1b | ACTIVE_TOKEN residual BLOCKED_NOT_WIRED summary=T-X073: provider-side token may still be active until live revoke is wired/performed | PROVIDER_REVOKE residual BLOCKED_NOT_WIRED | Offboarding incomplete-until-revoked: manifest=ob-5fe546d3-f1b9-4f66-8ca0-196455d1b7f5 catalogClaim=NOT_RUN auditRetained=true secretsExported=false | Post-offboard lease denied CONNECTION_REVOKED | liveProviderRevoke=NOT_WIRED — T-X073 incomplete until external revoke | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X073 (Offboarding retains active token — incomplete until revoked)\nproof=offboard_active_token_residual applyCount=1 :: Pre-offboard lease granted leaseId=lease-ca064327-7d59-4f4b-be21-aff372b29dc4 | ACTIVE_TOKEN residual BLOCKED_NOT_WIRED summary=T-X073: provider-side token may still be active until live revoke is wired/performed | PROVIDER_REVOKE residual BLOCKED_NOT_WIRED | Offboarding incomplete-until-revoked: manifest=ob-e20c08a5-f2d7-4c70-bb81-345dd9af2787 catalogClaim=NOT_RUN auditRetained=true secretsExported=false | Post-offboard lease denied CONNECTION_REVOKED | liveProviderRevoke=NOT_WIRED — T-X073 incomplete until external revoke | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "offboard_active_token_residual"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x073.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-x073-ca1db3ed75fb"
+      "uniqueSourceArtifactId": "art-fixture-t-x073-65c27e0c9dd9"
     },
     {
       "artifactId": "art-fixture-t-us-060",
@@ -383,10 +407,10 @@
         "emergency_stop_at_commit"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-060.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-us-060-ca1db3ed75fb"
+      "uniqueSourceArtifactId": "art-fixture-t-us-060-65c27e0c9dd9"
     },
     {
       "artifactId": "art-fixture-t-x005",
@@ -398,10 +422,10 @@
         "forged_browser_role_ignored"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x005.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-x005-ca1db3ed75fb"
+      "uniqueSourceArtifactId": "art-fixture-t-x005-65c27e0c9dd9"
     },
     {
       "artifactId": "art-fixture-t-x006",
@@ -413,170 +437,200 @@
         "cross_workspace_reference_denied"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x006.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-x006-ca1db3ed75fb"
+      "uniqueSourceArtifactId": "art-fixture-t-x006-65c27e0c9dd9"
+    },
+    {
+      "artifactId": "art-fixture-t-x019",
+      "caseId": "T-X019",
+      "environment": "fixture",
+      "redacted": true,
+      "summary": "Fixture ACCEPTED for T-X019 (Approved payload edited — digest conflict)\nproof=approved_payload_edit_invalidated applyCount=1 :: Bound review validates against exact revision/digest | A25 accepted while digests matched | T-X019: payload checksum edit invalidated binding (digest conflict) | T-US-036: revision change invalidated stale approval binding | Verdict after payload edit rejected (stale binding) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "proofKinds": [
+        "approved_payload_edit_invalidated"
+      ],
+      "evidenceRef": "soak/evidence/art-fixture-t-x019.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
+      "liveProviderSuccessClaimed": false,
+      "externalEffects": "NONE",
+      "uniqueSourceArtifactId": "art-fixture-t-x019-65c27e0c9dd9"
+    },
+    {
+      "artifactId": "art-fixture-t-us-036",
+      "caseId": "T-US-036",
+      "environment": "fixture",
+      "redacted": true,
+      "summary": "Fixture ACCEPTED for T-US-036 (Stale approval invalidated on revision change)\nproof=approved_payload_edit_invalidated applyCount=1 :: Bound review validates against exact revision/digest | A25 accepted while digests matched | T-X019: payload checksum edit invalidated binding (digest conflict) | T-US-036: revision change invalidated stale approval binding | Verdict after payload edit rejected (stale binding) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "proofKinds": [
+        "approved_payload_edit_invalidated"
+      ],
+      "evidenceRef": "soak/evidence/art-fixture-t-us-036.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
+      "liveProviderSuccessClaimed": false,
+      "externalEffects": "NONE",
+      "uniqueSourceArtifactId": "art-fixture-t-us-036-65c27e0c9dd9"
     }
   ],
   "uniqueRunArtifacts": [
     {
-      "artifactId": "art-fixture-t-x014-ca1db3ed75fb",
+      "artifactId": "art-fixture-t-x014-65c27e0c9dd9",
       "caseId": "T-X014",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X014 (Approval wait survives restart)\nproof=crash_restart applyCount=1 :: Accepted ACCEPTED_PENDING applyCount=1 | Rehydrated ACCEPTED_PENDING after restart | Verified matched=true applyCount=1\nproof=job_continuity applyCount=1 :: Job job-229e2f27b555c85b recorded | After restart created=false sameJob=true\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X014 (Approval wait survives restart)\nproof=crash_restart applyCount=1 :: Accepted ACCEPTED_PENDING applyCount=1 | Rehydrated ACCEPTED_PENDING after restart | Verified matched=true applyCount=1\nproof=job_continuity applyCount=1 :: Job job-7d6cee1d6c28cc63 recorded | After restart created=false sameJob=true\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "crash_restart",
         "job_continuity"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-x014-ca1db3ed75fb.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x014-65c27e0c9dd9.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
-      "artifactId": "art-fixture-t-x020-ca1db3ed75fb",
+      "artifactId": "art-fixture-t-x020-65c27e0c9dd9",
       "caseId": "T-X020",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X020 (Timeout after provider acceptance)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-733e1290 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X020 (Timeout after provider acceptance)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-e3915754 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "unknown_remote_reconcile"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-x020-ca1db3ed75fb.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x020-65c27e0c9dd9.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
-      "artifactId": "art-fixture-t-us-048-ca1db3ed75fb",
+      "artifactId": "art-fixture-t-us-048-65c27e0c9dd9",
       "caseId": "T-US-048",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-US-048 (Unknown remote effects reconciled before resume)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-733e1290 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-048 (Unknown remote effects reconciled before resume)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-e3915754 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "unknown_remote_reconcile"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-us-048-ca1db3ed75fb.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-048-65c27e0c9dd9.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
-      "artifactId": "art-fixture-t-x066-ca1db3ed75fb",
+      "artifactId": "art-fixture-t-x066-65c27e0c9dd9",
       "caseId": "T-X066",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X066 (Backup omits remote receipt)\nproof=backup_omit_receipt applyCount=1 :: Applied ACCEPTED_PENDING applyCount=1 remoteRef=remote-079e8761 | Omit-receipt backup written (providerEffects=[] receipts=[]); remote ledger preserved separately | Post-restore decision=ACCEPTED_PENDING localProvider=omitted receipts=0 | Reconciled remoteRef=remote-079e8761 from remote SoR without re-apply | Post-reconcile verified matched=true applyCount=1 | Post-reconcile retry providerCreated=false applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X066 (Backup omits remote receipt)\nproof=backup_omit_receipt applyCount=1 :: Applied ACCEPTED_PENDING applyCount=1 remoteRef=remote-90f42d97 | Omit-receipt backup written (providerEffects=[] receipts=[]); remote ledger preserved separately | Post-restore decision=ACCEPTED_PENDING localProvider=omitted receipts=0 | Reconciled remoteRef=remote-90f42d97 from remote SoR without re-apply | Post-reconcile verified matched=true applyCount=1 | Post-reconcile retry providerCreated=false applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "backup_omit_receipt"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-x066-ca1db3ed75fb.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x066-65c27e0c9dd9.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
-      "artifactId": "art-fixture-t-f24-ca1db3ed75fb",
+      "artifactId": "art-fixture-t-f24-65c27e0c9dd9",
       "caseId": "T-F24",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-F24 (Recover, rotate access and reconcile)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-d2504e29-b777-482e-9dc8-7e19f4029dde classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-d2504e29-b777-482e-9dc8-7e19f4029dde,stop-prov-rec-85cd8fa1-99a4-49b9-9621-58e811f731c4 | Rotation record rot-04245ea7-9dc5-454b-94be-6ad030d70a5a localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-d8bb1b77-0c08-4649-bea7-f9f3651fc7df classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-82d19a00-f9ca-403e-bb68-d89a797e428a residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-F24 (Recover, rotate access and reconcile)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-41a34603-f6fb-4fc7-819d-a5d7c964aafe classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-41a34603-f6fb-4fc7-819d-a5d7c964aafe,stop-prov-rec-6095a519-3f60-4d2b-a382-d91fc95ae798 | Rotation record rot-4735ec29-c908-4d3b-9864-663ca4ddd111 localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-be38356d-78a0-47f4-be02-b6ff241a02fb classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-d44f28e9-6237-41f1-b7f1-109c970245d5 residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "recover_rotate_reconcile"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-f24-ca1db3ed75fb.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-f24-65c27e0c9dd9.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
-      "artifactId": "art-fixture-t-us-047-ca1db3ed75fb",
+      "artifactId": "art-fixture-t-us-047-65c27e0c9dd9",
       "caseId": "T-US-047",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-US-047 (Recover/rotate/reconcile — offboarding manifest)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-d2504e29-b777-482e-9dc8-7e19f4029dde classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-d2504e29-b777-482e-9dc8-7e19f4029dde,stop-prov-rec-85cd8fa1-99a4-49b9-9621-58e811f731c4 | Rotation record rot-04245ea7-9dc5-454b-94be-6ad030d70a5a localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-d8bb1b77-0c08-4649-bea7-f9f3651fc7df classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-82d19a00-f9ca-403e-bb68-d89a797e428a residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-047 (Recover/rotate/reconcile — offboarding manifest)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-41a34603-f6fb-4fc7-819d-a5d7c964aafe classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-41a34603-f6fb-4fc7-819d-a5d7c964aafe,stop-prov-rec-6095a519-3f60-4d2b-a382-d91fc95ae798 | Rotation record rot-4735ec29-c908-4d3b-9864-663ca4ddd111 localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-be38356d-78a0-47f4-be02-b6ff241a02fb classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-d44f28e9-6237-41f1-b7f1-109c970245d5 residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "recover_rotate_reconcile"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-us-047-ca1db3ed75fb.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-047-65c27e0c9dd9.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
-      "artifactId": "art-fixture-t-us-002-ca1db3ed75fb",
+      "artifactId": "art-fixture-t-us-002-65c27e0c9dd9",
       "caseId": "T-US-002",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-US-002 (Competing supervisors refused; no duplicate leases)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-d82749aa scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-d82749aa | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-464722c7 reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-002 (Competing supervisors refused; no duplicate leases)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-c03b713a scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-c03b713a | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-4c3bc297 reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "competing_supervisor_lease"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-us-002-ca1db3ed75fb.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-002-65c27e0c9dd9.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
-      "artifactId": "art-fixture-t-x002-ca1db3ed75fb",
+      "artifactId": "art-fixture-t-x002-65c27e0c9dd9",
       "caseId": "T-X002",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X002 (Two supervisors start together — single host lease)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-d82749aa scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-d82749aa | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-464722c7 reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X002 (Two supervisors start together — single host lease)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-c03b713a scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-c03b713a | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-4c3bc297 reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "competing_supervisor_lease"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-x002-ca1db3ed75fb.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x002-65c27e0c9dd9.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
-      "artifactId": "art-fixture-t-x018-ca1db3ed75fb",
+      "artifactId": "art-fixture-t-x018-65c27e0c9dd9",
       "caseId": "T-X018",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X018 (Self-approval rejected)\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-14365d14 reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X018 (Self-approval rejected)\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-fbdfea32 reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "self_approval_rejected"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-x018-ca1db3ed75fb.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x018-65c27e0c9dd9.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
-      "artifactId": "art-fixture-t-us-054-ca1db3ed75fb",
+      "artifactId": "art-fixture-t-us-054-65c27e0c9dd9",
       "caseId": "T-US-054",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-US-054 (Independent approval enforced (no ordinary self-approval))\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-14365d14 reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-054 (Independent approval enforced (no ordinary self-approval))\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-fbdfea32 reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "self_approval_rejected"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-us-054-ca1db3ed75fb.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-054-65c27e0c9dd9.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
-      "artifactId": "art-fixture-t-x073-ca1db3ed75fb",
+      "artifactId": "art-fixture-t-x073-65c27e0c9dd9",
       "caseId": "T-X073",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X073 (Offboarding retains active token — incomplete until revoked)\nproof=offboard_active_token_residual applyCount=1 :: Pre-offboard lease granted leaseId=lease-b98e025d-29e8-462f-8b48-5c70f12abd1b | ACTIVE_TOKEN residual BLOCKED_NOT_WIRED summary=T-X073: provider-side token may still be active until live revoke is wired/performed | PROVIDER_REVOKE residual BLOCKED_NOT_WIRED | Offboarding incomplete-until-revoked: manifest=ob-5fe546d3-f1b9-4f66-8ca0-196455d1b7f5 catalogClaim=NOT_RUN auditRetained=true secretsExported=false | Post-offboard lease denied CONNECTION_REVOKED | liveProviderRevoke=NOT_WIRED — T-X073 incomplete until external revoke | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X073 (Offboarding retains active token — incomplete until revoked)\nproof=offboard_active_token_residual applyCount=1 :: Pre-offboard lease granted leaseId=lease-ca064327-7d59-4f4b-be21-aff372b29dc4 | ACTIVE_TOKEN residual BLOCKED_NOT_WIRED summary=T-X073: provider-side token may still be active until live revoke is wired/performed | PROVIDER_REVOKE residual BLOCKED_NOT_WIRED | Offboarding incomplete-until-revoked: manifest=ob-e20c08a5-f2d7-4c70-bb81-345dd9af2787 catalogClaim=NOT_RUN auditRetained=true secretsExported=false | Post-offboard lease denied CONNECTION_REVOKED | liveProviderRevoke=NOT_WIRED — T-X073 incomplete until external revoke | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "offboard_active_token_residual"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-x073-ca1db3ed75fb.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x073-65c27e0c9dd9.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
-      "artifactId": "art-fixture-t-us-060-ca1db3ed75fb",
+      "artifactId": "art-fixture-t-us-060-65c27e0c9dd9",
       "caseId": "T-US-060",
       "environment": "fixture",
       "redacted": true,
@@ -584,13 +638,13 @@
       "proofKinds": [
         "emergency_stop_at_commit"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-us-060-ca1db3ed75fb.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-060-65c27e0c9dd9.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
-      "artifactId": "art-fixture-t-x005-ca1db3ed75fb",
+      "artifactId": "art-fixture-t-x005-65c27e0c9dd9",
       "caseId": "T-X005",
       "environment": "fixture",
       "redacted": true,
@@ -598,13 +652,13 @@
       "proofKinds": [
         "forged_browser_role_ignored"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-x005-ca1db3ed75fb.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x005-65c27e0c9dd9.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
-      "artifactId": "art-fixture-t-x006-ca1db3ed75fb",
+      "artifactId": "art-fixture-t-x006-65c27e0c9dd9",
       "caseId": "T-X006",
       "environment": "fixture",
       "redacted": true,
@@ -612,11 +666,39 @@
       "proofKinds": [
         "cross_workspace_reference_denied"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-x006-ca1db3ed75fb.json",
-      "createdAtIso": "2026-11-21T22:53:33.274Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x006-65c27e0c9dd9.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
+      "liveProviderSuccessClaimed": false,
+      "externalEffects": "NONE"
+    },
+    {
+      "artifactId": "art-fixture-t-x019-65c27e0c9dd9",
+      "caseId": "T-X019",
+      "environment": "fixture",
+      "redacted": true,
+      "summary": "Fixture ACCEPTED for T-X019 (Approved payload edited — digest conflict)\nproof=approved_payload_edit_invalidated applyCount=1 :: Bound review validates against exact revision/digest | A25 accepted while digests matched | T-X019: payload checksum edit invalidated binding (digest conflict) | T-US-036: revision change invalidated stale approval binding | Verdict after payload edit rejected (stale binding) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "proofKinds": [
+        "approved_payload_edit_invalidated"
+      ],
+      "evidenceRef": "soak/evidence/art-fixture-t-x019-65c27e0c9dd9.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
+      "liveProviderSuccessClaimed": false,
+      "externalEffects": "NONE"
+    },
+    {
+      "artifactId": "art-fixture-t-us-036-65c27e0c9dd9",
+      "caseId": "T-US-036",
+      "environment": "fixture",
+      "redacted": true,
+      "summary": "Fixture ACCEPTED for T-US-036 (Stale approval invalidated on revision change)\nproof=approved_payload_edit_invalidated applyCount=1 :: Bound review validates against exact revision/digest | A25 accepted while digests matched | T-X019: payload checksum edit invalidated binding (digest conflict) | T-US-036: revision change invalidated stale approval binding | Verdict after payload edit rejected (stale binding) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "proofKinds": [
+        "approved_payload_edit_invalidated"
+      ],
+      "evidenceRef": "soak/evidence/art-fixture-t-us-036-65c27e0c9dd9.json",
+      "createdAtIso": "2026-11-21T22:57:08.798Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     }
   ],
-  "note": "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied. Not R1-complete."
+  "note": "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated. Not R1-complete."
 }
