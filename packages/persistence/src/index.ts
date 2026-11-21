@@ -325,3 +325,9 @@ export {
   defaultRecoveryStateDir,
   type RecoveryStore,
 } from "./recovery-store.js";
+
+export {
+  createFilePaidMediaStore,
+  defaultPaidMediaStateDir,
+  type PaidMediaStore,
+} from "./paid-media-store.js";

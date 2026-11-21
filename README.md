@@ -123,6 +123,13 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - Console `/analysis` + `/eval`; APIs `/analysis/*` + `/eval/*` + `/seo/judge-search`.
 - SQL `020_m8_search_analytics_eval.sql` companion; **Temporal NOT_WIRED**. Catalog cases remain **NOT_RUN** unless later fixture evidence is attached. Not an R1-complete claim.
 
+### AA-19 review analysis + paid-media proposals (F16 / F19)
+
+- Console `/paid` + enhanced `/analysis` (hypotheses / redacted briefs).
+- APIs `/paid/*` and `/analysis/{definitions,hypotheses,briefs,save-*}`.
+- Google Ads fixture Analyze-only proposals with financial diffs; approve/decline records decisions without spend mutations.
+- ChatGPT Ads remains **ACCESS_BLOCKED** without verified local transport + entitlement; live execute **NOT_WIRED**. External effects **NONE**. Catalog cases stay **NOT_RUN**.
+
 ### WP10 recovery evidence (F24)
 
 - Classifies **STALE_OBSERVATION** vs **ACTIVE_INCIDENT** vs **UNKNOWN_REMOTE_OUTCOME** for host/provider outage and queued work (fixture-only).
@@ -182,7 +189,7 @@ Status labels stay honest: fixture / stub / `NOT_RUN` / fixture-`ACCEPTED` ≠ s
 
 ```
 apps/console, apps/api
-services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-broker,learning-worker,probes,knowledge,seo,content,inbox,repair,owner-staging,evaluation-worker,soak,recovery}
+services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-broker,learning-worker,probes,knowledge,seo,content,inbox,repair,owner-staging,evaluation-worker,soak,recovery,paid-media}
 packages/{contracts,domain,ml,persistence,provider-adapters,observability,ui}
 database/migrations
 tests/{unit,integration,contract,workflow,e2e,security,eval,soak}

@@ -9,7 +9,7 @@
     "pnpm": "9.15.0"
   },
   "scripts": {
-    "build:local": "tsc -b packages/contracts packages/domain packages/ml packages/persistence packages/provider-adapters services/action-gateway services/credential-broker services/claude-runner services/workflow-worker services/learning-worker services/probes services/knowledge services/seo services/content services/inbox services/repair services/owner-staging services/lead-capture services/evaluation-worker services/soak services/recovery apps/api apps/console services/supervisor --pretty false",
+    "build:local": "tsc -b packages/contracts packages/domain packages/ml packages/persistence packages/provider-adapters services/action-gateway services/credential-broker services/claude-runner services/workflow-worker services/learning-worker services/probes services/knowledge services/seo services/content services/inbox services/repair services/owner-staging services/lead-capture services/evaluation-worker services/soak services/recovery services/paid-media apps/api apps/console services/supervisor --pretty false",
     "local:doctor": "pnpm build:local && tsx scripts/local-doctor.ts",
     "local:start": "pnpm build:local && tsx services/supervisor/src/cli.ts start",
     "local:stop": "pnpm build:local && tsx services/supervisor/src/cli.ts stop",
@@ -18,7 +18,7 @@
     "check": "tsc -b --pretty false",
     "db:migrate": "pnpm --filter @worksocial/persistence build && tsx scripts/migrate.ts",
     "test:acceptance-matrix": "tsx scripts/validate-acceptance-matrix.ts",
-    "test:unit": "pnpm build:local && pnpm --filter @worksocial/domain --filter @worksocial/ml --filter @worksocial/persistence --filter @worksocial/provider-adapters --filter @worksocial/supervisor --filter @worksocial/action-gateway --filter @worksocial/credential-broker --filter @worksocial/claude-runner --filter @worksocial/workflow-worker --filter @worksocial/learning-worker --filter @worksocial/probes --filter @worksocial/knowledge --filter @worksocial/seo --filter @worksocial/content --filter @worksocial/inbox --filter @worksocial/repair --filter @worksocial/owner-staging --filter @worksocial/lead-capture --filter @worksocial/evaluation-worker --filter @worksocial/soak --filter @worksocial/recovery --filter @worksocial/api test",
+    "test:unit": "pnpm build:local && pnpm --filter @worksocial/domain --filter @worksocial/ml --filter @worksocial/persistence --filter @worksocial/provider-adapters --filter @worksocial/supervisor --filter @worksocial/action-gateway --filter @worksocial/credential-broker --filter @worksocial/claude-runner --filter @worksocial/workflow-worker --filter @worksocial/learning-worker --filter @worksocial/probes --filter @worksocial/knowledge --filter @worksocial/seo --filter @worksocial/content --filter @worksocial/inbox --filter @worksocial/repair --filter @worksocial/owner-staging --filter @worksocial/lead-capture --filter @worksocial/evaluation-worker --filter @worksocial/soak --filter @worksocial/recovery --filter @worksocial/paid-media --filter @worksocial/api test",
     "test:database": "pnpm build:local && tsx scripts/run-database-tests.ts",
     "test:workflow": "pnpm build:local && tsx scripts/run-workflow-tests.ts",
     "test:temporal-compose": "pnpm build:local && tsx scripts/run-temporal-compose-tests.ts",

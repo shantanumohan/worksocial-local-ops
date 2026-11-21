@@ -2278,7 +2278,7 @@ export function analysisPage(apiOrigin: string): string {
     main { max-width:960px; margin:0 auto; padding:1.5rem; display:grid; gap:1rem; }
     section { background:var(--panel); border:1px solid #c9d6cc; padding:1rem 1.1rem; }
     .muted { color:#405248; } .warn { color:var(--warn); }
-    button { background:var(--accent); color:#fff; border:0; padding:.5rem .85rem; cursor:pointer; margin-right:.4rem; }
+    button { background:var(--accent); color:#fff; border:0; padding:.5rem .85rem; cursor:pointer; margin-right:.4rem; margin-bottom:.35rem; }
     pre { background:#f3f6f3; padding:.75rem; overflow:auto; font-size:.8rem; }
   </style>
 </head>
@@ -2286,20 +2286,25 @@ export function analysisPage(apiOrigin: string): string {
 <header>
   <h1>WorkSocial</h1>
   <p class="muted" id="who">Checking session…</p>
-  <p class="muted"><a href="/seo">SEO</a> · <a href="/analysis">Analysis</a> · <a href="/eval">Eval</a> · <a href="/authority">Authority</a></p>
+  <p class="muted"><a href="/seo">SEO</a> · <a href="/analysis">Analysis</a> · <a href="/paid">Paid media</a> · <a href="/eval">Eval</a> · <a href="/authority">Authority</a></p>
 </header>
 <main>
   <section>
-    <h2>Measurement / analysis (M8)</h2>
-    <p class="muted">GSC/GA4 fixture read path. <strong>FIXTURE ≠ SANDBOX ≠ LIVE</strong>. No invented live KPIs.</p>
-    <p class="warn">Live GSC/GA4 query transport is <strong>NOT_WIRED</strong>. Omitted GSC rows are UNKNOWN — not zero. GA4 debug ≠ measured receipt. ChatGPT Ads access-blocked.</p>
+    <h2>Measurement / analysis (M8 + AA-19)</h2>
+    <p class="muted">GSC/GA4 fixture read path plus saved hypotheses / redacted decision briefs. <strong>FIXTURE ≠ SANDBOX ≠ LIVE</strong>. No invented live KPIs.</p>
+    <p class="warn">Live GSC/GA4 query transport is <strong>NOT_WIRED</strong>. Omitted GSC rows are UNKNOWN — not zero. GA4 debug ≠ measured receipt. ChatGPT Ads access-blocked. Catalog cases remain NOT_RUN.</p>
     <button id="btn-read" type="button">Read fixture analytics</button>
+    <button id="btn-seed-hyp" type="button">Seed fixture hypothesis + brief</button>
     <button id="btn-refresh" type="button">Refresh status</button>
     <p class="muted" id="note"></p>
   </section>
   <section>
     <h2>Status</h2>
     <pre id="status">Loading…</pre>
+  </section>
+  <section>
+    <h2>Hypotheses / briefs</h2>
+    <pre id="hyp">—</pre>
   </section>
   <section>
     <h2>Read result</h2>
@@ -2322,12 +2327,125 @@ export function analysisPage(apiOrigin: string): string {
     document.getElementById('who').textContent = s.username + ' · ' + s.role;
     const res = await api('/analysis/status');
     document.getElementById('status').textContent = JSON.stringify(await res.json(), null, 2);
+    const hyp = await api('/analysis/hypotheses');
+    const briefs = await api('/analysis/briefs');
+    document.getElementById('hyp').textContent = JSON.stringify({
+      hypotheses: (await hyp.json()).hypotheses,
+      briefs: (await briefs.json()).briefs,
+    }, null, 2);
   }
   document.getElementById('btn-read').onclick = async () => {
     const res = await api('/analysis/read', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
     const body = await res.json();
     document.getElementById('note').textContent = body.note || '';
     document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+  };
+  document.getElementById('btn-seed-hyp').onclick = async () => {
+    const seed = await api('/paid/seed', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    document.getElementById('out').textContent = JSON.stringify(await seed.json(), null, 2);
+    refresh();
+  };
+  document.getElementById('btn-refresh').onclick = () => refresh();
+  refresh();
+</script>
+</body>
+</html>`;
+}
+
+export function paidPage(apiOrigin: string): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WorkSocial — Paid media proposals</title>
+  <style>
+    :root { --ink:#1b2a22; --panel:#fff; --accent:#2f6b4f; --warn:#8a5a00; }
+    body { margin:0; font-family:"IBM Plex Sans","Segoe UI",sans-serif; background:linear-gradient(180deg,#e7efe9,#f6f3ec); color:var(--ink); }
+    header { padding:1.25rem 1.5rem; border-bottom:1px solid #c9d6cc; background:rgba(255,255,255,.7); }
+    h1 { font-family:"IBM Plex Serif",Georgia,serif; margin:0; font-size:1.45rem; }
+    main { max-width:960px; margin:0 auto; padding:1.5rem; display:grid; gap:1rem; }
+    section { background:var(--panel); border:1px solid #c9d6cc; padding:1rem 1.1rem; }
+    .muted { color:#405248; } .warn { color:var(--warn); }
+    button { background:var(--accent); color:#fff; border:0; padding:.5rem .85rem; cursor:pointer; margin-right:.4rem; margin-bottom:.35rem; }
+    pre { background:#f3f6f3; padding:.75rem; overflow:auto; font-size:.8rem; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>WorkSocial</h1>
+  <p class="muted" id="who">Checking session…</p>
+  <p class="muted"><a href="/analysis">Analysis</a> · <a href="/paid">Paid media</a> · <a href="/eval">Eval</a> · <a href="/authority">Authority</a></p>
+</header>
+<main>
+  <section>
+    <h2>Paid-media recommendations (AA-19 / F16)</h2>
+    <p class="muted">Fixture Google Ads Analyze-only proposals with financial diffs. Approve/decline records a decision — <strong>no live spend mutations</strong>.</p>
+    <p class="warn">ChatGPT Ads is <strong>ACCESS_BLOCKED</strong> without verified local transport + entitlement. Live Ads execute path is <strong>NOT_WIRED</strong>. External effects: NONE. Catalog T-F16 / T-F07 remain NOT_RUN.</p>
+    <button id="btn-seed" type="button">Seed fixture proposals</button>
+    <button id="btn-approve" type="button">Approve Google fixture proposal</button>
+    <button id="btn-execute" type="button">Attempt execute (expect NOT_WIRED)</button>
+    <button id="btn-channels" type="button">Channel gates</button>
+    <button id="btn-refresh" type="button">Refresh</button>
+    <p class="muted" id="note"></p>
+  </section>
+  <section>
+    <h2>Status / channels</h2>
+    <pre id="status">Loading…</pre>
+  </section>
+  <section>
+    <h2>Proposals / decisions</h2>
+    <pre id="out">—</pre>
+  </section>
+</main>
+<script>
+  const API = ${JSON.stringify(apiOrigin)};
+  let googleProposalId = null;
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ origin: window.location.origin }, opts.headers || {});
+    const csrf = sessionStorage.getItem('ws_csrf');
+    if (opts.method && opts.method !== 'GET' && csrf) headers['x-csrf-token'] = csrf;
+    return fetch(API + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+  }
+  async function refresh() {
+    const session = await api('/auth/session');
+    if (!session.ok) { location.href = '/login'; return; }
+    const s = await session.json();
+    sessionStorage.setItem('ws_csrf', s.csrfToken);
+    document.getElementById('who').textContent = s.username + ' · ' + s.role;
+    const status = await (await api('/paid/status')).json();
+    document.getElementById('status').textContent = JSON.stringify(status, null, 2);
+    const proposals = await (await api('/paid/proposals')).json();
+    const google = (proposals.proposals || []).find(p => p.platform === 'google_ads');
+    if (google) googleProposalId = google.proposalId;
+    document.getElementById('out').textContent = JSON.stringify(proposals, null, 2);
+  }
+  document.getElementById('btn-seed').onclick = async () => {
+    const body = await (await api('/paid/seed', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' })).json();
+    googleProposalId = body.googleProposal && body.googleProposal.proposalId;
+    document.getElementById('note').textContent = body.note || '';
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-approve').onclick = async () => {
+    if (!googleProposalId) { document.getElementById('note').textContent = 'Seed first'; return; }
+    const body = await (await api('/paid/decide', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ proposalId: googleProposalId, decision: 'approve', reason: 'Fixture review only — no live spend' })
+    })).json();
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-execute').onclick = async () => {
+    if (!googleProposalId) { document.getElementById('note').textContent = 'Seed first'; return; }
+    const body = await (await api('/paid/execute', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ proposalId: googleProposalId, preferLive: true })
+    })).json();
+    document.getElementById('note').textContent = (body.reasons || []).join(' · ');
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+  };
+  document.getElementById('btn-channels').onclick = async () => {
+    document.getElementById('out').textContent = JSON.stringify(await (await api('/paid/channels')).json(), null, 2);
   };
   document.getElementById('btn-refresh').onclick = () => refresh();
   refresh();

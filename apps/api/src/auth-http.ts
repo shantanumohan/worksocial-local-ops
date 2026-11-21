@@ -71,6 +71,7 @@ import {
   openEvaluationStore,
   createFileSoakStore,
   createFileRecoveryStore,
+  createFilePaidMediaStore,
   createFileProbeStore,
   createFileProductionMappingStore,
   createFileRepairStore,
@@ -89,6 +90,7 @@ import {
   type PgPool,
   type SoakStore,
   type RecoveryStore,
+  type PaidMediaStore,
   type PolicyDecisionRecord,
   type ContentStore,
   type InboxStore,
@@ -172,11 +174,16 @@ import { handleCanonicalPublishRequest } from "./content-http.js";
 import { handleEvaluationAndAnalyticsRequest } from "./evaluation-http.js";
 import { handleSoakRequest } from "./soak-http.js";
 import { handleRecoveryRequest } from "./recovery-http.js";
+import { handlePaidMediaRequest } from "./paid-media-http.js";
 import {
   createEvaluationWorker,
   type EvaluationService,
 } from "@worksocial/evaluation-worker";
 import { createSoakService, type SoakService } from "@worksocial/soak";
+import {
+  createPaidMediaService,
+  type PaidMediaService,
+} from "@worksocial/paid-media";
 import {
   createRecoveryService,
   type RecoveryService,
@@ -286,6 +293,8 @@ export type ApiRuntime = {
   soak: SoakService;
   recoveryStore: RecoveryStore;
   recovery: RecoveryService;
+  paidMediaStore: PaidMediaStore;
+  paidMedia: PaidMediaService;
   runner: ClaudeRunner;
   missions: MissionEnqueueService;
   /** Bound when TEMPORAL_ADDRESS frontend is reachable; closed on API shutdown. */
@@ -512,6 +521,8 @@ export function createApiRuntime(options: {
   const soak = createSoakService(soakStore);
   const recoveryStore = createFileRecoveryStore(options.stateDir);
   const recovery = createRecoveryService(recoveryStore);
+  const paidMediaStore = createFilePaidMediaStore(options.stateDir);
+  const paidMedia = createPaidMediaService(paidMediaStore);
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
@@ -560,6 +571,8 @@ export function createApiRuntime(options: {
     soak,
     recoveryStore,
     recovery,
+    paidMediaStore,
+    paidMedia,
     runner,
     missions,
     temporalClient,
@@ -767,7 +780,7 @@ export async function handleApiRequest(
         identity:
           "M9 soak/acceptance evidence + M8 grounded-search/analytics/eval + M6–M7 + R1-02–R1-10",
         message:
-          "API surface includes WP10 recovery evidence (stale/incident/URO), AA-20 EVAL_ONLY isolation, M9 soak/acceptance, M8 analysis, M6 canonical publish. Live CMS/GBP/social/inbox/Zoho/GSC/GA4/Ads/eval-fleet NOT_WIRED. Catalog ACCEPTED only with fixture evidence; never silently VERIFIED for live. Not R1-complete.",
+          "API surface includes AA-19 paid-media proposals + analysis hypotheses, WP10 recovery evidence, AA-20 EVAL_ONLY isolation, M9 soak/acceptance, M8 analysis, M6 canonical publish. Live CMS/GBP/social/inbox/Zoho/GSC/GA4/Ads/eval-fleet NOT_WIRED. ChatGPT Ads ACCESS_BLOCKED. Catalog ACCEPTED only with fixture evidence; never silently VERIFIED for live. Not R1-complete.",
       },
       cors,
     );
@@ -4346,6 +4359,20 @@ export async function handleApiRequest(
     requireSession: (r, opts) => requireSession(runtime, r, opts),
   });
   if (recoveryHandled) return;
+
+  const paidMediaHandled = await handlePaidMediaRequest({
+    paidMedia: runtime.paidMedia,
+    req,
+    res,
+    url,
+    method,
+    cors,
+    json,
+    readBody,
+    parseJsonObjectBody,
+    requireSession: (r, opts) => requireSession(runtime, r, opts),
+  });
+  if (paidMediaHandled) return;
 
   const inboxHandled = await handleInboxRequest({
     inbox: runtime.inbox,
