@@ -256,6 +256,12 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN),
     ).toEqual(["T-US-018", "T-X037"]);
+    expect(expectedProofsForFixtureCase("T-X058")).toEqual([
+      SoakProofKind.REPAIR_ATTEMPT_LIMIT_ESCALATED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.REPAIR_ATTEMPT_LIMIT_ESCALATED),
+    ).toEqual(["T-X058"]);
   });
 
   it("builds unique per-run artifact ids", () => {

@@ -108,6 +108,10 @@ export const SoakProofKind = {
    * Gemini/Claude cannot publish / CRM-write / customer-message / ads-mutate.
    */
   EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN: "eval_only_operational_tool_forbidden",
+  /**
+   * Third automatic repair attempt escalates (T-X058).
+   */
+  REPAIR_ATTEMPT_LIMIT_ESCALATED: "repair_attempt_limit_escalated",
 } as const;
 
 export type SoakProofKindValue =
@@ -163,6 +167,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-042 / T-X057 require REPAIR_WEAKEN_TEST_REJECTED.
  * T-US-044 / T-X053 require TAKEOVER_CANCELS_UNSENT_REPLIES.
  * T-US-018 / T-X037 require EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN.
+ * T-X058 requires REPAIR_ATTEMPT_LIMIT_ESCALATED.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -191,6 +196,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X053",
   "T-US-018",
   "T-X037",
+  "T-X058",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -577,6 +583,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN];
     case "T-X037":
       return [SoakProofKind.EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN];
+    case "T-X058":
+      return [SoakProofKind.REPAIR_ATTEMPT_LIMIT_ESCALATED];
     default:
       return [];
   }
@@ -629,6 +637,8 @@ export function mapProofToFixtureCases(
       return ["T-US-044", "T-X053"];
     case SoakProofKind.EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN:
       return ["T-US-018", "T-X037"];
+    case SoakProofKind.REPAIR_ATTEMPT_LIMIT_ESCALATED:
+      return ["T-X058"];
     default:
       return [];
   }
