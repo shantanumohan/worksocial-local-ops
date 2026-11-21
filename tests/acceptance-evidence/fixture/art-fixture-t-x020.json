@@ -3,13 +3,13 @@
   "caseId": "T-X020",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X020 (Timeout after provider acceptance)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-fd7ca9d1 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X020 (Timeout after provider acceptance)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-fbc08584 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "unknown_remote_reconcile"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x020.json",
-  "createdAtIso": "2026-11-21T22:27:39.015Z",
+  "createdAtIso": "2026-11-21T22:34:07.128Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x020-2092a7fb038a"
+  "uniqueSourceArtifactId": "art-fixture-t-x020-a010bd6851f2"
 }

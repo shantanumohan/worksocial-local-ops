@@ -53,6 +53,11 @@ export const SoakProofKind = {
    * Feeds fixture ACCEPTED for T-F24 / T-US-047 only — never live VERIFIED.
    */
   RECOVER_ROTATE_RECONCILE: "recover_rotate_reconcile",
+  /**
+   * Competing supervisors / singleton host lease (T-US-002 / T-X002).
+   * Second live generation refused; dead-holder reclaim allowed; ownership fail-closed.
+   */
+  COMPETING_SUPERVISOR_LEASE: "competing_supervisor_lease",
 } as const;
 
 export type SoakProofKindValue =
@@ -95,6 +100,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * Catalog cases the fixture soak/evidence harness can honestly ACCEPTED offline.
  * T-X066 requires BACKUP_OMIT_RECEIPT (not retry-only NO_DUPLICATE_EFFECTS).
  * T-F24 / T-US-047 require RECOVER_ROTATE_RECONCILE (complete F24 evidence set).
+ * T-US-002 / T-X002 require COMPETING_SUPERVISOR_LEASE (singleton host lease).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -104,6 +110,8 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X066",
   "T-F24",
   "T-US-047",
+  "T-US-002",
+  "T-X002",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -452,6 +460,10 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.RECOVER_ROTATE_RECONCILE];
     case "T-US-047":
       return [SoakProofKind.RECOVER_ROTATE_RECONCILE];
+    case "T-US-002":
+      return [SoakProofKind.COMPETING_SUPERVISOR_LEASE];
+    case "T-X002":
+      return [SoakProofKind.COMPETING_SUPERVISOR_LEASE];
     default:
       return [];
   }
@@ -478,6 +490,8 @@ export function mapProofToFixtureCases(
       return ["T-X066"];
     case SoakProofKind.RECOVER_ROTATE_RECONCILE:
       return ["T-F24", "T-US-047"];
+    case SoakProofKind.COMPETING_SUPERVISOR_LEASE:
+      return ["T-US-002", "T-X002"];
     default:
       return [];
   }

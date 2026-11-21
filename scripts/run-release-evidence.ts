@@ -94,7 +94,7 @@ async function main(): Promise<void> {
       cases: stableCaseResults,
       artifacts: stableArtifacts,
       uniqueRunArtifacts: artifacts,
-      note: "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile. Not R1-complete.",
+      note: "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease. Not R1-complete.",
     };
     writeFileSync(ledgerPath, JSON.stringify(ledger, null, 2), "utf8");
 
@@ -124,10 +124,18 @@ async function main(): Promise<void> {
     const hasUs047Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-US-047",
     );
+    const hasUs002Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-US-002",
+    );
+    const hasTx002Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-X002",
+    );
     const expectedAccepted = [
       "T-F24",
+      "T-US-002",
       "T-US-047",
       "T-US-048",
+      "T-X002",
       "T-X014",
       "T-X020",
       "T-X066",
@@ -145,7 +153,9 @@ async function main(): Promise<void> {
         hasTx066Accepted &&
         hasTf24Accepted &&
         hasUs047Accepted &&
-        accepted.length === 6 &&
+        hasUs002Accepted &&
+        hasTx002Accepted &&
+        accepted.length === 8 &&
         JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
@@ -160,7 +170,7 @@ async function main(): Promise<void> {
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. T-X066 + T-F24/T-US-047 fixture ACCEPTED. Live VERIFIED forbidden. Not R1-complete.",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. T-X066 + T-F24/T-US-047 + T-US-002/T-X002 fixture ACCEPTED. Live VERIFIED forbidden. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {

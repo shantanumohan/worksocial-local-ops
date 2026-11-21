@@ -23,13 +23,13 @@ describe("soak service (M9)", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  it("passes crash-restart / no-dup / continuity / reconcile / backup-omit / recover-rotate proofs", async () => {
+  it("passes crash-restart / no-dup / continuity / reconcile / backup-omit / recover-rotate / competing-supervisor proofs", async () => {
     const result = await runSoakRecoveryHarness({
       stateDir: dir,
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(6);
+    expect(result.proofs).toHaveLength(7);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(result.proofs.every((p) => p.applyAttemptCount === 1)).toBe(true);
     expect(
@@ -40,9 +40,14 @@ describe("soak service (M9)", () => {
         (p) => p.kind === SoakProofKind.RECOVER_ROTATE_RECONCILE,
       ),
     ).toBe(true);
+    expect(
+      result.proofs.some(
+        (p) => p.kind === SoakProofKind.COMPETING_SUPERVISOR_LEASE,
+      ),
+    ).toBe(true);
   });
 
-  it("compiles fixture ACCEPTED for complete proof sets including T-F24/T-US-047", async () => {
+  it("compiles fixture ACCEPTED for complete proof sets including T-US-002/T-X002", async () => {
     const harness = await runSoakRecoveryHarness({
       stateDir: dir,
       nowIso: "2026-11-21T18:00:00.000Z",
@@ -59,8 +64,10 @@ describe("soak service (M9)", () => {
     );
     expect(accepted.map((c) => c.caseId).sort()).toEqual([
       "T-F24",
+      "T-US-002",
       "T-US-047",
       "T-US-048",
+      "T-X002",
       "T-X014",
       "T-X020",
       "T-X066",
@@ -177,7 +184,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(6);
+    expect(soak.ownerReport().acceptedCases.length).toBe(8);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {
