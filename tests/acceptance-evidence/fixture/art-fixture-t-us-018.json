@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-018",
+  "caseId": "T-US-018",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-018 (Gemini never used for publish/CRM/customer reply)\nproof=eval_only_operational_tool_forbidden applyCount=1 :: Evaluation worker isolation asserts no gateway-write / effect credentials | gemini connection EVAL_ONLY with operationalFallback=false | claude connection EVAL_ONLY with operationalFallback=false | Eval state live fleet + ChatGPT Ads wiring NOT_WIRED | Allowed EVAL tools (judge/read) pass gate | publish forbidden (EVAL_TOOL_FORBIDDEN) — no effect | crm_write forbidden (EVAL_TOOL_FORBIDDEN) — no effect | customer_message forbidden (EVAL_TOOL_FORBIDDEN) — no effect | ads_mutation forbidden (EVAL_TOOL_FORBIDDEN) — no effect | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "eval_only_operational_tool_forbidden"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-018.json",
+  "createdAtIso": "2026-11-21T23:19:36.492Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-018-e7364ac2c7d0"
+}
