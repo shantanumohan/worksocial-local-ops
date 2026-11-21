@@ -6,6 +6,7 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { resolveWorkSocialStateDir } from "./host-paths.js";
 import type {
   CapabilityGrant,
   LocalUserRecord,
@@ -519,6 +520,7 @@ export function createDemoRepairGrant(nowIso: string): {
   return { policy, grant };
 }
 
-export function defaultAuthorityStateDir(repoRoot: string): string {
-  return join(repoRoot, ".worksocial", "local-state");
+export function defaultAuthorityStateDir(_repoRoot?: string): string {
+  // Shared control-plane root — outside the checkout by default (see host-paths).
+  return resolveWorkSocialStateDir();
 }

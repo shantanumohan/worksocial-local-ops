@@ -8,6 +8,7 @@
 import { createServer } from "node:http";
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { resolveWorkSocialStateDir } from "@worksocial/persistence";
 
 type ServiceId = "api" | "console" | "temporal-worker";
 
@@ -20,7 +21,8 @@ function argValue(name: string): string | undefined {
 }
 
 const serviceId = (argValue("--service") ?? process.env.WORKSOCIAL_SERVICE_ID ?? "api") as ServiceId;
-const stateDir = argValue("--state-dir") ?? process.env.WORKSOCIAL_STATE_DIR ?? ".worksocial/local-state";
+const stateDir =
+  argValue("--state-dir") ?? process.env.WORKSOCIAL_STATE_DIR ?? resolveWorkSocialStateDir();
 const generationId =
   argValue("--generation") ?? process.env.WORKSOCIAL_GENERATION ?? `gen-${process.pid}`;
 const hostId = argValue("--host-id") ?? process.env.WORKSOCIAL_HOST_ID ?? "local";

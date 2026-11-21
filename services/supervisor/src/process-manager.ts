@@ -177,10 +177,20 @@ async function signalAndWait(pid: number, signal: NodeJS.Signals): Promise<void>
  * Default spawner: detached child processes (survive VS Code/terminal close).
  * API/console expose loopback health HTTP.
  * temporal-worker is a stub unless TEMPORAL_ADDRESS is set (then real Temporal worker).
+ *
+ * Kill authorization (PID-reuse safe):
+ * 1. Same-session spawn map (this CLI process started the child), or
+ * 2. Linux `/proc` ownership probe.
+ * Persisted heartbeat files are never used to authorize SIGTERM/SIGKILL.
  */
 export function createChildProcessSpawner(
   ownershipProbe: ProcessOwnershipProbe = defaultOwnershipProbe(),
 ): ProcessSpawner {
+  const sessionOwned = new Map<
+    number,
+    { serviceId: ServiceSlotId; generationId: string }
+  >();
+
   return {
     start(request) {
       const entry = slotEntrypoint(request.config.repoRoot, request.serviceId);
@@ -209,6 +219,11 @@ export function createChildProcessSpawner(
         throw new Error(`Failed to spawn ${request.serviceId}`);
       }
 
+      sessionOwned.set(child.pid, {
+        serviceId: request.serviceId,
+        generationId: request.generationId,
+      });
+
       // Allow the parent CLI/task to exit without waiting on slots.
       child.unref();
 
@@ -225,20 +240,31 @@ export function createChildProcessSpawner(
 
     async stopOwned(target, signal = "SIGTERM") {
       if (!isProcessAlive(target.pid)) {
+        sessionOwned.delete(target.pid);
         return "skipped";
       }
-      const owned = verifyProcessOwnership(
-        {
-          pid: target.pid,
-          serviceId: target.serviceId,
-          generationId: target.generationId,
-        },
-        ownershipProbe,
-      );
+
+      const session = sessionOwned.get(target.pid);
+      const sessionMatch =
+        session !== undefined &&
+        session.serviceId === target.serviceId &&
+        session.generationId === target.generationId;
+
+      const owned =
+        sessionMatch ||
+        verifyProcessOwnership(
+          {
+            pid: target.pid,
+            serviceId: target.serviceId,
+            generationId: target.generationId,
+          },
+          ownershipProbe,
+        );
       if (!owned) {
         return "skipped";
       }
       await signalAndWait(target.pid, signal);
+      sessionOwned.delete(target.pid);
       return "stopped";
     },
 

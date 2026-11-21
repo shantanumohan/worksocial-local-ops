@@ -83,6 +83,4 @@ export function createFileLocalStateStore(stateDir: string): LocalStateStore {
   return { stateDir, read, write, update };
 }
 
-export function defaultStateDir(repoRoot: string): string {
-  return join(repoRoot, ".worksocial", "local-state");
-}
+export { defaultStateDir, resolveWorkSocialStateDir } from "./host-paths.js";

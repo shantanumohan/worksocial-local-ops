@@ -1,6 +1,7 @@
 import { accessSync, constants, existsSync } from "node:fs";
 import {
   assertDurableRootsOffSync,
+  describeOwnershipCapability,
   listMissingArtifactRoots,
   listMissingDurableRoots,
   resolveCanonicalPath,
@@ -37,10 +38,25 @@ export function runDoctor(
 
   checks.push({
     id: "state-dir",
+    status: config.hostPaths.stateDirOnSyncPath ? "fail" : "pass",
+    message: config.hostPaths.stateDirOnSyncPath
+      ? `State dir under sync path (refused): ${config.stateDir}. Set WORKSOCIAL_STATE_DIR off OneDrive.`
+      : existsSync(config.stateDir)
+        ? `Supervisor state dir present: ${config.stateDir} (source=${config.hostPaths.source}; outside checkout by default).`
+        : `Supervisor state dir will be created at ${config.stateDir} (source=${config.hostPaths.source}; outside checkout by default).`,
+  });
+
+  checks.push({
+    id: "data-home",
     status: "pass",
-    message: existsSync(config.stateDir)
-      ? `Supervisor state dir present: ${config.stateDir} (file-backed until Postgres is bound).`
-      : `Supervisor state dir will be created at ${config.stateDir} (file-backed until Postgres is bound).`,
+    message: `Data home ${config.dataHome}; durable suggestions database=${config.hostPaths.durableRoots.database} temporal=${config.hostPaths.durableRoots.temporal} secrets=${config.hostPaths.durableRoots.secrets}`,
+  });
+
+  const ownership = describeOwnershipCapability(false);
+  checks.push({
+    id: "process-ownership",
+    status: ownership.procAvailable ? "pass" : "warn",
+    message: ownership.detail,
   });
 
   const missingArtifacts = listMissingArtifactRoots(state.storageRoots);
@@ -94,6 +110,33 @@ export function runDoctor(
   }
 
   const health = collectHealth(store, config, spawner, nowIso);
+  const components = health.components;
+
+  checks.push({
+    id: "component-host",
+    status: components.host.status === "up" ? "pass" : "warn",
+    message: `host plane=${components.host.status} leaseHeld=${components.host.leaseHeld} — ${components.host.detail}`,
+  });
+  checks.push({
+    id: "component-api",
+    status: components.api.status === "degraded" ? "fail" : components.api.status === "up" ? "pass" : "warn",
+    message: `api plane=${components.api.status} wiring=${components.api.wiringStatus} — ${components.api.detail}`,
+  });
+  checks.push({
+    id: "component-console",
+    status:
+      components.console.status === "degraded"
+        ? "fail"
+        : components.console.status === "up"
+          ? "pass"
+          : "warn",
+    message: `console plane=${components.console.status} wiring=${components.console.wiringStatus} — ${components.console.detail}`,
+  });
+  checks.push({
+    id: "component-temporal",
+    status: components.temporal.status === "up" ? "pass" : "warn",
+    message: `temporal plane=${components.temporal.status} wiring=${components.temporal.wiringStatus} — ${components.temporal.detail}`,
+  });
 
   for (const svc of health.services) {
     if (svc.serviceId === "temporal-worker") {
@@ -121,7 +164,7 @@ export function runDoctor(
     id: "host-lease",
     status: health.leaseHeld ? "pass" : "warn",
     message: health.leaseHeld
-      ? `Host lease held for ${config.hostId} (generation=${state.hostLease?.generationId ?? "n/a"}).`
+      ? `Host lease held for ${config.hostId} (generation=${state.hostLease?.generationId ?? "n/a"}). Distinct from Temporal/API/console plane status.`
       : "No active host lease (services may be stopped).",
   });
 

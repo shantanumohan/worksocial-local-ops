@@ -15,6 +15,9 @@
   "scripts": {
     "build": "tsc -b"
   },
+  "dependencies": {
+    "@worksocial/persistence": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "22.10.2",
     "typescript": "5.7.2"

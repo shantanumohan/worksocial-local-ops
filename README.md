@@ -7,10 +7,10 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 ## What is real (R1-01 → R1-10 + learning)
 
 ### R1-01 local execution
-- **Supervisor-owned local lifecycle** — `pnpm local:start|stop|doctor|health` and VS Code tasks call `services/supervisor`.
-- **Detached process slots** for `api` and `console`; Temporal worker remains a stub slot.
+- **Supervisor-owned local lifecycle** — `pnpm local:start|stop|recover|doctor|health` and VS Code tasks call `services/supervisor`.
+- **Detached process slots** for `api` and `console`; Temporal worker remains a stub slot unless `TEMPORAL_ADDRESS` is set.
 - **Storage-root registry + sync-path policy** — refuses durable `database` / `temporal` / `secrets` under OneDrive-style paths.
-- File-backed host lease / heartbeats under `.worksocial/local-state` + SQL `002_local_execution.sql`.
+- File-backed host lease / heartbeats under a **safe default state dir outside the checkout** (XDG / `%LOCALAPPDATA%\WorkSocial`) + SQL `002_local_execution.sql`. Plane-separated health: host ≠ api ≠ console ≠ temporal.
 
 ### R1-02 identity and authority
 - **Local session auth** for API/console (single-owner host; no cloud IdP). Default user `owner` / `local-owner-change-me` (override `WORKSOCIAL_OWNER_PASSWORD`).
@@ -192,7 +192,7 @@ See `docs/product/toolchain.md`. Node `.nvmrc` (`20.18.1`), pnpm `9.15.0` via `p
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm local:doctor | local:start | local:stop | local:health
+pnpm local:doctor | local:start | local:stop | local:recover | local:health
 pnpm check
 pnpm test:acceptance-matrix   # 159-case catalog ↔ matrix (NOT_RUN|ACCEPTED+evidence; never silent live VERIFIED)
 pnpm test:unit                # domain + ml + persistence + … + evaluation-worker + soak + api
@@ -205,19 +205,29 @@ pnpm test:security | test:eval                                   # stubs — exi
 
 VS Code tasks: **WorkSocial: Start / Stop / Diagnostics / Test Local Operations** → supervisor CLI.
 
-Optional env: `WORKSOCIAL_SYNC_DENY`, `WORKSOCIAL_STATE_DIR`, `WORKSOCIAL_HOST_ID`, `WORKSOCIAL_API_PORT`, `WORKSOCIAL_CONSOLE_PORT`, `WORKSOCIAL_OWNER_PASSWORD`, `WORKSOCIAL_CLAUDE_CLI`, `WORKSOCIAL_CLAUDE_FIXTURE` (`0` to allow live CLI when present), `WORKSOCIAL_PLAYWRIGHT` (`1` to acknowledge optional Playwright install — still unbound/`NOT_WIRED` without URL), `WORKSOCIAL_PROBE_ALLOWED_HOSTS` (comma-separated public hostnames required for live HTTP probes; loopback/private rejected).
+Optional env: `WORKSOCIAL_SYNC_DENY`, `WORKSOCIAL_STATE_DIR`, `WORKSOCIAL_DATA_HOME`, `WORKSOCIAL_HOST_ID`, `WORKSOCIAL_API_PORT`, `WORKSOCIAL_CONSOLE_PORT`, `WORKSOCIAL_OWNER_PASSWORD`, `WORKSOCIAL_CLAUDE_CLI`, `WORKSOCIAL_CLAUDE_FIXTURE` (`0` to allow live CLI when present), `WORKSOCIAL_PLAYWRIGHT` (`1` to acknowledge optional Playwright install — still unbound/`NOT_WIRED` without URL), `WORKSOCIAL_PROBE_ALLOWED_HOSTS` (comma-separated public hostnames required for live HTTP probes; loopback/private rejected).
 
 ## Workspace vs database (OneDrive note)
 
 Example owner workspace (source/content OK):  
 `C:\Users\ShantanuMohan\OneDrive - myworksocial.com\Documents\AgenticArmyWS`
 
-That path is a **workspace / artifact root example**, not a database root. **Do not** place live PostgreSQL data directories, Temporal persistence, browser-session state, or secret vault material inside consumer file-sync paths (OneDrive, etc.). Register separate roots:
+That path is a **workspace / artifact root example**, not a database root. **Do not** place live PostgreSQL data directories, Temporal persistence, browser-session state, auth sessions, or secret vault material inside consumer file-sync paths (OneDrive, etc.).
+
+Default control-plane state is **outside the repo**:
+
+| Platform | Default |
+|----------|---------|
+| Linux | `~/.local/share/worksocial/local-state` (or `$XDG_DATA_HOME/worksocial`) |
+| Windows | `%LOCALAPPDATA%\WorkSocial\local-state` |
+| Override | `WORKSOCIAL_STATE_DIR` / `WORKSOCIAL_DATA_HOME` |
+
+Supervisor refuses to run when the resolved state dir is under OneDrive-style sync paths. See `docs/runbooks/host-service-storage.md`.
 
 | Kind | Sync folder OK? |
 |------|-----------------|
 | `source`, `working`, `content`, `reports`, `encrypted_backup` | yes (owner-selected) |
-| `database`, `temporal`, `secrets` | **no** — keep off sync volumes |
+| `database`, `temporal`, `secrets`, control-plane state | **no** — keep off sync volumes |
 
 ## Acceptance vs reference-core
 

@@ -6,6 +6,7 @@
 
 import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { resolveWorkSocialStateDir } from "./host-paths.js";
 import {
   emptyProductionMappingState,
   type ProductionMappingState,
@@ -196,6 +197,7 @@ export function createFileProductionMappingStore(
   };
 }
 
-export function defaultProductionMappingStateDir(repoRoot: string): string {
-  return join(repoRoot, ".worksocial", "local-state");
+export function defaultProductionMappingStateDir(_repoRoot?: string): string {
+  // Shared control-plane root — outside the checkout by default (see host-paths).
+  return resolveWorkSocialStateDir();
 }
