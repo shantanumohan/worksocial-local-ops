@@ -262,6 +262,18 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.REPAIR_ATTEMPT_LIMIT_ESCALATED),
     ).toEqual(["T-X058"]);
+    expect(expectedProofsForFixtureCase("T-X069")).toEqual([
+      SoakProofKind.IMPORTED_DOC_QUARANTINED_AS_DATA,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.IMPORTED_DOC_QUARANTINED_AS_DATA),
+    ).toEqual(["T-X069"]);
+    expect(expectedProofsForFixtureCase("T-X038")).toEqual([
+      SoakProofKind.EVAL_NO_GROUNDING_FAIL_CLOSED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.EVAL_NO_GROUNDING_FAIL_CLOSED),
+    ).toEqual(["T-X038"]);
   });
 
   it("builds unique per-run artifact ids", () => {

@@ -112,6 +112,14 @@ export const SoakProofKind = {
    * Third automatic repair attempt escalates (T-X058).
    */
   REPAIR_ATTEMPT_LIMIT_ESCALATED: "repair_attempt_limit_escalated",
+  /**
+   * Imported document quarantined as data, not executable instructions (T-X069).
+   */
+  IMPORTED_DOC_QUARANTINED_AS_DATA: "imported_doc_quarantined_as_data",
+  /**
+   * Grounded eval without grounding fails closed (T-X038).
+   */
+  EVAL_NO_GROUNDING_FAIL_CLOSED: "eval_no_grounding_fail_closed",
 } as const;
 
 export type SoakProofKindValue =
@@ -168,6 +176,8 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-044 / T-X053 require TAKEOVER_CANCELS_UNSENT_REPLIES.
  * T-US-018 / T-X037 require EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN.
  * T-X058 requires REPAIR_ATTEMPT_LIMIT_ESCALATED.
+ * T-X069 requires IMPORTED_DOC_QUARANTINED_AS_DATA.
+ * T-X038 requires EVAL_NO_GROUNDING_FAIL_CLOSED.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -197,6 +207,8 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-018",
   "T-X037",
   "T-X058",
+  "T-X069",
+  "T-X038",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -585,6 +597,10 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN];
     case "T-X058":
       return [SoakProofKind.REPAIR_ATTEMPT_LIMIT_ESCALATED];
+    case "T-X069":
+      return [SoakProofKind.IMPORTED_DOC_QUARANTINED_AS_DATA];
+    case "T-X038":
+      return [SoakProofKind.EVAL_NO_GROUNDING_FAIL_CLOSED];
     default:
       return [];
   }
@@ -639,6 +655,10 @@ export function mapProofToFixtureCases(
       return ["T-US-018", "T-X037"];
     case SoakProofKind.REPAIR_ATTEMPT_LIMIT_ESCALATED:
       return ["T-X058"];
+    case SoakProofKind.IMPORTED_DOC_QUARANTINED_AS_DATA:
+      return ["T-X069"];
+    case SoakProofKind.EVAL_NO_GROUNDING_FAIL_CLOSED:
+      return ["T-X038"];
     default:
       return [];
   }

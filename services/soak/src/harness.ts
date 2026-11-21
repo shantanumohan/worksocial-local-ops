@@ -15,7 +15,9 @@
  * repair weaken test rejected (T-US-042 / T-X057),
  * takeover cancels unsent replies (T-US-044 / T-X053),
  * EVAL_ONLY operational tool forbidden (T-US-018 / T-X037),
- * repair attempt limit escalated (T-X058).
+ * repair attempt limit escalated (T-X058),
+ * imported doc quarantined as data (T-X069),
+ * eval no-grounding fail closed (T-X038).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -56,6 +58,8 @@ import { proofRepairWeakenTestRejected } from "./repair-weaken-test-proof.js";
 import { proofTakeoverCancelsUnsentReplies } from "./takeover-cancel-unsent-proof.js";
 import { proofEvalOnlyOperationalToolForbidden } from "./eval-only-operational-tool-proof.js";
 import { proofRepairAttemptLimitEscalated } from "./repair-attempt-limit-proof.js";
+import { proofImportedDocQuarantinedAsData } from "./imported-doc-quarantine-proof.js";
+import { proofEvalNoGroundingFailClosed } from "./eval-no-grounding-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -555,7 +559,8 @@ function failProof(
  * cross-workspace substitution feeds T-US-057; agent cannot widen grant feeds T-US-024;
  * repair weaken test feeds T-US-042/T-X057; takeover cancel feeds T-US-044/T-X053;
  * EVAL_ONLY operational tool forbid feeds T-US-018/T-X037;
- * repair attempt limit feeds T-X058.
+ * repair attempt limit feeds T-X058;
+ * imported-doc quarantine feeds T-X069; eval no-grounding feeds T-X038.
  */
 export async function runSoakRecoveryHarness(input: {
   stateDir: string;
@@ -598,6 +603,8 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofTakeoverCancelsUnsentReplies(nowPlus(nowIso, 170_000)));
   proofs.push(proofEvalOnlyOperationalToolForbidden(nowPlus(nowIso, 180_000)));
   proofs.push(proofRepairAttemptLimitEscalated(nowPlus(nowIso, 190_000)));
+  proofs.push(proofImportedDocQuarantinedAsData(nowPlus(nowIso, 200_000)));
+  proofs.push(proofEvalNoGroundingFailClosed(nowPlus(nowIso, 210_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -622,6 +629,8 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-044/T-X053 fixture ACCEPTED via takeover_cancels_unsent_replies only — not live VERIFIED",
       "T-US-018/T-X037 fixture ACCEPTED via eval_only_operational_tool_forbidden only — not live VERIFIED",
       "T-X058 fixture ACCEPTED via repair_attempt_limit_escalated only — not live VERIFIED",
+      "T-X069 fixture ACCEPTED via imported_doc_quarantined_as_data only — not live VERIFIED",
+      "T-X038 fixture ACCEPTED via eval_no_grounding_fail_closed only — not live VERIFIED",
     ],
   };
 }
