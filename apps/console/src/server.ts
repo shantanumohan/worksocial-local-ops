@@ -11,6 +11,8 @@ import {
   contentPage,
   inboxPage,
   repairPage,
+  analysisPage,
+  evalPage,
 } from "./pages.js";
 import {
   activationPage,
@@ -36,9 +38,9 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
         status: "running",
         productionActivated: false,
         identity:
-          "M6 canonical publish + M5 lead-capture + M4 owner staging + R1-02–R1-10 login/authority/mapping/roles/monitoring/knowledge/SEO/content/inbox/repair/learning",
+          "M8 analysis/eval + M6 canonical publish + M7 inbox + M5 lead-capture + M4 owner staging + R1-02–R1-10 console pages",
         message:
-          "Progressive console: activation → connections → sites → missions → review → evidence + M5 lead journeys. Not full React routes. Not R1-complete.",
+          "Progressive console: activation → connections → sites → missions → review → evidence + analysis + eval. Not full React routes. Not R1-complete.",
       });
       res.writeHead(200, { "content-type": "application/json" });
       res.end(body);
@@ -144,6 +146,18 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
     if (url.pathname === "/repair") {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       res.end(repairPage(options.apiOrigin));
+      return;
+    }
+
+    if (url.pathname === "/analysis") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(analysisPage(options.apiOrigin));
+      return;
+    }
+
+    if (url.pathname === "/eval") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(evalPage(options.apiOrigin));
       return;
     }
 

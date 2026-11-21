@@ -32,6 +32,7 @@
     "@worksocial/repair": "workspace:*",
     "@worksocial/owner-staging": "workspace:*",
     "@worksocial/lead-capture": "workspace:*",
+    "@worksocial/evaluation-worker": "workspace:*",
     "@worksocial/probes": "workspace:*",
     "@worksocial/provider-adapters": "workspace:*",
     "@worksocial/workflow-worker": "workspace:*"

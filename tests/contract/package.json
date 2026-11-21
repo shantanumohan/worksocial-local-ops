@@ -20,6 +20,8 @@
     "@worksocial/inbox": "workspace:*",
     "@worksocial/repair": "workspace:*",
     "@worksocial/lead-capture": "workspace:*",
+    "@worksocial/evaluation-worker": "workspace:*",
+    "@worksocial/provider-adapters": "workspace:*",
     "@worksocial/probes": "workspace:*"
   },
   "devDependencies": {

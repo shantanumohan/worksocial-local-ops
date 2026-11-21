@@ -5,5 +5,9 @@
     "rootDir": "src"
   },
   "include": ["src/**/*"],
-  "exclude": ["dist"]
+  "exclude": ["src/**/*.test.ts", "dist"],
+  "references": [
+    { "path": "../../packages/domain" },
+    { "path": "../../packages/persistence" }
+  ]
 }

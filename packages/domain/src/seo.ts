@@ -277,13 +277,37 @@ export type ParsedSearchConstraints = {
   unknownConstraints: string[];
 };
 
+/** M8 grounding status for a search hit — only SUPPORTED facts ground answers. */
+export const SearchGroundingStatus = {
+  GROUNDED: "grounded",
+  UNKNOWN: "unknown",
+  UNGROUNDED: "ungrounded",
+} as const;
+
+export type SearchGroundingStatusValue =
+  (typeof SearchGroundingStatus)[keyof typeof SearchGroundingStatus];
+
 export type SemanticSearchHit = {
   entryId: string;
   name: string;
   score: number;
   citations: string[];
+  /** Fact ids that are SUPPORTED at query time (subset of citations). */
+  supportedFactIds: string[];
+  groundingStatus: SearchGroundingStatusValue;
   filterTrace: string[];
 };
+
+/** Honest answer posture for the overall result (M8 / T-F23). */
+export const SearchAnswerStatus = {
+  GROUNDED: "grounded",
+  NO_RESULT: "no_result",
+  UNKNOWN: "unknown",
+  CLARIFY: "clarify",
+} as const;
+
+export type SearchAnswerStatusValue =
+  (typeof SearchAnswerStatus)[keyof typeof SearchAnswerStatus];
 
 export type SemanticSearchResult = {
   queryId: string;
@@ -291,7 +315,39 @@ export type SemanticSearchResult = {
   constraints: ParsedSearchConstraints;
   hits: SemanticSearchHit[];
   noMatchReason: string | null;
+  answerStatus: SearchAnswerStatusValue;
+  /** Optional booking handoff URL only when grounded in evidence — never invented. */
+  bookingHandoffUrl: string | null;
   indexVersion: number;
+  createdAtIso: string;
+};
+
+/** Operator judgment on a search result (T-F23). */
+export const SearchJudgmentLabel = {
+  RELEVANT: "relevant",
+  WRONG: "wrong",
+  NO_MATCH: "no_match",
+} as const;
+
+export type SearchJudgmentLabelValue =
+  (typeof SearchJudgmentLabel)[keyof typeof SearchJudgmentLabel];
+
+export type SearchJudgmentRecord = {
+  judgmentId: string;
+  queryId: string;
+  label: SearchJudgmentLabelValue;
+  note: string;
+  fixtureOnly: boolean;
+  createdAtIso: string;
+};
+
+export type SearchRemediationTask = {
+  taskId: string;
+  queryId: string;
+  judgmentId: string;
+  summary: string;
+  status: "open" | "done";
+  fixtureOnly: boolean;
   createdAtIso: string;
 };
 
@@ -303,6 +359,9 @@ export type SeoState = {
   schemaValidations: SchemaValidationResult[];
   searchIndex: SemanticSearchIndex | null;
   searchResults: SemanticSearchResult[];
+  /** M8 judged retrieval ledger. */
+  searchJudgments: SearchJudgmentRecord[];
+  searchRemediations: SearchRemediationTask[];
   /** Verified SEO release SUCCESS/FAILURE outcomes for learning-worker. */
   releaseOutcomes: WritePathOutcomeEvidence[];
   /**
@@ -323,6 +382,8 @@ export function emptySeoState(nowIso: string): SeoState {
     schemaValidations: [],
     searchIndex: null,
     searchResults: [],
+    searchJudgments: [],
+    searchRemediations: [],
     releaseOutcomes: [],
     fixtureRemoteLedger: {},
     liveCmsPublishWiring: "NOT_WIRED",
@@ -834,16 +895,103 @@ export function parseSearchConstraints(rawQuery: string): ParsedSearchConstraint
   };
 }
 
+function resolveHitGrounding(
+  entry: SemanticCatalogEntry,
+  factLabels: FactSupportLookup | undefined,
+): {
+  citations: string[];
+  supportedFactIds: string[];
+  groundingStatus: SearchGroundingStatusValue;
+  exclude: boolean;
+  filterNote: string | null;
+} {
+  const pageCite = `page:${entry.sourcePageId}`;
+  if (!factLabels) {
+    // Legacy path (unit tests without labels): keep prior citation shape but
+    // mark grounding UNKNOWN so callers cannot claim SUPPORTED without labels.
+    return {
+      citations: [
+        pageCite,
+        ...entry.groundedFactIds.map((id) => `fact:${id}`),
+      ],
+      supportedFactIds: [],
+      groundingStatus: SearchGroundingStatus.UNKNOWN,
+      exclude: false,
+      filterNote: "factLabels absent — citations not attested as SUPPORTED",
+    };
+  }
+
+  const supportedFactIds = entry.groundedFactIds.filter(
+    (id) => factLabels.get(id) === SupportLabel.SUPPORTED,
+  );
+  const unknownOrMissing = entry.groundedFactIds.filter((id) => {
+    const label = factLabels.get(id);
+    return label === undefined || label === SupportLabel.UNKNOWN;
+  });
+  const hypothesisOnly = entry.groundedFactIds.filter(
+    (id) => factLabels.get(id) === SupportLabel.HYPOTHESIS,
+  );
+
+  if (supportedFactIds.length > 0) {
+    return {
+      citations: [
+        pageCite,
+        ...supportedFactIds.map((id) => `fact:${id}`),
+      ],
+      supportedFactIds,
+      groundingStatus: SearchGroundingStatus.GROUNDED,
+      exclude: false,
+      filterNote: null,
+    };
+  }
+
+  if (entry.groundedFactIds.length === 0) {
+    return {
+      citations: [pageCite],
+      supportedFactIds: [],
+      groundingStatus: SearchGroundingStatus.UNGROUNDED,
+      exclude: true,
+      filterNote: "excluded: no grounded facts — cannot cite SUPPORTED truth",
+    };
+  }
+
+  if (hypothesisOnly.length > 0 && unknownOrMissing.length === 0) {
+    return {
+      citations: [pageCite],
+      supportedFactIds: [],
+      groundingStatus: SearchGroundingStatus.UNGROUNDED,
+      exclude: true,
+      filterNote:
+        "excluded: only HYPOTHESIS facts — public answers require SUPPORTED",
+    };
+  }
+
+  // UNKNOWN / missing labels — honest abstain rather than inventing eligibility.
+  return {
+    citations: [pageCite],
+    supportedFactIds: [],
+    groundingStatus: SearchGroundingStatus.UNKNOWN,
+    exclude: true,
+    filterNote:
+      "excluded: fact support UNKNOWN/missing — honest no-result, not false match",
+  };
+}
+
 /**
  * Deterministic structured filters before any ranking. Unknown / unresolved
  * constraints force honest clarify/abstain rather than inventing eligibility
  * or silently dropping location/price/date/negation.
+ *
+ * When factLabels are supplied (M8), public hits cite SUPPORTED facts only.
  */
 export function runSemanticSearch(input: {
   queryId: string;
   rawQuery: string;
   index: SemanticSearchIndex;
   createdAtIso: string;
+  factLabels?: FactSupportLookup;
+  /** Optional booking URL — only attached when answer is grounded. */
+  bookingHandoffUrl?: string | null;
 }): SemanticSearchResult {
   const constraints = parseSearchConstraints(input.rawQuery);
 
@@ -854,6 +1002,8 @@ export function runSemanticSearch(input: {
       constraints,
       hits: [],
       noMatchReason: `Unsupported or unverified constraints: ${constraints.unknownConstraints.join(", ")}`,
+      answerStatus: SearchAnswerStatus.UNKNOWN,
+      bookingHandoffUrl: null,
       indexVersion: input.index.version,
       createdAtIso: input.createdAtIso,
     };
@@ -866,12 +1016,15 @@ export function runSemanticSearch(input: {
       constraints,
       hits: [],
       noMatchReason: `Clarify or abstain — unresolved constraints preserved (not dropped): ${constraints.unresolvedConstraints.join(", ")}`,
+      answerStatus: SearchAnswerStatus.CLARIFY,
+      bookingHandoffUrl: null,
       indexVersion: input.index.version,
       createdAtIso: input.createdAtIso,
     };
   }
 
   const hits: SemanticSearchHit[] = [];
+  let sawUnknownGrounding = false;
   for (const entry of input.index.entries) {
     const filterTrace: string[] = [];
     if (entry.inaccessible) {
@@ -907,38 +1060,113 @@ export function runSemanticSearch(input: {
     }
     if (!amenityOk) continue;
 
+    const grounding = resolveHitGrounding(entry, input.factLabels);
+    if (grounding.filterNote) filterTrace.push(grounding.filterNote);
+    if (grounding.groundingStatus === SearchGroundingStatus.UNKNOWN) {
+      sawUnknownGrounding = true;
+    }
+    if (grounding.exclude) {
+      continue;
+    }
+
     filterTrace.push("passed hard constraints");
+    if (grounding.groundingStatus === SearchGroundingStatus.GROUNDED) {
+      filterTrace.push("grounded: SUPPORTED facts only");
+    }
     const score =
       10 +
       (constraints.people !== null
         ? Math.max(0, 5 - (entry.capacity - constraints.people))
         : 0) +
-      constraints.requiredAmenities.length;
+      constraints.requiredAmenities.length +
+      grounding.supportedFactIds.length;
 
     hits.push({
       entryId: entry.entryId,
       name: entry.name,
       score,
-      citations: [
-        `page:${entry.sourcePageId}`,
-        ...entry.groundedFactIds.map((id) => `fact:${id}`),
-      ],
+      citations: grounding.citations,
+      supportedFactIds: grounding.supportedFactIds,
+      groundingStatus: grounding.groundingStatus,
       filterTrace,
     });
   }
 
   hits.sort((a, b) => b.score - a.score);
 
+  const groundedHits = hits.filter(
+    (h) => h.groundingStatus === SearchGroundingStatus.GROUNDED,
+  );
+  const publicHits = input.factLabels ? groundedHits : hits;
+
+  let answerStatus: SearchAnswerStatusValue;
+  let noMatchReason: string | null = null;
+  if (publicHits.length > 0) {
+    answerStatus = input.factLabels
+      ? SearchAnswerStatus.GROUNDED
+      : SearchAnswerStatus.UNKNOWN;
+  } else if (sawUnknownGrounding && input.factLabels) {
+    answerStatus = SearchAnswerStatus.UNKNOWN;
+    noMatchReason =
+      "Eligible inventory lacked SUPPORTED grounding — UNKNOWN, not a false match";
+  } else {
+    answerStatus = SearchAnswerStatus.NO_RESULT;
+    noMatchReason = "No eligible inventory matched the hard constraints";
+  }
+
+  const bookingHandoffUrl =
+    answerStatus === SearchAnswerStatus.GROUNDED &&
+    input.bookingHandoffUrl &&
+    /^https?:\/\//i.test(input.bookingHandoffUrl)
+      ? input.bookingHandoffUrl
+      : null;
+
   return {
     queryId: input.queryId,
     rawQuery: input.rawQuery,
     constraints,
-    hits,
-    noMatchReason:
-      hits.length === 0
-        ? "No eligible inventory matched the hard constraints"
-        : null,
+    hits: publicHits,
+    noMatchReason,
+    answerStatus,
+    bookingHandoffUrl,
     indexVersion: input.index.version,
+    createdAtIso: input.createdAtIso,
+  };
+}
+
+export function recordSearchJudgment(input: {
+  judgmentId: string;
+  queryId: string;
+  label: SearchJudgmentLabelValue;
+  note?: string;
+  fixtureOnly?: boolean;
+  createdAtIso: string;
+}): SearchJudgmentRecord {
+  return {
+    judgmentId: input.judgmentId,
+    queryId: input.queryId,
+    label: input.label,
+    note: input.note ?? "",
+    fixtureOnly: input.fixtureOnly ?? true,
+    createdAtIso: input.createdAtIso,
+  };
+}
+
+export function createSearchRemediation(input: {
+  taskId: string;
+  queryId: string;
+  judgmentId: string;
+  summary: string;
+  fixtureOnly?: boolean;
+  createdAtIso: string;
+}): SearchRemediationTask {
+  return {
+    taskId: input.taskId,
+    queryId: input.queryId,
+    judgmentId: input.judgmentId,
+    summary: input.summary,
+    status: "open",
+    fixtureOnly: input.fixtureOnly ?? true,
     createdAtIso: input.createdAtIso,
   };
 }
@@ -1100,4 +1328,7 @@ export const SEO_RELATED_CASE_IDS = [
   "T-S02", // schema validation gates
   "T-S03", // semantic search constraints
   "T-S04", // pilot page release via gateway
+  "T-F23", // judged retrieval / no-result (M8)
+  "T-US-045",
+  "T-US-046",
 ] as const;

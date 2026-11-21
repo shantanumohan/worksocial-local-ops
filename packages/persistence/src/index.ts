@@ -283,3 +283,9 @@ export {
   defaultLeadCaptureStateDir,
   type LeadCaptureStore,
 } from "./lead-capture-store.js";
+
+export {
+  createFileEvaluationStore,
+  defaultEvaluationStateDir,
+  type EvaluationStore,
+} from "./evaluation-store.js";

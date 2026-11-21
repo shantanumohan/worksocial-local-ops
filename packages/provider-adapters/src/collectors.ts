@@ -325,3 +325,65 @@ export function collectorCredentialHints(): {
     ga4: envHasLiveCollectorCreds("ga4") ? "present" : "absent",
   };
 }
+
+/**
+ * M8 analytics read path — fixture ≠ sandbox ≠ live.
+ * Live query transport remains NOT_WIRED; credentials alone → UNAVAILABLE.
+ * Omitted GSC sample rows stay UNKNOWN (never false zero).
+ */
+export function readAnalyticsFixtureBundle(input: {
+  nowIso: string;
+  includeOmittedGscRow?: boolean;
+}): {
+  gsc: MeasurementCollectorResult;
+  ga4: MeasurementCollectorResult;
+  gscOmittedRow: {
+    query: string;
+    clicks: null;
+    impressions: null;
+    omitted: true;
+    environment: "FIXTURE";
+  } | null;
+  liveWiring: { gsc: "NOT_WIRED" | "FIXTURE"; ga4: "NOT_WIRED" | "FIXTURE" };
+  environmentNotes: string[];
+} {
+  const gsc = readGscObservations({
+    observationId: `gsc-${input.nowIso}`,
+    nowIso: input.nowIso,
+  });
+  const ga4 = readGa4Observations({
+    observationId: `ga4-${input.nowIso}`,
+    nowIso: input.nowIso,
+  });
+  const gscOmittedRow =
+    input.includeOmittedGscRow === false
+      ? null
+      : {
+          query: "omitted-sample-query",
+          clicks: null as null,
+          impressions: null as null,
+          omitted: true as const,
+          environment: "FIXTURE" as const,
+        };
+  return {
+    gsc,
+    ga4,
+    gscOmittedRow,
+    liveWiring: {
+      gsc:
+        gsc.measurementMode === MeasurementMode.FIXTURE
+          ? "FIXTURE"
+          : "NOT_WIRED",
+      ga4:
+        ga4.measurementMode === MeasurementMode.FIXTURE
+          ? "FIXTURE"
+          : "NOT_WIRED",
+    },
+    environmentNotes: [
+      "FIXTURE ≠ SANDBOX ≠ LIVE — labels must not be collapsed",
+      "Live GSC/GA4 query transport remains NOT_WIRED without executed query",
+      "Omitted GSC rows are UNKNOWN demand, not zero",
+      "GA4 debug validation is not a measured receipt",
+    ],
+  };
+}

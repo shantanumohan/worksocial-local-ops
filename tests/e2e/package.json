@@ -13,7 +13,10 @@
     "@worksocial/probes": "workspace:*",
     "@worksocial/lead-capture": "workspace:*",
     "@worksocial/inbox": "workspace:*",
-    "@worksocial/content": "workspace:*"
+    "@worksocial/content": "workspace:*",
+    "@worksocial/seo": "workspace:*",
+    "@worksocial/evaluation-worker": "workspace:*",
+    "@worksocial/provider-adapters": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "22.10.2",

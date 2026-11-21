@@ -16,10 +16,12 @@ import {
   applySeoReleaseVerification,
   createPageAudit,
   createSeoProposal,
+  createSearchRemediation,
   digestSchemaNodes,
   evaluateFixtureReadBack,
   evaluateProposalGate,
   listSeoOutcomesForLearning,
+  recordSearchJudgment,
   runSemanticSearch,
   validateSchemaOrg,
   type FactSupportLookup,
@@ -30,6 +32,9 @@ import {
   type CapabilityGrant,
   type SchemaOrgNode,
   type SchemaValidationResult,
+  type SearchJudgmentLabelValue,
+  type SearchJudgmentRecord,
+  type SearchRemediationTask,
   type SemanticSearchResult,
   type SeoChangeProposal,
   type SeoChangeKindValue,
@@ -137,10 +142,26 @@ export type SeoService = {
   semanticSearch(input: {
     queryId?: string;
     rawQuery: string;
+    factLabels?: FactSupportLookup;
+    bookingHandoffUrl?: string | null;
     nowIso?: string;
   }):
     | { ok: true; result: SemanticSearchResult }
     | { ok: false; code: string; reasons: string[] };
+  listSearchJudgments(limit?: number): SearchJudgmentRecord[];
+  listSearchRemediations(limit?: number): SearchRemediationTask[];
+  judgeSearchResult(input: {
+    judgmentId?: string;
+    queryId: string;
+    label: SearchJudgmentLabelValue;
+    note?: string;
+    createRemediation?: boolean;
+    remediationSummary?: string;
+    nowIso?: string;
+  }): {
+    judgment: SearchJudgmentRecord;
+    remediation: SearchRemediationTask | null;
+  };
   /**
    * Pilot page release through the shared action gateway.
    * Requires persisted productionMapping with ownership + read evidence.
@@ -485,9 +506,51 @@ export function createSeoService(
         rawQuery: input.rawQuery,
         index: state.searchIndex,
         createdAtIso: nowIso,
+        ...(input.factLabels ? { factLabels: input.factLabels } : {}),
+        bookingHandoffUrl: input.bookingHandoffUrl ?? null,
       });
       store.addSearchResult(result);
       return { ok: true, result };
+    },
+
+    listSearchJudgments(limit) {
+      return store.listSearchJudgments(limit);
+    },
+
+    listSearchRemediations(limit) {
+      return store.listSearchRemediations(limit);
+    },
+
+    judgeSearchResult(input) {
+      const nowIso = input.nowIso ?? new Date().toISOString();
+      const judgment = recordSearchJudgment({
+        judgmentId: input.judgmentId ?? `sj-${randomUUID()}`,
+        queryId: input.queryId,
+        label: input.label,
+        ...(input.note !== undefined ? { note: input.note } : {}),
+        fixtureOnly: true,
+        createdAtIso: nowIso,
+      });
+      store.addSearchJudgment(judgment);
+      let remediation: SearchRemediationTask | null = null;
+      if (
+        input.createRemediation ||
+        input.label === "wrong" ||
+        input.label === "no_match"
+      ) {
+        remediation = createSearchRemediation({
+          taskId: `sr-${randomUUID()}`,
+          queryId: input.queryId,
+          judgmentId: judgment.judgmentId,
+          summary:
+            input.remediationSummary ??
+            `Remediate search judgment ${input.label} for ${input.queryId}`,
+          fixtureOnly: true,
+          createdAtIso: nowIso,
+        });
+        store.addSearchRemediation(remediation);
+      }
+      return { judgment, remediation };
     },
 
     seedAndProveSeoMapping(nowIso) {
