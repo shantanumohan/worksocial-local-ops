@@ -95,6 +95,14 @@ export const SoakProofKind = {
    * Agent cannot widen its own grant (T-US-024).
    */
   AGENT_CANNOT_WIDEN_GRANT: "agent_cannot_widen_grant",
+  /**
+   * Repair cannot weaken protected tests (T-US-042 / T-X057).
+   */
+  REPAIR_WEAKEN_TEST_REJECTED: "repair_weaken_test_rejected",
+  /**
+   * Takeover cancels unsent agent replies (T-US-044 / T-X053).
+   */
+  TAKEOVER_CANCELS_UNSENT_REPLIES: "takeover_cancels_unsent_replies",
 } as const;
 
 export type SoakProofKindValue =
@@ -147,6 +155,8 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X029 requires EXPLICIT_ACCOUNT_REBIND (not same-account local rotate).
  * T-US-057 requires CROSS_WORKSPACE_RESOURCE_SUBSTITUTION.
  * T-US-024 requires AGENT_CANNOT_WIDEN_GRANT.
+ * T-US-042 / T-X057 require REPAIR_WEAKEN_TEST_REJECTED.
+ * T-US-044 / T-X053 require TAKEOVER_CANCELS_UNSENT_REPLIES.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -169,6 +179,10 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X029",
   "T-US-057",
   "T-US-024",
+  "T-US-042",
+  "T-X057",
+  "T-US-044",
+  "T-X053",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -543,6 +557,14 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CROSS_WORKSPACE_RESOURCE_SUBSTITUTION];
     case "T-US-024":
       return [SoakProofKind.AGENT_CANNOT_WIDEN_GRANT];
+    case "T-US-042":
+      return [SoakProofKind.REPAIR_WEAKEN_TEST_REJECTED];
+    case "T-X057":
+      return [SoakProofKind.REPAIR_WEAKEN_TEST_REJECTED];
+    case "T-US-044":
+      return [SoakProofKind.TAKEOVER_CANCELS_UNSENT_REPLIES];
+    case "T-X053":
+      return [SoakProofKind.TAKEOVER_CANCELS_UNSENT_REPLIES];
     default:
       return [];
   }
@@ -589,6 +611,10 @@ export function mapProofToFixtureCases(
       return ["T-US-057"];
     case SoakProofKind.AGENT_CANNOT_WIDEN_GRANT:
       return ["T-US-024"];
+    case SoakProofKind.REPAIR_WEAKEN_TEST_REJECTED:
+      return ["T-US-042", "T-X057"];
+    case SoakProofKind.TAKEOVER_CANCELS_UNSENT_REPLIES:
+      return ["T-US-044", "T-X053"];
     default:
       return [];
   }

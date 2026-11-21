@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-044",
+  "caseId": "T-US-044",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-044 (Takeover cancels unsent agent replies)\nproof=takeover_cancels_unsent_replies applyCount=1 :: Queued agent reply bound to conversation version | Takeover incremented version 1→2; humanOwned; agent send blocked | Queued reply cancelled and draft invalidated | Message sendStatus=BLOCKED_TAKEOVER | Outbound send gate denies post-takeover/stale-version send (CONVERSATION_TAKEOVER) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "takeover_cancels_unsent_replies"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-044.json",
+  "createdAtIso": "2026-11-21T23:14:41.303Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-044-6e9bc95a0b10"
+}

@@ -11,7 +11,9 @@
  * cross-workspace reference denied (T-X006),
  * approved payload edit / stale approval invalidated (T-X019 / T-US-036),
  * cross-workspace resource substitution (T-US-057),
- * agent cannot widen grant (T-US-024).
+ * agent cannot widen grant (T-US-024),
+ * repair weaken test rejected (T-US-042 / T-X057),
+ * takeover cancels unsent replies (T-US-044 / T-X053).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -48,6 +50,8 @@ import { proofApprovedPayloadEditInvalidated } from "./approved-payload-edit-pro
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
+import { proofRepairWeakenTestRejected } from "./repair-weaken-test-proof.js";
+import { proofTakeoverCancelsUnsentReplies } from "./takeover-cancel-unsent-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -544,7 +548,8 @@ function failProof(
  * T-X018/T-US-054; offboard ACTIVE_TOKEN residual feeds T-X073; emergency
  * stop feeds T-US-060; forged browser role feeds T-X005; cross-workspace
  * reference feeds T-X006; approved payload edit feeds T-X019/T-US-036; explicit rebind feeds T-X029;
- * cross-workspace substitution feeds T-US-057; agent cannot widen grant feeds T-US-024.
+ * cross-workspace substitution feeds T-US-057; agent cannot widen grant feeds T-US-024;
+ * repair weaken test feeds T-US-042/T-X057; takeover cancel feeds T-US-044/T-X053.
  */
 export async function runSoakRecoveryHarness(input: {
   stateDir: string;
@@ -583,6 +588,8 @@ export async function runSoakRecoveryHarness(input: {
   );
   proofs.push(proofCrossWorkspaceResourceSubstitution(nowPlus(nowIso, 140_000)));
   proofs.push(proofAgentCannotWidenGrant(nowPlus(nowIso, 150_000)));
+  proofs.push(proofRepairWeakenTestRejected(nowPlus(nowIso, 160_000)));
+  proofs.push(proofTakeoverCancelsUnsentReplies(nowPlus(nowIso, 170_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -603,6 +610,8 @@ export async function runSoakRecoveryHarness(input: {
       "T-X019/T-US-036 fixture ACCEPTED via approved_payload_edit_invalidated only — not live VERIFIED",
       "T-US-057 fixture ACCEPTED via cross_workspace_resource_substitution only — not live VERIFIED",
       "T-US-024 fixture ACCEPTED via agent_cannot_widen_grant only — not live VERIFIED",
+      "T-US-042/T-X057 fixture ACCEPTED via repair_weaken_test_rejected only — not live VERIFIED",
+      "T-US-044/T-X053 fixture ACCEPTED via takeover_cancels_unsent_replies only — not live VERIFIED",
     ],
   };
 }

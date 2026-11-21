@@ -59,6 +59,10 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X029": "Token rotates to different account",
   "T-US-057": "Cross-workspace resource substitution rejected",
   "T-US-024": "Agent cannot widen its own grant",
+  "T-US-042": "Repair cannot weaken protected tests",
+  "T-X057": "Repair disables failing test — rejected",
+  "T-US-044": "Takeover cancels unsent agent replies",
+  "T-X053": "Takeover races queued reply — version invalidates send",
 };
 
 function relatedProofsForCase(
@@ -210,6 +214,8 @@ export function compileAcceptanceEvidence(
     "T-X019/T-US-036 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED (digest/revision)",
     "T-US-057 fixture ACCEPTED only via CROSS_WORKSPACE_RESOURCE_SUBSTITUTION",
     "T-US-024 fixture ACCEPTED only via AGENT_CANNOT_WIDEN_GRANT",
+    "T-US-042/T-X057 fixture ACCEPTED only via REPAIR_WEAKEN_TEST_REJECTED",
+    "T-US-044/T-X053 fixture ACCEPTED only via TAKEOVER_CANCELS_UNSENT_REPLIES",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
