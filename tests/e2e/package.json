@@ -16,6 +16,7 @@
     "@worksocial/content": "workspace:*",
     "@worksocial/seo": "workspace:*",
     "@worksocial/evaluation-worker": "workspace:*",
+    "@worksocial/soak": "workspace:*",
     "@worksocial/provider-adapters": "workspace:*"
   },
   "devDependencies": {

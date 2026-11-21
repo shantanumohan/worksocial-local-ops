@@ -21,6 +21,7 @@
     "@worksocial/repair": "workspace:*",
     "@worksocial/lead-capture": "workspace:*",
     "@worksocial/evaluation-worker": "workspace:*",
+    "@worksocial/soak": "workspace:*",
     "@worksocial/provider-adapters": "workspace:*",
     "@worksocial/probes": "workspace:*"
   },

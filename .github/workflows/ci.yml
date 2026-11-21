@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   implemented-suites:
-    name: check · unit · contract · e2e-lite
+    name: check · unit · contract · e2e-lite · soak evidence
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -33,9 +33,6 @@ jobs:
       - name: Install (frozen lockfile)
         run: pnpm install --frozen-lockfile
 
-      - name: Validate acceptance matrix ↔ catalog
-        run: pnpm test:acceptance-matrix
-
       - name: Typecheck
         run: pnpm check
 
@@ -48,11 +45,20 @@ jobs:
       - name: E2E lite (fixture; not browser acceptance)
         run: pnpm test:e2e
 
-      - name: Assert placeholder suites cannot pass release gates
+      - name: Soak recovery rehearsal (fixture)
+        run: pnpm recovery:rehearse
+
+      - name: Acceptance evidence compiler (fixture)
+        run: pnpm release:evidence
+
+      - name: Validate acceptance matrix ↔ catalog (+ ACCEPTED evidence)
+        run: pnpm test:acceptance-matrix
+
+      - name: Assert remaining placeholder suites cannot pass release gates
         run: |
           set +e
           failed=0
-          for suite in test:security test:eval recovery:rehearse release:evidence; do
+          for suite in test:security test:eval; do
             echo "::group::stub $suite (must exit non-zero)"
             pnpm "$suite"
             code=$?
@@ -111,6 +117,7 @@ jobs:
       - name: Workflow suite (LOCAL_DURABLE mission + Temporal NOT_WIRED probe)
         run: pnpm test:workflow
 
-  # Stub/incomplete suites (security/eval/recovery/release) are NOT
-  # required green checks — they must fail (see assert step above).
+  # Stub/incomplete suites (security/eval) are NOT required green checks —
+  # they must fail (see assert step above).
+  # recovery:rehearse + release:evidence are implemented for M9 and required above.
   # test:database and test:workflow are implemented for M2 and required above.

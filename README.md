@@ -121,7 +121,14 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - **Analytics read path** — GSC/GA4 **FIXTURE** samples; credentials-without-query → **UNAVAILABLE**; live query transport **NOT_WIRED**. Fixture ≠ sandbox ≠ live. Omitted GSC rows → UNKNOWN (not zero). GA4 debug validation ≠ measured receipt.
 - **Isolated EVAL_ONLY worker** — Claude/Gemini fixture adjudication; no publish/CRM/customer-message tools; separate eval budget; ChatGPT Ads **access-blocked** without verified local transport/entitlement.
 - Console `/analysis` + `/eval`; APIs `/analysis/*` + `/eval/*` + `/seo/judge-search`.
-- SQL `020_m8_search_analytics_eval.sql` companion; **Temporal NOT_WIRED**. Catalog cases remain **NOT_RUN**. Not an R1-complete claim.
+- SQL `020_m8_search_analytics_eval.sql` companion; **Temporal NOT_WIRED**. Catalog cases remain **NOT_RUN** unless later fixture evidence is attached. Not an R1-complete claim.
+
+### M9 R1 soak / acceptance evidence (NEXT-20)
+- **Soak / recovery harness** — crash-restart, no duplicate effects, job continuity, unknown-remote reconcile on file-durable LOCAL_DURABLE stores (`pnpm recovery:rehearse`).
+- **Acceptance evidence compiler** — selected catalog cases (T-X014 / T-X020 / T-X066 / T-US-048) may become **ACCEPTED** only with redacted fixture artifacts (`pnpm release:evidence`). Never silently **VERIFIED** for live.
+- **72h pilot gate** — short CI soaks stay `pilotGate=NOT_MET`; owner Windows 72h soak documented in `docs/runbooks/m9-soak-acceptance.md`.
+- Console `/soak`; APIs `/soak/status` · `/soak/run` · `/soak/report` · `/soak/cases`.
+- SQL `021_m9_soak_acceptance.sql` companion; live CMS/GSC/GA4/Zoho/Temporal **NOT_WIRED**. ChatGPT Ads **access-blocked**. **Not R1-complete.**
 
 ### M4 Owner staging workflow (NEXT-13–15)
 - **Console** — `/activation`, `/connections`, `/sites`, `/missions`, `/review`, `/evidence` wired to typed `/owner/*` APIs; safe text rendering (no raw ID/JSON as primary UI).
@@ -160,14 +167,15 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 | Live GSC / GA4 query transport | **NOT_WIRED** — fixture / UNAVAILABLE collectors only (M8) |
 | Live Claude/Gemini eval fleet | **NOT_WIRED** — EVAL_ONLY fixture adjudication (M8) |
 | ChatGPT Ads | **access-blocked / NOT_WIRED** without verified local transport + entitlement (M8) |
+| 72h R1 pilot soak on owner host | **NOT_MET** in CI — requires documented ≥72h owner soak (M9) |
 
-Status labels stay honest: fixture / stub / `NOT_RUN` ≠ sandbox-verified or production-canary-verified.
+Status labels stay honest: fixture / stub / `NOT_RUN` / fixture-`ACCEPTED` ≠ sandbox-verified or production-canary-verified.
 
 ## Layout (v6 § repository layout)
 
 ```
 apps/console, apps/api
-services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-broker,learning-worker,probes,knowledge,seo,content,inbox,repair,owner-staging,evaluation-worker}
+services/{supervisor,workflow-worker,claude-runner,action-gateway,credential-broker,learning-worker,probes,knowledge,seo,content,inbox,repair,owner-staging,evaluation-worker,soak}
 packages/{contracts,domain,ml,persistence,provider-adapters,observability,ui}
 database/migrations
 tests/{unit,integration,contract,workflow,e2e,security,eval,soak}
@@ -186,12 +194,13 @@ See `docs/product/toolchain.md`. Node `.nvmrc` (`20.18.1`), pnpm `9.15.0` via `p
 pnpm install --frozen-lockfile
 pnpm local:doctor | local:start | local:stop | local:health
 pnpm check
-pnpm test:acceptance-matrix   # 159-case catalog ↔ matrix alignment (all NOT_RUN)
-pnpm test:unit                # domain + ml + persistence + supervisor + gateway + broker + runners + learning-worker + probes + knowledge + seo + content + inbox + repair + api
-pnpm test:contract            # … + inbox-after-hours + inbox-m7 + lead-capture-m5 + …
-pnpm test:e2e                 # offline e2e-lite HTTP→DOM→canary + M5 lead journey (not browser product acceptance)
-pnpm test:database | test:workflow | test:security | test:eval   # stubs — exit 1 / INCOMPLETE
-pnpm recovery:rehearse | release:evidence                        # stubs — exit 1 / INCOMPLETE
+pnpm test:acceptance-matrix   # 159-case catalog ↔ matrix (NOT_RUN|ACCEPTED+evidence; never silent live VERIFIED)
+pnpm test:unit                # domain + ml + persistence + … + evaluation-worker + soak + api
+pnpm test:contract            # … + m9 soak/acceptance + …
+pnpm test:e2e                 # offline e2e-lite including M9 soak (not browser product acceptance)
+pnpm test:database | test:workflow   # M2 durable suites
+pnpm recovery:rehearse | release:evidence | test:soak            # M9 fixture soak + evidence
+pnpm test:security | test:eval                                   # stubs — exit 1 / INCOMPLETE
 ```
 
 VS Code tasks: **WorkSocial: Start / Stop / Diagnostics / Test Local Operations** → supervisor CLI.
@@ -212,9 +221,11 @@ That path is a **workspace / artifact root example**, not a database root. **Do 
 
 ## Acceptance vs reference-core
 
-- `docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md` — **full** 159-case product acceptance catalog (T-F / T-US / T-X); statuses remain `NOT_RUN` until evidence.
-- `tests/acceptance-matrix-v6.json` — machine-readable index aligned to the catalog (every ID resolves; ChatGPT Ads transport/entitlement gate retained).
+- `docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md` — **full** 159-case product acceptance catalog (T-F / T-US / T-X); statuses remain `NOT_RUN` until evidence, or `ACCEPTED` only with real redacted artifacts.
+- `tests/acceptance-matrix-v6.json` — machine-readable index aligned to the catalog (every ID resolves; ChatGPT Ads transport/entitlement gate retained; fixture ACCEPTED ≠ live VERIFIED).
+- `tests/acceptance-evidence/fixture/` — redacted fixture evidence from `pnpm release:evidence`.
 - Offline unit/contract/e2e-lite suites prove fixture behavior; they are **not** production acceptance and do **not** claim R1 complete (see `docs/product/reference-core-vs-acceptance.md`).
+- Soak runbook: `docs/runbooks/m9-soak-acceptance.md`.
 
 ## Specs in-repo
 

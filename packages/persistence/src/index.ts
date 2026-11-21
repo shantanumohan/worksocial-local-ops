@@ -289,3 +289,9 @@ export {
   defaultEvaluationStateDir,
   type EvaluationStore,
 } from "./evaluation-store.js";
+
+export {
+  createFileSoakStore,
+  defaultSoakStateDir,
+  type SoakStore,
+} from "./soak-store.js";

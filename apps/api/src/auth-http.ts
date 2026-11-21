@@ -69,6 +69,7 @@ import {
   createFileOwnerStagingStore,
   createFileLeadCaptureStore,
   createFileEvaluationStore,
+  createFileSoakStore,
   createFileProbeStore,
   createFileProductionMappingStore,
   createFileRepairStore,
@@ -83,6 +84,7 @@ import {
   type OwnerStagingStore,
   type LeadCaptureStore,
   type EvaluationStore,
+  type SoakStore,
   type PolicyDecisionRecord,
   type ContentStore,
   type InboxStore,
@@ -159,10 +161,12 @@ import { handleLeadCaptureRequest } from "./lead-capture-http.js";
 import { handleInboxRequest } from "./inbox-http.js";
 import { handleCanonicalPublishRequest } from "./content-http.js";
 import { handleEvaluationAndAnalyticsRequest } from "./evaluation-http.js";
+import { handleSoakRequest } from "./soak-http.js";
 import {
   createEvaluationService,
   type EvaluationService,
 } from "@worksocial/evaluation-worker";
+import { createSoakService, type SoakService } from "@worksocial/soak";
 
 function factLabelsFromKnowledge(
   knowledge: KnowledgeService,
@@ -261,6 +265,8 @@ export type ApiRuntime = {
   leadCapture: LeadCaptureService;
   evaluationStore: EvaluationStore;
   evaluation: EvaluationService;
+  soakStore: SoakStore;
+  soak: SoakService;
   runner: ClaudeRunner;
   missions: MissionEnqueueService;
   gateway: ActionGateway;
@@ -467,6 +473,8 @@ export function createApiRuntime(options: {
   });
   const evaluationStore = createFileEvaluationStore(options.stateDir);
   const evaluation = createEvaluationService(evaluationStore);
+  const soakStore = createFileSoakStore(options.stateDir);
+  const soak = createSoakService(soakStore);
   const ownerPassword =
     options.ownerPassword ?? process.env.WORKSOCIAL_OWNER_PASSWORD;
   ensureBootstrapOwner(
@@ -503,6 +511,8 @@ export function createApiRuntime(options: {
     leadCapture,
     evaluationStore,
     evaluation,
+    soakStore,
+    soak,
     runner,
     missions,
     gateway,
@@ -660,9 +670,9 @@ export async function handleApiRequest(
         status: "running",
         productionActivated: false,
         identity:
-          "M8 grounded-search/analytics/eval + M6 canonical publish + M7 inbox + M5 lead-capture + R1-02–R1-10 auth/mapping/roles/learning/probes/knowledge/SEO/content/repair",
+          "M9 soak/acceptance evidence + M8 grounded-search/analytics/eval + M6–M7 + R1-02–R1-10",
         message:
-          "API surface includes M8 EVAL_ONLY eval, analysis fixtures, grounded search, M6 canonical publish. Live CMS/GBP/social/inbox/Zoho/GSC/GA4/Ads/eval-fleet NOT_WIRED. No live SERP/Trends. Catalog NOT_RUN.",
+          "API surface includes M9 soak/recovery + acceptance evidence, M8 EVAL_ONLY/analysis, M6 canonical publish. Live CMS/GBP/social/inbox/Zoho/GSC/GA4/Ads/eval-fleet/Temporal NOT_WIRED. Catalog ACCEPTED only with fixture evidence; never silently VERIFIED for live. Not R1-complete.",
       },
       cors,
     );
@@ -4185,6 +4195,20 @@ export async function handleApiRequest(
     requireSession: (r, opts) => requireSession(runtime, r, opts),
   });
   if (evalHandled) return;
+
+  const soakHandled = await handleSoakRequest({
+    soak: runtime.soak,
+    req,
+    res,
+    url,
+    method,
+    cors,
+    json,
+    readBody,
+    parseJsonObjectBody,
+    requireSession: (r, opts) => requireSession(runtime, r, opts),
+  });
+  if (soakHandled) return;
 
   const inboxHandled = await handleInboxRequest({
     inbox: runtime.inbox,

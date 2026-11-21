@@ -1,3 +1,4 @@
 # Runbooks
 
-Local startup, recovery rehearsal, and release-evidence runbooks will be filled in WP15–WP16. Supervisor scripts today are stubs only.
+- `m9-soak-acceptance.md` — fixture soak / recovery rehearsal, acceptance evidence compiler, and owner 72h pilot gate (M9 / NEXT-20).
+- Local startup / host recovery notes remain under supervisor CLI (`pnpm local:doctor|start|stop|health`).
