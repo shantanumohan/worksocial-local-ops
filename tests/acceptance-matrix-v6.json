@@ -2,7 +2,7 @@
   "catalog": "WorkSocial product acceptance v6",
   "version": "6.0",
   "sourceDocument": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-  "note": "159 cases \u2014 140 NOT_RUN + 19 fixture ACCEPTED (T-X014, T-X020, T-US-048, T-X066, T-F24, T-US-047, T-US-002, T-X002, T-X018, T-US-054, T-X073, T-US-060, T-X005, T-X006, T-X019, T-US-036, T-X029, T-US-057, T-US-024) with redacted evidence and complete proof sets. Includes T-US-057 cross-workspace resource substitution + T-US-024 agent cannot widen grant \u2014 never silently VERIFIED for live. Fixture, sandbox, and authorized-production results must remain distinguishable. ChatGPT Ads (T-F07 / T-US-013 / T-US-014) stays access-blocked without verified local transport/entitlement. Pilot gate uses server-recorded observations only. Not R1-complete.",
+  "note": "159 cases — 136 NOT_RUN + 23 fixture ACCEPTED (T-F24, T-US-002, T-US-024, T-US-036, T-US-042, T-US-044, T-US-047, T-US-048, T-US-054, T-US-057, T-US-060, T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X053, T-X057, T-X066, T-X073) with redacted evidence and complete proof sets. Includes T-US-042/T-X057 repair weaken + T-US-044/T-X053 takeover cancel — never silently VERIFIED for live. Fixture, sandbox, and authorized-production results must remain distinguishable. ChatGPT Ads (T-F07 / T-US-013 / T-US-014) stays access-blocked without verified local transport/entitlement. Pilot gate uses server-recorded observations only. Not R1-complete.",
   "invariants": {
     "fixtureSandboxAuthorizedProductionDistinct": true,
     "acceptanceNotVerified": true,
@@ -14,8 +14,8 @@
     "userStories": 60,
     "experience": 73,
     "all": 159,
-    "notRun": 140,
-    "accepted": 19
+    "notRun": 136,
+    "accepted": 23
   },
   "cases": [
     {
@@ -571,7 +571,7 @@
       "definitionShape": "heading",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-f24",
-      "evidenceNote": "Fixture recover/rotate/reconcile/offboard proof only \u2014 not sandbox or production-canary VERIFIED; live provider revoke remains NOT_WIRED"
+      "evidenceNote": "Fixture recover/rotate/reconcile/offboard proof only — not sandbox or production-canary VERIFIED; live provider revoke remains NOT_WIRED"
     },
     {
       "id": "T-F25",
@@ -619,7 +619,7 @@
       "id": "T-US-001",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Create a trusted local workspace (F01/SC-02) \u2014 blockers and next actions.",
+      "title": "Create a trusted local workspace (F01/SC-02) — blockers and next actions.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -642,13 +642,13 @@
       "definitionShape": "list_item",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-us-002",
-      "evidenceNote": "Fixture competing-supervisor / singleton host-lease proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture competing-supervisor / singleton host-lease proof only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-US-003",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Choose folders and establish business truth (F02/SC-20) \u2014 restore evidence; secrets excluded.",
+      "title": "Choose folders and establish business truth (F02/SC-20) — restore evidence; secrets excluded.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -674,7 +674,7 @@
       "id": "T-US-005",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Map sites, pages and editable sources (F03/SC-06) \u2014 baseline ID and checks.",
+      "title": "Map sites, pages and editable sources (F03/SC-06) — baseline ID and checks.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -700,7 +700,7 @@
       "id": "T-US-007",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Connect GA4 (F04/SC-18) \u2014 ready-read and next sync.",
+      "title": "Connect GA4 (F04/SC-18) — ready-read and next sync.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -713,7 +713,7 @@
       "id": "T-US-008",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "GA4 debug validation \u2260 measured receipt.",
+      "title": "GA4 debug validation ≠ measured receipt.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -726,7 +726,7 @@
       "id": "T-US-009",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Connect Search Console (F05/SC-18) \u2014 schedule and watermark.",
+      "title": "Connect Search Console (F05/SC-18) — schedule and watermark.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -739,7 +739,7 @@
       "id": "T-US-010",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Missing GSC rows \u2260 zero demand.",
+      "title": "Missing GSC rows ≠ zero demand.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -752,7 +752,7 @@
       "id": "T-US-011",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Connect Google Ads analyze-only (F06/SC-18) \u2014 write disabled.",
+      "title": "Connect Google Ads analyze-only (F06/SC-18) — write disabled.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -778,7 +778,7 @@
       "id": "T-US-013",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Connect ChatGPT Ads (F07/SC-18) \u2014 read-ready; write denial; transport/entitlement gate.",
+      "title": "Connect ChatGPT Ads (F07/SC-18) — read-ready; write denial; transport/entitlement gate.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -808,7 +808,7 @@
       "id": "T-US-015",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Connect Claude Code + test API (F08/SC-18) \u2014 EVAL_ONLY.",
+      "title": "Connect Claude Code + test API (F08/SC-18) — EVAL_ONLY.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -834,7 +834,7 @@
       "id": "T-US-017",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Connect Gemini evaluation (F09/SC-18) \u2014 EVAL_ONLY.",
+      "title": "Connect Gemini evaluation (F09/SC-18) — EVAL_ONLY.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -860,7 +860,7 @@
       "id": "T-US-019",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Map CRM/forms/booking (F10/SC-16) \u2014 failure/recovery scenario.",
+      "title": "Map CRM/forms/booking (F10/SC-16) — failure/recovery scenario.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -886,7 +886,7 @@
       "id": "T-US-021",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Connect local/social/inbox (F11/SC-18) \u2014 test artifact and capability.",
+      "title": "Connect local/social/inbox (F11/SC-18) — test artifact and capability.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -912,7 +912,7 @@
       "id": "T-US-023",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Grant standing autonomy (F12/SC-19) \u2014 control tests with receipts.",
+      "title": "Grant standing autonomy (F12/SC-19) — control tests with receipts.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -935,13 +935,13 @@
       "definitionShape": "list_item",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-us-024",
-      "evidenceNote": "Fixture agent-cannot-widen-grant proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture agent-cannot-widen-grant proof only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-US-025",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Launch workstream and schedule (F13/SC-02) \u2014 mission outcome.",
+      "title": "Launch workstream and schedule (F13/SC-02) — mission outcome.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -967,7 +967,7 @@
       "id": "T-US-027",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Demand \u2192 page improvement (F14/SC-07) \u2014 release receipt and experiment window.",
+      "title": "Demand → page improvement (F14/SC-07) — release receipt and experiment window.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -993,7 +993,7 @@
       "id": "T-US-029",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Original campaign distribution (F15/SC-08) \u2014 campaign manifest.",
+      "title": "Original campaign distribution (F15/SC-08) — campaign manifest.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -1019,7 +1019,7 @@
       "id": "T-US-031",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Paid-media recommendations (F16/SC-13) \u2014 verified mutation or failure.",
+      "title": "Paid-media recommendations (F16/SC-13) — verified mutation or failure.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -1045,7 +1045,7 @@
       "id": "T-US-033",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Claude/Gemini eval suites (F17/SC-14) \u2014 adjudication + backlog.",
+      "title": "Claude/Gemini eval suites (F17/SC-14) — adjudication + backlog.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -1058,7 +1058,7 @@
       "id": "T-US-034",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Provider error \u2260 bad answer or pass.",
+      "title": "Provider error ≠ bad answer or pass.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -1071,7 +1071,7 @@
       "id": "T-US-035",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Review/revise/release (F18/SC-05) \u2014 release receipt or blocked exception.",
+      "title": "Review/revise/release (F18/SC-05) — release receipt or blocked exception.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -1094,13 +1094,13 @@
       "definitionShape": "list_item",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-us-036",
-      "evidenceNote": "Fixture stale-approval invalidated on revision-change proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture stale-approval invalidated on revision-change proof only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-US-037",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Analyze and hypothesis (F19/SC-12) \u2014 portable analysis artifact.",
+      "title": "Analyze and hypothesis (F19/SC-12) — portable analysis artifact.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -1126,7 +1126,7 @@
       "id": "T-US-039",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Form\u2192CRM continuous verify (F20/SC-15) \u2014 cadence/heartbeat.",
+      "title": "Form→CRM continuous verify (F20/SC-15) — cadence/heartbeat.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -1152,7 +1152,7 @@
       "id": "T-US-041",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Diagnose/repair defect (F21/SC-21) \u2014 verified resolution or handoff.",
+      "title": "Diagnose/repair defect (F21/SC-21) — verified resolution or handoff.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -1166,19 +1166,22 @@
       "kind": "user_story",
       "level": "behavior_acceptance",
       "title": "Repair cannot weaken protected tests.",
-      "status": "NOT_RUN",
+      "status": "ACCEPTED",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
       "family": "failure_gate",
       "gates": [],
       "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-      "definitionShape": "list_item"
+      "definitionShape": "list_item",
+      "resultEnvironment": "fixture",
+      "evidenceArtifactId": "art-fixture-t-us-042",
+      "evidenceNote": "Fixture repair-weaken-test-rejected proof only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-US-043",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "After-hours + takeover (F22/SC-17) \u2014 acknowledged handoff.",
+      "title": "After-hours + takeover (F22/SC-17) — acknowledged handoff.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -1192,19 +1195,22 @@
       "kind": "user_story",
       "level": "behavior_acceptance",
       "title": "Takeover cancels unsent agent replies.",
-      "status": "NOT_RUN",
+      "status": "ACCEPTED",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
       "family": "failure_gate",
       "gates": [],
       "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-      "definitionShape": "list_item"
+      "definitionShape": "list_item",
+      "resultEnvironment": "fixture",
+      "evidenceArtifactId": "art-fixture-t-us-044",
+      "evidenceNote": "Fixture takeover-cancels-unsent proof only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-US-045",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Semantic search / no-result (F23/SC-11) \u2014 evaluation comparison.",
+      "title": "Semantic search / no-result (F23/SC-11) — evaluation comparison.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -1230,7 +1236,7 @@
       "id": "T-US-047",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Recover/rotate/reconcile (F24/SC-18) \u2014 offboarding manifest.",
+      "title": "Recover/rotate/reconcile (F24/SC-18) — offboarding manifest.",
       "status": "ACCEPTED",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -1240,7 +1246,7 @@
       "definitionShape": "list_item",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-us-047",
-      "evidenceNote": "Fixture recover/rotate/reconcile offboarding-manifest proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture recover/rotate/reconcile offboarding-manifest proof only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-US-048",
@@ -1256,13 +1262,13 @@
       "definitionShape": "list_item",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-us-048",
-      "evidenceNote": "Fixture soak/recovery evidence only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture soak/recovery evidence only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-US-049",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Daily owner review (F25/SC-01) \u2014 reviewed operating knowledge.",
+      "title": "Daily owner review (F25/SC-01) — reviewed operating knowledge.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -1288,7 +1294,7 @@
       "id": "T-US-051",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Design/release readiness (F26/SC-23) \u2014 release acceptance packet.",
+      "title": "Design/release readiness (F26/SC-23) — release acceptance packet.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -1301,7 +1307,7 @@
       "id": "T-US-052",
       "kind": "user_story",
       "level": "behavior_acceptance",
-      "title": "Mocked connector \u2260 production-ready.",
+      "title": "Mocked connector ≠ production-ready.",
       "status": "NOT_RUN",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -1337,7 +1343,7 @@
       "definitionShape": "list_item",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-us-054",
-      "evidenceNote": "Fixture self-approval rejected / independent A25 proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture self-approval rejected / independent A25 proof only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-US-055",
@@ -1379,7 +1385,7 @@
       "definitionShape": "list_item",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-us-057",
-      "evidenceNote": "Fixture cross-workspace resource-substitution rejected proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture cross-workspace resource-substitution rejected proof only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-US-058",
@@ -1421,7 +1427,7 @@
       "definitionShape": "list_item",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-us-060",
-      "evidenceNote": "Fixture emergency-stop / outbound-stop at commit proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture emergency-stop / outbound-stop at commit proof only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X001",
@@ -1450,7 +1456,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x002",
-      "evidenceNote": "Fixture competing-supervisor / singleton host-lease proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture competing-supervisor / singleton host-lease proof only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X003",
@@ -1492,7 +1498,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x005",
-      "evidenceNote": "Fixture forged-browser-role / payload-role-ignored proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture forged-browser-role / payload-role-ignored proof only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X006",
@@ -1508,7 +1514,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x006",
-      "evidenceNote": "Fixture cross-workspace object-reference deny-without-leak proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture cross-workspace object-reference deny-without-leak proof only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X007",
@@ -1615,7 +1621,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x014",
-      "evidenceNote": "Fixture soak/recovery evidence only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture soak/recovery evidence only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X015",
@@ -1670,7 +1676,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x018",
-      "evidenceNote": "Fixture self-approval rejected / independent A25 proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture self-approval rejected / independent A25 proof only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X019",
@@ -1686,14 +1692,14 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x019",
-      "evidenceNote": "Fixture approved-payload-edit / digest-conflict proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture approved-payload-edit / digest-conflict proof only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X020",
       "kind": "experience",
       "level": "platform_security_resilience",
       "title": "Timeout after provider acceptance",
-      "focus": "Unknown \u2192 reconcile; no resend",
+      "focus": "Unknown → reconcile; no resend",
       "status": "ACCEPTED",
       "environment": "fixture_or_integration",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -1702,7 +1708,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x020",
-      "evidenceNote": "Fixture soak/recovery evidence only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture soak/recovery evidence only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X021",
@@ -1868,7 +1874,7 @@
       "kind": "experience",
       "level": "platform_security_resilience",
       "title": "Omitted GSC rows",
-      "focus": "Unknown \u2260 zero",
+      "focus": "Unknown ≠ zero",
       "status": "NOT_RUN",
       "environment": "fixture_or_integration",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
@@ -2129,12 +2135,15 @@
       "level": "platform_security_resilience",
       "title": "Takeover races queued reply",
       "focus": "Version invalidates send",
-      "status": "NOT_RUN",
+      "status": "ACCEPTED",
       "environment": "fixture_or_integration",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
       "gates": [],
       "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-      "definitionShape": "table_row"
+      "definitionShape": "table_row",
+      "resultEnvironment": "fixture",
+      "evidenceArtifactId": "art-fixture-t-x053",
+      "evidenceNote": "Fixture takeover-cancels-unsent proof only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X054",
@@ -2181,12 +2190,15 @@
       "level": "platform_security_resilience",
       "title": "Repair disables failing test",
       "focus": "Rejected",
-      "status": "NOT_RUN",
+      "status": "ACCEPTED",
       "environment": "fixture_or_integration",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
       "gates": [],
       "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-      "definitionShape": "table_row"
+      "definitionShape": "table_row",
+      "resultEnvironment": "fixture",
+      "evidenceArtifactId": "art-fixture-t-x057",
+      "evidenceNote": "Fixture repair-weaken-test-rejected proof only — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X058",
@@ -2306,7 +2318,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x066",
-      "evidenceNote": "Fixture backup/omit-receipt/post-restore reconcile proof only \u2014 not sandbox or production-canary VERIFIED; retry-only no-dup is not sufficient"
+      "evidenceNote": "Fixture backup/omit-receipt/post-restore reconcile proof only — not sandbox or production-canary VERIFIED; retry-only no-dup is not sufficient"
     },
     {
       "id": "T-X067",
@@ -2400,7 +2412,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x073",
-      "evidenceNote": "Fixture offboard ACTIVE_TOKEN residual incomplete-until-revoked proof only \u2014 live provider revoke remains NOT_WIRED; not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture offboard ACTIVE_TOKEN residual incomplete-until-revoked proof only — live provider revoke remains NOT_WIRED; not sandbox or production-canary VERIFIED"
     }
   ]
 }

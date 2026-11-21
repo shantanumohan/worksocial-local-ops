@@ -21,7 +21,7 @@ Fixture (LOCAL_DURABLE) proofs:
 
 Acceptance evidence compiler marks selected catalog cases **ACCEPTED** only when the **complete expected proof set** passes with **no failed related proofs**, and only with redacted fixture artifacts. It never silently marks live **VERIFIED**.
 
-Honest fixture ACCEPTED cases: **T-X014**, **T-X020**, **T-US-048**, **T-X066**, **T-F24**, **T-US-047**, **T-US-002**, **T-X002**, **T-X018**, **T-US-054**, **T-X073**, **T-US-060**, **T-X005**, **T-X006**, **T-X019**, **T-US-036**, **T-X029**, **T-US-057**, **T-US-024**.
+Honest fixture ACCEPTED cases: **T-X014**, **T-X020**, **T-US-048**, **T-X066**, **T-F24**, **T-US-047**, **T-US-002**, **T-X002**, **T-X018**, **T-US-054**, **T-X073**, **T-US-060**, **T-X005**, **T-X006**, **T-X019**, **T-US-036**, **T-X029**, **T-US-057**, **T-US-024**, **T-US-042**, **T-X057**, **T-US-044**, **T-X053**.
 
 **T-X066** maps only to `BACKUP_OMIT_RECEIPT`. Retry-only `NO_DUPLICATE_EFFECTS` does not satisfy T-X066.
 
@@ -86,3 +86,7 @@ Suggested owner Windows flow (state off OneDrive):
 **T-US-057** maps only to `CROSS_WORKSPACE_RESOURCE_SUBSTITUTION`.
 
 **T-US-024** maps only to `AGENT_CANNOT_WIDEN_GRANT`.
+
+**T-US-042** / **T-X057** map only to `REPAIR_WEAKEN_TEST_REJECTED`.
+
+**T-US-044** / **T-X053** map only to `TAKEOVER_CANCELS_UNSENT_REPLIES`.

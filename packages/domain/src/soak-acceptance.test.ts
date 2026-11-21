@@ -229,6 +229,24 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.AGENT_CANNOT_WIDEN_GRANT),
     ).toEqual(["T-US-024"]);
+    expect(expectedProofsForFixtureCase("T-US-042")).toEqual([
+      SoakProofKind.REPAIR_WEAKEN_TEST_REJECTED,
+    ]);
+    expect(expectedProofsForFixtureCase("T-X057")).toEqual([
+      SoakProofKind.REPAIR_WEAKEN_TEST_REJECTED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.REPAIR_WEAKEN_TEST_REJECTED),
+    ).toEqual(["T-US-042", "T-X057"]);
+    expect(expectedProofsForFixtureCase("T-US-044")).toEqual([
+      SoakProofKind.TAKEOVER_CANCELS_UNSENT_REPLIES,
+    ]);
+    expect(expectedProofsForFixtureCase("T-X053")).toEqual([
+      SoakProofKind.TAKEOVER_CANCELS_UNSENT_REPLIES,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.TAKEOVER_CANCELS_UNSENT_REPLIES),
+    ).toEqual(["T-US-044", "T-X053"]);
   });
 
   it("builds unique per-run artifact ids", () => {

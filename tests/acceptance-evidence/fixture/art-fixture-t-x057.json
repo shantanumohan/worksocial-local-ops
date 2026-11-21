@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x057",
+  "caseId": "T-X057",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X057 (Repair disables failing test — rejected)\nproof=repair_weaken_test_rejected applyCount=1 :: Healthy repair preserves test baseline | DISABLE_TEST weaken operation rejected (TEST_INTEGRITY_VIOLATION) | tests/unit/cta.test.ts is protected | Protected test path patch rejected (PROTECTED_PATH) | Test baseline digest mutation rejected | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "repair_weaken_test_rejected"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x057.json",
+  "createdAtIso": "2026-11-21T23:14:41.303Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x057-6e9bc95a0b10"
+}
