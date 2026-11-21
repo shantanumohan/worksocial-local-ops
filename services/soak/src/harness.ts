@@ -1,7 +1,8 @@
 /**
  * Soak / recovery harness — crash-restart, no duplicate effects,
  * durable job/effect continuity, unknown-remote reconcile,
- * backup/omit-receipt post-restore reconcile (T-X066).
+ * backup/omit-receipt post-restore reconcile (T-X066),
+ * recover/rotate/reconcile/offboard (T-F24 / T-US-047).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -27,6 +28,7 @@ import {
   type DurableExecutionService,
   type FakeProviderEffect,
 } from "@worksocial/persistence";
+import { proofRecoverRotateReconcile } from "./recover-rotate-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -511,10 +513,11 @@ function failProof(
 }
 
 /**
- * Run soak proofs (incl. T-X066 backup/omit-receipt) against a dedicated
- * durable state directory. Safe for CI and documented 72h owner soak wrappers.
+ * Run soak proofs (incl. T-X066 backup/omit-receipt and T-F24/T-US-047
+ * recover/rotate/reconcile) against a dedicated durable state directory.
+ * Safe for CI and documented 72h owner soak wrappers.
  * Pilot gate still requires the original four recovery proofs; backup proof
- * feeds fixture ACCEPTED for T-X066 only.
+ * feeds fixture ACCEPTED for T-X066 only; recover/rotate feeds T-F24/T-US-047.
  */
 export async function runSoakRecoveryHarness(input: {
   stateDir: string;
@@ -533,6 +536,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     await proofBackupOmitReceipt(durableDir, nowPlus(nowIso, 40_000)),
   );
+  proofs.push(
+    await proofRecoverRotateReconcile(durableDir, nowPlus(nowIso, 50_000)),
+  );
 
   const allPassed = proofs.every((p) => p.passed);
   return {
@@ -544,6 +550,7 @@ export async function runSoakRecoveryHarness(input: {
         : "One or more soak recovery proofs failed",
       "External effects: NONE — fake provider only",
       "Live CMS/GSC/GA4/Zoho/Temporal remain NOT_WIRED",
+      "T-F24/T-US-047 fixture ACCEPTED via recover_rotate_reconcile only — not live VERIFIED",
     ],
   };
 }

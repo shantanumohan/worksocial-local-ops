@@ -25,9 +25,9 @@
     { "path": "services/owner-staging" },
     { "path": "services/lead-capture" },
     { "path": "services/evaluation-worker" },
-    { "path": "services/soak" },
     { "path": "services/recovery" },
     { "path": "services/paid-media" },
-    { "path": "services/credential-rotation" }
+    { "path": "services/credential-rotation" },
+    { "path": "services/soak" }
   ]
 }

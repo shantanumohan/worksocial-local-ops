@@ -135,7 +135,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - Classifies **STALE_OBSERVATION** vs **ACTIVE_INCIDENT** vs **UNKNOWN_REMOTE_OUTCOME** for host/provider outage and queued work (fixture-only).
 - Console `/recovery`; APIs `/recovery/status` · `/recovery/inspect` · `/recovery/run` · timeline / queued-work / capability-stops.
 - Live recovery stays **NOT_RUN** — never silently VERIFIED. Local credential revoke/rotate/offboard are **fixture** paths (`/credentials`); live provider revocation **NOT_WIRED**. External effects **NONE**.
-- Runbook: `docs/runbooks/recovery-evidence.md`. Complements M9 soak; does not close product T-F24 alone.
+- Runbook: `docs/runbooks/recovery-evidence.md`. Complements M9 soak; T-F24/T-US-047 fixture ACCEPTED via recover/rotate/reconcile proof (not live VERIFIED).
 
 ### WP10 credential rotation / offboarding (F24)
 
@@ -146,7 +146,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 
 ### M9 R1 soak / acceptance evidence (NEXT-20)
 - **Soak / recovery harness** — crash-restart, no duplicate effects, job continuity, unknown-remote reconcile on file-durable LOCAL_DURABLE stores (`pnpm recovery:rehearse`).
-- **Acceptance evidence compiler** — selected catalog cases (T-X014 / T-X020 / T-US-048 / T-X066) may become **ACCEPTED** only with the complete expected proof set and redacted fixture artifacts (`pnpm release:evidence`). **T-X066** requires the backup/omit-receipt proof (not retry-only no-dup). Never silently **VERIFIED** for live.
+- **Acceptance evidence compiler** — selected catalog cases (T-X014 / T-X020 / T-US-048 / T-X066 / T-F24 / T-US-047) may become **ACCEPTED** only with the complete expected proof set and redacted fixture artifacts (`pnpm release:evidence`). **T-X066** requires backup/omit-receipt; **T-F24/T-US-047** require recover/rotate/reconcile. Never silently **VERIFIED** for live.
 - **72h pilot gate** — duration from **server-recorded** start/heartbeat/end only (client claim dates rejected); short CI soaks stay `pilotGate=NOT_MET`. Owner Windows 72h soak documented in `docs/runbooks/m9-soak-acceptance.md`.
 - Console `/soak`; APIs `/soak/status` · `/soak/run` · `/soak/report` · `/soak/cases`.
 - SQL `021_m9_soak_acceptance.sql` companion; live CMS/GSC/GA4/Zoho **NOT_WIRED**; Temporal prod/Windows still **NOT_WIRED** (local bind optional). ChatGPT Ads **access-blocked**. **Not R1-complete.**

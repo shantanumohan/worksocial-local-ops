@@ -9,12 +9,15 @@ Fixture (LOCAL_DURABLE) proofs:
 3. Job rows survive process restart via durable idempotency keys
 4. Unknown-remote reconcile reads the provider ledger before verify
 5. Backup that omits the remote receipt → restore → reconcile from remote SoR → no duplicate apply (**T-X066**)
+6. Recover → capability stop → rotate (no secrets) → reconcile → offboard (**T-F24** / **T-US-047**)
 
 Acceptance evidence compiler marks selected catalog cases **ACCEPTED** only when the **complete expected proof set** passes with **no failed related proofs**, and only with redacted fixture artifacts. It never silently marks live **VERIFIED**.
 
-Honest fixture ACCEPTED cases: **T-X014**, **T-X020**, **T-US-048**, **T-X066**.
+Honest fixture ACCEPTED cases: **T-X014**, **T-X020**, **T-US-048**, **T-X066**, **T-F24**, **T-US-047**.
 
 **T-X066** maps only to `BACKUP_OMIT_RECEIPT`. Retry-only `NO_DUPLICATE_EFFECTS` does not satisfy T-X066.
+
+**T-F24 / T-US-047** map only to `RECOVER_ROTATE_RECONCILE` (complete F24 evidence set). Live provider revoke remains **NOT_WIRED**.
 
 ## Commands
 
@@ -51,3 +54,4 @@ Suggested owner Windows flow (state off OneDrive):
 | VERIFIED (live) | Forbidden without explicit authorized-production evidence package |
 | ChatGPT Ads | Access-blocked without transport + entitlement |
 | T-X066 | Fixture ACCEPTED via backup/omit-receipt proof only |
+| T-F24 / T-US-047 | Fixture ACCEPTED via recover/rotate/reconcile proof only |

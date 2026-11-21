@@ -8,6 +8,9 @@
   "exclude": ["src/**/*.test.ts", "dist"],
   "references": [
     { "path": "../../packages/domain" },
-    { "path": "../../packages/persistence" }
+    { "path": "../../packages/persistence" },
+    { "path": "../credential-broker" },
+    { "path": "../credential-rotation" },
+    { "path": "../recovery" }
   ]
 }
