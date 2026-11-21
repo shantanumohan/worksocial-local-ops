@@ -94,7 +94,7 @@ async function main(): Promise<void> {
       cases: stableCaseResults,
       artifacts: stableArtifacts,
       uniqueRunArtifacts: artifacts,
-      note: "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual. Not R1-complete.",
+      note: "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit. Not R1-complete.",
     };
     writeFileSync(ledgerPath, JSON.stringify(ledger, null, 2), "utf8");
 
@@ -139,12 +139,16 @@ async function main(): Promise<void> {
     const hasTx073Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-X073",
     );
+    const hasUs060Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-US-060",
+    );
     const expectedAccepted = [
       "T-F24",
       "T-US-002",
       "T-US-047",
       "T-US-048",
       "T-US-054",
+      "T-US-060",
       "T-X002",
       "T-X014",
       "T-X018",
@@ -170,7 +174,8 @@ async function main(): Promise<void> {
         hasTx018Accepted &&
         hasUs054Accepted &&
         hasTx073Accepted &&
-        accepted.length === 11 &&
+        hasUs060Accepted &&
+        accepted.length === 12 &&
         JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
@@ -185,7 +190,7 @@ async function main(): Promise<void> {
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X073 offboard ACTIVE_TOKEN residual fixture ACCEPTED. Live VERIFIED forbidden. Not R1-complete.",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-US-060 emergency stop at commit fixture ACCEPTED. Live VERIFIED forbidden. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {

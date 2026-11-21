@@ -5,7 +5,8 @@
  * recover/rotate/reconcile/offboard (T-F24 / T-US-047),
  * competing-supervisor / singleton host lease (T-US-002 / T-X002),
  * self-approval rejected / independent A25 (T-X018 / T-US-054),
- * offboard ACTIVE_TOKEN residual incomplete-until-revoked (T-X073).
+ * offboard ACTIVE_TOKEN residual incomplete-until-revoked (T-X073),
+ * emergency stop at commit (T-US-060).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -35,6 +36,7 @@ import { proofRecoverRotateReconcile } from "./recover-rotate-proof.js";
 import { proofCompetingSupervisorLease } from "./competing-supervisor-proof.js";
 import { proofSelfApprovalRejected } from "./self-approval-proof.js";
 import { proofOffboardActiveTokenResidual } from "./offboard-active-token-proof.js";
+import { proofEmergencyStopAtCommit } from "./emergency-stop-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -521,13 +523,15 @@ function failProof(
 /**
  * Run soak proofs (incl. T-X066 backup/omit-receipt, T-F24/T-US-047
  * recover/rotate/reconcile, T-US-002/T-X002 competing-supervisor lease,
- * T-X018/T-US-054 self-approval rejected, and T-X073 offboard ACTIVE_TOKEN
- * residual) against a dedicated durable state directory.
+ * T-X018/T-US-054 self-approval rejected, T-X073 offboard ACTIVE_TOKEN
+ * residual, and T-US-060 emergency stop at commit) against a dedicated
+ * durable state directory.
  * Safe for CI and documented 72h owner soak wrappers.
  * Pilot gate still requires the original four recovery proofs; backup proof
  * feeds fixture ACCEPTED for T-X066 only; recover/rotate feeds T-F24/T-US-047;
  * competing-supervisor lease feeds T-US-002/T-X002; self-approval feeds
- * T-X018/T-US-054; offboard ACTIVE_TOKEN residual feeds T-X073.
+ * T-X018/T-US-054; offboard ACTIVE_TOKEN residual feeds T-X073; emergency
+ * stop feeds T-US-060.
  */
 export async function runSoakRecoveryHarness(input: {
   stateDir: string;
@@ -554,6 +558,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     await proofOffboardActiveTokenResidual(durableDir, nowPlus(nowIso, 80_000)),
   );
+  proofs.push(proofEmergencyStopAtCommit(nowPlus(nowIso, 90_000)));
 
   const allPassed = proofs.every((p) => p.passed);
   return {
@@ -569,6 +574,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-002/T-X002 fixture ACCEPTED via competing_supervisor_lease only — not live VERIFIED",
       "T-X018/T-US-054 fixture ACCEPTED via self_approval_rejected only — not live VERIFIED",
       "T-X073 fixture ACCEPTED via offboard_active_token_residual only — incomplete until live revoke; not live VERIFIED",
+      "T-US-060 fixture ACCEPTED via emergency_stop_at_commit only — not live VERIFIED",
     ],
   };
 }

@@ -672,7 +672,7 @@ Required evidence:
 
 Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixture ACCEPTED below | Environment fixture_or_sandbox; live evidence separately authorized.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-047, T-US-048, T-US-054.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-047, T-US-048, T-US-054, T-US-060.
 
 ### Happy-path / documented flow completions
 - **T-US-001** Create a trusted local workspace (F01/SC-02) — blockers and next actions.
@@ -738,7 +738,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 - **T-US-057** Cross-workspace resource substitution rejected.
 - **T-US-058** Synthetic excluded from business denominators.
 - **T-US-059** Shared briefs redacted; private evidence retained.
-- **T-US-060** Emergency stop checked at commit time.
+- **T-US-060** Emergency stop checked at commit time. *(fixture ACCEPTED — emergency-stop / outbound-stop at commit proof; not sandbox/prod VERIFIED)*
 
 ---
 
@@ -841,8 +841,8 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | Family | Count | Status |
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
-| T-US (behavior_acceptance) | 60 | 56 NOT_RUN + 4 fixture ACCEPTED (T-US-002, T-US-047, T-US-048, T-US-054) |
+| T-US (behavior_acceptance) | 60 | 55 NOT_RUN + 5 fixture ACCEPTED (T-US-002, T-US-047, T-US-048, T-US-054, T-US-060) |
 | T-X (platform/security/resilience) | 73 | 67 NOT_RUN + 6 fixture ACCEPTED (T-X002, T-X014, T-X018, T-X020, T-X066, T-X073) |
-| **Total** | **159** | **148 NOT_RUN + 11 fixture ACCEPTED** |
+| **Total** | **159** | **147 NOT_RUN + 12 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

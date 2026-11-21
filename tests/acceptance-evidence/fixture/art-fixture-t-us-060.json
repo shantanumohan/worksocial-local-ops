@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-060",
+  "caseId": "T-US-060",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-060 (Emergency stop checked at commit time)\nproof=emergency_stop_at_commit applyCount=1 :: Policy commit gate denied OUTBOUND_STOPPED reason=Owner stop flag blocks external effects | Standing authority commit path denied OUTBOUND_STOPPED | Standing authority allows publish when outboundStopped=false | Stop-switch privilege: operator denied, administrator allowed | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "emergency_stop_at_commit"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-060.json",
+  "createdAtIso": "2026-11-21T22:46:37.935Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-060-223b4849a2d1"
+}

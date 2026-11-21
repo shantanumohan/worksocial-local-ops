@@ -51,6 +51,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X018": "Self-approval rejected",
   "T-US-054": "Independent approval enforced (no ordinary self-approval)",
   "T-X073": "Offboarding retains active token — incomplete until revoked",
+  "T-US-060": "Emergency stop checked at commit time",
 };
 
 function relatedProofsForCase(
@@ -196,6 +197,7 @@ export function compileAcceptanceEvidence(
     "T-US-002/T-X002 fixture ACCEPTED only via COMPETING_SUPERVISOR_LEASE (singleton host lease)",
     "T-X018/T-US-054 fixture ACCEPTED only via SELF_APPROVAL_REJECTED (independent A25)",
     "T-X073 fixture ACCEPTED only via OFFBOARD_ACTIVE_TOKEN_RESIDUAL (incomplete until live revoke)",
+    "T-US-060 fixture ACCEPTED only via EMERGENCY_STOP_AT_COMMIT (outbound stop at commit)",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

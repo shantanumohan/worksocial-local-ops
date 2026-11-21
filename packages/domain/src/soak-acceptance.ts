@@ -67,6 +67,10 @@ export const SoakProofKind = {
    * Incomplete until revoked — never claims live provider revoke complete.
    */
   OFFBOARD_ACTIVE_TOKEN_RESIDUAL: "offboard_active_token_residual",
+  /**
+   * Emergency stop / outbound stop checked at commit time (T-US-060).
+   */
+  EMERGENCY_STOP_AT_COMMIT: "emergency_stop_at_commit",
 } as const;
 
 export type SoakProofKindValue =
@@ -112,6 +116,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-002 / T-X002 require COMPETING_SUPERVISOR_LEASE (singleton host lease).
  * T-X018 / T-US-054 require SELF_APPROVAL_REJECTED (independent A25).
  * T-X073 requires OFFBOARD_ACTIVE_TOKEN_RESIDUAL (incomplete until live revoke).
+ * T-US-060 requires EMERGENCY_STOP_AT_COMMIT (outbound stop at commit).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -126,6 +131,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X018",
   "T-US-054",
   "T-X073",
+  "T-US-060",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -484,6 +490,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.SELF_APPROVAL_REJECTED];
     case "T-X073":
       return [SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL];
+    case "T-US-060":
+      return [SoakProofKind.EMERGENCY_STOP_AT_COMMIT];
     default:
       return [];
   }
@@ -516,6 +524,8 @@ export function mapProofToFixtureCases(
       return ["T-X018", "T-US-054"];
     case SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL:
       return ["T-X073"];
+    case SoakProofKind.EMERGENCY_STOP_AT_COMMIT:
+      return ["T-US-060"];
     default:
       return [];
   }
