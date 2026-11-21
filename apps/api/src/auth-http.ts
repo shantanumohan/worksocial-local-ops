@@ -171,7 +171,7 @@ import { handleEvaluationAndAnalyticsRequest } from "./evaluation-http.js";
 import { handleSoakRequest } from "./soak-http.js";
 import { handleRecoveryRequest } from "./recovery-http.js";
 import {
-  createEvaluationService,
+  createEvaluationWorker,
   type EvaluationService,
 } from "@worksocial/evaluation-worker";
 import { createSoakService, type SoakService } from "@worksocial/soak";
@@ -491,7 +491,7 @@ export function createApiRuntime(options: {
     repairStore,
   });
   const evaluationStore = createFileEvaluationStore(options.stateDir);
-  const evaluation = createEvaluationService(evaluationStore);
+  const evaluation = createEvaluationWorker(evaluationStore);
   const soakStore = createFileSoakStore(options.stateDir);
   const soak = createSoakService(soakStore);
   const recoveryStore = createFileRecoveryStore(options.stateDir);
@@ -749,7 +749,7 @@ export async function handleApiRequest(
         identity:
           "M9 soak/acceptance evidence + M8 grounded-search/analytics/eval + M6–M7 + R1-02–R1-10",
         message:
-          "API surface includes WP10 recovery evidence (stale/incident/URO), M9 soak/acceptance, M8 EVAL_ONLY/analysis, M6 canonical publish. Live CMS/GBP/social/inbox/Zoho/GSC/GA4/Ads/eval-fleet NOT_WIRED. Catalog ACCEPTED only with fixture evidence; never silently VERIFIED for live. Not R1-complete.",
+          "API surface includes WP10 recovery evidence (stale/incident/URO), AA-20 EVAL_ONLY isolation, M9 soak/acceptance, M8 analysis, M6 canonical publish. Live CMS/GBP/social/inbox/Zoho/GSC/GA4/Ads/eval-fleet NOT_WIRED. Catalog ACCEPTED only with fixture evidence; never silently VERIFIED for live. Not R1-complete.",
       },
       cors,
     );

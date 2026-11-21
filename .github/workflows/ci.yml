@@ -54,11 +54,14 @@ jobs:
       - name: Validate acceptance matrix ↔ catalog (+ ACCEPTED evidence)
         run: pnpm test:acceptance-matrix
 
+      - name: Eval isolation suite (AA-20 offline; not live fleet / not catalog VERIFIED)
+        run: pnpm test:eval
+
       - name: Assert remaining placeholder suites cannot pass release gates
         run: |
           set +e
           failed=0
-          for suite in test:security test:eval; do
+          for suite in test:security; do
             echo "::group::stub $suite (must exit non-zero)"
             pnpm "$suite"
             code=$?

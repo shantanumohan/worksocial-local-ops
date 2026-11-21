@@ -4,4 +4,5 @@ packages:
   - "packages/*"
   - "tests/contract"
   - "tests/e2e"
+  - "tests/eval"
   - "tests/integration"

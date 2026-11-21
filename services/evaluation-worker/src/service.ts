@@ -1,5 +1,5 @@
 /**
- * M8 / NEXT-19 isolated evaluation worker.
+ * M8 / NEXT-19 / AA-20 isolated evaluation service.
  * EVAL_ONLY Claude/Gemini fixture adjudication. No publish/CRM/customer-message.
  * Separate budget. ChatGPT Ads stays access-blocked. Live fleet NOT_WIRED.
  */
@@ -9,6 +9,7 @@ import {
   EVAL_RELATED_CASE_IDS,
   EvalCapability,
   EvalProvider,
+  EvalRunMode,
   EvalRunStatus,
   EvalToolClass,
   adjudicateGroundedEvalCase,
@@ -20,6 +21,7 @@ import {
   type EvalCaseResult,
   type EvalConnectionRecord,
   type EvalProviderValue,
+  type EvalRunModeValue,
   type EvalRunRecord,
   type EvalSuite,
   type EvalToolClassValue,
@@ -62,13 +64,23 @@ export type EvaluationService = {
     provider: EvalProviderValue;
     displayName?: string;
     nowIso?: string;
-  }): EvalConnectionRecord;
+    /** Live connections are refused — always fixtureOnly. */
+    fixtureOnly?: boolean;
+  }):
+    | { ok: true; connection: EvalConnectionRecord }
+    | {
+        ok: false;
+        code: "LIVE_NOT_WIRED";
+        reasons: string[];
+      };
   runSuite(input: {
     suiteId?: string;
     provider?: EvalProviderValue;
     factLabels?: ReadonlyMap<string, SupportLabelValue>;
     nowIso?: string;
     reserveMinor?: number;
+    /** Default fixture. Live mode returns LIVE_NOT_WIRED without network I/O. */
+    mode?: EvalRunModeValue;
   }):
     | { ok: true; run: EvalRunRecord }
     | {
@@ -117,6 +129,15 @@ export function createEvaluationService(
     },
 
     connectProvider(input) {
+      if (input.fixtureOnly === false) {
+        return {
+          ok: false,
+          code: "LIVE_NOT_WIRED",
+          reasons: [
+            "Live eval fleet NOT_WIRED — connections remain fixtureOnly EVAL_ONLY until verified transport/entitlement exist",
+          ],
+        };
+      }
       const nowIso = input.nowIso ?? new Date().toISOString();
       const connection = createEvalConnection({
         connectionId: input.connectionId ?? `eval-conn-${randomUUID()}`,
@@ -128,13 +149,42 @@ export function createEvaluationService(
         nowIso,
       });
       store.upsertConnection(connection);
-      return connection;
+      return { ok: true, connection };
     },
 
     runSuite(input) {
       const nowIso = input.nowIso ?? new Date().toISOString();
+      const mode = input.mode ?? EvalRunMode.FIXTURE;
       const suiteId = input.suiteId ?? EVAL_GOLDEN_SUITE_ID;
       const provider = input.provider ?? EvalProvider.CLAUDE;
+
+      if (mode === EvalRunMode.LIVE) {
+        const blocked: EvalRunRecord = {
+          runId: `eval-run-${randomUUID()}`,
+          suiteId,
+          provider,
+          capability: EvalCapability.EVAL_ONLY,
+          status: EvalRunStatus.FAILED,
+          reservationId: null,
+          reservedMinor: 0,
+          settledMinor: 0,
+          results: [],
+          fixtureOnly: true,
+          chatgptAdsDecision: evalChatGptAdsProbe(),
+          createdAtIso: nowIso,
+          completedAtIso: nowIso,
+        };
+        store.addRun(blocked);
+        return {
+          ok: false,
+          code: "LIVE_NOT_WIRED",
+          reasons: [
+            "Live Claude/Gemini eval fleet NOT_WIRED — fixture adjudication only; no provider network I/O",
+          ],
+          run: blocked,
+        };
+      }
+
       const state = store.read();
       const suite = state.suites.find((s) => s.suiteId === suiteId) ?? null;
       if (!suite) {

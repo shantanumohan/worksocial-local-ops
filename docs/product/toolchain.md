@@ -32,9 +32,10 @@ GitHub Actions workflow `.github/workflows/ci.yml` runs:
 7. `pnpm test:workflow` — LOCAL_DURABLE mission + Temporal binding probe + Temporal local test-server crash/restart/replay
 8. `pnpm test:temporal-compose` — CI Docker `temporalio/auto-setup` + API→Temporal→PG e2e (honest skip locally without Temporal)
 9. `pnpm recovery:rehearse` + `pnpm release:evidence` — M9 fixture soak + evidence (must exit 0)
-10. Assert remaining stubs (`test:security`, `test:eval`) **exit non-zero**
+10. `pnpm test:eval` — AA-20 offline EVAL_ONLY isolation suite (must exit 0; fixture ≠ live fleet; not catalog VERIFIED)
+11. Assert remaining stub (`test:security`) **exits non-zero**
 
-Placeholder/stub suites (`test:security`, `test:eval`) must never exit 0 as release passes. Product acceptance cases remain `NOT_RUN` until executed with redacted evidence in their declared environment (fixture ≠ sandbox ≠ authorized production). M9 currently marks **3** cases fixture **ACCEPTED** (T-X014, T-X020, T-US-048); **T-X066** stays **NOT_RUN**.
+Placeholder/stub suite `test:security` must never exit 0 as a release pass. `test:eval` is implemented for isolation only — passing it does **not** mean live eval fleet, ChatGPT Ads, or the 159 acceptance cases are VERIFIED. Product acceptance cases remain `NOT_RUN` until executed with redacted evidence in their declared environment (fixture ≠ sandbox ≠ authorized production). M9 currently marks **3** cases fixture **ACCEPTED** (T-X014, T-X020, T-US-048); **T-X066** stays **NOT_RUN**.
 
 ChatGPT Ads (`T-F07` / `T-US-013` / `T-US-014`) stays access-blocked without verified local transport and entitlement.
 

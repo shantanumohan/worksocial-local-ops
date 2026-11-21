@@ -2575,11 +2575,13 @@ export function evalPage(apiOrigin: string): string {
 </header>
 <main>
   <section>
-    <h2>Evaluation lab (M8 EVAL_ONLY)</h2>
-    <p class="muted">Claude / Gemini fixture adjudication. Separate eval budget. No publish / CRM / customer-message tools.</p>
+    <h2>Evaluation lab (AA-20 / M8 EVAL_ONLY)</h2>
+    <p class="muted">Claude / Gemini fixture adjudication. Separate eval budget. No publish / CRM / customer-message tools. Learning cannot expand effects.</p>
     <p class="warn" id="temporal-warn">Live model fleet NOT_WIRED. ChatGPT Ads access-blocked. Checking Temporal… Catalog cases stay NOT_RUN.</p>
+    <p class="muted" id="isolation-line">Isolation: loading…</p>
     <button id="btn-seed" type="button">Seed fixtures</button>
     <button id="btn-run" type="button">Run golden suite</button>
+    <button id="btn-live" type="button">Try live fleet (must NOT_WIRED)</button>
     <button id="btn-ads" type="button">Probe ChatGPT Ads</button>
     <button id="btn-tool" type="button">Try publish tool (must block)</button>
     <p class="muted" id="note"></p>
@@ -2620,7 +2622,15 @@ export function evalPage(apiOrigin: string): string {
       clusterTemporal +
       '. Catalog cases stay NOT_RUN.';
     const res = await api('/eval/status');
-    document.getElementById('status').textContent = JSON.stringify(await res.json(), null, 2);
+    const statusBody = await res.json();
+    document.getElementById('status').textContent = JSON.stringify(statusBody, null, 2);
+    const iso = statusBody.isolation || {};
+    document.getElementById('isolation-line').textContent =
+      'Isolation: principal=' + (iso.principal || statusBody.principal || 'evaluation-worker') +
+      '; gatewayWrite=' + String(iso.hasActionGatewayWritePrincipal) +
+      '; prodCreds=' + String(iso.hasProductionEffectCredentials) +
+      '; learningExpandEffects=' + String(iso.learningCannotExpandEffects) +
+      '; liveEvalWiring=' + (statusBody.liveEvalWiring || 'NOT_WIRED');
   }
   document.getElementById('btn-seed').onclick = async () => {
     const res = await api('/eval/seed-fixtures', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
@@ -2630,8 +2640,15 @@ export function evalPage(apiOrigin: string): string {
     refresh();
   };
   document.getElementById('btn-run').onclick = async () => {
-    const res = await api('/eval/run-suite', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ provider:'claude' }) });
+    const res = await api('/eval/run-suite', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ provider:'claude', mode:'fixture' }) });
     const body = await res.json();
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-live').onclick = async () => {
+    const res = await api('/eval/run-suite', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ provider:'claude', mode:'live' }) });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.code === 'LIVE_NOT_WIRED' ? 'Honest LIVE_NOT_WIRED — no fleet call.' : (body.note || '');
     document.getElementById('out').textContent = JSON.stringify(body, null, 2);
     refresh();
   };

@@ -186,17 +186,30 @@ export async function handleEvaluationAndAnalyticsRequest(input: {
       json(res, 400, { error: "INVALID_PROVIDER" }, cors);
       return true;
     }
-    const connection = evaluation.connectProvider({
+    const connected = evaluation.connectProvider({
       provider,
       ...(typeof parsed.value.displayName === "string"
         ? { displayName: parsed.value.displayName }
         : {}),
+      ...(parsed.value.fixtureOnly === false ? { fixtureOnly: false } : {}),
     });
+    if (!connected.ok) {
+      json(
+        res,
+        400,
+        {
+          ...connected,
+          note: "Live eval fleet NOT_WIRED — fixture EVAL_ONLY connections only.",
+        },
+        cors,
+      );
+      return true;
+    }
     json(
       res,
       200,
       {
-        connection,
+        connection: connected.connection,
         note: "EVAL_ONLY connection saved — no publish/CRM/customer-message authority.",
       },
       cors,
@@ -220,12 +233,14 @@ export async function handleEvaluationAndAnalyticsRequest(input: {
     const labels = factLabelsFromKnowledge(knowledge);
     const provider =
       parsed.value.provider === "gemini" ? "gemini" : "claude";
+    const mode = parsed.value.mode === "live" ? "live" : "fixture";
     const result = evaluation.runSuite({
       ...(typeof parsed.value.suiteId === "string"
         ? { suiteId: parsed.value.suiteId }
         : {}),
       provider,
       factLabels: labels,
+      mode,
     });
     json(res, result.ok ? 200 : 400, result, cors);
     return true;

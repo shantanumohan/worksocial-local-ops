@@ -26,7 +26,7 @@
     "test:e2e": "pnpm build:local && pnpm --filter @worksocial/e2e-lite-tests test",
     "test:soak": "pnpm build:local && pnpm --filter @worksocial/soak test",
     "test:security": "tsx scripts/stub-test.ts test:security",
-    "test:eval": "tsx scripts/stub-test.ts test:eval",
+    "test:eval": "pnpm build:local && tsx scripts/run-eval-tests.ts",
     "recovery:rehearse": "pnpm build:local && tsx scripts/run-soak-recovery.ts",
     "release:evidence": "pnpm build:local && tsx scripts/run-release-evidence.ts"
   },

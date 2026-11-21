@@ -144,6 +144,57 @@ export type EvalRunRecord = {
   completedAtIso: string | null;
 };
 
+/** Fixed isolation flags — evaluation never holds effect credentials. */
+export type EvaluationIsolationContext = {
+  principal: "evaluation-worker";
+  hasActionGatewayWritePrincipal: false;
+  hasProductionEffectCredentials: false;
+  /** Learning proposals consumed here cannot expand operational effects. */
+  learningCannotExpandEffects: true;
+};
+
+export const EVALUATION_WORKER_PRINCIPAL = "evaluation-worker" as const;
+
+export const FIXED_EVALUATION_ISOLATION: EvaluationIsolationContext = {
+  principal: EVALUATION_WORKER_PRINCIPAL,
+  hasActionGatewayWritePrincipal: false,
+  hasProductionEffectCredentials: false,
+  learningCannotExpandEffects: true,
+};
+
+export function assertEvaluationWorkerIsolation(
+  ctx: EvaluationIsolationContext,
+): void {
+  if (ctx.principal !== EVALUATION_WORKER_PRINCIPAL) {
+    throw new Error(
+      `Evaluation isolation requires principal '${EVALUATION_WORKER_PRINCIPAL}', got '${ctx.principal}'`,
+    );
+  }
+  if (ctx.hasActionGatewayWritePrincipal) {
+    throw new Error(
+      "evaluation-worker must not hold an action-gateway write principal",
+    );
+  }
+  if (ctx.hasProductionEffectCredentials) {
+    throw new Error(
+      "evaluation-worker must not hold production effect credentials",
+    );
+  }
+  if (ctx.learningCannotExpandEffects !== true) {
+    throw new Error(
+      "evaluation-worker must keep learningCannotExpandEffects=true",
+    );
+  }
+}
+
+/** Suite execution mode — live fleet remains NOT_WIRED until transport exists. */
+export const EvalRunMode = {
+  FIXTURE: "fixture",
+  LIVE: "live",
+} as const;
+
+export type EvalRunModeValue = (typeof EvalRunMode)[keyof typeof EvalRunMode];
+
 export type EvaluationState = {
   version: 1;
   updatedAtIso: string;
@@ -154,6 +205,7 @@ export type EvaluationState = {
   budget: BudgetAccount;
   liveEvalWiring: "NOT_WIRED";
   chatgptAdsWiring: "NOT_WIRED";
+  isolation: EvaluationIsolationContext;
 };
 
 export const DEFAULT_EVAL_BUDGET_LIMIT_MINOR = 5_000; // $50.00 fixture ceiling
@@ -173,6 +225,7 @@ export function emptyEvaluationState(nowIso: string): EvaluationState {
     }),
     liveEvalWiring: "NOT_WIRED",
     chatgptAdsWiring: "NOT_WIRED",
+    isolation: { ...FIXED_EVALUATION_ISOLATION },
   };
 }
 
