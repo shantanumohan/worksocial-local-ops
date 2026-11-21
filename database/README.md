@@ -1,6 +1,6 @@
 # Database migrations
 
-Ordered SQL under `migrations/` (`001_…` … `022_…`).
+Ordered SQL under `migrations/` (`001_…` … `025_…`).
 
 ```bash
 export DATABASE_URL=postgres://worksocial:worksocial@127.0.0.1:5432/worksocial
@@ -23,7 +23,9 @@ events, ownership versioning, and lead coalesce keys (file-backed until Postgres
 content review bindings, and multi-destination distribution runs (file-backed
 until Postgres cutover).
 `020_m8_search_analytics_eval.sql` is the M8 companion for search judgments,
-EVAL_ONLY runs, and analytics observation provenance (file-backed until Postgres cutover).
+EVAL_ONLY runs, and analytics observation provenance.
+`025_eval_state_budget.sql` adds singleton eval budget/meta for `createPgEvaluationStore`
+(used when `DATABASE_URL` is set; file/memory fallback otherwise). Live fleet + Ads stay NOT_WIRED.
 `021_m9_soak_acceptance.sql` is the M9 companion for soak runs/proofs,
 redacted acceptance evidence artifacts, and the case ledger (file-backed until Postgres cutover).
 `022_m9_pilot_observations.sql` records server-clock pilot start/heartbeat/end

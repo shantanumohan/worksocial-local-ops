@@ -303,8 +303,15 @@ export {
 
 export {
   createFileEvaluationStore,
+  createMemoryEvaluationStore,
+  createPgEvaluationStore,
   defaultEvaluationStateDir,
+  openEvaluationStore,
   type EvaluationStore,
+  type EvaluationStoreBackend,
+  type EvaluationStoreStatus,
+  type OpenEvaluationStoreOptions,
+  type OpenEvaluationStoreResult,
 } from "./evaluation-store.js";
 
 export {

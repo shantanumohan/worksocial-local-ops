@@ -1,5 +1,5 @@
 /**
- * AA-20 offline isolation suite for the EVAL_ONLY worker.
+ * AA-20/AA-21 offline isolation suite for the EVAL_ONLY worker.
  * Proves fixture vs live boundaries; does not claim product acceptance VERIFIED.
  * External effects: NONE.
  */
@@ -37,7 +37,7 @@ afterEach(() => {
 });
 
 describe("eval isolation suite (AA-20)", () => {
-  it("principal + isolation flags match fixed context", () => {
+  it("principal + isolation flags match fixed context", async () => {
     const dir = mkdtempSync(join(tmpdir(), "ws-eval-suite-"));
     dirs.push(dir);
     const worker = createEvaluationWorker(createFileEvaluationStore(dir));
@@ -46,7 +46,7 @@ describe("eval isolation suite (AA-20)", () => {
     expect(worker.hasProductionEffectCredentials).toBe(false);
     expect(worker.learningCannotExpandEffects).toBe(true);
     expect(worker.isolation).toEqual(FIXED_EVALUATION_ISOLATION);
-    expect(worker.status().isolation).toEqual(FIXED_EVALUATION_ISOLATION);
+    expect((await worker.status()).isolation).toEqual(FIXED_EVALUATION_ISOLATION);
   });
 
   it("broker denies mint for evaluation-worker", () => {
@@ -74,12 +74,12 @@ describe("eval isolation suite (AA-20)", () => {
     expect(worker.attemptTool(EvalToolClass.COMPARE_GOLDEN).allowed).toBe(true);
   });
 
-  it("golden suite: grounded pass, unused grounding, blocked tools", () => {
+  it("golden suite: grounded pass, unused grounding, blocked tools", async () => {
     const dir = mkdtempSync(join(tmpdir(), "ws-eval-suite-"));
     dirs.push(dir);
     const worker = createEvaluationWorker(createFileEvaluationStore(dir));
-    worker.seedFixtures(now);
-    const run = worker.runSuite({
+    await worker.seedFixtures(now);
+    const run = await worker.runSuite({
       suiteId: EVAL_GOLDEN_SUITE_ID,
       provider: EvalProvider.CLAUDE,
       mode: EvalRunMode.FIXTURE,
@@ -97,15 +97,15 @@ describe("eval isolation suite (AA-20)", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("live mode and non-fixture connect return LIVE_NOT_WIRED", () => {
+  it("live mode and non-fixture connect return LIVE_NOT_WIRED", async () => {
     const dir = mkdtempSync(join(tmpdir(), "ws-eval-suite-"));
     dirs.push(dir);
     const worker = createEvaluationWorker(createFileEvaluationStore(dir));
-    worker.seedFixtures(now);
-    const live = worker.runSuite({ mode: EvalRunMode.LIVE, nowIso: now });
+    await worker.seedFixtures(now);
+    const live = await worker.runSuite({ mode: EvalRunMode.LIVE, nowIso: now });
     expect(live.ok).toBe(false);
     if (!live.ok) expect(live.code).toBe("LIVE_NOT_WIRED");
-    const connect = worker.connectProvider({
+    const connect = await worker.connectProvider({
       provider: EvalProvider.GEMINI,
       fixtureOnly: false,
       nowIso: now,
@@ -114,12 +114,12 @@ describe("eval isolation suite (AA-20)", () => {
     if (!connect.ok) expect(connect.code).toBe("LIVE_NOT_WIRED");
   });
 
-  it("eval budget exhausts independently; Ads stay NOT_WIRED", () => {
+  it("eval budget exhausts independently; Ads stay NOT_WIRED", async () => {
     const dir = mkdtempSync(join(tmpdir(), "ws-eval-suite-"));
     dirs.push(dir);
     const worker = createEvaluationWorker(createFileEvaluationStore(dir));
-    worker.seedFixtures(now);
-    const exhausted = worker.runSuite({
+    await worker.seedFixtures(now);
+    const exhausted = await worker.runSuite({
       reserveMinor: DEFAULT_EVAL_BUDGET_LIMIT_MINOR + 50,
       nowIso: now,
     });
@@ -137,11 +137,11 @@ describe("eval isolation suite (AA-20)", () => {
     ).toThrow(/authority-expansion/i);
   });
 
-  it("status keeps acceptance IDs as NOT_RUN honesty, not VERIFIED", () => {
+  it("status keeps acceptance IDs as NOT_RUN honesty, not VERIFIED", async () => {
     const dir = mkdtempSync(join(tmpdir(), "ws-eval-suite-"));
     dirs.push(dir);
     const worker = createEvaluationWorker(createFileEvaluationStore(dir));
-    const status = worker.status();
+    const status = await worker.status();
     expect(status.acceptanceCaseIds).toEqual(
       expect.arrayContaining(["T-X037", "T-X038", "T-US-018"]),
     );

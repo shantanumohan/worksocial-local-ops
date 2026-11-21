@@ -24,7 +24,8 @@ Library worker hosted by the API (same shape as learning-worker) — **not** a s
 | Live Claude/Gemini fleet | **NOT_WIRED** (`LIVE_NOT_WIRED`) |
 | ChatGPT Ads | **NOT_WIRED** / access-blocked |
 | Temporal eval activities | **NOT_WIRED** |
+| Persistence | **Postgres** when `DATABASE_URL` set (`createPgEvaluationStore`); file/memory fallback otherwise |
 | Acceptance catalog cases | remain **NOT_RUN** |
 | Supervisor fleet process slot | **not claimed** (API-hosted library) |
 
-Seed fixtures, run the golden suite, and inspect blocked-tool / no-grounding verdicts via `/eval/*` APIs and the `/eval` console page. External effects: **NONE**.
+Seed fixtures, run the golden suite, and inspect blocked-tool / no-grounding verdicts via `/eval/*` APIs and the `/eval` console page. External effects: **NONE**. Fixture persistence ≠ live VERIFIED.

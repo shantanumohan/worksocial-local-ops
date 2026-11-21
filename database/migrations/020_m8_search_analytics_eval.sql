@@ -1,5 +1,5 @@
 -- M8 / NEXT-19 grounded search, analytics honesty, isolated EVAL_ONLY worker.
--- File-backed seo + evaluation stores remain the runtime until Postgres cutover.
+-- Evaluation entities used by createPgEvaluationStore (AA-21); budget/meta in 025.
 -- Live GSC/GA4/eval fleet/ChatGPT Ads remain NOT_WIRED. Temporal may stay NOT_WIRED.
 
 -- Search judgments + remediations (companion to file-backed SeoState).

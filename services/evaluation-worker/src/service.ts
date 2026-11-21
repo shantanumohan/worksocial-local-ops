@@ -1,5 +1,5 @@
 /**
- * M8 / NEXT-19 / AA-20 isolated evaluation service.
+ * M8 / NEXT-19 / AA-20 / AA-21 isolated evaluation service.
  * EVAL_ONLY Claude/Gemini fixture adjudication. No publish/CRM/customer-message.
  * Separate budget. ChatGPT Ads stays access-blocked. Live fleet NOT_WIRED.
  */
@@ -27,7 +27,10 @@ import {
   type EvalToolClassValue,
   type SupportLabelValue,
 } from "@worksocial/domain";
-import type { EvaluationStore } from "@worksocial/persistence";
+import type {
+  EvaluationStore,
+  EvaluationStoreStatus,
+} from "@worksocial/persistence";
 import {
   EVAL_GOLDEN_SUITE_ID,
   EVAL_RESERVE_MINOR,
@@ -48,17 +51,19 @@ const TOOL_MAP: Record<string, EvalToolClassValue> = {
 };
 
 export type EvaluationService = {
-  status(): ReturnType<EvaluationStore["status"]> & {
-    acceptanceCaseIds: readonly string[];
-    principal: "evaluation-worker";
-  };
-  listConnections(limit?: number): EvalConnectionRecord[];
-  listSuites(limit?: number): EvalSuite[];
-  listRuns(limit?: number): EvalRunRecord[];
-  seedFixtures(nowIso?: string): {
+  status(): Promise<
+    EvaluationStoreStatus & {
+      acceptanceCaseIds: readonly string[];
+      principal: "evaluation-worker";
+    }
+  >;
+  listConnections(limit?: number): Promise<EvalConnectionRecord[]>;
+  listSuites(limit?: number): Promise<EvalSuite[]>;
+  listRuns(limit?: number): Promise<EvalRunRecord[]>;
+  seedFixtures(nowIso?: string): Promise<{
     connections: EvalConnectionRecord[];
     suite: EvalSuite;
-  };
+  }>;
   connectProvider(input: {
     connectionId?: string;
     provider: EvalProviderValue;
@@ -66,13 +71,14 @@ export type EvaluationService = {
     nowIso?: string;
     /** Live connections are refused — always fixtureOnly. */
     fixtureOnly?: boolean;
-  }):
+  }): Promise<
     | { ok: true; connection: EvalConnectionRecord }
     | {
         ok: false;
         code: "LIVE_NOT_WIRED";
         reasons: string[];
-      };
+      }
+  >;
   runSuite(input: {
     suiteId?: string;
     provider?: EvalProviderValue;
@@ -81,14 +87,15 @@ export type EvaluationService = {
     reserveMinor?: number;
     /** Default fixture. Live mode returns LIVE_NOT_WIRED without network I/O. */
     mode?: EvalRunModeValue;
-  }):
+  }): Promise<
     | { ok: true; run: EvalRunRecord }
     | {
         ok: false;
         code: "SUITE_NOT_FOUND" | "BUDGET_EXHAUSTED" | "LIVE_NOT_WIRED";
         reasons: string[];
         run?: EvalRunRecord;
-      };
+      }
+  >;
   attemptTool(tool: string): ReturnType<typeof evaluateEvalToolAttempt>;
   chatgptAdsStatus(): ReturnType<typeof evalChatGptAdsProbe> & {
     wiring: "NOT_WIRED";
@@ -99,9 +106,9 @@ export function createEvaluationService(
   store: EvaluationStore,
 ): EvaluationService {
   return {
-    status() {
+    async status() {
       return {
-        ...store.status(),
+        ...(await store.status()),
         acceptanceCaseIds: EVAL_RELATED_CASE_IDS,
         principal: "evaluation-worker",
       };
@@ -119,16 +126,16 @@ export function createEvaluationService(
       return store.listRuns(limit);
     },
 
-    seedFixtures(nowIso) {
+    async seedFixtures(nowIso) {
       const ts = nowIso ?? new Date().toISOString();
       const connections = buildFixtureEvalConnections(ts);
-      for (const c of connections) store.upsertConnection(c);
+      for (const c of connections) await store.upsertConnection(c);
       const suite = buildFixtureEvalSuite(ts);
-      store.upsertSuite(suite);
+      await store.upsertSuite(suite);
       return { connections, suite };
     },
 
-    connectProvider(input) {
+    async connectProvider(input) {
       if (input.fixtureOnly === false) {
         return {
           ok: false,
@@ -148,11 +155,11 @@ export function createEvaluationService(
         fixtureOnly: true,
         nowIso,
       });
-      store.upsertConnection(connection);
+      await store.upsertConnection(connection);
       return { ok: true, connection };
     },
 
-    runSuite(input) {
+    async runSuite(input) {
       const nowIso = input.nowIso ?? new Date().toISOString();
       const mode = input.mode ?? EvalRunMode.FIXTURE;
       const suiteId = input.suiteId ?? EVAL_GOLDEN_SUITE_ID;
@@ -174,7 +181,7 @@ export function createEvaluationService(
           createdAtIso: nowIso,
           completedAtIso: nowIso,
         };
-        store.addRun(blocked);
+        await store.addRun(blocked);
         return {
           ok: false,
           code: "LIVE_NOT_WIRED",
@@ -185,7 +192,7 @@ export function createEvaluationService(
         };
       }
 
-      const state = store.read();
+      const state = await store.read();
       const suite = state.suites.find((s) => s.suiteId === suiteId) ?? null;
       if (!suite) {
         return {
@@ -218,7 +225,7 @@ export function createEvaluationService(
           createdAtIso: nowIso,
           completedAtIso: nowIso,
         };
-        store.addRun(failed);
+        await store.addRun(failed);
         return {
           ok: false,
           code: "BUDGET_EXHAUSTED",
@@ -229,7 +236,7 @@ export function createEvaluationService(
         };
       }
 
-      store.update((s) => ({
+      await store.update((s) => ({
         ...s,
         budget: reserved.account,
         updatedAtIso: nowIso,
@@ -274,12 +281,12 @@ export function createEvaluationService(
 
       const actualMinor = Math.min(reserveMinor, 100 + results.length * 25);
       const settled = settleEvalBudget(
-        store.read().budget,
+        (await store.read()).budget,
         reservationId,
         actualMinor,
       );
       if (settled.ok) {
-        store.update((s) => ({
+        await store.update((s) => ({
           ...s,
           budget: settled.account,
           updatedAtIso: nowIso,
@@ -301,7 +308,7 @@ export function createEvaluationService(
         createdAtIso: nowIso,
         completedAtIso: nowIso,
       };
-      store.addRun(run);
+      await store.addRun(run);
 
       return { ok: true, run };
     },

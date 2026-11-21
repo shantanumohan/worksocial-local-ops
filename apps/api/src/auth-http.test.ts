@@ -33,6 +33,7 @@ async function withServer(
     apiPort: 0,
     consolePort: 8788,
     ownerPassword: "test-password",
+    evaluationStoreMode: "file",
   });
   // Seed an operate-mode grant for authorized path tests.
   const now = new Date().toISOString();
@@ -264,6 +265,7 @@ describe("api identity HTTP", () => {
       ownerPassword: "test-password",
       temporalStatus: "TEMPORAL",
       temporalClient,
+      evaluationStoreMode: "file",
     });
     expect(runtime.missions.temporalStatus).toBe("TEMPORAL");
 
@@ -347,6 +349,7 @@ describe("api identity HTTP", () => {
       apiPort: 0,
       consolePort: 8788,
       ownerPassword: "test-password",
+      evaluationStoreMode: "file",
     });
     const now = new Date().toISOString();
     const demo = createDemoPublishGrant(now);

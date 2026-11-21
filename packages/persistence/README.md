@@ -25,6 +25,9 @@ Local control-plane persistence helpers:
 | `ReceiptStore` | `createMemoryReceiptStore` | `createPgReceiptStore` |
 | `GatewayDecisionStore` | `createMemoryGatewayDecisionStore` | `createPgGatewayDecisionStore` |
 | `FakeProviderStore` | `createMemoryFakeProviderStore` | `createPgFakeProviderStore` |
+| `EvaluationStore` | `createMemoryEvaluationStore` / `createFileEvaluationStore` | `createPgEvaluationStore` |
+
+`openEvaluationStore({ stateDir })` uses Postgres when `DATABASE_URL` / `WORKSOCIAL_DATABASE_URL` is set; otherwise file. Live eval fleet and ChatGPT Ads stay **NOT_WIRED**.
 
 `createPgDurableExecutionService(pool)` runs accept in one transaction:
 stable idempotency key → job + effect + outbox + budget reserve → fake-provider apply once → `ACCEPTED_PENDING`.
