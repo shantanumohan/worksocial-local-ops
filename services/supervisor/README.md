@@ -12,7 +12,7 @@ Owns local service lifecycle for WorkSocial operations (R1-01).
 
 ## Honest stubs / not wired
 
-- `temporal-worker` slot is a **stub** process — Temporal runtime is `NOT_WIRED`
+- `temporal-worker` slot is a **stub** unless `TEMPORAL_ADDRESS` is set — then it runs the real Temporal worker (`TEMPORAL` when frontend reachable). Live CMS/Zoho/GSC stay `NOT_WIRED`.
 - `api` / `console` expose minimal loopback `/health` only (not full product surfaces)
 - Runtime control-plane state is **file-backed** under `.worksocial/local-state` until Postgres is bound (`002_local_execution.sql` defines schema)
 

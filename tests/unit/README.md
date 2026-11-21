@@ -9,7 +9,7 @@ Offline unit tests:
 - `services/action-gateway` — unauthorized-write + stop-switch + acceptance≠verified + read-evidence gates
 - `services/credential-broker` — Claude-runner / evaluation / learning-worker isolation
 - `services/claude-runner` — fixture evaluations, queue bounds, bypass denial
-- `services/workflow-worker` — Temporal NOT_WIRED mission enqueue
+- `services/workflow-worker` — mission enqueue + Temporal binding (full Temporal suite via `pnpm test:workflow`)
 - `services/learning-worker` — isolated train loop + proposals under review
 - `apps/api` — login-protected authority + mapping + roles + learning HTTP
 

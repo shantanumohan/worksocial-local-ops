@@ -50,11 +50,15 @@ function clearHeartbeatFiles(stateDir: string): void {
 }
 
 function stubsNote(): string[] {
+  const temporalWired = Boolean(process.env.TEMPORAL_ADDRESS?.trim());
   return [
-    "temporal-worker: stub process slot — Temporal runtime NOT_WIRED in R1-01",
+    temporalWired
+      ? "temporal-worker: TEMPORAL_ADDRESS set — worker polls worksocial-missions when frontend is reachable"
+      : "temporal-worker: stub process slot — Temporal runtime NOT_WIRED until TEMPORAL_ADDRESS is set",
     "api/console: minimal loopback /health process slots — not full product surfaces",
     "auth/login/standing grants: out of scope (R1-02)",
     "Postgres binding: schema migrated in SQL; runtime state is file-backed until DB is wired",
+    "Live CMS/Zoho/GSC remain NOT_WIRED regardless of Temporal",
   ];
 }
 
@@ -173,7 +177,9 @@ async function stopGeneration(
           return {
             ...base,
             status: "stub",
-            detail: "temporal-worker stopped; Temporal remains NOT_WIRED.",
+            wiringStatus: "stub",
+            detail:
+              "temporal-worker stopped; Temporal NOT_WIRED until TEMPORAL_ADDRESS + reachable frontend.",
           };
         }
         return {
@@ -271,14 +277,27 @@ async function startAll(
         await new Promise((r) => setTimeout(r, 25));
       }
     }
+    const temporalWired = Boolean(process.env.TEMPORAL_ADDRESS?.trim());
     const detail =
       serviceId === "temporal-worker"
-        ? "Stub temporal-worker slot started (Temporal NOT_WIRED)."
+        ? temporalWired
+          ? `temporal-worker slot started against TEMPORAL_ADDRESS (pid ${livePid}).`
+          : "Stub temporal-worker slot started (Temporal NOT_WIRED)."
         : `${serviceId} process slot started (pid ${livePid}).`;
     const record: ServiceHeartbeatRecord = {
       serviceId,
-      status: serviceId === "temporal-worker" ? "stub" : "running",
-      wiringStatus: serviceId === "temporal-worker" ? "stub" : "process-managed",
+      status:
+        serviceId === "temporal-worker"
+          ? temporalWired
+            ? "starting"
+            : "stub"
+          : "running",
+      wiringStatus:
+        serviceId === "temporal-worker"
+          ? temporalWired
+            ? "temporal-wired"
+            : "stub"
+          : "process-managed",
       pid: livePid,
       generationId,
       lastHeartbeatAt: new Date().toISOString(),

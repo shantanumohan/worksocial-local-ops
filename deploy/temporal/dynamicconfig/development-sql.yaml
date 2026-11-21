@@ -1,0 +1,5 @@
+# Minimal dynamic config for local Temporal auto-setup.
+# Keep defaults; file exists so compose volume mount is valid.
+limit.maxIDLength:
+  - value: 255
+    constraints: {}

@@ -1,6 +1,7 @@
 /**
  * Mission workflow store — enqueue-before-ack, leases, retry categories, review wait.
- * Temporal cluster remains NOT_WIRED until explicitly bound; LOCAL_DURABLE uses Postgres.
+ * Temporal cluster is NOT_WIRED until bound; LOCAL_DURABLE uses Postgres;
+ * TEMPORAL means a live local Temporal frontend is connected.
  */
 
 import type { PgQueryable } from "./pg/client.js";
@@ -21,7 +22,11 @@ export type MissionRetryCategory =
   | "fatal"
   | "none";
 
-export type MissionTemporalWiring = "NOT_WIRED" | "LOCAL_DURABLE" | "FIXTURE";
+export type MissionTemporalWiring =
+  | "NOT_WIRED"
+  | "LOCAL_DURABLE"
+  | "FIXTURE"
+  | "TEMPORAL";
 
 export type MissionWorkflowRecord = {
   workflowId: string;

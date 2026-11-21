@@ -10,7 +10,8 @@
  * 6. Independent verify (no second apply); update job status on terminal
  * 7. Crash/restart resumes from durable Postgres state
  *
- * Temporal cluster remains NOT_WIRED; temporalWiring label is LOCAL_DURABLE.
+ * Default temporalWiring label is LOCAL_DURABLE (Postgres/file durability).
+ * When a Temporal cluster is bound, pass temporalLabelOverride: "TEMPORAL".
  */
 
 import { randomBytes } from "node:crypto";
@@ -32,7 +33,7 @@ import {
 
 export type DurableMissionRuntime = {
   readonly temporal: TemporalBindingReport;
-  readonly temporalLabel: "NOT_WIRED" | "LOCAL_DURABLE" | "FIXTURE";
+  readonly temporalLabel: "NOT_WIRED" | "LOCAL_DURABLE" | "FIXTURE" | "TEMPORAL";
   enqueueBeforeAck(input: {
     envelope: JobEnvelope;
     reviewRequired?: boolean;
@@ -104,12 +105,15 @@ export function createDurableMissionRuntime(options: {
   missions: MissionWorkflowStore;
   execution: DurableExecutionService;
   temporalEnv?: NodeJS.ProcessEnv;
+  /** Force TEMPORAL when worker is bound to a live Temporal frontend. */
+  temporalLabelOverride?: "NOT_WIRED" | "LOCAL_DURABLE" | "FIXTURE" | "TEMPORAL";
 }): DurableMissionRuntime {
   const temporal = probeTemporalBinding(options.temporalEnv ?? process.env);
   const temporalLabel =
-    temporal.status === "NOT_WIRED" || temporal.status === "READY_TO_BIND"
+    options.temporalLabelOverride ??
+    (temporal.status === "NOT_WIRED" || temporal.status === "READY_TO_BIND"
       ? "LOCAL_DURABLE"
-      : runtimeTemporalLabel(temporal);
+      : runtimeTemporalLabel(temporal));
 
   const { missions, execution } = options;
 
@@ -541,10 +545,17 @@ export function createDurableMissionRuntime(options: {
   };
 }
 
-export function createMemoryDurableMissionRuntime(): DurableMissionRuntime {
+export function createMemoryDurableMissionRuntime(options?: {
+  temporalEnv?: NodeJS.ProcessEnv;
+  temporalLabelOverride?: "NOT_WIRED" | "LOCAL_DURABLE" | "FIXTURE" | "TEMPORAL";
+}): DurableMissionRuntime {
   const stores = createMemoryDurableStores();
   return createDurableMissionRuntime({
     missions: createMemoryMissionWorkflowStore(),
     execution: createDurableExecutionService(stores),
+    ...(options?.temporalEnv ? { temporalEnv: options.temporalEnv } : {}),
+    ...(options?.temporalLabelOverride
+      ? { temporalLabelOverride: options.temporalLabelOverride }
+      : {}),
   });
 }

@@ -1,18 +1,23 @@
 # workflow-worker
 
-Mission enqueue + durable local mission runtime (M2 / NEXT-10) + M3 evidence missions.
+Mission enqueue + durable local mission runtime (M2 / NEXT-10) + M3 evidence missions
++ Temporal SDK wiring for local durable orchestration.
 
 ## Temporal status
 
 | Label | Meaning |
 |---|---|
-| `NOT_WIRED` | No Temporal cluster / SDK bound (default honesty for Temporal) |
-| `LOCAL_DURABLE` | Postgres-backed mission workflow (enqueue, leases, review, effect restart) |
+| `NOT_WIRED` | No reachable Temporal frontend (default honesty) |
+| `READY_TO_BIND` | `TEMPORAL_ADDRESS` + SDK present; connection not proven |
+| `TEMPORAL` | SDK connected to a reachable Temporal frontend |
+| `LOCAL_DURABLE` | Postgres/file-backed mission workflow (no Temporal) |
 | `FIXTURE` | Explicit fixture-only Temporal stub |
 
-Probe: `probeTemporalBinding()`. Docs: `docs/product/temporal-binding.md`.
+Probe: `probeTemporalBinding()` / `probeTemporalConnection()`.
+Docs: `docs/product/temporal-binding.md`.
+Compose: `deploy/temporal/docker-compose.yml`.
 
-## Durable mission
+## Durable mission (LOCAL_DURABLE)
 
 `createDurableMissionRuntime` / `createMemoryDurableMissionRuntime`:
 
@@ -23,14 +28,21 @@ Probe: `probeTemporalBinding()`. Docs: `docs/product/temporal-binding.md`.
 5. Independent verify — **no second apply**
 6. `resumeAfterRestart` after process death at effect boundaries
 
+## Temporal mission (TEMPORAL)
+
+`durableMissionWorkflow` + activities in `src/temporal/`:
+
+1. Same effect boundary as LOCAL_DURABLE (idempotent `operationId`)
+2. Worker polls task queue `worksocial-missions`
+3. Crash/restart proven via `@temporalio/testing` local server (`pnpm test:workflow`)
+4. History replay via `Worker.runReplayHistory`
+
+Supervisor: when `TEMPORAL_ADDRESS` is set, the `temporal-worker` slot runs
+`src/temporal/worker-main.ts` instead of the stub heartbeat.
+
 ## Evidence mission (M3 / NEXT-12)
 
-`createEvidenceMissionRuntime` / `createMemoryEvidenceMissionRuntime`:
+`createEvidenceMissionRuntime` / `createMemoryEvidenceMissionRuntime` on LOCAL_DURABLE.
 
-1. Compile trust-labeled input package (fail-closed on stale/unauthorized/oversized)
-2. Writer role job (offline fake/fixture by default; live fail-closed)
-3. Persist proposal + A25 review artifacts
-4. Separate A25 review bound to exact proposal revision + evidence digest
-5. LOCAL_DURABLE enqueue → accept → review → verify; restart preserves history
-
-Not production-activated. External effects: none. Does not claim R1 complete.
+Not production-activated. External effects: none. Live CMS/Zoho/GSC remain NOT_WIRED.
+Does not claim R1 complete or 159 acceptance VERIFIED.

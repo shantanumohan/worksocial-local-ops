@@ -97,10 +97,15 @@ export function runDoctor(
 
   for (const svc of health.services) {
     if (svc.serviceId === "temporal-worker") {
+      const wired =
+        svc.wiringStatus === "temporal-wired" &&
+        (svc.status === "running" || svc.status === "starting");
       checks.push({
         id: `slot-${svc.serviceId}`,
-        status: "warn",
-        message: `temporal-worker wiringStatus=${svc.wiringStatus} status=${svc.status} — Temporal is NOT_WIRED (honest stub slot).`,
+        status: wired ? "pass" : "warn",
+        message: wired
+          ? `temporal-worker wiringStatus=${svc.wiringStatus} status=${svc.status} — Temporal worker slot bound (live CMS/Zoho/GSC still NOT_WIRED).`
+          : `temporal-worker wiringStatus=${svc.wiringStatus} status=${svc.status} — Temporal is NOT_WIRED (honest stub slot until TEMPORAL_ADDRESS + reachable frontend).`,
       });
       continue;
     }
