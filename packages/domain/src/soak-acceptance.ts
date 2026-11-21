@@ -120,6 +120,11 @@ export const SoakProofKind = {
    * Grounded eval without grounding fails closed (T-X038).
    */
   EVAL_NO_GROUNDING_FAIL_CLOSED: "eval_no_grounding_fail_closed",
+  /**
+   * Metric denominators stay honest (T-X039 / T-US-058):
+   * provider_error → unavailable (not zero/pass); synthetic → excluded from business.
+   */
+  METRIC_DENOMINATORS_HONEST: "metric_denominators_honest",
 } as const;
 
 export type SoakProofKindValue =
@@ -178,6 +183,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X058 requires REPAIR_ATTEMPT_LIMIT_ESCALATED.
  * T-X069 requires IMPORTED_DOC_QUARANTINED_AS_DATA.
  * T-X038 requires EVAL_NO_GROUNDING_FAIL_CLOSED.
+ * T-X039 / T-US-058 require METRIC_DENOMINATORS_HONEST.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -209,6 +215,8 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X058",
   "T-X069",
   "T-X038",
+  "T-X039",
+  "T-US-058",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -601,6 +609,10 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.IMPORTED_DOC_QUARANTINED_AS_DATA];
     case "T-X038":
       return [SoakProofKind.EVAL_NO_GROUNDING_FAIL_CLOSED];
+    case "T-X039":
+      return [SoakProofKind.METRIC_DENOMINATORS_HONEST];
+    case "T-US-058":
+      return [SoakProofKind.METRIC_DENOMINATORS_HONEST];
     default:
       return [];
   }
@@ -659,6 +671,8 @@ export function mapProofToFixtureCases(
       return ["T-X069"];
     case SoakProofKind.EVAL_NO_GROUNDING_FAIL_CLOSED:
       return ["T-X038"];
+    case SoakProofKind.METRIC_DENOMINATORS_HONEST:
+      return ["T-X039", "T-US-058"];
     default:
       return [];
   }
