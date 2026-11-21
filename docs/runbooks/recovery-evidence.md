@@ -19,8 +19,7 @@ Also exercises:
 ## What this does **not** claim
 
 - Live recovery **VERIFIED** — forbidden; claim stays `NOT_RUN`
-- Credential rotation through the broker — `NOT_WIRED`
-- Offboarding / residual obligations — `NOT_WIRED`
+- Live provider token revocation — `NOT_WIRED` (local fixture revoke/rotate/offboard live under `/credentials`)
 - Host OS service packaging (see host-service runbook / AA-33)
 - 159 catalog cases as live VERIFIED — T-F24 / T-US-047 remain product NOT_RUN
 
@@ -28,7 +27,7 @@ External effects: **NONE**.
 
 ## API / console
 
-- Console: `/recovery`
+- Console: `/recovery` · credential honesty: `/credentials`
 - `GET /recovery/status` · `/recovery/inspect` · `/recovery/timeline` · `/queued-work` · `/capability-stops` · `/runs`
 - `POST /recovery/run` — optional `{ "scenarioId": "…" }`; rejects live `VERIFIED` claims
 
@@ -37,3 +36,5 @@ Scenarios: `host_outage_queued_work`, `provider_outage_capability_stop`, `stale_
 ## Relation to M9 soak
 
 M9 (`pnpm recovery:rehearse`) proves durable crash-restart / no-dup / URO reconcile against the effect ledger. This WP10 surface proves **operator-facing classification** of outage vs stale vs URO plus capability stops. They are complementary; neither alone closes T-F24 product acceptance.
+
+See also: `docs/runbooks/credential-rotation.md` for local revoke → cancel queued → audit retained (live provider revoke stays NOT_WIRED).

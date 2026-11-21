@@ -3,6 +3,9 @@
  * Gateway/adapters may mint narrow scoped handles.
  * Reasoning / learning workers (claude-runner, evaluation, learning-worker)
  * never receive blanket secrets or production effect credentials.
+ *
+ * WP10: local revoke marks references revoked and denies mint/reveal.
+ * Live provider revoke stays NOT_WIRED — never invents remote token revocation.
  */
 
 import { createHash, randomBytes } from "node:crypto";
@@ -16,13 +19,19 @@ export type BrokerPrincipal =
   | "api"
   | "console";
 
+export type CredentialReferenceStatus = "ACTIVE" | "REVOKED";
+
 export type CredentialReference = {
   referenceId: string;
   providerId: string;
   /** Never the raw secret — opaque vault pointer only. */
   vaultPointer: string;
   scopes: string[];
+  status: CredentialReferenceStatus;
   createdAtIso: string;
+  revokedAtIso: string | null;
+  /** Successor after local rotation (fixture). */
+  rotatedToReferenceId: string | null;
 };
 
 export type ScopedCredentialHandle = {
@@ -47,7 +56,28 @@ export type BrokerMintResult =
   | { ok: true; handle: ScopedCredentialHandle }
   | {
       ok: false;
-      code: "PRINCIPAL_DENIED" | "REFERENCE_MISSING" | "SCOPE_DENIED";
+      code:
+        | "PRINCIPAL_DENIED"
+        | "REFERENCE_MISSING"
+        | "REFERENCE_REVOKED"
+        | "SCOPE_DENIED";
+      reason: string;
+    };
+
+export type BrokerRevokeResult =
+  | { ok: true; reference: CredentialReference }
+  | { ok: false; code: "REFERENCE_MISSING" | "ALREADY_REVOKED"; reason: string };
+
+export type BrokerRotateResult =
+  | {
+      ok: true;
+      oldReference: CredentialReference;
+      newReference: CredentialReference;
+      liveProviderRevoke: "NOT_WIRED";
+    }
+  | {
+      ok: false;
+      code: "REFERENCE_MISSING" | "REFERENCE_REVOKED";
       reason: string;
     };
 
@@ -76,7 +106,31 @@ export type CredentialBroker = {
     principal: BrokerPrincipal,
     nowIso: string,
   ): { ok: true; secret: string } | { ok: false; code: string; reason: string };
+  /** Local revoke — does not call the live provider. */
+  revokeReference(
+    referenceId: string,
+    nowIso: string,
+  ): BrokerRevokeResult;
+  /**
+   * Local rotation: new reference, mark old revoked.
+   * Live provider revoke of the old credential stays NOT_WIRED.
+   */
+  rotateReference(input: {
+    oldReferenceId: string;
+    secretMaterial: string;
+    nowIso: string;
+    scopes?: string[];
+  }): BrokerRotateResult;
+  getReference(referenceId: string): CredentialReference | null;
   listReferences(): CredentialReference[];
+  /** Honest live provider revoke — always NOT_WIRED. */
+  attemptLiveProviderRevoke(referenceId: string): {
+    ok: false;
+    code: "LIVE_PROVIDER_REVOKE_NOT_WIRED";
+    liveProviderRevoke: "NOT_WIRED";
+    externalEffects: "NONE";
+    reason: string;
+  };
 };
 
 export function createCredentialBroker(): CredentialBroker {
@@ -100,7 +154,10 @@ export function createCredentialBroker(): CredentialBroker {
       providerId,
       vaultPointer: `vault://${vaultPointer}`,
       scopes: [...scopes],
+      status: "ACTIVE",
       createdAtIso: nowIso,
+      revokedAtIso: null,
+      rotatedToReferenceId: null,
     };
     references.set(referenceId, ref);
     secrets.set(referenceId, secretMaterial);
@@ -130,6 +187,14 @@ export function createCredentialBroker(): CredentialBroker {
         ok: false,
         code: "REFERENCE_MISSING",
         reason: "Unknown credential reference",
+      };
+    }
+    if (ref.status === "REVOKED") {
+      return {
+        ok: false,
+        code: "REFERENCE_REVOKED",
+        reason:
+          "Credential reference is revoked — new leases denied (local honesty; live provider revoke may still be outstanding)",
       };
     }
 
@@ -180,6 +245,14 @@ export function createCredentialBroker(): CredentialBroker {
         reason: "Handle was minted for a different principal",
       };
     }
+    const ref = references.get(handle.referenceId);
+    if (ref?.status === "REVOKED") {
+      return {
+        ok: false,
+        code: "REFERENCE_REVOKED",
+        reason: "Credential reference was revoked — reveal denied",
+      };
+    }
     if (Date.parse(handle.expiresAtIso) <= Date.parse(nowIso)) {
       return {
         ok: false,
@@ -201,10 +274,94 @@ export function createCredentialBroker(): CredentialBroker {
     return { ok: true, secret };
   };
 
+  const revokeReference = (
+    referenceId: string,
+    nowIso: string,
+  ): BrokerRevokeResult => {
+    const ref = references.get(referenceId);
+    if (!ref) {
+      return {
+        ok: false,
+        code: "REFERENCE_MISSING",
+        reason: "Unknown credential reference",
+      };
+    }
+    if (ref.status === "REVOKED") {
+      return {
+        ok: false,
+        code: "ALREADY_REVOKED",
+        reason: "Credential reference is already revoked",
+      };
+    }
+    const revoked: CredentialReference = {
+      ...ref,
+      status: "REVOKED",
+      revokedAtIso: nowIso,
+    };
+    references.set(referenceId, revoked);
+    // Drop secret material from vault on local revoke (audit retains reference ids only).
+    secrets.delete(referenceId);
+    return { ok: true, reference: revoked };
+  };
+
+  const rotateReference = (input: {
+    oldReferenceId: string;
+    secretMaterial: string;
+    nowIso: string;
+    scopes?: string[];
+  }): BrokerRotateResult => {
+    const old = references.get(input.oldReferenceId);
+    if (!old) {
+      return {
+        ok: false,
+        code: "REFERENCE_MISSING",
+        reason: "Unknown credential reference",
+      };
+    }
+    if (old.status === "REVOKED") {
+      return {
+        ok: false,
+        code: "REFERENCE_REVOKED",
+        reason: "Cannot rotate an already-revoked reference",
+      };
+    }
+    const scopes = input.scopes ?? old.scopes;
+    const next = putReference(
+      old.providerId,
+      scopes,
+      input.secretMaterial,
+      input.nowIso,
+    );
+    const revokedOld: CredentialReference = {
+      ...old,
+      status: "REVOKED",
+      revokedAtIso: input.nowIso,
+      rotatedToReferenceId: next.referenceId,
+    };
+    references.set(old.referenceId, revokedOld);
+    secrets.delete(old.referenceId);
+    return {
+      ok: true,
+      oldReference: revokedOld,
+      newReference: next,
+      liveProviderRevoke: "NOT_WIRED",
+    };
+  };
+
   return {
     putReference,
     mintScopedHandle,
     revealForPrincipal,
+    revokeReference,
+    rotateReference,
+    getReference: (referenceId) => references.get(referenceId) ?? null,
     listReferences: () => [...references.values()],
+    attemptLiveProviderRevoke: (referenceId) => ({
+      ok: false,
+      code: "LIVE_PROVIDER_REVOKE_NOT_WIRED",
+      liveProviderRevoke: "NOT_WIRED",
+      externalEffects: "NONE",
+      reason: `Live provider revoke for ${referenceId} is NOT_WIRED — local revoke may already mark the connection revoked`,
+    }),
   };
 }

@@ -16,6 +16,7 @@ import {
   evalPage,
   soakPage,
   recoveryPage,
+  credentialsPage,
 } from "./pages.js";
 import {
   activationPage,
@@ -41,9 +42,9 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
         status: "running",
         productionActivated: false,
         identity:
-          "AA-19 paid-media + M9 soak/acceptance + M8 analysis/eval + M6–M7 + M4 owner staging + R1-02–R1-10 console pages",
+          "WP10 credentials + AA-19 paid-media + M9 soak/acceptance + M8 analysis/eval + M6–M7 + M4 owner staging + R1-02–R1-10 console pages",
         message:
-          "Progressive console: activation → connections → sites → missions → review → evidence + analysis + paid + eval + soak. Not full React routes. Not R1-complete.",
+          "Progressive console: activation → connections → credentials → sites → missions → review → evidence + analysis + paid + eval + soak. Not full React routes. Not R1-complete.",
       });
       res.writeHead(200, { "content-type": "application/json" });
       res.end(body);
@@ -179,6 +180,12 @@ export function startConsoleServer(options: ConsoleServerOptions): Server {
     if (url.pathname === "/recovery") {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       res.end(recoveryPage(options.apiOrigin));
+      return;
+    }
+
+    if (url.pathname === "/credentials") {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(credentialsPage(options.apiOrigin));
       return;
     }
 

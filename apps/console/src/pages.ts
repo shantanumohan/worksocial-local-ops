@@ -2485,7 +2485,7 @@ export function recoveryPage(apiOrigin: string): string {
   <section>
     <h2>Recover / outage evidence (F24 · WP10)</h2>
     <p class="muted">Inspect host/provider outage and queued work. Separate <strong>STALE_OBSERVATION</strong>, <strong>ACTIVE_INCIDENT</strong>, and <strong>UNKNOWN_REMOTE_OUTCOME</strong>.</p>
-    <p class="warn">Fixture-only effects. Live recovery stays <strong>NOT_RUN</strong> — never silently VERIFIED. Credential rotation and offboarding remain NOT_WIRED. External effects NONE.</p>
+    <p class="warn">Fixture-only effects. Live recovery stays <strong>NOT_RUN</strong> — never silently VERIFIED. Local credential revoke/rotate/offboard are fixture paths (<a href="/credentials">/credentials</a>); live provider revocation remains <strong>NOT_WIRED</strong>. External effects NONE.</p>
     <button id="btn-inspect" type="button">Inspect outage &amp; queue</button>
     <button id="btn-run" type="button">Run fixture recovery</button>
     <button id="btn-timeline" type="button">Health timeline</button>
@@ -2554,6 +2554,150 @@ export function recoveryPage(apiOrigin: string): string {
   };
   document.getElementById('btn-stops').onclick = async () => {
     const res = await api('/recovery/capability-stops');
+    document.getElementById('out').textContent = JSON.stringify(await res.json(), null, 2);
+  };
+  refresh();
+</script>
+</body>
+</html>`;
+}
+
+export function credentialsPage(apiOrigin: string): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WorkSocial — Credential rotation / offboarding</title>
+  <style>
+    :root { --ink:#1b2a22; --panel:#fff; --accent:#2f6b4f; --warn:#8a5a00; }
+    body { margin:0; font-family:"IBM Plex Sans","Segoe UI",sans-serif; background:linear-gradient(180deg,#e7efe9,#f6f3ec); color:var(--ink); }
+    header { padding:1.25rem 1.5rem; border-bottom:1px solid #c9d6cc; background:rgba(255,255,255,.7); }
+    h1 { font-family:"IBM Plex Serif",Georgia,serif; margin:0; font-size:1.45rem; }
+    main { max-width:960px; margin:0 auto; padding:1.5rem; display:grid; gap:1rem; }
+    section { background:var(--panel); border:1px solid #c9d6cc; padding:1rem 1.1rem; }
+    .muted { color:#405248; } .warn { color:var(--warn); }
+    button { background:var(--accent); color:#fff; border:0; padding:.5rem .85rem; cursor:pointer; margin-right:.4rem; margin-bottom:.35rem; }
+    button.ghost { background:transparent; color:var(--accent); border:1px solid var(--accent); }
+    pre { background:#f3f6f3; padding:.75rem; overflow:auto; font-size:.8rem; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.75rem; }
+    .stat strong { display:block; font-size:1.2rem; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>WorkSocial</h1>
+  <p class="muted" id="who">Checking session…</p>
+  <p class="muted"><a href="/connections">Connections</a> · <a href="/credentials">Credentials</a> · <a href="/recovery">Recovery</a> · <a href="/authority">Authority</a></p>
+</header>
+<main>
+  <section>
+    <h2>Credential revoke / rotate / offboard (F24 · WP10)</h2>
+    <p class="muted">Local honesty: mark revoked, deny leases/effects, cancel eligible queued work, retain audit. Rotation records never export secrets.</p>
+    <p class="warn">Live provider token revoke stays <strong>NOT_WIRED</strong>. External effects NONE. Catalog T-F24 / T-US-047 / T-X073 remain NOT_RUN.</p>
+    <button id="btn-seed" type="button">Seed fixture connection</button>
+    <button id="btn-revoke" type="button">Revoke (cancel queued)</button>
+    <button id="btn-rotate" type="button">Rotate locally</button>
+    <button id="btn-offboard" type="button">Offboard manifest</button>
+    <button id="btn-live" type="button" class="ghost">Try live provider revoke (NOT_WIRED)</button>
+    <button id="btn-audit" type="button" class="ghost">Audit</button>
+    <p class="muted" id="note"></p>
+  </section>
+  <section>
+    <h2>Counts</h2>
+    <div class="grid" id="counts">
+      <div class="stat"><span class="muted">Active</span><strong id="c-active">—</strong></div>
+      <div class="stat"><span class="muted">Revoked</span><strong id="c-revoked">—</strong></div>
+      <div class="stat"><span class="muted">Audit</span><strong id="c-audit">—</strong></div>
+      <div class="stat"><span class="muted">Manifests</span><strong id="c-manifest">—</strong></div>
+    </div>
+  </section>
+  <section>
+    <h2>Status</h2>
+    <pre id="status">Loading…</pre>
+  </section>
+  <section>
+    <h2>Output</h2>
+    <pre id="out">—</pre>
+  </section>
+</main>
+<script>
+  const API = ${JSON.stringify(apiOrigin)};
+  let lastConnectionId = null;
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ origin: window.location.origin }, opts.headers || {});
+    const csrf = sessionStorage.getItem('ws_csrf');
+    if (opts.method && opts.method !== 'GET' && csrf) headers['x-csrf-token'] = csrf;
+    return fetch(API + path, Object.assign({}, opts, { headers, credentials: 'include' }));
+  }
+  function paintStatus(body) {
+    document.getElementById('c-active').textContent = String(body?.activeCount ?? 0);
+    document.getElementById('c-revoked').textContent = String(body?.revokedCount ?? 0);
+    document.getElementById('c-audit').textContent = String(body?.auditCount ?? 0);
+    document.getElementById('c-manifest').textContent = String(body?.manifestCount ?? 0);
+    document.getElementById('status').textContent = JSON.stringify(body, null, 2);
+  }
+  async function refresh() {
+    const session = await api('/auth/session');
+    if (!session.ok) { location.href = '/login'; return; }
+    const s = await session.json();
+    sessionStorage.setItem('ws_csrf', s.csrfToken);
+    document.getElementById('who').textContent = s.username + ' · ' + s.role;
+    const res = await api('/credentials/status');
+    paintStatus(await res.json());
+  }
+  document.getElementById('btn-seed').onclick = async () => {
+    const res = await api('/credentials/seed', { method:'POST', headers:{'content-type':'application/json'}, body:'{}' });
+    const body = await res.json();
+    lastConnectionId = body.connection?.connectionId || null;
+    document.getElementById('note').textContent = body.note || ('Seeded ' + lastConnectionId);
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  async function needConnection() {
+    if (lastConnectionId) return lastConnectionId;
+    const res = await api('/credentials/connections');
+    const body = await res.json();
+    const first = (body.connections || [])[0];
+    lastConnectionId = first?.connectionId || null;
+    return lastConnectionId;
+  }
+  document.getElementById('btn-revoke').onclick = async () => {
+    const connectionId = await needConnection();
+    if (!connectionId) { document.getElementById('note').textContent = 'Seed a connection first.'; return; }
+    const res = await api('/credentials/revoke', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ connectionId, approvedBy: 'admin' }) });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.ok ? 'Revoked locally; live provider revoke NOT_WIRED.' : (body.reason || body.code);
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-rotate').onclick = async () => {
+    const connectionId = await needConnection();
+    if (!connectionId) { document.getElementById('note').textContent = 'Seed a connection first.'; return; }
+    const res = await api('/credentials/rotate', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ connectionId, approvedBy: 'admin', secretMaterial: 'console-rotate-' + Date.now() }) });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.ok ? 'Local rotation complete; live provider revoke NOT_WIRED.' : (body.reason || body.code);
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-offboard').onclick = async () => {
+    const connectionId = await needConnection();
+    if (!connectionId) { document.getElementById('note').textContent = 'Seed a connection first.'; return; }
+    const res = await api('/credentials/offboard', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ connectionId, approvedBy: 'admin' }) });
+    const body = await res.json();
+    document.getElementById('note').textContent = body.ok ? 'Offboarding manifest recorded; provider revoke residual OPEN/NOT_WIRED.' : (body.reason || body.code);
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+    refresh();
+  };
+  document.getElementById('btn-live').onclick = async () => {
+    const connectionId = await needConnection();
+    if (!connectionId) { document.getElementById('note').textContent = 'Seed a connection first.'; return; }
+    const res = await api('/credentials/live-revoke', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ connectionId }) });
+    const body = await res.json();
+    document.getElementById('note').textContent = 'Expected NOT_WIRED — ' + (body.code || '');
+    document.getElementById('out').textContent = JSON.stringify(body, null, 2);
+  };
+  document.getElementById('btn-audit').onclick = async () => {
+    const res = await api('/credentials/audit');
     document.getElementById('out').textContent = JSON.stringify(await res.json(), null, 2);
   };
   refresh();

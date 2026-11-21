@@ -9,5 +9,7 @@ Focused offline contracts (no live providers):
 - `learning-worker.contract.test.ts` — multi-model registry; fixture exclusion; authority non-bypass; learning-worker isolation; offline train/predict
 - `evaluation-worker.contract.test.ts` — AA-20 EVAL_ONLY isolation; LIVE_NOT_WIRED; broker deny; Ads blocked; learning cannot expand effects
 - `paid-media-proposals.contract.test.ts` — AA-19 analysis hypotheses + Google Ads fixture proposals; ChatGPT Ads ACCESS_BLOCKED; live execute NOT_WIRED; external effects NONE
+- `recovery-evidence.contract.test.ts` — WP10 stale vs active vs URO; live recovery NOT_RUN; local credential paths fixture; live provider revoke NOT_WIRED
+- `credential-rotation.contract.test.ts` — WP10 revoke → cancel queued → audit retained; live provider revoke NOT_WIRED; external effects NONE; catalog NOT_RUN
 
 Run: `pnpm test:contract`

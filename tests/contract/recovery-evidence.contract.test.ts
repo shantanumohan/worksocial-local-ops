@@ -55,8 +55,9 @@ describe("contract: WP10 recovery evidence", () => {
     ).toBeGreaterThanOrEqual(1);
 
     const status = service.status();
-    expect(status.liveWiring.credentialRotation).toBe("NOT_WIRED");
-    expect(status.liveWiring.offboarding).toBe("NOT_WIRED");
+    expect(status.liveWiring.credentialRotation).toBe("fixture");
+    expect(status.liveWiring.offboarding).toBe("fixture");
+    expect(status.liveWiring.liveProviderRevocation).toBe("NOT_WIRED");
     expect(status.relatedCaseIds).toContain("T-F24");
   });
 

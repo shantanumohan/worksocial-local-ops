@@ -95,7 +95,7 @@ export function createRecoveryService(store: RecoveryStore): RecoveryService {
         results,
         classCounts,
         note: ok
-          ? "Fixture recovery scenarios passed. Distinguishes STALE_OBSERVATION / ACTIVE_INCIDENT / UNKNOWN_REMOTE_OUTCOME. Live recovery NOT_RUN; external effects NONE. Credential rotation / offboarding remain NOT_WIRED. Not R1-complete."
+          ? "Fixture recovery scenarios passed. Distinguishes STALE_OBSERVATION / ACTIVE_INCIDENT / UNKNOWN_REMOTE_OUTCOME. Live recovery NOT_RUN; external effects NONE. Local credential revoke/rotate/offboard are fixture (/credentials); live provider revocation NOT_WIRED. Not R1-complete."
           : "One or more fixture recovery scenarios failed. Live recovery still NOT_RUN; no external effects attempted.",
       };
     },

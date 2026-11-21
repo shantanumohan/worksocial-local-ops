@@ -24,6 +24,7 @@
     "@worksocial/soak": "workspace:*",
     "@worksocial/recovery": "workspace:*",
     "@worksocial/paid-media": "workspace:*",
+    "@worksocial/credential-rotation": "workspace:*",
     "@worksocial/provider-adapters": "workspace:*",
     "@worksocial/probes": "workspace:*"
   },
