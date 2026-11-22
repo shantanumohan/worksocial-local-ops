@@ -352,6 +352,13 @@ export const SoakProofKind = {
    */
   CONNECT_GEMINI_EVALUATION_EVAL_ONLY:
     "connect_gemini_evaluation_eval_only",
+  /**
+   * Map CRM/forms/booking with passing failure/recovery (T-US-019).
+   * Environment binding, form→CRM contract, canary grant/retention,
+   * booking capability matrix, correlated journey; live Zoho NOT_WIRED.
+   */
+  MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY:
+    "map_crm_forms_booking_failure_recovery",
 } as const;
 
 export type SoakProofKindValue =
@@ -457,6 +464,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-012 requires GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED (test ≠ production).
  * T-US-015 requires CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY (runtime ≠ API readiness; EVAL_ONLY).
  * T-US-017 requires CONNECT_GEMINI_EVALUATION_EVAL_ONLY (Gemini EVAL_ONLY connect; live NOT_WIRED).
+ * T-US-019 requires MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY (CRM/forms/booking map + failure/recovery; live Zoho NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -541,6 +549,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-012",
   "T-US-015",
   "T-US-017",
+  "T-US-019",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1039,6 +1048,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY];
     case "T-US-017":
       return [SoakProofKind.CONNECT_GEMINI_EVALUATION_EVAL_ONLY];
+    case "T-US-019":
+      return [SoakProofKind.MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY];
     default:
       return [];
   }
@@ -1193,6 +1204,8 @@ export function mapProofToFixtureCases(
       return ["T-US-015"];
     case SoakProofKind.CONNECT_GEMINI_EVALUATION_EVAL_ONLY:
       return ["T-US-017"];
+    case SoakProofKind.MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY:
+      return ["T-US-019"];
     default:
       return [];
   }

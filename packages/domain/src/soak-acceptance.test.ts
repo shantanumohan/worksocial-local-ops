@@ -736,4 +736,15 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-US-017"]);
   });
+
+  it("maps T-US-019 to MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY only", () => {
+    expect(expectedProofsForFixtureCase("T-US-019")).toEqual([
+      SoakProofKind.MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY,
+      ),
+    ).toEqual(["T-US-019"]);
+  });
 });

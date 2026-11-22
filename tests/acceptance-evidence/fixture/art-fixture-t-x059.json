@@ -3,13 +3,13 @@
   "caseId": "T-X059",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X059 (Duplicate platform attribution — one booking; separate claims)\nproof=duplicate_platform_attribution_one_booking applyCount=1 :: two platform claims retained separately (claim-google-74d542f1, claim-meta-a3d4b533) → uniqueBookingCount=1 | SILENT_PLATFORM_SUM_REFUSED — platform conversions not summed into unique bookings | counterfactual: naive platform sum 2 ≠ unique booking 1 (double-count blocked) | single-platform claim → unique=1 allowed (no false double-count)\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X059 (Duplicate platform attribution — one booking; separate claims)\nproof=duplicate_platform_attribution_one_booking applyCount=1 :: two platform claims retained separately (claim-google-c9220941, claim-meta-fe22022c) → uniqueBookingCount=1 | SILENT_PLATFORM_SUM_REFUSED — platform conversions not summed into unique bookings | counterfactual: naive platform sum 2 ≠ unique booking 1 (double-count blocked) | single-platform claim → unique=1 allowed (no false double-count)\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "duplicate_platform_attribution_one_booking"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x059.json",
-  "createdAtIso": "2026-11-22T22:32:27.849Z",
+  "createdAtIso": "2026-11-22T22:40:11.666Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x059-16ac8dd69466"
+  "uniqueSourceArtifactId": "art-fixture-t-x059-be9fcaed7101"
 }
