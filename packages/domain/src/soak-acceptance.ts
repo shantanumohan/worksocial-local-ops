@@ -421,6 +421,14 @@ export const SoakProofKind = {
    */
   KEYWORD_PROLIFERATION_ONE_USEFUL_UPDATE:
     "keyword_proliferation_one_useful_update",
+  /**
+   * Original campaign distribution — campaign manifest (T-US-029 / F15).
+   * Brief + versioned draft + QA + per-destination previews/outcomes +
+   * measurement state → campaign manifest; blocked channels keep recovery
+   * actions; false live success refused; live NOT_WIRED. Distinct from
+   * T-X045 / T-US-022 / T-US-030.
+   */
+  CAMPAIGN_MANIFEST_DISTRIBUTION: "campaign_manifest_distribution",
 } as const;
 
 export type SoakProofKindValue =
@@ -535,6 +543,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-026 requires MISSED_SCHEDULE_COALESCE_NO_BURST (missed publish slots coalesce; no burst republish; live NOT_WIRED).
  * T-US-027 requires DEMAND_PAGE_IMPROVEMENT_RELEASE_RECEIPT (demand→page improvement; release receipt + experiment window; live NOT_WIRED).
  * T-US-028 requires KEYWORD_PROLIFERATION_ONE_USEFUL_UPDATE (prefer one useful page update; keyword proliferation refused; live NOT_WIRED).
+ * T-US-029 requires CAMPAIGN_MANIFEST_DISTRIBUTION (original campaign distribution campaign manifest; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -628,6 +637,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-026",
   "T-US-027",
   "T-US-028",
+  "T-US-029",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1144,6 +1154,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.DEMAND_PAGE_IMPROVEMENT_RELEASE_RECEIPT];
     case "T-US-028":
       return [SoakProofKind.KEYWORD_PROLIFERATION_ONE_USEFUL_UPDATE];
+    case "T-US-029":
+      return [SoakProofKind.CAMPAIGN_MANIFEST_DISTRIBUTION];
     default:
       return [];
   }
@@ -1316,6 +1328,8 @@ export function mapProofToFixtureCases(
       return ["T-US-027"];
     case SoakProofKind.KEYWORD_PROLIFERATION_ONE_USEFUL_UPDATE:
       return ["T-US-028"];
+    case SoakProofKind.CAMPAIGN_MANIFEST_DISTRIBUTION:
+      return ["T-US-029"];
     default:
       return [];
   }
