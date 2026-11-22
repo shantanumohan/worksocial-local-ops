@@ -1028,6 +1028,18 @@ export {
   type CoalesceMissedPublishResult,
 } from "./missed-schedule-coalesce.js";
 export {
+  DEMAND_PAGE_IMPROVEMENT_RELATED_CASE_IDS,
+  evaluateDemandPageImprovement,
+  type DemandPageObservation,
+  type IntentPageMatch,
+  type VisibilityMissionPlan,
+  type RevisionDiff,
+  type IndependentQaBundle,
+  type ExperimentWindow,
+  type DemandPageImprovementInput,
+  type DemandPageImprovementDecision,
+} from "./demand-page-improvement.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

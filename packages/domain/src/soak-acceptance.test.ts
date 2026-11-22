@@ -811,4 +811,15 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.MISSED_SCHEDULE_COALESCE_NO_BURST),
     ).toEqual(["T-US-026"]);
   });
+
+  it("maps T-US-027 to DEMAND_PAGE_IMPROVEMENT_RELEASE_RECEIPT only", () => {
+    expect(expectedProofsForFixtureCase("T-US-027")).toEqual([
+      SoakProofKind.DEMAND_PAGE_IMPROVEMENT_RELEASE_RECEIPT,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.DEMAND_PAGE_IMPROVEMENT_RELEASE_RECEIPT,
+      ),
+    ).toEqual(["T-US-027"]);
+  });
 });
