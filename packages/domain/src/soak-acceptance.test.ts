@@ -427,6 +427,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X007"]);
   });
 
+  it("maps T-X036 to RECENT_ADS_CONVERSION_BLANK_PENDING only", () => {
+    expect(expectedProofsForFixtureCase("T-X036")).toEqual([
+      SoakProofKind.RECENT_ADS_CONVERSION_BLANK_PENDING,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.RECENT_ADS_CONVERSION_BLANK_PENDING),
+    ).toEqual(["T-X036"]);
+  });
+
   it("builds unique per-run artifact ids", () => {
     const a = uniqueFixtureEvidenceArtifactId("T-X014", "soak-abcdef123456");
     const b = uniqueFixtureEvidenceArtifactId("T-X014", "soak-zzz999888777");
