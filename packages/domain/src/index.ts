@@ -271,6 +271,21 @@ export {
   type CoalesceWakeCatchupResult,
 } from "./host-sleep-monitoring.js";
 export {
+  StagingConflictStatus,
+  StagingVerifyOutcome,
+  EXTERNAL_HUMAN_EDIT_STAGING_RELATED_CASE_IDS,
+  createExternalEditStagingState,
+  stageAgentChangeAgainstBase,
+  applyExternalHumanEdit,
+  attemptBlindAgentOverwrite,
+  independentVerifyStagingChange,
+  type StagingConflictStatusValue,
+  type StagingVerifyOutcomeValue,
+  type StagingPageLedger,
+  type StagedAgentChange,
+  type ExternalEditStagingState,
+} from "./external-human-edit-staging.js";
+export {
   SupportLabel,
   CollectionMethod,
   InstructionIngestionStatus,

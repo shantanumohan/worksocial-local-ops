@@ -238,6 +238,10 @@ export const SoakProofKind = {
    */
   DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED:
     "disk_full_evidence_no_partial_completed",
+  /**
+   * External human edit during staging — conflict retained (T-X025).
+   */
+  EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED: "external_human_edit_conflict_retained",
 } as const;
 
 export type SoakProofKindValue =
@@ -322,6 +326,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X016 requires STOP_BEFORE_DISPATCH_NO_MUTATION (no adapter mutation).
  * T-X063 requires INDIRECT_PROMPT_INJECTION_EXFIL_DENIED.
  * T-X013 requires REPLAY_HISTORICAL_NO_REPEAT_IO (history replay; no second I/O).
+ * T-X025 requires EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -383,8 +388,9 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X063",
   "T-X013",
   "T-X027",
-
-  "T-X004",] as const;
+  "T-X004",
+  "T-X025",
+] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
 
@@ -838,6 +844,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.REPLAY_HISTORICAL_NO_REPEAT_IO];
     case "T-X004":
       return [SoakProofKind.DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED];
+    case "T-X025":
+      return [SoakProofKind.EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED];
     default:
       return [];
   }
@@ -950,6 +958,8 @@ export function mapProofToFixtureCases(
       return ["T-X013"];
     case SoakProofKind.DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED:
       return ["T-X004"];
+    case SoakProofKind.EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED:
+      return ["T-X025"];
     default:
       return [];
   }
