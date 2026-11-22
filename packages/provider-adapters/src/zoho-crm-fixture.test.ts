@@ -53,9 +53,32 @@ describe("zoho-crm-fixture adapter", () => {
       skipWrite: true,
     });
     expect(receipt).toBeNull();
+    expect(crm.writeAttemptCount()).toBe(1);
 
     const live = liveZohoCrmStub();
     expect(live.wiring).toBe("NOT_WIRED");
     expect(() => live.write()).toThrow(/NOT_WIRED/);
+  });
+
+  it("lags getByCorrelation reads while keeping the write on the ledger (T-X023)", () => {
+    const crm = createZohoCrmFixtureAdapter();
+    const receipt = crm.writeSyntheticLead({
+      correlationId: corr,
+      fieldSnapshot: {
+        Email: `canary+${corr}@worksocial.test.local`,
+        Last_Name: `Canary ${corr}`,
+        ws_synthetic: "true",
+        ws_correlation_id: corr,
+      },
+      nowIso: now,
+      visibilityLagReads: 2,
+    });
+    expect(receipt?.recordId).toBeTruthy();
+    expect(crm.listAll()).toHaveLength(1);
+    expect(crm.getByCorrelation(corr)).toBeNull();
+    expect(crm.getByCorrelation(corr)).toBeNull();
+    const visible = crm.getByCorrelation(corr);
+    expect(visible?.receipt.recordId).toBe(receipt?.recordId);
+    expect(crm.writeAttemptCount()).toBe(1);
   });
 });
