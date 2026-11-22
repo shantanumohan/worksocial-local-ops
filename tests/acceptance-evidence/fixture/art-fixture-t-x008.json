@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x008",
+  "caseId": "T-X008",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X008 (Fact changes after review — stale; no publish)\nproof=fact_changes_after_review_stale applyCount=1 :: A25 content review bound to approved revision + cited facts | Pre-change fixture publish eligibility true (APPROVED + bound review + SUPPORTED facts) | Cited facts changed after review -> evidenceChanged; status READY_FOR_REVIEW (stale) | A25 binding invalidated after cited-fact change (stale) | Fixture publish denied after cited-fact change (status=ready_for_review (require APPROVED); reviewBinding=BINDING_INVALIDATED); no receipt attempted | Provider applyAttemptCount=0 after denied publish (no receipt) | Fact support flip SUPPORTED->UNKNOWN fails article publish gate (binding not claimed invalidated by label alone) | Approval/publish gate rejected after fact support change | Fixture publish denied after support flip via articleGate (no receipt; applyAttemptCount=0) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "fact_changes_after_review_stale"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x008.json",
+  "createdAtIso": "2026-11-22T18:35:10.180Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x008-2ca44786a2c1"
+}

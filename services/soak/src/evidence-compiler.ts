@@ -89,6 +89,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X015": "DST recurring schedule — no unintended duplicates",
   "T-X001": "Host sleeps during scheduled monitoring — coverage gap honest; coalesce",
   "T-X021": "Concurrent idempotent releases — one dispatch",
+  "T-X008": "Fact changes after review — stale; no publish",
 };
 
 function relatedProofsForCase(
@@ -262,6 +263,7 @@ export function compileAcceptanceEvidence(
     "T-X015 fixture ACCEPTED only via DST_RECURRING_SCHEDULE_NO_DUPLICATES (no unintended duplicates)",
     "T-X001 fixture ACCEPTED only via HOST_SLEEP_MONITORING_COVERAGE_GAP",
     "T-X021 fixture ACCEPTED only via CONCURRENT_IDEMPOTENT_RELEASE (not retry-only NO_DUPLICATE_EFFECTS)",
+    "T-X008 fixture ACCEPTED only via FACT_CHANGES_AFTER_REVIEW_STALE (stale; no publish)",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
