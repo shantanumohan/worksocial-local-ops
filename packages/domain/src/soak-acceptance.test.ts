@@ -523,4 +523,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X043"]);
   });
 
+  it("maps T-X026 to CONCURRENT_FINAL_BUDGET_RESERVATION_CAP only", () => {
+    expect(expectedProofsForFixtureCase("T-X026")).toEqual([
+      SoakProofKind.CONCURRENT_FINAL_BUDGET_RESERVATION_CAP,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.CONCURRENT_FINAL_BUDGET_RESERVATION_CAP,
+      ),
+    ).toEqual(["T-X026"]);
+  });
+
 });

@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x026",
+  "caseId": "T-X026",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X026 (Concurrent final budget reservation — cap enforced)\nproof=concurrent_final_budget_reservation_cap applyCount=1 :: Domain reserve r-a=600 ok; reservedMinor=600 | Near-cap r-b=500 → BUDGET_EXHAUSTED availableMinor=400 (cap enforced) | Same-snapshot finals each ok in isolation (oversubscribe risk visible) | Composed concurrent finals: second BUDGET_EXHAUSTED; reservedMinor=1000 ≤ limit | Memory BudgetStore sequential finals: first ok, second BUDGET_EXHAUSTED; reservedMinor=1000 ≤ limit | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "concurrent_final_budget_reservation_cap"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x026.json",
+  "createdAtIso": "2026-11-22T19:19:15.073Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x026-63d3ff6386ab"
+}

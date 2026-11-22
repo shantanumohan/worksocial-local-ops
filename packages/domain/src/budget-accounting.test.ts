@@ -34,6 +34,31 @@ describe("budget accounting", () => {
     });
   });
 
+  it("enforces the cap on concurrent final budget reservation", () => {
+    const first = reserveBudget(account(), "r-a", 600);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const raced = reserveBudget(first.account, "r-b", 500);
+    expect(raced).toEqual({
+      ok: false,
+      code: "BUDGET_EXHAUSTED",
+      availableMinor: 400,
+    });
+    const snap = first.account;
+    const isolA = reserveBudget(snap, "r-final-a", 400);
+    const isolB = reserveBudget(snap, "r-final-b", 400);
+    expect(isolA.ok).toBe(true);
+    expect(isolB.ok).toBe(true);
+    if (!isolA.ok) return;
+    const composed = reserveBudget(isolA.account, "r-final-b", 400);
+    expect(composed).toEqual({
+      ok: false,
+      code: "BUDGET_EXHAUSTED",
+      availableMinor: 0,
+    });
+    expect(isolA.account.reservedMinor).toBe(1000);
+  });
+
   it("settles actual cost honestly (may be less than reserved)", () => {
     const reserved = reserveBudget(account(), "r3", 500);
     expect(reserved.ok).toBe(true);
