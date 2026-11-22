@@ -94,7 +94,7 @@ async function main(): Promise<void> {
       cases: stableCaseResults,
       artifacts: stableArtifacts,
       uniqueRunArtifacts: artifacts,
-      note: "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated; T-X029 via explicit rebind; T-US-057 via cross-workspace resource substitution; T-US-024 via agent cannot widen grant; T-US-042/T-X057 via repair weaken test rejected; T-US-044/T-X053 via takeover cancels unsent; T-US-018/T-X037 via EVAL_ONLY operational tool forbidden; T-X058 via repair attempt limit escalated; T-X069 via imported doc quarantined; T-X038 via eval no-grounding; T-X039/T-US-058 via metric denominators honest; T-US-046/T-X048 via hard search constraints; T-US-010/T-X033 via GSC omitted rows; T-US-008/T-X032 via GA4 debug not delivered; T-X031 via wrong property kind; T-US-040/T-X049 via thank-you without CRM; T-X017 via stop-after-dispatch reconcile; T-X024 via old fence after reassignment; T-X011 via output bomb bounded/quarantined. Not R1-complete.",
+      note: "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated; T-X029 via explicit rebind; T-US-057 via cross-workspace resource substitution; T-US-024 via agent cannot widen grant; T-US-042/T-X057 via repair weaken test rejected; T-US-044/T-X053 via takeover cancels unsent; T-US-018/T-X037 via EVAL_ONLY operational tool forbidden; T-X058 via repair attempt limit escalated; T-X069 via imported doc quarantined; T-X038 via eval no-grounding; T-X039/T-US-058 via metric denominators honest; T-US-046/T-X048 via hard search constraints; T-US-010/T-X033 via GSC omitted rows; T-US-008/T-X032 via GA4 debug not delivered; T-X031 via wrong property kind; T-US-040/T-X049 via thank-you without CRM; T-X017 via stop-after-dispatch reconcile; T-X024 via old fence after reassignment; T-X011 via output bomb bounded/quarantined; T-X003 via symlink escape after root verification. Not R1-complete.",
     };
     writeFileSync(ledgerPath, JSON.stringify(ledger, null, 2), "utf8");
 
@@ -232,6 +232,9 @@ async function main(): Promise<void> {
     const hasTx011Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-X011",
     );
+    const hasTx003Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-X003",
+    );
     const expectedAccepted = [
       "T-F24",
       "T-US-002",
@@ -251,6 +254,7 @@ async function main(): Promise<void> {
       "T-US-058",
       "T-US-060",
       "T-X002",
+      "T-X003",
       "T-X005",
       "T-X006",
       "T-X011",
@@ -325,7 +329,8 @@ async function main(): Promise<void> {
         hasTx017Accepted &&
         hasTx024Accepted &&
         hasTx011Accepted &&
-        accepted.length === 42 &&
+        hasTx003Accepted &&
+        accepted.length === 43 &&
         JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
@@ -340,7 +345,7 @@ async function main(): Promise<void> {
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X011 output bomb bounded/quarantined fixture ACCEPTED. Live VERIFIED forbidden. Not R1-complete.",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X003 symlink-escape fixture ACCEPTED. Live VERIFIED forbidden. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {

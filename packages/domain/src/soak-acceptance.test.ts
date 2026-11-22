@@ -343,6 +343,12 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.OUTPUT_BOMB_BOUNDED_QUARANTINED),
     ).toEqual(["T-X011"]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION),
+    ).toEqual(["T-X003"]);
+    expect(expectedProofsForFixtureCase("T-X003")).toEqual([
+      SoakProofKind.SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION,
+    ]);
   });
 
   it("builds unique per-run artifact ids", () => {

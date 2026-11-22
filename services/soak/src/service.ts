@@ -223,7 +223,7 @@ export function createSoakService(store: SoakStore): SoakService {
         note:
           latestRun == null
             ? "No soak runs yet — run fixture soak (recovery:rehearse / POST /soak/run)."
-            : `Latest pilotGate=${latestRun.pilotGate.status}; r1CompleteClaimed=false; ChatGPT Ads blocked; live NOT_WIRED; T-X066 + T-F24/T-US-047 + T-US-002/T-X002 + T-X018/T-US-054 + T-X073 + T-US-060 + T-X005/T-X006 + T-X019/T-US-036 + T-X029 fixture ACCEPTED when required proofs present (not live VERIFIED).`,
+            : `Latest pilotGate=${latestRun.pilotGate.status}; r1CompleteClaimed=false; ChatGPT Ads blocked; live NOT_WIRED; T-X066 + T-F24/T-US-047 + T-US-002/T-X002 + T-X018/T-US-054 + T-X073 + T-US-060 + T-X005/T-X006 + T-X019/T-US-036 + T-X029 + T-X003 fixture ACCEPTED when required proofs present (not live VERIFIED).`,
       };
     },
   };

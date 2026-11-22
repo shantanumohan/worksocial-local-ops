@@ -26,7 +26,8 @@
  * thank-you without CRM fails delivery (T-US-040 / T-X049),
  * stop after provider dispatch reconcile (T-X017),
  * old fence after reassignment (T-X024),
- * output bomb bounded/quarantined (T-X011).
+ * output bomb bounded/quarantined (T-X011),
+ * symlink escape after root verification (T-X003).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -78,6 +79,7 @@ import { proofThankYouWithoutCrmFailsDelivery } from "./thank-you-without-crm-pr
 import { proofStopAfterDispatchReconcile } from "./stop-after-dispatch-proof.js";
 import { proofOldFenceAfterReassignment } from "./old-fence-after-reassignment-proof.js";
 import { proofOutputBombBoundedQuarantined } from "./output-bomb-proof.js";
+import { proofSymlinkEscapeAfterRootVerification } from "./symlink-escape-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -640,6 +642,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     await proofOutputBombBoundedQuarantined(nowPlus(nowIso, 300_000)),
   );
+  proofs.push(proofSymlinkEscapeAfterRootVerification(nowPlus(nowIso, 310_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -675,6 +678,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X017 fixture ACCEPTED via stop_after_dispatch_reconcile only — not live VERIFIED",
       "T-X024 fixture ACCEPTED via old_fence_after_reassignment only — not live VERIFIED",
       "T-X011 fixture ACCEPTED via output_bomb_bounded_quarantined only — not live VERIFIED",
+      "T-X003 fixture ACCEPTED via symlink_escape_after_root_verification only — not live VERIFIED",
     ],
   };
 }
