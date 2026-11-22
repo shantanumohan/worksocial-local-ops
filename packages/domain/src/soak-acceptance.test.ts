@@ -833,4 +833,13 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-US-028"]);
   });
+
+  it("maps T-US-029 to CAMPAIGN_MANIFEST_DISTRIBUTION only", () => {
+    expect(expectedProofsForFixtureCase("T-US-029")).toEqual([
+      SoakProofKind.CAMPAIGN_MANIFEST_DISTRIBUTION,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CAMPAIGN_MANIFEST_DISTRIBUTION),
+    ).toEqual(["T-US-029"]);
+  });
 });

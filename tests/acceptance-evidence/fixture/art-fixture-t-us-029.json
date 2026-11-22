@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-029",
+  "caseId": "T-US-029",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-029 (Original campaign distribution — campaign manifest)\nproof=campaign_manifest_distribution applyCount=1 :: Happy → CAMPAIGN_MANIFEST_RECORDED; eligible receipts + blocked recovery; live NOT_WIRED | claimLiveDistributionSuccess → FALSE_LIVE_SUCCESS_CLAIM_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | Blocked preview without recovery → BLOCKED_CHANNEL_RECOVERY_REQUIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-X045 (partial destinations), T-US-022 (unsupported capabilities), T-US-030 (uncertain post reconcile) | proofRecordedAt=2026-11-21T19:13:10.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "campaign_manifest_distribution"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-029.json",
+  "createdAtIso": "2026-11-22T23:47:15.111Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-029-60dd991f7a51"
+}

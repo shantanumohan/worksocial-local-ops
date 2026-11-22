@@ -1048,6 +1048,18 @@ export {
   type KeywordProliferationGateDecision,
 } from "./keyword-proliferation-gate.js";
 export {
+  CAMPAIGN_MANIFEST_DISTRIBUTION_RELATED_CASE_IDS,
+  evaluateCampaignManifestDistribution,
+  type CampaignBriefEvidence,
+  type VersionedDraftEvidence,
+  type CampaignQaFindings,
+  type DestinationPreview,
+  type DestinationOutcome,
+  type MeasurementState,
+  type CampaignManifestDistributionInput,
+  type CampaignManifestDistributionDecision,
+} from "./campaign-manifest-distribution.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
