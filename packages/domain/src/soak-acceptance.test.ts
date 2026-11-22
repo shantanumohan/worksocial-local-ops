@@ -623,5 +623,16 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X028"]);
   });
 
-});
 
+  it("maps T-X044 to UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED only", () => {
+    expect(expectedProofsForFixtureCase("T-X044")).toEqual([
+      SoakProofKind.UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED,
+      ),
+    ).toEqual(["T-X044"]);
+  });
+
+});

@@ -41,3 +41,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | ChatGPT Ads | **access-blocked** |
 | R1-complete | **not claimed** |
 | External effects | **none** |
+
+| T-X044 unlicensed venue media | Fixture **ACCEPTED** via `UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED` (not live VERIFIED) |
