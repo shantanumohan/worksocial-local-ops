@@ -10,6 +10,7 @@ import {
   emptyMonitoringState,
   evaluateDomJourneyFixture,
   evaluateHttpProbe,
+  evaluateOptimizationCtaJourneyGate,
   reconcileCanaryIntent,
 } from "./monitoring.js";
 import { OutcomeEvidenceSource, OutcomeLabel } from "./production-mapping.js";
@@ -220,6 +221,29 @@ describe("monitoring domain", () => {
     });
     expect(dom.verdict).toBe(ProbeVerdict.SUCCESS);
     expect(dom.passedStepIds).toHaveLength(3);
+  });
+
+
+  it("blocks optimization release when CTA journey regression fails", () => {
+    const ctaSteps = [
+      { stepId: "cta-visible", target: "Book a tour", action: "assert_text" as const, expected: "Book a tour" },
+      { stepId: "tour-href", target: 'href="/tour"', action: "assert_href" as const, expected: "/tour" },
+    ];
+    const healthy = evaluateOptimizationCtaJourneyGate({
+      optimizedHtml: '<a href="/tour">Book a tour</a><form id="contact"><button>Submit</button></form>',
+      journeySteps: ctaSteps,
+    });
+    expect(healthy.allowed).toBe(true);
+    expect(healthy.code).toBeNull();
+    expect(healthy.journeyVerdict).toBe(ProbeVerdict.SUCCESS);
+    const broken = evaluateOptimizationCtaJourneyGate({
+      optimizedHtml: '<a href="/broken-cta">Learn more</a><form id="contact"><button>Submit</button></form>',
+      journeySteps: ctaSteps,
+    });
+    expect(broken.allowed).toBe(false);
+    expect(broken.code).toBe("JOURNEY_REGRESSION_FAILED");
+    expect(broken.journeyVerdict).toBe(ProbeVerdict.FAILURE);
+    expect(broken.failedStepDetails.length).toBeGreaterThan(0);
   });
 
   it("builds fixtureOnly learning outcomes for SUCCESS/FAILURE only", () => {

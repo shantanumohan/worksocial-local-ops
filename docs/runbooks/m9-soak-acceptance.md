@@ -21,7 +21,7 @@ Fixture (LOCAL_DURABLE) proofs:
 
 Acceptance evidence compiler marks selected catalog cases **ACCEPTED** only when the **complete expected proof set** passes with **no failed related proofs**, and only with redacted fixture artifacts. It never silently marks live **VERIFIED**.
 
-Honest fixture ACCEPTED cases: **T-X001**, **T-X014**, **T-X020**, **T-US-048**, **T-X066**, **T-F24**, **T-US-047**, **T-US-002**, **T-X002**, **T-X018**, **T-US-054**, **T-X073**, **T-US-060**, **T-X005**, **T-X006**, **T-X019**, **T-US-036**, **T-X029**, **T-US-057**, **T-US-024**, **T-US-042**, **T-X057**, **T-US-044**, **T-X053**, **T-US-018**, **T-X037**, **T-X058**, **T-X069**, **T-X038**, **T-X039**, **T-US-058**, **T-US-046**, **T-X048**, **T-US-010**, **T-X033**, **T-US-008**, **T-X032**, **T-X031**, **T-US-040**, **T-X049**, **T-X017**, **T-X024**, **T-X011**, **T-X003**, **T-X050**, **T-X010**, **T-X009**, **T-X007**, **T-X016**, **T-X022**, **T-X065**, **T-X004**, **T-X013**, **T-X027**, **T-X063**.
+Honest fixture ACCEPTED cases: **T-X001**, **T-X014**, **T-X020**, **T-US-048**, **T-X066**, **T-F24**, **T-US-047**, **T-US-002**, **T-X002**, **T-X018**, **T-US-054**, **T-X073**, **T-US-060**, **T-X005**, **T-X006**, **T-X019**, **T-US-036**, **T-X029**, **T-US-057**, **T-US-024**, **T-US-042**, **T-X057**, **T-US-044**, **T-X053**, **T-US-018**, **T-X037**, **T-X058**, **T-X069**, **T-X038**, **T-X039**, **T-US-058**, **T-US-046**, **T-X048**, **T-US-010**, **T-X033**, **T-US-008**, **T-X032**, **T-X031**, **T-US-040**, **T-X049**, **T-X017**, **T-X024**, **T-X011**, **T-X003**, **T-X050**, **T-X010**, **T-X009**, **T-X007**, **T-X016**, **T-X022**, **T-X065**, **T-X004**, **T-X013**, **T-X027**, **T-X063**, **T-X043**.
 
 **T-X001** maps only to `HOST_SLEEP_MONITORING_COVERAGE_GAP`.
 
@@ -163,3 +163,5 @@ Suggested owner Windows flow (state off OneDrive):
 **T-X065** maps only to `WORKER_BROWSER_AUTH_STATE_OS_DENIED` (worker OS deny for browser auth state; not live VERIFIED).
 
 **T-X004** maps only to `DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED`.
+
+**T-X043** maps only to `OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS` (SEO/content optimization that breaks CTA → journey regression fails / release blocked; not live VERIFIED).

@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x043",
+  "caseId": "T-X043",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X043 (Optimization breaks CTA — journey regression fails)\nproof=optimization_breaks_cta_journey_fails applyCount=1 :: Baseline healthy page CTA journey SUCCESS — gate allowed | SEO content optimization rewrote CTA → journey FAILURE; gate JOURNEY_REGRESSION_FAILED | Positive control: metadata-only optimization preserves CTA → journey SUCCESS + gate allowed | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "optimization_breaks_cta_journey_fails"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x043.json",
+  "createdAtIso": "2026-11-22T19:15:06.234Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x043-7ee0bc8cb5aa"
+}

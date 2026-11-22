@@ -100,6 +100,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X013": "Replay historical workflow — no repeated external I/O",
   "T-X004": "Disk full during evidence write — no partial completed manifest",
   "T-X025": "External human edit during staging — conflict retained",
+  "T-X043": "Optimization breaks CTA — journey regression fails",
 };
 
 function relatedProofsForCase(
