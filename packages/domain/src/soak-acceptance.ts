@@ -195,6 +195,10 @@ export const SoakProofKind = {
    * Cited-fact set change invalidates A25 content binding; support flip fails publish gates.
    */
   FACT_CHANGES_AFTER_REVIEW_STALE: "fact_changes_after_review_stale",
+  /**
+   * Orphan worker on deadline — process tree stopped (T-X012).
+   */
+  ORPHAN_WORKER_DEADLINE_TREE_STOPPED: "orphan_worker_deadline_tree_stopped",
 } as const;
 
 export type SoakProofKindValue =
@@ -270,6 +274,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X001 requires HOST_SLEEP_MONITORING_COVERAGE_GAP.
  * T-X021 requires CONCURRENT_IDEMPOTENT_RELEASE (not retry-only NO_DUPLICATE_EFFECTS).
  * T-X008 requires FACT_CHANGES_AFTER_REVIEW_STALE (cited/support change; no publish).
+ * T-X012 requires ORPHAN_WORKER_DEADLINE_TREE_STOPPED (process tree stopped on deadline).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -323,6 +328,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X001",
   "T-X021",
   "T-X008",
+  "T-X012",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -759,6 +765,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE];
     case "T-X008":
       return [SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE];
+    case "T-X012":
+      return [SoakProofKind.ORPHAN_WORKER_DEADLINE_TREE_STOPPED];
     default:
       return [];
   }
@@ -852,6 +860,8 @@ export function mapProofToFixtureCases(
       return ["T-X021"];
     case SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE:
       return ["T-X008"];
+    case SoakProofKind.ORPHAN_WORKER_DEADLINE_TREE_STOPPED:
+      return ["T-X012"];
     default:
       return [];
   }

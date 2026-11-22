@@ -96,6 +96,28 @@ export type ClaudeCliInvokeResult =
  * Oversized output is refused and must not be delivered as usable stdout
  * (quarantined / discarded). Counts UTF-8 bytes, not characters.
  */
+/**
+ * Stop a worker process tree by process group when possible.
+ * Prefers killing the negative PID (group leader from detached spawn);
+ * falls back to the direct PID.
+ */
+export function stopProcessTree(
+  pid: number,
+  signal: NodeJS.Signals = "SIGKILL",
+): void {
+  try {
+    process.kill(-pid, signal);
+    return;
+  } catch {
+    // Not a group leader / ESRCH — fall through.
+  }
+  try {
+    process.kill(pid, signal);
+  } catch {
+    // Already gone.
+  }
+}
+
 export type StdoutBoundAssessment =
   | { withinBound: true; byteLength: number }
   | {
@@ -424,6 +446,7 @@ export function invokeClaudeCli(
       child = spawn(request.executablePath, [...plan.argv], {
         stdio: ["pipe", "pipe", "pipe"],
         shell: plan.shell,
+        detached: true,
         cwd: request.cwd,
         env: {
           ...process.env,
@@ -439,8 +462,16 @@ export function invokeClaudeCli(
       return;
     }
 
+    const killTree = () => {
+      if (typeof child.pid === "number") {
+        stopProcessTree(child.pid, "SIGKILL");
+      } else {
+        child.kill("SIGKILL");
+      }
+    };
+
     const timer = setTimeout(() => {
-      child.kill("SIGKILL");
+      killTree();
       finish({
         ok: false,
         code: "TIMEOUT",
@@ -455,7 +486,7 @@ export function invokeClaudeCli(
       stdout += chunk.toString("utf8");
       const bound = assessStdoutBound(stdout, request.maxOutputBytes);
       if (!bound.withinBound) {
-        child.kill("SIGKILL");
+        killTree();
         clearTimeout(timer);
         // Quarantine: do not deliver bomb stdout to callers.
         finish({
