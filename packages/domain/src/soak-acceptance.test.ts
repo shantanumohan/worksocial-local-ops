@@ -665,4 +665,17 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-US-006"]);
   });
 
+
+  it("maps T-US-052 to MOCKED_CONNECTOR_NOT_PRODUCTION_READY only", () => {
+    expect(expectedProofsForFixtureCase("T-US-052")).toEqual([
+      SoakProofKind.MOCKED_CONNECTOR_NOT_PRODUCTION_READY,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.MOCKED_CONNECTOR_NOT_PRODUCTION_READY,
+      ),
+    ).toEqual(["T-US-052"]);
+  });
+
+
 });

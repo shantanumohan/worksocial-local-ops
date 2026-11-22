@@ -112,6 +112,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X070": "Validated payload not collected — separate failure states",
   "T-X044": "Unlicensed venue media — publish blocked",
   "T-X045": "Partial campaign destinations — per-destination states",
+  "T-US-052": "Mocked connector is not treated as production-ready",
   "T-US-006": "Unbound URL: analysis ok, write blocked",
   "T-X023": "Eventual consistency false not-found — no unsafe retry",
 };

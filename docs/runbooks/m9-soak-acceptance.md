@@ -185,6 +185,8 @@ Suggested owner Windows flow (state off OneDrive):
 **T-X045** maps only to `PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE` (per-destination PARTIAL honesty; not live VERIFIED).
 
 
+**T-US-052** maps only to `MOCKED_CONNECTOR_NOT_PRODUCTION_READY` (mocked FIXTURE/NOT_WIRED ≠ production-ready; not live VERIFIED).
+
 **T-US-006** maps only to `UNBOUND_WRITE_PATH_FAIL_CLOSED` (observe/create ok; unbound write fail closed; applyAttemptCount=0; not live VERIFIED).
 
-**T-X023** maps only to `EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND`.
+**T-X023**, **T-US-052** maps only to `EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND`.

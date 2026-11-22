@@ -316,6 +316,12 @@ export const SoakProofKind = {
    * Eventual consistency false not-found — no unsafe CRM create retry (T-X023).
    */
   EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND: "eventual_consistency_false_not_found",
+  /**
+   * Mocked connector ≠ production-ready (T-US-052).
+   * FIXTURE/NOT_WIRED wiring never elevates to productionActivated / live VERIFIED.
+   */
+  MOCKED_CONNECTOR_NOT_PRODUCTION_READY:
+    "mocked_connector_not_production_ready",
 } as const;
 
 export type SoakProofKindValue =
@@ -415,6 +421,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X045 requires PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE (per-destination honesty).
  * T-US-006 requires UNBOUND_WRITE_PATH_FAIL_CLOSED.
  * T-X023 requires EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND.
+ * T-US-052 requires MOCKED_CONNECTOR_NOT_PRODUCTION_READY.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -492,6 +499,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X045",
   "T-US-006",
   "T-X023",
+  "T-US-052",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -976,6 +984,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.UNBOUND_WRITE_PATH_FAIL_CLOSED];
     case "T-X023":
       return [SoakProofKind.EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND];
+    case "T-US-052":
+      return [SoakProofKind.MOCKED_CONNECTOR_NOT_PRODUCTION_READY];
     default:
       return [];
   }
@@ -1118,6 +1128,8 @@ export function mapProofToFixtureCases(
       return ["T-US-006"];
     case SoakProofKind.EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND:
       return ["T-X023"];
+    case SoakProofKind.MOCKED_CONNECTOR_NOT_PRODUCTION_READY:
+      return ["T-US-052"];
     default:
       return [];
   }
