@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x045",
+  "caseId": "T-X045",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X045 (Partial campaign destinations — per-destination states)\nproof=partial_campaign_destinations_per_state applyCount=1 :: Distribution run starts PLANNING with zero attempts | Mixed VERIFIED+FAILED+UNKNOWN_REMOTE → DistributionRunStatus.PARTIAL | Per-destination states retained independently (cms=VERIFIED, gbp=FAILED, linkedin=UNKNOWN_REMOTE) | Recoverable destinations = unfinished only (gbp, linkedin); verified cms not re-applied | ACCEPTED_PENDING destination kept distinct from VERIFIED; run stays IN_PROGRESS (not COMPLETE) | All-destination FAILED → DistributionRunStatus.FAILED (honest) | liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "partial_campaign_destinations_per_state"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x045.json",
+  "createdAtIso": "2026-11-22T21:26:10.314Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x045-fa90bf86fb89"
+}

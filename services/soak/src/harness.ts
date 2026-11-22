@@ -111,6 +111,7 @@ import { proofWrongCmsEnvironmentNoProductionOp } from "./wrong-cms-environment-
 import { proofStopBeforeDispatchClaim } from "./stop-before-dispatch-proof.js";
 import { proofIndirectPromptInjectionExfilDenied } from "./indirect-prompt-injection-exfil-proof.js";
 import { proofUnlicensedVenueMediaPublishBlocked } from "./unlicensed-venue-media-proof.js";
+import { proofPartialCampaignDestinationsPerState } from "./partial-campaign-destinations-proof.js";
 import { proofIdempotencyKeyPayloadMismatch } from "./idempotency-key-payload-mismatch-proof.js";
 import { proofWorkerBrowserAuthStateOsDenied } from "./browser-auth-state-proof.js";
 import { proofUnknownUsageCancelHoldsResidual } from "./unknown-usage-cancel-proof.js";
@@ -750,7 +751,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofCurrencyTimezoneMismatchNoSilentSum(nowPlus(nowIso, 570_000)),
   );
-    proofs.push(
+  proofs.push(
     proofValidatedPayloadNotCollectedSeparateStates(nowPlus(nowIso, 580_000)),
   );
   proofs.push(
@@ -758,6 +759,9 @@ export async function runSoakRecoveryHarness(input: {
   );
   proofs.push(
     proofUnlicensedVenueMediaPublishBlocked(nowPlus(nowIso, 600_000)),
+  );
+  proofs.push(
+    proofPartialCampaignDestinationsPerState(nowPlus(nowIso, 610_000)),
   );
   const allPassed = proofs.every((p) => p.passed);
   return {
@@ -823,6 +827,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X070 fixture ACCEPTED via validated_payload_not_collected_separate_states only — not live VERIFIED",
       "T-X028 fixture ACCEPTED via actual_cost_exceeds_estimate_overrun_visible only — not live VERIFIED",
       "T-X044 fixture ACCEPTED via unlicensed_venue_media_publish_blocked only — not live VERIFIED",
+      "T-X045 fixture ACCEPTED via partial_campaign_destinations_per_state only — not live VERIFIED",
     ],
   };
 }
