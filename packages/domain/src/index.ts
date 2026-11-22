@@ -893,6 +893,15 @@ export {
   type SimulatedRateLimitLoopResult,
 } from "./rate-limit-backoff.js";
 export {
+  DEFAULT_MIN_TREND_SAMPLE,
+  DEFAULT_SPIKE_RATIO,
+  TrendSpikeDecisionCode,
+  assessTrendSpikeEvidence,
+  type TrendSpikeDecisionCodeValue,
+  type AssessTrendSpikeEvidenceInput,
+  type AssessTrendSpikeEvidenceResult,
+} from "./trend-spike-evidence.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

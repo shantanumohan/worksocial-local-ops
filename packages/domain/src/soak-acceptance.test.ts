@@ -693,4 +693,16 @@ describe("soak-acceptance domain", () => {
   });
 
 
+  it("maps T-X040 to LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE only", () => {
+    expect(expectedProofsForFixtureCase("T-X040")).toEqual([
+      SoakProofKind.LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE,
+      ),
+    ).toEqual(["T-X040"]);
+  });
+
+
 });

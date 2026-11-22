@@ -39,6 +39,7 @@
  * validated payload not collected separate failure states (T-X070).
  * unbound write path fail closed (T-US-006).
  * rate-limit bounded backoff preserves deadline (T-X030).
+ * low-sample trend spike insufficient evidence (T-X040).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -86,6 +87,7 @@ import { proofUnboundWritePathFailClosed } from "./unbound-write-path-proof.js";
 import { proofEventualConsistencyFalseNotFound } from "./eventual-consistency-false-not-found-proof.js";
 import { proofMockedConnectorNotProductionReady } from "./mocked-connector-not-production-ready-proof.js";
 import { proofRateLimitBoundedBackoffPreservesDeadline } from "./rate-limit-deadline-proof.js";
+import { proofLowSampleTrendSpikeInsufficientEvidence } from "./low-sample-trend-spike-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -772,8 +774,15 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofUnboundWritePathFailClosed(nowPlus(nowIso, 610_000)));
   proofs.push(
     proofEventualConsistencyFalseNotFound(nowPlus(nowIso, 630_000)),
+  );
+  proofs.push(
     proofMockedConnectorNotProductionReady(nowPlus(nowIso, 640_000)),
+  );
+  proofs.push(
     proofRateLimitBoundedBackoffPreservesDeadline(nowPlus(nowIso, 650_000)),
+  );
+  proofs.push(
+    proofLowSampleTrendSpikeInsufficientEvidence(nowPlus(nowIso, 660_000)),
   );
   const allPassed = proofs.every((p) => p.passed);
   return {
@@ -844,6 +853,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X023 fixture ACCEPTED via eventual_consistency_false_not_found only — not live VERIFIED",
       "T-US-052 fixture ACCEPTED via mocked_connector_not_production_ready only — not live VERIFIED",
       "T-X030 fixture ACCEPTED via rate_limit_bounded_backoff_preserves_deadline only — not live VERIFIED",
+      "T-X040 fixture ACCEPTED via low_sample_trend_spike_insufficient_evidence only — not live VERIFIED",
     ],
   };
 }

@@ -116,6 +116,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-052": "Mocked connector is not treated as production-ready",
   "T-US-006": "Unbound URL: analysis ok, write blocked",
   "T-X023": "Eventual consistency false not-found — no unsafe retry",
+  "T-X040": "Low-sample trend spike stays insufficient evidence (research only)",
   "T-X030": "Rate-limit with deadline — bounded backoff",
 };
 
