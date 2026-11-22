@@ -103,6 +103,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X043": "Optimization breaks CTA — journey regression fails",
   "T-X026": "Concurrent final budget reservation — cap enforced",
   "T-X052": "Synthetic conversion contamination — excluded from commerce",
+  "T-X054": "Reply sent but CRM fails — CRM reconciles; no resend",
 };
 
 function relatedProofsForCase(
@@ -289,6 +290,7 @@ export function compileAcceptanceEvidence(
     "T-X025 fixture ACCEPTED only via EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED",
     "T-X026 fixture ACCEPTED only via CONCURRENT_FINAL_BUDGET_RESERVATION_CAP",
     "T-X052 fixture ACCEPTED only via SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED",
+    "T-X054 fixture ACCEPTED only via REPLY_SENT_CRM_RECONCILES_NO_RESEND",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

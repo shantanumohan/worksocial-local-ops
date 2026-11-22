@@ -259,6 +259,10 @@ export const SoakProofKind = {
    */
   SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED:
     "synthetic_conversion_contamination_excluded",
+  /**
+   * Reply SENT but CRM fails — CRM reconciles; no outbound resend (T-X054).
+   */
+  REPLY_SENT_CRM_RECONCILES_NO_RESEND: "reply_sent_crm_reconciles_no_resend",
 } as const;
 
 export type SoakProofKindValue =
@@ -347,6 +351,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X043 requires OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS (CTA journey regression).
  * T-X026 requires CONCURRENT_FINAL_BUDGET_RESERVATION_CAP (same-snapshot composition).
  * T-X052 requires SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED (commerce exclusion).
+ * T-X054 requires REPLY_SENT_CRM_RECONCILES_NO_RESEND.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -413,6 +418,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X043",
   "T-X026",
   "T-X052",
+  "T-X054",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -875,6 +881,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CONCURRENT_FINAL_BUDGET_RESERVATION_CAP];
     case "T-X052":
       return [SoakProofKind.SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED];
+    case "T-X054":
+      return [SoakProofKind.REPLY_SENT_CRM_RECONCILES_NO_RESEND];
     default:
       return [];
   }
@@ -995,6 +1003,8 @@ export function mapProofToFixtureCases(
       return ["T-X026"];
     case SoakProofKind.SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED:
       return ["T-X052"];
+    case SoakProofKind.REPLY_SENT_CRM_RECONCILES_NO_RESEND:
+      return ["T-X054"];
     default:
       return [];
   }

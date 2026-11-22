@@ -819,6 +819,15 @@ export {
   type BindSyntheticFromServerGrantResult,
 } from "./public-synthetic-flag.js";
 export {
+  assertOutboundResendSuppressed,
+  evaluateReplySentCrmFailure,
+  isMissingRemoteReconcile,
+  REPLY_CRM_RECONCILE_RELATED_CASE_IDS,
+  type CrmAttemptOutcome,
+  type ReplyCrmReconcileCode,
+  type ReplyCrmReconcileDecision,
+} from "./reply-crm-reconcile.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

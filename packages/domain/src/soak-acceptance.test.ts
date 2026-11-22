@@ -545,4 +545,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X052"]);
   });
 
+  it("maps T-X054 to REPLY_SENT_CRM_RECONCILES_NO_RESEND only", () => {
+    expect(expectedProofsForFixtureCase("T-X054")).toEqual([
+      SoakProofKind.REPLY_SENT_CRM_RECONCILES_NO_RESEND,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.REPLY_SENT_CRM_RECONCILES_NO_RESEND,
+      ),
+    ).toEqual(["T-X054"]);
+  });
+
 });
