@@ -37,6 +37,7 @@
  * worker browser auth state OS deny (T-X065).
  * external human edit during staging conflict retained (T-X025).
  * validated payload not collected separate failure states (T-X070).
+ * unbound write path fail closed (T-US-006).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -80,6 +81,7 @@ import { proofAutomatedResponseLoopBoundedHandoff } from "./automated-response-l
 import { proofDuplicatePlatformAttributionOneBooking } from "./duplicate-platform-attribution-proof.js";
 import { proofCurrencyTimezoneMismatchNoSilentSum } from "./currency-timezone-mismatch-proof.js";
 import { proofValidatedPayloadNotCollectedSeparateStates } from "./validated-payload-not-collected-proof.js";
+import { proofUnboundWritePathFailClosed } from "./unbound-write-path-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -763,6 +765,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofPartialCampaignDestinationsPerState(nowPlus(nowIso, 610_000)),
   );
+  proofs.push(proofUnboundWritePathFailClosed(nowPlus(nowIso, 610_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -828,6 +831,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X028 fixture ACCEPTED via actual_cost_exceeds_estimate_overrun_visible only — not live VERIFIED",
       "T-X044 fixture ACCEPTED via unlicensed_venue_media_publish_blocked only — not live VERIFIED",
       "T-X045 fixture ACCEPTED via partial_campaign_destinations_per_state only — not live VERIFIED",
+      "T-US-006 fixture ACCEPTED via unbound_write_path_fail_closed only — not live VERIFIED",
     ],
   };
 }

@@ -3,13 +3,13 @@
   "caseId": "T-X002",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X002 (Two supervisors start together — single host lease)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-93a8111b scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-93a8111b | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-51b47657 reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X002 (Two supervisors start together — single host lease)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-b32c2c7c scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-b32c2c7c | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-e6d8e12e reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "competing_supervisor_lease"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x002.json",
-  "createdAtIso": "2026-11-22T21:26:10.314Z",
+  "createdAtIso": "2026-11-22T21:30:06.035Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x002-fa90bf86fb89"
+  "uniqueSourceArtifactId": "art-fixture-t-x002-483ee744a98c"
 }

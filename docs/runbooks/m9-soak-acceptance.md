@@ -183,3 +183,6 @@ Suggested owner Windows flow (state off OneDrive):
 | T-X044 | Fixture ACCEPTED via unlicensed venue media publish blocked only |
 
 **T-X045** maps only to `PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE` (per-destination PARTIAL honesty; not live VERIFIED).
+
+
+**T-US-006** maps only to `UNBOUND_WRITE_PATH_FAIL_CLOSED` (observe/create ok; unbound write fail closed; applyAttemptCount=0; not live VERIFIED).

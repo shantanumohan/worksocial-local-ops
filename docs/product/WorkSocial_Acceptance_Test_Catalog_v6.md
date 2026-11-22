@@ -672,7 +672,7 @@ Required evidence:
 
 Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixture ACCEPTED below | Environment fixture_or_sandbox; live evidence separately authorized.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-F24, T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-F24, T-US-002, T-US-006, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060.
 
 **T-X043** is fixture ACCEPTED only via the optimization breaks CTA journey fails proof (`OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS`) — SEO/content optimization that rewrites the booking CTA fails the DOM journey probe; the optimization CTA journey gate blocks release with `JOURNEY_REGRESSION_FAILED`. Not sandbox/prod VERIFIED.
 
@@ -707,7 +707,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 ### Failure / gate cases (evidence: blocking decision, preserved inputs, current state, recovery path)
 - **T-US-002** Competing supervisors refused; no duplicate leases. *(fixture ACCEPTED — competing-supervisor / singleton host-lease proof; not sandbox/prod VERIFIED)*
 - **T-US-004** Unsafe folders / unresolved facts blocked; safe facts usable.
-- **T-US-006** Unbound URL: analysis ok, write blocked.
+- **T-US-006** Unbound URL: analysis ok, write blocked. *(fixture ACCEPTED — unbound write path fail-closed proof; not sandbox/prod VERIFIED)*
 - **T-US-008** GA4 debug validation ≠ measured receipt *(fixture ACCEPTED)*.
 - **T-US-010** Missing GSC rows ≠ zero demand *(fixture ACCEPTED)*.
 - **T-US-012** Google Ads test vs production access separated.
@@ -838,6 +838,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X044** is fixture ACCEPTED only via the unlicensed venue media publish-blocked proof (`UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED`) — `releaseCanonical` fails closed for unlicensed / unknown / expired / pending-clearance / uncleared rights / unapproved invented media. Not sandbox/prod VERIFIED.
 
+**T-US-006** is fixture ACCEPTED only via the unbound write path fail-closed proof (`UNBOUND_WRITE_PATH_FAIL_CLOSED`) — unbound URL OBSERVE/CREATE analysis may proceed without a mapped pilot write path; ROUTINE_PUBLISH on an unbound channel/asset fail closed with `prerequisiteMissing` and no matched path; `applyAttemptCount=0` (gate-only). Not sandbox/prod VERIFIED.
+
 **T-X045** is fixture ACCEPTED only via the partial campaign destinations / per-destination states proof (`PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE`) — mixed VERIFIED/FAILED/UNKNOWN_REMOTE yields PARTIAL; ACCEPTED_PENDING stays distinct from VERIFIED; recoverable destinations exclude verified peers. Not sandbox/prod VERIFIED.
 
 **T-X028** is fixture ACCEPTED only via the actual cost exceeds estimate overrun visible proof (`ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE`) — `settleBudget` posts full `actualMinor` when it exceeds the reserved estimate; overrun visible in `settledMinor`; reservation released; `heldMinor` stays 0. Not sandbox/prod VERIFIED.
@@ -943,9 +945,9 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 
 | Family | Count | Status |
 |---|---:|---|
-| T-F (full_stack_e2e) | 26 | 99 NOT_RUN + 60 fixture ACCEPTED (T-F24) |
-| T-US (behavior_acceptance) | 60 | 99 NOT_RUN + 60 fixture ACCEPTED (T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060) |
+| T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
+| T-US (behavior_acceptance) | 60 | 43 NOT_RUN + 17 fixture ACCEPTED (T-US-002, T-US-006, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060) |
 | T-X (platform/security/resilience) | 73 | 18 NOT_RUN + 55 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X043, T-X045, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X063, T-X065, T-X066, T-X069, T-X070, T-X073) |
-| **Total** | **159** | **87 NOT_RUN + 72 fixture ACCEPTED** |
+| **Total** | **159** | **86 NOT_RUN + 73 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.
