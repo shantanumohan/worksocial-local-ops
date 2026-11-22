@@ -31,6 +31,7 @@
  * public synthetic flag requires server grant (T-X050),
  * malicious prompt no shell injection (T-X010).
  * DST recurring schedule no duplicates (T-X015).
+ * wrong CMS environment no production op (T-X007).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -91,6 +92,7 @@ import { proofHostSleepMonitoringCoverageGap } from "./host-sleep-monitoring-pro
 import { proofConcurrentIdempotentRelease } from "./concurrent-idempotent-release-proof.js";
 import { proofFactChangesAfterReviewStale } from "./fact-changes-after-review-proof.js";
 import { proofOrphanWorkerDeadlineTreeStopped } from "./orphan-worker-deadline-proof.js";
+import { proofWrongCmsEnvironmentNoProductionOp } from "./wrong-cms-environment-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -673,6 +675,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     await proofOrphanWorkerDeadlineTreeStopped(nowPlus(nowIso, 390_000)),
   );
+  proofs.push(proofWrongCmsEnvironmentNoProductionOp(nowPlus(nowIso, 400_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -717,6 +720,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X021 fixture ACCEPTED via concurrent_idempotent_release only — not live VERIFIED",
       "T-X008 fixture ACCEPTED via fact_changes_after_review_stale only — not live VERIFIED",
       "T-X012 fixture ACCEPTED via orphan_worker_deadline_tree_stopped only — not live VERIFIED",
+      "T-X007 fixture ACCEPTED via wrong_cms_environment_no_production_op only — not live VERIFIED",
     ],
   };
 }

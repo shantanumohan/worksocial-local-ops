@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ActivationStepId,
   ActivationStepStatus,
+  CmsEnvironment,
   MeasurementMode,
   MissionStatus,
   createActivationChecklist,
@@ -13,6 +14,7 @@ import {
   ownerMissionSummary,
   runDeterministicPageChecks,
   setActivationStep,
+  validateCmsEnvironmentOperation,
   type OwnerMissionRecord,
   type StagingPageFields,
 } from "./owner-staging.js";
@@ -117,5 +119,47 @@ describe("owner-staging domain (M4)", () => {
     expect(state.version).toBe(1);
     expect(state.honestNote).toMatch(/NOT_WIRED/);
     expect(state.missions).toEqual([]);
+  });
+
+  it("refuses wrong CMS environment and production mutate (T-X007)", () => {
+    const mismatch = validateCmsEnvironmentOperation({
+      boundEnvironment: CmsEnvironment.PRODUCTION,
+      intendedEnvironment: CmsEnvironment.STAGING,
+      operation: "publish",
+    });
+    expect(mismatch.ok).toBe(false);
+    if (!mismatch.ok) {
+      expect(mismatch.code).toBe("WRONG_CMS_ENVIRONMENT");
+      expect(mismatch.allowProductionOp).toBe(false);
+    }
+    const prod = validateCmsEnvironmentOperation({
+      boundEnvironment: CmsEnvironment.PRODUCTION,
+      intendedEnvironment: CmsEnvironment.PRODUCTION,
+      operation: "publish",
+    });
+    expect(prod.ok).toBe(false);
+    if (!prod.ok) {
+      expect(prod.code).toBe("PRODUCTION_OP_REFUSED");
+      expect(prod.allowProductionOp).toBe(false);
+    }
+    const staging = validateCmsEnvironmentOperation({
+      boundEnvironment: CmsEnvironment.STAGING,
+      intendedEnvironment: CmsEnvironment.STAGING,
+      operation: "publish",
+    });
+    expect(staging.ok).toBe(true);
+    if (staging.ok) {
+      expect(staging.allowProductionOp).toBe(false);
+    }
+    const unrecognized = validateCmsEnvironmentOperation({
+      boundEnvironment: "prod",
+      intendedEnvironment: "prod",
+      operation: "publish",
+    });
+    expect(unrecognized.ok).toBe(false);
+    if (!unrecognized.ok) {
+      expect(unrecognized.code).toBe("UNRECOGNIZED_ENVIRONMENT");
+      expect(unrecognized.allowProductionOp).toBe(false);
+    }
   });
 });

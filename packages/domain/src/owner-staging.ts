@@ -541,3 +541,111 @@ export function assertIndependentObservedFields(input: {
   }
   return { ok: true };
 }
+
+/**
+ * Declared CMS target environment for publish/repair gates (T-X007).
+ * Owner pilot sites remain staging|fixture; production is modeled only so
+ * wrong-environment attempts can be refused without a live adapter.
+ */
+export const CmsEnvironment = {
+  FIXTURE: "fixture",
+  STAGING: "staging",
+  PRODUCTION: "production",
+} as const;
+
+export type CmsEnvironmentValue =
+  (typeof CmsEnvironment)[keyof typeof CmsEnvironment];
+
+export type CmsOperationKind = "read" | "publish" | "repair";
+
+const CMS_ENVIRONMENTS: ReadonlySet<string> = new Set(
+  Object.values(CmsEnvironment),
+);
+
+export type CmsEnvironmentGateResult =
+  | {
+      ok: true;
+      /** Fixture/staging paths never authorize a production mutation. */
+      allowProductionOp: false;
+      reasons: string[];
+    }
+  | {
+      ok: false;
+      code:
+        | "WRONG_CMS_ENVIRONMENT"
+        | "PRODUCTION_OP_REFUSED"
+        | "MISSING_ENVIRONMENT"
+        | "UNRECOGNIZED_ENVIRONMENT";
+      allowProductionOp: false;
+      reasons: string[];
+    };
+
+function isKnownCmsEnvironment(value: string): value is CmsEnvironmentValue {
+  return CMS_ENVIRONMENTS.has(value);
+}
+
+/**
+ * Refuse CMS mutate when bound vs intended environments disagree, unrecognized,
+ * or production (T-X007 — wrong CMS environment → no production op).
+ * Fixture/staging matching envs may publish/repair offline only.
+ */
+export function validateCmsEnvironmentOperation(input: {
+  boundEnvironment: CmsEnvironmentValue | string | null | undefined;
+  intendedEnvironment: CmsEnvironmentValue | string | null | undefined;
+  operation: CmsOperationKind;
+}): CmsEnvironmentGateResult {
+  const bound = (input.boundEnvironment ?? "").toString().trim();
+  const intended = (input.intendedEnvironment ?? "").toString().trim();
+  if (!bound || !intended) {
+    return {
+      ok: false,
+      code: "MISSING_ENVIRONMENT",
+      allowProductionOp: false,
+      reasons: ["CMS bound and intended environments are required"],
+    };
+  }
+
+  if (!isKnownCmsEnvironment(bound) || !isKnownCmsEnvironment(intended)) {
+    return {
+      ok: false,
+      code: "UNRECOGNIZED_ENVIRONMENT",
+      allowProductionOp: false,
+      reasons: [
+        `CMS environment labels must be fixture|staging|production (bound=${JSON.stringify(bound)}, intended=${JSON.stringify(intended)}) — refuse ${input.operation} (T-X007); no production op`,
+      ],
+    };
+  }
+
+  const mutating =
+    input.operation === "publish" || input.operation === "repair";
+
+  if (bound !== intended) {
+    return {
+      ok: false,
+      code: "WRONG_CMS_ENVIRONMENT",
+      allowProductionOp: false,
+      reasons: [
+        `CMS bound=${bound} ≠ intended=${intended} — refuse ${input.operation} (T-X007); no production op`,
+      ],
+    };
+  }
+
+  if (mutating && bound === CmsEnvironment.PRODUCTION) {
+    return {
+      ok: false,
+      code: "PRODUCTION_OP_REFUSED",
+      allowProductionOp: false,
+      reasons: [
+        `Production CMS ${input.operation} refused — wrong/production environment; no production op (T-X007)`,
+      ],
+    };
+  }
+
+  return {
+    ok: true,
+    allowProductionOp: false,
+    reasons: [
+      `CMS ${input.operation} allowed for matching ${bound} environment (not production; fixture/simulator only)`,
+    ],
+  };
+}

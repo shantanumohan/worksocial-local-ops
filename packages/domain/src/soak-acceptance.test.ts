@@ -402,7 +402,14 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.ORPHAN_WORKER_DEADLINE_TREE_STOPPED),
     ).toEqual(["T-X012"]);
-
+    expect(expectedProofsForFixtureCase("T-X007")).toEqual([
+      SoakProofKind.WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP,
+      ),
+    ).toEqual(["T-X007"]);
   });
 
   it("builds unique per-run artifact ids", () => {

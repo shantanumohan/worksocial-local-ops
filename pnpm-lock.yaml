@@ -555,6 +555,9 @@ importers:
       '@worksocial/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence
+      '@worksocial/provider-adapters':
+        specifier: workspace:*
+        version: link:../../packages/provider-adapters
       '@worksocial/recovery':
         specifier: workspace:*
         version: link:../recovery
