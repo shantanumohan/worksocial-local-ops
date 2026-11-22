@@ -99,6 +99,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X063": "Indirect prompt-injection exfiltration — boundary denies",
   "T-X013": "Replay historical workflow — no repeated external I/O",
   "T-X004": "Disk full during evidence write — no partial completed manifest",
+  "T-X025": "External human edit during staging — conflict retained",
 };
 
 function relatedProofsForCase(
@@ -282,6 +283,7 @@ export function compileAcceptanceEvidence(
     "T-X027 fixture ACCEPTED only via UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL",
     "T-X063 fixture ACCEPTED only via INDIRECT_PROMPT_INJECTION_EXFIL_DENIED",
     "T-X013 fixture ACCEPTED only via REPLAY_HISTORICAL_NO_REPEAT_IO (history replay; no repeated I/O)",
+    "T-X025 fixture ACCEPTED only via EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

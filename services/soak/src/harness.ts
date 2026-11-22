@@ -35,6 +35,7 @@
  * stop before dispatch claim — no adapter mutation (T-X016),
  * idempotency key payload mismatch (T-X022).
  * worker browser auth state OS deny (T-X065).
+ * external human edit during staging conflict retained (T-X025).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -68,6 +69,7 @@ import { proofEmergencyStopAtCommit } from "./emergency-stop-proof.js";
 import { proofForgedBrowserRoleIgnored } from "./forged-browser-role-proof.js";
 import { proofCrossWorkspaceReferenceDenied } from "./cross-workspace-reference-proof.js";
 import { proofApprovedPayloadEditInvalidated } from "./approved-payload-edit-proof.js";
+import { proofExternalHumanEditConflictRetained } from "./external-human-edit-staging-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -707,6 +709,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofDiskFullEvidenceNoPartialCompleted(nowPlus(nowIso, 460_000)),
   );
+  proofs.push(
+    proofExternalHumanEditConflictRetained(nowPlus(nowIso, 490_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -717,6 +722,7 @@ export async function runSoakRecoveryHarness(input: {
         : "One or more soak recovery proofs failed",
       "External effects: NONE — fake provider only",
       "T-X015 fixture ACCEPTED via dst_recurring_schedule_no_duplicates only — not live VERIFIED",
+      "T-X025 fixture ACCEPTED via external_human_edit_conflict_retained only — not live VERIFIED",
       "Live CMS/GSC/GA4/Zoho/Temporal remain NOT_WIRED",
       "T-F24/T-US-047 fixture ACCEPTED via recover_rotate_reconcile only — not live VERIFIED",
       "T-US-002/T-X002 fixture ACCEPTED via competing_supervisor_lease only — not live VERIFIED",

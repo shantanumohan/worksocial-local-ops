@@ -501,6 +501,15 @@ describe("soak-acceptance domain", () => {
         SoakProofKind.DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED,
       ),
     ).toEqual(["T-X004"]);
+
+    expect(expectedProofsForFixtureCase("T-X025")).toEqual([
+      SoakProofKind.EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED,
+      ),
+    ).toEqual(["T-X025"]);
   });
 
 });

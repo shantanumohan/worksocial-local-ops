@@ -29,7 +29,7 @@ describe("soak service (M9)", () => {
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(48);
+    expect(result.proofs).toHaveLength(49);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(
       result.proofs.every((p) =>
@@ -237,9 +237,14 @@ describe("soak service (M9)", () => {
           p.kind === SoakProofKind.DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED,
       ),
     ).toBe(true);
+    expect(
+      result.proofs.some(
+        (p) => p.kind === SoakProofKind.EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED,
+      ),
+    ).toBe(true);
   });
 
-  it("compiles fixture ACCEPTED for complete proof sets including T-X004", async () => {
+  it("compiles fixture ACCEPTED for complete proof sets including T-X025", async () => {
     const harness = await runSoakRecoveryHarness({
       stateDir: dir,
       nowIso: "2026-11-21T18:00:00.000Z",
@@ -254,7 +259,8 @@ describe("soak service (M9)", () => {
     const accepted = compiled.caseResults.filter(
       (c) => c.status === AcceptanceCaseStatus.ACCEPTED,
     );
-    expect(accepted.map((c) => c.caseId).sort()).toEqual([      "T-F24",
+    expect(accepted.map((c) => c.caseId).sort()).toEqual([
+      "T-F24",
       "T-US-002",
       "T-US-008",
       "T-US-010",
@@ -294,6 +300,7 @@ describe("soak service (M9)", () => {
       "T-X021",
       "T-X022",
       "T-X024",
+      "T-X025",
       "T-X027",
       "T-X029",
       "T-X031",
@@ -312,8 +319,8 @@ describe("soak service (M9)", () => {
       "T-X065",
       "T-X066",
       "T-X069",
-      "T-X073",
-]);
+      "T-X073"
+    ]);
     expect(compiled.caseResults.every((c) => c.status !== "VERIFIED")).toBe(
       true,
     );
@@ -350,6 +357,9 @@ describe("soak service (M9)", () => {
       "fixture",
     );
     expect(accepted.find((c) => c.caseId === "T-X022")?.environment).toBe(
+      "fixture",
+    );
+    expect(accepted.find((c) => c.caseId === "T-X025")?.environment).toBe(
       "fixture",
     );
   });
@@ -450,7 +460,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(59);
+    expect(soak.ownerReport().acceptedCases.length).toBe(60);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {
