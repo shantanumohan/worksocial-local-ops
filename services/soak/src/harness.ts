@@ -22,7 +22,8 @@
  * hard search constraints no invention (T-US-046 / T-X048),
  * GSC omitted rows unknown not zero (T-US-010 / T-X033),
  * GA4 debug not delivered conversion (T-US-008 / T-X032),
- * GA4 wrong property kind refused (T-X031).
+ * GA4 wrong property kind refused (T-X031),
+ * thank-you without CRM fails delivery (T-US-040 / T-X049).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -70,6 +71,7 @@ import { proofHardSearchConstraintsNoInvention } from "./hard-search-constraints
 import { proofGscOmittedRowsUnknownNotZero } from "./gsc-omitted-rows-proof.js";
 import { proofGa4DebugNotDeliveredConversion } from "./ga4-debug-not-delivered-proof.js";
 import { proofGa4WrongPropertyKindRefused } from "./ga4-wrong-property-kind-proof.js";
+import { proofThankYouWithoutCrmFailsDelivery } from "./thank-you-without-crm-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -575,7 +577,8 @@ function failProof(
  * hard search constraints feeds T-US-046/T-X048;
  * GSC omitted rows feeds T-US-010/T-X033;
  * GA4 debug not delivered feeds T-US-008/T-X032;
- * GA4 wrong property kind feeds T-X031.
+ * GA4 wrong property kind feeds T-X031;
+ * thank-you without CRM feeds T-US-040/T-X049.
  */
 export async function runSoakRecoveryHarness(input: {
   stateDir: string;
@@ -625,6 +628,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofGscOmittedRowsUnknownNotZero(nowPlus(nowIso, 240_000)));
   proofs.push(proofGa4DebugNotDeliveredConversion(nowPlus(nowIso, 250_000)));
   proofs.push(proofGa4WrongPropertyKindRefused(nowPlus(nowIso, 260_000)));
+  proofs.push(proofThankYouWithoutCrmFailsDelivery(nowPlus(nowIso, 270_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -656,6 +660,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-010/T-X033 fixture ACCEPTED via gsc_omitted_rows_unknown_not_zero only — not live VERIFIED",
       "T-US-008/T-X032 fixture ACCEPTED via ga4_debug_not_delivered_conversion only — not live VERIFIED",
       "T-X031 fixture ACCEPTED via ga4_wrong_property_kind_refused only — not live VERIFIED",
+      "T-US-040/T-X049 fixture ACCEPTED via thank_you_without_crm_fails_delivery only — not live VERIFIED",
     ],
   };
 }

@@ -316,6 +316,15 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.GA4_WRONG_PROPERTY_KIND_REFUSED),
     ).toEqual(["T-X031"]);
+    expect(expectedProofsForFixtureCase("T-US-040")).toEqual([
+      SoakProofKind.THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY,
+    ]);
+    expect(expectedProofsForFixtureCase("T-X049")).toEqual([
+      SoakProofKind.THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY),
+    ).toEqual(["T-US-040", "T-X049"]);
   });
 
   it("builds unique per-run artifact ids", () => {
