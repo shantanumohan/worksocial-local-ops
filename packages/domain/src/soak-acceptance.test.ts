@@ -611,5 +611,17 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X070"]);
   });
 
+
+  it("maps T-X028 to ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE only", () => {
+    expect(expectedProofsForFixtureCase("T-X028")).toEqual([
+      SoakProofKind.ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE,
+      ),
+    ).toEqual(["T-X028"]);
+  });
+
 });
 

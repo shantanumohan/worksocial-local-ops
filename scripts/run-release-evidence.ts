@@ -326,7 +326,10 @@ async function main(): Promise<void> {
     const hasTx070Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-X070",
     );
-    const expectedAccepted = [
+        const hasTx028Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-X028",
+    );
+const expectedAccepted = [
       "T-F24",
       "T-US-002",
       "T-US-008",
@@ -370,6 +373,7 @@ async function main(): Promise<void> {
       "T-X025",
       "T-X026",
       "T-X027",
+      "T-X028",
       "T-X029",
       "T-X031",
       "T-X032",
@@ -473,7 +477,8 @@ async function main(): Promise<void> {
         hasTx059Accepted &&
         hasTx060Accepted &&
         hasTx070Accepted &&
-        accepted.length === 69 &&
+        hasTx028Accepted &&
+        accepted.length === 70 &&
         JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
@@ -488,7 +493,7 @@ async function main(): Promise<void> {
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X070 validated payload not collected separate failure states fixture ACCEPTED (total 69).",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X028 actual cost exceeds estimate overrun visible fixture ACCEPTED (total 70). Live VERIFIED forbidden. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {

@@ -71,6 +71,25 @@ describe("budget accounting", () => {
     expect(settled.replayed).toBe(false);
   });
 
+  it("posts overrun when actual exceeds reserved estimate (T-X028)", () => {
+    const seed = account();
+    expect(seed.heldMinor).toBe(0);
+    const reserved = reserveBudget(seed, "r-over", 600);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    expect(reserved.account.heldMinor).toBe(0);
+    const settled = settleBudget(reserved.account, "r-over", 750);
+    expect(settled.ok).toBe(true);
+    if (!settled.ok) return;
+    expect(settled.actualMinor).toBe(750);
+    expect(settled.reservedMinor).toBe(600);
+    expect(settled.actualMinor).toBeGreaterThan(settled.reservedMinor);
+    expect(settled.account.reservedMinor).toBe(0);
+    expect(settled.account.settledMinor).toBe(750);
+    expect(settled.account.heldMinor).toBe(0);
+    expect(settled.account.openReservations["r-over"]).toBeUndefined();
+  });
+
   it("does not let a replayed settlement consume another reservation", () => {
     let state = account();
     const a = reserveBudget(state, "r-a", 400);

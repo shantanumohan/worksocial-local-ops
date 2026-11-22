@@ -113,6 +113,7 @@ import { proofIndirectPromptInjectionExfilDenied } from "./indirect-prompt-injec
 import { proofIdempotencyKeyPayloadMismatch } from "./idempotency-key-payload-mismatch-proof.js";
 import { proofWorkerBrowserAuthStateOsDenied } from "./browser-auth-state-proof.js";
 import { proofUnknownUsageCancelHoldsResidual } from "./unknown-usage-cancel-proof.js";
+import { proofActualCostExceedsEstimateOverrunVisible } from "./actual-cost-exceeds-estimate-proof.js";
 import { proofReplayHistoricalNoRepeatIo } from "./replay-historical-workflow-proof.js";
 import { proofDiskFullEvidenceNoPartialCompleted } from "./disk-full-evidence-proof.js";
 
@@ -751,7 +752,10 @@ export async function runSoakRecoveryHarness(input: {
     proofs.push(
     proofValidatedPayloadNotCollectedSeparateStates(nowPlus(nowIso, 580_000)),
   );
-  const allPassed = proofs.every((p) => p.passed);
+    proofs.push(
+    proofActualCostExceedsEstimateOverrunVisible(nowPlus(nowIso, 560_000)),
+  );
+const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
     allPassed,
@@ -813,6 +817,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X059 fixture ACCEPTED via duplicate_platform_attribution_one_booking only — not live VERIFIED",
       "T-X060 fixture ACCEPTED via currency_timezone_mismatch_no_silent_sum only — not live VERIFIED",
       "T-X070 fixture ACCEPTED via validated_payload_not_collected_separate_states only — not live VERIFIED",
+      "T-X028 fixture ACCEPTED via actual_cost_exceeds_estimate_overrun_visible only — not live VERIFIED",
     ],
   };
 }

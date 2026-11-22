@@ -223,6 +223,11 @@ export const SoakProofKind = {
    */
   UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL: "unknown_usage_cancel_holds_residual",
   /**
+   * Actual cost exceeds estimate — overrun visible in settledMinor (T-X028).
+   */
+  ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE:
+    "actual_cost_exceeds_estimate_overrun_visible",
+  /**
    * Indirect prompt-injection exfiltration denied at boundary (T-X063).
    * Untrusted web/email content cannot become instructions that exfiltrate secrets.
    */
@@ -369,6 +374,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X065 requires WORKER_BROWSER_AUTH_STATE_OS_DENIED.
  * T-X004 requires DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED (no partial COMPLETED manifest).
  * T-X027 requires UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL.
+ * T-X028 requires ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE.
  * T-X008 requires FACT_CHANGES_AFTER_REVIEW_STALE (cited/support change; no publish).
  * T-X012 requires ORPHAN_WORKER_DEADLINE_TREE_STOPPED
  * T-X007 requires WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP (process tree stopped on deadline).
@@ -457,6 +463,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X059",
   "T-X060",
   "T-X070",
+  "T-X028",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -897,6 +904,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.WORKER_BROWSER_AUTH_STATE_OS_DENIED];
     case "T-X027":
       return [SoakProofKind.UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL];
+    case "T-X028":
+      return [SoakProofKind.ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE];
     case "T-X008":
       return [SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE];
     case "T-X012":
@@ -1029,6 +1038,8 @@ export function mapProofToFixtureCases(
       return ["T-X065"];
     case SoakProofKind.UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL:
       return ["T-X027"];
+    case SoakProofKind.ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE:
+      return ["T-X028"];
     case SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE:
       return ["T-X008"];
     case SoakProofKind.ORPHAN_WORKER_DEADLINE_TREE_STOPPED:

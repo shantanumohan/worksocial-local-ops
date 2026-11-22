@@ -8,8 +8,8 @@
     "malicious_prompt_no_shell_injection"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x010.json",
-  "createdAtIso": "2026-11-22T20:02:25.143Z",
+  "createdAtIso": "2026-11-22T21:16:49.545Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x010-e50b9c2307eb"
+  "uniqueSourceArtifactId": "art-fixture-t-x010-0512b8377b77"
 }
