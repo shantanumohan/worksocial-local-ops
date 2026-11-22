@@ -43,6 +43,8 @@ function withPutReferenceCounter(broker: CredentialBroker): {
     },
     getReference: (referenceId) => broker.getReference(referenceId),
     listReferences: () => broker.listReferences(),
+    requestBrowserAuthState: (request) =>
+      broker.requestBrowserAuthState(request),
     attemptLiveProviderRevoke: (referenceId) =>
       broker.attemptLiveProviderRevoke(referenceId),
   };

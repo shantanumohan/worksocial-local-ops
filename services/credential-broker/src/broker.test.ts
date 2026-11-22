@@ -1,4 +1,8 @@
 import { describe, expect, it } from "vitest";
+import {
+  BrowserAuthAccessCode,
+  BrowserAuthStateKind,
+} from "@worksocial/domain";
 import { createCredentialBroker } from "./broker.js";
 
 describe("credential-broker isolation", () => {
@@ -181,6 +185,43 @@ describe("credential-broker isolation", () => {
     const live = broker.attemptLiveProviderRevoke(ref.referenceId);
     expect(live.code).toBe("LIVE_PROVIDER_REVOKE_NOT_WIRED");
     expect(live.externalEffects).toBe("NONE");
+  });
+
+  it("OS-denies worker browser auth-state reads while vault material stays present (T-X065)", () => {
+    const broker = createCredentialBroker();
+    const result = broker.requestBrowserAuthState({
+      principal: "claude-runner",
+      stateKind: BrowserAuthStateKind.SYSTEM_CHROME_COOKIES,
+      explicitUserConsent: true,
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.code).toBe(BrowserAuthAccessCode.OS_DENY);
+    expect(result.authMaterial).toBeNull();
+    expect(result.materialPresentInVault).toBe(true);
+    expect(result.sealedRef).toBeNull();
+    expect(result.externalEffects).toBe("NONE");
+    expect(JSON.stringify(result)).not.toMatch(/NEVER-RETURN/);
+  });
+
+  it("allows browser-pool workspace partition only with consent and sealed ref (T-X065)", () => {
+    const broker = createCredentialBroker();
+    const denied = broker.requestBrowserAuthState({
+      principal: "browser-pool",
+      stateKind: BrowserAuthStateKind.WORKSPACE_BROWSER_PARTITION,
+    });
+    expect(denied.code).toBe(BrowserAuthAccessCode.CONSENT_REQUIRED);
+    expect(denied.authMaterial).toBeNull();
+
+    const allowed = broker.requestBrowserAuthState({
+      principal: "browser-pool",
+      stateKind: BrowserAuthStateKind.WORKSPACE_BROWSER_PARTITION,
+      explicitUserConsent: true,
+    });
+    expect(allowed.allowed).toBe(true);
+    expect(allowed.code).toBe(BrowserAuthAccessCode.ALLOWED);
+    expect(allowed.authMaterial).toBeNull();
+    expect(allowed.sealedRef).toMatch(/^sealed:\/\//);
+    expect(allowed.materialPresentInVault).toBe(true);
   });
 
   it("rotates locally without claiming live provider revoke", () => {

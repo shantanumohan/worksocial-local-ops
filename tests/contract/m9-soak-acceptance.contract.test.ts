@@ -67,6 +67,7 @@ describe("contract: M9 soak / acceptance evidence", () => {
 
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X066");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X016");
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X065");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-F24");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-US-047");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-US-002");

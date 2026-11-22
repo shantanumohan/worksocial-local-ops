@@ -8,8 +8,8 @@
     "repair_weaken_test_rejected"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-042.json",
-  "createdAtIso": "2026-11-22T18:46:36.674Z",
+  "createdAtIso": "2026-11-22T18:51:24.061Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-042-bbe007d8af24"
+  "uniqueSourceArtifactId": "art-fixture-t-us-042-e06480167762"
 }

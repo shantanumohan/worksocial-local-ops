@@ -8,4 +8,13 @@ export {
   type BrokerMintResult,
 } from "./broker.js";
 
+export {
+  createBrowserAuthFixtureVault,
+  requestBrowserAuthState,
+  type BrowserAuthBoundaryPrincipal,
+  type BrowserAuthBoundaryRequest,
+  type BrowserAuthBoundaryResult,
+  type BrowserAuthFixtureVault,
+} from "./browser-auth-boundary.js";
+
 export const packageName = "@worksocial/credential-broker" as const;

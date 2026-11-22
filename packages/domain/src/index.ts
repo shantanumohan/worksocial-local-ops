@@ -860,3 +860,15 @@ export {
   type OffboardingManifest,
   type CredentialRotationState,
 } from "./credential-rotation.js";
+export {
+  BrowserAuthStateKind,
+  BrowserAuthPrincipal,
+  BrowserAuthAccessCode,
+  evaluateBrowserAuthStateAccess,
+  isWorkerBrowserAuthOsDeny,
+  type BrowserAuthStateKindValue,
+  type BrowserAuthPrincipalValue,
+  type BrowserAuthAccessCodeValue,
+  type BrowserAuthStateAccessRequest,
+  type BrowserAuthStateAccessDecision,
+} from "./browser-auth-isolation.js";
