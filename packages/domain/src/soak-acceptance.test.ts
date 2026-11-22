@@ -360,6 +360,13 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-X050"]);
 
+    expect(expectedProofsForFixtureCase("T-X009")).toEqual([
+      SoakProofKind.CLI_ERROR_DESPITE_EXIT_ZERO,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CLI_ERROR_DESPITE_EXIT_ZERO),
+    ).toEqual(["T-X009"]);
+
   it("builds unique per-run artifact ids", () => {
     const a = uniqueFixtureEvidenceArtifactId("T-X014", "soak-abcdef123456");
     const b = uniqueFixtureEvidenceArtifactId("T-X014", "soak-zzz999888777");

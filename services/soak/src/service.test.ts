@@ -29,7 +29,7 @@ describe("soak service (M9)", () => {
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(34);
+    expect(result.proofs).toHaveLength(35);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(result.proofs.every((p) => p.applyAttemptCount === 1)).toBe(true);
     expect(
@@ -174,9 +174,14 @@ describe("soak service (M9)", () => {
         (p) => p.kind === SoakProofKind.MALICIOUS_PROMPT_NO_SHELL_INJECTION,
       ),
     ).toBe(true);
+    expect(
+      result.proofs.some(
+        (p) => p.kind === SoakProofKind.CLI_ERROR_DESPITE_EXIT_ZERO,
+      ),
+    ).toBe(true);
   });
 
-  it("compiles fixture ACCEPTED for complete proof sets including T-X050", async () => {
+  it("compiles fixture ACCEPTED for complete proof sets including T-X009", async () => {
     const harness = await runSoakRecoveryHarness({
       stateDir: dir,
       nowIso: "2026-11-21T18:00:00.000Z",
@@ -213,6 +218,7 @@ describe("soak service (M9)", () => {
       "T-X003",
       "T-X005",
       "T-X006",
+      "T-X009",
       "T-X010",
       "T-X011",
       "T-X014",
@@ -256,6 +262,9 @@ describe("soak service (M9)", () => {
       "fixture",
     );
     expect(accepted.find((c) => c.caseId === "T-X011")?.environment).toBe(
+      "fixture",
+    );
+    expect(accepted.find((c) => c.caseId === "T-X009")?.environment).toBe(
       "fixture",
     );
   });
@@ -356,7 +365,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(45);
+    expect(soak.ownerReport().acceptedCases.length).toBe(46);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {

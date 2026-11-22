@@ -85,6 +85,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X003": "Symlink escape after root verification — write denied outside root",
   "T-X050": "Public synthetic flag abuse — server grant required",
   "T-X010": "Malicious prompt interpolation — no shell injection",
+  "T-X009": "CLI error despite exit 0 — job fails",
 };
 
 function relatedProofsForCase(
@@ -254,6 +255,7 @@ export function compileAcceptanceEvidence(
     "T-X003 fixture ACCEPTED only via SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION",
     "T-X050 fixture ACCEPTED only via PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT",
     "T-X010 fixture ACCEPTED only via MALICIOUS_PROMPT_NO_SHELL_INJECTION",
+    "T-X009 fixture ACCEPTED only via CLI_ERROR_DESPITE_EXIT_ZERO (job fails)",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

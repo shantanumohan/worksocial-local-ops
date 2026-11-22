@@ -654,6 +654,89 @@ function parseTypedTaskRequest(
 }
 
 /**
+ * Classify Claude Code CLI completion from exit code + stdout.
+ * Claude may exit 0 while `--output-format json` sets `is_error: true`
+ * (or subtype/type "error"). That must fail the job — never treat as success.
+ * Pure — no spawn/network.
+ */
+export type ClaudeCliCompletionClassification =
+  | { ok: true; jobShouldFail: false }
+  | {
+      ok: false;
+      code: "NONZERO_EXIT" | "CLI_REPORTED_ERROR";
+      reason: string;
+      jobShouldFail: true;
+      exitCode: number;
+    };
+
+export function classifyClaudeCliCompletion(input: {
+  exitCode: number | null;
+  stdout: string;
+  stderr?: string;
+}): ClaudeCliCompletionClassification {
+  const exitCode = input.exitCode ?? 0;
+  if (exitCode !== 0) {
+    return {
+      ok: false,
+      code: "NONZERO_EXIT",
+      reason: `CLI exited with code ${exitCode}`,
+      jobShouldFail: true,
+      exitCode,
+    };
+  }
+
+  const raw = input.stdout.trim();
+  if (!raw) {
+    return { ok: true, jobShouldFail: false };
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (parsed.is_error === true) {
+      const detail =
+        typeof parsed.result === "string" && parsed.result.trim().length > 0
+          ? parsed.result.trim().slice(0, 240)
+          : typeof parsed.error === "string" && parsed.error.trim().length > 0
+            ? parsed.error.trim().slice(0, 240)
+            : "is_error=true";
+      return {
+        ok: false,
+        code: "CLI_REPORTED_ERROR",
+        reason: `CLI error despite exit 0: ${detail}`,
+        jobShouldFail: true,
+        exitCode: 0,
+      };
+    }
+    if (parsed.subtype === "error" || parsed.type === "error") {
+      return {
+        ok: false,
+        code: "CLI_REPORTED_ERROR",
+        reason: "CLI error subtype/type despite exit 0",
+        jobShouldFail: true,
+        exitCode: 0,
+      };
+    }
+  } catch {
+    // Non-JSON stdout with exit 0 — leave to structured-output validation.
+  }
+
+  return { ok: true, jobShouldFail: false };
+}
+
+/** Map CLI completion classification to role-run status (job fails on CLI error). */
+export function roleRunStatusForClaudeCliCompletion(
+  classification: ClaudeCliCompletionClassification,
+): RoleRunStatusValue {
+  if (classification.ok) {
+    return RoleRunStatus.SUCCEEDED;
+  }
+  if (classification.code === "NONZERO_EXIT") {
+    return RoleRunStatus.FAILED;
+  }
+  return RoleRunStatus.FAILED;
+}
+
+/**
  * Unwrap Claude Code `--output-format json` envelope when present.
  * Live CLI returns `{ result: "<json-or-text>", ... }` rather than the model object alone.
  */
