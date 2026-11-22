@@ -578,4 +578,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X056"]);
   });
 
+  it("maps T-X059 to DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING only", () => {
+    expect(expectedProofsForFixtureCase("T-X059")).toEqual([
+      SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING,
+      ),
+    ).toEqual(["T-X059"]);
+  });
+
 });

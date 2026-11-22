@@ -835,6 +835,14 @@ export {
   type AutomatedResponseLoopDecision,
 } from "./automated-response-loop.js";
 export {
+  projectUniqueOutcomes,
+  refuseSilentPlatformSum,
+  DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS,
+  type PlatformAttributionClaim,
+  type UniqueOutcomeProjection,
+  type SilentPlatformSumDecision,
+} from "./platform-attribution.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

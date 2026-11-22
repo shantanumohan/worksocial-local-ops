@@ -106,6 +106,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X054": "Reply sent but CRM fails — CRM reconciles; no resend",
   "T-X055": "Unknown policy question — escalate without promise",
   "T-X056": "Automated response loop — bounded; handoff",
+  "T-X059": "Duplicate platform attribution — one booking; separate claims",
 };
 
 function relatedProofsForCase(
@@ -295,6 +296,7 @@ export function compileAcceptanceEvidence(
     "T-X054 fixture ACCEPTED only via REPLY_SENT_CRM_RECONCILES_NO_RESEND",
     "T-X055 fixture ACCEPTED only via UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE",
     "T-X056 fixture ACCEPTED only via AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF",
+    "T-X059 fixture ACCEPTED only via DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
