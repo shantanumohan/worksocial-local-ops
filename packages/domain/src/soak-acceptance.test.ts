@@ -704,5 +704,14 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X040"]);
   });
 
-
+  it("maps T-US-012 to GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED only", () => {
+    expect(expectedProofsForFixtureCase("T-US-012")).toEqual([
+      SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED,
+      ),
+    ).toEqual(["T-US-012"]);
+  });
 });

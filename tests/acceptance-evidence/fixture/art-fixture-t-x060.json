@@ -8,8 +8,8 @@
     "currency_timezone_mismatch_no_silent_sum"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x060.json",
-  "createdAtIso": "2026-11-22T21:56:32.113Z",
+  "createdAtIso": "2026-11-22T22:05:38.672Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x060-16b0b159ee8b"
+  "uniqueSourceArtifactId": "art-fixture-t-x060-4a83dbe17cb7"
 }

@@ -672,9 +672,9 @@ Required evidence:
 
 Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixture ACCEPTED below | Environment fixture_or_sandbox; live evidence separately authorized.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X023, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X030, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X043, T-X044, T-X045, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X063, T-X065, T-X066, T-X069, T-X070, T-X073.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-018, T-US-024, T-US-036, T-US-038, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-052, T-US-054, T-US-057, T-US-058, T-US-060.
 
-**T-X043** is fixture ACCEPTED only via the optimization breaks CTA journey fails proof (`OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS`) — SEO/content optimization that rewrites the booking CTA fails the DOM journey probe; the optimization CTA journey gate blocks release with `JOURNEY_REGRESSION_FAILED`. Not sandbox/prod VERIFIED.
+**T-US-012** is fixture ACCEPTED only via the Google Ads test vs production access separated proof (`GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED`) — TEST credential cannot reach PRODUCTION customer (and reverse); LIVE stays NOT_WIRED; mutate never authorized from this gate. Distinct from T-X034 (ChatGPT Ads SANDBOX→LIVE) and T-US-011 (analyze-only connect). Not sandbox/prod VERIFIED.
 
 ### Happy-path / documented flow completions
 - **T-US-001** Create a trusted local workspace (F01/SC-02) — blockers and next actions.
@@ -710,7 +710,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 - **T-US-006** Unbound URL: analysis ok, write blocked. *(fixture ACCEPTED — unbound write path fail-closed proof; not sandbox/prod VERIFIED)*
 - **T-US-008** GA4 debug validation ≠ measured receipt *(fixture ACCEPTED)*.
 - **T-US-010** Missing GSC rows ≠ zero demand *(fixture ACCEPTED)*.
-- **T-US-012** Google Ads test vs production access separated.
+- **T-US-012** Google Ads test vs production access separated. *(fixture ACCEPTED — Google Ads test vs production access separated proof; not sandbox/prod VERIFIED)*
 - **T-US-014** ChatGPT Ads key/account identity mismatch refuses bind.
 - **T-US-016** Claude runtime vs API eval auth separated.
 - **T-US-018** Gemini never used for publish/CRM/customer reply. *(fixture ACCEPTED — EVAL_ONLY operational tool forbidden proof; not sandbox/prod VERIFIED)*
@@ -842,6 +842,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-US-052** is fixture ACCEPTED only via the mocked connector not production-ready proof (`MOCKED_CONNECTOR_NOT_PRODUCTION_READY`) — `AdapterWiring.FIXTURE`/`NOT_WIRED` map to non-production live status; fixture paid-media state keeps `productionActivated=false`; `ACCEPTED_PENDING` never sets `verified=true`; LIVE adapter read evidence is refused; FIXTURE+VERIFIED still fails closed. Not sandbox/prod VERIFIED.
 
+**T-US-012** is fixture ACCEPTED only via the Google Ads test vs production access separated proof (`GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED`) — TEST credential cannot access PRODUCTION customer (and reverse); LIVE NOT_WIRED; mutate never authorized. Distinct from T-X034 and T-US-011. Not sandbox/prod VERIFIED.
+
 **T-X023** is fixture ACCEPTED only via the eventual-consistency false not-found proof (`EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND`) — instrumented fixture CRM lagging read with local write refuses create (BOUND_WAIT); after visibility reconcile MATCHED; writeAttemptCount stays 1. Not sandbox/prod VERIFIED.
 
 **T-X030** is fixture ACCEPTED only via the rate-limit bounded backoff preserves deadline proof (`RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE`) — respect Retry-After / capped exponential backoff, stop before the job deadline, surface delayed/unavailable data, never spawn agents to bypass quotas. Not sandbox/prod VERIFIED.
@@ -953,9 +955,8 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | Family | Count | Status |
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
-| T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
-| T-US (behavior_acceptance) | 60 | 41 NOT_RUN + 19 fixture ACCEPTED (T-US-002, T-US-006, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-038, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-052, T-US-054, T-US-057, T-US-058, T-US-060) |
+| T-US (behavior_acceptance) | 60 | 40 NOT_RUN + 20 fixture ACCEPTED (T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-018, T-US-024, T-US-036, T-US-038, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-052, T-US-054, T-US-057, T-US-058, T-US-060) |
 | T-X (platform/security/resilience) | 73 | 14 NOT_RUN + 59 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X023, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X030, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X040, T-X043, T-X044, T-X045, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X063, T-X065, T-X066, T-X069, T-X070, T-X073) |
-| **Total** | **159** | **81 NOT_RUN + 78 fixture ACCEPTED** |
+| **Total** | **159** | **80 NOT_RUN + 79 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.
