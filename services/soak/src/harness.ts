@@ -38,6 +38,7 @@
  * external human edit during staging conflict retained (T-X025).
  * validated payload not collected separate failure states (T-X070).
  * unbound write path fail closed (T-US-006).
+ * rate-limit bounded backoff preserves deadline (T-X030).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -84,6 +85,7 @@ import { proofValidatedPayloadNotCollectedSeparateStates } from "./validated-pay
 import { proofUnboundWritePathFailClosed } from "./unbound-write-path-proof.js";
 import { proofEventualConsistencyFalseNotFound } from "./eventual-consistency-false-not-found-proof.js";
 import { proofMockedConnectorNotProductionReady } from "./mocked-connector-not-production-ready-proof.js";
+import { proofRateLimitBoundedBackoffPreservesDeadline } from "./rate-limit-deadline-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -771,6 +773,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofEventualConsistencyFalseNotFound(nowPlus(nowIso, 630_000)),
     proofMockedConnectorNotProductionReady(nowPlus(nowIso, 640_000)),
+    proofRateLimitBoundedBackoffPreservesDeadline(nowPlus(nowIso, 650_000)),
   );
   const allPassed = proofs.every((p) => p.passed);
   return {
@@ -840,6 +843,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-006 fixture ACCEPTED via unbound_write_path_fail_closed only — not live VERIFIED",
       "T-X023 fixture ACCEPTED via eventual_consistency_false_not_found only — not live VERIFIED",
       "T-US-052 fixture ACCEPTED via mocked_connector_not_production_ready only — not live VERIFIED",
+      "T-X030 fixture ACCEPTED via rate_limit_bounded_backoff_preserves_deadline only — not live VERIFIED",
     ],
   };
 }

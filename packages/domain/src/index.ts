@@ -877,6 +877,22 @@ export {
   type PayloadIntakeDecision,
 } from "./validated-payload-collection.js";
 export {
+  DEFAULT_INITIAL_BACKOFF_SECONDS,
+  DEFAULT_BACKOFF_MULTIPLIER,
+  DEFAULT_MAX_BACKOFF_SECONDS,
+  DEFAULT_MAX_ATTEMPTS,
+  computeBackoffWaitSeconds,
+  evaluateRateLimitWithDeadline,
+  planRateLimitRecovery,
+  simulateRateLimitedProviderRecovery,
+  type ProviderRateLimitSignal,
+  type RateLimitBackoffConfig,
+  type RateLimitBackoffStep,
+  type RateLimitRecoveryOutcome,
+  type FakeProviderFetchResult,
+  type SimulatedRateLimitLoopResult,
+} from "./rate-limit-backoff.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
