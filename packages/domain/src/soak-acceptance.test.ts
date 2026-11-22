@@ -769,4 +769,15 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-US-021"]);
   });
+
+  it("maps T-US-022 to UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED only", () => {
+    expect(expectedProofsForFixtureCase("T-US-022")).toEqual([
+      SoakProofKind.UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED,
+      ),
+    ).toEqual(["T-US-022"]);
+  });
 });

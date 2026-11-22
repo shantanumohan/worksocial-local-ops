@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-022",
+  "caseId": "T-US-022",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-022 (Unsupported destination capabilities respected)\nproof=unsupported_destination_capabilities_respected applyCount=0 :: Batch → UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED; 2 allowed / 3 unsupported refused; live NOT_WIRED | Supported REVIEW_READ → SUPPORTED_CAPABILITY_ATTEMPT_ALLOWED | GBP MESSAGE_SEND → UNSUPPORTED_DESTINATION_CAPABILITY_REFUSED | False success on ADS_MUTATE → FALSE_SUCCESS_CLAIM_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | Empty matrix → CAPABILITY_MATRIX_MISSING | liveProviderSuccessClaimed=false externalEffects=NONE | Distinct from T-US-021 (connect test artifact), T-X045 (partial destinations), T-X046 (unsupported blog)\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "unsupported_destination_capabilities_respected"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-022.json",
+  "createdAtIso": "2026-11-22T23:01:44.467Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-022-7041918a29af"
+}
