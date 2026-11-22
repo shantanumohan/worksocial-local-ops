@@ -89,6 +89,54 @@ export type ClaudeCliInvokeResult =
       durationMs?: number;
     };
 
+/**
+ * Pure stdout byte-bound check for T-X011 (output bomb).
+ * Oversized output is refused and must not be delivered as usable stdout
+ * (quarantined / discarded). Counts UTF-8 bytes, not characters.
+ */
+export type StdoutBoundAssessment =
+  | { withinBound: true; byteLength: number }
+  | {
+      withinBound: false;
+      code: "OUTPUT_TOO_LARGE";
+      reason: string;
+      byteLength: number;
+    };
+
+export function assessStdoutBound(
+  stdoutUtf8: string,
+  maxOutputBytes: number,
+): StdoutBoundAssessment {
+  const byteLength = Buffer.byteLength(stdoutUtf8, "utf8");
+  if (byteLength > maxOutputBytes) {
+    return {
+      withinBound: false,
+      code: "OUTPUT_TOO_LARGE",
+      reason: `stdout exceeded ${maxOutputBytes} bytes`,
+      byteLength,
+    };
+  }
+  return { withinBound: true, byteLength };
+}
+
+/**
+ * Quarantine decision for oversized CLI stdout — bomb content is not delivered.
+ */
+export function quarantineStdoutDelivery(
+  assessment: StdoutBoundAssessment,
+):
+  | { deliver: true }
+  | { deliver: false; code: "OUTPUT_TOO_LARGE"; reason: string } {
+  if (assessment.withinBound) {
+    return { deliver: true };
+  }
+  return {
+    deliver: false,
+    code: assessment.code,
+    reason: assessment.reason,
+  };
+}
+
 export function defaultClaudeExecutableCandidates(): string[] {
   const fromEnv = process.env.WORKSOCIAL_CLAUDE_CLI?.trim();
   const candidates = [
@@ -341,13 +389,15 @@ export function invokeClaudeCli(
 
     child.stdout.on("data", (chunk: Buffer) => {
       stdout += chunk.toString("utf8");
-      if (Buffer.byteLength(stdout, "utf8") > request.maxOutputBytes) {
+      const bound = assessStdoutBound(stdout, request.maxOutputBytes);
+      if (!bound.withinBound) {
         child.kill("SIGKILL");
         clearTimeout(timer);
+        // Quarantine: do not deliver bomb stdout to callers.
         finish({
           ok: false,
-          code: "OUTPUT_TOO_LARGE",
-          reason: `stdout exceeded ${request.maxOutputBytes} bytes`,
+          code: bound.code,
+          reason: bound.reason,
           durationMs: Date.now() - started,
         });
       }

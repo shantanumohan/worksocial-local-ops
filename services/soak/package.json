@@ -18,6 +18,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@worksocial/claude-runner": "workspace:*",
     "@worksocial/credential-broker": "workspace:*",
     "@worksocial/credential-rotation": "workspace:*",
     "@worksocial/domain": "workspace:*",

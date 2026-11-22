@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x011",
+  "caseId": "T-X011",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X011 (Output bomb — bounded/quarantined)\nproof=output_bomb_bounded_quarantined applyCount=1 :: Oversized stdout (2112B > 2048) → OUTPUT_TOO_LARGE quarantined | Under-bound stdout remains deliverable | UTF-8 multi-byte bomb counted by bytes (4096B) | invokeClaudeCli bomb → OUTPUT_TOO_LARGE; bomb stdout quarantined (not delivered) | Under-bound invokeClaudeCli stdout delivered | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "output_bomb_bounded_quarantined"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x011.json",
+  "createdAtIso": "2026-11-22T18:04:44.092Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x011-fa9f830546a1"
+}

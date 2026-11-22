@@ -29,7 +29,7 @@ describe("soak service (M9)", () => {
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(30);
+    expect(result.proofs).toHaveLength(31);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(result.proofs.every((p) => p.applyAttemptCount === 1)).toBe(true);
     expect(
@@ -148,9 +148,19 @@ describe("soak service (M9)", () => {
         (p) => p.kind === SoakProofKind.STOP_AFTER_DISPATCH_RECONCILE,
       ),
     ).toBe(true);
+    expect(
+      result.proofs.some(
+        (p) => p.kind === SoakProofKind.OLD_FENCE_AFTER_REASSIGNMENT,
+      ),
+    ).toBe(true);
+    expect(
+      result.proofs.some(
+        (p) => p.kind === SoakProofKind.OUTPUT_BOMB_BOUNDED_QUARANTINED,
+      ),
+    ).toBe(true);
   });
 
-  it("compiles fixture ACCEPTED for complete proof sets including T-X017", async () => {
+  it("compiles fixture ACCEPTED for complete proof sets including T-X011", async () => {
     const harness = await runSoakRecoveryHarness({
       stateDir: dir,
       nowIso: "2026-11-21T18:00:00.000Z",
@@ -186,6 +196,7 @@ describe("soak service (M9)", () => {
       "T-X002",
       "T-X005",
       "T-X006",
+      "T-X011",
       "T-X014",
       "T-X017",
       "T-X018",
@@ -223,6 +234,9 @@ describe("soak service (M9)", () => {
       "fixture",
     );
     expect(accepted.find((c) => c.caseId === "T-X017")?.environment).toBe(
+      "fixture",
+    );
+    expect(accepted.find((c) => c.caseId === "T-X011")?.environment).toBe(
       "fixture",
     );
   });
@@ -323,7 +337,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(41);
+    expect(soak.ownerReport().acceptedCases.length).toBe(42);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {

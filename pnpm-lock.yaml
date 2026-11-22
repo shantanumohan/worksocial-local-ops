@@ -537,6 +537,9 @@ importers:
 
   services/soak:
     dependencies:
+      '@worksocial/claude-runner':
+        specifier: workspace:*
+        version: link:../claude-runner
       '@worksocial/credential-broker':
         specifier: workspace:*
         version: link:../credential-broker

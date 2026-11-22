@@ -103,6 +103,7 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X049");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X017");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X024");
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X011");
 
     const soak = createSoakService(createFileSoakStore(dir));
     const run = await soak.runFixtureSoak({

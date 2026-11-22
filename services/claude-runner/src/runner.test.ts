@@ -13,6 +13,8 @@ import {
   FORBIDDEN_CLI_FLAGS,
   isRegisteredAgentName,
   DEFAULT_LIVE_CLI_TOOLS,
+  assessStdoutBound,
+  quarantineStdoutDelivery,
 } from "./cli-adapter.js";
 import { createClaudeRunner } from "./runner.js";
 import { runAllRoleFixtureEvaluations } from "./fixture-runner.js";
@@ -58,6 +60,18 @@ describe("claude-runner (R1-04)", () => {
     expect(isRegisteredAgentName("A01")).toBe(true);
     expect(isRegisteredAgentName("/tmp/.claude/agents/A01.md")).toBe(false);
     expect(DEFAULT_LIVE_CLI_TOOLS).toBe("");
+  });
+
+  it("bounds and quarantines output-bomb stdout (T-X011)", () => {
+    const over = assessStdoutBound("A".repeat(100), 50);
+    expect(over.withinBound).toBe(false);
+    if (!over.withinBound) {
+      expect(over.code).toBe("OUTPUT_TOO_LARGE");
+    }
+    expect(quarantineStdoutDelivery(over).deliver).toBe(false);
+    const under = assessStdoutBound("ok", 50);
+    expect(under.withinBound).toBe(true);
+    expect(quarantineStdoutDelivery(under).deliver).toBe(true);
   });
 
   it("runs all 30 roles in fixture mode", async () => {

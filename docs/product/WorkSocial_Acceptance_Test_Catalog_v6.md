@@ -746,7 +746,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X005, T-X006, T-X014, T-X017, T-X018, T-X019, T-X020, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X005, T-X006, T-X011, T-X014, T-X017, T-X018, T-X019, T-X020, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073.
 
 **T-X066** is fixture ACCEPTED only via the backup / omit-receipt / post-restore reconcile proof (`BACKUP_OMIT_RECEIPT`). Retry-only no-duplicate-effects does **not** satisfy this case. Not sandbox/prod VERIFIED.
 
@@ -798,6 +798,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X024** is fixture ACCEPTED only via the old fence after reassignment proof (`OLD_FENCE_AFTER_REASSIGNMENT`). Not sandbox/prod VERIFIED.
 
+**T-X011** is fixture ACCEPTED only via the output bomb bounded/quarantined proof (`OUTPUT_BOMB_BOUNDED_QUARANTINED`) — oversized CLI stdout is refused (`OUTPUT_TOO_LARGE`) and not delivered. Not sandbox/prod VERIFIED.
+
 Shared evidence for each: actual state before/after; instrumented provider call count or read-back; correlated redacted logs/traces; no unauthorized external effect.
 
 | ID | Title | Focus |
@@ -812,7 +814,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X008 | Fact changes after review | Stale; no publish |
 | T-X009 | CLI error despite exit 0 | Job fails |
 | T-X010 | Malicious prompt interpolation | No shell injection |
-| T-X011 | Output bomb | Bounded/quarantined |
+| T-X011 | Output bomb | Bounded/quarantined *(fixture ACCEPTED — output bomb bounded/quarantined proof; not sandbox/prod VERIFIED)* |
 | T-X012 | Orphan worker on deadline | Process tree stopped |
 | T-X013 | Replay historical workflow | No repeated external I/O |
 | T-X014 | Approval wait survives restart | Resume wait; no slot hold *(fixture ACCEPTED)* |
@@ -884,7 +886,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
 | T-US (behavior_acceptance) | 60 | 44 NOT_RUN + 16 fixture ACCEPTED (T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060) |
-| T-X (platform/security/resilience) | 73 | 49 NOT_RUN + 24 fixture ACCEPTED (T-X002, T-X005, T-X006, T-X014, T-X017, T-X018, T-X019, T-X020, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073) |
-| **Total** | **159** | **118 NOT_RUN + 41 fixture ACCEPTED** |
+| T-X (platform/security/resilience) | 73 | 48 NOT_RUN + 25 fixture ACCEPTED (T-X002, T-X005, T-X006, T-X011, T-X014, T-X017, T-X018, T-X019, T-X020, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073) |
+| **Total** | **159** | **117 NOT_RUN + 42 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.
