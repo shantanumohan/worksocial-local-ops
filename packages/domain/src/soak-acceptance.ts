@@ -391,6 +391,14 @@ export const SoakProofKind = {
    */
   STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS:
     "standing_autonomy_grant_control_receipts",
+  /**
+   * Launch workstream + recurring schedule with mission outcome (T-US-025).
+   * Objective/pilot scope, readiness gates, dry rehearsal (NONE), frequency/
+   * timezone/cooldown, launch receipt, mission outcome + next action; live
+   * NOT_WIRED. Distinct from T-US-026 / T-X015.
+   */
+  LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME:
+    "launch_workstream_schedule_mission_outcome",
 } as const;
 
 export type SoakProofKindValue =
@@ -501,6 +509,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-021 requires CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT (local/social/inbox connect; test artifact + capability; live NOT_WIRED).
  * T-US-022 requires UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED (unsupported destination capabilities refused; live NOT_WIRED).
  * T-US-023 requires STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS (owner-signed standing autonomy + control receipts; live NOT_WIRED).
+ * T-US-025 requires LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME (workstream launch + schedule + mission outcome; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -590,6 +599,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-021",
   "T-US-022",
   "T-US-023",
+  "T-US-025",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1098,6 +1108,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED];
     case "T-US-023":
       return [SoakProofKind.STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS];
+    case "T-US-025":
+      return [SoakProofKind.LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME];
     default:
       return [];
   }
@@ -1262,6 +1274,8 @@ export function mapProofToFixtureCases(
       return ["T-US-022"];
     case SoakProofKind.STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS:
       return ["T-US-023"];
+    case SoakProofKind.LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME:
+      return ["T-US-025"];
     default:
       return [];
   }

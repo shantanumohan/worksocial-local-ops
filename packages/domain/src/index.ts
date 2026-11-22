@@ -999,6 +999,20 @@ export {
   type StandingAutonomyGrantDecision,
 } from "./standing-autonomy-grant.js";
 export {
+  WorkstreamScheduleFrequency,
+  WORKSTREAM_SCHEDULE_LAUNCH_RELATED_CASE_IDS,
+  evaluateWorkstreamScheduleLaunch,
+  type WorkstreamScheduleFrequencyValue,
+  type WorkstreamPilotScope,
+  type WorkstreamReadinessGates,
+  type WorkstreamPlanEstimate,
+  type WorkstreamDryRunBundle,
+  type WorkstreamScheduleSelection,
+  type WorkstreamMissionOutcome,
+  type WorkstreamScheduleLaunchInput,
+  type WorkstreamScheduleLaunchDecision,
+} from "./workstream-schedule-launch.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
