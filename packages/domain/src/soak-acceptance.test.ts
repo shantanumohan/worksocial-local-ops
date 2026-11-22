@@ -512,4 +512,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X025"]);
   });
 
+  it("maps T-X043 to OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS only", () => {
+    expect(expectedProofsForFixtureCase("T-X043")).toEqual([
+      SoakProofKind.OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS,
+      ),
+    ).toEqual(["T-X043"]);
+  });
+
 });

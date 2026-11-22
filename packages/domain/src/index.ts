@@ -241,6 +241,7 @@ export {
   buildProbeWritePathOutcome,
   evaluateHttpProbe,
   evaluateDomJourneyFixture,
+  evaluateOptimizationCtaJourneyGate,
   type ProbeKindValue,
   type ProbeModeValue,
   type ProbeVerdictValue,

@@ -523,6 +523,47 @@ export function evaluateDomJourneyFixture(input: {
   };
 }
 
+/**
+ * Gate an SEO/content optimization against CTA journey regression (T-X043).
+ * When post-optimization HTML fails the CTA journey, release is blocked —
+ * journey regression fails; never silently allowed.
+ */
+export function evaluateOptimizationCtaJourneyGate(input: {
+  /** Rendered page HTML after the proposed optimization. */
+  optimizedHtml: string;
+  journeySteps: readonly DomJourneyStep[];
+}): {
+  allowed: boolean;
+  code: "JOURNEY_REGRESSION_FAILED" | null;
+  reasons: string[];
+  journeyVerdict: ProbeVerdictValue;
+  failedStepDetails: string[];
+} {
+  const journey = evaluateDomJourneyFixture({
+    html: input.optimizedHtml,
+    steps: input.journeySteps,
+  });
+  if (journey.verdict === ProbeVerdict.SUCCESS) {
+    return {
+      allowed: true,
+      code: null,
+      reasons: ["CTA journey regression passed"],
+      journeyVerdict: journey.verdict,
+      failedStepDetails: [],
+    };
+  }
+  return {
+    allowed: false,
+    code: "JOURNEY_REGRESSION_FAILED",
+    reasons: [
+      "Optimization breaks CTA — journey regression failed",
+      ...journey.details,
+    ],
+    journeyVerdict: journey.verdict,
+    failedStepDetails: [...journey.details],
+  };
+}
+
 /** Catalog case ids related to monitoring (do not mark VERIFIED without evidence). */
 export const MONITORING_RELATED_CASE_IDS = [
   "T-F20", // form-to-CRM continuous canary journey (catalog)
@@ -530,4 +571,5 @@ export const MONITORING_RELATED_CASE_IDS = [
   "T-US-040", // thank-you without Zoho record fails at CRM
   "T-X049", // thank-you but no CRM record — fail at delivery
   "T-X001", // host sleeps during scheduled monitoring
+  "T-X043", // optimization breaks CTA — journey regression fails
 ] as const;

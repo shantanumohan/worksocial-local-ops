@@ -70,6 +70,7 @@ import { proofForgedBrowserRoleIgnored } from "./forged-browser-role-proof.js";
 import { proofCrossWorkspaceReferenceDenied } from "./cross-workspace-reference-proof.js";
 import { proofApprovedPayloadEditInvalidated } from "./approved-payload-edit-proof.js";
 import { proofExternalHumanEditConflictRetained } from "./external-human-edit-staging-proof.js";
+import { proofOptimizationBreaksCtaJourneyFails } from "./optimization-breaks-cta-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -712,6 +713,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofExternalHumanEditConflictRetained(nowPlus(nowIso, 490_000)),
   );
+  proofs.push(
+    proofOptimizationBreaksCtaJourneyFails(nowPlus(nowIso, 480_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -765,6 +769,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X013 fixture ACCEPTED via replay_historical_no_repeat_io only — not live VERIFIED",
       "T-X027 fixture ACCEPTED via unknown_usage_cancel_holds_residual only — not live VERIFIED",
       "T-X004 fixture ACCEPTED via disk_full_evidence_no_partial_completed only — not live VERIFIED",
+      "T-X043 fixture ACCEPTED via optimization_breaks_cta_journey_fails only — not live VERIFIED",
     ],
   };
 }

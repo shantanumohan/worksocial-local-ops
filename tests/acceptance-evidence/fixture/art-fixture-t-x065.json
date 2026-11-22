@@ -8,8 +8,8 @@
     "worker_browser_auth_state_os_denied"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x065.json",
-  "createdAtIso": "2026-11-22T19:10:46.436Z",
+  "createdAtIso": "2026-11-22T19:15:06.234Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x065-7d70b7d4cada"
+  "uniqueSourceArtifactId": "art-fixture-t-x065-7ee0bc8cb5aa"
 }

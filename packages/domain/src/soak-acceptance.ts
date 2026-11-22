@@ -242,6 +242,11 @@ export const SoakProofKind = {
    * External human edit during staging — conflict retained (T-X025).
    */
   EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED: "external_human_edit_conflict_retained",
+  /**
+   * Optimization breaks CTA → journey regression fails (T-X043).
+   */
+  OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS:
+    "optimization_breaks_cta_journey_fails",
 } as const;
 
 export type SoakProofKindValue =
@@ -327,6 +332,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X063 requires INDIRECT_PROMPT_INJECTION_EXFIL_DENIED.
  * T-X013 requires REPLAY_HISTORICAL_NO_REPEAT_IO (history replay; no second I/O).
  * T-X025 requires EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED.
+ * T-X043 requires OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS (CTA journey regression).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -390,6 +396,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X027",
   "T-X004",
   "T-X025",
+  "T-X043",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -846,6 +853,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED];
     case "T-X025":
       return [SoakProofKind.EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED];
+    case "T-X043":
+      return [SoakProofKind.OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS];
     default:
       return [];
   }
@@ -960,6 +969,8 @@ export function mapProofToFixtureCases(
       return ["T-X004"];
     case SoakProofKind.EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED:
       return ["T-X025"];
+    case SoakProofKind.OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS:
+      return ["T-X043"];
     default:
       return [];
   }
