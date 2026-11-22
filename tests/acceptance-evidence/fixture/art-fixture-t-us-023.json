@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-023",
+  "caseId": "T-US-023",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-023 (Grant standing autonomy — control tests with receipts)\nproof=standing_autonomy_grant_control_receipts applyCount=0 :: Ready → STANDING_AUTONOMY_GRANT_READY; 3 control receipts; spend explicit; live NOT_WIRED | agentSelfApprove → AGENT_SELF_APPROVE_REFUSED | adSpend side-effect → AD_SPEND_SIDE_EFFECT_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | unsigned → OWNER_SIGNATURE_REQUIRED | liveProviderSuccessClaimed=false externalEffects=NONE | Distinct from T-US-024 (agent cannot widen grant) and T-US-060 (emergency stop at commit)\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "standing_autonomy_grant_control_receipts"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-023.json",
+  "createdAtIso": "2026-11-22T23:10:03.490Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-023-c9f41722c050"
+}
