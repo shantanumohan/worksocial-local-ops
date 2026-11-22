@@ -214,6 +214,10 @@ export const SoakProofKind = {
    * Pre-apply CANCELLED with applyAttempts=0 / no fake-provider entry.
    */
   STOP_BEFORE_DISPATCH_NO_MUTATION: "stop_before_dispatch_no_mutation",
+  /**
+   * Worker reads browser auth state → OS deny (T-X065).
+   */
+  WORKER_BROWSER_AUTH_STATE_OS_DENIED: "worker_browser_auth_state_os_denied",
 } as const;
 
 export type SoakProofKindValue =
@@ -289,6 +293,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X001 requires HOST_SLEEP_MONITORING_COVERAGE_GAP.
  * T-X021 requires CONCURRENT_IDEMPOTENT_RELEASE (not retry-only NO_DUPLICATE_EFFECTS).
  * T-X022 requires IDEMPOTENCY_KEY_PAYLOAD_MISMATCH (business key digest conflict).
+ * T-X065 requires WORKER_BROWSER_AUTH_STATE_OS_DENIED.
  * T-X008 requires FACT_CHANGES_AFTER_REVIEW_STALE (cited/support change; no publish).
  * T-X012 requires ORPHAN_WORKER_DEADLINE_TREE_STOPPED
  * T-X007 requires WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP (process tree stopped on deadline).
@@ -346,6 +351,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X001",
   "T-X021",
   "T-X022",
+  "T-X065",
   "T-X008",
   "T-X012",
   "T-X007",
@@ -786,6 +792,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE];
     case "T-X022":
       return [SoakProofKind.IDEMPOTENCY_KEY_PAYLOAD_MISMATCH];
+    case "T-X065":
+      return [SoakProofKind.WORKER_BROWSER_AUTH_STATE_OS_DENIED];
     case "T-X008":
       return [SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE];
     case "T-X012":
@@ -888,6 +896,8 @@ export function mapProofToFixtureCases(
       return ["T-X021"];
     case SoakProofKind.IDEMPOTENCY_KEY_PAYLOAD_MISMATCH:
       return ["T-X022"];
+    case SoakProofKind.WORKER_BROWSER_AUTH_STATE_OS_DENIED:
+      return ["T-X065"];
     case SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE:
       return ["T-X008"];
     case SoakProofKind.ORPHAN_WORKER_DEADLINE_TREE_STOPPED:

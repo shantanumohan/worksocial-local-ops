@@ -34,6 +34,7 @@
  * wrong CMS environment no production op (T-X007).
  * stop before dispatch claim — no adapter mutation (T-X016),
  * idempotency key payload mismatch (T-X022).
+ * worker browser auth state OS deny (T-X065).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -97,6 +98,7 @@ import { proofOrphanWorkerDeadlineTreeStopped } from "./orphan-worker-deadline-p
 import { proofWrongCmsEnvironmentNoProductionOp } from "./wrong-cms-environment-proof.js";
 import { proofStopBeforeDispatchClaim } from "./stop-before-dispatch-proof.js";
 import { proofIdempotencyKeyPayloadMismatch } from "./idempotency-key-payload-mismatch-proof.js";
+import { proofWorkerBrowserAuthStateOsDenied } from "./browser-auth-state-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -687,6 +689,7 @@ export async function runSoakRecoveryHarness(input: {
       nowPlus(nowIso, 420_000),
     ),
   );
+  proofs.push(proofWorkerBrowserAuthStateOsDenied(nowPlus(nowIso, 430_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -734,6 +737,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X007 fixture ACCEPTED via wrong_cms_environment_no_production_op only — not live VERIFIED",
       "T-X016 fixture ACCEPTED via stop_before_dispatch_no_mutation only — not live VERIFIED",
       "T-X022 fixture ACCEPTED via idempotency_key_payload_mismatch only — not live VERIFIED",
+      "T-X065 fixture ACCEPTED via worker_browser_auth_state_os_denied only — not live VERIFIED",
     ],
   };
 }

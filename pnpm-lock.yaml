@@ -266,6 +266,10 @@ importers:
         version: 2.1.8(@types/node@22.10.2)(terser@5.51.4)
 
   services/credential-broker:
+    dependencies:
+      '@worksocial/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
     devDependencies:
       '@types/node':
         specifier: 22.10.2

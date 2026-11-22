@@ -393,6 +393,12 @@ describe("soak-acceptance domain", () => {
     expect(expectedProofsForFixtureCase("T-X022")).toEqual([
       SoakProofKind.IDEMPOTENCY_KEY_PAYLOAD_MISMATCH,
     ]);
+    expect(expectedProofsForFixtureCase("T-X065")).toEqual([
+      SoakProofKind.WORKER_BROWSER_AUTH_STATE_OS_DENIED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.WORKER_BROWSER_AUTH_STATE_OS_DENIED),
+    ).toEqual(["T-X065"]);
     expect(
       mapProofToFixtureCases(SoakProofKind.IDEMPOTENCY_KEY_PAYLOAD_MISMATCH),
     ).toEqual(["T-X022"]);

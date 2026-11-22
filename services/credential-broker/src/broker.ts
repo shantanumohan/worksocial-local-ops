@@ -4,11 +4,21 @@
  * Reasoning / learning workers (claude-runner, evaluation, learning-worker)
  * never receive blanket secrets or production effect credentials.
  *
+ * T-X065: browser auth-state reads go through requestBrowserAuthState —
+ * workers are OS-denied; raw cookie material never leaves the fixture vault.
+ *
  * WP10: local revoke marks references revoked and denies mint/reveal.
  * Live provider revoke stays NOT_WIRED — never invents remote token revocation.
  */
 
 import { createHash, randomBytes } from "node:crypto";
+import {
+  createBrowserAuthFixtureVault,
+  requestBrowserAuthState,
+  type BrowserAuthBoundaryRequest,
+  type BrowserAuthBoundaryResult,
+  type BrowserAuthFixtureVault,
+} from "./browser-auth-boundary.js";
 
 export type BrokerPrincipal =
   | "action-gateway"
@@ -123,6 +133,13 @@ export type CredentialBroker = {
   }): BrokerRotateResult;
   getReference(referenceId: string): CredentialReference | null;
   listReferences(): CredentialReference[];
+  /**
+   * Worker/browser-pool attempt to read OS or workspace browser auth state.
+   * Enforces domain OS deny; never returns raw cookie bytes (T-X065).
+   */
+  requestBrowserAuthState(
+    request: BrowserAuthBoundaryRequest,
+  ): BrowserAuthBoundaryResult;
   /** Honest live provider revoke — always NOT_WIRED. */
   attemptLiveProviderRevoke(referenceId: string): {
     ok: false;
@@ -137,6 +154,8 @@ export function createCredentialBroker(): CredentialBroker {
   const references = new Map<string, CredentialReference>();
   const secrets = new Map<string, string>();
   const handles = new Map<string, ScopedCredentialHandle>();
+  const browserAuthVault: BrowserAuthFixtureVault =
+    createBrowserAuthFixtureVault();
 
   const putReference = (
     providerId: string,
@@ -356,6 +375,8 @@ export function createCredentialBroker(): CredentialBroker {
     rotateReference,
     getReference: (referenceId) => references.get(referenceId) ?? null,
     listReferences: () => [...references.values()],
+    requestBrowserAuthState: (request) =>
+      requestBrowserAuthState(browserAuthVault, request),
     attemptLiveProviderRevoke: (referenceId) => ({
       ok: false,
       code: "LIVE_PROVIDER_REVOKE_NOT_WIRED",

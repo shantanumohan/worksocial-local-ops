@@ -268,6 +268,9 @@ async function main(): Promise<void> {
     const hasTx022Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-X022",
     );
+    const hasTx065Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-X065",
+    );
     const expectedAccepted = [
       "T-F24",
       "T-US-002",
@@ -320,6 +323,7 @@ async function main(): Promise<void> {
       "T-X053",
       "T-X057",
       "T-X058",
+      "T-X065",
       "T-X066",
       "T-X069",
       "T-X073"
@@ -385,7 +389,8 @@ async function main(): Promise<void> {
         hasTx007Accepted &&
         hasTx016Accepted &&
         hasTx022Accepted &&
-        accepted.length === 54 &&
+        hasTx065Accepted &&
+        accepted.length === 55 &&
         JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
@@ -400,7 +405,7 @@ async function main(): Promise<void> {
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X022 idempotency-key-payload-mismatch fixture ACCEPTED (keeps T-X016). Live VERIFIED forbidden. Not R1-complete.",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X065 worker browser auth OS deny fixture ACCEPTED (total 55). Live VERIFIED forbidden. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {
