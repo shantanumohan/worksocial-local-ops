@@ -665,4 +665,14 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-US-006"]);
   });
 
+
+  it("maps T-X036 to RECENT_ADS_CONVERSION_BLANK_PENDING only", () => {
+    expect(expectedProofsForFixtureCase("T-X036")).toEqual([
+      SoakProofKind.RECENT_ADS_CONVERSION_BLANK_PENDING,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.RECENT_ADS_CONVERSION_BLANK_PENDING),
+    ).toEqual(["T-X036"]);
+  });
+
 });

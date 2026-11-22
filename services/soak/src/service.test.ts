@@ -29,7 +29,7 @@ describe("soak service (M9)", () => {
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(63);
+    expect(result.proofs).toHaveLength(64);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(
       result.proofs.every((p) =>
@@ -327,8 +327,7 @@ describe("soak service (M9)", () => {
     const accepted = compiled.caseResults.filter(
       (c) => c.status === AcceptanceCaseStatus.ACCEPTED,
     );
-    expect(accepted.map((c) => c.caseId).sort()).toEqual([
-      "T-F24",
+    expect(accepted.map((c) => c.caseId).sort()).toEqual([      "T-F24",
       "T-US-002",
       "T-US-006",
       "T-US-008",
@@ -378,6 +377,7 @@ describe("soak service (M9)", () => {
       "T-X031",
       "T-X032",
       "T-X033",
+      "T-X036",
       "T-X037",
       "T-X038",
       "T-X039",
@@ -401,7 +401,7 @@ describe("soak service (M9)", () => {
       "T-X066",
       "T-X069",
       "T-X070",
-      "T-X073"
+      "T-X073",
     ]);
     expect(compiled.caseResults.every((c) => c.status !== "VERIFIED")).toBe(
       true,
@@ -545,7 +545,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(74);
+    expect(soak.ownerReport().acceptedCases.length).toBe(75);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {
@@ -572,4 +572,5 @@ describe("soak service (M9)", () => {
       expect(stored).toContain(id);
   }
   });
+
 });

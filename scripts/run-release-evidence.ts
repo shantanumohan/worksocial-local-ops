@@ -341,6 +341,9 @@ async function main(): Promise<void> {
     const hasTx023Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-X023",
     );
+    const hasTx036Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-X036",
+    );
 const expectedAccepted = [
       "T-F24",
       "T-US-002",
@@ -392,6 +395,7 @@ const expectedAccepted = [
       "T-X031",
       "T-X032",
       "T-X033",
+      "T-X036",
       "T-X037",
       "T-X038",
       "T-X039",
@@ -498,7 +502,8 @@ const expectedAccepted = [
         hasTx045Accepted &&
         hasUs006Accepted &&
         hasTx023Accepted &&
-        accepted.length === 74 &&
+        hasTx036Accepted &&
+        accepted.length === 75 &&
         JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
@@ -513,7 +518,7 @@ const expectedAccepted = [
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X023 eventual consistency false not-found fixture ACCEPTED (total 74). Live VERIFIED forbidden. Not R1-complete.",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X023 eventual consistency and T-X036 recent Ads conversion blank fixtures ACCEPTED (total 75). Live VERIFIED forbidden. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {

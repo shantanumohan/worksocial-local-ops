@@ -83,6 +83,7 @@ import { proofCurrencyTimezoneMismatchNoSilentSum } from "./currency-timezone-mi
 import { proofValidatedPayloadNotCollectedSeparateStates } from "./validated-payload-not-collected-proof.js";
 import { proofUnboundWritePathFailClosed } from "./unbound-write-path-proof.js";
 import { proofEventualConsistencyFalseNotFound } from "./eventual-consistency-false-not-found-proof.js";
+import { proofRecentAdsConversionBlankPending } from "./recent-ads-conversion-blank-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -770,6 +771,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofEventualConsistencyFalseNotFound(nowPlus(nowIso, 630_000)),
   );
+  proofs.push(proofRecentAdsConversionBlankPending(nowPlus(nowIso, 450_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -782,6 +784,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X015 fixture ACCEPTED via dst_recurring_schedule_no_duplicates only — not live VERIFIED",
       "T-X025 fixture ACCEPTED via external_human_edit_conflict_retained only — not live VERIFIED",
       "T-X026 fixture ACCEPTED via concurrent_final_budget_reservation_cap only — not live VERIFIED",
+      "T-X036 fixture ACCEPTED via recent_ads_conversion_blank_pending only — not live VERIFIED",
       "Live CMS/GSC/GA4/Zoho/Temporal remain NOT_WIRED",
       "T-F24/T-US-047 fixture ACCEPTED via recover_rotate_reconcile only — not live VERIFIED",
       "T-US-002/T-X002 fixture ACCEPTED via competing_supervisor_lease only — not live VERIFIED",
