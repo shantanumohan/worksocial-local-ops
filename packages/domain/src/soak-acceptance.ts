@@ -185,6 +185,11 @@ export const SoakProofKind = {
    * Host sleeps during scheduled monitoring — coverage gap honest; coalesce (T-X001).
    */
   HOST_SLEEP_MONITORING_COVERAGE_GAP: "host_sleep_monitoring_coverage_gap",
+  /**
+   * Concurrent idempotent releases → one dispatch (T-X021).
+   * Distinct from NO_DUPLICATE_EFFECTS (sequential retry-only).
+   */
+  CONCURRENT_IDEMPOTENT_RELEASE: "concurrent_idempotent_release",
 } as const;
 
 export type SoakProofKindValue =
@@ -258,6 +263,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X009 requires CLI_ERROR_DESPITE_EXIT_ZERO (job fails when CLI reports error on exit 0).
  * T-X015 requires DST_RECURRING_SCHEDULE_NO_DUPLICATES.
  * T-X001 requires HOST_SLEEP_MONITORING_COVERAGE_GAP.
+ * T-X021 requires CONCURRENT_IDEMPOTENT_RELEASE (not retry-only NO_DUPLICATE_EFFECTS).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -309,6 +315,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X009",
   "T-X015",
   "T-X001",
+  "T-X021",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -741,6 +748,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.DST_RECURRING_SCHEDULE_NO_DUPLICATES];
     case "T-X001":
       return [SoakProofKind.HOST_SLEEP_MONITORING_COVERAGE_GAP];
+    case "T-X021":
+      return [SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE];
     default:
       return [];
   }
@@ -749,7 +758,8 @@ export function expectedProofsForFixtureCase(
 /**
  * Map a proof kind to catalog cases it honestly exercises.
  * NO_DUPLICATE_EFFECTS stays unmapped: T-X066 requires BACKUP_OMIT_RECEIPT
- * (backup / omit-receipt / post-restore reconcile), not retry-only no-dup.
+ * (backup / omit-receipt / post-restore reconcile), not retry-only no-dup;
+ * T-X021 requires CONCURRENT_IDEMPOTENT_RELEASE, not retry-only no-dup.
  */
 export function mapProofToFixtureCases(
   kind: SoakProofKindValue,
@@ -829,6 +839,8 @@ export function mapProofToFixtureCases(
       return ["T-X015"];
     case SoakProofKind.HOST_SLEEP_MONITORING_COVERAGE_GAP:
       return ["T-X001"];
+    case SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE:
+      return ["T-X021"];
     default:
       return [];
   }

@@ -88,6 +88,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X009": "CLI error despite exit 0 — job fails",
   "T-X015": "DST recurring schedule — no unintended duplicates",
   "T-X001": "Host sleeps during scheduled monitoring — coverage gap honest; coalesce",
+  "T-X021": "Concurrent idempotent releases — one dispatch",
 };
 
 function relatedProofsForCase(
@@ -260,6 +261,7 @@ export function compileAcceptanceEvidence(
     "T-X009 fixture ACCEPTED only via CLI_ERROR_DESPITE_EXIT_ZERO (job fails)",
     "T-X015 fixture ACCEPTED only via DST_RECURRING_SCHEDULE_NO_DUPLICATES (no unintended duplicates)",
     "T-X001 fixture ACCEPTED only via HOST_SLEEP_MONITORING_COVERAGE_GAP",
+    "T-X021 fixture ACCEPTED only via CONCURRENT_IDEMPOTENT_RELEASE (not retry-only NO_DUPLICATE_EFFECTS)",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
