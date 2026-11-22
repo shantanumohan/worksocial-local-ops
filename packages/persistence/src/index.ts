@@ -17,6 +17,13 @@ export {
 } from "./sync-path-policy.js";
 
 export {
+  evaluateWriteWithinRoot,
+  isLogicalPathInsideRoot,
+  type WriteWithinRootOptions,
+  type WriteWithinRootVerdict,
+} from "./write-root-policy.js";
+
+export {
   assertDurableRootsOffSync,
   createEmptyRegistry,
   getRootByKind,

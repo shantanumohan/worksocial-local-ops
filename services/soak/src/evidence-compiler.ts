@@ -82,6 +82,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X017": "Stop after provider dispatch starts — reconcile; no fake cancel",
   "T-X024": "Old fence after reassignment — old worker cannot commit",
   "T-X011": "Output bomb — bounded/quarantined",
+  "T-X003": "Symlink escape after root verification — write denied outside root",
 };
 
 function relatedProofsForCase(
@@ -247,7 +248,8 @@ export function compileAcceptanceEvidence(
     "T-US-040/T-X049 fixture ACCEPTED only via THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY",
     "T-X017 fixture ACCEPTED only via STOP_AFTER_DISPATCH_RECONCILE (no fake cancel)",
     "T-X024 fixture ACCEPTED only via OLD_FENCE_AFTER_REASSIGNMENT",
-    "T-X011 fixture ACCEPTED only via OUTPUT_BOMB_BOUNDED_QUARANTINED (oversized stdout quarantined)",
+    "T-X011 fixture ACCEPTED only via OUTPUT_BOMB_BOUNDED_QUARANTINED",
+    "T-X003 fixture ACCEPTED only via SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

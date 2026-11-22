@@ -157,6 +157,11 @@ export const SoakProofKind = {
    * Output bomb bounded and quarantined — oversized stdout not delivered (T-X011).
    */
   OUTPUT_BOMB_BOUNDED_QUARANTINED: "output_bomb_bounded_quarantined",
+  /**
+   * Symlink escape after root verification — write denied outside root (T-X003).
+   */
+  SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION:
+    "symlink_escape_after_root_verification",
 } as const;
 
 export type SoakProofKindValue =
@@ -224,6 +229,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X017 requires STOP_AFTER_DISPATCH_RECONCILE (no fake cancel after APPLYING).
  * T-X024 requires OLD_FENCE_AFTER_REASSIGNMENT.
  * T-X011 requires OUTPUT_BOMB_BOUNDED_QUARANTINED (oversized stdout quarantined).
+ * T-X003 requires SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -269,6 +275,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X017",
   "T-X024",
   "T-X011",
+  "T-X003",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -689,6 +696,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.OLD_FENCE_AFTER_REASSIGNMENT];
     case "T-X011":
       return [SoakProofKind.OUTPUT_BOMB_BOUNDED_QUARANTINED];
+    case "T-X003":
+      return [SoakProofKind.SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION];
     default:
       return [];
   }
@@ -765,6 +774,8 @@ export function mapProofToFixtureCases(
       return ["T-X024"];
     case SoakProofKind.OUTPUT_BOMB_BOUNDED_QUARANTINED:
       return ["T-X011"];
+    case SoakProofKind.SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION:
+      return ["T-X003"];
     default:
       return [];
   }

@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x003",
+  "caseId": "T-X003",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X003 (Symlink escape after root verification — write denied outside root)\nproof=symlink_escape_after_root_verification applyCount=1 :: In-root write allowed after canonical resolve | Logical path appears under verified root (pre-canonical) | Symlink escape denied: SYMLINK_ESCAPE_OUTSIDE_ROOT (write outside root) | Direct outside path denied: LOGICAL_OUTSIDE_ROOT | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "symlink_escape_after_root_verification"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x003.json",
+  "createdAtIso": "2026-11-22T18:09:19.177Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x003-7345746649c2"
+}
