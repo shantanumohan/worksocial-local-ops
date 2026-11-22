@@ -291,6 +291,11 @@ export const SoakProofKind = {
    */
   VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES:
     "validated_payload_not_collected_separate_states",
+  /**
+   * Unbound URL: analysis ok, write blocked (T-US-006).
+   * Observe/create allowed; unmapped write paths fail closed.
+   */
+  UNBOUND_WRITE_PATH_FAIL_CLOSED: "unbound_write_path_fail_closed",
 } as const;
 
 export type SoakProofKindValue =
@@ -385,6 +390,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X059 requires DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING.
  * T-X060 requires CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM.
  * T-X070 requires VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES.
+ * T-US-006 requires UNBOUND_WRITE_PATH_FAIL_CLOSED.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -457,6 +463,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X059",
   "T-X060",
   "T-X070",
+  "T-US-006",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -931,6 +938,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM];
     case "T-X070":
       return [SoakProofKind.VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES];
+    case "T-US-006":
+      return [SoakProofKind.UNBOUND_WRITE_PATH_FAIL_CLOSED];
     default:
       return [];
   }
@@ -1063,6 +1072,8 @@ export function mapProofToFixtureCases(
       return ["T-X060"];
     case SoakProofKind.VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES:
       return ["T-X070"];
+    case SoakProofKind.UNBOUND_WRITE_PATH_FAIL_CLOSED:
+      return ["T-US-006"];
     default:
       return [];
   }

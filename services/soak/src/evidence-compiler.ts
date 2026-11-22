@@ -109,6 +109,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X059": "Duplicate platform attribution — one booking; separate claims",
   "T-X060": "Currency/timezone mismatch — no silent sum",
   "T-X070": "Validated payload not collected — separate failure states",
+  "T-US-006": "Unbound URL: analysis ok, write blocked",
 };
 
 function relatedProofsForCase(
@@ -301,6 +302,7 @@ export function compileAcceptanceEvidence(
     "T-X059 fixture ACCEPTED only via DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING",
     "T-X060 fixture ACCEPTED only via CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM",
     "T-X070 fixture ACCEPTED only via VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES",
+    "T-US-006 fixture ACCEPTED only via UNBOUND_WRITE_PATH_FAIL_CLOSED",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

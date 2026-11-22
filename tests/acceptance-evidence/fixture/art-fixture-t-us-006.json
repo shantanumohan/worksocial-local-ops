@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-006",
+  "caseId": "T-US-006",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-006 (Unbound URL: analysis ok, write blocked)\nproof=unbound_write_path_fail_closed applyCount=1 :: OBSERVE on unbound URL → analysis ok (prerequisiteMissing=false) | CREATE on unbound URL → analysis ok (prerequisiteMissing=false) | ROUTINE_PUBLISH unbound URL → write blocked (matchedWritePath=null prerequisiteMissing=true) | Write path id present but asset/operation unbound → write blocked | Proven mapped write path → gates pass (positive control; not live) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "unbound_write_path_fail_closed"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-006.json",
+  "createdAtIso": "2026-11-22T21:18:46.245Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-006-87cb5a95e9d2"
+}
