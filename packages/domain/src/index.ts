@@ -983,6 +983,22 @@ export {
   type DestinationCapabilityBatchDecision,
 } from "./unsupported-destination-capabilities.js";
 export {
+  AutonomyMode,
+  PolicyTestExpectation,
+  ControlTestKind,
+  STANDING_AUTONOMY_GRANT_RELATED_CASE_IDS,
+  evaluateStandingAutonomyGrant,
+  type AutonomyModeValue,
+  type PolicyTestExpectationValue,
+  type ControlTestKindValue,
+  type StandingAutonomyScopeSnapshot,
+  type StandingAutonomyPolicyConstraints,
+  type StandingAutonomyPolicyTestCase,
+  type StandingAutonomyControlTest,
+  type StandingAutonomyGrantInput,
+  type StandingAutonomyGrantDecision,
+} from "./standing-autonomy-grant.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

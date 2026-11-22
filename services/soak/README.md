@@ -55,4 +55,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-US-020 Synthetic leads classified | Fixture **ACCEPTED** via `SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION` (not live VERIFIED) |
 | T-US-021 Connect local/social/inbox | Fixture **ACCEPTED** via `CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT` (not live VERIFIED) |
 | T-US-022 Unsupported destination capabilities | Fixture **ACCEPTED** via `UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED` (not live VERIFIED) |
+| T-US-023 Grant standing autonomy control receipts | Fixture **ACCEPTED** via `STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS` (not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |

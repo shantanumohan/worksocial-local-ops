@@ -780,4 +780,15 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-US-022"]);
   });
+
+  it("maps T-US-023 to STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS only", () => {
+    expect(expectedProofsForFixtureCase("T-US-023")).toEqual([
+      SoakProofKind.STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS,
+      ),
+    ).toEqual(["T-US-023"]);
+  });
 });

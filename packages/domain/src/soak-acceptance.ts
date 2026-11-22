@@ -382,6 +382,15 @@ export const SoakProofKind = {
    */
   UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED:
     "unsupported_destination_capabilities_respected",
+  /**
+   * Grant standing autonomy with control-test receipts (T-US-023).
+   * Scope snapshot, versioned authority draft, policy constraints,
+   * policy test matrix, owner-signed grant + audit, pause/stop-writes/
+   * pause-replies receipts; live NOT_WIRED. Distinct from T-US-024 /
+   * T-US-060.
+   */
+  STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS:
+    "standing_autonomy_grant_control_receipts",
 } as const;
 
 export type SoakProofKindValue =
@@ -491,6 +500,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-020 requires SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION (classified canary; no commerce pollution).
  * T-US-021 requires CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT (local/social/inbox connect; test artifact + capability; live NOT_WIRED).
  * T-US-022 requires UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED (unsupported destination capabilities refused; live NOT_WIRED).
+ * T-US-023 requires STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS (owner-signed standing autonomy + control receipts; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -579,6 +589,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-020",
   "T-US-021",
   "T-US-022",
+  "T-US-023",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1085,6 +1096,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT];
     case "T-US-022":
       return [SoakProofKind.UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED];
+    case "T-US-023":
+      return [SoakProofKind.STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS];
     default:
       return [];
   }
@@ -1247,6 +1260,8 @@ export function mapProofToFixtureCases(
       return ["T-US-021"];
     case SoakProofKind.UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED:
       return ["T-US-022"];
+    case SoakProofKind.STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS:
+      return ["T-US-023"];
     default:
       return [];
   }

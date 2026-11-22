@@ -672,7 +672,7 @@ Required evidence:
 
 Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixture ACCEPTED below | Environment fixture_or_sandbox; live evidence separately authorized.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-015, T-US-017, T-US-018, T-US-019, T-US-020, T-US-021, T-US-022, T-US-024, T-US-036, T-US-038, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-052, T-US-054, T-US-057, T-US-058, T-US-060.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-015, T-US-017, T-US-018, T-US-019, T-US-020, T-US-021, T-US-022, T-US-023, T-US-024, T-US-036, T-US-038, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-052, T-US-054, T-US-057, T-US-058, T-US-060.
 
 **T-US-012** is fixture ACCEPTED only via the Google Ads test vs production access separated proof (`GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED`) — TEST credential cannot reach PRODUCTION customer (and reverse); LIVE stays NOT_WIRED; mutate never authorized from this gate. Distinct from T-X034 (ChatGPT Ads SANDBOX→LIVE) and T-US-011 (analyze-only connect). Not sandbox/prod VERIFIED.
 
@@ -688,6 +688,8 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 **T-US-022** is fixture ACCEPTED only via the unsupported destination capabilities respected proof (`UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED`) — each destination's declared capability matrix is enforced; unsupported actions are refused; false success claims are refused; live provider wiring stays NOT_WIRED. Distinct from T-US-021 (connect test artifact), T-X045 (partial campaign destinations), and T-X046 (unsupported blog destination). Not sandbox/prod VERIFIED.
 
+**T-US-023** is fixture ACCEPTED only via the standing autonomy grant control receipts proof (`STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS`) — scope snapshot, versioned authority draft, policy constraints (inference vs ad-spend), policy test matrix (allowed + blocked), owner-signed grant + audit event, and pause / stop-writes / pause-replies control receipts; live provider wiring stays NOT_WIRED; ad spend never a side effect. Distinct from T-US-024 (agent cannot widen grant) and T-US-060 (emergency stop at commit). Not sandbox/prod VERIFIED.
+
 ### Happy-path / documented flow completions
 - **T-US-001** Create a trusted local workspace (F01/SC-02) — blockers and next actions.
 - **T-US-003** Choose folders and establish business truth (F02/SC-20) — restore evidence; secrets excluded.
@@ -700,7 +702,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 - **T-US-017** Connect Gemini evaluation (F09/SC-18) — EVAL_ONLY. *(fixture ACCEPTED — connect Gemini evaluation EVAL_ONLY proof; not sandbox/prod VERIFIED)*
 - **T-US-019** Map CRM/forms/booking (F10/SC-16) — failure/recovery scenario. *(fixture ACCEPTED — map CRM/forms/booking failure/recovery proof; not sandbox/prod VERIFIED)*
 - **T-US-021** Connect local/social/inbox (F11/SC-18) — test artifact and capability. *(fixture ACCEPTED — connect local/social/inbox test artifact and capability proof; not sandbox/prod VERIFIED)*
-- **T-US-023** Grant standing autonomy (F12/SC-19) — control tests with receipts.
+- **T-US-023** Grant standing autonomy (F12/SC-19) — control tests with receipts. *(fixture ACCEPTED — standing autonomy grant control receipts proof; not sandbox/prod VERIFIED)*
 - **T-US-025** Launch workstream and schedule (F13/SC-02) — mission outcome.
 - **T-US-027** Demand → page improvement (F14/SC-07) — release receipt and experiment window.
 - **T-US-029** Original campaign distribution (F15/SC-08) — campaign manifest.
@@ -967,8 +969,8 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | Family | Count | Status |
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
-| T-US (behavior_acceptance) | 60 | 34 NOT_RUN + 26 fixture ACCEPTED (T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-015, T-US-017, T-US-018, T-US-019, T-US-020, T-US-021, T-US-022, T-US-024, T-US-036, T-US-038, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-052, T-US-054, T-US-057, T-US-058, T-US-060) |
+| T-US (behavior_acceptance) | 60 | 33 NOT_RUN + 27 fixture ACCEPTED (T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-015, T-US-017, T-US-018, T-US-019, T-US-020, T-US-021, T-US-022, T-US-023, T-US-024, T-US-036, T-US-038, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-052, T-US-054, T-US-057, T-US-058, T-US-060) |
 | T-X (platform/security/resilience) | 73 | 14 NOT_RUN + 59 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X023, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X030, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X040, T-X043, T-X044, T-X045, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X063, T-X065, T-X066, T-X069, T-X070, T-X073) |
-| **Total** | **159** | **74 NOT_RUN + 85 fixture ACCEPTED** |
+| **Total** | **159** | **73 NOT_RUN + 86 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

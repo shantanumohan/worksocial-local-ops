@@ -43,6 +43,7 @@
  * Google Ads test vs production access separated (T-US-012).
  * Connect Claude Code + test API EVAL_ONLY (T-US-015).
  * Connect Gemini Evaluation EVAL_ONLY (T-US-017).
+ * Grant standing autonomy control receipts (T-US-023).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -98,6 +99,7 @@ import { proofMapCrmFormsBookingFailureRecovery } from "./crm-forms-booking-map-
 import { proofSyntheticLeadsClassifiedNoCommercePollution } from "./synthetic-lead-classification-proof.js";
 import { proofConnectLocalSocialInboxTestArtifact } from "./local-social-inbox-connect-proof.js";
 import { proofUnsupportedDestinationCapabilitiesRespected } from "./unsupported-destination-capabilities-proof.js";
+import { proofStandingAutonomyGrantControlReceipts } from "./standing-autonomy-grant-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -817,6 +819,9 @@ export async function runSoakRecoveryHarness(input: {
       nowPlus(nowIso, 730_000),
     ),
   );
+  proofs.push(
+    proofStandingAutonomyGrantControlReceipts(nowPlus(nowIso, 740_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -894,6 +899,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-020 fixture ACCEPTED via synthetic_leads_classified_no_commerce_pollution only — not live VERIFIED",
       "T-US-021 fixture ACCEPTED via connect_local_social_inbox_test_artifact only — not live VERIFIED",
       "T-US-022 fixture ACCEPTED via unsupported_destination_capabilities_respected only — not live VERIFIED",
+      "T-US-023 fixture ACCEPTED via standing_autonomy_grant_control_receipts only — not live VERIFIED",
     ],
   };
 }
