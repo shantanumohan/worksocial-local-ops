@@ -3,13 +3,13 @@
   "caseId": "T-X066",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X066 (Backup omits remote receipt)\nproof=backup_omit_receipt applyCount=1 :: Applied ACCEPTED_PENDING applyCount=1 remoteRef=remote-a21a2859 | Omit-receipt backup written (providerEffects=[] receipts=[]); remote ledger preserved separately | Post-restore decision=ACCEPTED_PENDING localProvider=omitted receipts=0 | Reconciled remoteRef=remote-a21a2859 from remote SoR without re-apply | Post-reconcile verified matched=true applyCount=1 | Post-reconcile retry providerCreated=false applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X066 (Backup omits remote receipt)\nproof=backup_omit_receipt applyCount=1 :: Applied ACCEPTED_PENDING applyCount=1 remoteRef=remote-517d2eb0 | Omit-receipt backup written (providerEffects=[] receipts=[]); remote ledger preserved separately | Post-restore decision=ACCEPTED_PENDING localProvider=omitted receipts=0 | Reconciled remoteRef=remote-517d2eb0 from remote SoR without re-apply | Post-reconcile verified matched=true applyCount=1 | Post-reconcile retry providerCreated=false applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "backup_omit_receipt"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x066.json",
-  "createdAtIso": "2026-11-22T20:02:25.143Z",
+  "createdAtIso": "2026-11-22T21:16:49.545Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x066-e50b9c2307eb"
+  "uniqueSourceArtifactId": "art-fixture-t-x066-0512b8377b77"
 }

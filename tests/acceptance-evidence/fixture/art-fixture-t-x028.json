@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x028",
+  "caseId": "T-X028",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X028 (Actual cost exceeds estimate — overrun visible)\nproof=actual_cost_exceeds_estimate_overrun_visible applyCount=1 :: createBudgetAccount → heldMinor=0 (preserve T-X027 hold field) | Reserve r-overrun for 600 → ok; reservedMinor=600; heldMinor=0 | Settle r-overrun actualMinor=750 (> reserved 600) → settledMinor=750 overrun visible; reservation released; heldMinor=0 | Positive control: under-estimate settle actual=120 (< reserved 500) → settled posts actual; reserved released; heldMinor=0 | Unknown reservation → UNKNOWN_RESERVATION (fail-closed) | proofClock=2026-11-21T19:09:20.000Z | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "actual_cost_exceeds_estimate_overrun_visible"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x028.json",
+  "createdAtIso": "2026-11-22T21:16:49.545Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x028-0512b8377b77"
+}
