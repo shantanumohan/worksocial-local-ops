@@ -274,6 +274,12 @@ export const SoakProofKind = {
    */
   AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF:
     "automated_response_loop_bounded_handoff",
+  /**
+   * Duplicate platform attribution — one booking; separate claims (T-X059).
+   * Platform conversions must not silently sum into unique booking outcomes.
+   */
+  DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING:
+    "duplicate_platform_attribution_one_booking",
 } as const;
 
 export type SoakProofKindValue =
@@ -365,6 +371,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X054 requires REPLY_SENT_CRM_RECONCILES_NO_RESEND.
  * T-X055 requires UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE.
  * T-X056 requires AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF.
+ * T-X059 requires DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -434,6 +441,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X054",
   "T-X055",
   "T-X056",
+  "T-X059",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -902,6 +910,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE];
     case "T-X056":
       return [SoakProofKind.AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF];
+    case "T-X059":
+      return [SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING];
     default:
       return [];
   }
@@ -1028,6 +1038,8 @@ export function mapProofToFixtureCases(
       return ["T-X055"];
     case SoakProofKind.AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF:
       return ["T-X056"];
+    case SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING:
+      return ["T-X059"];
     default:
       return [];
   }
