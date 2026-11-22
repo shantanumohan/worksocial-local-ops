@@ -345,6 +345,13 @@ export const SoakProofKind = {
    */
   CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY:
     "connect_claude_code_test_api_eval_only",
+  /**
+   * Connect Gemini Evaluation as EVAL_ONLY (T-US-017).
+   * Data-use decision, broker credential, model snapshot, test mode;
+   * live NOT_WIRED; cannot publish or respond to customers.
+   */
+  CONNECT_GEMINI_EVALUATION_EVAL_ONLY:
+    "connect_gemini_evaluation_eval_only",
 } as const;
 
 export type SoakProofKindValue =
@@ -449,6 +456,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X040 requires LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE (research only; not publish).
  * T-US-012 requires GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED (test ≠ production).
  * T-US-015 requires CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY (runtime ≠ API readiness; EVAL_ONLY).
+ * T-US-017 requires CONNECT_GEMINI_EVALUATION_EVAL_ONLY (Gemini EVAL_ONLY connect; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -532,6 +540,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X040",
   "T-US-012",
   "T-US-015",
+  "T-US-017",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1028,6 +1037,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED];
     case "T-US-015":
       return [SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY];
+    case "T-US-017":
+      return [SoakProofKind.CONNECT_GEMINI_EVALUATION_EVAL_ONLY];
     default:
       return [];
   }
@@ -1180,6 +1191,8 @@ export function mapProofToFixtureCases(
       return ["T-US-012"];
     case SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY:
       return ["T-US-015"];
+    case SoakProofKind.CONNECT_GEMINI_EVALUATION_EVAL_ONLY:
+      return ["T-US-017"];
     default:
       return [];
   }

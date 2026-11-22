@@ -923,6 +923,19 @@ export {
   type ClaudeCodeTestApiConnectDecision,
 } from "./claude-code-test-api-connect.js";
 export {
+  GeminiEvalTestMode,
+  GeminiEvalDesiredCapability,
+  GeminiDataUseDecision,
+  GEMINI_EVALUATION_RELATED_CASE_IDS,
+  evaluateGeminiEvaluationConnect,
+  geminiConnectOperationalToolRefused,
+  type GeminiEvalTestModeValue,
+  type GeminiEvalDesiredCapabilityValue,
+  type GeminiDataUseDecisionValue,
+  type GeminiEvaluationConnectInput,
+  type GeminiEvaluationConnectDecision,
+} from "./gemini-evaluation-connect.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

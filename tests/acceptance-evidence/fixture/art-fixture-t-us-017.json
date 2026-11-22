@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-017",
+  "caseId": "T-US-017",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-017 (Connect Gemini evaluation (EVAL_ONLY))\nproof=connect_gemini_evaluation_eval_only applyCount=0 :: Gemini Evaluation → GEMINI_EVALUATION_EVAL_ONLY_CONNECTED; data-use accepted; EVAL_ONLY; live NOT_WIRED; cannot publish/respond | OPERATIONAL capability → OPERATIONAL_CAPABILITY_REFUSED | requestLiveEvalWiring → LIVE_EVAL_WIRING_NOT_WIRED | Missing data-use decision → DATA_USE_DECISION_MISSING | Operational tools remain EVAL_TOOL_FORBIDDEN on Gemini connect surface | liveProviderSuccessClaimed=false externalEffects=NONE | Distinct from T-US-015 (Claude Code + test API) and T-US-018/T-X037 (operational tool forbid)\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "connect_gemini_evaluation_eval_only"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-017.json",
+  "createdAtIso": "2026-11-22T22:26:38.954Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-017-3f107518abf3"
+}
