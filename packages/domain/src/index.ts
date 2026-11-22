@@ -575,6 +575,7 @@ export {
   ingestInboundMessage,
   ingestFixtureWebhook,
   acquireConversationLease,
+  evaluateUnknownPolicyQuestion,
   prepareConciergeReply,
   queueOutboundReply,
   evaluateOutboundSendGate,

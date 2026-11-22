@@ -556,4 +556,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X054"]);
   });
 
+  it("maps T-X055 to UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE only", () => {
+    expect(expectedProofsForFixtureCase("T-X055")).toEqual([
+      SoakProofKind.UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE,
+      ),
+    ).toEqual(["T-X055"]);
+  });
+
 });
