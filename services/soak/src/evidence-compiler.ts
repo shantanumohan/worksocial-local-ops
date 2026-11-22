@@ -104,6 +104,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X026": "Concurrent final budget reservation — cap enforced",
   "T-X052": "Synthetic conversion contamination — excluded from commerce",
   "T-X054": "Reply sent but CRM fails — CRM reconciles; no resend",
+  "T-X055": "Unknown policy question — escalate without promise",
 };
 
 function relatedProofsForCase(
@@ -291,6 +292,7 @@ export function compileAcceptanceEvidence(
     "T-X026 fixture ACCEPTED only via CONCURRENT_FINAL_BUDGET_RESERVATION_CAP",
     "T-X052 fixture ACCEPTED only via SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED",
     "T-X054 fixture ACCEPTED only via REPLY_SENT_CRM_RECONCILES_NO_RESEND",
+    "T-X055 fixture ACCEPTED only via UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

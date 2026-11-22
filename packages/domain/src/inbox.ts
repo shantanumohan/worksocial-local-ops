@@ -533,6 +533,35 @@ export function acquireConversationLease(input: {
 }
 
 /**
+ * Unknown policy question gate (T-X055).
+ * Questions outside `policy.allowedQuestionIds` must escalate without promising
+ * an answer — never invent policy coverage.
+ */
+export function evaluateUnknownPolicyQuestion(input: {
+  questionId: string;
+  policy: ResponsePolicy;
+}):
+  | { allowed: true; code: null; escalateWithoutPromise: false }
+  | {
+      allowed: false;
+      code: "UNKNOWN_POLICY_QUESTION";
+      reasons: string[];
+      escalateWithoutPromise: true;
+    } {
+  if (input.policy.allowedQuestionIds.includes(input.questionId)) {
+    return { allowed: true, code: null, escalateWithoutPromise: false };
+  }
+  return {
+    allowed: false,
+    code: "UNKNOWN_POLICY_QUESTION",
+    reasons: [
+      `Question ${input.questionId} is not in response policy allowedQuestionIds — escalate without promise`,
+    ],
+    escalateWithoutPromise: true,
+  };
+}
+
+/**
  * Prepare a concierge reply grounded only in SUPPORTED facts.
  * Never invents prices/availability; reservation claims require booking evidence.
  */
@@ -547,11 +576,30 @@ export function prepareConciergeReply(input: {
   bookingClaim?: BookingClaimKindValue | null;
   /** Required when bookingClaim is AVAILABILITY_LINK — must be a real URL. */
   bookingLinkUrl?: string | null;
+  /**
+   * Optional policy-question id. When set, must be in
+   * `policy.allowedQuestionIds` or the draft is refused (T-X055).
+   */
+  questionId?: string | null;
   nowIso: string;
 }):
   | { ok: true; draft: ConciergeDraft; reasons: string[] }
   | { ok: false; code: string; reasons: string[] } {
   const reasons: string[] = [];
+
+  if (input.questionId) {
+    const questionGate = evaluateUnknownPolicyQuestion({
+      questionId: input.questionId,
+      policy: input.policy,
+    });
+    if (!questionGate.allowed) {
+      return {
+        ok: false,
+        code: questionGate.code,
+        reasons: questionGate.reasons,
+      };
+    }
+  }
 
   if (input.policy.repliesPaused) {
     return {
@@ -1504,6 +1552,7 @@ export const INBOX_RELATED_CASE_IDS = [
   "T-I03", // no reservation without booking evidence
   "T-US-043", // after-hours + takeover (M7)
   "T-US-044", // duplicate inbound coalesce (M7)
+  "T-X055", // unknown policy question — escalate without promise
 ] as const;
 
 // Re-export OutcomeEvidenceSource for callers that build inbox outcomes.

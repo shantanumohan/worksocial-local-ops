@@ -20,6 +20,7 @@ import {
   findCoalescedLead,
   ingestFixtureWebhook,
   ingestInboundMessage,
+  evaluateUnknownPolicyQuestion,
   prepareConciergeReply,
   queueOutboundReply,
 } from "./inbox.js";
@@ -170,6 +171,65 @@ describe("inbox domain", () => {
       nowIso: now,
     });
     expect(sendGate.allowed).toBe(false);
+  });
+
+  it("escalates unknown policy questions without promising an answer", () => {
+    const conversation = createConversation({
+      conversationId: "c1",
+      providerThreadId: "thr-1",
+      channel: InboxChannel.FIXTURE,
+      customerDisplayName: "Alex",
+      nowIso: now,
+    });
+    const policy = defaultResponsePolicy(now);
+
+    const unknown = evaluateUnknownPolicyQuestion({
+      questionId: "undocumented_cancellation_guarantee",
+      policy,
+    });
+    expect(unknown.allowed).toBe(false);
+    if (!unknown.allowed) {
+      expect(unknown.code).toBe("UNKNOWN_POLICY_QUESTION");
+      expect(unknown.escalateWithoutPromise).toBe(true);
+    }
+
+    const allowed = evaluateUnknownPolicyQuestion({
+      questionId: "documented_policies",
+      policy,
+    });
+    expect(allowed.allowed).toBe(true);
+
+    const refusedDraft = prepareConciergeReply({
+      draftId: "d-unknown",
+      conversation,
+      inboundBody: "Can you guarantee a full refund if I cancel anytime?",
+      citedFactIds: ["fact-hours"],
+      factLabels: new Map([["fact-hours", SupportLabel.SUPPORTED]]),
+      policy,
+      bookingEvidence: [],
+      questionId: "undocumented_cancellation_guarantee",
+      nowIso: now,
+    });
+    expect(refusedDraft.ok).toBe(false);
+    if (!refusedDraft.ok) {
+      expect(refusedDraft.code).toBe("UNKNOWN_POLICY_QUESTION");
+    }
+
+    const { handoff, conversation: handed } = createHandoff({
+      handoffId: "ho-unknown-policy",
+      conversation,
+      reason: "Unknown policy question — escalate without promise",
+      nextOwner: policy.escalationOwner,
+      customerQuestions: [
+        "Can you guarantee a full refund if I cancel anytime?",
+      ],
+      verifiedAnswers: [],
+      requestedAction: "Owner answers undocumented policy; do not invent coverage",
+      nowIso: now,
+    });
+    expect(handoff.verifiedAnswers).toEqual([]);
+    expect(handed.agentSendAllowed).toBe(false);
+    expect(handed.humanOwned).toBe(true);
   });
 
   it("rejects human-request drafts and requires booking URL for links", () => {
