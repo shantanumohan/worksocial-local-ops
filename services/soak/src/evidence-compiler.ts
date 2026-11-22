@@ -119,6 +119,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X040": "Low-sample trend spike stays insufficient evidence (research only)",
   "T-X030": "Rate-limit with deadline — bounded backoff",
   "T-US-012": "Google Ads test vs production access separated",
+  "T-US-015": "Connect Claude Code + test API (EVAL_ONLY)",
 };
 
 function relatedProofsForCase(
@@ -316,6 +317,7 @@ export function compileAcceptanceEvidence(
     "T-X045 fixture ACCEPTED only via PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE (per-destination honesty)",
     "T-X030 fixture ACCEPTED only via RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE",
     "T-US-012 fixture ACCEPTED only via GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED",
+    "T-US-015 fixture ACCEPTED only via CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
