@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x050",
+  "caseId": "T-X050",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X050 (Public synthetic flag abuse — server grant required)\nproof=public_synthetic_flag_requires_server_grant applyCount=1 :: Browser boundary: public ws_synthetic=true without server canary grant → denied GRANT_MISSING | Browser boundary: same claim with server canary grant → AUTHORIZED synthetic submit | Domain bind: public claim without grant → GRANT_MISSING (counterfactual public flag alone would mark synthetic) | Positive control: server canary grant without client claim → AUTHORIZED | No claim + no grant → not synthetic (NO_CLAIM) | proofClock=2026-11-21T19:05:20.000Z | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "public_synthetic_flag_requires_server_grant"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x050.json",
+  "createdAtIso": "2026-11-22T18:13:38.995Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x050-5c66f4ee9ec9"
+}

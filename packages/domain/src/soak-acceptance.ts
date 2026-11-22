@@ -162,6 +162,12 @@ export const SoakProofKind = {
    */
   SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION:
     "symlink_escape_after_root_verification",
+  /**
+   * Public synthetic flag abuse — server canary grant required (T-X050).
+   * Client/public ws_synthetic / is_synthetic cannot authorize alone.
+   */
+  PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT:
+    "public_synthetic_flag_requires_server_grant",
 } as const;
 
 export type SoakProofKindValue =
@@ -230,6 +236,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X024 requires OLD_FENCE_AFTER_REASSIGNMENT.
  * T-X011 requires OUTPUT_BOMB_BOUNDED_QUARANTINED (oversized stdout quarantined).
  * T-X003 requires SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION.
+ * T-X050 requires PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -276,6 +283,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X024",
   "T-X011",
   "T-X003",
+  "T-X050",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -698,6 +706,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.OUTPUT_BOMB_BOUNDED_QUARANTINED];
     case "T-X003":
       return [SoakProofKind.SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION];
+    case "T-X050":
+      return [SoakProofKind.PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT];
     default:
       return [];
   }
@@ -776,6 +786,8 @@ export function mapProofToFixtureCases(
       return ["T-X011"];
     case SoakProofKind.SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION:
       return ["T-X003"];
+    case SoakProofKind.PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT:
+      return ["T-X050"];
     default:
       return [];
   }

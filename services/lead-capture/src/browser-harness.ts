@@ -7,7 +7,12 @@
  */
 
 import { createHash, randomBytes } from "node:crypto";
-import type { LeadCaptureArtifactRefs } from "@worksocial/domain";
+import {
+  SyntheticFlagDecisionCode,
+  bindSyntheticFromServerGrant,
+  parsePublicSyntheticClaim,
+  type LeadCaptureArtifactRefs,
+} from "@worksocial/domain";
 
 export const FIXTURE_CONTACT_FORM_HTML = `<!doctype html>
 <html lang="en">
@@ -49,13 +54,19 @@ export function isPlaywrightEnabled(): boolean {
 
 /**
  * Run a marked synthetic form submit into the approved fixture destination.
- * Does not touch production Zoho or live sites.
+ * Public `ws_synthetic` / `is_synthetic` cannot authorize alone — a server
+ * canary grant is required (T-X050). Does not touch production Zoho or live sites.
  */
 export async function runBrowserFormSubmit(input: {
   correlationId: string;
   fieldValues: Record<string, string>;
   /** Prefer live Playwright path — still fixture destination only in M5. */
   preferLive?: boolean;
+  /**
+   * Host/gateway-issued canary grant present.
+   * Required for synthetic labeling — public flag abuse is denied without it.
+   */
+  serverCanaryGrantPresent?: boolean;
 }): Promise<BrowserFormSubmitResult> {
   const playwrightAvailable = isPlaywrightEnabled();
   const details: string[] = [];
@@ -96,7 +107,12 @@ export async function runBrowserFormSubmit(input: {
   }
 
   const submittedFields = { ...input.fieldValues };
-  if (submittedFields.ws_synthetic !== "true") {
+  const clientClaimed = parsePublicSyntheticClaim(submittedFields);
+  const bind = bindSyntheticFromServerGrant({
+    clientClaimedSynthetic: clientClaimed,
+    serverCanaryGrantPresent: input.serverCanaryGrantPresent === true,
+  });
+  if (!bind.synthetic) {
     return {
       ok: false,
       mode: "FIXTURE",
@@ -108,9 +124,15 @@ export async function runBrowserFormSubmit(input: {
         traceId: null,
         htmlSnapshotId: null,
       },
-      details: ["Browser harness refused non-synthetic lead"],
+      details: [
+        bind.code === SyntheticFlagDecisionCode.GRANT_MISSING
+          ? `Public synthetic flag abuse denied: ${bind.code} — server canary grant required`
+          : "Browser harness refused non-synthetic lead (server canary grant required)",
+      ],
     };
   }
+  // Effective synthetic labeling is server-bound, not client-trusted.
+  submittedFields.ws_synthetic = "true";
   if (submittedFields.ws_correlation_id !== input.correlationId) {
     submittedFields.ws_correlation_id = input.correlationId;
   }
@@ -119,7 +141,7 @@ export async function runBrowserFormSubmit(input: {
   details.push(
     mode === "OPTIONAL_LIVE"
       ? "Playwright flag set — synthetic lead submitted via fixture HTML destination (not production Zoho/site)"
-      : "Fixture browser harness submitted marked synthetic lead to approved test destination",
+      : "Fixture browser harness submitted server-authorized synthetic lead to approved test destination",
   );
 
   return {

@@ -42,6 +42,8 @@ describe("e2e-lite: M5 lead capture journey", () => {
         ws_synthetic: "true",
         ws_correlation_id: "corr-e2e",
       },
+      // Host canary — server grant required (T-X050); public flag alone is abuse.
+      serverCanaryGrantPresent: true,
     });
     expect(browser.ok).toBe(true);
     expect(browser.destination).toBe("fixture_test");

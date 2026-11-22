@@ -194,6 +194,8 @@ export function createLeadCaptureService(
         correlationId,
         fieldValues: lead.fieldValues,
         preferLive: input.preferLiveBrowser === true,
+        // Host canary journey — server grant present (not public-flag abuse).
+        serverCanaryGrantPresent: true,
       });
       details.push(...browser.details);
       journey = {
