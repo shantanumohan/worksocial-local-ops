@@ -49,6 +49,7 @@
  * Demand page improvement release receipt (T-US-027).
  * Keyword proliferation → one useful page update (T-US-028).
  * Original campaign distribution campaign manifest (T-US-029).
+ * Uncertain post reconcile before retry (T-US-030).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -110,6 +111,7 @@ import { proofMissedScheduleCoalesceNoBurst } from "./missed-schedule-coalesce-p
 import { proofDemandPageImprovementReleaseReceipt } from "./demand-page-improvement-proof.js";
 import { proofKeywordProliferationOneUsefulUpdate } from "./keyword-proliferation-gate-proof.js";
 import { proofCampaignManifestDistribution } from "./campaign-manifest-distribution-proof.js";
+import { proofUncertainPostReconcileBeforeRetry } from "./uncertain-post-reconcile-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -847,6 +849,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofCampaignManifestDistribution(nowPlus(nowIso, 790_000)),
   );
+  proofs.push(
+    proofUncertainPostReconcileBeforeRetry(nowPlus(nowIso, 800_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -930,6 +935,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-027 fixture ACCEPTED via demand_page_improvement_release_receipt only — not live VERIFIED",
       "T-US-028 fixture ACCEPTED via keyword_proliferation_one_useful_update only — not live VERIFIED",
       "T-US-029 fixture ACCEPTED via campaign_manifest_distribution only — not live VERIFIED",
+      "T-US-030 fixture ACCEPTED via uncertain_post_reconcile_before_retry only — not live VERIFIED",
     ],
   };
 }

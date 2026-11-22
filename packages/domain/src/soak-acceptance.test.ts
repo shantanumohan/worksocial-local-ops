@@ -842,4 +842,15 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.CAMPAIGN_MANIFEST_DISTRIBUTION),
     ).toEqual(["T-US-029"]);
   });
+
+  it("maps T-US-030 to UNCERTAIN_POST_RECONCILE_BEFORE_RETRY only", () => {
+    expect(expectedProofsForFixtureCase("T-US-030")).toEqual([
+      SoakProofKind.UNCERTAIN_POST_RECONCILE_BEFORE_RETRY,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.UNCERTAIN_POST_RECONCILE_BEFORE_RETRY,
+      ),
+    ).toEqual(["T-US-030"]);
+  });
 });

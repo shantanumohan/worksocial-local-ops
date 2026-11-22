@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-030",
+  "caseId": "T-US-030",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-030 (Uncertain post: reconcile before retry)\nproof=uncertain_post_reconcile_before_retry applyCount=1 :: requestBlindRetry → BLIND_RETRY_REFUSED; preserved inputs + RECONCILE_BEFORE_RETRY | no reconcile → RECONCILE_REQUIRED; blocking decision UNCERTAIN_POST_REQUIRES_RECONCILE | reconcile VERIFIED_PRESENT → RECONCILED_POST_PRESENT_NO_RETRY; live NOT_WIRED | retry after VERIFIED_PRESENT → RETRY_REFUSED_POST_PRESENT (no double-post) | reconcile VERIFIED_ABSENT + linked retry → RECONCILED_POST_ABSENT_RETRY_AUTHORIZED | claimPostSucceededDespiteUncertainty → FALSE_SUCCESS_CLAIM_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-048/T-X020 (general unknown-remote resume), T-X017 (stop-after-dispatch), T-US-029 (campaign manifest), T-X045 (partial destinations) | proofRecordedAt=2026-11-21T19:13:20.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "uncertain_post_reconcile_before_retry"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-030.json",
+  "createdAtIso": "2026-11-22T23:54:55.880Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-030-5d7454fabbbd"
+}
