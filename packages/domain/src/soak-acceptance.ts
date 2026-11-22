@@ -269,6 +269,11 @@ export const SoakProofKind = {
    */
   UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE:
     "unknown_policy_question_escalates_without_promise",
+  /**
+   * Automated response loop bounded; handoff when agent message cap hit (T-X056).
+   */
+  AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF:
+    "automated_response_loop_bounded_handoff",
 } as const;
 
 export type SoakProofKindValue =
@@ -359,6 +364,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X052 requires SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED (commerce exclusion).
  * T-X054 requires REPLY_SENT_CRM_RECONCILES_NO_RESEND.
  * T-X055 requires UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE.
+ * T-X056 requires AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -427,6 +433,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X052",
   "T-X054",
   "T-X055",
+  "T-X056",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -893,6 +900,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.REPLY_SENT_CRM_RECONCILES_NO_RESEND];
     case "T-X055":
       return [SoakProofKind.UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE];
+    case "T-X056":
+      return [SoakProofKind.AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF];
     default:
       return [];
   }
@@ -1017,6 +1026,8 @@ export function mapProofToFixtureCases(
       return ["T-X054"];
     case SoakProofKind.UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE:
       return ["T-X055"];
+    case SoakProofKind.AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF:
+      return ["T-X056"];
     default:
       return [];
   }

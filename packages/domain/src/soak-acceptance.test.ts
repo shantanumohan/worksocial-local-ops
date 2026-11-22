@@ -567,4 +567,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X055"]);
   });
 
+  it("maps T-X056 to AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF only", () => {
+    expect(expectedProofsForFixtureCase("T-X056")).toEqual([
+      SoakProofKind.AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF,
+      ),
+    ).toEqual(["T-X056"]);
+  });
+
 });

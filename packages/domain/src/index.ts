@@ -829,6 +829,12 @@ export {
   type ReplyCrmReconcileDecision,
 } from "./reply-crm-reconcile.js";
 export {
+  evaluateAutomatedResponseLoopBound,
+  AUTOMATED_RESPONSE_LOOP_RELATED_CASE_IDS,
+  type AutomatedResponseLoopCode,
+  type AutomatedResponseLoopDecision,
+} from "./automated-response-loop.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

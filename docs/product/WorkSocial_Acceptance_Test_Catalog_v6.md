@@ -748,7 +748,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X025, T-X026, T-X027, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X043, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X057, T-X058, T-X063, T-X065, T-X066, T-X069, T-X073.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X025, T-X026, T-X027, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X043, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X063, T-X065, T-X066, T-X069, T-X073.
 
 **T-X021** is fixture ACCEPTED only via `CONCURRENT_IDEMPOTENT_RELEASE` (barrier+mutex one dispatch; not retry-only NO_DUPLICATE_EFFECTS). Not sandbox/prod VERIFIED.
 
@@ -825,6 +825,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 **T-X054** is fixture ACCEPTED only via the reply sent CRM reconciles no-resend proof (`REPLY_SENT_CRM_RECONCILES_NO_RESEND`) — after outbound SENT, CRM write failure reconciles/retries CRM only; outbound stays `retain_sent` and same-body resend is suppressed. Distinct from thank-you-without-CRM (T-US-040/T-X049). Not sandbox/prod VERIFIED.
 
 **T-X055** is fixture ACCEPTED only via the unknown policy question escalates without promise proof (`UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE`) — questions outside `allowedQuestionIds` refuse the concierge draft and escalate handoff with empty `verifiedAnswers` (no invented promise). Not sandbox/prod VERIFIED.
+
+**T-X056** is fixture ACCEPTED only via the automated response loop bounded handoff proof (`AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF`) — `maxAgentMessagesPerConversation` enforces `MESSAGE_LIMIT` and creates a handoff (`handed_off`, `agentSendAllowed=false`); no unbounded auto-reply loop. Distinct from takeover-cancels-unsent (T-US-044/T-X053). Not sandbox/prod VERIFIED.
 
 **T-X027** is fixture ACCEPTED only via the unknown usage cancel holds residual proof (`UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL`). Not sandbox/prod VERIFIED.
 
@@ -906,7 +908,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X053 | Takeover races queued reply | Version invalidates send *(fixture ACCEPTED)* |
 | T-X054 | Reply sent but CRM fails | CRM reconciles; no resend *(fixture ACCEPTED — reply sent CRM reconciles no-resend proof; not sandbox/prod VERIFIED)* |
 | T-X055 | Unknown policy question | Escalate without promise *(fixture ACCEPTED — unknown policy question escalates without promise proof; not sandbox/prod VERIFIED)* |
-| T-X056 | Automated response loop | Bounded; handoff |
+| T-X056 | Automated response loop | Bounded; handoff *(fixture ACCEPTED — automated response loop bounded handoff proof; not sandbox/prod VERIFIED)* |
 | T-X057 | Repair disables failing test | Rejected *(fixture ACCEPTED)* |
 | T-X058 | Third automatic repair attempt | Escalate *(fixture ACCEPTED)* |
 | T-X059 | Duplicate platform attribution | One booking; separate claims |
@@ -931,7 +933,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 99 NOT_RUN + 60 fixture ACCEPTED (T-F24) |
 | T-US (behavior_acceptance) | 60 | 99 NOT_RUN + 60 fixture ACCEPTED (T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060) |
-| T-X (platform/security/resilience) | 73 | 25 NOT_RUN + 48 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X025, T-X026, T-X027, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X043, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X057, T-X058, T-X063, T-X065, T-X066, T-X069, T-X073) |
-| **Total** | **159** | **94 NOT_RUN + 65 fixture ACCEPTED** |
+| T-X (platform/security/resilience) | 73 | 24 NOT_RUN + 49 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X025, T-X026, T-X027, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X043, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X063, T-X065, T-X066, T-X069, T-X073) |
+| **Total** | **159** | **93 NOT_RUN + 66 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.
