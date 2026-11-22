@@ -73,6 +73,7 @@ import { proofExternalHumanEditConflictRetained } from "./external-human-edit-st
 import { proofOptimizationBreaksCtaJourneyFails } from "./optimization-breaks-cta-proof.js";
 import { proofConcurrentFinalBudgetReservationCap } from "./concurrent-final-budget-reservation-proof.js";
 import { proofSyntheticConversionContaminationExcluded } from "./synthetic-conversion-contamination-proof.js";
+import { proofReplySentCrmReconcilesNoResend } from "./reply-sent-crm-reconcile-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -724,6 +725,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofSyntheticConversionContaminationExcluded(nowPlus(nowIso, 520_000)),
   );
+  proofs.push(
+    proofReplySentCrmReconcilesNoResend(nowPlus(nowIso, 530_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -780,6 +784,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X004 fixture ACCEPTED via disk_full_evidence_no_partial_completed only — not live VERIFIED",
       "T-X043 fixture ACCEPTED via optimization_breaks_cta_journey_fails only — not live VERIFIED",
       "T-X052 fixture ACCEPTED via synthetic_conversion_contamination_excluded only — not live VERIFIED",
+      "T-X054 fixture ACCEPTED via reply_sent_crm_reconciles_no_resend only — not live VERIFIED",
     ],
   };
 }
