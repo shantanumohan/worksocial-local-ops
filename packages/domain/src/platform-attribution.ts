@@ -1,5 +1,6 @@
 /**
- * T-X059 — Duplicate platform attribution: one booking; separate claims.
+ * T-X059 / T-US-038 — Duplicate platform attribution / double-counted
+ * attribution avoided: one booking; separate claims.
  *
  * Multiple ad/analytics platforms may each claim the same CRM-verified booking.
  * Unique outcome count stays 1; per-platform claims remain separate ledger rows.

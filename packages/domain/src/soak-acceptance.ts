@@ -280,7 +280,7 @@ export const SoakProofKind = {
   AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF:
     "automated_response_loop_bounded_handoff",
   /**
-   * Duplicate platform attribution — one booking; separate claims (T-X059).
+   * Duplicate platform attribution — one booking; separate claims (T-X059 / T-US-038).
    * Platform conversions must not silently sum into unique booking outcomes.
    */
   DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING:
@@ -419,7 +419,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X054 requires REPLY_SENT_CRM_RECONCILES_NO_RESEND.
  * T-X055 requires UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE.
  * T-X056 requires AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF.
- * T-X059 requires DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING.
+ * T-X059 / T-US-038 require DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING.
  * T-X060 requires CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM.
  * T-X070 requires VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES.
  * T-X044 requires UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED.
@@ -498,6 +498,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X055",
   "T-X056",
   "T-X059",
+  "T-US-038",
   "T-X060",
   "T-X070",
   "T-X028",
@@ -979,6 +980,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF];
     case "T-X059":
       return [SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING];
+    case "T-US-038":
+      return [SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING];
     case "T-X060":
       return [SoakProofKind.CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM];
     case "T-X070":
@@ -1124,7 +1127,7 @@ export function mapProofToFixtureCases(
     case SoakProofKind.AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF:
       return ["T-X056"];
     case SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING:
-      return ["T-X059"];
+      return ["T-X059", "T-US-038"];
     case SoakProofKind.CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM:
       return ["T-X060"];
     case SoakProofKind.VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES:

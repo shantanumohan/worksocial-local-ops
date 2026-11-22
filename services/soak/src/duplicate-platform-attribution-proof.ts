@@ -1,5 +1,6 @@
 /**
- * Fixture proof for T-X059 — Duplicate platform attribution.
+ * Fixture proof for T-X059 / T-US-038 — Duplicate platform attribution /
+ * double-counted attribution avoided in unique outcomes.
  *
  * Two platforms claim the same CRM-verified booking. Unique outcome count
  * stays 1; platform claims remain separate ledger rows (claimId retained).
@@ -16,7 +17,7 @@ import {
 } from "@worksocial/domain";
 
 /**
- * Complete expected proof set for T-X059 fixture ACCEPTED.
+ * Complete expected proof set for T-X059 + T-US-038 fixture ACCEPTED.
  */
 export function proofDuplicatePlatformAttributionOneBooking(
   nowIso: string,

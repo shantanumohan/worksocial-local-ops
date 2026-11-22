@@ -589,15 +589,18 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X056"]);
   });
 
-  it("maps T-X059 to DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING only", () => {
+  it("maps T-X059 / T-US-038 to DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING", () => {
     expect(expectedProofsForFixtureCase("T-X059")).toEqual([
+      SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING,
+    ]);
+    expect(expectedProofsForFixtureCase("T-US-038")).toEqual([
       SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING,
     ]);
     expect(
       mapProofToFixtureCases(
         SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING,
       ),
-    ).toEqual(["T-X059"]);
+    ).toEqual(["T-X059", "T-US-038"]);
   });
 
   it("maps T-X060 to CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM only", () => {
