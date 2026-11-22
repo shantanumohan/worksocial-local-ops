@@ -912,6 +912,17 @@ export {
   type GoogleAdsTestProductionAccessDecision,
 } from "./google-ads-test-production-access.js";
 export {
+  ClaudeConnectSurface,
+  ClaudeConnectDesiredCapability,
+  CLAUDE_CODE_TEST_API_RELATED_CASE_IDS,
+  evaluateClaudeCodeTestApiConnect,
+  claudeConnectOperationalToolRefused,
+  type ClaudeConnectSurfaceValue,
+  type ClaudeConnectDesiredCapabilityValue,
+  type ClaudeCodeTestApiConnectInput,
+  type ClaudeCodeTestApiConnectDecision,
+} from "./claude-code-test-api-connect.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

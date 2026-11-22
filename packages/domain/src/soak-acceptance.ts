@@ -339,6 +339,12 @@ export const SoakProofKind = {
    */
   GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED:
     "google_ads_test_production_access_separated",
+  /**
+   * Connect Claude Code + test API as separate EVAL_ONLY surfaces (T-US-015).
+   * Runtime and API readiness separated; live NOT_WIRED; no operational capability.
+   */
+  CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY:
+    "connect_claude_code_test_api_eval_only",
 } as const;
 
 export type SoakProofKindValue =
@@ -442,6 +448,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X030 requires RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE.
  * T-X040 requires LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE (research only; not publish).
  * T-US-012 requires GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED (test ≠ production).
+ * T-US-015 requires CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY (runtime ≠ API readiness; EVAL_ONLY).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -524,6 +531,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X030",
   "T-X040",
   "T-US-012",
+  "T-US-015",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1018,6 +1026,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE];
     case "T-US-012":
       return [SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED];
+    case "T-US-015":
+      return [SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY];
     default:
       return [];
   }
@@ -1168,6 +1178,8 @@ export function mapProofToFixtureCases(
       return ["T-X040"];
     case SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED:
       return ["T-US-012"];
+    case SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY:
+      return ["T-US-015"];
     default:
       return [];
   }

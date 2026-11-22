@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-015",
+  "caseId": "T-US-015",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-015 (Connect Claude Code + test API (EVAL_ONLY))\nproof=connect_claude_code_test_api_eval_only applyCount=0 :: Claude Code runtime + test API → CLAUDE_CODE_TEST_API_EVAL_ONLY_CONNECTED; readinessSeparated; EVAL_ONLY; live NOT_WIRED | OPERATIONAL capability → OPERATIONAL_CAPABILITY_REFUSED | requestLiveEvalWiring → LIVE_EVAL_WIRING_NOT_WIRED | Missing runtime diagnostic → RUNTIME_DIAGNOSTIC_MISSING | Operational tools remain EVAL_TOOL_FORBIDDEN on connect surface | liveProviderSuccessClaimed=false externalEffects=NONE | Distinct from T-US-016 (runtime vs API eval auth) and T-US-018/T-X037 (operational tool forbid)\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "connect_claude_code_test_api_eval_only"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-015.json",
+  "createdAtIso": "2026-11-22T22:15:40.130Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-015-1523f9a35304"
+}

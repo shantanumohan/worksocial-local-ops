@@ -714,4 +714,15 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-US-012"]);
   });
+
+  it("maps T-US-015 to CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY only", () => {
+    expect(expectedProofsForFixtureCase("T-US-015")).toEqual([
+      SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY,
+      ),
+    ).toEqual(["T-US-015"]);
+  });
 });
