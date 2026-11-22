@@ -135,7 +135,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - Classifies **STALE_OBSERVATION** vs **ACTIVE_INCIDENT** vs **UNKNOWN_REMOTE_OUTCOME** for host/provider outage and queued work (fixture-only).
 - Console `/recovery`; APIs `/recovery/status` · `/recovery/inspect` · `/recovery/run` · timeline / queued-work / capability-stops.
 - Live recovery stays **NOT_RUN** — never silently VERIFIED. Local credential revoke/rotate/offboard are **fixture** paths (`/credentials`); live provider revocation **NOT_WIRED**. External effects **NONE**.
-- Runbook: `docs/runbooks/recovery-evidence.md`. Complements M9 soak; T-F24/T-US-047 fixture ACCEPTED via recover/rotate/reconcile proof (not live VERIFIED).
+- Runbook: `docs/runbooks/recovery-evidence.md`. Complements M9 soak; T-F24/T-US-75 fixture ACCEPTED via recover/rotate/reconcile proof (not live VERIFIED).
 
 ### WP10 credential rotation / offboarding (F24)
 

@@ -348,6 +348,7 @@ describe("soak service (M9)", () => {
       "T-US-018",
       "T-US-024",
       "T-US-036",
+      "T-US-038",
       "T-US-040",
       "T-US-042",
       "T-US-044",
@@ -559,7 +560,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(76);
+    expect(soak.ownerReport().acceptedCases.length).toBe(77);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {
