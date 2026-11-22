@@ -46,6 +46,7 @@
  * Grant standing autonomy control receipts (T-US-023).
  * Launch workstream schedule mission outcome (T-US-025).
  * Missed schedule coalesce no burst republish (T-US-026).
+ * Demand page improvement release receipt (T-US-027).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -104,6 +105,7 @@ import { proofUnsupportedDestinationCapabilitiesRespected } from "./unsupported-
 import { proofStandingAutonomyGrantControlReceipts } from "./standing-autonomy-grant-proof.js";
 import { proofLaunchWorkstreamScheduleMissionOutcome } from "./workstream-schedule-launch-proof.js";
 import { proofMissedScheduleCoalesceNoBurst } from "./missed-schedule-coalesce-proof.js";
+import { proofDemandPageImprovementReleaseReceipt } from "./demand-page-improvement-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -832,6 +834,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofMissedScheduleCoalesceNoBurst(nowPlus(nowIso, 760_000)),
   );
+  proofs.push(
+    proofDemandPageImprovementReleaseReceipt(nowPlus(nowIso, 770_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -912,6 +917,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-023 fixture ACCEPTED via standing_autonomy_grant_control_receipts only — not live VERIFIED",
       "T-US-025 fixture ACCEPTED via launch_workstream_schedule_mission_outcome only — not live VERIFIED",
       "T-US-026 fixture ACCEPTED via missed_schedule_coalesce_no_burst only — not live VERIFIED",
+      "T-US-027 fixture ACCEPTED via demand_page_improvement_release_receipt only — not live VERIFIED",
     ],
   };
 }

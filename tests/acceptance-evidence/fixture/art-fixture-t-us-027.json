@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-027",
+  "caseId": "T-US-027",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-027 (Demand → page improvement — release receipt and experiment window)\nproof=demand_page_improvement_release_receipt applyCount=1 :: Ready → DEMAND_PAGE_IMPROVEMENT_RELEASED; observations matched; release receipt + experiment window; live NOT_WIRED | requestKeywordProliferation → KEYWORD_PROLIFERATION_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | Missing observations → OBSERVATIONS_REQUIRED (clear block) | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-025 (workstream launch), T-US-026 (missed schedule coalesce), and T-US-028 (keyword proliferation gate)\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "demand_page_improvement_release_receipt"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-027.json",
+  "createdAtIso": "2026-11-22T23:32:11.079Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-027-c8b99e27307a"
+}

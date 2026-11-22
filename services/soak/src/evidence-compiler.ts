@@ -128,6 +128,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-023": "Grant standing autonomy — control tests with receipts",
   "T-US-025": "Launch workstream and schedule — mission outcome",
   "T-US-026": "Missed schedules coalesce; no burst republish",
+  "T-US-027": "Demand → page improvement — release receipt and experiment window",
 };
 
 function relatedProofsForCase(
@@ -334,6 +335,7 @@ export function compileAcceptanceEvidence(
     "T-US-023 fixture ACCEPTED only via STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS",
     "T-US-025 fixture ACCEPTED only via LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME",
     "T-US-026 fixture ACCEPTED only via MISSED_SCHEDULE_COALESCE_NO_BURST",
+    "T-US-027 fixture ACCEPTED only via DEMAND_PAGE_IMPROVEMENT_RELEASE_RECEIPT",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
