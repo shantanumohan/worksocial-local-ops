@@ -949,6 +949,12 @@ export {
   type FailureRecoveryScenarioResult,
 } from "./crm-forms-booking-map.js";
 export {
+  SYNTHETIC_LEAD_CLASSIFICATION_RELATED_CASE_IDS,
+  evaluateSyntheticLeadClassification,
+  type SyntheticLeadClassificationInput,
+  type SyntheticLeadClassificationDecision,
+} from "./synthetic-lead-classification.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

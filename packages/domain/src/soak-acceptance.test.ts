@@ -747,4 +747,15 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-US-019"]);
   });
+
+  it("maps T-US-020 to SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION only", () => {
+    expect(expectedProofsForFixtureCase("T-US-020")).toEqual([
+      SoakProofKind.SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION,
+      ),
+    ).toEqual(["T-US-020"]);
+  });
 });

@@ -359,6 +359,13 @@ export const SoakProofKind = {
    */
   MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY:
     "map_crm_forms_booking_failure_recovery",
+  /**
+   * Synthetic leads classified; no commerce pollution (T-US-020).
+   * synthetic + ws_synthetic classification; commercialExcluded;
+   * live Zoho NOT_WIRED. Distinct from T-X052 / T-X050.
+   */
+  SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION:
+    "synthetic_leads_classified_no_commerce_pollution",
 } as const;
 
 export type SoakProofKindValue =
@@ -465,6 +472,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-015 requires CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY (runtime ≠ API readiness; EVAL_ONLY).
  * T-US-017 requires CONNECT_GEMINI_EVALUATION_EVAL_ONLY (Gemini EVAL_ONLY connect; live NOT_WIRED).
  * T-US-019 requires MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY (CRM/forms/booking map + failure/recovery; live Zoho NOT_WIRED).
+ * T-US-020 requires SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION (classified canary; no commerce pollution).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -550,6 +558,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-015",
   "T-US-017",
   "T-US-019",
+  "T-US-020",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1050,6 +1059,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CONNECT_GEMINI_EVALUATION_EVAL_ONLY];
     case "T-US-019":
       return [SoakProofKind.MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY];
+    case "T-US-020":
+      return [SoakProofKind.SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION];
     default:
       return [];
   }
@@ -1206,6 +1217,8 @@ export function mapProofToFixtureCases(
       return ["T-US-017"];
     case SoakProofKind.MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY:
       return ["T-US-019"];
+    case SoakProofKind.SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION:
+      return ["T-US-020"];
     default:
       return [];
   }

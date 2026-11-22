@@ -95,6 +95,7 @@ import { proofGoogleAdsTestProductionAccessSeparated } from "./google-ads-test-p
 import { proofConnectClaudeCodeTestApiEvalOnly } from "./claude-code-test-api-connect-proof.js";
 import { proofConnectGeminiEvaluationEvalOnly } from "./gemini-evaluation-connect-proof.js";
 import { proofMapCrmFormsBookingFailureRecovery } from "./crm-forms-booking-map-proof.js";
+import { proofSyntheticLeadsClassifiedNoCommercePollution } from "./synthetic-lead-classification-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -803,6 +804,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofMapCrmFormsBookingFailureRecovery(nowPlus(nowIso, 700_000)),
   );
+  proofs.push(
+    proofSyntheticLeadsClassifiedNoCommercePollution(nowPlus(nowIso, 710_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -877,6 +881,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-015 fixture ACCEPTED via connect_claude_code_test_api_eval_only only — not live VERIFIED",
       "T-US-017 fixture ACCEPTED via connect_gemini_evaluation_eval_only only — not live VERIFIED",
       "T-US-019 fixture ACCEPTED via map_crm_forms_booking_failure_recovery only — not live VERIFIED",
+      "T-US-020 fixture ACCEPTED via synthetic_leads_classified_no_commerce_pollution only — not live VERIFIED",
     ],
   };
 }

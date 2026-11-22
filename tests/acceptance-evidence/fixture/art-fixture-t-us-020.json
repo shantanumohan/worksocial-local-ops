@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-020",
+  "caseId": "T-US-020",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-020 (Synthetic leads classified; no commerce pollution)\nproof=synthetic_leads_classified_no_commerce_pollution applyCount=0 :: createSyntheticLead → synthetic=true; assertSyntheticExcludedFromCommercial ok | evaluateSyntheticLeadClassification → SYNTHETIC_LEAD_CLASSIFIED_COMMERCIAL_EXCLUDED | verifyCanaryCrmFields passed (ws_synthetic + correlation) | Commerce projection: synthetic excluded (leadCount=1, revenue=2500) | countInCommerce on synthetic → COMMERCE_POLLUTION_REFUSED | appendCommerceLead refuses synthetic+countedInCommerce | Live Zoho request → LIVE_ZOHO_WIRING_NOT_WIRED | Unclassified lead → NOT_CLASSIFIED_AS_SYNTHETIC | ACCEPTED ≠ VERIFIED; externalEffects NONE; distinct from T-X052/T-X050\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "synthetic_leads_classified_no_commerce_pollution"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-020.json",
+  "createdAtIso": "2026-11-22T22:47:14.817Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-020-3272a7136310"
+}

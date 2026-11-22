@@ -122,6 +122,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-015": "Connect Claude Code + test API (EVAL_ONLY)",
   "T-US-017": "Connect Gemini evaluation (EVAL_ONLY)",
   "T-US-019": "Map CRM/forms/booking failure/recovery",
+  "T-US-020": "Synthetic leads classified; no commerce pollution",
 };
 
 function relatedProofsForCase(
@@ -322,6 +323,7 @@ export function compileAcceptanceEvidence(
     "T-US-015 fixture ACCEPTED only via CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY",
     "T-US-017 fixture ACCEPTED only via CONNECT_GEMINI_EVALUATION_EVAL_ONLY",
     "T-US-019 fixture ACCEPTED only via MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY",
+    "T-US-020 fixture ACCEPTED only via SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
