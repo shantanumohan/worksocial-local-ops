@@ -83,6 +83,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X024": "Old fence after reassignment — old worker cannot commit",
   "T-X011": "Output bomb — bounded/quarantined",
   "T-X003": "Symlink escape after root verification — write denied outside root",
+  "T-X050": "Public synthetic flag abuse — server grant required",
 };
 
 function relatedProofsForCase(
@@ -250,6 +251,7 @@ export function compileAcceptanceEvidence(
     "T-X024 fixture ACCEPTED only via OLD_FENCE_AFTER_REASSIGNMENT",
     "T-X011 fixture ACCEPTED only via OUTPUT_BOMB_BOUNDED_QUARANTINED",
     "T-X003 fixture ACCEPTED only via SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION",
+    "T-X050 fixture ACCEPTED only via PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

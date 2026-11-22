@@ -351,6 +351,15 @@ describe("soak-acceptance domain", () => {
     ]);
   });
 
+    expect(expectedProofsForFixtureCase("T-X050")).toEqual([
+      SoakProofKind.PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT,
+      ),
+    ).toEqual(["T-X050"]);
+
   it("builds unique per-run artifact ids", () => {
     const a = uniqueFixtureEvidenceArtifactId("T-X014", "soak-abcdef123456");
     const b = uniqueFixtureEvidenceArtifactId("T-X014", "soak-zzz999888777");

@@ -6,6 +6,8 @@
 
 import { randomBytes } from "node:crypto";
 import {
+  bindSyntheticFromServerGrant,
+  parsePublicSyntheticClaim,
   verifyCanaryCrmFields,
   type CanaryRemoteReceipt,
   type CrmFieldVerifyResult,
@@ -30,6 +32,11 @@ export type FixtureCrmWriteInput = {
   omitRecordId?: boolean;
   /** Test hook: skip writing (delivery failure). */
   skipWrite?: boolean;
+  /**
+   * Host/gateway canary grant. Defaults true for host-driven fixture canaries.
+   * Explicit false refuses public synthetic-flag abuse (T-X050).
+   */
+  serverCanaryGrantPresent?: boolean;
 };
 
 export type FixtureCrmCleanupResult = {
@@ -71,12 +78,24 @@ export function createZohoCrmFixtureAdapter(): ZohoCrmFixtureAdapter {
       if (input.skipWrite) {
         return null;
       }
-      if (!input.fieldSnapshot.ws_synthetic || input.fieldSnapshot.ws_synthetic !== "true") {
-        throw new Error("Fixture CRM refuses non-synthetic canary writes");
+      const claim = parsePublicSyntheticClaim(input.fieldSnapshot);
+      const bind = bindSyntheticFromServerGrant({
+        clientClaimedSynthetic: claim,
+        // Host canary writes default to grant-present; explicit false denies abuse.
+        serverCanaryGrantPresent: input.serverCanaryGrantPresent !== false,
+      });
+      if (!bind.synthetic) {
+        throw new Error(
+          `Fixture CRM refuses synthetic write without server canary grant (${bind.code})`,
+        );
       }
       if (input.fieldSnapshot.ws_correlation_id !== input.correlationId) {
         throw new Error("Fixture CRM correlation mismatch on write");
       }
+      const fieldSnapshot = {
+        ...input.fieldSnapshot,
+        ws_synthetic: "true",
+      };
       const receipt: CanaryRemoteReceipt = {
         receiptId: newId("rcpt"),
         correlationId: input.correlationId,
@@ -85,7 +104,7 @@ export function createZohoCrmFixtureAdapter(): ZohoCrmFixtureAdapter {
         synthetic: true,
         observedAtIso: input.nowIso,
         source: "fixture_crm",
-        fieldSnapshot: { ...input.fieldSnapshot },
+        fieldSnapshot,
       };
       ledger.set(input.correlationId, {
         receipt,

@@ -738,6 +738,14 @@ export {
   type SoakAcceptanceState,
 } from "./soak-acceptance.js";
 export {
+  SyntheticFlagDecisionCode,
+  parsePublicSyntheticClaim,
+  bindSyntheticFromServerGrant,
+  type SyntheticFlagDecisionCodeValue,
+  type BindSyntheticFromServerGrantInput,
+  type BindSyntheticFromServerGrantResult,
+} from "./public-synthetic-flag.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

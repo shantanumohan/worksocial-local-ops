@@ -23,7 +23,8 @@
     "@worksocial/credential-rotation": "workspace:*",
     "@worksocial/domain": "workspace:*",
     "@worksocial/persistence": "workspace:*",
-    "@worksocial/recovery": "workspace:*"
+    "@worksocial/recovery": "workspace:*",
+    "@worksocial/lead-capture": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "22.10.2",
