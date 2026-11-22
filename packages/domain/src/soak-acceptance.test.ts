@@ -822,4 +822,15 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-US-027"]);
   });
+
+  it("maps T-US-028 to KEYWORD_PROLIFERATION_ONE_USEFUL_UPDATE only", () => {
+    expect(expectedProofsForFixtureCase("T-US-028")).toEqual([
+      SoakProofKind.KEYWORD_PROLIFERATION_ONE_USEFUL_UPDATE,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.KEYWORD_PROLIFERATION_ONE_USEFUL_UPDATE,
+      ),
+    ).toEqual(["T-US-028"]);
+  });
 });

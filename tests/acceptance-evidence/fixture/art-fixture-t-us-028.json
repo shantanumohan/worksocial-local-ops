@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-028",
+  "caseId": "T-US-028",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-028 (Prefer one useful page update over keyword proliferation)\nproof=keyword_proliferation_one_useful_update applyCount=1 :: Preferred → ONE_USEFUL_PAGE_UPDATE_PREFERRED; proliferation refused; live NOT_WIRED | requestKeywordProliferation → KEYWORD_PROLIFERATION_REFUSED; preserved inputs + recovery path | claimSuccessDespiteProliferation → FALSE_SUCCESS_CLAIM_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-027 (demand page improvement release receipt + experiment window) | proofRecordedAt=2026-11-21T19:13:00.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "keyword_proliferation_one_useful_update"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-028.json",
+  "createdAtIso": "2026-11-22T23:39:40.338Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-028-c0817b36ba55"
+}

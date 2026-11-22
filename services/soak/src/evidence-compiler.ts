@@ -129,6 +129,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-025": "Launch workstream and schedule — mission outcome",
   "T-US-026": "Missed schedules coalesce; no burst republish",
   "T-US-027": "Demand → page improvement — release receipt and experiment window",
+  "T-US-028": "Prefer one useful page update over keyword proliferation",
 };
 
 function relatedProofsForCase(
@@ -336,6 +337,7 @@ export function compileAcceptanceEvidence(
     "T-US-025 fixture ACCEPTED only via LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME",
     "T-US-026 fixture ACCEPTED only via MISSED_SCHEDULE_COALESCE_NO_BURST",
     "T-US-027 fixture ACCEPTED only via DEMAND_PAGE_IMPROVEMENT_RELEASE_RECEIPT",
+    "T-US-028 fixture ACCEPTED only via KEYWORD_PROLIFERATION_ONE_USEFUL_UPDATE",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

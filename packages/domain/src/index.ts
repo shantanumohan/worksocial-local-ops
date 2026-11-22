@@ -1040,6 +1040,14 @@ export {
   type DemandPageImprovementDecision,
 } from "./demand-page-improvement.js";
 export {
+  KEYWORD_PROLIFERATION_GATE_RELATED_CASE_IDS,
+  evaluateKeywordProliferationGate,
+  type ProposedKeywordPage,
+  type PreferredUsefulPageUpdate,
+  type KeywordProliferationGateInput,
+  type KeywordProliferationGateDecision,
+} from "./keyword-proliferation-gate.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
