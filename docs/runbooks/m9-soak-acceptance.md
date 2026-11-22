@@ -188,3 +188,5 @@ Suggested owner Windows flow (state off OneDrive):
 **T-US-006** maps only to `UNBOUND_WRITE_PATH_FAIL_CLOSED` (observe/create ok; unbound write fail closed; applyAttemptCount=0; not live VERIFIED).
 
 **T-X023** maps only to `EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND`.
+
+**T-X034** maps only to `ADS_TEST_PROJECT_PRODUCTION_BLOCKED`.

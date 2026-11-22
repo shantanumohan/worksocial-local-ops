@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   AnalyticsEnvironment,
   Ga4PropertyKind,
+  attemptGuardedChatGptAdsProductionBind,
   classifyGscDemand,
   evaluateChatGptAdsAccess,
   interpretGa4DebugValidation,
@@ -97,5 +98,41 @@ describe("analytics — ChatGPT Ads gate", () => {
     });
     expect(decision.allowed).toBe(false);
     expect(decision.environment).toBe(AnalyticsEnvironment.NOT_WIRED);
+  });
+
+  it("blocks test-only Ads project binding production (T-X034)", () => {
+    const decision = evaluateChatGptAdsAccess({
+      localTransportVerified: true,
+      entitlementVerified: true,
+      authVerified: true,
+      projectEnvironment: AnalyticsEnvironment.SANDBOX,
+      requestedEnvironment: AnalyticsEnvironment.LIVE,
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("ADS_TEST_PROJECT_MISMATCH");
+    expect(decision.environment).toBe(AnalyticsEnvironment.NOT_WIRED);
+    expect(decision.reasons.some((r) => /T-X034/.test(r))).toBe(true);
+  });
+
+  it("guarded production bind never invokes binder on T-X034 mismatch", () => {
+    let calls = 0;
+    const result = attemptGuardedChatGptAdsProductionBind({
+      access: {
+        localTransportVerified: true,
+        entitlementVerified: true,
+        authVerified: true,
+        projectEnvironment: AnalyticsEnvironment.SANDBOX,
+        requestedEnvironment: AnalyticsEnvironment.LIVE,
+      },
+      projectId: "sandbox-ads",
+      productionBind: () => {
+        calls += 1;
+      },
+    });
+    expect(result.bound).toBe(false);
+    expect(result.decision.code).toBe("ADS_TEST_PROJECT_MISMATCH");
+    expect(result.productionBindCallCount).toBe(0);
+    expect(calls).toBe(0);
+    expect(result.externalEffects).toBe("NONE");
   });
 });

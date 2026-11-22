@@ -38,6 +38,7 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | 72h pilot gate | server-recorded start/heartbeat/end only — short CI soaks stay **NOT_MET**; client claim dates rejected |
 | T-X063 indirect prompt-injection exfil | Fixture **ACCEPTED** via `INDIRECT_PROMPT_INJECTION_EXFIL_DENIED` (not live VERIFIED) |
 | Live CMS / GSC / GA4 / Zoho / Temporal | **NOT_WIRED** |
+| T-X034 test Ads vs production | Fixture **ACCEPTED** via `ADS_TEST_PROJECT_PRODUCTION_BLOCKED` (not live VERIFIED) |
 | ChatGPT Ads | **access-blocked** |
 | R1-complete | **not claimed** |
 | External effects | **none** |

@@ -656,6 +656,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X023"]);
   });
 
+  it("maps T-X034 to ADS_TEST_PROJECT_PRODUCTION_BLOCKED only", () => {
+    expect(expectedProofsForFixtureCase("T-X034")).toEqual([
+      SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED),
+    ).toEqual(["T-X034"]);
+  });
+
   it("maps T-US-006 to UNBOUND_WRITE_PATH_FAIL_CLOSED only", () => {
     expect(expectedProofsForFixtureCase("T-US-006")).toEqual([
       SoakProofKind.UNBOUND_WRITE_PATH_FAIL_CLOSED,

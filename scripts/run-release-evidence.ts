@@ -95,7 +95,7 @@ async function main(): Promise<void> {
       cases: stableCaseResults,
       artifacts: stableArtifacts,
       uniqueRunArtifacts: artifacts,
-      note: "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated; T-X029 via explicit rebind; T-US-057 via cross-workspace resource substitution; T-US-024 via agent cannot widen grant; T-US-042/T-X057 via repair weaken test rejected; T-US-044/T-X053 via takeover cancels unsent; T-US-018/T-X037 via EVAL_ONLY operational tool forbidden; T-X058 via repair attempt limit escalated; T-X069 via imported doc quarantined; T-X038 via eval no-grounding; T-X039/T-US-058 via metric denominators honest; T-US-046/T-X048 via hard search constraints; T-US-010/T-X033 via GSC omitted rows; T-US-008/T-X032 via GA4 debug not delivered; T-X031 via wrong property kind; T-US-040/T-X049 via thank-you without CRM; T-X017 via stop-after-dispatch reconcile; T-X024 via old fence after reassignment; T-X011 via output bomb bounded/quarantined; T-X003 via symlink escape after root verification; T-X050 via public synthetic flag requires server grant; T-X010 via malicious prompt no shell injection; T-X009 via CLI error despite exit 0. T-X015 via DST recurring schedule no duplicates. T-X001 via host-sleep monitoring coverage-gap coalesce; T-X021 via concurrent idempotent release. T-X008 via fact changes after review stale; T-X012 via orphan worker deadline tree stopped; T-X007 via wrong CMS environment no production op; T-X016 via stop before dispatch no mutation; T-X022 via idempotency key payload mismatch. T-X063 via indirect prompt-injection exfil denied; T-X013 via replay historical no repeat I/O. T-X004 via disk-full evidence no partial completed. T-X043 via optimization breaks CTA journey fails. T-X026 via concurrent final budget reservation cap. T-X052 via synthetic conversion contamination excluded. T-X054 via reply sent CRM reconciles no resend. T-X055 via unknown policy question escalates without promise. T-X056 via automated response loop bounded handoff. T-X059 via duplicate platform attribution one booking. T-X060 via currency/timezone mismatch no silent sum. T-X070 via validated payload not collected separate failure states. T-X044 via unlicensed venue media publish blocked; T-X045 via partial campaign destinations per-state. T-US-006 via unbound write path fail closed. T-X023 via eventual consistency false not-found. Not R1-complete.",
+      note: "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated; T-X029 via explicit rebind; T-US-057 via cross-workspace resource substitution; T-US-024 via agent cannot widen grant; T-US-042/T-X057 via repair weaken test rejected; T-US-044/T-X053 via takeover cancels unsent; T-US-018/T-X037 via EVAL_ONLY operational tool forbidden; T-X058 via repair attempt limit escalated; T-X069 via imported doc quarantined; T-X038 via eval no-grounding; T-X039/T-US-058 via metric denominators honest; T-US-046/T-X048 via hard search constraints; T-US-010/T-X033 via GSC omitted rows; T-US-008/T-X032 via GA4 debug not delivered; T-X031 via wrong property kind; T-US-040/T-X049 via thank-you without CRM; T-X017 via stop-after-dispatch reconcile; T-X024 via old fence after reassignment; T-X011 via output bomb bounded/quarantined; T-X003 via symlink escape after root verification; T-X050 via public synthetic flag requires server grant; T-X010 via malicious prompt no shell injection; T-X009 via CLI error despite exit 0. T-X015 via DST recurring schedule no duplicates. T-X001 via host-sleep monitoring coverage-gap coalesce; T-X021 via concurrent idempotent release. T-X008 via fact changes after review stale; T-X012 via orphan worker deadline tree stopped; T-X007 via wrong CMS environment no production op; T-X016 via stop before dispatch no mutation; T-X022 via idempotency key payload mismatch. T-X063 via indirect prompt-injection exfil denied; T-X013 via replay historical no repeat I/O. T-X004 via disk-full evidence no partial completed. T-X043 via optimization breaks CTA journey fails. T-X026 via concurrent final budget reservation cap. T-X052 via synthetic conversion contamination excluded. T-X054 via reply sent CRM reconciles no resend. T-X055 via unknown policy question escalates without promise. T-X056 via automated response loop bounded handoff. T-X059 via duplicate platform attribution one booking. T-X060 via currency/timezone mismatch no silent sum. T-X070 via validated payload not collected separate failure states. T-X044 via unlicensed venue media publish blocked; T-X045 via partial campaign destinations per-state. T-US-006 via unbound write path fail closed. T-X023 via eventual consistency false not-found. T-X034 via test Ads project vs production blocked. Not R1-complete.",
     };
     const ledgerWrite = atomicWriteEvidenceJson({
       filePath: ledgerPath,
@@ -341,6 +341,9 @@ async function main(): Promise<void> {
     const hasTx023Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-X023",
     );
+    const hasTx034Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-X034",
+    );
 const expectedAccepted = [
       "T-F24",
       "T-US-002",
@@ -392,6 +395,7 @@ const expectedAccepted = [
       "T-X031",
       "T-X032",
       "T-X033",
+      "T-X034",
       "T-X037",
       "T-X038",
       "T-X039",
@@ -498,7 +502,8 @@ const expectedAccepted = [
         hasTx045Accepted &&
         hasUs006Accepted &&
         hasTx023Accepted &&
-        accepted.length === 74 &&
+        hasTx034Accepted &&
+        accepted.length === 75 &&
         JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
@@ -513,7 +518,7 @@ const expectedAccepted = [
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X023 eventual consistency false not-found fixture ACCEPTED (total 74). Live VERIFIED forbidden. Not R1-complete.",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X034 test Ads project vs production fixture ACCEPTED (total 75). Live VERIFIED forbidden. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {

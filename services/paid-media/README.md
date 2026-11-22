@@ -9,7 +9,7 @@ AA-19 / WP13–14 fixture analysis + paid-media proposal decision support.
 | ChatGPT Ads recommendations | **ACCESS_BLOCKED** without verified local transport + entitlement |
 | Live Ads mutations / spend | **NOT_WIRED** |
 | External effects | **NONE** |
-| Acceptance catalog VERIFIED | **No** — related cases remain NOT_RUN |
+| Acceptance catalog VERIFIED | **No** — T-X034 fixture ACCEPTED only (test Ads ≠ production); other related cases remain NOT_RUN |
 
 ## Hard rules
 

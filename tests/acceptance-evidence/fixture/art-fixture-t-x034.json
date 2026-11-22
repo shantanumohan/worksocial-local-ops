@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x034",
+  "caseId": "T-X034",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X034 (Test-only Ads project vs production — blocked)\nproof=ads_test_project_production_blocked applyCount=1 :: Guarded bind: SANDBOX→LIVE → ADS_TEST_PROJECT_MISMATCH; productionBindCallCount=0 | evaluateChatGptAdsAccess → ADS_TEST_PROJECT_MISMATCH (T-X034) | createPaidMediaProposal CHATGPT_ADS with mismatch → CHATGPT_ADS_BLOCKED; bind count still 0 | attemptPaidMediaExecution refused code=CHATGPT_ADS_BLOCKED; productionBindCallCount=0 | LIVE→LIVE guarded refuse ADS_LIVE_NOT_WIRED (distinct from T-X034); bind count=0 | instrumentedProductionBindCalls=0 liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "ads_test_project_production_blocked"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x034.json",
+  "createdAtIso": "2026-11-22T21:45:00.009Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x034-cb38c6c84ed9"
+}

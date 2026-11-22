@@ -316,6 +316,10 @@ export const SoakProofKind = {
    * Eventual consistency false not-found — no unsafe CRM create retry (T-X023).
    */
   EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND: "eventual_consistency_false_not_found",
+  /**
+   * Test-only (sandbox) Ads project cannot bind production/LIVE (T-X034).
+   */
+  ADS_TEST_PROJECT_PRODUCTION_BLOCKED: "ads_test_project_production_blocked",
 } as const;
 
 export type SoakProofKindValue =
@@ -415,6 +419,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X045 requires PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE (per-destination honesty).
  * T-US-006 requires UNBOUND_WRITE_PATH_FAIL_CLOSED.
  * T-X023 requires EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND.
+ * T-X034 requires ADS_TEST_PROJECT_PRODUCTION_BLOCKED (test Ads project ≠ production).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -492,6 +497,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X045",
   "T-US-006",
   "T-X023",
+  "T-X034",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -976,6 +982,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.UNBOUND_WRITE_PATH_FAIL_CLOSED];
     case "T-X023":
       return [SoakProofKind.EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND];
+    case "T-X034":
+      return [SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED];
     default:
       return [];
   }
@@ -1118,6 +1126,8 @@ export function mapProofToFixtureCases(
       return ["T-US-006"];
     case SoakProofKind.EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND:
       return ["T-X023"];
+    case SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED:
+      return ["T-X034"];
     default:
       return [];
   }

@@ -191,7 +191,7 @@ export function createSoakService(store: SoakStore): SoakService {
         r1CompleteClaimed: false,
         externalEffects: "NONE",
         honestNote:
-          "Fixture soak only. Pilot gate uses server-recorded observations only (client claim dates ignored). Live providers NOT_WIRED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated; T-X029 via explicit rebind; T-X015 via DST recurring schedule no duplicates — not live VERIFIED. T-X008 via fact changes after review stale. T-X023 via eventual consistency false not-found — not live VERIFIED. Not R1-complete.",
+          "Fixture soak only. Pilot gate uses server-recorded observations only (client claim dates ignored). Live providers NOT_WIRED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated; T-X029 via explicit rebind; T-X015 via DST recurring schedule no duplicates — not live VERIFIED. T-X008 via fact changes after review stale. T-X023 via eventual consistency false not-found — not live VERIFIED. T-X034 via test Ads project vs production blocked. Not R1-complete.",
       };
       store.addRun(run);
 
