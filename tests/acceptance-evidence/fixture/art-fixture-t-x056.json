@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x056",
+  "caseId": "T-X056",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X056 (Automated response loop — bounded; handoff)\nproof=automated_response_loop_bounded_handoff applyCount=1 :: sentAgentMessageCount=1 < max=2 → WITHIN_BOUND; no handoff | sentAgentMessageCount=2 ≥ max=2 → MESSAGE_LIMIT_HANDOFF; status=handed_off; agentSendAllowed=false | Over-bound sentAgentMessageCount=5 still MESSAGE_LIMIT_HANDOFF (no unbounded loop) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "automated_response_loop_bounded_handoff"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x056.json",
+  "createdAtIso": "2026-11-22T19:42:48.627Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x056-4f5db98c6060"
+}
