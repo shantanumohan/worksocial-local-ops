@@ -534,4 +534,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X026"]);
   });
 
+  it("maps T-X052 to SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED only", () => {
+    expect(expectedProofsForFixtureCase("T-X052")).toEqual([
+      SoakProofKind.SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED,
+      ),
+    ).toEqual(["T-X052"]);
+  });
+
 });

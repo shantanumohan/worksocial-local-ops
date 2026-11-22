@@ -253,6 +253,12 @@ export const SoakProofKind = {
    */
   CONCURRENT_FINAL_BUDGET_RESERVATION_CAP:
     "concurrent_final_budget_reservation_cap",
+  /**
+   * Synthetic conversion contamination excluded from commerce (T-X052).
+   * Canary/synthetic conversion rows never inflate commerce denominators.
+   */
+  SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED:
+    "synthetic_conversion_contamination_excluded",
 } as const;
 
 export type SoakProofKindValue =
@@ -340,6 +346,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X025 requires EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED.
  * T-X043 requires OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS (CTA journey regression).
  * T-X026 requires CONCURRENT_FINAL_BUDGET_RESERVATION_CAP (same-snapshot composition).
+ * T-X052 requires SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED (commerce exclusion).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -405,6 +412,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X025",
   "T-X043",
   "T-X026",
+  "T-X052",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -865,6 +873,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS];
     case "T-X026":
       return [SoakProofKind.CONCURRENT_FINAL_BUDGET_RESERVATION_CAP];
+    case "T-X052":
+      return [SoakProofKind.SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED];
     default:
       return [];
   }
@@ -983,6 +993,8 @@ export function mapProofToFixtureCases(
       return ["T-X043"];
     case SoakProofKind.CONCURRENT_FINAL_BUDGET_RESERVATION_CAP:
       return ["T-X026"];
+    case SoakProofKind.SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED:
+      return ["T-X052"];
     default:
       return [];
   }
