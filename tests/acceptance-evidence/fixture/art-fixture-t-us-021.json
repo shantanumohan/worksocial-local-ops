@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-021",
+  "caseId": "T-US-021",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-021 (Connect local/social/inbox — test artifact and capability)\nproof=connect_local_social_inbox_test_artifact applyCount=0 :: Local/social/inbox → LOCAL_SOCIAL_INBOX_CONNECT_READY; 3 destinations; test artifact present; live NOT_WIRED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | NEEDS_HUMAN_VERIFICATION → AUTH_RESULT_NOT_READY | Missing authorized test artifact → AUTHORIZED_TEST_ARTIFACT_MISSING | Empty destinations → DESTINATIONS_MISSING | liveProviderSuccessClaimed=false externalEffects=NONE | Distinct from T-US-022 (unsupported destination capabilities) and T-X045 (partial campaign destinations)\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "connect_local_social_inbox_test_artifact"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-021.json",
+  "createdAtIso": "2026-11-22T22:55:12.912Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-021-13a62e278c8d"
+}

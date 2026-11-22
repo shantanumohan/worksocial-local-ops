@@ -8,8 +8,8 @@
     "actual_cost_exceeds_estimate_overrun_visible"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x028.json",
-  "createdAtIso": "2026-11-22T22:47:14.817Z",
+  "createdAtIso": "2026-11-22T22:55:12.912Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x028-3272a7136310"
+  "uniqueSourceArtifactId": "art-fixture-t-x028-13a62e278c8d"
 }

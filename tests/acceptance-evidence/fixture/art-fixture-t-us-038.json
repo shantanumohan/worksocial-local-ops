@@ -3,13 +3,13 @@
   "caseId": "T-US-038",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-US-038 (Double-counted attribution avoided in unique outcomes)\nproof=duplicate_platform_attribution_one_booking applyCount=1 :: two platform claims retained separately (claim-google-a9cc3a86, claim-meta-306fd299) → uniqueBookingCount=1 | SILENT_PLATFORM_SUM_REFUSED — platform conversions not summed into unique bookings | counterfactual: naive platform sum 2 ≠ unique booking 1 (double-count blocked) | single-platform claim → unique=1 allowed (no false double-count)\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-US-038 (Double-counted attribution avoided in unique outcomes)\nproof=duplicate_platform_attribution_one_booking applyCount=1 :: two platform claims retained separately (claim-google-a954f5aa, claim-meta-51312689) → uniqueBookingCount=1 | SILENT_PLATFORM_SUM_REFUSED — platform conversions not summed into unique bookings | counterfactual: naive platform sum 2 ≠ unique booking 1 (double-count blocked) | single-platform claim → unique=1 allowed (no false double-count)\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "duplicate_platform_attribution_one_booking"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-038.json",
-  "createdAtIso": "2026-11-22T22:47:14.817Z",
+  "createdAtIso": "2026-11-22T22:55:12.912Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-038-3272a7136310"
+  "uniqueSourceArtifactId": "art-fixture-t-us-038-13a62e278c8d"
 }

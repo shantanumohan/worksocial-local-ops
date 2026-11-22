@@ -955,6 +955,20 @@ export {
   type SyntheticLeadClassificationDecision,
 } from "./synthetic-lead-classification.js";
 export {
+  LocalSocialInboxChannelKind,
+  ChannelActionCapability,
+  FIXTURE_CHANNEL_ACTION_CAPABILITIES,
+  ChannelAuthResult,
+  LOCAL_SOCIAL_INBOX_CONNECT_RELATED_CASE_IDS,
+  evaluateLocalSocialInboxConnect,
+  type LocalSocialInboxChannelKindValue,
+  type ChannelActionCapabilityValue,
+  type ChannelAuthResultValue,
+  type LocalSocialInboxDestinationInput,
+  type LocalSocialInboxConnectInput,
+  type LocalSocialInboxConnectDecision,
+} from "./local-social-inbox-connect.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

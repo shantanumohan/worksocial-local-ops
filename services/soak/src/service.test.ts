@@ -29,7 +29,7 @@ describe("soak service (M9)", () => {
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(71);
+    expect(result.proofs).toHaveLength(72);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(
       result.proofs.every((p) =>
@@ -39,7 +39,8 @@ describe("soak service (M9)", () => {
         p.kind === SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY ||
         p.kind === SoakProofKind.CONNECT_GEMINI_EVALUATION_EVAL_ONLY ||
         p.kind === SoakProofKind.MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY ||
-        p.kind === SoakProofKind.SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION
+        p.kind === SoakProofKind.SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION ||
+        p.kind === SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT
           ? p.applyAttemptCount === 0
           : p.applyAttemptCount === 1,
       ),
@@ -347,9 +348,15 @@ describe("soak service (M9)", () => {
           SoakProofKind.SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION,
       ),
     ).toBe(true);
+    expect(
+      result.proofs.some(
+        (p) =>
+          p.kind === SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT,
+      ),
+    ).toBe(true);
   });
 
-  it("compiles fixture ACCEPTED for complete proof sets including T-US-020", async () => {
+  it("compiles fixture ACCEPTED for complete proof sets including T-US-021", async () => {
     const harness = await runSoakRecoveryHarness({
       stateDir: dir,
       nowIso: "2026-11-21T18:00:00.000Z",
@@ -376,6 +383,7 @@ describe("soak service (M9)", () => {
       "T-US-018",
       "T-US-019",
       "T-US-020",
+      "T-US-021",
       "T-US-024",
       "T-US-036",
       "T-US-038",
@@ -591,7 +599,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(83);
+    expect(soak.ownerReport().acceptedCases.length).toBe(84);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {

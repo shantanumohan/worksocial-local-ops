@@ -123,6 +123,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-017": "Connect Gemini evaluation (EVAL_ONLY)",
   "T-US-019": "Map CRM/forms/booking failure/recovery",
   "T-US-020": "Synthetic leads classified; no commerce pollution",
+  "T-US-021": "Connect local/social/inbox — test artifact and capability",
 };
 
 function relatedProofsForCase(
@@ -324,6 +325,7 @@ export function compileAcceptanceEvidence(
     "T-US-017 fixture ACCEPTED only via CONNECT_GEMINI_EVALUATION_EVAL_ONLY",
     "T-US-019 fixture ACCEPTED only via MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY",
     "T-US-020 fixture ACCEPTED only via SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION",
+    "T-US-021 fixture ACCEPTED only via CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
