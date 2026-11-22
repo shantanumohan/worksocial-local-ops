@@ -98,6 +98,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X016": "Stop before dispatch claim — no adapter mutation",
   "T-X063": "Indirect prompt-injection exfiltration — boundary denies",
   "T-X013": "Replay historical workflow — no repeated external I/O",
+  "T-X004": "Disk full during evidence write — no partial completed manifest",
 };
 
 function relatedProofsForCase(
@@ -277,6 +278,7 @@ export function compileAcceptanceEvidence(
     "T-X016 fixture ACCEPTED only via STOP_BEFORE_DISPATCH_NO_MUTATION",
     "T-X022 fixture ACCEPTED only via IDEMPOTENCY_KEY_PAYLOAD_MISMATCH",
     "T-X065 fixture ACCEPTED only via WORKER_BROWSER_AUTH_STATE_OS_DENIED",
+    "T-X004 fixture ACCEPTED only via DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED (no partial COMPLETED manifest)",
     "T-X027 fixture ACCEPTED only via UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL",
     "T-X063 fixture ACCEPTED only via INDIRECT_PROMPT_INJECTION_EXFIL_DENIED",
     "T-X013 fixture ACCEPTED only via REPLAY_HISTORICAL_NO_REPEAT_IO (history replay; no repeated I/O)",
