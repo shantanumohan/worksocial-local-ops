@@ -307,6 +307,11 @@ export const SoakProofKind = {
    */
   PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE:
     "partial_campaign_destinations_per_state",
+  /**
+   * Unbound URL: analysis ok, write blocked (T-US-006).
+   * Observe/create skip pilot write gates; unbound write targets fail closed.
+   */
+  UNBOUND_WRITE_PATH_FAIL_CLOSED: "unbound_write_path_fail_closed",
 } as const;
 
 export type SoakProofKindValue =
@@ -404,6 +409,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X070 requires VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES.
  * T-X044 requires UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED.
  * T-X045 requires PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE (per-destination honesty).
+ * T-US-006 requires UNBOUND_WRITE_PATH_FAIL_CLOSED.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -479,6 +485,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X028",
   "T-X044",
   "T-X045",
+  "T-US-006",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -959,6 +966,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED];
     case "T-X045":
       return [SoakProofKind.PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE];
+    case "T-US-006":
+      return [SoakProofKind.UNBOUND_WRITE_PATH_FAIL_CLOSED];
     default:
       return [];
   }
@@ -1097,6 +1106,8 @@ export function mapProofToFixtureCases(
       return ["T-X044"];
     case SoakProofKind.PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE:
       return ["T-X045"];
+    case SoakProofKind.UNBOUND_WRITE_PATH_FAIL_CLOSED:
+      return ["T-US-006"];
     default:
       return [];
   }

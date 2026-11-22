@@ -646,4 +646,13 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X044"]);
   });
 
+  it("maps T-US-006 to UNBOUND_WRITE_PATH_FAIL_CLOSED only", () => {
+    expect(expectedProofsForFixtureCase("T-US-006")).toEqual([
+      SoakProofKind.UNBOUND_WRITE_PATH_FAIL_CLOSED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.UNBOUND_WRITE_PATH_FAIL_CLOSED),
+    ).toEqual(["T-US-006"]);
+  });
+
 });
