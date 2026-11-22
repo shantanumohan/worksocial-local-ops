@@ -30,6 +30,7 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-US-010 / T-X033 GSC omitted rows | Fixture **ACCEPTED** via `GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO` (not live VERIFIED) |
 | T-US-008 / T-X032 GA4 debug not delivered | Fixture **ACCEPTED** via `GA4_DEBUG_NOT_DELIVERED_CONVERSION` (not live VERIFIED) |
 | T-X031 wrong GA4 property kind | Fixture **ACCEPTED** via `GA4_WRONG_PROPERTY_KIND_REFUSED` (not live VERIFIED) |
+| T-X034 test Ads vs production | Fixture **ACCEPTED** via `ADS_TEST_PROJECT_PRODUCTION_BLOCKED` (not live VERIFIED) |
 | T-US-040 / T-X049 thank-you without CRM | Fixture **ACCEPTED** via `THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY` (not live VERIFIED) |
 | T-X017 stop after provider dispatch | Fixture **ACCEPTED** via `STOP_AFTER_DISPATCH_RECONCILE` (reconcile; no fake cancel; not live VERIFIED) |
 | T-X024 old fence after reassignment | Fixture **ACCEPTED** via `OLD_FENCE_AFTER_REASSIGNMENT` (not live VERIFIED) |

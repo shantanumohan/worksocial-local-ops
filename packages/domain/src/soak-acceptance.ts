@@ -220,91 +220,58 @@ export const SoakProofKind = {
   WORKER_BROWSER_AUTH_STATE_OS_DENIED: "worker_browser_auth_state_os_denied",
   /**
    * Unknown usage on cancelled request — hold residual, not zero cost (T-X027).
-   */
   UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL: "unknown_usage_cancel_holds_residual",
-  /**
    * Actual cost exceeds estimate — overrun visible in settledMinor (T-X028).
-   */
   ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE:
     "actual_cost_exceeds_estimate_overrun_visible",
-  /**
    * Indirect prompt-injection exfiltration denied at boundary (T-X063).
    * Untrusted web/email content cannot become instructions that exfiltrate secrets.
-   */
   INDIRECT_PROMPT_INJECTION_EXFIL_DENIED:
     "indirect_prompt_injection_exfil_denied",
-  /**
    * Replay historical workflow — no repeated external I/O (T-X013).
    * Offline history replay of mission control flow; not acceptPending short-circuit.
-   */
   REPLAY_HISTORICAL_NO_REPEAT_IO: "replay_historical_no_repeat_io",
-  /**
    * Disk full during evidence write — no partial COMPLETED manifest (T-X004).
-   */
   DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED:
     "disk_full_evidence_no_partial_completed",
-  /**
    * External human edit during staging — conflict retained (T-X025).
-   */
   EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED: "external_human_edit_conflict_retained",
-  /**
    * Optimization breaks CTA → journey regression fails (T-X043).
-   */
   OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS:
     "optimization_breaks_cta_journey_fails",
-  /**
    * Concurrent final budget reservation — daily cap enforced (T-X026).
    * Same-snapshot finals compose to BUDGET_EXHAUSTED; reserved never exceeds limit.
-   */
   CONCURRENT_FINAL_BUDGET_RESERVATION_CAP:
     "concurrent_final_budget_reservation_cap",
-  /**
    * Synthetic conversion contamination excluded from commerce (T-X052).
    * Canary/synthetic conversion rows never inflate commerce denominators.
-   */
   SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED:
     "synthetic_conversion_contamination_excluded",
-  /**
    * Reply SENT but CRM fails — CRM reconciles; no outbound resend (T-X054).
-   */
   REPLY_SENT_CRM_RECONCILES_NO_RESEND: "reply_sent_crm_reconciles_no_resend",
-  /**
    * Unknown policy question escalates without promise (T-X055).
    * Outside allowedQuestionIds → refuse draft; handoff with no invented answer.
-   */
   UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE:
     "unknown_policy_question_escalates_without_promise",
-  /**
    * Automated response loop bounded; handoff when agent message cap hit (T-X056).
-   */
   AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF:
     "automated_response_loop_bounded_handoff",
-  /**
    * Duplicate platform attribution — one booking; separate claims (T-X059).
    * Platform conversions must not silently sum into unique booking outcomes.
-   */
   DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING:
     "duplicate_platform_attribution_one_booking",
-  /**
    * Currency/timezone mismatch — refuse silent sum (T-X060).
    * Heterogeneous currency or reporting timezone series never invent a total.
-   */
   CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM:
     "currency_timezone_mismatch_no_silent_sum",
-  /**
    * Validated payload not collected — VALIDATION_FAILED ≠ COLLECTION_FAILED (T-X070).
-   */
   VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES:
     "validated_payload_not_collected_separate_states",
-  /**
    * Unlicensed venue media → publish blocked (T-X044).
-   */
   UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED:
     "unlicensed_venue_media_publish_blocked",
-  /**
    * Partial campaign destinations — per-destination states (T-X045).
    * Mixed VERIFIED/FAILED/UNKNOWN keep PARTIAL; verified destinations not re-applied.
-   */
   PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE:
     "partial_campaign_destinations_per_state",
   /**
@@ -312,10 +279,10 @@ export const SoakProofKind = {
    * Observe/create skip pilot write gates; unbound write targets fail closed.
    */
   UNBOUND_WRITE_PATH_FAIL_CLOSED: "unbound_write_path_fail_closed",
-  /**
    * Eventual consistency false not-found — no unsafe CRM create retry (T-X023).
-   */
   EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND: "eventual_consistency_false_not_found",
+   * Test-only (sandbox) Ads project cannot bind production/LIVE (T-X034).
+  ADS_TEST_PROJECT_PRODUCTION_BLOCKED: "ads_test_project_production_blocked",
 } as const;
 
 export type SoakProofKindValue =
@@ -415,6 +382,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X045 requires PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE (per-destination honesty).
  * T-US-006 requires UNBOUND_WRITE_PATH_FAIL_CLOSED.
  * T-X023 requires EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND.
+ * T-X034 requires ADS_TEST_PROJECT_PRODUCTION_BLOCKED (test Ads project ≠ production).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -492,6 +460,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X045",
   "T-US-006",
   "T-X023",
+  "T-X034",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -976,6 +945,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.UNBOUND_WRITE_PATH_FAIL_CLOSED];
     case "T-X023":
       return [SoakProofKind.EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND];
+    case "T-X034":
+      return [SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED];
     default:
       return [];
   }
@@ -1118,6 +1089,8 @@ export function mapProofToFixtureCases(
       return ["T-US-006"];
     case SoakProofKind.EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND:
       return ["T-X023"];
+    case SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED:
+      return ["T-X034"];
     default:
       return [];
   }

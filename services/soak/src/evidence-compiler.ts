@@ -114,6 +114,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X045": "Partial campaign destinations — per-destination states",
   "T-US-006": "Unbound URL: analysis ok, write blocked",
   "T-X023": "Eventual consistency false not-found — no unsafe retry",
+  "T-X034": "Test-only Ads project vs production — blocked",
 };
 
 function relatedProofsForCase(
@@ -309,6 +310,7 @@ export function compileAcceptanceEvidence(
     "T-X070 fixture ACCEPTED only via VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES",
     "T-X044 fixture ACCEPTED only via UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED",
     "T-X045 fixture ACCEPTED only via PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE (per-destination honesty)",
+    "T-X034 fixture ACCEPTED only via ADS_TEST_PROJECT_PRODUCTION_BLOCKED (test Ads ≠ production)",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

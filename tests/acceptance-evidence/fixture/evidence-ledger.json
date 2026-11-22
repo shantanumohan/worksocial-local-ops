@@ -1,11 +1,15 @@
 {
   "compiledAtIso": "2026-11-22T21:34:20.301Z",
+  "compiledAtIso": "2026-11-22T21:26:10.314Z",
+  "compiledAtIso": "2026-11-22T18:53:55.534Z",
   "environment": "fixture",
   "r1CompleteClaimed": false,
   "pilotGate": {
     "status": "NOT_MET",
     "requiredMs": 259200000,
     "observedMs": 616,
+    "observedMs": 599,
+    "observedMs": 593,
     "proofsRequired": [
       "crash_restart",
       "no_duplicate_effects",
@@ -20,6 +24,8 @@
     ],
     "reasons": [
       "Soak duration 616ms < required 259200000ms (72h pilot gate)"
+      "Soak duration 599ms < required 259200000ms (72h pilot gate)"
+      "Soak duration 593ms < required 259200000ms (72h pilot gate)"
     ],
     "serverObservationsOnly": true
   },
@@ -48,6 +54,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x014-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x014-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x014-0718d79ee911"
     },
     {
       "caseId": "T-X020",
@@ -60,6 +70,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x020-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x020-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x020-0718d79ee911"
     },
     {
       "caseId": "T-US-048",
@@ -72,6 +86,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-048-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-048-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-048-0718d79ee911"
     },
     {
       "caseId": "T-X066",
@@ -84,6 +102,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x066-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x066-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x066-0718d79ee911"
     },
     {
       "caseId": "T-F24",
@@ -96,6 +118,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-f24-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-f24-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-f24-0718d79ee911"
     },
     {
       "caseId": "T-US-047",
@@ -108,6 +134,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-047-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-047-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-047-0718d79ee911"
     },
     {
       "caseId": "T-US-002",
@@ -120,6 +150,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-002-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-002-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-002-0718d79ee911"
     },
     {
       "caseId": "T-X002",
@@ -132,6 +166,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x002-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x002-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x002-0718d79ee911"
     },
     {
       "caseId": "T-X018",
@@ -144,6 +182,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x018-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x018-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x018-0718d79ee911"
     },
     {
       "caseId": "T-US-054",
@@ -156,6 +198,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-054-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-054-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-054-0718d79ee911"
     },
     {
       "caseId": "T-X073",
@@ -168,6 +214,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x073-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x073-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x073-0718d79ee911"
     },
     {
       "caseId": "T-US-060",
@@ -180,6 +230,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-060-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-060-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-060-0718d79ee911"
     },
     {
       "caseId": "T-X005",
@@ -192,6 +246,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x005-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x005-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x005-0718d79ee911"
     },
     {
       "caseId": "T-X006",
@@ -204,6 +262,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x006-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x006-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x006-0718d79ee911"
     },
     {
       "caseId": "T-X019",
@@ -216,6 +278,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x019-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x019-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x019-0718d79ee911"
     },
     {
       "caseId": "T-US-036",
@@ -228,6 +294,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-036-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-036-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-036-0718d79ee911"
     },
     {
       "caseId": "T-X029",
@@ -240,6 +310,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x029-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x029-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x029-0718d79ee911"
     },
     {
       "caseId": "T-US-057",
@@ -252,6 +326,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-057-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-057-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-057-0718d79ee911"
     },
     {
       "caseId": "T-US-024",
@@ -264,6 +342,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-024-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-024-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-024-0718d79ee911"
     },
     {
       "caseId": "T-US-042",
@@ -276,6 +358,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-042-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-042-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-042-0718d79ee911"
     },
     {
       "caseId": "T-X057",
@@ -288,6 +374,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x057-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x057-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x057-0718d79ee911"
     },
     {
       "caseId": "T-US-044",
@@ -300,6 +390,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-044-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-044-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-044-0718d79ee911"
     },
     {
       "caseId": "T-X053",
@@ -312,6 +406,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x053-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x053-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x053-0718d79ee911"
     },
     {
       "caseId": "T-US-018",
@@ -324,6 +422,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-018-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-018-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-018-0718d79ee911"
     },
     {
       "caseId": "T-X037",
@@ -336,6 +438,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x037-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x037-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x037-0718d79ee911"
     },
     {
       "caseId": "T-X058",
@@ -348,6 +454,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x058-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x058-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x058-0718d79ee911"
     },
     {
       "caseId": "T-X069",
@@ -360,6 +470,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x069-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x069-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x069-0718d79ee911"
     },
     {
       "caseId": "T-X038",
@@ -372,6 +486,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x038-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x038-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x038-0718d79ee911"
     },
     {
       "caseId": "T-X039",
@@ -384,6 +502,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x039-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x039-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x039-0718d79ee911"
     },
     {
       "caseId": "T-US-058",
@@ -396,6 +518,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-058-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-058-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-058-0718d79ee911"
     },
     {
       "caseId": "T-US-046",
@@ -408,6 +534,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-046-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-046-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-046-0718d79ee911"
     },
     {
       "caseId": "T-X048",
@@ -420,6 +550,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x048-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x048-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x048-0718d79ee911"
     },
     {
       "caseId": "T-US-010",
@@ -432,6 +566,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-010-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-010-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-010-0718d79ee911"
     },
     {
       "caseId": "T-X033",
@@ -444,6 +582,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x033-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x033-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x033-0718d79ee911"
     },
     {
       "caseId": "T-US-008",
@@ -456,6 +598,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-008-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-008-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-008-0718d79ee911"
     },
     {
       "caseId": "T-X032",
@@ -468,6 +614,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x032-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x032-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x032-0718d79ee911"
     },
     {
       "caseId": "T-X031",
@@ -480,6 +630,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x031-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x031-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x031-0718d79ee911"
     },
     {
       "caseId": "T-US-040",
@@ -492,6 +646,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-040-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-040-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-040-0718d79ee911"
     },
     {
       "caseId": "T-X049",
@@ -504,6 +662,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x049-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x049-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x049-0718d79ee911"
     },
     {
       "caseId": "T-X017",
@@ -516,6 +678,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x017-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x017-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x017-0718d79ee911"
     },
     {
       "caseId": "T-X024",
@@ -528,6 +694,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x024-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x024-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x024-0718d79ee911"
     },
     {
       "caseId": "T-X011",
@@ -540,6 +710,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x011-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x011-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x011-0718d79ee911"
     },
     {
       "caseId": "T-X003",
@@ -552,6 +726,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x003-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x003-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x003-0718d79ee911"
     },
     {
       "caseId": "T-X050",
@@ -564,6 +742,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x050-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x050-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x050-0718d79ee911"
     },
     {
       "caseId": "T-X010",
@@ -576,6 +758,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x010-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x010-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x010-0718d79ee911"
     },
     {
       "caseId": "T-X009",
@@ -588,6 +774,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x009-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x009-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x009-0718d79ee911"
     },
     {
       "caseId": "T-X015",
@@ -600,6 +790,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x015-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x015-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x015-0718d79ee911"
     },
     {
       "caseId": "T-X001",
@@ -612,6 +806,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x001-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x001-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x001-0718d79ee911"
     },
     {
       "caseId": "T-X021",
@@ -624,6 +822,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x021-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x021-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x021-0718d79ee911"
     },
     {
       "caseId": "T-X022",
@@ -648,6 +850,9 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x065-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x065-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x022-0718d79ee911"
     },
     {
       "caseId": "T-X008",
@@ -660,6 +865,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x008-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x008-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x008-0718d79ee911"
     },
     {
       "caseId": "T-X012",
@@ -672,6 +881,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x012-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x012-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x012-0718d79ee911"
     },
     {
       "caseId": "T-X007",
@@ -684,6 +897,10 @@
       ],
       "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x007-bb82c3448343"
+      "updatedAtIso": "2026-11-22T21:26:10.314Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x007-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x007-0718d79ee911"
     },
     {
       "caseId": "T-X016",
@@ -702,6 +919,10 @@
       "status": "ACCEPTED",
       "environment": "fixture",
       "artifactId": "art-fixture-t-x063",
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x016-0718d79ee911"
+      "caseId": "T-X034",
+      "artifactId": "art-fixture-t-x034",
       "reasons": [
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
@@ -722,9 +943,8 @@
       "uniqueSourceArtifactId": "art-fixture-t-x013-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x013-fa90bf86fb89"
       "caseId": "T-X027",
-      "status": "ACCEPTED",
-      "environment": "fixture",
       "artifactId": "art-fixture-t-x027",
       "reasons": [
         "Fixture evidence compiled from complete proof set (1)",
@@ -734,9 +954,8 @@
       "uniqueSourceArtifactId": "art-fixture-t-x027-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x027-fa90bf86fb89"
       "caseId": "T-X004",
-      "status": "ACCEPTED",
-      "environment": "fixture",
       "artifactId": "art-fixture-t-x004",
       "reasons": [
         "Fixture evidence compiled from complete proof set (1)",
@@ -746,9 +965,8 @@
       "uniqueSourceArtifactId": "art-fixture-t-x004-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x004-fa90bf86fb89"
       "caseId": "T-X025",
-      "status": "ACCEPTED",
-      "environment": "fixture",
       "artifactId": "art-fixture-t-x025",
       "reasons": [
         "Fixture evidence compiled from complete proof set (1)",
@@ -758,9 +976,8 @@
       "uniqueSourceArtifactId": "art-fixture-t-x025-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x025-fa90bf86fb89"
       "caseId": "T-X043",
-      "status": "ACCEPTED",
-      "environment": "fixture",
       "artifactId": "art-fixture-t-x043",
       "reasons": [
         "Fixture evidence compiled from complete proof set (1)",
@@ -770,9 +987,8 @@
       "uniqueSourceArtifactId": "art-fixture-t-x043-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x043-fa90bf86fb89"
       "caseId": "T-X026",
-      "status": "ACCEPTED",
-      "environment": "fixture",
       "artifactId": "art-fixture-t-x026",
       "reasons": [
         "Fixture evidence compiled from complete proof set (1)",
@@ -782,9 +998,8 @@
       "uniqueSourceArtifactId": "art-fixture-t-x026-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x026-fa90bf86fb89"
       "caseId": "T-X052",
-      "status": "ACCEPTED",
-      "environment": "fixture",
       "artifactId": "art-fixture-t-x052",
       "reasons": [
         "Fixture evidence compiled from complete proof set (1)",
@@ -794,9 +1009,8 @@
       "uniqueSourceArtifactId": "art-fixture-t-x052-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x052-fa90bf86fb89"
       "caseId": "T-X054",
-      "status": "ACCEPTED",
-      "environment": "fixture",
       "artifactId": "art-fixture-t-x054",
       "reasons": [
         "Fixture evidence compiled from complete proof set (1)",
@@ -806,9 +1020,8 @@
       "uniqueSourceArtifactId": "art-fixture-t-x054-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x054-fa90bf86fb89"
       "caseId": "T-X055",
-      "status": "ACCEPTED",
-      "environment": "fixture",
       "artifactId": "art-fixture-t-x055",
       "reasons": [
         "Fixture evidence compiled from complete proof set (1)",
@@ -818,9 +1031,8 @@
       "uniqueSourceArtifactId": "art-fixture-t-x055-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x055-fa90bf86fb89"
       "caseId": "T-X056",
-      "status": "ACCEPTED",
-      "environment": "fixture",
       "artifactId": "art-fixture-t-x056",
       "reasons": [
         "Fixture evidence compiled from complete proof set (1)",
@@ -830,9 +1042,8 @@
       "uniqueSourceArtifactId": "art-fixture-t-x056-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x056-fa90bf86fb89"
       "caseId": "T-X059",
-      "status": "ACCEPTED",
-      "environment": "fixture",
       "artifactId": "art-fixture-t-x059",
       "reasons": [
         "Fixture evidence compiled from complete proof set (1)",
@@ -842,9 +1053,8 @@
       "uniqueSourceArtifactId": "art-fixture-t-x059-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x059-fa90bf86fb89"
       "caseId": "T-X060",
-      "status": "ACCEPTED",
-      "environment": "fixture",
       "artifactId": "art-fixture-t-x060",
       "reasons": [
         "Fixture evidence compiled from complete proof set (1)",
@@ -854,9 +1064,8 @@
       "uniqueSourceArtifactId": "art-fixture-t-x060-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x060-fa90bf86fb89"
       "caseId": "T-X070",
-      "status": "ACCEPTED",
-      "environment": "fixture",
       "artifactId": "art-fixture-t-x070",
       "reasons": [
         "Fixture evidence compiled from complete proof set (1)",
@@ -866,9 +1075,8 @@
       "uniqueSourceArtifactId": "art-fixture-t-x070-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x070-fa90bf86fb89"
       "caseId": "T-X028",
-      "status": "ACCEPTED",
-      "environment": "fixture",
       "artifactId": "art-fixture-t-x028",
       "reasons": [
         "Fixture evidence compiled from complete proof set (1)",
@@ -878,9 +1086,8 @@
       "uniqueSourceArtifactId": "art-fixture-t-x028-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x028-fa90bf86fb89"
       "caseId": "T-X044",
-      "status": "ACCEPTED",
-      "environment": "fixture",
       "artifactId": "art-fixture-t-x044",
       "reasons": [
         "Fixture evidence compiled from complete proof set (1)",
@@ -890,9 +1097,8 @@
       "uniqueSourceArtifactId": "art-fixture-t-x044-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x044-fa90bf86fb89"
       "caseId": "T-X045",
-      "status": "ACCEPTED",
-      "environment": "fixture",
       "artifactId": "art-fixture-t-x045",
       "reasons": [
         "Fixture evidence compiled from complete proof set (1)",
@@ -906,24 +1112,13 @@
       "status": "ACCEPTED",
       "environment": "fixture",
       "artifactId": "art-fixture-t-us-006",
-      "reasons": [
-        "Fixture evidence compiled from complete proof set (1)",
-        "Not sandbox-verified; not production-canary-verified"
-      ],
-      "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-us-006-bb82c3448343"
-    },
-    {
       "caseId": "T-X023",
-      "status": "ACCEPTED",
-      "environment": "fixture",
       "artifactId": "art-fixture-t-x023",
-      "reasons": [
-        "Fixture evidence compiled from complete proof set (1)",
-        "Not sandbox-verified; not production-canary-verified"
-      ],
-      "updatedAtIso": "2026-11-22T21:34:20.301Z",
       "uniqueSourceArtifactId": "art-fixture-t-x023-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x045-fa90bf86fb89"
+      "updatedAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x034-0718d79ee911"
     }
   ],
   "artifacts": [
@@ -933,6 +1128,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-X014 (Approval wait survives restart)\nproof=crash_restart applyCount=1 :: Accepted ACCEPTED_PENDING applyCount=1 | Rehydrated ACCEPTED_PENDING after restart | Verified matched=true applyCount=1\nproof=job_continuity applyCount=1 :: Job job-747f576a0d75238e recorded | After restart created=false sameJob=true\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X014 (Approval wait survives restart)\nproof=crash_restart applyCount=1 :: Accepted ACCEPTED_PENDING applyCount=1 | Rehydrated ACCEPTED_PENDING after restart | Verified matched=true applyCount=1\nproof=job_continuity applyCount=1 :: Job job-fa75a6031fe5c173 recorded | After restart created=false sameJob=true\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X014 (Approval wait survives restart)\nproof=crash_restart applyCount=1 :: Accepted ACCEPTED_PENDING applyCount=1 | Rehydrated ACCEPTED_PENDING after restart | Verified matched=true applyCount=1\nproof=job_continuity applyCount=1 :: Job job-95a93ee8b609f8c9 recorded | After restart created=false sameJob=true\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "crash_restart",
         "job_continuity"
@@ -942,6 +1139,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x014-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x014-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x014-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x020",
@@ -949,6 +1149,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-X020 (Timeout after provider acceptance)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-97747ea4 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X020 (Timeout after provider acceptance)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-8d40207f without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X020 (Timeout after provider acceptance)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-57d12312 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "unknown_remote_reconcile"
       ],
@@ -957,6 +1159,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x020-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x020-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x020-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-us-048",
@@ -964,6 +1169,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-US-048 (Unknown remote effects reconciled before resume)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-97747ea4 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-048 (Unknown remote effects reconciled before resume)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-8d40207f without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-048 (Unknown remote effects reconciled before resume)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-57d12312 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "unknown_remote_reconcile"
       ],
@@ -972,6 +1179,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-048-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-us-048-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-048-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x066",
@@ -979,6 +1189,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-X066 (Backup omits remote receipt)\nproof=backup_omit_receipt applyCount=1 :: Applied ACCEPTED_PENDING applyCount=1 remoteRef=remote-44f4443e | Omit-receipt backup written (providerEffects=[] receipts=[]); remote ledger preserved separately | Post-restore decision=ACCEPTED_PENDING localProvider=omitted receipts=0 | Reconciled remoteRef=remote-44f4443e from remote SoR without re-apply | Post-reconcile verified matched=true applyCount=1 | Post-reconcile retry providerCreated=false applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X066 (Backup omits remote receipt)\nproof=backup_omit_receipt applyCount=1 :: Applied ACCEPTED_PENDING applyCount=1 remoteRef=remote-41fff260 | Omit-receipt backup written (providerEffects=[] receipts=[]); remote ledger preserved separately | Post-restore decision=ACCEPTED_PENDING localProvider=omitted receipts=0 | Reconciled remoteRef=remote-41fff260 from remote SoR without re-apply | Post-reconcile verified matched=true applyCount=1 | Post-reconcile retry providerCreated=false applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X066 (Backup omits remote receipt)\nproof=backup_omit_receipt applyCount=1 :: Applied ACCEPTED_PENDING applyCount=1 remoteRef=remote-c3a7dd85 | Omit-receipt backup written (providerEffects=[] receipts=[]); remote ledger preserved separately | Post-restore decision=ACCEPTED_PENDING localProvider=omitted receipts=0 | Reconciled remoteRef=remote-c3a7dd85 from remote SoR without re-apply | Post-reconcile verified matched=true applyCount=1 | Post-reconcile retry providerCreated=false applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "backup_omit_receipt"
       ],
@@ -987,6 +1199,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x066-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x066-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x066-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-f24",
@@ -994,6 +1209,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-F24 (Recover, rotate access and reconcile)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-224bf023-47ae-4819-8e71-ebacdba97950 classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-224bf023-47ae-4819-8e71-ebacdba97950,stop-prov-rec-60453e7a-443f-4a8e-8515-be39d4761649 | Rotation record rot-2f86727e-8609-48ce-98cd-1fd992b3b712 localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-d6674f80-bfd8-4381-a8d0-838b03aea838 classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-4a1d566c-ff52-4373-8d43-2ec2d51a4321 residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-F24 (Recover, rotate access and reconcile)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-6745a1e1-9255-4924-adb3-9584fb1a8d2e classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-6745a1e1-9255-4924-adb3-9584fb1a8d2e,stop-prov-rec-626e15a1-f85e-4ac0-910e-d5f868cf7f66 | Rotation record rot-0b91d15f-9080-4600-b2a5-6d841ac03c27 localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-caace575-6591-45d8-b32d-80004eb2e409 classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-75a32f47-ba0a-4733-b129-03597bc51467 residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-F24 (Recover, rotate access and reconcile)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-0d127634-2cc3-4fe0-b2aa-7b581e2380b4 classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-0d127634-2cc3-4fe0-b2aa-7b581e2380b4,stop-prov-rec-e4fd7d47-1a9e-4056-9bc3-5a6217dfaf07 | Rotation record rot-657ecd65-5909-48b7-8c6a-232cea2a1723 localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-864dc723-e0d5-4717-a723-43a9735c8cd9 classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-c9a33da0-2ce6-49bf-9888-ed1c2ac4f67e residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "recover_rotate_reconcile"
       ],
@@ -1002,6 +1219,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-f24-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-f24-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-f24-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-us-047",
@@ -1009,6 +1229,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-US-047 (Recover/rotate/reconcile — offboarding manifest)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-224bf023-47ae-4819-8e71-ebacdba97950 classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-224bf023-47ae-4819-8e71-ebacdba97950,stop-prov-rec-60453e7a-443f-4a8e-8515-be39d4761649 | Rotation record rot-2f86727e-8609-48ce-98cd-1fd992b3b712 localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-d6674f80-bfd8-4381-a8d0-838b03aea838 classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-4a1d566c-ff52-4373-8d43-2ec2d51a4321 residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-047 (Recover/rotate/reconcile — offboarding manifest)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-6745a1e1-9255-4924-adb3-9584fb1a8d2e classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-6745a1e1-9255-4924-adb3-9584fb1a8d2e,stop-prov-rec-626e15a1-f85e-4ac0-910e-d5f868cf7f66 | Rotation record rot-0b91d15f-9080-4600-b2a5-6d841ac03c27 localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-caace575-6591-45d8-b32d-80004eb2e409 classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-75a32f47-ba0a-4733-b129-03597bc51467 residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-047 (Recover/rotate/reconcile — offboarding manifest)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-0d127634-2cc3-4fe0-b2aa-7b581e2380b4 classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-0d127634-2cc3-4fe0-b2aa-7b581e2380b4,stop-prov-rec-e4fd7d47-1a9e-4056-9bc3-5a6217dfaf07 | Rotation record rot-657ecd65-5909-48b7-8c6a-232cea2a1723 localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-864dc723-e0d5-4717-a723-43a9735c8cd9 classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-c9a33da0-2ce6-49bf-9888-ed1c2ac4f67e residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "recover_rotate_reconcile"
       ],
@@ -1017,6 +1239,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-047-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-us-047-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-047-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-us-002",
@@ -1024,6 +1249,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-US-002 (Competing supervisors refused; no duplicate leases)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-06b20c97 scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-06b20c97 | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-1f4ad9af reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-002 (Competing supervisors refused; no duplicate leases)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-93a8111b scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-93a8111b | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-51b47657 reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-002 (Competing supervisors refused; no duplicate leases)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-7518b9dc scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-7518b9dc | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-1f1e253e reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "competing_supervisor_lease"
       ],
@@ -1032,6 +1259,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-002-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-us-002-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-002-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x002",
@@ -1039,6 +1269,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-X002 (Two supervisors start together — single host lease)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-06b20c97 scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-06b20c97 | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-1f4ad9af reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X002 (Two supervisors start together — single host lease)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-93a8111b scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-93a8111b | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-51b47657 reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X002 (Two supervisors start together — single host lease)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-7518b9dc scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-7518b9dc | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-1f1e253e reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "competing_supervisor_lease"
       ],
@@ -1047,6 +1279,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x002-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x002-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x002-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x018",
@@ -1054,6 +1289,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-X018 (Self-approval rejected)\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-324a56dd reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X018 (Self-approval rejected)\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-630e7c1c reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X018 (Self-approval rejected)\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-e5a2140b reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "self_approval_rejected"
       ],
@@ -1062,6 +1299,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x018-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x018-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x018-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-us-054",
@@ -1069,6 +1309,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-US-054 (Independent approval enforced (no ordinary self-approval))\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-324a56dd reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-054 (Independent approval enforced (no ordinary self-approval))\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-630e7c1c reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-US-054 (Independent approval enforced (no ordinary self-approval))\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-e5a2140b reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "self_approval_rejected"
       ],
@@ -1077,6 +1319,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-054-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-us-054-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-054-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x073",
@@ -1084,6 +1329,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-X073 (Offboarding retains active token — incomplete until revoked)\nproof=offboard_active_token_residual applyCount=1 :: Pre-offboard lease granted leaseId=lease-136f2ba6-fb66-44f6-8abb-8df26dcc11ac | ACTIVE_TOKEN residual BLOCKED_NOT_WIRED summary=T-X073: provider-side token may still be active until live revoke is wired/performed | PROVIDER_REVOKE residual BLOCKED_NOT_WIRED | Offboarding incomplete-until-revoked: manifest=ob-e92d6ba4-33fc-4652-972a-5ea923871f1c catalogClaim=NOT_RUN auditRetained=true secretsExported=false | Post-offboard lease denied CONNECTION_REVOKED | liveProviderRevoke=NOT_WIRED — T-X073 incomplete until external revoke | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X073 (Offboarding retains active token — incomplete until revoked)\nproof=offboard_active_token_residual applyCount=1 :: Pre-offboard lease granted leaseId=lease-a5a4ec8b-cd93-4a4e-b390-819dc47b0f0f | ACTIVE_TOKEN residual BLOCKED_NOT_WIRED summary=T-X073: provider-side token may still be active until live revoke is wired/performed | PROVIDER_REVOKE residual BLOCKED_NOT_WIRED | Offboarding incomplete-until-revoked: manifest=ob-dd1998b8-12b4-4610-9f55-d613278a4a84 catalogClaim=NOT_RUN auditRetained=true secretsExported=false | Post-offboard lease denied CONNECTION_REVOKED | liveProviderRevoke=NOT_WIRED — T-X073 incomplete until external revoke | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X073 (Offboarding retains active token — incomplete until revoked)\nproof=offboard_active_token_residual applyCount=1 :: Pre-offboard lease granted leaseId=lease-9dce4384-c8ca-4bed-b619-bda57fd34f75 | ACTIVE_TOKEN residual BLOCKED_NOT_WIRED summary=T-X073: provider-side token may still be active until live revoke is wired/performed | PROVIDER_REVOKE residual BLOCKED_NOT_WIRED | Offboarding incomplete-until-revoked: manifest=ob-26c2ed48-39f3-4d5e-8446-2e8c8ebeb614 catalogClaim=NOT_RUN auditRetained=true secretsExported=false | Post-offboard lease denied CONNECTION_REVOKED | liveProviderRevoke=NOT_WIRED — T-X073 incomplete until external revoke | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "offboard_active_token_residual"
       ],
@@ -1092,6 +1339,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x073-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x073-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x073-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-us-060",
@@ -1107,6 +1357,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-060-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-us-060-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-060-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x005",
@@ -1122,6 +1375,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x005-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x005-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x005-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x006",
@@ -1137,6 +1393,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x006-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x006-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x006-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x019",
@@ -1152,6 +1411,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x019-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x019-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x019-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-us-036",
@@ -1167,6 +1429,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-036-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-us-036-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-036-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x029",
@@ -1174,6 +1439,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-X029 (Token rotates to different account)\nproof=explicit_account_rebind applyCount=1 :: Seeded connection=conn-old-rebind-8cd5596e account=fixture-account-alpha | Silent different-account rotate denied (REBIND_REQUIRED) — not treated as transparent refresh | Blank observedAccountLabel denied (ACCOUNT_IDENTITY_REQUIRED) — no silent different-account bind | Explicit rebind complete old=conn-old-rebind-8cd5596e→ROTATED_AWAY new=conn-new-rebind-8cd5596e account=fixture-account-beta | silentRefreshRejected=true catalogCaseId=T-X029 liveProviderRevoke=NOT_WIRED externalEffects=NONE | Measured broker putReference during rebind applyAttemptCount=1 | Successor connectionId collision rejected (CONNECTION_ID_COLLISION) | Old connection leases denied (CONNECTION_ROTATED_AWAY) | New connection lease granted leaseId=lease-0a38e065-a52b-4558-b50e-f0dec2c3a7bb | Same-account rebind correctly denied (use rotate for same-account refresh) | Audit retained and redacted; no secret material in records | liveProviderRevocation=NOT_WIRED externalEffects=NONE — never silently VERIFIED for live\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X029 (Token rotates to different account)\nproof=explicit_account_rebind applyCount=1 :: Seeded connection=conn-old-rebind-dfeb9f4a account=fixture-account-alpha | Silent different-account rotate denied (REBIND_REQUIRED) — not treated as transparent refresh | Blank observedAccountLabel denied (ACCOUNT_IDENTITY_REQUIRED) — no silent different-account bind | Explicit rebind complete old=conn-old-rebind-dfeb9f4a→ROTATED_AWAY new=conn-new-rebind-dfeb9f4a account=fixture-account-beta | silentRefreshRejected=true catalogCaseId=T-X029 liveProviderRevoke=NOT_WIRED externalEffects=NONE | Measured broker putReference during rebind applyAttemptCount=1 | Successor connectionId collision rejected (CONNECTION_ID_COLLISION) | Old connection leases denied (CONNECTION_ROTATED_AWAY) | New connection lease granted leaseId=lease-9078c51f-d76d-43f0-80c9-64d5d2d58986 | Same-account rebind correctly denied (use rotate for same-account refresh) | Audit retained and redacted; no secret material in records | liveProviderRevocation=NOT_WIRED externalEffects=NONE — never silently VERIFIED for live\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X029 (Token rotates to different account)\nproof=explicit_account_rebind applyCount=1 :: Seeded connection=conn-old-rebind-65500e8d account=fixture-account-alpha | Silent different-account rotate denied (REBIND_REQUIRED) — not treated as transparent refresh | Blank observedAccountLabel denied (ACCOUNT_IDENTITY_REQUIRED) — no silent different-account bind | Explicit rebind complete old=conn-old-rebind-65500e8d→ROTATED_AWAY new=conn-new-rebind-65500e8d account=fixture-account-beta | silentRefreshRejected=true catalogCaseId=T-X029 liveProviderRevoke=NOT_WIRED externalEffects=NONE | Measured broker putReference during rebind applyAttemptCount=1 | Successor connectionId collision rejected (CONNECTION_ID_COLLISION) | Old connection leases denied (CONNECTION_ROTATED_AWAY) | New connection lease granted leaseId=lease-7efcc352-8a67-4050-9819-eeb26dcb3942 | Same-account rebind correctly denied (use rotate for same-account refresh) | Audit retained and redacted; no secret material in records | liveProviderRevocation=NOT_WIRED externalEffects=NONE — never silently VERIFIED for live\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "explicit_account_rebind"
       ],
@@ -1182,6 +1449,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x029-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x029-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x029-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-us-057",
@@ -1197,6 +1467,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-057-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-us-057-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-057-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-us-024",
@@ -1212,6 +1485,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-024-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-us-024-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-024-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-us-042",
@@ -1227,6 +1503,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-042-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-us-042-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-042-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x057",
@@ -1242,6 +1521,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x057-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x057-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x057-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-us-044",
@@ -1257,6 +1539,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-044-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-us-044-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-044-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x053",
@@ -1272,6 +1557,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x053-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x053-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x053-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-us-018",
@@ -1287,6 +1575,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-018-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-us-018-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-018-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x037",
@@ -1302,6 +1593,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x037-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x037-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x037-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x058",
@@ -1317,6 +1611,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x058-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x058-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x058-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x069",
@@ -1332,6 +1629,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x069-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x069-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x069-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x038",
@@ -1347,6 +1647,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x038-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x038-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x038-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x039",
@@ -1362,6 +1665,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x039-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x039-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x039-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-us-058",
@@ -1377,6 +1683,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-058-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-us-058-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-058-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-us-046",
@@ -1392,6 +1701,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-046-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-us-046-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-046-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x048",
@@ -1407,6 +1719,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x048-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x048-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x048-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-us-010",
@@ -1422,6 +1737,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-010-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-us-010-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-010-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x033",
@@ -1437,6 +1755,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x033-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x033-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x033-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-us-008",
@@ -1452,6 +1773,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-008-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-us-008-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-008-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x032",
@@ -1467,6 +1791,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x032-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x032-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x032-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x031",
@@ -1482,6 +1809,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x031-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x031-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x031-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-us-040",
@@ -1497,6 +1827,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-040-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-us-040-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-040-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x049",
@@ -1512,6 +1845,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x049-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x049-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x049-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x017",
@@ -1527,6 +1863,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x017-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x017-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x017-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x024",
@@ -1534,6 +1873,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-X024 (Old fence after reassignment — old worker cannot commit)\nproof=old_fence_after_reassignment applyCount=1 :: Worker A acquired lease holder=worker-a-2a915387 expires=2026-11-21T19:04:51.000Z | Worker B refused while A lease live (no premature reassignment) | Worker B reassigned lease holder=worker-b-42076244 after A expiry | Old worker A bind denied: Lease fence failed for wf-fence-873bddb8 | Old worker A markEffectPending denied: Lease fence failed for wf-fence-873bddb8 | Worker B commit ok phase=effect_pending operationId=op-fence-d954be2f | liveTemporalWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X024 (Old fence after reassignment — old worker cannot commit)\nproof=old_fence_after_reassignment applyCount=1 :: Worker A acquired lease holder=worker-a-99b4388c expires=2026-11-21T19:04:51.000Z | Worker B refused while A lease live (no premature reassignment) | Worker B reassigned lease holder=worker-b-5125aad7 after A expiry | Old worker A bind denied: Lease fence failed for wf-fence-faede5bf | Old worker A markEffectPending denied: Lease fence failed for wf-fence-faede5bf | Worker B commit ok phase=effect_pending operationId=op-fence-46c3bc61 | liveTemporalWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X024 (Old fence after reassignment — old worker cannot commit)\nproof=old_fence_after_reassignment applyCount=1 :: Worker A acquired lease holder=worker-a-4542f35e expires=2026-11-21T19:04:51.000Z | Worker B refused while A lease live (no premature reassignment) | Worker B reassigned lease holder=worker-b-9d5a1bc8 after A expiry | Old worker A bind denied: Lease fence failed for wf-fence-3eb42e82 | Old worker A markEffectPending denied: Lease fence failed for wf-fence-3eb42e82 | Worker B commit ok phase=effect_pending operationId=op-fence-ffe03f34 | liveTemporalWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "old_fence_after_reassignment"
       ],
@@ -1542,6 +1883,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x024-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x024-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x024-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x011",
@@ -1557,6 +1901,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x011-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x011-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x011-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x003",
@@ -1572,6 +1919,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x003-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x003-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x003-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x050",
@@ -1587,6 +1937,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x050-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x050-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x050-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x010",
@@ -1602,6 +1955,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x010-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x010-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x010-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x009",
@@ -1617,6 +1973,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x009-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x009-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x009-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x015",
@@ -1632,6 +1991,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x015-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x015-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x015-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x001",
@@ -1639,6 +2001,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-X001 (Host sleeps during scheduled monitoring — coverage gap honest; coalesce)\nproof=host_sleep_monitoring_coverage_gap applyCount=1 :: Pre-sleep SUCCESS recorded at 2026-11-21T19:06:00.000Z | Derived 3 missed slots from cadence=60000ms | Host sleep → 3 COVERAGE_GAP slots; lastVerifiedSuccess unchanged; probeApplyCount=1 | Burst replay refused: Missed monitoring slots must coalesce on wake — burst per-slot replay forbidden | Catch-up without probe refused: Catch-up coalesce requires an actual fixture probe result before counting an apply | Wake coalesce catchup=probe-host-sleep-cae29cd8:2026-11-21T19:09:30.000Z gaps=3 probeAppliesThisWake=1 totalApplies=2 fixtureProbe=2026-11-21T19:09:30.000Z | liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X001 (Host sleeps during scheduled monitoring — coverage gap honest; coalesce)\nproof=host_sleep_monitoring_coverage_gap applyCount=1 :: Pre-sleep SUCCESS recorded at 2026-11-21T19:06:00.000Z | Derived 3 missed slots from cadence=60000ms | Host sleep → 3 COVERAGE_GAP slots; lastVerifiedSuccess unchanged; probeApplyCount=1 | Burst replay refused: Missed monitoring slots must coalesce on wake — burst per-slot replay forbidden | Catch-up without probe refused: Catch-up coalesce requires an actual fixture probe result before counting an apply | Wake coalesce catchup=probe-host-sleep-c02337d9:2026-11-21T19:09:30.000Z gaps=3 probeAppliesThisWake=1 totalApplies=2 fixtureProbe=2026-11-21T19:09:30.000Z | liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X001 (Host sleeps during scheduled monitoring — coverage gap honest; coalesce)\nproof=host_sleep_monitoring_coverage_gap applyCount=1 :: Pre-sleep SUCCESS recorded at 2026-11-21T19:06:00.000Z | Derived 3 missed slots from cadence=60000ms | Host sleep → 3 COVERAGE_GAP slots; lastVerifiedSuccess unchanged; probeApplyCount=1 | Burst replay refused: Missed monitoring slots must coalesce on wake — burst per-slot replay forbidden | Catch-up without probe refused: Catch-up coalesce requires an actual fixture probe result before counting an apply | Wake coalesce catchup=probe-host-sleep-31470094:2026-11-21T19:09:30.000Z gaps=3 probeAppliesThisWake=1 totalApplies=2 fixtureProbe=2026-11-21T19:09:30.000Z | liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "host_sleep_monitoring_coverage_gap"
       ],
@@ -1647,6 +2011,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x001-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x001-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x001-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x021",
@@ -1654,6 +2021,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-X021 (Concurrent idempotent releases — one dispatch)\nproof=concurrent_idempotent_release applyCount=1 :: Barrier+async race window without serializer → created=12 (overlap proven) | Concurrent applyOnce x12 behind barrier + mutex → created=1 (one dispatch) | Single remoteRef=remote-concurrent-op-concurrent-c064afa6 | applyCount=1 for every concurrent observer | Post-concurrent replay → created=false applyCount=1 | Provider ledger holds exactly one effect for the business key | Distinct from NO_DUPLICATE_EFFECTS (retry-only); concurrent coalescing only | Offline async race-window + per-key serializer; PG ON CONFLICT covered separately; not sandbox/prod VERIFIED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X021 (Concurrent idempotent releases — one dispatch)\nproof=concurrent_idempotent_release applyCount=1 :: Barrier+async race window without serializer → created=12 (overlap proven) | Concurrent applyOnce x12 behind barrier + mutex → created=1 (one dispatch) | Single remoteRef=remote-concurrent-op-concurrent-cc70c650 | applyCount=1 for every concurrent observer | Post-concurrent replay → created=false applyCount=1 | Provider ledger holds exactly one effect for the business key | Distinct from NO_DUPLICATE_EFFECTS (retry-only); concurrent coalescing only | Offline async race-window + per-key serializer; PG ON CONFLICT covered separately; not sandbox/prod VERIFIED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X021 (Concurrent idempotent releases — one dispatch)\nproof=concurrent_idempotent_release applyCount=1 :: Barrier+async race window without serializer → created=12 (overlap proven) | Concurrent applyOnce x12 behind barrier + mutex → created=1 (one dispatch) | Single remoteRef=remote-concurrent-op-concurrent-5166c479 | applyCount=1 for every concurrent observer | Post-concurrent replay → created=false applyCount=1 | Provider ledger holds exactly one effect for the business key | Distinct from NO_DUPLICATE_EFFECTS (retry-only); concurrent coalescing only | Offline async race-window + per-key serializer; PG ON CONFLICT covered separately; not sandbox/prod VERIFIED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "concurrent_idempotent_release"
       ],
@@ -1662,6 +2031,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x021-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x021-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x021-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x022",
@@ -1669,6 +2041,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-X022 (Idempotency key payload mismatch — Conflict)\nproof=idempotency_key_payload_mismatch applyCount=1 :: acceptPending bound key with digest A applyCount=1 remoteRef=remote-38e43eb7 | acceptPending same operationId + different payloadDigest → Conflict | acceptPending same businessIdempotencyKey + different payloadDigest → Conflict | Post-conflict: applyCount=1; original digest/remoteRef retained; no second effect | Same-digest acceptPending replay: created=false applyCount=1 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X022 (Idempotency key payload mismatch — Conflict)\nproof=idempotency_key_payload_mismatch applyCount=1 :: acceptPending bound key with digest A applyCount=1 remoteRef=remote-fd40b35f | acceptPending same operationId + different payloadDigest → Conflict | acceptPending same businessIdempotencyKey + different payloadDigest → Conflict | Post-conflict: applyCount=1; original digest/remoteRef retained; no second effect | Same-digest acceptPending replay: created=false applyCount=1 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X022 (Idempotency key payload mismatch — Conflict)\nproof=idempotency_key_payload_mismatch applyCount=1 :: acceptPending bound key with digest A applyCount=1 remoteRef=remote-42529ea2 | acceptPending same operationId + different payloadDigest → Conflict | acceptPending same businessIdempotencyKey + different payloadDigest → Conflict | Post-conflict: applyCount=1; original digest/remoteRef retained; no second effect | Same-digest acceptPending replay: created=false applyCount=1 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "idempotency_key_payload_mismatch"
       ],
@@ -1692,6 +2066,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x065-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x065-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x022-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x008",
@@ -1707,6 +2084,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x008-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x008-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x008-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x012",
@@ -1714,6 +2094,8 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-X012 (Orphan worker on deadline — process tree stopped)\nproof=orphan_worker_deadline_tree_stopped applyCount=1 :: Deadline not exceeded at +20s | Pre-deadline stop refused; worker+children still alive (no premature kill) | Post-deadline PROCESS_TREE_STOPPED: tree dead; foreign+sibling skipped | invokeClaudeCli tree-worker → TIMEOUT (deadline) | OS process tree stopped worker=24673 child=24680 | Outcome timed_out_stopped aligns with RoleRunStatus.TIMED_OUT (not VERIFIED) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X012 (Orphan worker on deadline — process tree stopped)\nproof=orphan_worker_deadline_tree_stopped applyCount=1 :: Deadline not exceeded at +20s | Pre-deadline stop refused; worker+children still alive (no premature kill) | Post-deadline PROCESS_TREE_STOPPED: tree dead; foreign+sibling skipped | invokeClaudeCli tree-worker → TIMEOUT (deadline) | OS process tree stopped worker=10518 child=10525 | Outcome timed_out_stopped aligns with RoleRunStatus.TIMED_OUT (not VERIFIED) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X012 (Orphan worker on deadline — process tree stopped)\nproof=orphan_worker_deadline_tree_stopped applyCount=1 :: Deadline not exceeded at +20s | Pre-deadline stop refused; worker+children still alive (no premature kill) | Post-deadline PROCESS_TREE_STOPPED: tree dead; foreign+sibling skipped | invokeClaudeCli tree-worker → TIMEOUT (deadline) | OS process tree stopped worker=7207 child=7214 | Outcome timed_out_stopped aligns with RoleRunStatus.TIMED_OUT (not VERIFIED) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "orphan_worker_deadline_tree_stopped"
       ],
@@ -1722,6 +2104,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x012-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x012-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x012-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x007",
@@ -1737,6 +2122,9 @@
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x007-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x007-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x007-0718d79ee911"
     },
     {
       "artifactId": "art-fixture-t-x016",
@@ -1775,8 +2163,9 @@
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-X013 (Replay historical workflow — no repeated external I/O)\nproof=replay_historical_no_repeat_io applyCount=1 :: Recorded enqueue history for wf-soak-replay-hist-741ec831 | Recorded claimAndAccept providerCreated=true applyCount=1 | Recorded verify outcome=VERIFIED matched=true applyCount=1 | History replay outcome=VERIFIED applyCount=1 scheduledFromHistory=3 | Post-replay durable outcome=VERIFIED applyCount=1 opProviders=1 ledgerDelta=0 | Replay used recorded activity history only — no acceptPending/applyOnce during replay | Historical workflow replay: no repeated external I/O (externalEffects=NONE) | liveProviderSuccessClaimed=false catalogClaim=ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
+      "uniqueSourceArtifactId": "art-fixture-t-x063-fa90bf86fb89"
+      "summary": "Fixture ACCEPTED for T-X013 (Replay historical workflow — no repeated external I/O)\nproof=replay_historical_no_repeat_io applyCount=1 :: Recorded enqueue history for wf-soak-replay-hist-b9dad216 | Recorded claimAndAccept providerCreated=true applyCount=1 | Recorded verify outcome=VERIFIED matched=true applyCount=1 | History replay outcome=VERIFIED applyCount=1 scheduledFromHistory=3 | Post-replay durable outcome=VERIFIED applyCount=1 opProviders=1 ledgerDelta=0 | Replay used recorded activity history only — no acceptPending/applyOnce during replay | Historical workflow replay: no repeated external I/O (externalEffects=NONE) | liveProviderSuccessClaimed=false catalogClaim=ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
         "replay_historical_no_repeat_io"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x013.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
       "liveProviderSuccessClaimed": false,
@@ -1784,14 +2173,11 @@
       "uniqueSourceArtifactId": "art-fixture-t-x013-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x013-fa90bf86fb89"
       "artifactId": "art-fixture-t-x027",
       "caseId": "T-X027",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X027 (Unknown usage on cancelled request — hold; not zero cost)\nproof=unknown_usage_cancel_holds_residual applyCount=1 :: Reserved 700 for cancel candidate; available=300 | Cancel unknown usage → heldMinor=700 (not zero); available stays 300 | Counterfactual settle-as-zero refused on unknown-usage hold | Positive control: known-zero cancel releases that reservation only; unknown hold still consumes 700 | Hold residual blocks over-cap reserve (BUDGET_EXHAUSTED available=300) | Known reconcile after hold posts actual=220 and clears held residual | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "unknown_usage_cancel_holds_residual"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x027.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
       "liveProviderSuccessClaimed": false,
@@ -1799,14 +2185,11 @@
       "uniqueSourceArtifactId": "art-fixture-t-x027-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x027-fa90bf86fb89"
       "artifactId": "art-fixture-t-x004",
       "caseId": "T-X004",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X004 (Disk full during evidence write — no partial completed manifest)\nproof=disk_full_evidence_no_partial_completed applyCount=1 :: Happy-path evidence write → COMPLETED manifest published atomically | ENOSPC during evidence write → no completed manifest (tmp cleaned) | release:evidence atomicWriteEvidenceJson ENOSPC → no partial final artifact | Retry ENOSPC preserves prior COMPLETED (no delete-on-failure) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "disk_full_evidence_no_partial_completed"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x004.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
       "liveProviderSuccessClaimed": false,
@@ -1820,8 +2203,9 @@
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-X025 (External human edit during staging — conflict retained)\nproof=external_human_edit_conflict_retained applyCount=1 :: Staged against base rev-1 → STAGED_PENDING changeId=chg-ext-edit-c51ea759 | External human edit → CONFLICT_RETAINED humanRev=rev-3 | Blind overwrite refused (OVERWRITE_FORBIDDEN); human fields preserved; attempts=1 | Independent verify → CONFLICT_RETAINED; verifiedClaimed=false (ACCEPTED≠VERIFIED) | Pre-stage human edit → BASE_REVISION_MISMATCH (BASE_REVISION_MISMATCH) | liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
+      "uniqueSourceArtifactId": "art-fixture-t-x004-fa90bf86fb89"
+      "summary": "Fixture ACCEPTED for T-X025 (External human edit during staging — conflict retained)\nproof=external_human_edit_conflict_retained applyCount=1 :: Staged against base rev-1 → STAGED_PENDING changeId=chg-ext-edit-890c8484 | External human edit → CONFLICT_RETAINED humanRev=rev-3 | Blind overwrite refused (OVERWRITE_FORBIDDEN); human fields preserved; attempts=1 | Independent verify → CONFLICT_RETAINED; verifiedClaimed=false (ACCEPTED≠VERIFIED) | Pre-stage human edit → BASE_REVISION_MISMATCH (BASE_REVISION_MISMATCH) | liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
         "external_human_edit_conflict_retained"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x025.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
       "liveProviderSuccessClaimed": false,
@@ -1829,14 +2213,11 @@
       "uniqueSourceArtifactId": "art-fixture-t-x025-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x025-fa90bf86fb89"
       "artifactId": "art-fixture-t-x043",
       "caseId": "T-X043",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X043 (Optimization breaks CTA — journey regression fails)\nproof=optimization_breaks_cta_journey_fails applyCount=1 :: Baseline healthy page CTA journey SUCCESS — gate allowed | SEO content optimization rewrote CTA → journey FAILURE; gate JOURNEY_REGRESSION_FAILED | Positive control: metadata-only optimization preserves CTA → journey SUCCESS + gate allowed | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "optimization_breaks_cta_journey_fails"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x043.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
       "liveProviderSuccessClaimed": false,
@@ -1844,14 +2225,11 @@
       "uniqueSourceArtifactId": "art-fixture-t-x043-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x043-fa90bf86fb89"
       "artifactId": "art-fixture-t-x026",
       "caseId": "T-X026",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X026 (Concurrent final budget reservation — cap enforced)\nproof=concurrent_final_budget_reservation_cap applyCount=1 :: Domain reserve r-a=600 ok; reservedMinor=600 | Near-cap r-b=500 → BUDGET_EXHAUSTED availableMinor=400 (cap enforced) | Same-snapshot finals each ok in isolation (oversubscribe risk visible) | Composed concurrent finals: second BUDGET_EXHAUSTED; reservedMinor=1000 ≤ limit | Memory BudgetStore sequential finals: first ok, second BUDGET_EXHAUSTED; reservedMinor=1000 ≤ limit | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "concurrent_final_budget_reservation_cap"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x026.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
       "liveProviderSuccessClaimed": false,
@@ -1859,14 +2237,11 @@
       "uniqueSourceArtifactId": "art-fixture-t-x026-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x026-fa90bf86fb89"
       "artifactId": "art-fixture-t-x052",
       "caseId": "T-X052",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X052 (Synthetic conversion contamination — excluded from commerce)\nproof=synthetic_conversion_contamination_excluded applyCount=1 :: synthetic conversion metric → excluded (not measured commerce win) | commerce projection excludes synthetic conversion contaminant (leadCount=1, revenue=5000, syntheticExcluded=1; contaminant 99999 not counted) | counterfactual: raw ledger revenue 104999 ≠ commerce revenue 5000 (contamination blocked) | appendCommerceLead refuses synthetic && countedInCommerce (fail closed) | createSyntheticLead synthetic=true + assertSyntheticExcludedFromCommercial | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "synthetic_conversion_contamination_excluded"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x052.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
       "liveProviderSuccessClaimed": false,
@@ -1874,14 +2249,11 @@
       "uniqueSourceArtifactId": "art-fixture-t-x052-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x052-fa90bf86fb89"
       "artifactId": "art-fixture-t-x054",
       "caseId": "T-X054",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X054 (Reply sent but CRM fails — CRM reconciles; no resend)\nproof=reply_sent_crm_reconciles_no_resend applyCount=1 :: QUEUED reply → REPLY_NOT_SENT (gate requires SENT first) | SENT + CRM fail → CRM_RECONCILE_NO_RESEND; MISSING_REMOTE; resendAllowed=false | detectDuplicateOutbound suppresses same-body resend after SENT | CRM reconcile MATCHED on retry; outbound remains SENT; still no resend | Positive control: CRM_OK still forbids outbound resend | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "reply_sent_crm_reconciles_no_resend"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x054.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
       "liveProviderSuccessClaimed": false,
@@ -1889,14 +2261,11 @@
       "uniqueSourceArtifactId": "art-fixture-t-x054-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x054-fa90bf86fb89"
       "artifactId": "art-fixture-t-x055",
       "caseId": "T-X055",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X055 (Unknown policy question — escalate without promise)\nproof=unknown_policy_question_escalates_without_promise applyCount=1 :: allowed question documented_policies → allowed (no escalate) | prepareConciergeReply allows documented_policies questionId | unknown question undocumented_cancellation_guarantee → UNKNOWN_POLICY_QUESTION escalateWithoutPromise | prepareConciergeReply refuses unknown policy question (no promise draft) | createHandoff escalates with verifiedAnswers=[] humanOwned agentSendAllowed=false | no invented guarantee/promise in verifiedAnswers (escalate without promise) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "unknown_policy_question_escalates_without_promise"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x055.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
       "liveProviderSuccessClaimed": false,
@@ -1904,14 +2273,11 @@
       "uniqueSourceArtifactId": "art-fixture-t-x055-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x055-fa90bf86fb89"
       "artifactId": "art-fixture-t-x056",
       "caseId": "T-X056",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X056 (Automated response loop — bounded; handoff)\nproof=automated_response_loop_bounded_handoff applyCount=1 :: sentAgentMessageCount=1 < max=2 → WITHIN_BOUND; no handoff | sentAgentMessageCount=2 ≥ max=2 → MESSAGE_LIMIT_HANDOFF; status=handed_off; agentSendAllowed=false | Over-bound sentAgentMessageCount=5 still MESSAGE_LIMIT_HANDOFF (no unbounded loop) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "automated_response_loop_bounded_handoff"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x056.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
       "liveProviderSuccessClaimed": false,
@@ -1925,8 +2291,9 @@
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-X059 (Duplicate platform attribution — one booking; separate claims)\nproof=duplicate_platform_attribution_one_booking applyCount=1 :: two platform claims retained separately (claim-google-9421bb70, claim-meta-0300c0f2) → uniqueBookingCount=1 | SILENT_PLATFORM_SUM_REFUSED — platform conversions not summed into unique bookings | counterfactual: naive platform sum 2 ≠ unique booking 1 (double-count blocked) | single-platform claim → unique=1 allowed (no false double-count)\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
+      "uniqueSourceArtifactId": "art-fixture-t-x056-fa90bf86fb89"
+      "summary": "Fixture ACCEPTED for T-X059 (Duplicate platform attribution — one booking; separate claims)\nproof=duplicate_platform_attribution_one_booking applyCount=1 :: two platform claims retained separately (claim-google-0312cbef, claim-meta-2cb869cc) → uniqueBookingCount=1 | SILENT_PLATFORM_SUM_REFUSED — platform conversions not summed into unique bookings | counterfactual: naive platform sum 2 ≠ unique booking 1 (double-count blocked) | single-platform claim → unique=1 allowed (no false double-count)\nliveProviderSuccessClaimed=false externalEffects=NONE",
         "duplicate_platform_attribution_one_booking"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x059.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
       "liveProviderSuccessClaimed": false,
@@ -1934,14 +2301,11 @@
       "uniqueSourceArtifactId": "art-fixture-t-x059-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x059-fa90bf86fb89"
       "artifactId": "art-fixture-t-x060",
       "caseId": "T-X060",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X060 (Currency/timezone mismatch — no silent sum)\nproof=currency_timezone_mismatch_no_silent_sum applyCount=1 :: Matched USD / America/New_York → AGGREGATED totalMinor=550 | USD+EUR → CURRENCY_MISMATCH; totalMinor=null (no silent sum) | America/New_York+Europe/London → TIMEZONE_MISMATCH; totalMinor=null | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "currency_timezone_mismatch_no_silent_sum"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x060.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
       "liveProviderSuccessClaimed": false,
@@ -1949,14 +2313,11 @@
       "uniqueSourceArtifactId": "art-fixture-t-x060-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x060-fa90bf86fb89"
       "artifactId": "art-fixture-t-x070",
       "caseId": "T-X070",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X070 (Validated payload not collected — separate failure states)\nproof=validated_payload_not_collected_separate_states applyCount=1 :: Valid signature+schema + durable write → COLLECTED (validated=true collected=true) | Bad webhook signature → VALIDATION_FAILED (collectionAttempted=false) | Validated payload not collected → COLLECTION_FAILED (validated=true collected=false; not VALIDATION_FAILED) | Collector throw → COLLECTION_FAILED (validated=true; not VALIDATION_FAILED) | Non-hex signature suffix → VALIDATION_FAILED | Separate failure states: VALIDATION_FAILED ≠ COLLECTION_FAILED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "validated_payload_not_collected_separate_states"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x070.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
       "liveProviderSuccessClaimed": false,
@@ -1964,14 +2325,11 @@
       "uniqueSourceArtifactId": "art-fixture-t-x070-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x070-fa90bf86fb89"
       "artifactId": "art-fixture-t-x028",
       "caseId": "T-X028",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X028 (Actual cost exceeds estimate — overrun visible)\nproof=actual_cost_exceeds_estimate_overrun_visible applyCount=1 :: createBudgetAccount → heldMinor=0 (preserve T-X027 hold field) | Reserve r-overrun for 600 → ok; reservedMinor=600; heldMinor=0 | Settle r-overrun actualMinor=750 (> reserved 600) → settledMinor=750 overrun visible; reservation released; heldMinor=0 | Positive control: under-estimate settle actual=120 (< reserved 500) → settled posts actual; reserved released; heldMinor=0 | Unknown reservation → UNKNOWN_RESERVATION (fail-closed) | proofClock=2026-11-21T19:09:20.000Z | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "actual_cost_exceeds_estimate_overrun_visible"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x028.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
       "liveProviderSuccessClaimed": false,
@@ -1979,14 +2337,11 @@
       "uniqueSourceArtifactId": "art-fixture-t-x028-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x028-fa90bf86fb89"
       "artifactId": "art-fixture-t-x044",
       "caseId": "T-X044",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X044 (Unlicensed venue media — publish blocked)\nproof=unlicensed_venue_media_publish_blocked applyCount=1 :: Domain: unlicensed venue media → UNLICENSED_MEDIA | releaseCanonical: unlicensed venueMedia → publish blocked before gateway (receipt=null) | Domain: unknown → LICENSE_UNKNOWN | Domain: expired → LICENSE_EXPIRED | Domain: pending_clearance → PENDING_CLEARANCE | releaseCanonical: invented/stock without approval → UNAPPROVED_INVENTED_MEDIA blocked | Positive control: licensed + rights cleared + owner approved → media gate open at releaseCanonical | proofClock=2026-11-21T19:10:00.000Z | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "unlicensed_venue_media_publish_blocked"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x044.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
       "liveProviderSuccessClaimed": false,
@@ -1994,14 +2349,11 @@
       "uniqueSourceArtifactId": "art-fixture-t-x044-bb82c3448343"
     },
     {
+      "uniqueSourceArtifactId": "art-fixture-t-x044-fa90bf86fb89"
       "artifactId": "art-fixture-t-x045",
       "caseId": "T-X045",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X045 (Partial campaign destinations — per-destination states)\nproof=partial_campaign_destinations_per_state applyCount=1 :: Distribution run starts PLANNING with zero attempts | Mixed VERIFIED+FAILED+UNKNOWN_REMOTE → DistributionRunStatus.PARTIAL | Per-destination states retained independently (cms=VERIFIED, gbp=FAILED, linkedin=UNKNOWN_REMOTE) | Recoverable destinations = unfinished only (gbp, linkedin); verified cms not re-applied | ACCEPTED_PENDING destination kept distinct from VERIFIED; run stays IN_PROGRESS (not COMPLETE) | All-destination FAILED → DistributionRunStatus.FAILED (honest) | liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "partial_campaign_destinations_per_state"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x045.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
       "liveProviderSuccessClaimed": false,
@@ -2018,25 +2370,22 @@
         "unbound_write_path_fail_closed"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-006.json",
-      "createdAtIso": "2026-11-22T21:34:20.301Z",
-      "liveProviderSuccessClaimed": false,
-      "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-us-006-bb82c3448343"
-    },
-    {
       "artifactId": "art-fixture-t-x023",
       "caseId": "T-X023",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X023 (Eventual consistency false not-found — no unsafe retry)\nproof=eventual_consistency_false_not_found applyCount=1 :: Fixture CRM write → ledger size 1; writeAttemptCount=1; lag reads scheduled | getByCorrelation empty under lag → BOUND_WAIT createLead=false (false not-found) | Counterfactual empty→create documented as forbidden | No second writeSyntheticLead; writeAttemptCount remains 1 | After visibility → fixture read-back RECONCILE MATCHED; createLead=false; writeAttemptCount=1 | Window exceeded empty → ESCALATE_MISSING createLead=false | Fixture CRM only — live Zoho NOT_WIRED; externalEffects NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "eventual_consistency_false_not_found"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x023.json",
-      "createdAtIso": "2026-11-22T21:34:20.301Z",
-      "liveProviderSuccessClaimed": false,
-      "externalEffects": "NONE",
       "uniqueSourceArtifactId": "art-fixture-t-x023-bb82c3448343"
+      "uniqueSourceArtifactId": "art-fixture-t-x045-fa90bf86fb89"
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x016-0718d79ee911"
+      "artifactId": "art-fixture-t-x034",
+      "caseId": "T-X034",
+      "summary": "Fixture ACCEPTED for T-X034 (Test-only Ads project vs production — blocked)\nproof=ads_test_project_production_blocked applyCount=1 :: Guarded bind: SANDBOX→LIVE → ADS_TEST_PROJECT_MISMATCH; productionBindCallCount=0 | evaluateChatGptAdsAccess → ADS_TEST_PROJECT_MISMATCH (T-X034) | createPaidMediaProposal CHATGPT_ADS with mismatch → CHATGPT_ADS_BLOCKED; bind count still 0 | attemptPaidMediaExecution refused code=CHATGPT_ADS_BLOCKED; productionBindCallCount=0 | LIVE→LIVE guarded refuse ADS_LIVE_NOT_WIRED (distinct from T-X034); bind count=0 | instrumentedProductionBindCalls=0 liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+        "ads_test_project_production_blocked"
+      "evidenceRef": "soak/evidence/art-fixture-t-x034.json",
+      "uniqueSourceArtifactId": "art-fixture-t-x034-0718d79ee911"
     }
   ],
   "uniqueRunArtifacts": [
@@ -2046,12 +2395,19 @@
       "environment": "fixture",
       "redacted": true,
       "summary": "Fixture ACCEPTED for T-X014 (Approval wait survives restart)\nproof=crash_restart applyCount=1 :: Accepted ACCEPTED_PENDING applyCount=1 | Rehydrated ACCEPTED_PENDING after restart | Verified matched=true applyCount=1\nproof=job_continuity applyCount=1 :: Job job-747f576a0d75238e recorded | After restart created=false sameJob=true\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X014 (Approval wait survives restart)\nproof=crash_restart applyCount=1 :: Accepted ACCEPTED_PENDING applyCount=1 | Rehydrated ACCEPTED_PENDING after restart | Verified matched=true applyCount=1\nproof=job_continuity applyCount=1 :: Job job-fa75a6031fe5c173 recorded | After restart created=false sameJob=true\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "artifactId": "art-fixture-t-x014-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-X014 (Approval wait survives restart)\nproof=crash_restart applyCount=1 :: Accepted ACCEPTED_PENDING applyCount=1 | Rehydrated ACCEPTED_PENDING after restart | Verified matched=true applyCount=1\nproof=job_continuity applyCount=1 :: Job job-95a93ee8b609f8c9 recorded | After restart created=false sameJob=true\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "crash_restart",
         "job_continuity"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x014-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x014-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x014-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2066,6 +2422,12 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x020-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x020-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "artifactId": "art-fixture-t-x020-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-X020 (Timeout after provider acceptance)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-57d12312 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-x020-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2080,6 +2442,12 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-048-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-048-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "artifactId": "art-fixture-t-us-048-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-US-048 (Unknown remote effects reconciled before resume)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-57d12312 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-048-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2094,6 +2462,12 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x066-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x066-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "artifactId": "art-fixture-t-x066-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-X066 (Backup omits remote receipt)\nproof=backup_omit_receipt applyCount=1 :: Applied ACCEPTED_PENDING applyCount=1 remoteRef=remote-c3a7dd85 | Omit-receipt backup written (providerEffects=[] receipts=[]); remote ledger preserved separately | Post-restore decision=ACCEPTED_PENDING localProvider=omitted receipts=0 | Reconciled remoteRef=remote-c3a7dd85 from remote SoR without re-apply | Post-reconcile verified matched=true applyCount=1 | Post-reconcile retry providerCreated=false applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-x066-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2108,6 +2482,12 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-f24-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-f24-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "artifactId": "art-fixture-t-f24-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-F24 (Recover, rotate access and reconcile)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-0d127634-2cc3-4fe0-b2aa-7b581e2380b4 classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-0d127634-2cc3-4fe0-b2aa-7b581e2380b4,stop-prov-rec-e4fd7d47-1a9e-4056-9bc3-5a6217dfaf07 | Rotation record rot-657ecd65-5909-48b7-8c6a-232cea2a1723 localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-864dc723-e0d5-4717-a723-43a9735c8cd9 classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-c9a33da0-2ce6-49bf-9888-ed1c2ac4f67e residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-f24-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2122,6 +2502,12 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-047-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-047-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "artifactId": "art-fixture-t-us-047-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-US-047 (Recover/rotate/reconcile — offboarding manifest)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-0d127634-2cc3-4fe0-b2aa-7b581e2380b4 classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-0d127634-2cc3-4fe0-b2aa-7b581e2380b4,stop-prov-rec-e4fd7d47-1a9e-4056-9bc3-5a6217dfaf07 | Rotation record rot-657ecd65-5909-48b7-8c6a-232cea2a1723 localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-864dc723-e0d5-4717-a723-43a9735c8cd9 classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-c9a33da0-2ce6-49bf-9888-ed1c2ac4f67e residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-047-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2136,6 +2522,12 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-002-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-002-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "artifactId": "art-fixture-t-us-002-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-US-002 (Competing supervisors refused; no duplicate leases)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-7518b9dc scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-7518b9dc | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-1f1e253e reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-002-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2150,6 +2542,12 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x002-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x002-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "artifactId": "art-fixture-t-x002-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-X002 (Two supervisors start together — single host lease)\nproof=competing_supervisor_lease applyCount=1 :: First supervisor acquired leaseId=lease-1795287660000 generation=gen-a-7518b9dc scope=local-singleton | Second supervisor refused reason=LEASE_HELD holderGeneration=gen-a-7518b9dc | Dead-holder reclaim ok leaseId=lease-1795287662000 generation=gen-b-1f1e253e reclaimed=true | Matching ownership probe accepted | Ownership fail-closed denyReuse=true denyEmpty=true heartbeatFallback=false | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-x002-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2164,6 +2562,12 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x018-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x018-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "artifactId": "art-fixture-t-x018-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-X018 (Self-approval rejected)\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-e5a2140b reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-x018-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2178,6 +2582,12 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-054-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-054-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "artifactId": "art-fixture-t-us-054-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-US-054 (Independent approval enforced (no ordinary self-approval))\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-e5a2140b reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-054-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2192,11 +2602,19 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x073-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x073-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "artifactId": "art-fixture-t-x073-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-X073 (Offboarding retains active token — incomplete until revoked)\nproof=offboard_active_token_residual applyCount=1 :: Pre-offboard lease granted leaseId=lease-9dce4384-c8ca-4bed-b619-bda57fd34f75 | ACTIVE_TOKEN residual BLOCKED_NOT_WIRED summary=T-X073: provider-side token may still be active until live revoke is wired/performed | PROVIDER_REVOKE residual BLOCKED_NOT_WIRED | Offboarding incomplete-until-revoked: manifest=ob-26c2ed48-39f3-4d5e-8446-2e8c8ebeb614 catalogClaim=NOT_RUN auditRetained=true secretsExported=false | Post-offboard lease denied CONNECTION_REVOKED | liveProviderRevoke=NOT_WIRED — T-X073 incomplete until external revoke | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-x073-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-us-060-bb82c3448343",
+      "artifactId": "art-fixture-t-us-060-fa90bf86fb89",
+      "artifactId": "art-fixture-t-us-060-0718d79ee911",
       "caseId": "T-US-060",
       "environment": "fixture",
       "redacted": true,
@@ -2206,11 +2624,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-060-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-060-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-060-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x005-bb82c3448343",
+      "artifactId": "art-fixture-t-x005-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x005-0718d79ee911",
       "caseId": "T-X005",
       "environment": "fixture",
       "redacted": true,
@@ -2220,11 +2644,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x005-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x005-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x005-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x006-bb82c3448343",
+      "artifactId": "art-fixture-t-x006-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x006-0718d79ee911",
       "caseId": "T-X006",
       "environment": "fixture",
       "redacted": true,
@@ -2234,11 +2664,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x006-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x006-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x006-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x019-bb82c3448343",
+      "artifactId": "art-fixture-t-x019-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x019-0718d79ee911",
       "caseId": "T-X019",
       "environment": "fixture",
       "redacted": true,
@@ -2248,11 +2684,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x019-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x019-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x019-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-us-036-bb82c3448343",
+      "artifactId": "art-fixture-t-us-036-fa90bf86fb89",
+      "artifactId": "art-fixture-t-us-036-0718d79ee911",
       "caseId": "T-US-036",
       "environment": "fixture",
       "redacted": true,
@@ -2262,6 +2704,10 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-036-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-036-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-036-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2276,11 +2722,19 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x029-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x029-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "artifactId": "art-fixture-t-x029-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-X029 (Token rotates to different account)\nproof=explicit_account_rebind applyCount=1 :: Seeded connection=conn-old-rebind-65500e8d account=fixture-account-alpha | Silent different-account rotate denied (REBIND_REQUIRED) — not treated as transparent refresh | Blank observedAccountLabel denied (ACCOUNT_IDENTITY_REQUIRED) — no silent different-account bind | Explicit rebind complete old=conn-old-rebind-65500e8d→ROTATED_AWAY new=conn-new-rebind-65500e8d account=fixture-account-beta | silentRefreshRejected=true catalogCaseId=T-X029 liveProviderRevoke=NOT_WIRED externalEffects=NONE | Measured broker putReference during rebind applyAttemptCount=1 | Successor connectionId collision rejected (CONNECTION_ID_COLLISION) | Old connection leases denied (CONNECTION_ROTATED_AWAY) | New connection lease granted leaseId=lease-7efcc352-8a67-4050-9819-eeb26dcb3942 | Same-account rebind correctly denied (use rotate for same-account refresh) | Audit retained and redacted; no secret material in records | liveProviderRevocation=NOT_WIRED externalEffects=NONE — never silently VERIFIED for live\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-x029-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-us-057-bb82c3448343",
+      "artifactId": "art-fixture-t-us-057-fa90bf86fb89",
+      "artifactId": "art-fixture-t-us-057-0718d79ee911",
       "caseId": "T-US-057",
       "environment": "fixture",
       "redacted": true,
@@ -2290,11 +2744,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-057-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-057-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-057-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-us-024-bb82c3448343",
+      "artifactId": "art-fixture-t-us-024-fa90bf86fb89",
+      "artifactId": "art-fixture-t-us-024-0718d79ee911",
       "caseId": "T-US-024",
       "environment": "fixture",
       "redacted": true,
@@ -2304,11 +2764,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-024-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-024-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-024-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-us-042-bb82c3448343",
+      "artifactId": "art-fixture-t-us-042-fa90bf86fb89",
+      "artifactId": "art-fixture-t-us-042-0718d79ee911",
       "caseId": "T-US-042",
       "environment": "fixture",
       "redacted": true,
@@ -2318,11 +2784,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-042-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-042-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-042-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x057-bb82c3448343",
+      "artifactId": "art-fixture-t-x057-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x057-0718d79ee911",
       "caseId": "T-X057",
       "environment": "fixture",
       "redacted": true,
@@ -2332,11 +2804,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x057-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x057-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x057-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-us-044-bb82c3448343",
+      "artifactId": "art-fixture-t-us-044-fa90bf86fb89",
+      "artifactId": "art-fixture-t-us-044-0718d79ee911",
       "caseId": "T-US-044",
       "environment": "fixture",
       "redacted": true,
@@ -2346,11 +2824,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-044-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-044-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-044-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x053-bb82c3448343",
+      "artifactId": "art-fixture-t-x053-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x053-0718d79ee911",
       "caseId": "T-X053",
       "environment": "fixture",
       "redacted": true,
@@ -2360,11 +2844,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x053-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x053-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x053-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-us-018-bb82c3448343",
+      "artifactId": "art-fixture-t-us-018-fa90bf86fb89",
+      "artifactId": "art-fixture-t-us-018-0718d79ee911",
       "caseId": "T-US-018",
       "environment": "fixture",
       "redacted": true,
@@ -2374,11 +2864,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-018-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-018-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-018-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x037-bb82c3448343",
+      "artifactId": "art-fixture-t-x037-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x037-0718d79ee911",
       "caseId": "T-X037",
       "environment": "fixture",
       "redacted": true,
@@ -2388,11 +2884,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x037-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x037-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x037-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x058-bb82c3448343",
+      "artifactId": "art-fixture-t-x058-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x058-0718d79ee911",
       "caseId": "T-X058",
       "environment": "fixture",
       "redacted": true,
@@ -2402,11 +2904,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x058-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x058-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x058-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x069-bb82c3448343",
+      "artifactId": "art-fixture-t-x069-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x069-0718d79ee911",
       "caseId": "T-X069",
       "environment": "fixture",
       "redacted": true,
@@ -2416,11 +2924,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x069-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x069-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x069-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x038-bb82c3448343",
+      "artifactId": "art-fixture-t-x038-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x038-0718d79ee911",
       "caseId": "T-X038",
       "environment": "fixture",
       "redacted": true,
@@ -2430,11 +2944,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x038-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x038-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x038-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x039-bb82c3448343",
+      "artifactId": "art-fixture-t-x039-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x039-0718d79ee911",
       "caseId": "T-X039",
       "environment": "fixture",
       "redacted": true,
@@ -2444,11 +2964,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x039-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x039-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x039-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-us-058-bb82c3448343",
+      "artifactId": "art-fixture-t-us-058-fa90bf86fb89",
+      "artifactId": "art-fixture-t-us-058-0718d79ee911",
       "caseId": "T-US-058",
       "environment": "fixture",
       "redacted": true,
@@ -2458,11 +2984,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-058-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-058-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-058-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-us-046-bb82c3448343",
+      "artifactId": "art-fixture-t-us-046-fa90bf86fb89",
+      "artifactId": "art-fixture-t-us-046-0718d79ee911",
       "caseId": "T-US-046",
       "environment": "fixture",
       "redacted": true,
@@ -2472,11 +3004,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-046-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-046-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-046-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x048-bb82c3448343",
+      "artifactId": "art-fixture-t-x048-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x048-0718d79ee911",
       "caseId": "T-X048",
       "environment": "fixture",
       "redacted": true,
@@ -2486,11 +3024,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x048-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x048-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x048-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-us-010-bb82c3448343",
+      "artifactId": "art-fixture-t-us-010-fa90bf86fb89",
+      "artifactId": "art-fixture-t-us-010-0718d79ee911",
       "caseId": "T-US-010",
       "environment": "fixture",
       "redacted": true,
@@ -2500,11 +3044,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-010-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-010-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-010-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x033-bb82c3448343",
+      "artifactId": "art-fixture-t-x033-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x033-0718d79ee911",
       "caseId": "T-X033",
       "environment": "fixture",
       "redacted": true,
@@ -2514,11 +3064,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x033-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x033-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x033-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-us-008-bb82c3448343",
+      "artifactId": "art-fixture-t-us-008-fa90bf86fb89",
+      "artifactId": "art-fixture-t-us-008-0718d79ee911",
       "caseId": "T-US-008",
       "environment": "fixture",
       "redacted": true,
@@ -2528,11 +3084,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-008-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-008-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-008-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x032-bb82c3448343",
+      "artifactId": "art-fixture-t-x032-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x032-0718d79ee911",
       "caseId": "T-X032",
       "environment": "fixture",
       "redacted": true,
@@ -2542,11 +3104,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x032-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x032-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x032-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x031-bb82c3448343",
+      "artifactId": "art-fixture-t-x031-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x031-0718d79ee911",
       "caseId": "T-X031",
       "environment": "fixture",
       "redacted": true,
@@ -2556,11 +3124,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x031-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x031-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x031-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-us-040-bb82c3448343",
+      "artifactId": "art-fixture-t-us-040-fa90bf86fb89",
+      "artifactId": "art-fixture-t-us-040-0718d79ee911",
       "caseId": "T-US-040",
       "environment": "fixture",
       "redacted": true,
@@ -2570,11 +3144,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-040-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-040-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-us-040-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x049-bb82c3448343",
+      "artifactId": "art-fixture-t-x049-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x049-0718d79ee911",
       "caseId": "T-X049",
       "environment": "fixture",
       "redacted": true,
@@ -2584,11 +3164,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x049-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x049-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x049-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x017-bb82c3448343",
+      "artifactId": "art-fixture-t-x017-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x017-0718d79ee911",
       "caseId": "T-X017",
       "environment": "fixture",
       "redacted": true,
@@ -2598,6 +3184,10 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x017-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x017-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x017-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2612,11 +3202,19 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x024-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x024-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "artifactId": "art-fixture-t-x024-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-X024 (Old fence after reassignment — old worker cannot commit)\nproof=old_fence_after_reassignment applyCount=1 :: Worker A acquired lease holder=worker-a-4542f35e expires=2026-11-21T19:04:51.000Z | Worker B refused while A lease live (no premature reassignment) | Worker B reassigned lease holder=worker-b-9d5a1bc8 after A expiry | Old worker A bind denied: Lease fence failed for wf-fence-3eb42e82 | Old worker A markEffectPending denied: Lease fence failed for wf-fence-3eb42e82 | Worker B commit ok phase=effect_pending operationId=op-fence-ffe03f34 | liveTemporalWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-x024-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x011-bb82c3448343",
+      "artifactId": "art-fixture-t-x011-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x011-0718d79ee911",
       "caseId": "T-X011",
       "environment": "fixture",
       "redacted": true,
@@ -2626,11 +3224,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x011-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x011-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x011-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x003-bb82c3448343",
+      "artifactId": "art-fixture-t-x003-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x003-0718d79ee911",
       "caseId": "T-X003",
       "environment": "fixture",
       "redacted": true,
@@ -2640,11 +3244,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x003-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x003-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x003-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x050-bb82c3448343",
+      "artifactId": "art-fixture-t-x050-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x050-0718d79ee911",
       "caseId": "T-X050",
       "environment": "fixture",
       "redacted": true,
@@ -2654,11 +3264,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x050-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x050-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x050-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x010-bb82c3448343",
+      "artifactId": "art-fixture-t-x010-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x010-0718d79ee911",
       "caseId": "T-X010",
       "environment": "fixture",
       "redacted": true,
@@ -2668,11 +3284,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x010-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x010-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x010-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x009-bb82c3448343",
+      "artifactId": "art-fixture-t-x009-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x009-0718d79ee911",
       "caseId": "T-X009",
       "environment": "fixture",
       "redacted": true,
@@ -2682,11 +3304,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x009-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x009-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x009-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x015-bb82c3448343",
+      "artifactId": "art-fixture-t-x015-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x015-0718d79ee911",
       "caseId": "T-X015",
       "environment": "fixture",
       "redacted": true,
@@ -2696,6 +3324,10 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x015-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x015-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x015-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2710,6 +3342,12 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x001-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x001-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "artifactId": "art-fixture-t-x001-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-X001 (Host sleeps during scheduled monitoring — coverage gap honest; coalesce)\nproof=host_sleep_monitoring_coverage_gap applyCount=1 :: Pre-sleep SUCCESS recorded at 2026-11-21T19:06:00.000Z | Derived 3 missed slots from cadence=60000ms | Host sleep → 3 COVERAGE_GAP slots; lastVerifiedSuccess unchanged; probeApplyCount=1 | Burst replay refused: Missed monitoring slots must coalesce on wake — burst per-slot replay forbidden | Catch-up without probe refused: Catch-up coalesce requires an actual fixture probe result before counting an apply | Wake coalesce catchup=probe-host-sleep-31470094:2026-11-21T19:09:30.000Z gaps=3 probeAppliesThisWake=1 totalApplies=2 fixtureProbe=2026-11-21T19:09:30.000Z | liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-x001-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2724,6 +3362,12 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x021-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x021-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "artifactId": "art-fixture-t-x021-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-X021 (Concurrent idempotent releases — one dispatch)\nproof=concurrent_idempotent_release applyCount=1 :: Barrier+async race window without serializer → created=12 (overlap proven) | Concurrent applyOnce x12 behind barrier + mutex → created=1 (one dispatch) | Single remoteRef=remote-concurrent-op-concurrent-5166c479 | applyCount=1 for every concurrent observer | Post-concurrent replay → created=false applyCount=1 | Provider ledger holds exactly one effect for the business key | Distinct from NO_DUPLICATE_EFFECTS (retry-only); concurrent coalescing only | Offline async race-window + per-key serializer; PG ON CONFLICT covered separately; not sandbox/prod VERIFIED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-x021-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2738,6 +3382,12 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x022-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x022-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "artifactId": "art-fixture-t-x022-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-X022 (Idempotency key payload mismatch — Conflict)\nproof=idempotency_key_payload_mismatch applyCount=1 :: acceptPending bound key with digest A applyCount=1 remoteRef=remote-42529ea2 | acceptPending same operationId + different payloadDigest → Conflict | acceptPending same businessIdempotencyKey + different payloadDigest → Conflict | Post-conflict: applyCount=1; original digest/remoteRef retained; no second effect | Same-digest acceptPending replay: created=false applyCount=1 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-x022-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2757,6 +3407,8 @@
     },
     {
       "artifactId": "art-fixture-t-x008-bb82c3448343",
+      "artifactId": "art-fixture-t-x008-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x008-0718d79ee911",
       "caseId": "T-X008",
       "environment": "fixture",
       "redacted": true,
@@ -2766,6 +3418,10 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x008-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x008-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x008-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2780,11 +3436,19 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x012-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x012-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "artifactId": "art-fixture-t-x012-0718d79ee911",
+      "summary": "Fixture ACCEPTED for T-X012 (Orphan worker on deadline — process tree stopped)\nproof=orphan_worker_deadline_tree_stopped applyCount=1 :: Deadline not exceeded at +20s | Pre-deadline stop refused; worker+children still alive (no premature kill) | Post-deadline PROCESS_TREE_STOPPED: tree dead; foreign+sibling skipped | invokeClaudeCli tree-worker → TIMEOUT (deadline) | OS process tree stopped worker=7207 child=7214 | Outcome timed_out_stopped aligns with RoleRunStatus.TIMED_OUT (not VERIFIED) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-x012-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x007-bb82c3448343",
+      "artifactId": "art-fixture-t-x007-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x007-0718d79ee911",
       "caseId": "T-X007",
       "environment": "fixture",
       "redacted": true,
@@ -2794,11 +3458,17 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x007-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x007-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x007-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
     {
       "artifactId": "art-fixture-t-x016-bb82c3448343",
+      "artifactId": "art-fixture-t-x016-fa90bf86fb89",
+      "artifactId": "art-fixture-t-x016-0718d79ee911",
       "caseId": "T-X016",
       "environment": "fixture",
       "redacted": true,
@@ -2808,6 +3478,10 @@
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x016-bb82c3448343.json",
       "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x016-fa90bf86fb89.json",
+      "createdAtIso": "2026-11-22T21:26:10.314Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x016-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
@@ -2841,11 +3515,11 @@
     },
     {
       "artifactId": "art-fixture-t-x027-bb82c3448343",
+      "summary": "Fixture ACCEPTED for T-X013 (Replay historical workflow — no repeated external I/O)\nproof=replay_historical_no_repeat_io applyCount=1 :: Recorded enqueue history for wf-soak-replay-hist-b9dad216 | Recorded claimAndAccept providerCreated=true applyCount=1 | Recorded verify outcome=VERIFIED matched=true applyCount=1 | History replay outcome=VERIFIED applyCount=1 scheduledFromHistory=3 | Post-replay durable outcome=VERIFIED applyCount=1 opProviders=1 ledgerDelta=0 | Replay used recorded activity history only — no acceptPending/applyOnce during replay | Historical workflow replay: no repeated external I/O (externalEffects=NONE) | liveProviderSuccessClaimed=false catalogClaim=ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-x013-fa90bf86fb89.json",
+      "artifactId": "art-fixture-t-x027-fa90bf86fb89",
       "caseId": "T-X027",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X027 (Unknown usage on cancelled request — hold; not zero cost)\nproof=unknown_usage_cancel_holds_residual applyCount=1 :: Reserved 700 for cancel candidate; available=300 | Cancel unknown usage → heldMinor=700 (not zero); available stays 300 | Counterfactual settle-as-zero refused on unknown-usage hold | Positive control: known-zero cancel releases that reservation only; unknown hold still consumes 700 | Hold residual blocks over-cap reserve (BUDGET_EXHAUSTED available=300) | Known reconcile after hold posts actual=220 and clears held residual | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "unknown_usage_cancel_holds_residual"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x027-bb82c3448343.json",
@@ -2855,11 +3529,10 @@
     },
     {
       "artifactId": "art-fixture-t-x004-bb82c3448343",
+      "evidenceRef": "soak/evidence/art-fixture-t-x027-fa90bf86fb89.json",
+      "artifactId": "art-fixture-t-x004-fa90bf86fb89",
       "caseId": "T-X004",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X004 (Disk full during evidence write — no partial completed manifest)\nproof=disk_full_evidence_no_partial_completed applyCount=1 :: Happy-path evidence write → COMPLETED manifest published atomically | ENOSPC during evidence write → no completed manifest (tmp cleaned) | release:evidence atomicWriteEvidenceJson ENOSPC → no partial final artifact | Retry ENOSPC preserves prior COMPLETED (no delete-on-failure) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "disk_full_evidence_no_partial_completed"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x004-bb82c3448343.json",
@@ -2875,19 +3548,15 @@
       "summary": "Fixture ACCEPTED for T-X025 (External human edit during staging — conflict retained)\nproof=external_human_edit_conflict_retained applyCount=1 :: Staged against base rev-1 → STAGED_PENDING changeId=chg-ext-edit-c51ea759 | External human edit → CONFLICT_RETAINED humanRev=rev-3 | Blind overwrite refused (OVERWRITE_FORBIDDEN); human fields preserved; attempts=1 | Independent verify → CONFLICT_RETAINED; verifiedClaimed=false (ACCEPTED≠VERIFIED) | Pre-stage human edit → BASE_REVISION_MISMATCH (BASE_REVISION_MISMATCH) | liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "external_human_edit_conflict_retained"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x025-bb82c3448343.json",
-      "createdAtIso": "2026-11-22T21:34:20.301Z",
-      "liveProviderSuccessClaimed": false,
-      "externalEffects": "NONE"
-    },
-    {
       "artifactId": "art-fixture-t-x043-bb82c3448343",
+      "evidenceRef": "soak/evidence/art-fixture-t-x004-fa90bf86fb89.json",
+      "artifactId": "art-fixture-t-x025-fa90bf86fb89",
+      "summary": "Fixture ACCEPTED for T-X025 (External human edit during staging — conflict retained)\nproof=external_human_edit_conflict_retained applyCount=1 :: Staged against base rev-1 → STAGED_PENDING changeId=chg-ext-edit-890c8484 | External human edit → CONFLICT_RETAINED humanRev=rev-3 | Blind overwrite refused (OVERWRITE_FORBIDDEN); human fields preserved; attempts=1 | Independent verify → CONFLICT_RETAINED; verifiedClaimed=false (ACCEPTED≠VERIFIED) | Pre-stage human edit → BASE_REVISION_MISMATCH (BASE_REVISION_MISMATCH) | liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-x025-fa90bf86fb89.json",
+      "artifactId": "art-fixture-t-x043-fa90bf86fb89",
       "caseId": "T-X043",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X043 (Optimization breaks CTA — journey regression fails)\nproof=optimization_breaks_cta_journey_fails applyCount=1 :: Baseline healthy page CTA journey SUCCESS — gate allowed | SEO content optimization rewrote CTA → journey FAILURE; gate JOURNEY_REGRESSION_FAILED | Positive control: metadata-only optimization preserves CTA → journey SUCCESS + gate allowed | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "optimization_breaks_cta_journey_fails"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x043-bb82c3448343.json",
@@ -2897,11 +3566,10 @@
     },
     {
       "artifactId": "art-fixture-t-x026-bb82c3448343",
+      "evidenceRef": "soak/evidence/art-fixture-t-x043-fa90bf86fb89.json",
+      "artifactId": "art-fixture-t-x026-fa90bf86fb89",
       "caseId": "T-X026",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X026 (Concurrent final budget reservation — cap enforced)\nproof=concurrent_final_budget_reservation_cap applyCount=1 :: Domain reserve r-a=600 ok; reservedMinor=600 | Near-cap r-b=500 → BUDGET_EXHAUSTED availableMinor=400 (cap enforced) | Same-snapshot finals each ok in isolation (oversubscribe risk visible) | Composed concurrent finals: second BUDGET_EXHAUSTED; reservedMinor=1000 ≤ limit | Memory BudgetStore sequential finals: first ok, second BUDGET_EXHAUSTED; reservedMinor=1000 ≤ limit | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "concurrent_final_budget_reservation_cap"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x026-bb82c3448343.json",
@@ -2911,11 +3579,10 @@
     },
     {
       "artifactId": "art-fixture-t-x052-bb82c3448343",
+      "evidenceRef": "soak/evidence/art-fixture-t-x026-fa90bf86fb89.json",
+      "artifactId": "art-fixture-t-x052-fa90bf86fb89",
       "caseId": "T-X052",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X052 (Synthetic conversion contamination — excluded from commerce)\nproof=synthetic_conversion_contamination_excluded applyCount=1 :: synthetic conversion metric → excluded (not measured commerce win) | commerce projection excludes synthetic conversion contaminant (leadCount=1, revenue=5000, syntheticExcluded=1; contaminant 99999 not counted) | counterfactual: raw ledger revenue 104999 ≠ commerce revenue 5000 (contamination blocked) | appendCommerceLead refuses synthetic && countedInCommerce (fail closed) | createSyntheticLead synthetic=true + assertSyntheticExcludedFromCommercial | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "synthetic_conversion_contamination_excluded"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x052-bb82c3448343.json",
@@ -2925,11 +3592,10 @@
     },
     {
       "artifactId": "art-fixture-t-x054-bb82c3448343",
+      "evidenceRef": "soak/evidence/art-fixture-t-x052-fa90bf86fb89.json",
+      "artifactId": "art-fixture-t-x054-fa90bf86fb89",
       "caseId": "T-X054",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X054 (Reply sent but CRM fails — CRM reconciles; no resend)\nproof=reply_sent_crm_reconciles_no_resend applyCount=1 :: QUEUED reply → REPLY_NOT_SENT (gate requires SENT first) | SENT + CRM fail → CRM_RECONCILE_NO_RESEND; MISSING_REMOTE; resendAllowed=false | detectDuplicateOutbound suppresses same-body resend after SENT | CRM reconcile MATCHED on retry; outbound remains SENT; still no resend | Positive control: CRM_OK still forbids outbound resend | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "reply_sent_crm_reconciles_no_resend"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x054-bb82c3448343.json",
@@ -2939,11 +3605,10 @@
     },
     {
       "artifactId": "art-fixture-t-x055-bb82c3448343",
+      "evidenceRef": "soak/evidence/art-fixture-t-x054-fa90bf86fb89.json",
+      "artifactId": "art-fixture-t-x055-fa90bf86fb89",
       "caseId": "T-X055",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X055 (Unknown policy question — escalate without promise)\nproof=unknown_policy_question_escalates_without_promise applyCount=1 :: allowed question documented_policies → allowed (no escalate) | prepareConciergeReply allows documented_policies questionId | unknown question undocumented_cancellation_guarantee → UNKNOWN_POLICY_QUESTION escalateWithoutPromise | prepareConciergeReply refuses unknown policy question (no promise draft) | createHandoff escalates with verifiedAnswers=[] humanOwned agentSendAllowed=false | no invented guarantee/promise in verifiedAnswers (escalate without promise) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "unknown_policy_question_escalates_without_promise"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x055-bb82c3448343.json",
@@ -2953,11 +3618,10 @@
     },
     {
       "artifactId": "art-fixture-t-x056-bb82c3448343",
+      "evidenceRef": "soak/evidence/art-fixture-t-x055-fa90bf86fb89.json",
+      "artifactId": "art-fixture-t-x056-fa90bf86fb89",
       "caseId": "T-X056",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X056 (Automated response loop — bounded; handoff)\nproof=automated_response_loop_bounded_handoff applyCount=1 :: sentAgentMessageCount=1 < max=2 → WITHIN_BOUND; no handoff | sentAgentMessageCount=2 ≥ max=2 → MESSAGE_LIMIT_HANDOFF; status=handed_off; agentSendAllowed=false | Over-bound sentAgentMessageCount=5 still MESSAGE_LIMIT_HANDOFF (no unbounded loop) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "automated_response_loop_bounded_handoff"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x056-bb82c3448343.json",
@@ -2973,19 +3637,15 @@
       "summary": "Fixture ACCEPTED for T-X059 (Duplicate platform attribution — one booking; separate claims)\nproof=duplicate_platform_attribution_one_booking applyCount=1 :: two platform claims retained separately (claim-google-9421bb70, claim-meta-0300c0f2) → uniqueBookingCount=1 | SILENT_PLATFORM_SUM_REFUSED — platform conversions not summed into unique bookings | counterfactual: naive platform sum 2 ≠ unique booking 1 (double-count blocked) | single-platform claim → unique=1 allowed (no false double-count)\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "duplicate_platform_attribution_one_booking"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x059-bb82c3448343.json",
-      "createdAtIso": "2026-11-22T21:34:20.301Z",
-      "liveProviderSuccessClaimed": false,
-      "externalEffects": "NONE"
-    },
-    {
       "artifactId": "art-fixture-t-x060-bb82c3448343",
+      "evidenceRef": "soak/evidence/art-fixture-t-x056-fa90bf86fb89.json",
+      "artifactId": "art-fixture-t-x059-fa90bf86fb89",
+      "summary": "Fixture ACCEPTED for T-X059 (Duplicate platform attribution — one booking; separate claims)\nproof=duplicate_platform_attribution_one_booking applyCount=1 :: two platform claims retained separately (claim-google-0312cbef, claim-meta-2cb869cc) → uniqueBookingCount=1 | SILENT_PLATFORM_SUM_REFUSED — platform conversions not summed into unique bookings | counterfactual: naive platform sum 2 ≠ unique booking 1 (double-count blocked) | single-platform claim → unique=1 allowed (no false double-count)\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "evidenceRef": "soak/evidence/art-fixture-t-x059-fa90bf86fb89.json",
+      "artifactId": "art-fixture-t-x060-fa90bf86fb89",
       "caseId": "T-X060",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X060 (Currency/timezone mismatch — no silent sum)\nproof=currency_timezone_mismatch_no_silent_sum applyCount=1 :: Matched USD / America/New_York → AGGREGATED totalMinor=550 | USD+EUR → CURRENCY_MISMATCH; totalMinor=null (no silent sum) | America/New_York+Europe/London → TIMEZONE_MISMATCH; totalMinor=null | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "currency_timezone_mismatch_no_silent_sum"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x060-bb82c3448343.json",
@@ -2995,11 +3655,10 @@
     },
     {
       "artifactId": "art-fixture-t-x070-bb82c3448343",
+      "evidenceRef": "soak/evidence/art-fixture-t-x060-fa90bf86fb89.json",
+      "artifactId": "art-fixture-t-x070-fa90bf86fb89",
       "caseId": "T-X070",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X070 (Validated payload not collected — separate failure states)\nproof=validated_payload_not_collected_separate_states applyCount=1 :: Valid signature+schema + durable write → COLLECTED (validated=true collected=true) | Bad webhook signature → VALIDATION_FAILED (collectionAttempted=false) | Validated payload not collected → COLLECTION_FAILED (validated=true collected=false; not VALIDATION_FAILED) | Collector throw → COLLECTION_FAILED (validated=true; not VALIDATION_FAILED) | Non-hex signature suffix → VALIDATION_FAILED | Separate failure states: VALIDATION_FAILED ≠ COLLECTION_FAILED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "validated_payload_not_collected_separate_states"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x070-bb82c3448343.json",
@@ -3009,11 +3668,10 @@
     },
     {
       "artifactId": "art-fixture-t-x028-bb82c3448343",
+      "evidenceRef": "soak/evidence/art-fixture-t-x070-fa90bf86fb89.json",
+      "artifactId": "art-fixture-t-x028-fa90bf86fb89",
       "caseId": "T-X028",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X028 (Actual cost exceeds estimate — overrun visible)\nproof=actual_cost_exceeds_estimate_overrun_visible applyCount=1 :: createBudgetAccount → heldMinor=0 (preserve T-X027 hold field) | Reserve r-overrun for 600 → ok; reservedMinor=600; heldMinor=0 | Settle r-overrun actualMinor=750 (> reserved 600) → settledMinor=750 overrun visible; reservation released; heldMinor=0 | Positive control: under-estimate settle actual=120 (< reserved 500) → settled posts actual; reserved released; heldMinor=0 | Unknown reservation → UNKNOWN_RESERVATION (fail-closed) | proofClock=2026-11-21T19:09:20.000Z | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "actual_cost_exceeds_estimate_overrun_visible"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x028-bb82c3448343.json",
@@ -3023,11 +3681,10 @@
     },
     {
       "artifactId": "art-fixture-t-x044-bb82c3448343",
+      "evidenceRef": "soak/evidence/art-fixture-t-x028-fa90bf86fb89.json",
+      "artifactId": "art-fixture-t-x044-fa90bf86fb89",
       "caseId": "T-X044",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X044 (Unlicensed venue media — publish blocked)\nproof=unlicensed_venue_media_publish_blocked applyCount=1 :: Domain: unlicensed venue media → UNLICENSED_MEDIA | releaseCanonical: unlicensed venueMedia → publish blocked before gateway (receipt=null) | Domain: unknown → LICENSE_UNKNOWN | Domain: expired → LICENSE_EXPIRED | Domain: pending_clearance → PENDING_CLEARANCE | releaseCanonical: invented/stock without approval → UNAPPROVED_INVENTED_MEDIA blocked | Positive control: licensed + rights cleared + owner approved → media gate open at releaseCanonical | proofClock=2026-11-21T19:10:00.000Z | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "unlicensed_venue_media_publish_blocked"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x044-bb82c3448343.json",
@@ -3037,11 +3694,10 @@
     },
     {
       "artifactId": "art-fixture-t-x045-bb82c3448343",
+      "evidenceRef": "soak/evidence/art-fixture-t-x044-fa90bf86fb89.json",
+      "artifactId": "art-fixture-t-x045-fa90bf86fb89",
       "caseId": "T-X045",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X045 (Partial campaign destinations — per-destination states)\nproof=partial_campaign_destinations_per_state applyCount=1 :: Distribution run starts PLANNING with zero attempts | Mixed VERIFIED+FAILED+UNKNOWN_REMOTE → DistributionRunStatus.PARTIAL | Per-destination states retained independently (cms=VERIFIED, gbp=FAILED, linkedin=UNKNOWN_REMOTE) | Recoverable destinations = unfinished only (gbp, linkedin); verified cms not re-applied | ACCEPTED_PENDING destination kept distinct from VERIFIED; run stays IN_PROGRESS (not COMPLETE) | All-destination FAILED → DistributionRunStatus.FAILED (honest) | liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "partial_campaign_destinations_per_state"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x045-bb82c3448343.json",
@@ -3057,26 +3713,24 @@
       "summary": "Fixture ACCEPTED for T-US-006 (Unbound URL: analysis ok, write blocked)\nproof=unbound_write_path_fail_closed applyCount=0 :: Unbound URL OBSERVE/analysis ok without mapped write path | CREATE scaffolding ok without mapped write path | Unbound URL write blocked — no pilot write path; fail closed | Mapped in-workspace write path gates pass (positive control) | Mapped but unproven path remains blocked (ownership/evidence missing) | No gateway submitIntent/apply — gate-only deny; applyAttemptCount=0 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "unbound_write_path_fail_closed"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-006-bb82c3448343.json",
-      "createdAtIso": "2026-11-22T21:34:20.301Z",
-      "liveProviderSuccessClaimed": false,
-      "externalEffects": "NONE"
-    },
-    {
       "artifactId": "art-fixture-t-x023-bb82c3448343",
       "caseId": "T-X023",
-      "environment": "fixture",
-      "redacted": true,
       "summary": "Fixture ACCEPTED for T-X023 (Eventual consistency false not-found — no unsafe retry)\nproof=eventual_consistency_false_not_found applyCount=1 :: Fixture CRM write → ledger size 1; writeAttemptCount=1; lag reads scheduled | getByCorrelation empty under lag → BOUND_WAIT createLead=false (false not-found) | Counterfactual empty→create documented as forbidden | No second writeSyntheticLead; writeAttemptCount remains 1 | After visibility → fixture read-back RECONCILE MATCHED; createLead=false; writeAttemptCount=1 | Window exceeded empty → ESCALATE_MISSING createLead=false | Fixture CRM only — live Zoho NOT_WIRED; externalEffects NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
         "eventual_consistency_false_not_found"
-      ],
       "evidenceRef": "soak/evidence/art-fixture-t-x023-bb82c3448343.json",
-      "createdAtIso": "2026-11-22T21:34:20.301Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x045-fa90bf86fb89.json",
+      "artifactId": "art-fixture-t-x034-0718d79ee911",
+      "caseId": "T-X034",
+      "summary": "Fixture ACCEPTED for T-X034 (Test-only Ads project vs production — blocked)\nproof=ads_test_project_production_blocked applyCount=1 :: Guarded bind: SANDBOX→LIVE → ADS_TEST_PROJECT_MISMATCH; productionBindCallCount=0 | evaluateChatGptAdsAccess → ADS_TEST_PROJECT_MISMATCH (T-X034) | createPaidMediaProposal CHATGPT_ADS with mismatch → CHATGPT_ADS_BLOCKED; bind count still 0 | attemptPaidMediaExecution refused code=CHATGPT_ADS_BLOCKED; productionBindCallCount=0 | LIVE→LIVE guarded refuse ADS_LIVE_NOT_WIRED (distinct from T-X034); bind count=0 | instrumentedProductionBindCalls=0 liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+        "ads_test_project_production_blocked"
+      "evidenceRef": "soak/evidence/art-fixture-t-x034-0718d79ee911.json",
+      "createdAtIso": "2026-11-22T18:53:55.534Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     }
   ],
   "note": "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated; T-X029 via explicit rebind; T-US-057 via cross-workspace resource substitution; T-US-024 via agent cannot widen grant; T-US-042/T-X057 via repair weaken test rejected; T-US-044/T-X053 via takeover cancels unsent; T-US-018/T-X037 via EVAL_ONLY operational tool forbidden; T-X058 via repair attempt limit escalated; T-X069 via imported doc quarantined; T-X038 via eval no-grounding; T-X039/T-US-058 via metric denominators honest; T-US-046/T-X048 via hard search constraints; T-US-010/T-X033 via GSC omitted rows; T-US-008/T-X032 via GA4 debug not delivered; T-X031 via wrong property kind; T-US-040/T-X049 via thank-you without CRM; T-X017 via stop-after-dispatch reconcile; T-X024 via old fence after reassignment; T-X011 via output bomb bounded/quarantined; T-X003 via symlink escape after root verification; T-X050 via public synthetic flag requires server grant; T-X010 via malicious prompt no shell injection; T-X009 via CLI error despite exit 0. T-X015 via DST recurring schedule no duplicates. T-X001 via host-sleep monitoring coverage-gap coalesce; T-X021 via concurrent idempotent release. T-X008 via fact changes after review stale; T-X012 via orphan worker deadline tree stopped; T-X007 via wrong CMS environment no production op; T-X016 via stop before dispatch no mutation; T-X022 via idempotency key payload mismatch. T-X063 via indirect prompt-injection exfil denied; T-X013 via replay historical no repeat I/O. T-X004 via disk-full evidence no partial completed. T-X043 via optimization breaks CTA journey fails. T-X026 via concurrent final budget reservation cap. T-X052 via synthetic conversion contamination excluded. T-X054 via reply sent CRM reconciles no resend. T-X055 via unknown policy question escalates without promise. T-X056 via automated response loop bounded handoff. T-X059 via duplicate platform attribution one booking. T-X060 via currency/timezone mismatch no silent sum. T-X070 via validated payload not collected separate failure states. T-X044 via unlicensed venue media publish blocked; T-X045 via partial campaign destinations per-state. T-US-006 via unbound write path fail closed. T-X023 via eventual consistency false not-found. Not R1-complete."
+  "note": "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated; T-X029 via explicit rebind; T-US-057 via cross-workspace resource substitution; T-US-024 via agent cannot widen grant; T-US-042/T-X057 via repair weaken test rejected; T-US-044/T-X053 via takeover cancels unsent; T-US-018/T-X037 via EVAL_ONLY operational tool forbidden; T-X058 via repair attempt limit escalated; T-X069 via imported doc quarantined; T-X038 via eval no-grounding; T-X039/T-US-058 via metric denominators honest; T-US-046/T-X048 via hard search constraints; T-US-010/T-X033 via GSC omitted rows; T-US-008/T-X032 via GA4 debug not delivered; T-X031 via wrong property kind; T-US-040/T-X049 via thank-you without CRM; T-X017 via stop-after-dispatch reconcile; T-X024 via old fence after reassignment; T-X011 via output bomb bounded/quarantined; T-X003 via symlink escape after root verification; T-X050 via public synthetic flag requires server grant; T-X010 via malicious prompt no shell injection; T-X009 via CLI error despite exit 0. T-X015 via DST recurring schedule no duplicates. T-X001 via host-sleep monitoring coverage-gap coalesce; T-X021 via concurrent idempotent release. T-X008 via fact changes after review stale; T-X012 via orphan worker deadline tree stopped; T-X007 via wrong CMS environment no production op; T-X016 via stop before dispatch no mutation; T-X022 via idempotency key payload mismatch. T-X063 via indirect prompt-injection exfil denied; T-X013 via replay historical no repeat I/O. T-X004 via disk-full evidence no partial completed. T-X043 via optimization breaks CTA journey fails. T-X026 via concurrent final budget reservation cap. T-X052 via synthetic conversion contamination excluded. T-X054 via reply sent CRM reconciles no resend. T-X055 via unknown policy question escalates without promise. T-X056 via automated response loop bounded handoff. T-X059 via duplicate platform attribution one booking. T-X060 via currency/timezone mismatch no silent sum. T-X070 via validated payload not collected separate failure states. T-X044 via unlicensed venue media publish blocked; T-X045 via partial campaign destinations per-state. Not R1-complete."
+  "note": "Fixture evidence only. ACCEPTED ≠ sandbox/prod VERIFIED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated; T-X029 via explicit rebind; T-US-057 via cross-workspace resource substitution; T-US-024 via agent cannot widen grant; T-US-042/T-X057 via repair weaken test rejected; T-US-044/T-X053 via takeover cancels unsent; T-US-018/T-X037 via EVAL_ONLY operational tool forbidden; T-X058 via repair attempt limit escalated; T-X069 via imported doc quarantined; T-X038 via eval no-grounding; T-X039/T-US-058 via metric denominators honest; T-US-046/T-X048 via hard search constraints; T-US-010/T-X033 via GSC omitted rows; T-US-008/T-X032 via GA4 debug not delivered; T-X031 via wrong property kind; T-US-040/T-X049 via thank-you without CRM; T-X017 via stop-after-dispatch reconcile; T-X024 via old fence after reassignment; T-X011 via output bomb bounded/quarantined; T-X003 via symlink escape after root verification; T-X050 via public synthetic flag requires server grant; T-X010 via malicious prompt no shell injection; T-X009 via CLI error despite exit 0. T-X015 via DST recurring schedule no duplicates. T-X001 via host-sleep monitoring coverage-gap coalesce; T-X021 via concurrent idempotent release. T-X008 via fact changes after review stale; T-X012 via orphan worker deadline tree stopped; T-X007 via wrong CMS environment no production op; T-X016 via stop before dispatch no mutation; T-X022 via idempotency key payload mismatch. T-X034 via test Ads project vs production blocked. Not R1-complete."
 }
