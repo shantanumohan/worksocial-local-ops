@@ -8,8 +8,8 @@
     "takeover_cancels_unsent_replies"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x053.json",
-  "createdAtIso": "2026-11-22T20:00:41.431Z",
+  "createdAtIso": "2026-11-22T20:02:25.143Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x053-d69bc592d907"
+  "uniqueSourceArtifactId": "art-fixture-t-x053-e50b9c2307eb"
 }

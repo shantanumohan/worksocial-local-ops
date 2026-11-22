@@ -112,6 +112,53 @@ export function proofValidatedPayloadNotCollectedSeparateStates(
     );
   }
 
+  // Thrown collector → still COLLECTION_FAILED (not uncaught / not VALIDATION_FAILED).
+  const throwEnv = signedEnvelope({
+    eventId: `evt-throw-${randomUUID().slice(0, 8)}`,
+    kind: "lead.created",
+  });
+  const thrown = evaluateValidatedPayloadCollection({
+    payload: throwEnv,
+    secret: FIXTURE_SECRET,
+    collect: () => {
+      throw new Error("durable write rejected");
+    },
+  });
+  if (
+    thrown.code === "COLLECTION_FAILED" &&
+    thrown.validated === true &&
+    thrown.collected === false &&
+    thrown.collectionAttempted === true
+  ) {
+    details.push(
+      "Collector throw → COLLECTION_FAILED (validated=true; not VALIDATION_FAILED)",
+    );
+  } else {
+    passed = false;
+    details.push(`Thrown collector unexpectedly ${JSON.stringify(thrown)}`);
+  }
+
+  // Malformed hex suffix must not validate.
+  const suffixReject = evaluateValidatedPayloadCollection({
+    payload: {
+      ...okEnv,
+      signatureHex: `${okEnv.signatureHex}zz`,
+    },
+    secret: FIXTURE_SECRET,
+    collect: () => ({ ok: true, recordId: "should-not" }),
+  });
+  if (
+    suffixReject.code === "VALIDATION_FAILED" &&
+    suffixReject.collectionAttempted === false
+  ) {
+    details.push("Non-hex signature suffix → VALIDATION_FAILED");
+  } else {
+    passed = false;
+    details.push(
+      `Signature suffix unexpectedly ${JSON.stringify(suffixReject)}`,
+    );
+  }
+
   // Honesty: the two failure codes must remain distinct.
   if (badSig.code !== notCollected.code) {
     details.push(

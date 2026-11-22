@@ -19,10 +19,8 @@ export type FixtureWebhookPayload = {
   eventId: string;
   /** Canonical body bytes used for signature (fixture JSON string). */
   body: string;
-  /** Hex HMAC-SHA256 of body with fixture secret. */
+  /** Hex HMAC-SHA256 of body with fixture secret (exactly 64 hex chars). */
   signatureHex: string;
-  /** Required schema fields after JSON parse. */
-  requiredFields?: readonly string[];
 };
 
 export type PayloadCollectionAttempt =
@@ -38,6 +36,9 @@ export type PayloadIntakeDecision = {
   recordId: string | null;
 };
 
+const DEFAULT_REQUIRED_FIELDS = ["eventId", "kind"] as const;
+const HEX64 = /^[0-9a-fA-F]{64}$/;
+
 /** Fixture-only HMAC — never a live provider secret. */
 export function fixtureWebhookSignature(
   body: string,
@@ -47,10 +48,13 @@ export function fixtureWebhookSignature(
 }
 
 function signaturesMatch(expectedHex: string, providedHex: string): boolean {
+  if (!HEX64.test(expectedHex) || !HEX64.test(providedHex)) {
+    return false;
+  }
   try {
     const a = Buffer.from(expectedHex, "hex");
     const b = Buffer.from(providedHex, "hex");
-    if (a.length === 0 || a.length !== b.length) return false;
+    if (a.length !== 32 || b.length !== 32) return false;
     return timingSafeEqual(a, b);
   } catch {
     return false;
@@ -60,14 +64,21 @@ function signaturesMatch(expectedHex: string, providedHex: string): boolean {
 /**
  * Validate fixture webhook signature + schema, then optionally collect.
  * Stages stay distinct: VALIDATION_FAILED ≠ COLLECTION_FAILED ≠ COLLECTED.
+ * Schema field requirements come from trusted evaluator config — never from
+ * the signed payload envelope.
  */
 export function evaluateValidatedPayloadCollection(input: {
   payload: FixtureWebhookPayload;
   /** Fixture HMAC secret (local only). */
   secret: string;
   /**
+   * Trusted schema field list (evaluator/host config). Defaults to
+   * eventId + kind. Must not be taken from the untrusted payload.
+   */
+  requiredFields?: readonly string[];
+  /**
    * Durable collection step. Invoked only after validation passes.
-   * Callers inject failure to prove COLLECTION_FAILED separately.
+   * Thrown errors become COLLECTION_FAILED (not an uncaught exception).
    */
   collect: (parsed: Record<string, unknown>) => PayloadCollectionAttempt;
 }): PayloadIntakeDecision {
@@ -114,7 +125,7 @@ export function evaluateValidatedPayloadCollection(input: {
     };
   }
 
-  const required = input.payload.requiredFields ?? ["eventId", "kind"];
+  const required = input.requiredFields ?? DEFAULT_REQUIRED_FIELDS;
   const missing = required.filter((field) => {
     const v = parsed[field];
     return v === undefined || v === null || v === "";
@@ -132,10 +143,19 @@ export function evaluateValidatedPayloadCollection(input: {
     };
   }
 
-  if (
-    typeof parsed.eventId === "string" &&
-    parsed.eventId !== input.payload.eventId
-  ) {
+  if (typeof parsed.eventId !== "string") {
+    return {
+      code: "VALIDATION_FAILED",
+      validated: false,
+      collected: false,
+      collectionAttempted: false,
+      reasons: [
+        "Body eventId must be a string — VALIDATION_FAILED (collection not attempted)",
+      ],
+      recordId: null,
+    };
+  }
+  if (parsed.eventId !== input.payload.eventId) {
     return {
       code: "VALIDATION_FAILED",
       validated: false,
@@ -148,7 +168,24 @@ export function evaluateValidatedPayloadCollection(input: {
     };
   }
 
-  const attempt = input.collect(parsed);
+  let attempt: PayloadCollectionAttempt;
+  try {
+    attempt = input.collect(parsed);
+  } catch (err) {
+    const reason =
+      err instanceof Error ? err.message : `collector threw: ${String(err)}`;
+    return {
+      code: "COLLECTION_FAILED",
+      validated: true,
+      collected: false,
+      collectionAttempted: true,
+      reasons: [
+        `Signature+schema valid but durable collection threw (${reason}) — COLLECTION_FAILED (not VALIDATION_FAILED)`,
+      ],
+      recordId: null,
+    };
+  }
+
   if (!attempt.ok) {
     return {
       code: "COLLECTION_FAILED",
