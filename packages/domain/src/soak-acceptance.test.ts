@@ -355,6 +355,13 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.DST_RECURRING_SCHEDULE_NO_DUPLICATES),
     ).toEqual(["T-X015"]);
+    expect(expectedProofsForFixtureCase("T-X001")).toEqual([
+      SoakProofKind.HOST_SLEEP_MONITORING_COVERAGE_GAP,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.HOST_SLEEP_MONITORING_COVERAGE_GAP),
+    ).toEqual(["T-X001"]);
+
   });
 
     expect(expectedProofsForFixtureCase("T-X050")).toEqual([

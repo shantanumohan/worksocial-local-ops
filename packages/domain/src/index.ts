@@ -242,6 +242,21 @@ export {
   type MonitoringState,
 } from "./monitoring.js";
 export {
+  MonitoringSlotOutcome,
+  HOST_SLEEP_MONITORING_RELATED_CASE_IDS,
+  createHostSleepMonitoringState,
+  monitoringSlotId,
+  recordScheduledProbeSuccess,
+  markHostSleepCoverageGaps,
+  deriveMissedScheduledSlots,
+  coalesceWakeCatchup,
+  type MonitoringSlotOutcomeValue,
+  type MonitoringSlotRecord,
+  type HostSleepMonitoringState,
+  type CatchupProbeResult,
+  type CoalesceWakeCatchupResult,
+} from "./host-sleep-monitoring.js";
+export {
   SupportLabel,
   CollectionMethod,
   InstructionIngestionStatus,

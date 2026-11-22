@@ -529,4 +529,5 @@ export const MONITORING_RELATED_CASE_IDS = [
   "T-US-039", // Form→CRM continuous verify / cadence
   "T-US-040", // thank-you without Zoho record fails at CRM
   "T-X049", // thank-you but no CRM record — fail at delivery
+  "T-X001", // host sleeps during scheduled monitoring
 ] as const;

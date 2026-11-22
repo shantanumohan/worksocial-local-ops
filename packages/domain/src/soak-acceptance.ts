@@ -181,6 +181,10 @@ export const SoakProofKind = {
    * DST recurring schedule — no unintended duplicates (T-X015).
    */
   DST_RECURRING_SCHEDULE_NO_DUPLICATES: "dst_recurring_schedule_no_duplicates",
+  /**
+   * Host sleeps during scheduled monitoring — coverage gap honest; coalesce (T-X001).
+   */
+  HOST_SLEEP_MONITORING_COVERAGE_GAP: "host_sleep_monitoring_coverage_gap",
 } as const;
 
 export type SoakProofKindValue =
@@ -253,6 +257,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X010 requires MALICIOUS_PROMPT_NO_SHELL_INJECTION.
  * T-X009 requires CLI_ERROR_DESPITE_EXIT_ZERO (job fails when CLI reports error on exit 0).
  * T-X015 requires DST_RECURRING_SCHEDULE_NO_DUPLICATES.
+ * T-X001 requires HOST_SLEEP_MONITORING_COVERAGE_GAP.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -303,6 +308,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X010",
   "T-X009",
   "T-X015",
+  "T-X001",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -733,6 +739,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CLI_ERROR_DESPITE_EXIT_ZERO];
     case "T-X015":
       return [SoakProofKind.DST_RECURRING_SCHEDULE_NO_DUPLICATES];
+    case "T-X001":
+      return [SoakProofKind.HOST_SLEEP_MONITORING_COVERAGE_GAP];
     default:
       return [];
   }
@@ -819,6 +827,8 @@ export function mapProofToFixtureCases(
       return ["T-X009"];
     case SoakProofKind.DST_RECURRING_SCHEDULE_NO_DUPLICATES:
       return ["T-X015"];
+    case SoakProofKind.HOST_SLEEP_MONITORING_COVERAGE_GAP:
+      return ["T-X001"];
     default:
       return [];
   }
