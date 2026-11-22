@@ -331,6 +331,12 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.STOP_AFTER_DISPATCH_RECONCILE),
     ).toEqual(["T-X017"]);
+    expect(expectedProofsForFixtureCase("T-X024")).toEqual([
+      SoakProofKind.OLD_FENCE_AFTER_REASSIGNMENT,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OLD_FENCE_AFTER_REASSIGNMENT),
+    ).toEqual(["T-X024"]);
   });
 
   it("builds unique per-run artifact ids", () => {

@@ -149,6 +149,10 @@ export const SoakProofKind = {
    * Stop after provider dispatch starts — reconcile; no fake cancel (T-X017).
    */
   STOP_AFTER_DISPATCH_RECONCILE: "stop_after_dispatch_reconcile",
+  /**
+   * Old fence after reassignment — old worker cannot commit (T-X024).
+   */
+  OLD_FENCE_AFTER_REASSIGNMENT: "old_fence_after_reassignment",
 } as const;
 
 export type SoakProofKindValue =
@@ -214,6 +218,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X031 requires GA4_WRONG_PROPERTY_KIND_REFUSED.
  * T-US-040 / T-X049 require THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY.
  * T-X017 requires STOP_AFTER_DISPATCH_RECONCILE (no fake cancel after APPLYING).
+ * T-X024 requires OLD_FENCE_AFTER_REASSIGNMENT.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -257,6 +262,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-040",
   "T-X049",
   "T-X017",
+  "T-X024",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -673,6 +679,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY];
     case "T-X017":
       return [SoakProofKind.STOP_AFTER_DISPATCH_RECONCILE];
+    case "T-X024":
+      return [SoakProofKind.OLD_FENCE_AFTER_REASSIGNMENT];
     default:
       return [];
   }
@@ -745,6 +753,8 @@ export function mapProofToFixtureCases(
       return ["T-US-040", "T-X049"];
     case SoakProofKind.STOP_AFTER_DISPATCH_RECONCILE:
       return ["T-X017"];
+    case SoakProofKind.OLD_FENCE_AFTER_REASSIGNMENT:
+      return ["T-X024"];
     default:
       return [];
   }
