@@ -589,4 +589,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X059"]);
   });
 
+  it("maps T-X060 to CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM only", () => {
+    expect(expectedProofsForFixtureCase("T-X060")).toEqual([
+      SoakProofKind.CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM,
+      ),
+    ).toEqual(["T-X060"]);
+  });
+
 });
