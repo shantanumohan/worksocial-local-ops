@@ -23,7 +23,9 @@
  * GSC omitted rows unknown not zero (T-US-010 / T-X033),
  * GA4 debug not delivered conversion (T-US-008 / T-X032),
  * GA4 wrong property kind refused (T-X031),
- * thank-you without CRM fails delivery (T-US-040 / T-X049).
+ * thank-you without CRM fails delivery (T-US-040 / T-X049),
+ * stop after provider dispatch reconcile (T-X017),
+ * old fence after reassignment (T-X024).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -73,6 +75,7 @@ import { proofGa4DebugNotDeliveredConversion } from "./ga4-debug-not-delivered-p
 import { proofGa4WrongPropertyKindRefused } from "./ga4-wrong-property-kind-proof.js";
 import { proofThankYouWithoutCrmFailsDelivery } from "./thank-you-without-crm-proof.js";
 import { proofStopAfterDispatchReconcile } from "./stop-after-dispatch-proof.js";
+import { proofOldFenceAfterReassignment } from "./old-fence-after-reassignment-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -631,6 +634,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofGa4WrongPropertyKindRefused(nowPlus(nowIso, 260_000)));
   proofs.push(proofThankYouWithoutCrmFailsDelivery(nowPlus(nowIso, 270_000)));
   proofs.push(proofStopAfterDispatchReconcile(nowPlus(nowIso, 280_000)));
+  proofs.push(await proofOldFenceAfterReassignment(nowPlus(nowIso, 290_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -663,6 +667,8 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-008/T-X032 fixture ACCEPTED via ga4_debug_not_delivered_conversion only — not live VERIFIED",
       "T-X031 fixture ACCEPTED via ga4_wrong_property_kind_refused only — not live VERIFIED",
       "T-US-040/T-X049 fixture ACCEPTED via thank_you_without_crm_fails_delivery only — not live VERIFIED",
+      "T-X017 fixture ACCEPTED via stop_after_dispatch_reconcile only — not live VERIFIED",
+      "T-X024 fixture ACCEPTED via old_fence_after_reassignment only — not live VERIFIED",
     ],
   };
 }
