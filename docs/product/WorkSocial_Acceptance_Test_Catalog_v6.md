@@ -672,7 +672,7 @@ Required evidence:
 
 Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixture ACCEPTED below | Environment fixture_or_sandbox; live evidence separately authorized.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060, T-X013.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-F24, T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060.
 
 ### Happy-path / documented flow completions
 - **T-US-001** Create a trusted local workspace (F01/SC-02) — blockers and next actions.
@@ -746,7 +746,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-X002, T-X003, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X013, T-X063, T-X065, T-X066, T-X069, T-X073.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-X002, T-X003, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X027, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X063, T-X065, T-X066, T-X069, T-X073.
 
 **T-X021** is fixture ACCEPTED only via `CONCURRENT_IDEMPOTENT_RELEASE` (barrier+mutex one dispatch; not retry-only NO_DUPLICATE_EFFECTS). Not sandbox/prod VERIFIED.
 
@@ -811,6 +811,9 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 **T-X063** is fixture ACCEPTED only via the indirect prompt-injection exfiltration boundary proof (`INDIRECT_PROMPT_INJECTION_EXFIL_DENIED`) — untrusted web/email content is not instruction-eligible; `secret_exfiltration` / `credential_access` / `broker_secret_read` are absolute-denied via `proposeEffect` and the injection boundary. Not sandbox/prod VERIFIED.
 
 **T-X013** is fixture ACCEPTED only via the replay historical workflow / no repeated external I/O proof (`REPLAY_HISTORICAL_NO_REPEAT_IO`) — record enqueue→accept→verify activity history, then replay the mission control flow from that history without re-invoking acceptPending/applyOnce; provider ledger must not grow. Distinct from mid-flight no-dup, crash-restart, and mere VERIFIED acceptPending short-circuit. Not sandbox/prod VERIFIED.
+
+**T-X027** is fixture ACCEPTED only via the unknown usage cancel holds residual proof (`UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL`). Not sandbox/prod VERIFIED.
+
 
 **T-X017** is fixture ACCEPTED only via the stop-after-dispatch reconcile / no fake cancel proof (`STOP_AFTER_DISPATCH_RECONCILE`) — once APPLYING has started, stop retains work for reconcile (APPLYING→CANCELLED forbidden). Not sandbox/prod VERIFIED.
 

@@ -2,7 +2,13 @@
  * Memory/file evaluation store — fixture honesty; no live VERIFIED claims.
  */
 
-import { mkdtempSync, rmSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -10,9 +16,11 @@ import {
   EvalCapability,
   EvalProvider,
   EvalRunStatus,
+  availableBudgetMinor,
   createEvalConnection,
   emptyEvaluationState,
   evalChatGptAdsProbe,
+  reserveBudget,
 } from "@worksocial/domain";
 import {
   createFileEvaluationStore,
@@ -90,6 +98,49 @@ describe("evaluation store (memory/file)", () => {
     const status = await second.status();
     expect(status.backend).toBe("file");
     expect(status.chatgptAdsWiring).toBe("NOT_WIRED");
+  });
+
+  it("normalizes legacy file budgets missing heldMinor/heldReservations", async () => {
+    const evalDir = join(dir, "evaluation");
+    mkdirSync(evalDir, { recursive: true });
+    const statePath = join(evalDir, "evaluation-state.json");
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        version: 1,
+        updatedAtIso: now,
+        connections: [],
+        suites: [],
+        runs: [],
+        budget: {
+          dayKey: "2026-11-21",
+          currency: "USD",
+          limitMinor: 1000,
+          reservedMinor: 0,
+          settledMinor: 0,
+          openReservations: {},
+          settledReservations: {},
+        },
+        liveEvalWiring: "NOT_WIRED",
+        chatgptAdsWiring: "NOT_WIRED",
+      }),
+      "utf8",
+    );
+    const store = createFileEvaluationStore(dir);
+    const state = await store.read();
+    expect(state.budget.heldMinor).toBe(0);
+    expect(state.budget.heldReservations).toEqual({});
+    expect(state.budget.limitMinor).toBe(1000);
+    const reserved = reserveBudget(state.budget, "legacy-ok", 100);
+    expect(reserved.ok).toBe(true);
+    if (reserved.ok) {
+      expect(availableBudgetMinor(reserved.account)).toBe(900);
+    }
+    // Ensure the on-disk shape really omitted the new fields.
+    const raw = JSON.parse(readFileSync(statePath, "utf8")) as {
+      budget: Record<string, unknown>;
+    };
+    expect(raw.budget.heldMinor).toBeUndefined();
   });
 
   it("openEvaluationStore forceMemory ignores DATABASE_URL", () => {

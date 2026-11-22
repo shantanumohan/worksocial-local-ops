@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  availableBudgetMinor,
+  cancelBudgetReservation,
   createBudgetAccount,
   reserveBudget,
   settleBudget,
@@ -19,6 +21,7 @@ describe("budget accounting", () => {
     if (result.ok) {
       expect(result.account.reservedMinor).toBe(400);
       expect(result.account.openReservations.r1).toBe(400);
+      expect(result.account.heldMinor).toBe(0);
     }
   });
 
@@ -81,5 +84,94 @@ describe("budget accounting", () => {
       code: "UNKNOWN_RESERVATION",
       reservationId: "missing",
     });
+  });
+
+  it("holds residual on cancel with unknown usage (T-X027 — not zero cost)", () => {
+    const reserved = reserveBudget(account(), "r-cancel", 600);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    expect(availableBudgetMinor(reserved.account)).toBe(400);
+
+    const cancelled = cancelBudgetReservation(reserved.account, "r-cancel", {
+      known: false,
+    });
+    expect(cancelled.ok).toBe(true);
+    if (!cancelled.ok) return;
+    expect(cancelled.usageKnown).toBe(false);
+    expect(cancelled.actualMinor).toBeNull();
+    expect(cancelled.heldMinor).toBe(600);
+    expect(cancelled.costKind).toBe("unknown_hold");
+    expect(cancelled.account.heldMinor).toBe(600);
+    expect(cancelled.account.reservedMinor).toBe(0);
+    expect(cancelled.account.settledMinor).toBe(0);
+    expect(cancelled.account.heldReservations["r-cancel"]).toBe(600);
+    // Hold keeps capacity consumed — not released as zero.
+    expect(availableBudgetMinor(cancelled.account)).toBe(400);
+
+    const replay = cancelBudgetReservation(cancelled.account, "r-cancel", {
+      known: false,
+    });
+    expect(replay.ok).toBe(true);
+    if (!replay.ok) return;
+    expect(replay.replayed).toBe(true);
+    expect(replay.heldMinor).toBe(600);
+    expect(availableBudgetMinor(replay.account)).toBe(400);
+  });
+
+  it("refuses settle-as-zero after unknown-usage hold", () => {
+    const reserved = reserveBudget(account(), "r-hold", 300);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const cancelled = cancelBudgetReservation(reserved.account, "r-hold", {
+      known: false,
+    });
+    expect(cancelled.ok).toBe(true);
+    if (!cancelled.ok) return;
+    expect(() => settleBudget(cancelled.account, "r-hold", 0)).toThrow(
+      /held for unknown usage/i,
+    );
+  });
+
+  it("allows known-zero cancel to release (usage known)", () => {
+    const reserved = reserveBudget(account(), "r-known-zero", 250);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const cancelled = cancelBudgetReservation(reserved.account, "r-known-zero", {
+      known: true,
+      actualMinor: 0,
+    });
+    expect(cancelled.ok).toBe(true);
+    if (!cancelled.ok) return;
+    expect(cancelled.costKind).toBe("zero_release");
+    expect(cancelled.heldMinor).toBe(0);
+    expect(cancelled.actualMinor).toBe(0);
+    expect(availableBudgetMinor(cancelled.account)).toBe(1000);
+  });
+
+  it("resolves an unknown-usage hold with later known actual", () => {
+    const reserved = reserveBudget(account(), "r-reconcile", 400);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-reconcile", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    expect(held.account.heldMinor).toBe(400);
+    expect(availableBudgetMinor(held.account)).toBe(600);
+
+    const resolved = cancelBudgetReservation(held.account, "r-reconcile", {
+      known: true,
+      actualMinor: 175,
+    });
+    expect(resolved.ok).toBe(true);
+    if (!resolved.ok) return;
+    expect(resolved.costKind).toBe("actual");
+    expect(resolved.heldMinor).toBe(0);
+    expect(resolved.actualMinor).toBe(175);
+    expect(resolved.account.heldMinor).toBe(0);
+    expect(resolved.account.settledMinor).toBe(175);
+    expect(resolved.account.heldReservations).toEqual({});
+    expect(availableBudgetMinor(resolved.account)).toBe(825);
   });
 });

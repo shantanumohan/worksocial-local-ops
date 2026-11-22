@@ -96,7 +96,8 @@ function normalizeState(
     connections: raw.connections ?? [],
     suites: raw.suites ?? [],
     runs: raw.runs ?? [],
-    budget: raw.budget ?? base.budget,
+    // Legacy file budgets may omit heldMinor / heldReservations (pre-T-X027).
+    budget: parseBudget(raw.budget ?? base.budget, raw.updatedAtIso ?? fallbackIso),
     liveEvalWiring: "NOT_WIRED",
     chatgptAdsWiring: "NOT_WIRED",
     isolation: { ...FIXED_EVALUATION_ISOLATION },
@@ -257,9 +258,14 @@ function parseBudget(raw: unknown, fallbackIso: string): BudgetAccount {
     limitMinor: Number(row.limitMinor ?? empty.limitMinor),
     reservedMinor: Number(row.reservedMinor ?? 0),
     settledMinor: Number(row.settledMinor ?? 0),
+    heldMinor: Number(row.heldMinor ?? 0),
     openReservations:
       typeof row.openReservations === "object" && row.openReservations !== null
         ? (row.openReservations as Record<string, number>)
+        : {},
+    heldReservations:
+      typeof row.heldReservations === "object" && row.heldReservations !== null
+        ? (row.heldReservations as Record<string, number>)
         : {},
     settledReservations:
       typeof row.settledReservations === "object" &&

@@ -277,7 +277,11 @@ async function main(): Promise<void> {
     const hasTx013Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-X013",
     );
-    const expectedAccepted = [      "T-F24",
+    const hasTx027Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-X027",
+    );
+    const expectedAccepted = [
+      "T-F24",
       "T-US-002",
       "T-US-008",
       "T-US-010",
@@ -316,6 +320,7 @@ async function main(): Promise<void> {
       "T-X021",
       "T-X022",
       "T-X024",
+      "T-X027",
       "T-X029",
       "T-X031",
       "T-X032",
@@ -333,8 +338,8 @@ async function main(): Promise<void> {
       "T-X065",
       "T-X066",
       "T-X069",
-      "T-X073",
-].sort();
+      "T-X073"
+    ].sort();
     const acceptedIds = accepted
       .map((c: { caseId: string }) => c.caseId)
       .sort();
@@ -399,7 +404,8 @@ async function main(): Promise<void> {
         hasTx065Accepted &&
         hasTx063Accepted &&
         hasTx013Accepted &&
-        accepted.length === 57 &&
+        hasTx027Accepted &&
+        accepted.length === 58 &&
         JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
@@ -414,7 +420,7 @@ async function main(): Promise<void> {
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X013 replay historical no-repeat-I/O fixture ACCEPTED.",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X027 unknown usage cancel hold residual fixture ACCEPTED (total 58). Live VERIFIED forbidden. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {

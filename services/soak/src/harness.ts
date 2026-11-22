@@ -100,6 +100,7 @@ import { proofStopBeforeDispatchClaim } from "./stop-before-dispatch-proof.js";
 import { proofIndirectPromptInjectionExfilDenied } from "./indirect-prompt-injection-exfil-proof.js";
 import { proofIdempotencyKeyPayloadMismatch } from "./idempotency-key-payload-mismatch-proof.js";
 import { proofWorkerBrowserAuthStateOsDenied } from "./browser-auth-state-proof.js";
+import { proofUnknownUsageCancelHoldsResidual } from "./unknown-usage-cancel-proof.js";
 import { proofReplayHistoricalNoRepeatIo } from "./replay-historical-workflow-proof.js";
 
 type FileLedgerSnapshot = {
@@ -692,6 +693,7 @@ export async function runSoakRecoveryHarness(input: {
     ),
   );
   proofs.push(proofWorkerBrowserAuthStateOsDenied(nowPlus(nowIso, 430_000)));
+  proofs.push(proofUnknownUsageCancelHoldsResidual(nowPlus(nowIso, 460_000)));
   proofs.push(
     proofIndirectPromptInjectionExfilDenied(nowPlus(nowIso, 440_000)),
   );
@@ -751,6 +753,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X065 fixture ACCEPTED via worker_browser_auth_state_os_denied only — not live VERIFIED",
       "T-X063 fixture ACCEPTED via indirect_prompt_injection_exfil_denied only — not live VERIFIED",
       "T-X013 fixture ACCEPTED via replay_historical_no_repeat_io only — not live VERIFIED",
+      "T-X027 fixture ACCEPTED via unknown_usage_cancel_holds_residual only — not live VERIFIED",
     ],
   };
 }
