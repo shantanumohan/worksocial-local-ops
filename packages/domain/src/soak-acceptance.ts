@@ -366,6 +366,14 @@ export const SoakProofKind = {
    */
   SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION:
     "synthetic_leads_classified_no_commerce_pollution",
+  /**
+   * Connect local/social/inbox with test artifact + capability (T-US-021).
+   * Account/asset IDs, auth, per-action capability matrix, destination
+   * contract, support policy, authorized test artifact; live NOT_WIRED.
+   * Distinct from T-US-022 / T-X045.
+   */
+  CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT:
+    "connect_local_social_inbox_test_artifact",
 } as const;
 
 export type SoakProofKindValue =
@@ -473,6 +481,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-017 requires CONNECT_GEMINI_EVALUATION_EVAL_ONLY (Gemini EVAL_ONLY connect; live NOT_WIRED).
  * T-US-019 requires MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY (CRM/forms/booking map + failure/recovery; live Zoho NOT_WIRED).
  * T-US-020 requires SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION (classified canary; no commerce pollution).
+ * T-US-021 requires CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT (local/social/inbox connect; test artifact + capability; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -559,6 +568,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-017",
   "T-US-019",
   "T-US-020",
+  "T-US-021",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1061,6 +1071,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY];
     case "T-US-020":
       return [SoakProofKind.SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION];
+    case "T-US-021":
+      return [SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT];
     default:
       return [];
   }
@@ -1219,6 +1231,8 @@ export function mapProofToFixtureCases(
       return ["T-US-019"];
     case SoakProofKind.SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION:
       return ["T-US-020"];
+    case SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT:
+      return ["T-US-021"];
     default:
       return [];
   }

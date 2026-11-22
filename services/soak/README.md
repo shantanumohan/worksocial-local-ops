@@ -53,4 +53,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-US-017 Connect Gemini evaluation | Fixture **ACCEPTED** via `CONNECT_GEMINI_EVALUATION_EVAL_ONLY` (not live VERIFIED) |
 | T-US-019 Map CRM/forms/booking | Fixture **ACCEPTED** via `MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY` (not live VERIFIED) |
 | T-US-020 Synthetic leads classified | Fixture **ACCEPTED** via `SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION` (not live VERIFIED) |
+| T-US-021 Connect local/social/inbox | Fixture **ACCEPTED** via `CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT` (not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |

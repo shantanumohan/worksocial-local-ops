@@ -758,4 +758,15 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-US-020"]);
   });
+
+  it("maps T-US-021 to CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT only", () => {
+    expect(expectedProofsForFixtureCase("T-US-021")).toEqual([
+      SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT,
+      ),
+    ).toEqual(["T-US-021"]);
+  });
 });
