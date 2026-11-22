@@ -377,6 +377,7 @@ async function acceptWithStores(
   }
 
   // Idempotent replay: already ACCEPTED_PENDING/VERIFIED → return without re-apply.
+  // Same operation / business key with a different payload digest is Conflict.
   const existingDecision = await stores.decisions.get(input.operationId);
   if (
     existingDecision &&
@@ -387,6 +388,24 @@ async function acceptWithStores(
     const provider = (await stores.fakeProvider.getByOperation(
       input.operationId,
     ))!;
+    if (
+      intent.payloadDigest !== input.payloadDigest ||
+      provider.payloadDigest !== input.payloadDigest ||
+      existingDecision.payloadDigest !== input.payloadDigest
+    ) {
+      throw new Error(
+        `Idempotency key payload mismatch for ${input.operationId}: bound digest differs from request`,
+      );
+    }
+    if (
+      provider.businessIdempotencyKey !== input.businessIdempotencyKey ||
+      (intent.businessIdempotencyKey != null &&
+        intent.businessIdempotencyKey !== input.businessIdempotencyKey)
+    ) {
+      throw new Error(
+        `Business idempotency key mismatch for ${input.operationId}`,
+      );
+    }
     let reservation: DurableBudgetReservation | null = null;
     let account: DurableBudgetAccount | null = null;
     if (input.budget) {

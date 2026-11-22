@@ -806,6 +806,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X016** is fixture ACCEPTED only via the stop-before-dispatch / no adapter mutation proof (`STOP_BEFORE_DISPATCH_NO_MUTATION`) — pre-apply AUTHORIZED/QUEUED may CANCELLED with durable `applyAttempts=0` and no fake-provider entry; outbound stop returns `OUTBOUND_STOPPED` before dispatch claim. Not sandbox/prod VERIFIED.
 
+**T-X022** is fixture ACCEPTED only via the idempotency key payload mismatch proof (`IDEMPOTENCY_KEY_PAYLOAD_MISMATCH`) — same businessIdempotencyKey/operationId with a different payloadDigest is Conflict; applyCount stays 1. Not sandbox/prod VERIFIED.
+
 **T-X017** is fixture ACCEPTED only via the stop-after-dispatch reconcile / no fake cancel proof (`STOP_AFTER_DISPATCH_RECONCILE`) — once APPLYING has started, stop retains work for reconcile (APPLYING→CANCELLED forbidden). Not sandbox/prod VERIFIED.
 
 **T-X024** is fixture ACCEPTED only via the old fence after reassignment proof (`OLD_FENCE_AFTER_REASSIGNMENT`). Not sandbox/prod VERIFIED.
@@ -847,7 +849,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X019 | Approved payload edited | Digest conflict *(fixture ACCEPTED — approved payload edit invalidated proof; not sandbox/prod VERIFIED)* |
 | T-X020 | Timeout after provider acceptance | Unknown → reconcile; no resend *(fixture ACCEPTED)* |
 | T-X021 | Concurrent idempotent releases | One dispatch *(fixture ACCEPTED)* |
-| T-X022 | Idempotency key payload mismatch | Conflict |
+| T-X022 | Idempotency key payload mismatch | Conflict *(fixture ACCEPTED — idempotency key payload mismatch proof; not sandbox/prod VERIFIED)* |
 | T-X023 | Eventual consistency false not-found | No unsafe retry |
 | T-X024 | Old fence after reassignment | Old worker cannot commit *(fixture ACCEPTED — old fence after reassignment proof; not sandbox/prod VERIFIED)* |
 | T-X025 | External human edit during staging | Conflict retained |
@@ -908,7 +910,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
 | T-US (behavior_acceptance) | 60 | 44 NOT_RUN + 16 fixture ACCEPTED (T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060) |
-| T-X (platform/security/resilience) | 73 | 37 NOT_RUN + 36 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073) |
-| **Total** | **159** | **106 NOT_RUN + 53 fixture ACCEPTED** |
+| T-X (platform/security/resilience) | 73 | 36 NOT_RUN + 37 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073) |
+| **Total** | **159** | **105 NOT_RUN + 54 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

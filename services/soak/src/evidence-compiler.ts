@@ -89,6 +89,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X015": "DST recurring schedule — no unintended duplicates",
   "T-X001": "Host sleeps during scheduled monitoring — coverage gap honest; coalesce",
   "T-X021": "Concurrent idempotent releases — one dispatch",
+  "T-X022": "Idempotency key payload mismatch — Conflict",
   "T-X008": "Fact changes after review — stale; no publish",
   "T-X012": "Orphan worker on deadline — process tree stopped",
   "T-X007": "Wrong CMS environment — no production op",
@@ -270,6 +271,7 @@ export function compileAcceptanceEvidence(
     "T-X012 fixture ACCEPTED only via ORPHAN_WORKER_DEADLINE_TREE_STOPPED",
     "T-X007 fixture ACCEPTED only via WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP",
     "T-X016 fixture ACCEPTED only via STOP_BEFORE_DISPATCH_NO_MUTATION",
+    "T-X022 fixture ACCEPTED only via IDEMPOTENCY_KEY_PAYLOAD_MISMATCH",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
