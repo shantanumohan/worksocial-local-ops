@@ -29,7 +29,7 @@ describe("soak service (M9)", () => {
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(74);
+    expect(result.proofs).toHaveLength(75);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(
       result.proofs.every((p) =>
@@ -42,7 +42,8 @@ describe("soak service (M9)", () => {
         p.kind === SoakProofKind.SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION ||
         p.kind === SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT ||
         p.kind === SoakProofKind.UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED ||
-        p.kind === SoakProofKind.STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS
+        p.kind === SoakProofKind.STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS ||
+        p.kind === SoakProofKind.LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME
           ? p.applyAttemptCount === 0
           : p.applyAttemptCount === 1,
       ),
@@ -369,9 +370,15 @@ describe("soak service (M9)", () => {
           p.kind === SoakProofKind.STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS,
       ),
     ).toBe(true);
+    expect(
+      result.proofs.some(
+        (p) =>
+          p.kind === SoakProofKind.LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME,
+      ),
+    ).toBe(true);
   });
 
-  it("compiles fixture ACCEPTED for complete proof sets including T-US-023", async () => {
+  it("compiles fixture ACCEPTED for complete proof sets including T-US-025", async () => {
     const harness = await runSoakRecoveryHarness({
       stateDir: dir,
       nowIso: "2026-11-21T18:00:00.000Z",
@@ -402,6 +409,7 @@ describe("soak service (M9)", () => {
       "T-US-022",
       "T-US-023",
       "T-US-024",
+      "T-US-025",
       "T-US-036",
       "T-US-038",
       "T-US-040",
@@ -518,6 +526,9 @@ describe("soak service (M9)", () => {
     expect(accepted.find((c) => c.caseId === "T-US-023")?.environment).toBe(
       "fixture",
     );
+    expect(accepted.find((c) => c.caseId === "T-US-025")?.environment).toBe(
+      "fixture",
+    );
     expect(accepted.find((c) => c.caseId === "T-X025")?.environment).toBe(
       "fixture",
     );
@@ -622,7 +633,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(86);
+    expect(soak.ownerReport().acceptedCases.length).toBe(87);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {

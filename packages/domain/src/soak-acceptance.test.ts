@@ -791,4 +791,15 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-US-023"]);
   });
+
+  it("maps T-US-025 to LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME only", () => {
+    expect(expectedProofsForFixtureCase("T-US-025")).toEqual([
+      SoakProofKind.LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME,
+      ),
+    ).toEqual(["T-US-025"]);
+  });
 });

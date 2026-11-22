@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-025",
+  "caseId": "T-US-025",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-025 (Launch workstream and schedule — mission outcome)\nproof=launch_workstream_schedule_mission_outcome applyCount=0 :: Ready → WORKSTREAM_SCHEDULE_LAUNCH_READY; schedule visible; mission outcome + nextAction; live NOT_WIRED | requestBurstRepublish → BURST_REPUBLISH_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | tests not ready → READINESS_GATES_INCOMPLETE | unreviewed → OWNER_REVIEW_REQUIRED | liveProviderSuccessClaimed=false externalEffects=NONE | Distinct from T-US-026 (missed-schedule coalesce / no burst) and T-X015 (DST schedule no duplicates)\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "launch_workstream_schedule_mission_outcome"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-025.json",
+  "createdAtIso": "2026-11-22T23:18:22.038Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-025-1abd1b8092fa"
+}

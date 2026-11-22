@@ -44,6 +44,7 @@
  * Connect Claude Code + test API EVAL_ONLY (T-US-015).
  * Connect Gemini Evaluation EVAL_ONLY (T-US-017).
  * Grant standing autonomy control receipts (T-US-023).
+ * Launch workstream schedule mission outcome (T-US-025).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -100,6 +101,7 @@ import { proofSyntheticLeadsClassifiedNoCommercePollution } from "./synthetic-le
 import { proofConnectLocalSocialInboxTestArtifact } from "./local-social-inbox-connect-proof.js";
 import { proofUnsupportedDestinationCapabilitiesRespected } from "./unsupported-destination-capabilities-proof.js";
 import { proofStandingAutonomyGrantControlReceipts } from "./standing-autonomy-grant-proof.js";
+import { proofLaunchWorkstreamScheduleMissionOutcome } from "./workstream-schedule-launch-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -822,6 +824,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofStandingAutonomyGrantControlReceipts(nowPlus(nowIso, 740_000)),
   );
+  proofs.push(
+    proofLaunchWorkstreamScheduleMissionOutcome(nowPlus(nowIso, 750_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -900,6 +905,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-021 fixture ACCEPTED via connect_local_social_inbox_test_artifact only — not live VERIFIED",
       "T-US-022 fixture ACCEPTED via unsupported_destination_capabilities_respected only — not live VERIFIED",
       "T-US-023 fixture ACCEPTED via standing_autonomy_grant_control_receipts only — not live VERIFIED",
+      "T-US-025 fixture ACCEPTED via launch_workstream_schedule_mission_outcome only — not live VERIFIED",
     ],
   };
 }

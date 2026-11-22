@@ -126,6 +126,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-021": "Connect local/social/inbox — test artifact and capability",
   "T-US-022": "Unsupported destination capabilities respected",
   "T-US-023": "Grant standing autonomy — control tests with receipts",
+  "T-US-025": "Launch workstream and schedule — mission outcome",
 };
 
 function relatedProofsForCase(
@@ -330,6 +331,7 @@ export function compileAcceptanceEvidence(
     "T-US-021 fixture ACCEPTED only via CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT",
     "T-US-022 fixture ACCEPTED only via UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED",
     "T-US-023 fixture ACCEPTED only via STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS",
+    "T-US-025 fixture ACCEPTED only via LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
