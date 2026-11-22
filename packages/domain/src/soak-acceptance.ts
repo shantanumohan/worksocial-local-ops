@@ -322,6 +322,11 @@ export const SoakProofKind = {
    */
   MOCKED_CONNECTOR_NOT_PRODUCTION_READY:
     "mocked_connector_not_production_ready",
+  /**
+   * Rate-limit with deadline — bounded backoff preserves deadline (T-X030).
+   */
+  RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE:
+    "rate_limit_bounded_backoff_preserves_deadline",
 } as const;
 
 export type SoakProofKindValue =
@@ -422,6 +427,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-006 requires UNBOUND_WRITE_PATH_FAIL_CLOSED.
  * T-X023 requires EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND.
  * T-US-052 requires MOCKED_CONNECTOR_NOT_PRODUCTION_READY.
+ * T-X030 requires RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -500,6 +506,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-006",
   "T-X023",
   "T-US-052",
+  "T-X030",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -986,6 +993,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND];
     case "T-US-052":
       return [SoakProofKind.MOCKED_CONNECTOR_NOT_PRODUCTION_READY];
+    case "T-X030":
+      return [SoakProofKind.RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE];
     default:
       return [];
   }
@@ -1130,6 +1139,8 @@ export function mapProofToFixtureCases(
       return ["T-X023"];
     case SoakProofKind.MOCKED_CONNECTOR_NOT_PRODUCTION_READY:
       return ["T-US-052"];
+    case SoakProofKind.RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE:
+      return ["T-X030"];
     default:
       return [];
   }

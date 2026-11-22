@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x030",
+  "caseId": "T-X030",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X030 (Rate-limit with deadline — bounded backoff)\nproof=rate_limit_bounded_backoff_preserves_deadline applyCount=1 :: 429 Retry-After=5s within deadline → WAIT (dataStatus=DELAYED, spawnedExtraAgents=0) | Fake-provider loop: before calls=0 → after calls=3; STOP_DEADLINE; dataStatus=UNAVAILABLE; no agent fan-out | STOP_MAX_ATTEMPTS on attempt 5 (maxAttempts=5); no sixth wait; spawnedExtraAgents=0 | Retry-After=300s honored (not truncated to 60); STOP_DEADLINE vs 60s remaining | instrumentedFakeProviderCalls=8 liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "rate_limit_bounded_backoff_preserves_deadline"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x030.json",
+  "createdAtIso": "2026-11-22T21:46:08.073Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x030-9c8f915bd832"
+}

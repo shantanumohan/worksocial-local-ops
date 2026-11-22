@@ -115,6 +115,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-052": "Mocked connector is not treated as production-ready",
   "T-US-006": "Unbound URL: analysis ok, write blocked",
   "T-X023": "Eventual consistency false not-found — no unsafe retry",
+  "T-X030": "Rate-limit with deadline — bounded backoff",
 };
 
 function relatedProofsForCase(
@@ -310,6 +311,7 @@ export function compileAcceptanceEvidence(
     "T-X070 fixture ACCEPTED only via VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES",
     "T-X044 fixture ACCEPTED only via UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED",
     "T-X045 fixture ACCEPTED only via PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE (per-destination honesty)",
+    "T-X030 fixture ACCEPTED only via RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

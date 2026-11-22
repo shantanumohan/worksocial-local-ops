@@ -666,6 +666,18 @@ describe("soak-acceptance domain", () => {
   });
 
 
+
+  it("maps T-X030 to RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE only", () => {
+    expect(expectedProofsForFixtureCase("T-X030")).toEqual([
+      SoakProofKind.RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE,
+      ),
+    ).toEqual(["T-X030"]);
+  });
+
   it("maps T-US-052 to MOCKED_CONNECTOR_NOT_PRODUCTION_READY only", () => {
     expect(expectedProofsForFixtureCase("T-US-052")).toEqual([
       SoakProofKind.MOCKED_CONNECTOR_NOT_PRODUCTION_READY,
