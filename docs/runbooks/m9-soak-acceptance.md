@@ -21,7 +21,7 @@ Fixture (LOCAL_DURABLE) proofs:
 
 Acceptance evidence compiler marks selected catalog cases **ACCEPTED** only when the **complete expected proof set** passes with **no failed related proofs**, and only with redacted fixture artifacts. It never silently marks live **VERIFIED**.
 
-Honest fixture ACCEPTED cases: **T-X001**, **T-X014**, **T-X020**, **T-US-048**, **T-X066**, **T-F24**, **T-US-047**, **T-US-002**, **T-X002**, **T-X018**, **T-US-054**, **T-X073**, **T-US-060**, **T-X005**, **T-X006**, **T-X019**, **T-US-036**, **T-X029**, **T-US-057**, **T-US-024**, **T-US-042**, **T-X057**, **T-US-044**, **T-X053**, **T-US-018**, **T-X037**, **T-X058**, **T-X069**, **T-X038**, **T-X039**, **T-US-058**, **T-US-046**, **T-X048**, **T-US-010**, **T-X033**, **T-US-008**, **T-X032**, **T-X031**, **T-US-040**, **T-X049**, **T-X017**, **T-X024**, **T-X011**, **T-X003**, **T-X050**, **T-X010**, **T-X009**, **T-X007**, **T-X016**, **T-X022**, **T-X065**, **T-X004**, **T-X013**, **T-X027**, **T-X063**, **T-X043**, **T-X026**, **T-X052**, **T-X054**, **T-X055**, **T-X056**, **T-X059**, **T-X060**, **T-X070**.
+Honest fixture ACCEPTED cases: **T-X001**, **T-X014**, **T-X020**, **T-US-048**, **T-X066**, **T-F24**, **T-US-047**, **T-US-002**, **T-US-006**, **T-X002**, **T-X018**, **T-US-054**, **T-X073**, **T-US-060**, **T-X005**, **T-X006**, **T-X019**, **T-US-036**, **T-X029**, **T-US-057**, **T-US-024**, **T-US-042**, **T-X057**, **T-US-044**, **T-X053**, **T-US-018**, **T-X037**, **T-X058**, **T-X069**, **T-X038**, **T-X039**, **T-US-058**, **T-US-046**, **T-X048**, **T-US-010**, **T-X033**, **T-US-008**, **T-X032**, **T-X031**, **T-US-040**, **T-X049**, **T-X017**, **T-X024**, **T-X011**, **T-X003**, **T-X050**, **T-X010**, **T-X009**, **T-X007**, **T-X016**, **T-X022**, **T-X065**, **T-X004**, **T-X013**, **T-X027**, **T-X063**, **T-X043**, **T-X026**, **T-X052**, **T-X054**, **T-X055**, **T-X056**, **T-X059**, **T-X060**, **T-X070**.
 
 **T-X001** maps only to `HOST_SLEEP_MONITORING_COVERAGE_GAP`.
 
@@ -175,5 +175,7 @@ Suggested owner Windows flow (state off OneDrive):
 **T-X059** maps only to `DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING`.
 
 **T-X070** maps only to `VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES` (VALIDATION_FAILED ≠ COLLECTION_FAILED; not live VERIFIED).
+
+**T-US-006** maps only to `UNBOUND_WRITE_PATH_FAIL_CLOSED` (observe/create analysis ok; unbound write fail-closed; not live VERIFIED).
 
 **T-X060** maps only to `CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM` (heterogeneous currency/timezone series refuse silent sum; not live VERIFIED).
