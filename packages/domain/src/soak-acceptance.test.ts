@@ -380,6 +380,15 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.CLI_ERROR_DESPITE_EXIT_ZERO),
     ).toEqual(["T-X009"]);
 
+  it("maps T-X021 to CONCURRENT_IDEMPOTENT_RELEASE only", () => {
+    expect(expectedProofsForFixtureCase("T-X021")).toEqual([
+      SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE),
+    ).toEqual(["T-X021"]);
+  });
+
   it("builds unique per-run artifact ids", () => {
     const a = uniqueFixtureEvidenceArtifactId("T-X014", "soak-abcdef123456");
     const b = uniqueFixtureEvidenceArtifactId("T-X014", "soak-zzz999888777");
