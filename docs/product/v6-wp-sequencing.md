@@ -24,12 +24,12 @@ v6 does not publish sixteen separate titles. Tracker tasks may still use histori
 | WP06–09 | Mapping, knowledge, SEO/search, content/distribution | Live CMS / GBP / social / SERP / Trends / GSC-GA4 query |
 | WP10–12 | Probes/canary, inbox/takeover, bounded repair | Live Zoho / inbox / CMS repair |
 | WP13–14 | Paid-media + analysis fixtures (**AA-19** #37); EVAL_ONLY worker + PG eval store (#35–#36) | Live ads execute **NOT_WIRED**; ChatGPT Ads ACCESS_BLOCKED without local transport+entitlement |
-| WP15–16 | Soak harness, recovery evidence (#27–#28, #34); offline security gate suite (`pnpm test:security` — ownership/auth/lease) | Pen-test / AA-48 credential-rotation / Windows host still open; live recovery NOT_RUN; 72h soak NOT_MET; **120/159** catalog cases NOT_RUN |
+| WP15–16 | Soak harness, recovery evidence (#27–#28, #34); offline security gate suite (`pnpm test:security` — ownership/auth/lease) | Pen-test / AA-48 credential-rotation / Windows host still open; live recovery NOT_RUN; 72h soak NOT_MET; **119/159** catalog cases NOT_RUN |
 
 ## Acceptance matrix (do not invent VERIFIED)
 
 - Machine index: `tests/acceptance-matrix-v6.json`
-- Typical counts on current main: **120 NOT_RUN**, **39 fixture ACCEPTED** (`T-F24, T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060, T-X002, T-X005, T-X006, T-X014, T-X018, T-X019, T-X020, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073`), **0 VERIFIED**
+- Typical counts on current main: **119 NOT_RUN**, **40 fixture ACCEPTED** (`T-F24, T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060, T-X002, T-X005, T-X006, T-X014, T-X017, T-X018, T-X019, T-X020, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073`), **0 VERIFIED**
 - Fixture ACCEPTED ≠ sandbox-verified ≠ production-canary-verified
 - Catalog: `WorkSocial_Acceptance_Test_Catalog_v6.md`
 

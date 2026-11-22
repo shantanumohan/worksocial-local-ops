@@ -79,6 +79,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X031": "Wrong GA4 property kind — refuse bind",
   "T-US-040": "Thank-you without Zoho record fails at CRM",
   "T-X049": "Thank-you but no CRM record — fail at delivery",
+  "T-X017": "Stop after provider dispatch starts — reconcile; no fake cancel",
 };
 
 function relatedProofsForCase(
@@ -242,6 +243,7 @@ export function compileAcceptanceEvidence(
     "T-US-008/T-X032 fixture ACCEPTED only via GA4_DEBUG_NOT_DELIVERED_CONVERSION",
     "T-X031 fixture ACCEPTED only via GA4_WRONG_PROPERTY_KIND_REFUSED",
     "T-US-040/T-X049 fixture ACCEPTED only via THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY",
+    "T-X017 fixture ACCEPTED only via STOP_AFTER_DISPATCH_RECONCILE (no fake cancel)",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

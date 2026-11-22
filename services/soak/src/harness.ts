@@ -72,6 +72,7 @@ import { proofGscOmittedRowsUnknownNotZero } from "./gsc-omitted-rows-proof.js";
 import { proofGa4DebugNotDeliveredConversion } from "./ga4-debug-not-delivered-proof.js";
 import { proofGa4WrongPropertyKindRefused } from "./ga4-wrong-property-kind-proof.js";
 import { proofThankYouWithoutCrmFailsDelivery } from "./thank-you-without-crm-proof.js";
+import { proofStopAfterDispatchReconcile } from "./stop-after-dispatch-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -629,6 +630,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofGa4DebugNotDeliveredConversion(nowPlus(nowIso, 250_000)));
   proofs.push(proofGa4WrongPropertyKindRefused(nowPlus(nowIso, 260_000)));
   proofs.push(proofThankYouWithoutCrmFailsDelivery(nowPlus(nowIso, 270_000)));
+  proofs.push(proofStopAfterDispatchReconcile(nowPlus(nowIso, 280_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
