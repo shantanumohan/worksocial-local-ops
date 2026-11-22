@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x035",
+  "caseId": "T-X035",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X035 (Shared ad budget changed externally — proposal invalidated)\nproof=shared_ad_budget_external_change_invalidates applyCount=1 :: Google Ads shared-budget proposal READY_FOR_REVIEW with bound snapshot | Matching re-read → PROVIDER_STATE_MATCHES (positive control) | External shared-budget drift → SHARED_BUDGET_CHANGED_EXTERNALLY; proposal INVALIDATED | Approve on invalidated proposal refused (PROPOSAL_INVALIDATED) | Execute refused on invalidated proposal — no mutation; externalEffects=NONE | Provider revision-only drift also invalidates (fail closed) | Distinct from SHARED_BUDGET_UNKNOWN (create-time block) and A25 review INVALIDATED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "shared_ad_budget_external_change_invalidates"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x035.json",
+  "createdAtIso": "2026-11-22T18:55:48.319Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x035-11f4630caed4"
+}

@@ -421,6 +421,17 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X007"]);
   });
 
+  it("maps T-X035 to SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES only", () => {
+    expect(expectedProofsForFixtureCase("T-X035")).toEqual([
+      SoakProofKind.SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES,
+      ),
+    ).toEqual(["T-X035"]);
+  });
+
   it("builds unique per-run artifact ids", () => {
     const a = uniqueFixtureEvidenceArtifactId("T-X014", "soak-abcdef123456");
     const b = uniqueFixtureEvidenceArtifactId("T-X014", "soak-zzz999888777");

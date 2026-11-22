@@ -97,6 +97,7 @@ import { proofOrphanWorkerDeadlineTreeStopped } from "./orphan-worker-deadline-p
 import { proofWrongCmsEnvironmentNoProductionOp } from "./wrong-cms-environment-proof.js";
 import { proofStopBeforeDispatchClaim } from "./stop-before-dispatch-proof.js";
 import { proofIdempotencyKeyPayloadMismatch } from "./idempotency-key-payload-mismatch-proof.js";
+import { proofSharedAdBudgetExternalChangeInvalidates } from "./shared-ad-budget-external-change-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -687,6 +688,9 @@ export async function runSoakRecoveryHarness(input: {
       nowPlus(nowIso, 420_000),
     ),
   );
+  proofs.push(
+    proofSharedAdBudgetExternalChangeInvalidates(nowPlus(nowIso, 430_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -734,6 +738,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X007 fixture ACCEPTED via wrong_cms_environment_no_production_op only — not live VERIFIED",
       "T-X016 fixture ACCEPTED via stop_before_dispatch_no_mutation only — not live VERIFIED",
       "T-X022 fixture ACCEPTED via idempotency_key_payload_mismatch only — not live VERIFIED",
+      "T-X035 fixture ACCEPTED via shared_ad_budget_external_change_invalidates only — not live VERIFIED",
     ],
   };
 }

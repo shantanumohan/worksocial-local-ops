@@ -292,6 +292,7 @@ export function createPaidMediaService(store: PaidMediaStore): PaidMediaService 
           externalEffects: "NONE" as const,
           liveMutationWiring: "NOT_WIRED" as const,
           acceptanceEqualsVerified: false as const,
+          mutationAttempted: false as const,
           proposal: null,
         };
       }

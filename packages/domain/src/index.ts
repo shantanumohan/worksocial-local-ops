@@ -386,6 +386,7 @@ export {
   createPaidMediaProposal,
   recordPaidMediaDecision,
   attemptPaidMediaExecution,
+  reReadPaidProviderBudgetBeforeMutation,
   paidMediaChannelStatus,
   type PaidMediaPlatformValue,
   type PaidMediaWiringValue,
@@ -396,6 +397,7 @@ export {
   type AnalysisHypothesis,
   type DecisionBrief,
   type FinancialDiff,
+  type PaidProviderBudgetSnapshot,
   type DeliveryDiagnosis,
   type PaidMediaProposal,
   type PaidMediaDecision,
@@ -410,6 +412,8 @@ export {
   type RecordPaidDecisionResult,
   type ExecutePaidProposalInput,
   type ExecutePaidProposalResult,
+  type ReReadPaidProviderBudgetInput,
+  type ReReadPaidProviderBudgetResult,
 } from "./paid-media.js";
 export {
   EvalProvider,

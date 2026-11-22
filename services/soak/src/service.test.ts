@@ -29,7 +29,7 @@ describe("soak service (M9)", () => {
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(43);
+    expect(result.proofs).toHaveLength(44);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(
       result.proofs.every((p) =>
@@ -212,7 +212,23 @@ describe("soak service (M9)", () => {
     ).toBe(true);
     expect(
       result.proofs.some(
+        (p) => p.kind === SoakProofKind.ORPHAN_WORKER_DEADLINE_TREE_STOPPED,
+      ),
+    ).toBe(true);
+    expect(
+      result.proofs.some(
+        (p) => p.kind === SoakProofKind.WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP,
+      ),
+    ).toBe(true);
+    expect(
+      result.proofs.some(
         (p) => p.kind === SoakProofKind.IDEMPOTENCY_KEY_PAYLOAD_MISMATCH,
+      ),
+    ).toBe(true);
+    expect(
+      result.proofs.some(
+        (p) =>
+          p.kind === SoakProofKind.SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES,
       ),
     ).toBe(true);
   });
@@ -275,6 +291,7 @@ describe("soak service (M9)", () => {
       "T-X031",
       "T-X032",
       "T-X033",
+      "T-X035",
       "T-X037",
       "T-X038",
       "T-X039",
@@ -421,7 +438,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(54);
+    expect(soak.ownerReport().acceptedCases.length).toBe(55);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {

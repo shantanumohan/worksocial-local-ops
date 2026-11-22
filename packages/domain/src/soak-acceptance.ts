@@ -214,6 +214,11 @@ export const SoakProofKind = {
    * Pre-apply CANCELLED with applyAttempts=0 / no fake-provider entry.
    */
   STOP_BEFORE_DISPATCH_NO_MUTATION: "stop_before_dispatch_no_mutation",
+  /**
+   * Shared ad budget changed externally → proposal invalidated (T-X035).
+   */
+  SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES:
+    "shared_ad_budget_external_change_invalidates",
 } as const;
 
 export type SoakProofKindValue =
@@ -350,6 +355,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X012",
   "T-X007",
   "T-X016",
+  "T-X035",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -794,6 +800,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP];
     case "T-X016":
       return [SoakProofKind.STOP_BEFORE_DISPATCH_NO_MUTATION];
+    case "T-X035":
+      return [SoakProofKind.SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES];
     default:
       return [];
   }
@@ -896,6 +904,8 @@ export function mapProofToFixtureCases(
       return ["T-X007"];
     case SoakProofKind.STOP_BEFORE_DISPATCH_NO_MUTATION:
       return ["T-X016"];
+    case SoakProofKind.SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES:
+      return ["T-X035"];
     default:
       return [];
   }
