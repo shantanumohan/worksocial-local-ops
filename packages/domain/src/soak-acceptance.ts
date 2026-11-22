@@ -218,6 +218,12 @@ export const SoakProofKind = {
    * Worker reads browser auth state → OS deny (T-X065).
    */
   WORKER_BROWSER_AUTH_STATE_OS_DENIED: "worker_browser_auth_state_os_denied",
+  /**
+   * Indirect prompt-injection exfiltration denied at boundary (T-X063).
+   * Untrusted web/email content cannot become instructions that exfiltrate secrets.
+   */
+  INDIRECT_PROMPT_INJECTION_EXFIL_DENIED:
+    "indirect_prompt_injection_exfil_denied",
 } as const;
 
 export type SoakProofKindValue =
@@ -298,6 +304,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X012 requires ORPHAN_WORKER_DEADLINE_TREE_STOPPED
  * T-X007 requires WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP (process tree stopped on deadline).
  * T-X016 requires STOP_BEFORE_DISPATCH_NO_MUTATION (no adapter mutation).
+ * T-X063 requires INDIRECT_PROMPT_INJECTION_EXFIL_DENIED.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -356,6 +363,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X012",
   "T-X007",
   "T-X016",
+  "T-X063",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -802,6 +810,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP];
     case "T-X016":
       return [SoakProofKind.STOP_BEFORE_DISPATCH_NO_MUTATION];
+    case "T-X063":
+      return [SoakProofKind.INDIRECT_PROMPT_INJECTION_EXFIL_DENIED];
     default:
       return [];
   }
@@ -906,6 +916,8 @@ export function mapProofToFixtureCases(
       return ["T-X007"];
     case SoakProofKind.STOP_BEFORE_DISPATCH_NO_MUTATION:
       return ["T-X016"];
+    case SoakProofKind.INDIRECT_PROMPT_INJECTION_EXFIL_DENIED:
+      return ["T-X063"];
     default:
       return [];
   }

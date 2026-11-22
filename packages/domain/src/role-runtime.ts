@@ -377,9 +377,12 @@ export function proposeEffect(
   }
 
   // Absolute denials for every reasoning role — never solvable by CLI flags.
+  // secret_exfiltration / broker_secret_read close T-X063 indirect injection.
   const absoluteForbidden = [
     "bypass_gateway",
     "credential_access",
+    "secret_exfiltration",
+    "broker_secret_read",
     "unrestricted_shell",
   ] as const;
   for (const effect of absoluteForbidden) {

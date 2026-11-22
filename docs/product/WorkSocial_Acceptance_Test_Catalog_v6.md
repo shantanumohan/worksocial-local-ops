@@ -746,7 +746,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-X002, T-X003, T-X005, T-X006, T-X009, T-X010, T-X011, T-X012, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X065, T-X066, T-X069, T-X073.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-X002, T-X003, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X063, T-X065, T-X066, T-X069, T-X073.
 
 **T-X021** is fixture ACCEPTED only via `CONCURRENT_IDEMPOTENT_RELEASE` (barrier+mutex one dispatch; not retry-only NO_DUPLICATE_EFFECTS). Not sandbox/prod VERIFIED.
 
@@ -807,6 +807,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 **T-X016** is fixture ACCEPTED only via the stop-before-dispatch / no adapter mutation proof (`STOP_BEFORE_DISPATCH_NO_MUTATION`) — pre-apply AUTHORIZED/QUEUED may CANCELLED with durable `applyAttempts=0` and no fake-provider entry; outbound stop returns `OUTBOUND_STOPPED` before dispatch claim. Not sandbox/prod VERIFIED.
 
 **T-X022** is fixture ACCEPTED only via the idempotency key payload mismatch proof (`IDEMPOTENCY_KEY_PAYLOAD_MISMATCH`) — same businessIdempotencyKey/operationId with a different payloadDigest is Conflict; applyCount stays 1. Not sandbox/prod VERIFIED.
+
+**T-X063** is fixture ACCEPTED only via the indirect prompt-injection exfiltration boundary proof (`INDIRECT_PROMPT_INJECTION_EXFIL_DENIED`) — untrusted web/email content is not instruction-eligible; `secret_exfiltration` / `credential_access` / `broker_secret_read` are absolute-denied via `proposeEffect` and the injection boundary. Not sandbox/prod VERIFIED.
 
 **T-X017** is fixture ACCEPTED only via the stop-after-dispatch reconcile / no fake cancel proof (`STOP_AFTER_DISPATCH_RECONCILE`) — once APPLYING has started, stop retains work for reconcile (APPLYING→CANCELLED forbidden). Not sandbox/prod VERIFIED.
 
@@ -892,7 +894,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X060 | Currency/timezone mismatch | No silent sum |
 | T-X061 | Keyboard review and focus restore | A11y |
 | T-X062 | SSE gap after offline UI | Full-state resync |
-| T-X063 | Indirect prompt-injection exfiltration | Boundary denies |
+| T-X063 | Indirect prompt-injection exfiltration | Boundary denies *(fixture ACCEPTED — indirect-prompt-injection-exfil-denied proof; not sandbox/prod VERIFIED)* |
 | T-X064 | SSRF redirect and DNS rebind | Blocked every hop |
 | T-X065 | Worker reads browser auth state | OS deny *(fixture ACCEPTED — worker browser-auth OS deny; not sandbox/prod VERIFIED)* |
 | T-X066 | Backup omits remote receipt | Reconcile; no duplicate *(fixture ACCEPTED — backup/omit-receipt proof; not sandbox/prod VERIFIED)* |
@@ -910,7 +912,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
 | T-US (behavior_acceptance) | 60 | 44 NOT_RUN + 16 fixture ACCEPTED (T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060) |
-| T-X (platform/security/resilience) | 73 | 35 NOT_RUN + 38 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X065, T-X066, T-X069, T-X073) |
+| T-X (platform/security/resilience) | 73 | 34 NOT_RUN + 39 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X063, T-X065, T-X066, T-X069, T-X073) |
 | **Total** | **159** | **104 NOT_RUN + 55 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

@@ -201,6 +201,16 @@ export {
   type CompileInputPackageResult,
 } from "./input-package.js";
 export {
+  IndirectInjectionChannel,
+  ExfiltrationEffect,
+  evaluateIndirectPromptInjectionBoundary,
+  isAbsoluteExfiltrationEffect,
+  type IndirectInjectionChannelValue,
+  type ExfiltrationEffectValue,
+  type IndirectPromptInjectionBoundaryInput,
+  type IndirectPromptInjectionBoundaryDecision,
+} from "./prompt-injection-boundary.js";
+export {
   ReviewBindingStatus,
   ReviewBindingErrorCode,
   createReviewBinding,
