@@ -218,6 +218,11 @@ export const SoakProofKind = {
    * Worker reads browser auth state → OS deny (T-X065).
    */
   WORKER_BROWSER_AUTH_STATE_OS_DENIED: "worker_browser_auth_state_os_denied",
+  /**
+   * Recent Ads conversion blank → PENDING, not a false zero (T-X036).
+   */
+  RECENT_ADS_CONVERSION_BLANK_PENDING:
+    "recent_ads_conversion_blank_pending",
 } as const;
 
 export type SoakProofKindValue =
@@ -298,6 +303,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X012 requires ORPHAN_WORKER_DEADLINE_TREE_STOPPED
  * T-X007 requires WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP (process tree stopped on deadline).
  * T-X016 requires STOP_BEFORE_DISPATCH_NO_MUTATION (no adapter mutation).
+ * T-X036 requires RECENT_ADS_CONVERSION_BLANK_PENDING (blank → PENDING, not false zero).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -356,6 +362,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X012",
   "T-X007",
   "T-X016",
+  "T-X036",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -802,6 +809,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP];
     case "T-X016":
       return [SoakProofKind.STOP_BEFORE_DISPATCH_NO_MUTATION];
+    case "T-X036":
+      return [SoakProofKind.RECENT_ADS_CONVERSION_BLANK_PENDING];
     default:
       return [];
   }
@@ -906,6 +915,8 @@ export function mapProofToFixtureCases(
       return ["T-X007"];
     case SoakProofKind.STOP_BEFORE_DISPATCH_NO_MUTATION:
       return ["T-X016"];
+    case SoakProofKind.RECENT_ADS_CONVERSION_BLANK_PENDING:
+      return ["T-X036"];
     default:
       return [];
   }

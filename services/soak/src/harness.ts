@@ -99,6 +99,7 @@ import { proofWrongCmsEnvironmentNoProductionOp } from "./wrong-cms-environment-
 import { proofStopBeforeDispatchClaim } from "./stop-before-dispatch-proof.js";
 import { proofIdempotencyKeyPayloadMismatch } from "./idempotency-key-payload-mismatch-proof.js";
 import { proofWorkerBrowserAuthStateOsDenied } from "./browser-auth-state-proof.js";
+import { proofRecentAdsConversionBlankPending } from "./recent-ads-conversion-blank-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -690,6 +691,7 @@ export async function runSoakRecoveryHarness(input: {
     ),
   );
   proofs.push(proofWorkerBrowserAuthStateOsDenied(nowPlus(nowIso, 430_000)));
+  proofs.push(proofRecentAdsConversionBlankPending(nowPlus(nowIso, 440_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -700,6 +702,7 @@ export async function runSoakRecoveryHarness(input: {
         : "One or more soak recovery proofs failed",
       "External effects: NONE — fake provider only",
       "T-X015 fixture ACCEPTED via dst_recurring_schedule_no_duplicates only — not live VERIFIED",
+      "T-X036 fixture ACCEPTED via recent_ads_conversion_blank_pending only — not live VERIFIED",
       "Live CMS/GSC/GA4/Zoho/Temporal remain NOT_WIRED",
       "T-F24/T-US-047 fixture ACCEPTED via recover_rotate_reconcile only — not live VERIFIED",
       "T-US-002/T-X002 fixture ACCEPTED via competing_supervisor_lease only — not live VERIFIED",

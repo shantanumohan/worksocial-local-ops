@@ -2,7 +2,7 @@
   "catalog": "WorkSocial product acceptance v6",
   "version": "6.0",
   "sourceDocument": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-  "note": "159 cases \u2014 104 NOT_RUN + 55 fixture ACCEPTED (T-F24, T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060, T-X001, T-X002, T-X003, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X065, T-X066, T-X069, T-X073) with redacted evidence and complete proof sets. Includes T-X016 stop before dispatch claim (no adapter mutation) and T-X016 stop before dispatch claim (no adapter mutation) and T-X007 wrong CMS environment no production op \u2014 never silently VERIFIED for live. Includes T-X022 idempotency key payload mismatch \u2014 never silently VERIFIED for live. Fixture, sandbox, and authorized-production results must remain distinguishable. ChatGPT Ads (T-F07 / T-US-013 / T-US-014) stays access-blocked without verified local transport/entitlement. Pilot gate uses server-recorded observations only. Not R1-complete.",
+  "note": "159 cases \u2014 103 NOT_RUN + 56 fixture ACCEPTED (T-F24, T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060, T-X001, T-X002, T-X003, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X029, T-X031, T-X032, T-X033, T-X036, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X065, T-X066, T-X069, T-X073) with redacted evidence and complete proof sets. Includes T-X036 recent Ads conversion blank \u2014 PENDING not false zero \u2014 never silently VERIFIED for live. Fixture, sandbox, and authorized-production results must remain distinguishable. ChatGPT Ads (T-F07 / T-US-013 / T-US-014) stays access-blocked without verified local transport/entitlement. Pilot gate uses server-recorded observations only. Not R1-complete.",
   "invariants": {
     "fixtureSandboxAuthorizedProductionDistinct": true,
     "acceptanceNotVerified": true,
@@ -14,8 +14,8 @@
     "userStories": 60,
     "experience": 73,
     "all": 159,
-    "notRun": 104,
-    "accepted": 55
+    "notRun": 103,
+    "accepted": 56
   },
   "cases": [
     {
@@ -1983,12 +1983,15 @@
       "level": "platform_security_resilience",
       "title": "Recent Ads conversion blank",
       "focus": "Pending; no false zero",
-      "status": "NOT_RUN",
+      "status": "ACCEPTED",
       "environment": "fixture_or_integration",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
       "gates": [],
       "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-      "definitionShape": "table_row"
+      "definitionShape": "table_row",
+      "resultEnvironment": "fixture",
+      "evidenceArtifactId": "art-fixture-t-x036",
+      "evidenceNote": "Fixture ACCEPTED via RECENT_ADS_CONVERSION_BLANK_PENDING \u2014 blank/omitted recent Ads conversion stays PENDING (displayValue null), not a false zero; budget recs blocked while unsettled including zero-delivery paths. ACCEPTED \u2260 sandbox/prod VERIFIED. externalEffects NONE."
     },
     {
       "id": "T-X037",
