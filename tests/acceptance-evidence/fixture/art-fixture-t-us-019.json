@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-019",
+  "caseId": "T-US-019",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-019 (Map CRM/forms/booking failure/recovery)\nproof=map_crm_forms_booking_failure_recovery applyCount=0 :: Failure→recovery scenario passed (CRM_WRITE inject + retry); live NOT_WIRED; commercialExcluded | CRM/forms/booking map → MAP_CRM_FORMS_BOOKING_READY; failure/recovery passed; live NOT_WIRED | Live Zoho wiring request → LIVE_ZOHO_WIRING_NOT_WIRED | Missing failure/recovery → FAILURE_RECOVERY_SCENARIO_NOT_PASSED | Synthetic commerce count → COMMERCE_POLLUTION_REFUSED | ACCEPTED ≠ VERIFIED; externalEffects NONE; distinct from T-US-039/T-US-040\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "map_crm_forms_booking_failure_recovery"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-019.json",
+  "createdAtIso": "2026-11-22T22:40:11.666Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-019-be9fcaed7101"
+}

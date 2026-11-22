@@ -936,6 +936,19 @@ export {
   type GeminiEvaluationConnectDecision,
 } from "./gemini-evaluation-connect.js";
 export {
+  CrmMapEnvironment,
+  BookingCapability,
+  FIXTURE_BOOKING_CAPABILITIES,
+  CRM_FORMS_BOOKING_MAP_RELATED_CASE_IDS,
+  evaluateCrmFormsBookingMap,
+  runCrmFormsBookingFailureRecovery,
+  type CrmMapEnvironmentValue,
+  type BookingCapabilityValue,
+  type CrmFormsBookingMapInput,
+  type CrmFormsBookingMapDecision,
+  type FailureRecoveryScenarioResult,
+} from "./crm-forms-booking-map.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
