@@ -25,7 +25,8 @@
  * GA4 wrong property kind refused (T-X031),
  * thank-you without CRM fails delivery (T-US-040 / T-X049),
  * stop after provider dispatch reconcile (T-X017),
- * old fence after reassignment (T-X024).
+ * old fence after reassignment (T-X024),
+ * output bomb bounded/quarantined (T-X011).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -76,6 +77,7 @@ import { proofGa4WrongPropertyKindRefused } from "./ga4-wrong-property-kind-proo
 import { proofThankYouWithoutCrmFailsDelivery } from "./thank-you-without-crm-proof.js";
 import { proofStopAfterDispatchReconcile } from "./stop-after-dispatch-proof.js";
 import { proofOldFenceAfterReassignment } from "./old-fence-after-reassignment-proof.js";
+import { proofOutputBombBoundedQuarantined } from "./output-bomb-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -635,6 +637,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofThankYouWithoutCrmFailsDelivery(nowPlus(nowIso, 270_000)));
   proofs.push(proofStopAfterDispatchReconcile(nowPlus(nowIso, 280_000)));
   proofs.push(await proofOldFenceAfterReassignment(nowPlus(nowIso, 290_000)));
+  proofs.push(
+    await proofOutputBombBoundedQuarantined(nowPlus(nowIso, 300_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -669,6 +674,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-040/T-X049 fixture ACCEPTED via thank_you_without_crm_fails_delivery only — not live VERIFIED",
       "T-X017 fixture ACCEPTED via stop_after_dispatch_reconcile only — not live VERIFIED",
       "T-X024 fixture ACCEPTED via old_fence_after_reassignment only — not live VERIFIED",
+      "T-X011 fixture ACCEPTED via output_bomb_bounded_quarantined only — not live VERIFIED",
     ],
   };
 }

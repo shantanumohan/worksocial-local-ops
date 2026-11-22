@@ -9,6 +9,7 @@
   "references": [
     { "path": "../../packages/domain" },
     { "path": "../../packages/persistence" },
+    { "path": "../claude-runner" },
     { "path": "../credential-broker" },
     { "path": "../credential-rotation" },
     { "path": "../recovery" }

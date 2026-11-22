@@ -9,9 +9,12 @@ export {
   isRegisteredAgentName,
   detectClaudeCli,
   invokeClaudeCli,
+  assessStdoutBound,
+  quarantineStdoutDelivery,
   type ClaudeCliDetection,
   type ClaudeCliInvokeRequest,
   type ClaudeCliInvokeResult,
+  type StdoutBoundAssessment,
 } from "./cli-adapter.js";
 
 export {

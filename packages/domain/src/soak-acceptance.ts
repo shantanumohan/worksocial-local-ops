@@ -153,6 +153,10 @@ export const SoakProofKind = {
    * Old fence after reassignment — old worker cannot commit (T-X024).
    */
   OLD_FENCE_AFTER_REASSIGNMENT: "old_fence_after_reassignment",
+  /**
+   * Output bomb bounded and quarantined — oversized stdout not delivered (T-X011).
+   */
+  OUTPUT_BOMB_BOUNDED_QUARANTINED: "output_bomb_bounded_quarantined",
 } as const;
 
 export type SoakProofKindValue =
@@ -219,6 +223,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-040 / T-X049 require THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY.
  * T-X017 requires STOP_AFTER_DISPATCH_RECONCILE (no fake cancel after APPLYING).
  * T-X024 requires OLD_FENCE_AFTER_REASSIGNMENT.
+ * T-X011 requires OUTPUT_BOMB_BOUNDED_QUARANTINED (oversized stdout quarantined).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -263,6 +268,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X049",
   "T-X017",
   "T-X024",
+  "T-X011",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -681,6 +687,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.STOP_AFTER_DISPATCH_RECONCILE];
     case "T-X024":
       return [SoakProofKind.OLD_FENCE_AFTER_REASSIGNMENT];
+    case "T-X011":
+      return [SoakProofKind.OUTPUT_BOMB_BOUNDED_QUARANTINED];
     default:
       return [];
   }
@@ -755,6 +763,8 @@ export function mapProofToFixtureCases(
       return ["T-X017"];
     case SoakProofKind.OLD_FENCE_AFTER_REASSIGNMENT:
       return ["T-X024"];
+    case SoakProofKind.OUTPUT_BOMB_BOUNDED_QUARANTINED:
+      return ["T-X011"];
     default:
       return [];
   }
