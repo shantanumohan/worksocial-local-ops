@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x070",
+  "caseId": "T-X070",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X070 (Validated payload not collected — separate failure states)\nproof=validated_payload_not_collected_separate_states applyCount=1 :: Valid signature+schema + durable write → COLLECTED (validated=true collected=true) | Bad webhook signature → VALIDATION_FAILED (collectionAttempted=false) | Validated payload not collected → COLLECTION_FAILED (validated=true collected=false; not VALIDATION_FAILED) | Collector throw → COLLECTION_FAILED (validated=true; not VALIDATION_FAILED) | Non-hex signature suffix → VALIDATION_FAILED | Separate failure states: VALIDATION_FAILED ≠ COLLECTION_FAILED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "validated_payload_not_collected_separate_states"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x070.json",
+  "createdAtIso": "2026-11-22T20:02:25.143Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x070-e50b9c2307eb"
+}

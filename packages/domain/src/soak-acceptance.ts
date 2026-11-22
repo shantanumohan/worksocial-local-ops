@@ -286,6 +286,11 @@ export const SoakProofKind = {
    */
   CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM:
     "currency_timezone_mismatch_no_silent_sum",
+  /**
+   * Validated payload not collected — VALIDATION_FAILED ≠ COLLECTION_FAILED (T-X070).
+   */
+  VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES:
+    "validated_payload_not_collected_separate_states",
 } as const;
 
 export type SoakProofKindValue =
@@ -379,6 +384,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X056 requires AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF.
  * T-X059 requires DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING.
  * T-X060 requires CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM.
+ * T-X070 requires VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -450,6 +456,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X056",
   "T-X059",
   "T-X060",
+  "T-X070",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -922,6 +929,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING];
     case "T-X060":
       return [SoakProofKind.CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM];
+    case "T-X070":
+      return [SoakProofKind.VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES];
     default:
       return [];
   }
@@ -1052,6 +1061,8 @@ export function mapProofToFixtureCases(
       return ["T-X059"];
     case SoakProofKind.CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM:
       return ["T-X060"];
+    case SoakProofKind.VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES:
+      return ["T-X070"];
     default:
       return [];
   }

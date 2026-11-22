@@ -36,6 +36,7 @@
  * idempotency key payload mismatch (T-X022).
  * worker browser auth state OS deny (T-X065).
  * external human edit during staging conflict retained (T-X025).
+ * validated payload not collected separate failure states (T-X070).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -78,6 +79,7 @@ import { proofUnknownPolicyQuestionEscalatesWithoutPromise } from "./unknown-pol
 import { proofAutomatedResponseLoopBoundedHandoff } from "./automated-response-loop-proof.js";
 import { proofDuplicatePlatformAttributionOneBooking } from "./duplicate-platform-attribution-proof.js";
 import { proofCurrencyTimezoneMismatchNoSilentSum } from "./currency-timezone-mismatch-proof.js";
+import { proofValidatedPayloadNotCollectedSeparateStates } from "./validated-payload-not-collected-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -746,6 +748,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofCurrencyTimezoneMismatchNoSilentSum(nowPlus(nowIso, 570_000)),
   );
+    proofs.push(
+    proofValidatedPayloadNotCollectedSeparateStates(nowPlus(nowIso, 580_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -807,6 +812,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X056 fixture ACCEPTED via automated_response_loop_bounded_handoff only — not live VERIFIED",
       "T-X059 fixture ACCEPTED via duplicate_platform_attribution_one_booking only — not live VERIFIED",
       "T-X060 fixture ACCEPTED via currency_timezone_mismatch_no_silent_sum only — not live VERIFIED",
+      "T-X070 fixture ACCEPTED via validated_payload_not_collected_separate_states only — not live VERIFIED",
     ],
   };
 }
