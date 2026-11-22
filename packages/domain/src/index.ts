@@ -773,6 +773,16 @@ export {
   type OccurrenceClaimResult, type OccurrenceClaimLedger,
 } from "./recurring-schedule.js";
 export {
+  CrmEmptyReadAction,
+  DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+  decideCrmLeadRetryAfterEmptyRead,
+  counterfactualUnsafeCreateOnEmptyRead,
+  reconcileAfterConsistencyVisibility,
+  type CrmEmptyReadActionValue,
+  type DecideCrmLeadRetryAfterEmptyReadInput,
+  type DecideCrmLeadRetryAfterEmptyReadResult,
+} from "./crm-eventual-consistency.js";
+export {
   AcceptanceEnvironment,
   AcceptanceCaseStatus,
   FORBIDDEN_SILENT_LIVE_STATUS,

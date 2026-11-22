@@ -312,6 +312,10 @@ export const SoakProofKind = {
    * Observe/create skip pilot write gates; unbound write targets fail closed.
    */
   UNBOUND_WRITE_PATH_FAIL_CLOSED: "unbound_write_path_fail_closed",
+  /**
+   * Eventual consistency false not-found — no unsafe CRM create retry (T-X023).
+   */
+  EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND: "eventual_consistency_false_not_found",
 } as const;
 
 export type SoakProofKindValue =
@@ -410,6 +414,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X044 requires UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED.
  * T-X045 requires PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE (per-destination honesty).
  * T-US-006 requires UNBOUND_WRITE_PATH_FAIL_CLOSED.
+ * T-X023 requires EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -486,6 +491,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X044",
   "T-X045",
   "T-US-006",
+  "T-X023",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -968,6 +974,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE];
     case "T-US-006":
       return [SoakProofKind.UNBOUND_WRITE_PATH_FAIL_CLOSED];
+    case "T-X023":
+      return [SoakProofKind.EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND];
     default:
       return [];
   }
@@ -1108,6 +1116,8 @@ export function mapProofToFixtureCases(
       return ["T-X045"];
     case SoakProofKind.UNBOUND_WRITE_PATH_FAIL_CLOSED:
       return ["T-US-006"];
+    case SoakProofKind.EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND:
+      return ["T-X023"];
     default:
       return [];
   }

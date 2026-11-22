@@ -672,7 +672,7 @@ Required evidence:
 
 Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixture ACCEPTED below | Environment fixture_or_sandbox; live evidence separately authorized.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-F24, T-US-002, T-US-006, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X023, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X043, T-X044, T-X045, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X063, T-X065, T-X066, T-X069, T-X070, T-X073.
 
 **T-X043** is fixture ACCEPTED only via the optimization breaks CTA journey fails proof (`OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS`) — SEO/content optimization that rewrites the booking CTA fails the DOM journey probe; the optimization CTA journey gate blocks release with `JOURNEY_REGRESSION_FAILED`. Not sandbox/prod VERIFIED.
 
@@ -840,6 +840,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-US-006** is fixture ACCEPTED only via the unbound write path fail-closed proof (`UNBOUND_WRITE_PATH_FAIL_CLOSED`) — unbound URL OBSERVE/CREATE analysis may proceed without a mapped pilot write path; ROUTINE_PUBLISH on an unbound channel/asset fail closed with `prerequisiteMissing` and no matched path; `applyAttemptCount=0` (gate-only). Not sandbox/prod VERIFIED.
 
+**T-X023** is fixture ACCEPTED only via the eventual-consistency false not-found proof (`EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND`) — instrumented fixture CRM lagging read with local write refuses create (BOUND_WAIT); after visibility reconcile MATCHED; writeAttemptCount stays 1. Not sandbox/prod VERIFIED.
+
 **T-X045** is fixture ACCEPTED only via the partial campaign destinations / per-destination states proof (`PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE`) — mixed VERIFIED/FAILED/UNKNOWN_REMOTE yields PARTIAL; ACCEPTED_PENDING stays distinct from VERIFIED; recoverable destinations exclude verified peers. Not sandbox/prod VERIFIED.
 
 **T-X028** is fixture ACCEPTED only via the actual cost exceeds estimate overrun visible proof (`ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE`) — `settleBudget` posts full `actualMinor` when it exceeds the reserved estimate; overrun visible in `settledMinor`; reservation released; `heldMinor` stays 0. Not sandbox/prod VERIFIED.
@@ -887,7 +889,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X020 | Timeout after provider acceptance | Unknown → reconcile; no resend *(fixture ACCEPTED)* |
 | T-X021 | Concurrent idempotent releases | One dispatch *(fixture ACCEPTED)* |
 | T-X022 | Idempotency key payload mismatch | Conflict *(fixture ACCEPTED — idempotency key payload mismatch proof; not sandbox/prod VERIFIED)* |
-| T-X023 | Eventual consistency false not-found | No unsafe retry |
+| T-X023 | Eventual consistency false not-found | No unsafe retry *(fixture ACCEPTED — eventual-consistency false not-found proof; not sandbox/prod VERIFIED)* |
 | T-X024 | Old fence after reassignment | Old worker cannot commit *(fixture ACCEPTED — old fence after reassignment proof; not sandbox/prod VERIFIED)* |
 | T-X025 | External human edit during staging | Conflict retained *(fixture ACCEPTED — external human edit conflict retained proof; not sandbox/prod VERIFIED)* |
 | T-X026 | Concurrent final budget reservation | Cap enforced *(fixture ACCEPTED — concurrent final budget reservation cap proof; not sandbox/prod VERIFIED)* |
@@ -947,7 +949,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
 | T-US (behavior_acceptance) | 60 | 43 NOT_RUN + 17 fixture ACCEPTED (T-US-002, T-US-006, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060) |
-| T-X (platform/security/resilience) | 73 | 18 NOT_RUN + 55 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X043, T-X045, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X063, T-X065, T-X066, T-X069, T-X070, T-X073) |
-| **Total** | **159** | **86 NOT_RUN + 73 fixture ACCEPTED** |
+| T-X (platform/security/resilience) | 73 | 17 NOT_RUN + 56 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X023, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X043, T-X044, T-X045, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X063, T-X065, T-X066, T-X069, T-X070, T-X073) |
+| **Total** | **159** | **85 NOT_RUN + 74 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

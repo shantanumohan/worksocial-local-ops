@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x023",
+  "caseId": "T-X023",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X023 (Eventual consistency false not-found — no unsafe retry)\nproof=eventual_consistency_false_not_found applyCount=1 :: Fixture CRM write → ledger size 1; writeAttemptCount=1; lag reads scheduled | getByCorrelation empty under lag → BOUND_WAIT createLead=false (false not-found) | Counterfactual empty→create documented as forbidden | No second writeSyntheticLead; writeAttemptCount remains 1 | After visibility → fixture read-back RECONCILE MATCHED; createLead=false; writeAttemptCount=1 | Window exceeded empty → ESCALATE_MISSING createLead=false | Fixture CRM only — live Zoho NOT_WIRED; externalEffects NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "eventual_consistency_false_not_found"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x023.json",
+  "createdAtIso": "2026-11-22T21:34:20.301Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x023-bb82c3448343"
+}

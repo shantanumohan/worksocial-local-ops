@@ -37,6 +37,11 @@ export type FixtureCrmWriteInput = {
    * Explicit false refuses public synthetic-flag abuse (T-X050).
    */
   serverCanaryGrantPresent?: boolean;
+  /**
+   * Test hook (T-X023): first N `getByCorrelation` reads return empty
+   * (eventual-consistency false not-found) while the write remains on the ledger.
+   */
+  visibilityLagReads?: number;
 };
 
 export type FixtureCrmCleanupResult = {
@@ -50,6 +55,8 @@ export type FixtureCrmCleanupResult = {
 export type ZohoCrmFixtureAdapter = {
   readonly mode: "FIXTURE";
   readonly liveZohoWiring: "NOT_WIRED";
+  /** Counts every writeSyntheticLead call (including skipWrite). */
+  writeAttemptCount(): number;
   writeSyntheticLead(input: FixtureCrmWriteInput): CanaryRemoteReceipt | null;
   verifyFields(input: {
     correlationId: string;
@@ -69,12 +76,19 @@ export type ZohoCrmFixtureAdapter = {
  */
 export function createZohoCrmFixtureAdapter(): ZohoCrmFixtureAdapter {
   const ledger = new Map<string, FixtureCrmLedgerEntry>();
+  const visibilityLagReads = new Map<string, number>();
+  let writeAttempts = 0;
 
   return {
     mode: "FIXTURE",
     liveZohoWiring: "NOT_WIRED",
 
+    writeAttemptCount() {
+      return writeAttempts;
+    },
+
     writeSyntheticLead(input) {
+      writeAttempts += 1;
       if (input.skipWrite) {
         return null;
       }
@@ -111,6 +125,12 @@ export function createZohoCrmFixtureAdapter(): ZohoCrmFixtureAdapter {
         cleaned: false,
         cleanedAtIso: null,
       });
+      const lag = Math.max(0, input.visibilityLagReads ?? 0);
+      if (lag > 0) {
+        visibilityLagReads.set(input.correlationId, lag);
+      } else {
+        visibilityLagReads.delete(input.correlationId);
+      }
       return receipt;
     },
 
@@ -187,6 +207,12 @@ export function createZohoCrmFixtureAdapter(): ZohoCrmFixtureAdapter {
     },
 
     getByCorrelation(correlationId) {
+      const lag = visibilityLagReads.get(correlationId) ?? 0;
+      if (lag > 0) {
+        visibilityLagReads.set(correlationId, lag - 1);
+        // Eventual-consistency false not-found: write exists, read empty.
+        return null;
+      }
       const entry = ledger.get(correlationId);
       return entry ? { ...entry, receipt: { ...entry.receipt } } : null;
     },
