@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-012",
+  "caseId": "T-US-012",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-012 (Google Ads test vs production access separated)\nproof=google_ads_test_production_access_separated applyCount=0 :: TEST→PRODUCTION ANALYZE → TEST_CREDENTIAL_PRODUCTION_TARGET_REFUSED; separated; mutateAuthorized=false | PRODUCTION→TEST ANALYZE → PRODUCTION_CREDENTIAL_TEST_TARGET_REFUSED | Same-tier TEST FIXTURE ANALYZE allowed; mutateAuthorized=false; live NOT_WIRED | Same-tier MUTATE → MUTATE_AUTHORITY_REFUSED | LIVE PRODUCTION→PRODUCTION → LIVE_TRANSPORT_NOT_WIRED | liveProviderSuccessClaimed=false externalEffects=NONE | Distinct from T-X034 (ChatGPT Ads SANDBOX→LIVE) and T-US-011 (analyze-only connect)\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "google_ads_test_production_access_separated"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-012.json",
+  "createdAtIso": "2026-11-22T22:05:38.672Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-012-4a83dbe17cb7"
+}

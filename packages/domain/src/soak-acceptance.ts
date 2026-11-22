@@ -333,6 +333,12 @@ export const SoakProofKind = {
    */
   LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE:
     "low_sample_trend_spike_insufficient_evidence",
+  /**
+   * Google Ads test vs production access separated (T-US-012).
+   * Cross-tier credential→customer refused; LIVE NOT_WIRED; mutate never authorized.
+   */
+  GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED:
+    "google_ads_test_production_access_separated",
 } as const;
 
 export type SoakProofKindValue =
@@ -435,6 +441,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-052 requires MOCKED_CONNECTOR_NOT_PRODUCTION_READY.
  * T-X030 requires RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE.
  * T-X040 requires LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE (research only; not publish).
+ * T-US-012 requires GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED (test ≠ production).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -516,6 +523,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-052",
   "T-X030",
   "T-X040",
+  "T-US-012",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1008,6 +1016,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE];
     case "T-X040":
       return [SoakProofKind.LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE];
+    case "T-US-012":
+      return [SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED];
     default:
       return [];
   }
@@ -1156,6 +1166,8 @@ export function mapProofToFixtureCases(
       return ["T-X030"];
     case SoakProofKind.LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE:
       return ["T-X040"];
+    case SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED:
+      return ["T-US-012"];
     default:
       return [];
   }

@@ -48,4 +48,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-US-006 unbound write path fail closed | Fixture **ACCEPTED** via `UNBOUND_WRITE_PATH_FAIL_CLOSED` (applyAttemptCount=0; not live VERIFIED) |
 | T-US-052 mocked connector not production-ready | Fixture **ACCEPTED** via `MOCKED_CONNECTOR_NOT_PRODUCTION_READY` (not live VERIFIED) |
 | T-X040 low-sample trend spike | Fixture **ACCEPTED** via `LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE` (not live VERIFIED) |
+| T-US-012 Google Ads test vs production | Fixture **ACCEPTED** via `GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED` (not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |

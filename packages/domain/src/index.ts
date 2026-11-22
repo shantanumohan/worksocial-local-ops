@@ -902,6 +902,16 @@ export {
   type AssessTrendSpikeEvidenceResult,
 } from "./trend-spike-evidence.js";
 export {
+  GoogleAdsAccessTier,
+  GoogleAdsAccessOperation,
+  GOOGLE_ADS_TEST_PRODUCTION_RELATED_CASE_IDS,
+  evaluateGoogleAdsTestProductionAccess,
+  type GoogleAdsAccessTierValue,
+  type GoogleAdsAccessOperationValue,
+  type GoogleAdsTestProductionAccessInput,
+  type GoogleAdsTestProductionAccessDecision,
+} from "./google-ads-test-production-access.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

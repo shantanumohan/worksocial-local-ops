@@ -40,6 +40,7 @@
  * unbound write path fail closed (T-US-006).
  * rate-limit bounded backoff preserves deadline (T-X030).
  * low-sample trend spike insufficient evidence (T-X040).
+ * Google Ads test vs production access separated (T-US-012).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -88,6 +89,7 @@ import { proofEventualConsistencyFalseNotFound } from "./eventual-consistency-fa
 import { proofMockedConnectorNotProductionReady } from "./mocked-connector-not-production-ready-proof.js";
 import { proofRateLimitBoundedBackoffPreservesDeadline } from "./rate-limit-deadline-proof.js";
 import { proofLowSampleTrendSpikeInsufficientEvidence } from "./low-sample-trend-spike-proof.js";
+import { proofGoogleAdsTestProductionAccessSeparated } from "./google-ads-test-production-access-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -784,6 +786,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofLowSampleTrendSpikeInsufficientEvidence(nowPlus(nowIso, 660_000)),
   );
+  proofs.push(
+    proofGoogleAdsTestProductionAccessSeparated(nowPlus(nowIso, 670_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -854,6 +859,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-052 fixture ACCEPTED via mocked_connector_not_production_ready only — not live VERIFIED",
       "T-X030 fixture ACCEPTED via rate_limit_bounded_backoff_preserves_deadline only — not live VERIFIED",
       "T-X040 fixture ACCEPTED via low_sample_trend_spike_insufficient_evidence only — not live VERIFIED",
+      "T-US-012 fixture ACCEPTED via google_ads_test_production_access_separated only — not live VERIFIED",
     ],
   };
 }
