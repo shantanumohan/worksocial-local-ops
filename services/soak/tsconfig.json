@@ -22,7 +22,13 @@
       "path": "../../packages/provider-adapters"
     },
     {
+      "path": "../action-gateway"
+    },
+    {
       "path": "../claude-runner"
+    },
+    {
+      "path": "../content"
     },
     {
       "path": "../credential-broker"

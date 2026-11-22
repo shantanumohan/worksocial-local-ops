@@ -541,9 +541,15 @@ importers:
 
   services/soak:
     dependencies:
+      '@worksocial/action-gateway':
+        specifier: workspace:*
+        version: link:../action-gateway
       '@worksocial/claude-runner':
         specifier: workspace:*
         version: link:../claude-runner
+      '@worksocial/content':
+        specifier: workspace:*
+        version: link:../content
       '@worksocial/credential-broker':
         specifier: workspace:*
         version: link:../credential-broker

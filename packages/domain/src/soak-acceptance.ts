@@ -296,6 +296,12 @@ export const SoakProofKind = {
    */
   VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES:
     "validated_payload_not_collected_separate_states",
+  /**
+   * Unlicensed venue media → publish blocked (T-X044).
+   */
+  UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED:
+    "unlicensed_venue_media_publish_blocked",
+
 } as const;
 
 export type SoakProofKindValue =
@@ -391,6 +397,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X059 requires DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING.
  * T-X060 requires CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM.
  * T-X070 requires VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES.
+ * T-X044 requires UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -464,6 +471,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X060",
   "T-X070",
   "T-X028",
+  "T-X044",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -940,6 +948,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM];
     case "T-X070":
       return [SoakProofKind.VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES];
+    case "T-X044":
+      return [SoakProofKind.UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED];
     default:
       return [];
   }
@@ -1074,6 +1084,8 @@ export function mapProofToFixtureCases(
       return ["T-X060"];
     case SoakProofKind.VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES:
       return ["T-X070"];
+    case SoakProofKind.UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED:
+      return ["T-X044"];
     default:
       return [];
   }

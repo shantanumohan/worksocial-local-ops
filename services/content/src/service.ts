@@ -30,6 +30,7 @@ import {
   evaluateArticleApprovalGate,
   evaluateContentReadBack,
   evaluateVariantReleaseGate,
+  gateVenueMediaBundleForPublish,
   listContentOutcomesForLearning,
   type ArticleQaVerdict,
   type CanonicalArticle,
@@ -45,6 +46,7 @@ import {
   type PublicationReceipt,
   type StandingPolicy,
   type VariantQaVerdict,
+  type VenueMediaPublishGateInput,
   type WritePathOutcomeEvidence,
 } from "@worksocial/domain";
 import type { ContentStore, DurableExecutionService } from "@worksocial/persistence";
@@ -209,6 +211,11 @@ export type ContentService = {
     targetAccountId?: string;
     contentRevision?: string | null;
     nowIso?: string;
+    /**
+     * Optional venue media cited by this release (T-X044).
+     * When present, unlicensed / uncleared media blocks publish before gateway.
+     */
+    venueMedia?: readonly VenueMediaPublishGateInput[];
   }): {
     article: CanonicalArticle | null;
     gatewayDecision: GatewayDecisionRecord | null;
@@ -793,6 +800,27 @@ export function createContentService(
           acceptanceEqualsVerified: false,
           details,
         };
+      }
+
+      // T-X044 — unlicensed / uncleared venue media blocks publish before gateway.
+      const venueMediaGate = gateVenueMediaBundleForPublish(input.venueMedia);
+      if (!venueMediaGate.allowed) {
+        details.push(
+          `Venue media publish blocked: ${venueMediaGate.code} — ${venueMediaGate.reason}`,
+        );
+        details.push("externalEffects=NONE");
+        return {
+          article,
+          gatewayDecision: null,
+          receipt: null,
+          outcome: null,
+          liveCmsPublishWiring: "NOT_WIRED",
+          acceptanceEqualsVerified: false,
+          details,
+        };
+      }
+      if (!("skipped" in venueMediaGate && venueMediaGate.skipped)) {
+        details.push(venueMediaGate.reason);
       }
 
       const qaVerdict =

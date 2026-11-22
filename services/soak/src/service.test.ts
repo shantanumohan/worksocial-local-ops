@@ -29,7 +29,7 @@ describe("soak service (M9)", () => {
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(59);
+    expect(result.proofs).toHaveLength(60);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(
       result.proofs.every((p) =>
@@ -298,6 +298,13 @@ describe("soak service (M9)", () => {
           SoakProofKind.ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE,
       ),
     ).toBe(true);
+    expect(
+      result.proofs.some(
+        (p) =>
+          p.kind === SoakProofKind.UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED,
+      ),
+    ).toBe(true);
+
   });
 
   it("compiles fixture ACCEPTED for complete proof sets including T-X028", async () => {
@@ -368,6 +375,7 @@ describe("soak service (M9)", () => {
       "T-X038",
       "T-X039",
       "T-X043",
+      "T-X044",
       "T-X048",
       "T-X049",
       "T-X050",
@@ -529,7 +537,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(70);
+    expect(soak.ownerReport().acceptedCases.length).toBe(71);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {

@@ -215,6 +215,14 @@ export {
   type IndirectPromptInjectionBoundaryDecision,
 } from "./prompt-injection-boundary.js";
 export {
+  VenueMediaLicenseStatus,
+  evaluateVenueMediaPublishGate,
+  gateVenueMediaBundleForPublish,
+  type VenueMediaLicenseStatusValue,
+  type VenueMediaPublishGateInput,
+  type VenueMediaPublishGateDecision,
+} from "./venue-media-license.js";
+export {
   ReviewBindingStatus,
   ReviewBindingErrorCode,
   createReviewBinding,

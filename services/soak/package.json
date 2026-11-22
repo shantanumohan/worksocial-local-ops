@@ -25,7 +25,9 @@
     "@worksocial/persistence": "workspace:*",
     "@worksocial/provider-adapters": "workspace:*",
     "@worksocial/recovery": "workspace:*",
-    "@worksocial/lead-capture": "workspace:*"
+    "@worksocial/lead-capture": "workspace:*",
+    "@worksocial/action-gateway": "workspace:*",
+    "@worksocial/content": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "22.10.2",

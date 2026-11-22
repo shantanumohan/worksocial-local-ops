@@ -110,6 +110,7 @@ import { proofOrphanWorkerDeadlineTreeStopped } from "./orphan-worker-deadline-p
 import { proofWrongCmsEnvironmentNoProductionOp } from "./wrong-cms-environment-proof.js";
 import { proofStopBeforeDispatchClaim } from "./stop-before-dispatch-proof.js";
 import { proofIndirectPromptInjectionExfilDenied } from "./indirect-prompt-injection-exfil-proof.js";
+import { proofUnlicensedVenueMediaPublishBlocked } from "./unlicensed-venue-media-proof.js";
 import { proofIdempotencyKeyPayloadMismatch } from "./idempotency-key-payload-mismatch-proof.js";
 import { proofWorkerBrowserAuthStateOsDenied } from "./browser-auth-state-proof.js";
 import { proofUnknownUsageCancelHoldsResidual } from "./unknown-usage-cancel-proof.js";
@@ -752,10 +753,13 @@ export async function runSoakRecoveryHarness(input: {
     proofs.push(
     proofValidatedPayloadNotCollectedSeparateStates(nowPlus(nowIso, 580_000)),
   );
-    proofs.push(
+  proofs.push(
     proofActualCostExceedsEstimateOverrunVisible(nowPlus(nowIso, 560_000)),
   );
-const allPassed = proofs.every((p) => p.passed);
+  proofs.push(
+    proofUnlicensedVenueMediaPublishBlocked(nowPlus(nowIso, 600_000)),
+  );
+  const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
     allPassed,
@@ -818,6 +822,7 @@ const allPassed = proofs.every((p) => p.passed);
       "T-X060 fixture ACCEPTED via currency_timezone_mismatch_no_silent_sum only — not live VERIFIED",
       "T-X070 fixture ACCEPTED via validated_payload_not_collected_separate_states only — not live VERIFIED",
       "T-X028 fixture ACCEPTED via actual_cost_exceeds_estimate_overrun_visible only — not live VERIFIED",
+      "T-X044 fixture ACCEPTED via unlicensed_venue_media_publish_blocked only — not live VERIFIED",
     ],
   };
 }

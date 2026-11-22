@@ -836,6 +836,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X027** is fixture ACCEPTED only via the unknown usage cancel holds residual proof (`UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL`). Not sandbox/prod VERIFIED.
 
+**T-X044** is fixture ACCEPTED only via the unlicensed venue media publish-blocked proof (`UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED`) — `releaseCanonical` fails closed for unlicensed / unknown / expired / pending-clearance / uncleared rights / unapproved invented media. Not sandbox/prod VERIFIED.
+
 **T-X028** is fixture ACCEPTED only via the actual cost exceeds estimate overrun visible proof (`ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE`) — `settleBudget` posts full `actualMinor` when it exceeds the reserved estimate; overrun visible in `settledMinor`; reservation released; `heldMinor` stays 0. Not sandbox/prod VERIFIED.
 
 
@@ -904,7 +906,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X041 | Incomparable trend indices | Reject/label |
 | T-X042 | Schema differs from page | Gate fails |
 | T-X043 | Optimization breaks CTA | Journey regression fails *(fixture ACCEPTED — optimization breaks CTA journey fails proof; not sandbox/prod VERIFIED)* |
-| T-X044 | Unlicensed venue media | Publish blocked |
+| T-X044 | Unlicensed venue media | Publish blocked *(fixture ACCEPTED — unlicensed venue media publish-blocked proof; not sandbox/prod VERIFIED)* |
 | T-X045 | Partial campaign destinations | Per-destination states |
 | T-X046 | Unsupported blog destination | No fake publication |
 | T-X047 | Layout-specific capacity mismatch | Filter correctly |
@@ -942,6 +944,6 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-F (full_stack_e2e) | 26 | 99 NOT_RUN + 60 fixture ACCEPTED (T-F24) |
 | T-US (behavior_acceptance) | 60 | 99 NOT_RUN + 60 fixture ACCEPTED (T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060) |
 | T-X (platform/security/resilience) | 73 | 20 NOT_RUN + 53 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X043, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X063, T-X065, T-X066, T-X069, T-X070, T-X073) |
-| **Total** | **159** | **89 NOT_RUN + 70 fixture ACCEPTED** |
+| **Total** | **159** | **88 NOT_RUN + 71 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

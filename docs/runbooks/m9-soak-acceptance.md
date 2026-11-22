@@ -179,3 +179,5 @@ Suggested owner Windows flow (state off OneDrive):
 **T-X060** maps only to `CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM` (heterogeneous currency/timezone series refuse silent sum; not live VERIFIED).
 
 **T-X028** maps only to `ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE`.
+
+| T-X044 | Fixture ACCEPTED via unlicensed venue media publish blocked only |
