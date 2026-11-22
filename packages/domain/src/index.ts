@@ -969,6 +969,20 @@ export {
   type LocalSocialInboxConnectDecision,
 } from "./local-social-inbox-connect.js";
 export {
+  DestinationCapabilityAction,
+  DestinationCapabilityKind,
+  UNSUPPORTED_DESTINATION_CAPABILITIES_RELATED_CASE_IDS,
+  evaluateUnsupportedDestinationCapability,
+  evaluateUnsupportedDestinationCapabilityBatch,
+  type DestinationCapabilityActionValue,
+  type DestinationCapabilityKindValue,
+  type DestinationCapabilityMatrix,
+  type UnsupportedDestinationCapabilityInput,
+  type UnsupportedDestinationCapabilityDecision,
+  type DestinationCapabilityBatchInput,
+  type DestinationCapabilityBatchDecision,
+} from "./unsupported-destination-capabilities.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

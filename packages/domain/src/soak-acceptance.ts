@@ -374,6 +374,14 @@ export const SoakProofKind = {
    */
   CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT:
     "connect_local_social_inbox_test_artifact",
+  /**
+   * Unsupported destination capabilities respected (T-US-022).
+   * Per-destination capability matrix; unsupported actions refused;
+   * false success claims refused; live NOT_WIRED.
+   * Distinct from T-US-021 / T-X045 / T-X046.
+   */
+  UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED:
+    "unsupported_destination_capabilities_respected",
 } as const;
 
 export type SoakProofKindValue =
@@ -482,6 +490,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-019 requires MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY (CRM/forms/booking map + failure/recovery; live Zoho NOT_WIRED).
  * T-US-020 requires SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION (classified canary; no commerce pollution).
  * T-US-021 requires CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT (local/social/inbox connect; test artifact + capability; live NOT_WIRED).
+ * T-US-022 requires UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED (unsupported destination capabilities refused; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -569,6 +578,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-019",
   "T-US-020",
   "T-US-021",
+  "T-US-022",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1073,6 +1083,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION];
     case "T-US-021":
       return [SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT];
+    case "T-US-022":
+      return [SoakProofKind.UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED];
     default:
       return [];
   }
@@ -1233,6 +1245,8 @@ export function mapProofToFixtureCases(
       return ["T-US-020"];
     case SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT:
       return ["T-US-021"];
+    case SoakProofKind.UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED:
+      return ["T-US-022"];
     default:
       return [];
   }
