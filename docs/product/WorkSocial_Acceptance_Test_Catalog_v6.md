@@ -746,7 +746,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-X002, T-X003, T-X005, T-X006, T-X009, T-X010, T-X011, T-X014, T-X015, T-X017, T-X018, T-X019, T-X020, T-X021, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-X002, T-X003, T-X005, T-X006, T-X009, T-X010, T-X011, T-X012, T-X014, T-X015, T-X017, T-X018, T-X019, T-X020, T-X021, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073.
 
 **T-X021** is fixture ACCEPTED only via `CONCURRENT_IDEMPOTENT_RELEASE` (barrier+mutex one dispatch; not retry-only NO_DUPLICATE_EFFECTS). Not sandbox/prod VERIFIED.
 
@@ -814,6 +814,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X009** is fixture ACCEPTED only via the CLI error despite exit 0 proof (`CLI_ERROR_DESPITE_EXIT_ZERO`) — Claude `--output-format json` may set `is_error` while exiting 0; the job must FAIL. Not sandbox/prod VERIFIED.
 
+**T-X012** is fixture ACCEPTED only via `ORPHAN_WORKER_DEADLINE_TREE_STOPPED`. Not sandbox/prod VERIFIED.
+
 **T-X008** is fixture ACCEPTED only via the fact changes after review stale / no publish proof (`FACT_CHANGES_AFTER_REVIEW_STALE`) — cited-fact set change after A25 bind invalidates review and blocks fixture publish; support-label flip fails article/approval gates (binding not claimed invalidated by label alone). Not sandbox/prod VERIFIED.
 
 Shared evidence for each: actual state before/after; instrumented provider call count or read-back; correlated redacted logs/traces; no unauthorized external effect.
@@ -831,7 +833,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X009 | CLI error despite exit 0 | Job fails *(fixture ACCEPTED — CLI error despite exit 0 proof; not sandbox/prod VERIFIED)* |
 | T-X010 | Malicious prompt interpolation | No shell injection *(fixture ACCEPTED)* |
 | T-X011 | Output bomb | Bounded/quarantined *(fixture ACCEPTED — output bomb bounded/quarantined proof; not sandbox/prod VERIFIED)* |
-| T-X012 | Orphan worker on deadline | Process tree stopped |
+| T-X012 | Orphan worker on deadline | Process tree stopped *(fixture ACCEPTED)* |
 | T-X013 | Replay historical workflow | No repeated external I/O |
 | T-X014 | Approval wait survives restart | Resume wait; no slot hold *(fixture ACCEPTED)* |
 | T-X015 | DST recurring schedule | No unintended duplicates *(fixture ACCEPTED — DST recurring schedule no-duplicates proof; not sandbox/prod VERIFIED)* |
@@ -902,7 +904,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
 | T-US (behavior_acceptance) | 60 | 44 NOT_RUN + 16 fixture ACCEPTED (T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060) |
-| T-X (platform/security/resilience) | 73 | 40 NOT_RUN + 33 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X005, T-X006, T-X008, T-X009, T-X010, T-X011, T-X014, T-X015, T-X017, T-X018, T-X019, T-X020, T-X021, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073) |
-| **Total** | **159** | **109 NOT_RUN + 50 fixture ACCEPTED** |
+| T-X (platform/security/resilience) | 73 | 39 NOT_RUN + 34 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X005, T-X006, T-X008, T-X009, T-X010, T-X011, T-X012, T-X014, T-X015, T-X017, T-X018, T-X019, T-X020, T-X021, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073) |
+| **Total** | **159** | **108 NOT_RUN + 51 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

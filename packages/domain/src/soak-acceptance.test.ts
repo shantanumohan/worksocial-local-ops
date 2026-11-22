@@ -396,6 +396,13 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE),
     ).toEqual(["T-X008"]);
+    expect(expectedProofsForFixtureCase("T-X012")).toEqual([
+      SoakProofKind.ORPHAN_WORKER_DEADLINE_TREE_STOPPED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.ORPHAN_WORKER_DEADLINE_TREE_STOPPED),
+    ).toEqual(["T-X012"]);
+
   });
 
   it("builds unique per-run artifact ids", () => {

@@ -10,6 +10,7 @@ export {
   planClaudeCliInvocation,
   detectClaudeCli,
   invokeClaudeCli,
+  stopProcessTree,
   assessStdoutBound,
   quarantineStdoutDelivery,
   type ClaudeCliDetection,

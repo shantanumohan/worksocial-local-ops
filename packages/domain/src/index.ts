@@ -765,6 +765,17 @@ export {
   type SoakAcceptanceState,
 } from "./soak-acceptance.js";
 export {
+  createWorkerProcessTree,
+  workerDeadlineExceeded,
+  alivePids,
+  workerRootPid,
+  isInWorkerProcessTree,
+  stopProcessTreeOnDeadline,
+  type WorkerProcessNode,
+  type WorkerProcessTree,
+  type StopProcessTreeOnDeadlineResult,
+} from "./orphan-worker-deadline.js";
+export {
   SyntheticFlagDecisionCode,
   parsePublicSyntheticClaim,
   bindSyntheticFromServerGrant,

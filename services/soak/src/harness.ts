@@ -90,6 +90,7 @@ import { proofDstRecurringScheduleNoDuplicates } from "./dst-recurring-schedule-
 import { proofHostSleepMonitoringCoverageGap } from "./host-sleep-monitoring-proof.js";
 import { proofConcurrentIdempotentRelease } from "./concurrent-idempotent-release-proof.js";
 import { proofFactChangesAfterReviewStale } from "./fact-changes-after-review-proof.js";
+import { proofOrphanWorkerDeadlineTreeStopped } from "./orphan-worker-deadline-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -669,6 +670,9 @@ export async function runSoakRecoveryHarness(input: {
     await proofConcurrentIdempotentRelease(nowPlus(nowIso, 370_000)),
   );
   proofs.push(proofFactChangesAfterReviewStale(nowPlus(nowIso, 380_000)));
+  proofs.push(
+    await proofOrphanWorkerDeadlineTreeStopped(nowPlus(nowIso, 390_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -712,6 +716,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X001 fixture ACCEPTED via host_sleep_monitoring_coverage_gap only — not live VERIFIED",
       "T-X021 fixture ACCEPTED via concurrent_idempotent_release only — not live VERIFIED",
       "T-X008 fixture ACCEPTED via fact_changes_after_review_stale only — not live VERIFIED",
+      "T-X012 fixture ACCEPTED via orphan_worker_deadline_tree_stopped only — not live VERIFIED",
     ],
   };
 }
