@@ -485,4 +485,14 @@ describe("soak-acceptance domain", () => {
       }),
     ).toThrow(/authorized_production/);
   });
+
+  it("maps T-X027 to UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL only", () => {
+    expect(expectedProofsForFixtureCase("T-X027")).toEqual([
+      SoakProofKind.UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL),
+    ).toEqual(["T-X027"]);
+  });
+
 });

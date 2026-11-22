@@ -219,6 +219,10 @@ export const SoakProofKind = {
    */
   WORKER_BROWSER_AUTH_STATE_OS_DENIED: "worker_browser_auth_state_os_denied",
   /**
+   * Unknown usage on cancelled request — hold residual, not zero cost (T-X027).
+   */
+  UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL: "unknown_usage_cancel_holds_residual",
+  /**
    * Indirect prompt-injection exfiltration denied at boundary (T-X063).
    * Untrusted web/email content cannot become instructions that exfiltrate secrets.
    */
@@ -305,6 +309,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X021 requires CONCURRENT_IDEMPOTENT_RELEASE (not retry-only NO_DUPLICATE_EFFECTS).
  * T-X022 requires IDEMPOTENCY_KEY_PAYLOAD_MISMATCH (business key digest conflict).
  * T-X065 requires WORKER_BROWSER_AUTH_STATE_OS_DENIED.
+ * T-X027 requires UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL.
  * T-X008 requires FACT_CHANGES_AFTER_REVIEW_STALE (cited/support change; no publish).
  * T-X012 requires ORPHAN_WORKER_DEADLINE_TREE_STOPPED
  * T-X007 requires WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP (process tree stopped on deadline).
@@ -371,6 +376,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X016",
   "T-X063",
   "T-X013",
+  "T-X027",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -809,6 +815,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.IDEMPOTENCY_KEY_PAYLOAD_MISMATCH];
     case "T-X065":
       return [SoakProofKind.WORKER_BROWSER_AUTH_STATE_OS_DENIED];
+    case "T-X027":
+      return [SoakProofKind.UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL];
     case "T-X008":
       return [SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE];
     case "T-X012":
@@ -917,6 +925,8 @@ export function mapProofToFixtureCases(
       return ["T-X022"];
     case SoakProofKind.WORKER_BROWSER_AUTH_STATE_OS_DENIED:
       return ["T-X065"];
+    case SoakProofKind.UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL:
+      return ["T-X027"];
     case SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE:
       return ["T-X008"];
     case SoakProofKind.ORPHAN_WORKER_DEADLINE_TREE_STOPPED:

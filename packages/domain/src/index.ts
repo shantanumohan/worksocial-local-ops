@@ -22,10 +22,14 @@ export {
   type EffectOutcome,
 } from "./simulated-effect-ledger.js";
 export {
+  availableBudgetMinor,
+  cancelBudgetReservation,
   createBudgetAccount,
   reserveBudget,
   settleBudget,
   type BudgetAccount,
+  type BudgetCancelUsage,
+  type BudgetCancellation,
   type BudgetReservation,
   type BudgetSettlement,
 } from "./budget-accounting.js";

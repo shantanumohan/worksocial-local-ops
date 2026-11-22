@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x027",
+  "caseId": "T-X027",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X027 (Unknown usage on cancelled request — hold; not zero cost)\nproof=unknown_usage_cancel_holds_residual applyCount=1 :: Reserved 700 for cancel candidate; available=300 | Cancel unknown usage → heldMinor=700 (not zero); available stays 300 | Counterfactual settle-as-zero refused on unknown-usage hold | Positive control: known-zero cancel releases that reservation only; unknown hold still consumes 700 | Hold residual blocks over-cap reserve (BUDGET_EXHAUSTED available=300) | Known reconcile after hold posts actual=220 and clears held residual | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "unknown_usage_cancel_holds_residual"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x027.json",
+  "createdAtIso": "2026-11-22T19:02:46.596Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x027-d6aa006bf6ff"
+}
