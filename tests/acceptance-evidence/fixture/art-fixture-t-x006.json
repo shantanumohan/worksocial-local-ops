@@ -8,8 +8,8 @@
     "cross_workspace_reference_denied"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x006.json",
-  "createdAtIso": "2026-11-22T18:31:39.685Z",
+  "createdAtIso": "2026-11-22T18:35:10.180Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x006-745add71fdc8"
+  "uniqueSourceArtifactId": "art-fixture-t-x006-2ca44786a2c1"
 }

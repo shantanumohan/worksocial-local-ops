@@ -147,3 +147,5 @@ Suggested owner Windows flow (state off OneDrive):
 
 
 **T-X021** maps only to `CONCURRENT_IDEMPOTENT_RELEASE` (not retry-only `NO_DUPLICATE_EFFECTS`).
+
+**T-X008** maps only to `FACT_CHANGES_AFTER_REVIEW_STALE`.

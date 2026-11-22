@@ -89,6 +89,7 @@ import { proofCliErrorDespiteExitZero } from "./cli-error-despite-exit-zero-proo
 import { proofDstRecurringScheduleNoDuplicates } from "./dst-recurring-schedule-proof.js";
 import { proofHostSleepMonitoringCoverageGap } from "./host-sleep-monitoring-proof.js";
 import { proofConcurrentIdempotentRelease } from "./concurrent-idempotent-release-proof.js";
+import { proofFactChangesAfterReviewStale } from "./fact-changes-after-review-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -667,6 +668,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     await proofConcurrentIdempotentRelease(nowPlus(nowIso, 370_000)),
   );
+  proofs.push(proofFactChangesAfterReviewStale(nowPlus(nowIso, 380_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -709,6 +711,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X009 fixture ACCEPTED via cli_error_despite_exit_zero only — not live VERIFIED",
       "T-X001 fixture ACCEPTED via host_sleep_monitoring_coverage_gap only — not live VERIFIED",
       "T-X021 fixture ACCEPTED via concurrent_idempotent_release only — not live VERIFIED",
+      "T-X008 fixture ACCEPTED via fact_changes_after_review_stale only — not live VERIFIED",
     ],
   };
 }

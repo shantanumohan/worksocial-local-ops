@@ -190,6 +190,11 @@ export const SoakProofKind = {
    * Distinct from NO_DUPLICATE_EFFECTS (sequential retry-only).
    */
   CONCURRENT_IDEMPOTENT_RELEASE: "concurrent_idempotent_release",
+  /**
+   * Fact changes after review -> stale; no publish (T-X008).
+   * Cited-fact set change invalidates A25 content binding; support flip fails publish gates.
+   */
+  FACT_CHANGES_AFTER_REVIEW_STALE: "fact_changes_after_review_stale",
 } as const;
 
 export type SoakProofKindValue =
@@ -264,6 +269,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X015 requires DST_RECURRING_SCHEDULE_NO_DUPLICATES.
  * T-X001 requires HOST_SLEEP_MONITORING_COVERAGE_GAP.
  * T-X021 requires CONCURRENT_IDEMPOTENT_RELEASE (not retry-only NO_DUPLICATE_EFFECTS).
+ * T-X008 requires FACT_CHANGES_AFTER_REVIEW_STALE (cited/support change; no publish).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -316,6 +322,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X015",
   "T-X001",
   "T-X021",
+  "T-X008",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -750,6 +757,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.HOST_SLEEP_MONITORING_COVERAGE_GAP];
     case "T-X021":
       return [SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE];
+    case "T-X008":
+      return [SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE];
     default:
       return [];
   }
@@ -841,6 +850,8 @@ export function mapProofToFixtureCases(
       return ["T-X001"];
     case SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE:
       return ["T-X021"];
+    case SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE:
+      return ["T-X008"];
     default:
       return [];
   }
