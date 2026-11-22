@@ -1013,6 +1013,21 @@ export {
   type WorkstreamScheduleLaunchDecision,
 } from "./workstream-schedule-launch.js";
 export {
+  MissedScheduleSlotOutcome,
+  MISSED_SCHEDULE_COALESCE_RELATED_CASE_IDS,
+  missedScheduleSlotId,
+  createMissedScheduleCoalesceState,
+  deriveMissedPublishSlots,
+  recordScheduledPublish,
+  markMissedPublishSlots,
+  coalesceMissedPublishSlots,
+  type MissedScheduleSlotOutcomeValue,
+  type MissedScheduleSlotRecord,
+  type MissedScheduleCoalesceState,
+  type CatchupPublishDecision,
+  type CoalesceMissedPublishResult,
+} from "./missed-schedule-coalesce.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

@@ -672,7 +672,7 @@ Required evidence:
 
 Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixture ACCEPTED below | Environment fixture_or_sandbox; live evidence separately authorized.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-015, T-US-017, T-US-018, T-US-019, T-US-020, T-US-021, T-US-022, T-US-023, T-US-024, T-US-025, T-US-036, T-US-038, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-052, T-US-054, T-US-057, T-US-058, T-US-060.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-015, T-US-017, T-US-018, T-US-019, T-US-020, T-US-021, T-US-022, T-US-023, T-US-024, T-US-025, T-US-026, T-US-036, T-US-038, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-052, T-US-054, T-US-057, T-US-058, T-US-060.
 
 **T-US-012** is fixture ACCEPTED only via the Google Ads test vs production access separated proof (`GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED`) — TEST credential cannot reach PRODUCTION customer (and reverse); LIVE stays NOT_WIRED; mutate never authorized from this gate. Distinct from T-X034 (ChatGPT Ads SANDBOX→LIVE) and T-US-011 (analyze-only connect). Not sandbox/prod VERIFIED.
 
@@ -691,6 +691,8 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 **T-US-023** is fixture ACCEPTED only via the standing autonomy grant control receipts proof (`STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS`) — scope snapshot, versioned authority draft, policy constraints (inference vs ad-spend), policy test matrix (allowed + blocked), owner-signed grant + audit event, and pause / stop-writes / pause-replies control receipts; live provider wiring stays NOT_WIRED; ad spend never a side effect. Distinct from T-US-024 (agent cannot widen grant) and T-US-060 (emergency stop at commit). Not sandbox/prod VERIFIED.
 
 **T-US-025** is fixture ACCEPTED only via the launch workstream schedule mission outcome proof (`LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME`) — objective + pilot scope, readiness gates, dry rehearsal with externalEffects NONE, frequency/timezone/change cooldown, owner-reviewed launch receipt, and mission outcome + next action; live provider wiring stays NOT_WIRED; burst republish refused. Distinct from T-US-026 (missed-schedule coalesce / no burst) and T-X015 (DST recurring schedule no duplicates). Not sandbox/prod VERIFIED.
+
+**T-US-026** is fixture ACCEPTED only via the missed schedule coalesce no burst republish proof (`MISSED_SCHEDULE_COALESCE_NO_BURST`) — cadence-derived content/social misses, single catch-up after fixture publish decision, burst republish of every missed post refused; live provider wiring stays NOT_WIRED. Distinct from T-X001 (monitoring probe coalesce), T-X015 (DST no duplicates), and T-US-025 (workstream launch). Not sandbox/prod VERIFIED.
 
 ### Happy-path / documented flow completions
 - **T-US-001** Create a trusted local workspace (F01/SC-02) — blockers and next actions.
@@ -733,7 +735,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 - **T-US-020** Synthetic leads classified; no commerce pollution. *(fixture ACCEPTED — synthetic leads classified no commerce pollution proof; not sandbox/prod VERIFIED)*
 - **T-US-022** Unsupported destination capabilities respected. *(fixture ACCEPTED — unsupported destination capabilities respected proof; not sandbox/prod VERIFIED)*
 - **T-US-024** Agent cannot widen its own grant. *(fixture ACCEPTED — agent cannot widen grant proof; not sandbox/prod VERIFIED)*
-- **T-US-026** Missed schedules coalesce; no burst republish.
+- **T-US-026** Missed schedules coalesce; no burst republish. *(fixture ACCEPTED — missed schedule coalesce no burst republish proof; not sandbox/prod VERIFIED)*
 - **T-US-028** Prefer one useful page update over keyword proliferation.
 - **T-US-030** Uncertain post: reconcile before retry.
 - **T-US-032** Exact financial boundaries preserved.
@@ -971,8 +973,8 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | Family | Count | Status |
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
-| T-US (behavior_acceptance) | 60 | 32 NOT_RUN + 28 fixture ACCEPTED (T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-015, T-US-017, T-US-018, T-US-019, T-US-020, T-US-021, T-US-022, T-US-023, T-US-024, T-US-025, T-US-036, T-US-038, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-052, T-US-054, T-US-057, T-US-058, T-US-060) |
+| T-US (behavior_acceptance) | 60 | 31 NOT_RUN + 29 fixture ACCEPTED (T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-015, T-US-017, T-US-018, T-US-019, T-US-020, T-US-021, T-US-022, T-US-023, T-US-024, T-US-025, T-US-026, T-US-036, T-US-038, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-052, T-US-054, T-US-057, T-US-058, T-US-060) |
 | T-X (platform/security/resilience) | 73 | 14 NOT_RUN + 59 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X023, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X030, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X040, T-X043, T-X044, T-X045, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X063, T-X065, T-X066, T-X069, T-X070, T-X073) |
-| **Total** | **159** | **72 NOT_RUN + 87 fixture ACCEPTED** |
+| **Total** | **159** | **71 NOT_RUN + 88 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.
