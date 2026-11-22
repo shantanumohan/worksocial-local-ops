@@ -444,6 +444,17 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X013"]);
   });
 
+  it("maps T-X045 to PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE only", () => {
+    expect(expectedProofsForFixtureCase("T-X045")).toEqual([
+      SoakProofKind.PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE,
+      ),
+    ).toEqual(["T-X045"]);
+  });
+
   it("builds unique per-run artifact ids", () => {
     const a = uniqueFixtureEvidenceArtifactId("T-X014", "soak-abcdef123456");
     const b = uniqueFixtureEvidenceArtifactId("T-X014", "soak-zzz999888777");

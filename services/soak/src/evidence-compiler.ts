@@ -111,6 +111,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X060": "Currency/timezone mismatch — no silent sum",
   "T-X070": "Validated payload not collected — separate failure states",
   "T-X044": "Unlicensed venue media — publish blocked",
+  "T-X045": "Partial campaign destinations — per-destination states",
 };
 
 function relatedProofsForCase(
@@ -305,6 +306,7 @@ export function compileAcceptanceEvidence(
     "T-X060 fixture ACCEPTED only via CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM",
     "T-X070 fixture ACCEPTED only via VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES",
     "T-X044 fixture ACCEPTED only via UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED",
+    "T-X045 fixture ACCEPTED only via PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE (per-destination honesty)",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
