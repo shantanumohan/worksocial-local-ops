@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x010",
+  "caseId": "T-X010",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X010 (Malicious prompt interpolation — no shell injection)\nproof=malicious_prompt_no_shell_injection applyCount=1 :: Malicious prompts planned with shell=false; prompt via stdin; argv clean | Bash tool string refused (FLAG_DENIED) | Permission-bypass flag refused | Path-like agent name refused (INVALID_AGENT) | Benign prompt also stdin-only (positive control) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "malicious_prompt_no_shell_injection"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x010.json",
+  "createdAtIso": "2026-11-22T18:17:04.722Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x010-bb2a4dbd3ba6"
+}

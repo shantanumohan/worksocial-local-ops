@@ -7,6 +7,7 @@ export {
   defaultClaudeExecutableCandidates,
   validateCliArgs,
   isRegisteredAgentName,
+  planClaudeCliInvocation,
   detectClaudeCli,
   invokeClaudeCli,
   assessStdoutBound,
@@ -14,6 +15,8 @@ export {
   type ClaudeCliDetection,
   type ClaudeCliInvokeRequest,
   type ClaudeCliInvokeResult,
+  type ClaudeCliInvocationPlan,
+  type PlanClaudeCliInvocationInput,
   type StdoutBoundAssessment,
 } from "./cli-adapter.js";
 

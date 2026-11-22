@@ -84,6 +84,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X011": "Output bomb — bounded/quarantined",
   "T-X003": "Symlink escape after root verification — write denied outside root",
   "T-X050": "Public synthetic flag abuse — server grant required",
+  "T-X010": "Malicious prompt interpolation — no shell injection",
 };
 
 function relatedProofsForCase(
@@ -252,6 +253,7 @@ export function compileAcceptanceEvidence(
     "T-X011 fixture ACCEPTED only via OUTPUT_BOMB_BOUNDED_QUARANTINED",
     "T-X003 fixture ACCEPTED only via SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION",
     "T-X050 fixture ACCEPTED only via PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT",
+    "T-X010 fixture ACCEPTED only via MALICIOUS_PROMPT_NO_SHELL_INJECTION",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
