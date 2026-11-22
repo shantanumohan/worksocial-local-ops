@@ -77,6 +77,7 @@ import { proofReplySentCrmReconcilesNoResend } from "./reply-sent-crm-reconcile-
 import { proofUnknownPolicyQuestionEscalatesWithoutPromise } from "./unknown-policy-question-proof.js";
 import { proofAutomatedResponseLoopBoundedHandoff } from "./automated-response-loop-proof.js";
 import { proofDuplicatePlatformAttributionOneBooking } from "./duplicate-platform-attribution-proof.js";
+import { proofCurrencyTimezoneMismatchNoSilentSum } from "./currency-timezone-mismatch-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -742,6 +743,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofDuplicatePlatformAttributionOneBooking(nowPlus(nowIso, 560_000)),
   );
+  proofs.push(
+    proofCurrencyTimezoneMismatchNoSilentSum(nowPlus(nowIso, 570_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -802,6 +806,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X055 fixture ACCEPTED via unknown_policy_question_escalates_without_promise only — not live VERIFIED",
       "T-X056 fixture ACCEPTED via automated_response_loop_bounded_handoff only — not live VERIFIED",
       "T-X059 fixture ACCEPTED via duplicate_platform_attribution_one_booking only — not live VERIFIED",
+      "T-X060 fixture ACCEPTED via currency_timezone_mismatch_no_silent_sum only — not live VERIFIED",
     ],
   };
 }

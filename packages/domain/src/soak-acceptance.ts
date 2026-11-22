@@ -280,6 +280,12 @@ export const SoakProofKind = {
    */
   DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING:
     "duplicate_platform_attribution_one_booking",
+  /**
+   * Currency/timezone mismatch — refuse silent sum (T-X060).
+   * Heterogeneous currency or reporting timezone series never invent a total.
+   */
+  CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM:
+    "currency_timezone_mismatch_no_silent_sum",
 } as const;
 
 export type SoakProofKindValue =
@@ -372,6 +378,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X055 requires UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE.
  * T-X056 requires AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF.
  * T-X059 requires DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING.
+ * T-X060 requires CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -442,6 +449,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X055",
   "T-X056",
   "T-X059",
+  "T-X060",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -912,6 +920,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF];
     case "T-X059":
       return [SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING];
+    case "T-X060":
+      return [SoakProofKind.CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM];
     default:
       return [];
   }
@@ -1040,6 +1050,8 @@ export function mapProofToFixtureCases(
       return ["T-X056"];
     case SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING:
       return ["T-X059"];
+    case SoakProofKind.CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM:
+      return ["T-X060"];
     default:
       return [];
   }
