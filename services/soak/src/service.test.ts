@@ -29,9 +29,15 @@ describe("soak service (M9)", () => {
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(41);
+    expect(result.proofs).toHaveLength(42);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
-    expect(result.proofs.every((p) => p.applyAttemptCount === 1)).toBe(true);
+    expect(
+      result.proofs.every((p) =>
+        p.kind === SoakProofKind.STOP_BEFORE_DISPATCH_NO_MUTATION
+          ? p.applyAttemptCount === 0
+          : p.applyAttemptCount === 1,
+      ),
+    ).toBe(true);
     expect(
       result.proofs.some((p) => p.kind === SoakProofKind.BACKUP_OMIT_RECEIPT),
     ).toBe(true);
@@ -199,6 +205,11 @@ describe("soak service (M9)", () => {
         (p) => p.kind === SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE,
       ),
     ).toBe(true);
+    expect(
+      result.proofs.some(
+        (p) => p.kind === SoakProofKind.STOP_BEFORE_DISPATCH_NO_MUTATION,
+      ),
+    ).toBe(true);
   });
 
   it("compiles fixture ACCEPTED for complete proof sets including T-X008", async () => {
@@ -247,6 +258,7 @@ describe("soak service (M9)", () => {
       "T-X012",
       "T-X014",
       "T-X015",
+      "T-X016",
       "T-X017",
       "T-X018",
       "T-X019",
@@ -400,7 +412,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(52);
+    expect(soak.ownerReport().acceptedCases.length).toBe(53);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {
