@@ -8,8 +8,8 @@
     "unknown_usage_cancel_holds_residual"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x027.json",
-  "createdAtIso": "2026-11-22T19:15:06.234Z",
+  "createdAtIso": "2026-11-22T19:19:15.073Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x027-7ee0bc8cb5aa"
+  "uniqueSourceArtifactId": "art-fixture-t-x027-63d3ff6386ab"
 }

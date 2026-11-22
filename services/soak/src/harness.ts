@@ -71,6 +71,7 @@ import { proofCrossWorkspaceReferenceDenied } from "./cross-workspace-reference-
 import { proofApprovedPayloadEditInvalidated } from "./approved-payload-edit-proof.js";
 import { proofExternalHumanEditConflictRetained } from "./external-human-edit-staging-proof.js";
 import { proofOptimizationBreaksCtaJourneyFails } from "./optimization-breaks-cta-proof.js";
+import { proofConcurrentFinalBudgetReservationCap } from "./concurrent-final-budget-reservation-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -716,6 +717,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofOptimizationBreaksCtaJourneyFails(nowPlus(nowIso, 480_000)),
   );
+  proofs.push(
+    await proofConcurrentFinalBudgetReservationCap(nowPlus(nowIso, 510_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -727,6 +731,7 @@ export async function runSoakRecoveryHarness(input: {
       "External effects: NONE — fake provider only",
       "T-X015 fixture ACCEPTED via dst_recurring_schedule_no_duplicates only — not live VERIFIED",
       "T-X025 fixture ACCEPTED via external_human_edit_conflict_retained only — not live VERIFIED",
+      "T-X026 fixture ACCEPTED via concurrent_final_budget_reservation_cap only — not live VERIFIED",
       "Live CMS/GSC/GA4/Zoho/Temporal remain NOT_WIRED",
       "T-F24/T-US-047 fixture ACCEPTED via recover_rotate_reconcile only — not live VERIFIED",
       "T-US-002/T-X002 fixture ACCEPTED via competing_supervisor_lease only — not live VERIFIED",

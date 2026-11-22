@@ -247,6 +247,12 @@ export const SoakProofKind = {
    */
   OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS:
     "optimization_breaks_cta_journey_fails",
+  /**
+   * Concurrent final budget reservation — daily cap enforced (T-X026).
+   * Same-snapshot finals compose to BUDGET_EXHAUSTED; reserved never exceeds limit.
+   */
+  CONCURRENT_FINAL_BUDGET_RESERVATION_CAP:
+    "concurrent_final_budget_reservation_cap",
 } as const;
 
 export type SoakProofKindValue =
@@ -333,6 +339,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X013 requires REPLAY_HISTORICAL_NO_REPEAT_IO (history replay; no second I/O).
  * T-X025 requires EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED.
  * T-X043 requires OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS (CTA journey regression).
+ * T-X026 requires CONCURRENT_FINAL_BUDGET_RESERVATION_CAP (same-snapshot composition).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -397,6 +404,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X004",
   "T-X025",
   "T-X043",
+  "T-X026",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -855,6 +863,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED];
     case "T-X043":
       return [SoakProofKind.OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS];
+    case "T-X026":
+      return [SoakProofKind.CONCURRENT_FINAL_BUDGET_RESERVATION_CAP];
     default:
       return [];
   }
@@ -971,6 +981,8 @@ export function mapProofToFixtureCases(
       return ["T-X025"];
     case SoakProofKind.OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS:
       return ["T-X043"];
+    case SoakProofKind.CONCURRENT_FINAL_BUDGET_RESERVATION_CAP:
+      return ["T-X026"];
     default:
       return [];
   }
