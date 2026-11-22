@@ -389,6 +389,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X021"]);
   });
 
+  it("maps T-X022 to IDEMPOTENCY_KEY_PAYLOAD_MISMATCH only", () => {
+    expect(expectedProofsForFixtureCase("T-X022")).toEqual([
+      SoakProofKind.IDEMPOTENCY_KEY_PAYLOAD_MISMATCH,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.IDEMPOTENCY_KEY_PAYLOAD_MISMATCH),
+    ).toEqual(["T-X022"]);
+  });
+
   it("maps T-X008 to FACT_CHANGES_AFTER_REVIEW_STALE only", () => {
     expect(expectedProofsForFixtureCase("T-X008")).toEqual([
       SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE,

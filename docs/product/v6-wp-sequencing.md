@@ -29,7 +29,7 @@ v6 does not publish sixteen separate titles. Tracker tasks may still use histori
 ## Acceptance matrix (do not invent VERIFIED)
 
 - Machine index: `tests/acceptance-matrix-v6.json`
-- Typical counts on current main: **106 NOT_RUN**, **53 fixture ACCEPTED** (`T-F24, T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060, T-X001, T-X002, T-X003, T-X005, T-X006, T-X009, T-X010, T-X011, T-X012, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073`), **0 VERIFIED**
+- Typical counts on current main: **105 NOT_RUN**, **54 fixture ACCEPTED** (`T-F24, T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060, T-X001, T-X002, T-X003, T-X005, T-X006, T-X009, T-X010, T-X011, T-X012, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073`), **0 VERIFIED**
 - Fixture ACCEPTED ≠ sandbox-verified ≠ production-canary-verified
 - Catalog: `WorkSocial_Acceptance_Test_Catalog_v6.md`
 

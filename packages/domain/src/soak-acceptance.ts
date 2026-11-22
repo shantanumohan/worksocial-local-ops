@@ -191,6 +191,11 @@ export const SoakProofKind = {
    */
   CONCURRENT_IDEMPOTENT_RELEASE: "concurrent_idempotent_release",
   /**
+   * Idempotency key payload mismatch → Conflict (T-X022).
+   * Same businessIdempotencyKey with a different payloadDigest is refused.
+   */
+  IDEMPOTENCY_KEY_PAYLOAD_MISMATCH: "idempotency_key_payload_mismatch",
+  /**
    * Fact changes after review -> stale; no publish (T-X008).
    * Cited-fact set change invalidates A25 content binding; support flip fails publish gates.
    */
@@ -283,6 +288,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X015 requires DST_RECURRING_SCHEDULE_NO_DUPLICATES.
  * T-X001 requires HOST_SLEEP_MONITORING_COVERAGE_GAP.
  * T-X021 requires CONCURRENT_IDEMPOTENT_RELEASE (not retry-only NO_DUPLICATE_EFFECTS).
+ * T-X022 requires IDEMPOTENCY_KEY_PAYLOAD_MISMATCH (business key digest conflict).
  * T-X008 requires FACT_CHANGES_AFTER_REVIEW_STALE (cited/support change; no publish).
  * T-X012 requires ORPHAN_WORKER_DEADLINE_TREE_STOPPED
  * T-X007 requires WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP (process tree stopped on deadline).
@@ -339,6 +345,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X015",
   "T-X001",
   "T-X021",
+  "T-X022",
   "T-X008",
   "T-X012",
   "T-X007",
@@ -777,6 +784,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.HOST_SLEEP_MONITORING_COVERAGE_GAP];
     case "T-X021":
       return [SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE];
+    case "T-X022":
+      return [SoakProofKind.IDEMPOTENCY_KEY_PAYLOAD_MISMATCH];
     case "T-X008":
       return [SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE];
     case "T-X012":
@@ -795,6 +804,7 @@ export function expectedProofsForFixtureCase(
  * NO_DUPLICATE_EFFECTS stays unmapped: T-X066 requires BACKUP_OMIT_RECEIPT
  * (backup / omit-receipt / post-restore reconcile), not retry-only no-dup;
  * T-X021 requires CONCURRENT_IDEMPOTENT_RELEASE, not retry-only no-dup.
+ * T-X022 requires IDEMPOTENCY_KEY_PAYLOAD_MISMATCH, not retry-only no-dup.
  */
 export function mapProofToFixtureCases(
   kind: SoakProofKindValue,
@@ -876,6 +886,8 @@ export function mapProofToFixtureCases(
       return ["T-X001"];
     case SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE:
       return ["T-X021"];
+    case SoakProofKind.IDEMPOTENCY_KEY_PAYLOAD_MISMATCH:
+      return ["T-X022"];
     case SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE:
       return ["T-X008"];
     case SoakProofKind.ORPHAN_WORKER_DEADLINE_TREE_STOPPED:
