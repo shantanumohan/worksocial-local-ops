@@ -672,7 +672,7 @@ Required evidence:
 
 Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixture ACCEPTED below | Environment fixture_or_sandbox; live evidence separately authorized.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060, T-X013.
 
 ### Happy-path / documented flow completions
 - **T-US-001** Create a trusted local workspace (F01/SC-02) — blockers and next actions.
@@ -746,7 +746,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-X002, T-X003, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X063, T-X065, T-X066, T-X069, T-X073.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-X002, T-X003, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X013, T-X063, T-X065, T-X066, T-X069, T-X073.
 
 **T-X021** is fixture ACCEPTED only via `CONCURRENT_IDEMPOTENT_RELEASE` (barrier+mutex one dispatch; not retry-only NO_DUPLICATE_EFFECTS). Not sandbox/prod VERIFIED.
 
@@ -810,6 +810,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X063** is fixture ACCEPTED only via the indirect prompt-injection exfiltration boundary proof (`INDIRECT_PROMPT_INJECTION_EXFIL_DENIED`) — untrusted web/email content is not instruction-eligible; `secret_exfiltration` / `credential_access` / `broker_secret_read` are absolute-denied via `proposeEffect` and the injection boundary. Not sandbox/prod VERIFIED.
 
+**T-X013** is fixture ACCEPTED only via the replay historical workflow / no repeated external I/O proof (`REPLAY_HISTORICAL_NO_REPEAT_IO`) — record enqueue→accept→verify activity history, then replay the mission control flow from that history without re-invoking acceptPending/applyOnce; provider ledger must not grow. Distinct from mid-flight no-dup, crash-restart, and mere VERIFIED acceptPending short-circuit. Not sandbox/prod VERIFIED.
+
 **T-X017** is fixture ACCEPTED only via the stop-after-dispatch reconcile / no fake cancel proof (`STOP_AFTER_DISPATCH_RECONCILE`) — once APPLYING has started, stop retains work for reconcile (APPLYING→CANCELLED forbidden). Not sandbox/prod VERIFIED.
 
 **T-X024** is fixture ACCEPTED only via the old fence after reassignment proof (`OLD_FENCE_AFTER_REASSIGNMENT`). Not sandbox/prod VERIFIED.
@@ -842,7 +844,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X010 | Malicious prompt interpolation | No shell injection *(fixture ACCEPTED)* |
 | T-X011 | Output bomb | Bounded/quarantined *(fixture ACCEPTED — output bomb bounded/quarantined proof; not sandbox/prod VERIFIED)* |
 | T-X012 | Orphan worker on deadline | Process tree stopped *(fixture ACCEPTED)* |
-| T-X013 | Replay historical workflow | No repeated external I/O |
+| T-X013 | Replay historical workflow | No repeated external I/O *(fixture ACCEPTED — replay historical no-repeat-I/O proof; not sandbox/prod VERIFIED)* |
 | T-X014 | Approval wait survives restart | Resume wait; no slot hold *(fixture ACCEPTED)* |
 | T-X015 | DST recurring schedule | No unintended duplicates *(fixture ACCEPTED — DST recurring schedule no-duplicates proof; not sandbox/prod VERIFIED)* |
 | T-X016 | Stop before dispatch claim | No adapter mutation *(fixture ACCEPTED — stop-before-dispatch / no adapter mutation proof; not sandbox/prod VERIFIED)* |

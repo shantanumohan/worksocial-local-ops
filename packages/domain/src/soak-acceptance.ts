@@ -224,6 +224,11 @@ export const SoakProofKind = {
    */
   INDIRECT_PROMPT_INJECTION_EXFIL_DENIED:
     "indirect_prompt_injection_exfil_denied",
+  /**
+   * Replay historical workflow — no repeated external I/O (T-X013).
+   * Offline history replay of mission control flow; not acceptPending short-circuit.
+   */
+  REPLAY_HISTORICAL_NO_REPEAT_IO: "replay_historical_no_repeat_io",
 } as const;
 
 export type SoakProofKindValue =
@@ -305,6 +310,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X007 requires WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP (process tree stopped on deadline).
  * T-X016 requires STOP_BEFORE_DISPATCH_NO_MUTATION (no adapter mutation).
  * T-X063 requires INDIRECT_PROMPT_INJECTION_EXFIL_DENIED.
+ * T-X013 requires REPLAY_HISTORICAL_NO_REPEAT_IO (history replay; no second I/O).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -364,6 +370,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X007",
   "T-X016",
   "T-X063",
+  "T-X013",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -812,6 +819,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.STOP_BEFORE_DISPATCH_NO_MUTATION];
     case "T-X063":
       return [SoakProofKind.INDIRECT_PROMPT_INJECTION_EXFIL_DENIED];
+    case "T-X013":
+      return [SoakProofKind.REPLAY_HISTORICAL_NO_REPEAT_IO];
     default:
       return [];
   }
@@ -918,6 +927,8 @@ export function mapProofToFixtureCases(
       return ["T-X016"];
     case SoakProofKind.INDIRECT_PROMPT_INJECTION_EXFIL_DENIED:
       return ["T-X063"];
+    case SoakProofKind.REPLAY_HISTORICAL_NO_REPEAT_IO:
+      return ["T-X013"];
     default:
       return [];
   }

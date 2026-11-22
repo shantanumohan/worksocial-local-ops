@@ -96,6 +96,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X007": "Wrong CMS environment — no production op",
   "T-X016": "Stop before dispatch claim — no adapter mutation",
   "T-X063": "Indirect prompt-injection exfiltration — boundary denies",
+  "T-X013": "Replay historical workflow — no repeated external I/O",
 };
 
 function relatedProofsForCase(
@@ -276,6 +277,7 @@ export function compileAcceptanceEvidence(
     "T-X022 fixture ACCEPTED only via IDEMPOTENCY_KEY_PAYLOAD_MISMATCH",
     "T-X065 fixture ACCEPTED only via WORKER_BROWSER_AUTH_STATE_OS_DENIED",
     "T-X063 fixture ACCEPTED only via INDIRECT_PROMPT_INJECTION_EXFIL_DENIED",
+    "T-X013 fixture ACCEPTED only via REPLAY_HISTORICAL_NO_REPEAT_IO (history replay; no repeated I/O)",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
