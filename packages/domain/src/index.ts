@@ -1060,6 +1060,14 @@ export {
   type CampaignManifestDistributionDecision,
 } from "./campaign-manifest-distribution.js";
 export {
+  UNCERTAIN_POST_RECONCILE_RELATED_CASE_IDS,
+  evaluateUncertainPostReconcile,
+  type UncertainPostAttempt,
+  type PostReconcileSettlement,
+  type UncertainPostReconcileInput,
+  type UncertainPostReconcileDecision,
+} from "./uncertain-post-reconcile.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
