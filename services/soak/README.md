@@ -35,6 +35,7 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-X011 output bomb | Fixture **ACCEPTED** via `OUTPUT_BOMB_BOUNDED_QUARANTINED` (oversized stdout quarantined; not live VERIFIED) |
 | T-X003 symlink escape after root verification | Fixture **ACCEPTED** via `SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION` (write denied outside root; not live VERIFIED) |
 | 72h pilot gate | server-recorded start/heartbeat/end only — short CI soaks stay **NOT_MET**; client claim dates rejected |
+| T-X063 indirect prompt-injection exfil | Fixture **ACCEPTED** via `INDIRECT_PROMPT_INJECTION_EXFIL_DENIED` (not live VERIFIED) |
 | Live CMS / GSC / GA4 / Zoho / Temporal | **NOT_WIRED** |
 | ChatGPT Ads | **access-blocked** |
 | R1-complete | **not claimed** |

@@ -8,8 +8,8 @@
     "thank_you_without_crm_fails_delivery"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-040.json",
-  "createdAtIso": "2026-11-22T18:51:24.061Z",
+  "createdAtIso": "2026-11-22T18:55:51.014Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-040-e06480167762"
+  "uniqueSourceArtifactId": "art-fixture-t-us-040-517c85839233"
 }

@@ -402,6 +402,14 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.IDEMPOTENCY_KEY_PAYLOAD_MISMATCH),
     ).toEqual(["T-X022"]);
+    expect(expectedProofsForFixtureCase("T-X063")).toEqual([
+      SoakProofKind.INDIRECT_PROMPT_INJECTION_EXFIL_DENIED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.INDIRECT_PROMPT_INJECTION_EXFIL_DENIED,
+      ),
+    ).toEqual(["T-X063"]);
   });
 
   it("maps T-X008 to FACT_CHANGES_AFTER_REVIEW_STALE only", () => {
