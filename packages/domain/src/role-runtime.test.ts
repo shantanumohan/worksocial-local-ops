@@ -9,8 +9,10 @@ import {
   createRoleRunOutcome,
   evaluateIndependentReviewGate,
   listRoleOutcomesForLearning,
+  classifyClaudeCliCompletion,
   parseClaudeUsageCost,
   proposeEffect,
+  roleRunStatusForClaudeCliCompletion,
   unwrapClaudeJsonPayload,
   validateRoleStructuredOutput,
   validateTypedDelegation,
@@ -188,6 +190,69 @@ describe("role-runtime gates (R1-04)", () => {
       OutcomeLabel.FAILURE,
     ]);
     expect(success.costKind).toBe(CostRecordingKind.FIXTURE);
+  });
+
+  it("fails the job when CLI reports is_error despite exit 0 (T-X009)", () => {
+    const poisonedSuccess = classifyClaudeCliCompletion({
+      exitCode: 0,
+      stdout: JSON.stringify({
+        type: "result",
+        subtype: "success",
+        is_error: true,
+        result: JSON.stringify({
+          roleId: "A01",
+          jobId: "11111111-1111-4111-8111-111111111111",
+          status: "ok",
+          summary: "should not succeed",
+          artifactIds: [],
+          proposedEffects: [],
+          taskRequests: [],
+        }),
+      }),
+    });
+    expect(poisonedSuccess.ok).toBe(false);
+    if (!poisonedSuccess.ok) {
+      expect(poisonedSuccess.code).toBe("CLI_REPORTED_ERROR");
+      expect(poisonedSuccess.jobShouldFail).toBe(true);
+      expect(poisonedSuccess.exitCode).toBe(0);
+    }
+    expect(roleRunStatusForClaudeCliCompletion(poisonedSuccess)).toBe(
+      RoleRunStatus.FAILED,
+    );
+
+    const subtypeError = classifyClaudeCliCompletion({
+      exitCode: 0,
+      stdout: JSON.stringify({
+        type: "result",
+        subtype: "error",
+        is_error: false,
+        result: "rate limited",
+      }),
+    });
+    expect(subtypeError.ok).toBe(false);
+    if (!subtypeError.ok) {
+      expect(subtypeError.code).toBe("CLI_REPORTED_ERROR");
+    }
+
+    const clean = classifyClaudeCliCompletion({
+      exitCode: 0,
+      stdout: JSON.stringify({
+        type: "result",
+        subtype: "success",
+        is_error: false,
+        result: '{"roleId":"A01"}',
+      }),
+    });
+    expect(clean.ok).toBe(true);
+
+    const nonzero = classifyClaudeCliCompletion({
+      exitCode: 2,
+      stdout: "",
+    });
+    expect(nonzero.ok).toBe(false);
+    if (!nonzero.ok) {
+      expect(nonzero.code).toBe("NONZERO_EXIT");
+    }
   });
 
   it("parses CLI usage when present and never invents 25/50/75 as ACTUAL (F07)", () => {

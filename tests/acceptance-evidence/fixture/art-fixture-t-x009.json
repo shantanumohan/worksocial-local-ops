@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x009",
+  "caseId": "T-X009",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X009 (CLI error despite exit 0 — job fails)\nproof=cli_error_despite_exit_zero applyCount=1 :: Exit 0 + is_error (poisoned ok payload) → CLI_REPORTED_ERROR → job FAILED | Exit 0 + subtype=error → CLI_REPORTED_ERROR → job FAILED | Exit 0 + type=error → CLI_REPORTED_ERROR | Clean exit 0 success envelope does not force job fail | Nonzero exit → NONZERO_EXIT → job FAILED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "cli_error_despite_exit_zero"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x009.json",
+  "createdAtIso": "2026-11-22T18:20:41.201Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x009-f5eba1cd6b55"
+}

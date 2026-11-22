@@ -6,6 +6,7 @@
 
 import { spawn } from "node:child_process";
 import { accessSync, constants as fsConstants } from "node:fs";
+import { classifyClaudeCliCompletion } from "@worksocial/domain";
 
 /** Flags explicitly forbidden regardless of CLI version. */
 export const FORBIDDEN_CLI_FLAGS = [
@@ -82,6 +83,7 @@ export type ClaudeCliInvokeResult =
         | "OUTPUT_TOO_LARGE"
         | "SPAWN_FAILED"
         | "NONZERO_EXIT"
+        | "CLI_REPORTED_ERROR"
         | "INVALID_AGENT";
       reason: string;
       stdout?: string;
@@ -479,11 +481,16 @@ export function invokeClaudeCli(
     child.on("close", (code) => {
       clearTimeout(timer);
       const durationMs = Date.now() - started;
-      if (code !== 0) {
+      const classified = classifyClaudeCliCompletion({
+        exitCode: code,
+        stdout,
+        stderr,
+      });
+      if (!classified.ok) {
         finish({
           ok: false,
-          code: "NONZERO_EXIT",
-          reason: `CLI exited with code ${code}`,
+          code: classified.code,
+          reason: classified.reason,
           stdout,
           stderr,
           durationMs,

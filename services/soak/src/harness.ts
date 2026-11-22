@@ -84,6 +84,7 @@ import { proofOutputBombBoundedQuarantined } from "./output-bomb-proof.js";
 import { proofSymlinkEscapeAfterRootVerification } from "./symlink-escape-proof.js";
 import { proofPublicSyntheticFlagRequiresServerGrant } from "./public-synthetic-flag-proof.js";
 import { proofMaliciousPromptNoShellInjection } from "./malicious-prompt-interpolation-proof.js";
+import { proofCliErrorDespiteExitZero } from "./cli-error-despite-exit-zero-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -651,6 +652,7 @@ export async function runSoakRecoveryHarness(input: {
   );
   proofs.push(proofMaliciousPromptNoShellInjection(nowPlus(nowIso, 330_000)));
   proofs.push(proofSymlinkEscapeAfterRootVerification(nowPlus(nowIso, 310_000)));
+  proofs.push(proofCliErrorDespiteExitZero(nowPlus(nowIso, 340_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -689,6 +691,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X003 fixture ACCEPTED via symlink_escape_after_root_verification only — not live VERIFIED",
       "T-X050 fixture ACCEPTED via public_synthetic_flag_requires_server_grant only — not live VERIFIED",
       "T-X010 fixture ACCEPTED via malicious_prompt_no_shell_injection only — not live VERIFIED",
+      "T-X009 fixture ACCEPTED via cli_error_despite_exit_zero only — not live VERIFIED",
     ],
   };
 }
