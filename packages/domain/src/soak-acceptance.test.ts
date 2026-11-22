@@ -349,6 +349,12 @@ describe("soak-acceptance domain", () => {
     expect(expectedProofsForFixtureCase("T-X003")).toEqual([
       SoakProofKind.SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION,
     ]);
+    expect(expectedProofsForFixtureCase("T-X015")).toEqual([
+      SoakProofKind.DST_RECURRING_SCHEDULE_NO_DUPLICATES,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.DST_RECURRING_SCHEDULE_NO_DUPLICATES),
+    ).toEqual(["T-X015"]);
   });
 
     expect(expectedProofsForFixtureCase("T-X050")).toEqual([

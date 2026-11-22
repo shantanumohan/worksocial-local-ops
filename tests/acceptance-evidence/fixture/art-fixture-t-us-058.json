@@ -8,8 +8,8 @@
     "metric_denominators_honest"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-058.json",
-  "createdAtIso": "2026-11-22T18:20:41.201Z",
+  "createdAtIso": "2026-11-22T18:24:31.606Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-058-f5eba1cd6b55"
+  "uniqueSourceArtifactId": "art-fixture-t-us-058-1e67d94cf75d"
 }
