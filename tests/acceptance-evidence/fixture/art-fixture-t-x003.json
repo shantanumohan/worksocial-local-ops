@@ -8,8 +8,8 @@
     "symlink_escape_after_root_verification"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x003.json",
-  "createdAtIso": "2026-11-22T19:54:48.905Z",
+  "createdAtIso": "2026-11-22T20:00:41.431Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x003-fd42474207f5"
+  "uniqueSourceArtifactId": "art-fixture-t-x003-d69bc592d907"
 }

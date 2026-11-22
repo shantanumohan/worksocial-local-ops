@@ -108,6 +108,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X056": "Automated response loop — bounded; handoff",
   "T-X059": "Duplicate platform attribution — one booking; separate claims",
   "T-X060": "Currency/timezone mismatch — no silent sum",
+  "T-X070": "Validated payload not collected — separate failure states",
 };
 
 function relatedProofsForCase(
@@ -299,6 +300,7 @@ export function compileAcceptanceEvidence(
     "T-X056 fixture ACCEPTED only via AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF",
     "T-X059 fixture ACCEPTED only via DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING",
     "T-X060 fixture ACCEPTED only via CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM",
+    "T-X070 fixture ACCEPTED only via VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

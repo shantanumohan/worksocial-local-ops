@@ -600,4 +600,16 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X060"]);
   });
 
+  it("maps T-X070 to VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES only", () => {
+    expect(expectedProofsForFixtureCase("T-X070")).toEqual([
+      SoakProofKind.VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES,
+      ),
+    ).toEqual(["T-X070"]);
+  });
+
 });
+
