@@ -84,13 +84,13 @@ export type GeminiEvaluationConnectDecision =
       externalEffects: "NONE";
       canPublish: false;
       canRespondToCustomers: false;
-      smokeArtifactId: string | null;
+      smokeArtifactId: string;
       usageLedgerEntry: {
         modelId: string;
         costMinor: number;
         synthetic: true;
         testMode: GeminiEvalTestModeValue;
-      } | null;
+      };
       connection: EvalConnectionRecord;
       reasons: string[];
     }
@@ -103,6 +103,7 @@ export type GeminiEvaluationConnectDecision =
         | "MODEL_CAPABILITY_SNAPSHOT_MISSING"
         | "TEST_MODE_MISSING"
         | "BUDGET_CAP_MISSING"
+        | "SMOKE_TEST_REQUIRED"
         | "OPERATIONAL_CAPABILITY_REFUSED"
         | "LIVE_EVAL_WIRING_NOT_WIRED";
       dataUseAccepted: boolean;
@@ -277,6 +278,7 @@ export function evaluateGeminiEvaluationConnect(
     !input.budgetCapPresent ||
     !input.budgetCapRevision ||
     input.maxCostMinor === null ||
+    !Number.isFinite(input.maxCostMinor) ||
     input.maxCostMinor < 0
   ) {
     return {
@@ -289,7 +291,23 @@ export function evaluateGeminiEvaluationConnect(
       capability: null,
       ...base,
       reasons: [
-        "Displayed Gemini evaluation budget cap and non-negative max cost required (T-US-017)",
+        "Displayed Gemini evaluation budget cap and finite non-negative max cost required (T-US-017)",
+      ],
+    };
+  }
+
+  if (!input.smokeTestRequested) {
+    return {
+      allowed: false,
+      code: "SMOKE_TEST_REQUIRED",
+      dataUseAccepted: true,
+      credentialReady: true,
+      modelSnapshotReady: true,
+      testModeReady: true,
+      capability: null,
+      ...base,
+      reasons: [
+        "Minimal Gemini evaluation smoke test receipt required before EVAL_ONLY connect (T-US-017 / T-F09)",
       ],
     };
   }
@@ -302,17 +320,13 @@ export function evaluateGeminiEvaluationConnect(
     nowIso,
   });
 
-  const smokeArtifactId = input.smokeTestRequested
-    ? `smoke-gemini-eval-${input.selectedModelId}-${input.testMode}`
-    : null;
-  const usageLedgerEntry = input.smokeTestRequested
-    ? {
-        modelId: input.selectedModelId!,
-        costMinor: Math.min(input.maxCostMinor, 1),
-        synthetic: true as const,
-        testMode: input.testMode,
-      }
-    : null;
+  const smokeArtifactId = `smoke-gemini-eval-${input.selectedModelId}-${input.testMode}`;
+  const usageLedgerEntry = {
+    modelId: input.selectedModelId!,
+    costMinor: Math.min(input.maxCostMinor, 1),
+    synthetic: true as const,
+    testMode: input.testMode,
+  };
 
   return {
     allowed: true,

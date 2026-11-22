@@ -2592,11 +2592,11 @@
   "summary": {
     "total": 159,
     "byStatus": {
-      "NOT_RUN": 79,
-      "ACCEPTED": 80
+      "NOT_RUN": 78,
+      "ACCEPTED": 81
     },
     "blockingOpen": 0,
-    "generatedAt": "2026-11-22T22:15:16.000Z",
+    "generatedAt": "2026-11-22T22:32:00.000Z",
     "source": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
   }
 }

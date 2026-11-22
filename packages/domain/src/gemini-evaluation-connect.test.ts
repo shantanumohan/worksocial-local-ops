@@ -155,6 +155,30 @@ describe("evaluateGeminiEvaluationConnect (T-US-017)", () => {
     expect(result.code).toBe("BUDGET_CAP_MISSING");
   });
 
+  it("rejects non-finite budget caps", () => {
+    const nanResult = evaluateGeminiEvaluationConnect(
+      validInput({ maxCostMinor: Number.NaN }),
+      now,
+    );
+    expect(nanResult.allowed).toBe(false);
+    expect(nanResult.code).toBe("BUDGET_CAP_MISSING");
+    const infResult = evaluateGeminiEvaluationConnect(
+      validInput({ maxCostMinor: Number.POSITIVE_INFINITY }),
+      now,
+    );
+    expect(infResult.allowed).toBe(false);
+    expect(infResult.code).toBe("BUDGET_CAP_MISSING");
+  });
+
+  it("requires smoke test before connect success", () => {
+    const result = evaluateGeminiEvaluationConnect(
+      validInput({ smokeTestRequested: false }),
+      now,
+    );
+    expect(result.allowed).toBe(false);
+    expect(result.code).toBe("SMOKE_TEST_REQUIRED");
+  });
+
   it("keeps operational tools refused on the connect surface", () => {
     expect(geminiConnectOperationalToolRefused(EvalToolClass.PUBLISH)).toBe(
       true,

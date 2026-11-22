@@ -164,6 +164,37 @@ export function proofConnectGeminiEvaluationEvalOnly(
     );
   }
 
+  const missingSmoke = evaluateGeminiEvaluationConnect(
+    {
+      dataUseDecision: GeminiDataUseDecision.EVALUATION_ONLY_ACCEPTED,
+      credentialBindingPresent: true,
+      credentialRef: "cred-ref-gemini-eval-masked",
+      modelCapabilitySnapshotPresent: true,
+      modelCapabilitySnapshotAtIso: "2026-11-22T21:30:00.000Z",
+      selectedModelId: "gemini-fixture-eval",
+      supportedToolSnapshot: ["read_evidence"],
+      testMode: GeminiEvalTestMode.FIXED_CORPUS,
+      budgetCapPresent: true,
+      budgetCapRevision: "gemini-bp-rev-1",
+      maxCostMinor: 25,
+      smokeTestRequested: false,
+      desiredCapability: GeminiEvalDesiredCapability.EVAL_ONLY,
+      requestLiveEvalWiring: false,
+    },
+    nowIso,
+  );
+  if (
+    !missingSmoke.allowed &&
+    missingSmoke.code === "SMOKE_TEST_REQUIRED"
+  ) {
+    details.push("smokeTestRequested=false → SMOKE_TEST_REQUIRED");
+  } else {
+    passed = false;
+    details.push(
+      `Missing smoke unexpectedly ${JSON.stringify(missingSmoke)}`,
+    );
+  }
+
   if (
     geminiConnectOperationalToolRefused(EvalToolClass.PUBLISH) &&
     geminiConnectOperationalToolRefused(EvalToolClass.CUSTOMER_MESSAGE)
