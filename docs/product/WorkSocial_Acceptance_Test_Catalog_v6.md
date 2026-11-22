@@ -672,7 +672,7 @@ Required evidence:
 
 Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixture ACCEPTED below | Environment fixture_or_sandbox; live evidence separately authorized.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060.
 
 ### Happy-path / documented flow completions
 - **T-US-001** Create a trusted local workspace (F01/SC-02) — blockers and next actions.
@@ -746,7 +746,9 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X003, T-X005, T-X006, T-X009, T-X010, T-X011, T-X014, T-X015, T-X017, T-X018, T-X019, T-X020, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-X002, T-X003, T-X005, T-X006, T-X009, T-X010, T-X011, T-X014, T-X015, T-X017, T-X018, T-X019, T-X020, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073.
+
+**T-X001** is fixture ACCEPTED only via the host-sleep monitoring coverage-gap coalesce proof (`HOST_SLEEP_MONITORING_COVERAGE_GAP`) — cadence-derived misses, catch-up probe required, no burst. Not sandbox/prod VERIFIED.
 
 **T-X015** is fixture ACCEPTED only via the DST recurring schedule no-duplicates proof (`DST_RECURRING_SCHEDULE_NO_DUPLICATES`) — America/New_York civil occurrence keys; spring-forward gap skipped; fall-back ambiguous hour claims once across durable reload. Not sandbox/prod VERIFIED.
 
@@ -814,7 +816,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 
 | ID | Title | Focus |
 |---|---|---|
-| T-X001 | Host sleeps during scheduled monitoring | Coverage gap honest; coalesce |
+| T-X001 | Host sleeps during scheduled monitoring | Coverage gap honest; coalesce *(fixture ACCEPTED)* |
 | T-X002 | Two supervisors start together | Single host lease *(fixture ACCEPTED — competing-supervisor lease proof; not sandbox/prod VERIFIED)* |
 | T-X003 | Symlink escape after root verification | Write denied outside root *(fixture ACCEPTED — symlink escape after root verification proof; not sandbox/prod VERIFIED)* |
 | T-X004 | Disk full during evidence write | No partial completed manifest |
@@ -896,7 +898,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
 | T-US (behavior_acceptance) | 60 | 44 NOT_RUN + 16 fixture ACCEPTED (T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060) |
-| T-X (platform/security/resilience) | 73 | 43 NOT_RUN + 30 fixture ACCEPTED (T-X002, T-X003, T-X005, T-X006, T-X009, T-X010, T-X011, T-X014, T-X015, T-X017, T-X018, T-X019, T-X020, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073) |
-| **Total** | **159** | **112 NOT_RUN + 47 fixture ACCEPTED** |
+| T-X (platform/security/resilience) | 73 | 43 NOT_RUN + 30 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X005, T-X006, T-X009, T-X010, T-X011, T-X014, T-X015, T-X017, T-X018, T-X019, T-X020, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073) |
+| **Total** | **159** | **111 NOT_RUN + 48 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

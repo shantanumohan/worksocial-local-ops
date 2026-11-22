@@ -87,6 +87,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X010": "Malicious prompt interpolation — no shell injection",
   "T-X009": "CLI error despite exit 0 — job fails",
   "T-X015": "DST recurring schedule — no unintended duplicates",
+  "T-X001": "Host sleeps during scheduled monitoring — coverage gap honest; coalesce",
 };
 
 function relatedProofsForCase(
@@ -258,6 +259,7 @@ export function compileAcceptanceEvidence(
     "T-X010 fixture ACCEPTED only via MALICIOUS_PROMPT_NO_SHELL_INJECTION",
     "T-X009 fixture ACCEPTED only via CLI_ERROR_DESPITE_EXIT_ZERO (job fails)",
     "T-X015 fixture ACCEPTED only via DST_RECURRING_SCHEDULE_NO_DUPLICATES (no unintended duplicates)",
+    "T-X001 fixture ACCEPTED only via HOST_SLEEP_MONITORING_COVERAGE_GAP",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
