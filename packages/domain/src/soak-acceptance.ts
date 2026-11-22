@@ -145,6 +145,10 @@ export const SoakProofKind = {
    * Thank-you without CRM record fails at delivery (T-US-040 / T-X049).
    */
   THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY: "thank_you_without_crm_fails_delivery",
+  /**
+   * Stop after provider dispatch starts — reconcile; no fake cancel (T-X017).
+   */
+  STOP_AFTER_DISPATCH_RECONCILE: "stop_after_dispatch_reconcile",
 } as const;
 
 export type SoakProofKindValue =
@@ -209,6 +213,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-008 / T-X032 require GA4_DEBUG_NOT_DELIVERED_CONVERSION.
  * T-X031 requires GA4_WRONG_PROPERTY_KIND_REFUSED.
  * T-US-040 / T-X049 require THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY.
+ * T-X017 requires STOP_AFTER_DISPATCH_RECONCILE (no fake cancel after APPLYING).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -251,6 +256,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X031",
   "T-US-040",
   "T-X049",
+  "T-X017",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -665,6 +671,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY];
     case "T-X049":
       return [SoakProofKind.THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY];
+    case "T-X017":
+      return [SoakProofKind.STOP_AFTER_DISPATCH_RECONCILE];
     default:
       return [];
   }
@@ -735,6 +743,8 @@ export function mapProofToFixtureCases(
       return ["T-X031"];
     case SoakProofKind.THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY:
       return ["T-US-040", "T-X049"];
+    case SoakProofKind.STOP_AFTER_DISPATCH_RECONCILE:
+      return ["T-X017"];
     default:
       return [];
   }
