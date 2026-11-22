@@ -327,6 +327,12 @@ export const SoakProofKind = {
    */
   RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE:
     "rate_limit_bounded_backoff_preserves_deadline",
+  /**
+   * Low-sample trend spike → insufficient evidence (T-X040).
+   * Research task only; never a publish trigger from this gate alone.
+   */
+  LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE:
+    "low_sample_trend_spike_insufficient_evidence",
 } as const;
 
 export type SoakProofKindValue =
@@ -428,6 +434,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X023 requires EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND.
  * T-US-052 requires MOCKED_CONNECTOR_NOT_PRODUCTION_READY.
  * T-X030 requires RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE.
+ * T-X040 requires LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE (research only; not publish).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -508,6 +515,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X023",
   "T-US-052",
   "T-X030",
+  "T-X040",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -998,6 +1006,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.MOCKED_CONNECTOR_NOT_PRODUCTION_READY];
     case "T-X030":
       return [SoakProofKind.RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE];
+    case "T-X040":
+      return [SoakProofKind.LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE];
     default:
       return [];
   }
@@ -1144,6 +1154,8 @@ export function mapProofToFixtureCases(
       return ["T-US-052"];
     case SoakProofKind.RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE:
       return ["T-X030"];
+    case SoakProofKind.LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE:
+      return ["T-X040"];
     default:
       return [];
   }
