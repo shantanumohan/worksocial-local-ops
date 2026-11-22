@@ -802,4 +802,13 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-US-025"]);
   });
+
+  it("maps T-US-026 to MISSED_SCHEDULE_COALESCE_NO_BURST only", () => {
+    expect(expectedProofsForFixtureCase("T-US-026")).toEqual([
+      SoakProofKind.MISSED_SCHEDULE_COALESCE_NO_BURST,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.MISSED_SCHEDULE_COALESCE_NO_BURST),
+    ).toEqual(["T-US-026"]);
+  });
 });

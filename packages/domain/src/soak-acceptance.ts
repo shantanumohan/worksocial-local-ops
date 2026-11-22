@@ -399,6 +399,12 @@ export const SoakProofKind = {
    */
   LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME:
     "launch_workstream_schedule_mission_outcome",
+  /**
+   * Missed content/social schedules coalesce; no burst republish (T-US-026).
+   * Cadence-derived misses, single catch-up after fixture decision, burst
+   * republish refused; live NOT_WIRED. Distinct from T-X001 / T-X015 / T-US-025.
+   */
+  MISSED_SCHEDULE_COALESCE_NO_BURST: "missed_schedule_coalesce_no_burst",
 } as const;
 
 export type SoakProofKindValue =
@@ -510,6 +516,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-022 requires UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED (unsupported destination capabilities refused; live NOT_WIRED).
  * T-US-023 requires STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS (owner-signed standing autonomy + control receipts; live NOT_WIRED).
  * T-US-025 requires LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME (workstream launch + schedule + mission outcome; live NOT_WIRED).
+ * T-US-026 requires MISSED_SCHEDULE_COALESCE_NO_BURST (missed publish slots coalesce; no burst republish; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -600,6 +607,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-022",
   "T-US-023",
   "T-US-025",
+  "T-US-026",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1110,6 +1118,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS];
     case "T-US-025":
       return [SoakProofKind.LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME];
+    case "T-US-026":
+      return [SoakProofKind.MISSED_SCHEDULE_COALESCE_NO_BURST];
     default:
       return [];
   }
@@ -1276,6 +1286,8 @@ export function mapProofToFixtureCases(
       return ["T-US-023"];
     case SoakProofKind.LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME:
       return ["T-US-025"];
+    case SoakProofKind.MISSED_SCHEDULE_COALESCE_NO_BURST:
+      return ["T-US-026"];
     default:
       return [];
   }
