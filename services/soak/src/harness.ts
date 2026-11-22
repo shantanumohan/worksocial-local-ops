@@ -83,6 +83,7 @@ import { proofCurrencyTimezoneMismatchNoSilentSum } from "./currency-timezone-mi
 import { proofValidatedPayloadNotCollectedSeparateStates } from "./validated-payload-not-collected-proof.js";
 import { proofUnboundWritePathFailClosed } from "./unbound-write-path-proof.js";
 import { proofEventualConsistencyFalseNotFound } from "./eventual-consistency-false-not-found-proof.js";
+import { proofMockedConnectorNotProductionReady } from "./mocked-connector-not-production-ready-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -769,6 +770,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofUnboundWritePathFailClosed(nowPlus(nowIso, 610_000)));
   proofs.push(
     proofEventualConsistencyFalseNotFound(nowPlus(nowIso, 630_000)),
+    proofMockedConnectorNotProductionReady(nowPlus(nowIso, 640_000)),
   );
   const allPassed = proofs.every((p) => p.passed);
   return {
@@ -837,6 +839,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X045 fixture ACCEPTED via partial_campaign_destinations_per_state only — not live VERIFIED",
       "T-US-006 fixture ACCEPTED via unbound_write_path_fail_closed only — not live VERIFIED",
       "T-X023 fixture ACCEPTED via eventual_consistency_false_not_found only — not live VERIFIED",
+      "T-US-052 fixture ACCEPTED via mocked_connector_not_production_ready only — not live VERIFIED",
     ],
   };
 }

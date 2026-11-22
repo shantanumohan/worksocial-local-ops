@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-052",
+  "caseId": "T-US-052",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-052 (Mocked connector is not treated as production-ready)\nproof=mocked_connector_not_production_ready applyCount=1 :: AdapterWiring.FIXTURE → contentLiveWiringStatus=FIXTURE (mocked ≠ production) | AdapterWiring.NOT_WIRED → live status NOT_WIRED | emptyPaidMediaState → productionActivated=false liveMutationWiring=NOT_WIRED googleAdsWiring=FIXTURE | ACCEPTED_PENDING provider status → verified=false (accepted ≠ production-ready) | FIXTURE+VERIFIED unsafe combo → status.verified may be true, but liveWiring=FIXTURE and productionActivated=false (mocked ≠ production-ready) | createReadEvidence(AdapterWiring.LIVE) refused | FIXTURE adapter evidence accepted (mocked scaffold only) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "mocked_connector_not_production_ready"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-052.json",
+  "createdAtIso": "2026-11-22T21:40:15.794Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-052-bd450577774a"
+}

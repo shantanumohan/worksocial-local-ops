@@ -3,13 +3,13 @@
   "caseId": "T-US-047",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-US-047 (Recover/rotate/reconcile — offboarding manifest)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-224bf023-47ae-4819-8e71-ebacdba97950 classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-224bf023-47ae-4819-8e71-ebacdba97950,stop-prov-rec-60453e7a-443f-4a8e-8515-be39d4761649 | Rotation record rot-2f86727e-8609-48ce-98cd-1fd992b3b712 localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-d6674f80-bfd8-4381-a8d0-838b03aea838 classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-4a1d566c-ff52-4373-8d43-2ec2d51a4321 residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-US-047 (Recover/rotate/reconcile — offboarding manifest)\nproof=recover_rotate_reconcile applyCount=1 :: Health timeline events=2 hostRun=rec-3f09202e-64dc-40a1-822c-9031d64b74d2 classification=ACTIVE_INCIDENT | Capability stop recorded stopIds=stop-host-rec-3f09202e-64dc-40a1-822c-9031d64b74d2,stop-prov-rec-8cb485b9-2541-4a3c-95c0-230f531d86a1 | Rotation record rot-a303fd8d-1b88-4598-a47e-d10f3edc17cf localSwitchComplete=true secretsExported=false liveProviderRevoke=NOT_WIRED | Reconciliation receipts artifact=art-uro-rec-40fd8a4f-2f93-4bbe-9122-c325d7efb52c classification=UNKNOWN_REMOTE_OUTCOME externalEffects=NONE | Offboarding manifest ob-5afd9bab-47d6-4980-b487-3d8fa2445b10 residualObligations=5 providerRevoke=BLOCKED_NOT_WIRED catalogClaim=NOT_RUN (fixture ACCEPTED via soak only) | Recovery test runs passed=3 liveRecoveryClaim=NOT_RUN | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "recover_rotate_reconcile"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-047.json",
-  "createdAtIso": "2026-11-22T21:34:20.301Z",
+  "createdAtIso": "2026-11-22T21:40:15.794Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-047-bb82c3448343"
+  "uniqueSourceArtifactId": "art-fixture-t-us-047-bd450577774a"
 }
