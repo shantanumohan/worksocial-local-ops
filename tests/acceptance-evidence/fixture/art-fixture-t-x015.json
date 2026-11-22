@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x015",
+  "caseId": "T-X015",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X015 (DST recurring schedule — no unintended duplicates)\nproof=dst_recurring_schedule_no_duplicates applyCount=1 :: Spring-forward 02:30 America/New_York → NONEXISTENT_LOCAL_TIME | Spring plan skips gap day; one key per existing local day | Fall-back 01:30 America/New_York marked ambiguous | Fall-back day plans exactly one occurrence (no unintended duplicate) | Fall-back wall ticks share one occurrenceKey | Durable claim ledger: first tick CLAIMED; reloaded worker second tick → DUPLICATE_OCCURRENCE | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "dst_recurring_schedule_no_duplicates"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x015.json",
+  "createdAtIso": "2026-11-22T18:24:31.606Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x015-1e67d94cf75d"
+}

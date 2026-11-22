@@ -705,6 +705,15 @@ export {
   type DeliveryFailureIncidentBundle,
 } from "./lead-capture.js";
 export {
+  RecurringScheduleFrequency, DEFAULT_BUSINESS_TIMEZONE, LocalCivilResolveCode, OccurrenceClaimCode,
+  createDailySchedule, occurrenceKeyFor, isSupportedTimeZone, resolveLocalCivilTime, resolveLocalDateTime,
+  localDateInZone, planDailyOccurrences, emptyOccurrenceClaimLedger, occurrenceClaimLedgerFromKeys,
+  occurrenceClaimKeys, claimOccurrence, occurrenceKeyFromInstant,
+  type RecurringScheduleFrequencyValue, type RecurringScheduleDefinition, type ScheduleOccurrence,
+  type LocalCivilResolveCodeValue, type LocalCivilResolveResult, type OccurrenceClaimCodeValue,
+  type OccurrenceClaimResult, type OccurrenceClaimLedger,
+} from "./recurring-schedule.js";
+export {
   AcceptanceEnvironment,
   AcceptanceCaseStatus,
   FORBIDDEN_SILENT_LIVE_STATUS,

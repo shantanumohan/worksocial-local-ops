@@ -30,6 +30,7 @@
  * symlink escape after root verification (T-X003),
  * public synthetic flag requires server grant (T-X050),
  * malicious prompt no shell injection (T-X010).
+ * DST recurring schedule no duplicates (T-X015).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -85,6 +86,7 @@ import { proofSymlinkEscapeAfterRootVerification } from "./symlink-escape-proof.
 import { proofPublicSyntheticFlagRequiresServerGrant } from "./public-synthetic-flag-proof.js";
 import { proofMaliciousPromptNoShellInjection } from "./malicious-prompt-interpolation-proof.js";
 import { proofCliErrorDespiteExitZero } from "./cli-error-despite-exit-zero-proof.js";
+import { proofDstRecurringScheduleNoDuplicates } from "./dst-recurring-schedule-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -653,6 +655,12 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofMaliciousPromptNoShellInjection(nowPlus(nowIso, 330_000)));
   proofs.push(proofSymlinkEscapeAfterRootVerification(nowPlus(nowIso, 310_000)));
   proofs.push(proofCliErrorDespiteExitZero(nowPlus(nowIso, 340_000)));
+  proofs.push(
+    await proofDstRecurringScheduleNoDuplicates(
+      join(input.stateDir, `dst-schedule-${randomUUID().slice(0, 8)}`),
+      nowPlus(nowIso, 350_000),
+    ),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -662,6 +670,7 @@ export async function runSoakRecoveryHarness(input: {
         ? "All soak recovery proofs passed (fixture / LOCAL_DURABLE)"
         : "One or more soak recovery proofs failed",
       "External effects: NONE — fake provider only",
+      "T-X015 fixture ACCEPTED via dst_recurring_schedule_no_duplicates only — not live VERIFIED",
       "Live CMS/GSC/GA4/Zoho/Temporal remain NOT_WIRED",
       "T-F24/T-US-047 fixture ACCEPTED via recover_rotate_reconcile only — not live VERIFIED",
       "T-US-002/T-X002 fixture ACCEPTED via competing_supervisor_lease only — not live VERIFIED",

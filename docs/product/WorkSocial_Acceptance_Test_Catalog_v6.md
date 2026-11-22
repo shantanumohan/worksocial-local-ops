@@ -746,7 +746,9 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X003, T-X005, T-X006, T-X009, T-X010, T-X011, T-X014, T-X017, T-X018, T-X019, T-X020, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X002, T-X003, T-X005, T-X006, T-X009, T-X010, T-X011, T-X014, T-X015, T-X017, T-X018, T-X019, T-X020, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073.
+
+**T-X015** is fixture ACCEPTED only via the DST recurring schedule no-duplicates proof (`DST_RECURRING_SCHEDULE_NO_DUPLICATES`) — America/New_York civil occurrence keys; spring-forward gap skipped; fall-back ambiguous hour claims once across durable reload. Not sandbox/prod VERIFIED.
 
 **T-X066** is fixture ACCEPTED only via the backup / omit-receipt / post-restore reconcile proof (`BACKUP_OMIT_RECEIPT`). Retry-only no-duplicate-effects does **not** satisfy this case. Not sandbox/prod VERIFIED.
 
@@ -826,7 +828,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X012 | Orphan worker on deadline | Process tree stopped |
 | T-X013 | Replay historical workflow | No repeated external I/O |
 | T-X014 | Approval wait survives restart | Resume wait; no slot hold *(fixture ACCEPTED)* |
-| T-X015 | DST recurring schedule | No unintended duplicates |
+| T-X015 | DST recurring schedule | No unintended duplicates *(fixture ACCEPTED — DST recurring schedule no-duplicates proof; not sandbox/prod VERIFIED)* |
 | T-X016 | Stop before dispatch claim | No adapter mutation |
 | T-X017 | Stop after provider dispatch starts | Reconcile; no fake cancel *(fixture ACCEPTED — stop-after-dispatch reconcile / no fake cancel proof; not sandbox/prod VERIFIED)* |
 | T-X018 | Self-approval | Rejected *(fixture ACCEPTED — self-approval rejected / independent A25 proof; not sandbox/prod VERIFIED)* |
@@ -894,7 +896,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
 | T-US (behavior_acceptance) | 60 | 44 NOT_RUN + 16 fixture ACCEPTED (T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060) |
-| T-X (platform/security/resilience) | 73 | 44 NOT_RUN + 29 fixture ACCEPTED (T-X002, T-X003, T-X005, T-X006, T-X009, T-X010, T-X011, T-X014, T-X017, T-X018, T-X019, T-X020, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073) |
-| **Total** | **159** | **113 NOT_RUN + 46 fixture ACCEPTED** |
+| T-X (platform/security/resilience) | 73 | 43 NOT_RUN + 30 fixture ACCEPTED (T-X002, T-X003, T-X005, T-X006, T-X009, T-X010, T-X011, T-X014, T-X015, T-X017, T-X018, T-X019, T-X020, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X066, T-X069, T-X073) |
+| **Total** | **159** | **112 NOT_RUN + 47 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

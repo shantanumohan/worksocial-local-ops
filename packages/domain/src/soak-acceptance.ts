@@ -177,6 +177,10 @@ export const SoakProofKind = {
    * Claude `--output-format json` may set is_error while exiting 0.
    */
   CLI_ERROR_DESPITE_EXIT_ZERO: "cli_error_despite_exit_zero",
+  /**
+   * DST recurring schedule — no unintended duplicates (T-X015).
+   */
+  DST_RECURRING_SCHEDULE_NO_DUPLICATES: "dst_recurring_schedule_no_duplicates",
 } as const;
 
 export type SoakProofKindValue =
@@ -248,6 +252,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X050 requires PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT.
  * T-X010 requires MALICIOUS_PROMPT_NO_SHELL_INJECTION.
  * T-X009 requires CLI_ERROR_DESPITE_EXIT_ZERO (job fails when CLI reports error on exit 0).
+ * T-X015 requires DST_RECURRING_SCHEDULE_NO_DUPLICATES.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -297,6 +302,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X050",
   "T-X010",
   "T-X009",
+  "T-X015",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -725,6 +731,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.MALICIOUS_PROMPT_NO_SHELL_INJECTION];
     case "T-X009":
       return [SoakProofKind.CLI_ERROR_DESPITE_EXIT_ZERO];
+    case "T-X015":
+      return [SoakProofKind.DST_RECURRING_SCHEDULE_NO_DUPLICATES];
     default:
       return [];
   }
@@ -809,6 +817,8 @@ export function mapProofToFixtureCases(
       return ["T-X010"];
     case SoakProofKind.CLI_ERROR_DESPITE_EXIT_ZERO:
       return ["T-X009"];
+    case SoakProofKind.DST_RECURRING_SCHEDULE_NO_DUPLICATES:
+      return ["T-X015"];
     default:
       return [];
   }
