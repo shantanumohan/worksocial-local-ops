@@ -433,6 +433,12 @@ describe("soak-acceptance domain", () => {
         SoakProofKind.WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP,
       ),
     ).toEqual(["T-X007"]);
+    expect(expectedProofsForFixtureCase("T-X034")).toEqual([
+      SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED),
+    ).toEqual(["T-X034"]);
   });
 
   it("maps T-X013 to REPLAY_HISTORICAL_NO_REPEAT_IO only", () => {

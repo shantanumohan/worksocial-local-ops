@@ -115,6 +115,7 @@ import { proofStopBeforeDispatchClaim } from "./stop-before-dispatch-proof.js";
 import { proofIndirectPromptInjectionExfilDenied } from "./indirect-prompt-injection-exfil-proof.js";
 import { proofUnlicensedVenueMediaPublishBlocked } from "./unlicensed-venue-media-proof.js";
 import { proofPartialCampaignDestinationsPerState } from "./partial-campaign-destinations-proof.js";
+import { proofAdsTestProjectProductionBlocked } from "./ads-test-project-production-proof.js";
 import { proofIdempotencyKeyPayloadMismatch } from "./idempotency-key-payload-mismatch-proof.js";
 import { proofWorkerBrowserAuthStateOsDenied } from "./browser-auth-state-proof.js";
 import { proofUnknownUsageCancelHoldsResidual } from "./unknown-usage-cancel-proof.js";
@@ -716,60 +717,30 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofIndirectPromptInjectionExfilDenied(nowPlus(nowIso, 440_000)),
   );
-  proofs.push(
     await proofReplayHistoricalNoRepeatIo(
       durableDir,
       nowPlus(nowIso, 430_000),
     ),
-  );
-  proofs.push(
     proofDiskFullEvidenceNoPartialCompleted(nowPlus(nowIso, 460_000)),
-  );
-  proofs.push(
     proofExternalHumanEditConflictRetained(nowPlus(nowIso, 490_000)),
-  );
-  proofs.push(
     proofOptimizationBreaksCtaJourneyFails(nowPlus(nowIso, 480_000)),
-  );
-  proofs.push(
     await proofConcurrentFinalBudgetReservationCap(nowPlus(nowIso, 510_000)),
-  );
-  proofs.push(
     proofSyntheticConversionContaminationExcluded(nowPlus(nowIso, 520_000)),
-  );
-  proofs.push(
     proofReplySentCrmReconcilesNoResend(nowPlus(nowIso, 530_000)),
-  );
-  proofs.push(
     proofUnknownPolicyQuestionEscalatesWithoutPromise(
       nowPlus(nowIso, 540_000),
-    ),
-  );
-  proofs.push(
     proofAutomatedResponseLoopBoundedHandoff(nowPlus(nowIso, 550_000)),
-  );
-  proofs.push(
     proofDuplicatePlatformAttributionOneBooking(nowPlus(nowIso, 560_000)),
-  );
-  proofs.push(
     proofCurrencyTimezoneMismatchNoSilentSum(nowPlus(nowIso, 570_000)),
-  );
-  proofs.push(
     proofValidatedPayloadNotCollectedSeparateStates(nowPlus(nowIso, 580_000)),
-  );
-  proofs.push(
     proofActualCostExceedsEstimateOverrunVisible(nowPlus(nowIso, 560_000)),
-  );
-  proofs.push(
     proofUnlicensedVenueMediaPublishBlocked(nowPlus(nowIso, 600_000)),
-  );
-  proofs.push(
     proofPartialCampaignDestinationsPerState(nowPlus(nowIso, 610_000)),
   );
   proofs.push(proofUnboundWritePathFailClosed(nowPlus(nowIso, 610_000)));
   proofs.push(
     proofEventualConsistencyFalseNotFound(nowPlus(nowIso, 630_000)),
-  );
+  proofs.push(proofAdsTestProjectProductionBlocked(nowPlus(nowIso, 430_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -837,6 +808,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X045 fixture ACCEPTED via partial_campaign_destinations_per_state only — not live VERIFIED",
       "T-US-006 fixture ACCEPTED via unbound_write_path_fail_closed only — not live VERIFIED",
       "T-X023 fixture ACCEPTED via eventual_consistency_false_not_found only — not live VERIFIED",
+      "T-X034 fixture ACCEPTED via ads_test_project_production_blocked only — not live VERIFIED",
     ],
   };
 }

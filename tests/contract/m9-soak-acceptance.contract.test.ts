@@ -2,14 +2,14 @@
  * Contract: M9 soak proofs + evidence compiler honesty.
  * Fixture ≠ sandbox ≠ prod. Ads blocked. No silent live VERIFIED.
  * T-X066 fixture ACCEPTED only via BACKUP_OMIT_RECEIPT (not live VERIFIED).
- * T-F24 / T-US-047 fixture ACCEPTED only via RECOVER_ROTATE_RECONCILE.
+ * T-F24 / T-US-75 fixture ACCEPTED only via RECOVER_ROTATE_RECONCILE.
  * T-US-002 / T-X002 fixture ACCEPTED only via COMPETING_SUPERVISOR_LEASE.
- * T-X018 / T-US-054 fixture ACCEPTED only via SELF_APPROVAL_REJECTED.
+ * T-X018 / T-US-75 fixture ACCEPTED only via SELF_APPROVAL_REJECTED.
  * T-X073 fixture ACCEPTED only via OFFBOARD_ACTIVE_TOKEN_RESIDUAL.
- * T-US-060 fixture ACCEPTED only via EMERGENCY_STOP_AT_COMMIT.
+ * T-US-75 fixture ACCEPTED only via EMERGENCY_STOP_AT_COMMIT.
  * T-X005 fixture ACCEPTED only via FORGED_BROWSER_ROLE_IGNORED.
  * T-X006 fixture ACCEPTED only via CROSS_WORKSPACE_REFERENCE_DENIED.
- * T-X019/T-US-036 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED. */import { describe, expect, it, beforeEach, afterEach } from "vitest";
+ * T-X019/T-US-75 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED. */import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -72,6 +72,7 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X016");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X065");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X063");
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X034");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-F24");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-US-047");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-US-002");

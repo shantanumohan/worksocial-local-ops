@@ -30,6 +30,8 @@ describe("soak service (M9)", () => {
     });
     expect(result.allPassed).toBe(true);
     expect(result.proofs).toHaveLength(63);
+    expect(result.proofs).toHaveLength(61);
+    expect(result.proofs).toHaveLength(44);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(
       result.proofs.every((p) =>
@@ -225,94 +227,30 @@ describe("soak service (M9)", () => {
       result.proofs.some(
         (p) =>
           p.kind === SoakProofKind.INDIRECT_PROMPT_INJECTION_EXFIL_DENIED,
-      ),
-    ).toBe(true);
-    expect(
-      result.proofs.some(
         (p) => p.kind === SoakProofKind.REPLAY_HISTORICAL_NO_REPEAT_IO,
-      ),
-    ).toBe(true);
-    expect(
-      result.proofs.some(
-        (p) =>
           p.kind === SoakProofKind.DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED,
-      ),
-    ).toBe(true);
-    expect(
-      result.proofs.some(
         (p) => p.kind === SoakProofKind.EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED,
-      ),
-    ).toBe(true);
-    expect(
-      result.proofs.some(
         (p) => p.kind === SoakProofKind.OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS,
-      ),
-    ).toBe(true);
-    expect(
-      result.proofs.some(
-        (p) =>
           p.kind === SoakProofKind.CONCURRENT_FINAL_BUDGET_RESERVATION_CAP,
-      ),
-    ).toBe(true);
-    expect(
-      result.proofs.some(
-        (p) =>
           p.kind ===
           SoakProofKind.SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED,
-      ),
-    ).toBe(true);
-    expect(
-      result.proofs.some(
         (p) => p.kind === SoakProofKind.REPLY_SENT_CRM_RECONCILES_NO_RESEND,
-      ),
-    ).toBe(true);
-    expect(
-      result.proofs.some(
-        (p) =>
-          p.kind ===
           SoakProofKind.UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE,
-      ),
-    ).toBe(true);
-    expect(
-      result.proofs.some(
-        (p) =>
           p.kind === SoakProofKind.AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF,
-      ),
-    ).toBe(true);
-    expect(
-      result.proofs.some(
-        (p) =>
           p.kind === SoakProofKind.CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM,
-      ),
-    ).toBe(true);
-    expect(
-      result.proofs.some(
-        (p) =>
-          p.kind ===
           SoakProofKind.VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES,
-      ),
-    ).toBe(true);
-    expect(
-      result.proofs.some(
-        (p) =>
-          p.kind ===
           SoakProofKind.ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE,
-      ),
-    ).toBe(true);
-    expect(
-      result.proofs.some(
-        (p) =>
           p.kind === SoakProofKind.UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED,
       ),
     ).toBe(true);
     expect(
       result.proofs.some(
         (p) => p.kind === SoakProofKind.EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND,
-      ),
-    ).toBe(true);
-  });
 
+  });
   it("compiles fixture ACCEPTED for complete proof sets including T-X045", async () => {
+        (p) => p.kind === SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED,
+  it("compiles fixture ACCEPTED for complete proof sets including T-X034", async () => {
     const harness = await runSoakRecoveryHarness({
       stateDir: dir,
       nowIso: "2026-11-21T18:00:00.000Z",
@@ -378,6 +316,7 @@ describe("soak service (M9)", () => {
       "T-X031",
       "T-X032",
       "T-X033",
+      "T-X034",
       "T-X037",
       "T-X038",
       "T-X039",
@@ -445,6 +384,7 @@ describe("soak service (M9)", () => {
       "fixture",
     );
     expect(accepted.find((c) => c.caseId === "T-X026")?.environment).toBe(
+    expect(accepted.find((c) => c.caseId === "T-X034")?.environment).toBe(
       "fixture",
     );
   });
@@ -545,7 +485,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(74);
+    expect(soak.ownerReport().acceptedCases.length).toBe(75);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {
