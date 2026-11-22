@@ -92,6 +92,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X008": "Fact changes after review — stale; no publish",
   "T-X012": "Orphan worker on deadline — process tree stopped",
   "T-X007": "Wrong CMS environment — no production op",
+  "T-X016": "Stop before dispatch claim — no adapter mutation",
 };
 
 function relatedProofsForCase(
@@ -268,6 +269,7 @@ export function compileAcceptanceEvidence(
     "T-X008 fixture ACCEPTED only via FACT_CHANGES_AFTER_REVIEW_STALE (stale; no publish)",
     "T-X012 fixture ACCEPTED only via ORPHAN_WORKER_DEADLINE_TREE_STOPPED",
     "T-X007 fixture ACCEPTED only via WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP",
+    "T-X016 fixture ACCEPTED only via STOP_BEFORE_DISPATCH_NO_MUTATION",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

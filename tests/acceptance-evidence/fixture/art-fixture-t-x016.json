@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x016",
+  "caseId": "T-X016",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X016 (Stop before dispatch claim — no adapter mutation)\nproof=stop_before_dispatch_no_mutation applyCount=0 :: Effect machine: AUTHORIZED/QUEUED→CANCELLED allowed; APPLYING/VERIFYING→CANCELLED refused (no fake cancel) | Outbound stop denies OUTBOUND_STOPPED before dispatch claim | Durable harness: cancelled pre-dispatch with applyAttempts=0 provider=none outcome=FAILED | cancelEligibleQueuedWork: AUTHORIZED cancelled; APPLYING retained for reconcile (no fake cancel) | liveProviderSuccessClaimed=false externalEffects=NONE T-X017 not claimed\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "stop_before_dispatch_no_mutation"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x016.json",
+  "createdAtIso": "2026-11-22T18:42:40.845Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x016-b8461fec6c20"
+}

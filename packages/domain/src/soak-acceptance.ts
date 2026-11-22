@@ -204,6 +204,11 @@ export const SoakProofKind = {
    */
   WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP:
     "wrong_cms_environment_no_production_op",
+  /**
+   * Stop before dispatch claim — no adapter mutation (T-X016).
+   * Pre-apply CANCELLED with applyAttempts=0 / no fake-provider entry.
+   */
+  STOP_BEFORE_DISPATCH_NO_MUTATION: "stop_before_dispatch_no_mutation",
 } as const;
 
 export type SoakProofKindValue =
@@ -281,6 +286,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X008 requires FACT_CHANGES_AFTER_REVIEW_STALE (cited/support change; no publish).
  * T-X012 requires ORPHAN_WORKER_DEADLINE_TREE_STOPPED
  * T-X007 requires WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP (process tree stopped on deadline).
+ * T-X016 requires STOP_BEFORE_DISPATCH_NO_MUTATION (no adapter mutation).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -336,6 +342,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X008",
   "T-X012",
   "T-X007",
+  "T-X016",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -776,6 +783,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.ORPHAN_WORKER_DEADLINE_TREE_STOPPED];
     case "T-X007":
       return [SoakProofKind.WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP];
+    case "T-X016":
+      return [SoakProofKind.STOP_BEFORE_DISPATCH_NO_MUTATION];
     default:
       return [];
   }
@@ -873,6 +882,8 @@ export function mapProofToFixtureCases(
       return ["T-X012"];
     case SoakProofKind.WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP:
       return ["T-X007"];
+    case SoakProofKind.STOP_BEFORE_DISPATCH_NO_MUTATION:
+      return ["T-X016"];
     default:
       return [];
   }
