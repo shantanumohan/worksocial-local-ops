@@ -42,6 +42,7 @@
  * low-sample trend spike insufficient evidence (T-X040).
  * Google Ads test vs production access separated (T-US-012).
  * Connect Claude Code + test API EVAL_ONLY (T-US-015).
+ * Connect Gemini Evaluation EVAL_ONLY (T-US-017).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -92,6 +93,7 @@ import { proofRateLimitBoundedBackoffPreservesDeadline } from "./rate-limit-dead
 import { proofLowSampleTrendSpikeInsufficientEvidence } from "./low-sample-trend-spike-proof.js";
 import { proofGoogleAdsTestProductionAccessSeparated } from "./google-ads-test-production-access-proof.js";
 import { proofConnectClaudeCodeTestApiEvalOnly } from "./claude-code-test-api-connect-proof.js";
+import { proofConnectGeminiEvaluationEvalOnly } from "./gemini-evaluation-connect-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -794,6 +796,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofConnectClaudeCodeTestApiEvalOnly(nowPlus(nowIso, 680_000)),
   );
+  proofs.push(
+    proofConnectGeminiEvaluationEvalOnly(nowPlus(nowIso, 690_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -866,6 +871,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X040 fixture ACCEPTED via low_sample_trend_spike_insufficient_evidence only — not live VERIFIED",
       "T-US-012 fixture ACCEPTED via google_ads_test_production_access_separated only — not live VERIFIED",
       "T-US-015 fixture ACCEPTED via connect_claude_code_test_api_eval_only only — not live VERIFIED",
+      "T-US-017 fixture ACCEPTED via connect_gemini_evaluation_eval_only only — not live VERIFIED",
     ],
   };
 }

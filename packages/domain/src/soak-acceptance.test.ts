@@ -725,4 +725,15 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-US-015"]);
   });
+
+  it("maps T-US-017 to CONNECT_GEMINI_EVALUATION_EVAL_ONLY only", () => {
+    expect(expectedProofsForFixtureCase("T-US-017")).toEqual([
+      SoakProofKind.CONNECT_GEMINI_EVALUATION_EVAL_ONLY,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.CONNECT_GEMINI_EVALUATION_EVAL_ONLY,
+      ),
+    ).toEqual(["T-US-017"]);
+  });
 });
