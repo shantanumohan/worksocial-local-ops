@@ -19,6 +19,9 @@
       "path": "../../packages/persistence"
     },
     {
+      "path": "../../packages/provider-adapters"
+    },
+    {
       "path": "../claude-runner"
     },
     {

@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x007",
+  "caseId": "T-X007",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X007 (Wrong CMS environment — no production op)\nproof=wrong_cms_environment_no_production_op applyCount=1 :: Production-bound vs staging-intended publish → WRONG_CMS_ENVIRONMENT; no production op | Matching unrecognized label 'prod' → UNRECOGNIZED_ENVIRONMENT | Matching production publish → PRODUCTION_OP_REFUSED (no production op) | Matching staging publish allowed (fixture/simulator; allowProductionOp=false) | staging-cms applyChange wrong-env → providerMutateCount=0; page unchanged | staging-cms matching staging apply → providerMutateCount=1 (simulator only) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "wrong_cms_environment_no_production_op"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x007.json",
+  "createdAtIso": "2026-11-22T18:40:40.063Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x007-90b883af2131"
+}

@@ -676,12 +676,16 @@ export function createOwnerStagingService(
         };
       }
       const pageId = `page_${mission.siteId}`;
+      const site = state.sites.find((s) => s.siteId === mission.siteId);
+      const siteEnv = site?.environment ?? "staging";
       const applied = cms.applyChange({
         changeId: id("chg"),
         missionId: mission.missionId,
         pageId,
         desiredFields: mission.desiredFields,
         nowIso,
+        boundEnvironment: siteEnv,
+        intendedEnvironment: siteEnv,
         ...(input.forceUnknownRemote !== undefined
           ? { forceUnknownRemote: input.forceUnknownRemote }
           : {}),

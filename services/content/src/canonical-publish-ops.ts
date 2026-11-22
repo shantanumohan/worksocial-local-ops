@@ -851,6 +851,8 @@ export function createCanonicalPublishOps(
                 pageId,
                 desiredFields: desired,
                 nowIso,
+                boundEnvironment: "fixture",
+                intendedEnvironment: "fixture",
               });
               details.push(staging.note);
               const adapter = invokeDestinationAdapter({
@@ -1581,6 +1583,8 @@ export function createCanonicalPublishOps(
             pageId,
             desiredFields: desired,
             nowIso,
+            boundEnvironment: "fixture",
+            intendedEnvironment: "fixture",
           });
           store.update((s) => ({
             ...s,

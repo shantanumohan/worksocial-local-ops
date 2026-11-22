@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  CmsEnvironment,
   StagingChangeStatus,
   digestFields,
   type StagingCmsPageRecord,
@@ -46,8 +47,11 @@ describe("staging CMS simulator (NEXT-15)", () => {
       pageId: "page-pilot",
       desiredFields: desired,
       nowIso: now,
+      boundEnvironment: CmsEnvironment.STAGING,
+      intendedEnvironment: CmsEnvironment.STAGING,
     });
     expect(applied.change.status).toBe(StagingChangeStatus.APPLIED_PENDING);
+    expect(applied.providerMutateCount).toBe(1);
     expect(applied.page?.fields.title).toBe(desired.title);
 
     const read = cms.independentRead({
@@ -75,11 +79,14 @@ describe("staging CMS simulator (NEXT-15)", () => {
       pageId: "page-pilot",
       desiredFields: desired,
       nowIso: now,
+      boundEnvironment: CmsEnvironment.STAGING,
+      intendedEnvironment: CmsEnvironment.STAGING,
       forceUnknownRemote: true,
     });
     expect(applied.change.status).toBe(
       StagingChangeStatus.UNKNOWN_REMOTE_OUTCOME,
     );
+    expect(applied.providerMutateCount).toBe(0);
     const recovered = cms.recoverUnknown({
       change: applied.change,
       nowIso: now,
@@ -91,6 +98,33 @@ describe("staging CMS simulator (NEXT-15)", () => {
     });
     expect(read.matched).toBe(true);
     expect(read.change.status).toBe(StagingChangeStatus.VERIFIED);
+  });
+
+  it("refuses wrong CMS environment mutate without provider write (T-X007)", () => {
+    const cms = createStagingCmsSimulator([seedPage()]);
+    const before = cms.getPage("page-pilot")!;
+    const refused = cms.applyChange({
+      changeId: "chg-wrong-env",
+      missionId: "mis-wrong",
+      pageId: "page-pilot",
+      desiredFields: {
+        title: "Should not apply",
+        metaDescription: "x",
+        h1: "x",
+        bodyExcerpt: "x",
+      },
+      nowIso: now,
+      boundEnvironment: CmsEnvironment.PRODUCTION,
+      intendedEnvironment: CmsEnvironment.STAGING,
+    });
+    expect(refused.environmentGate.ok).toBe(false);
+    if (!refused.environmentGate.ok) {
+      expect(refused.environmentGate.code).toBe("WRONG_CMS_ENVIRONMENT");
+    }
+    expect(refused.providerMutateCount).toBe(0);
+    expect(refused.change.status).toBe(StagingChangeStatus.MISMATCH);
+    expect(cms.getPage("page-pilot")?.revision).toBe(before.revision);
+    expect(cms.getPage("page-pilot")?.fields.title).toBe(before.fields.title);
   });
 });
 

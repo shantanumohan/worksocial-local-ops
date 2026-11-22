@@ -9,10 +9,22 @@ import {
   StagingChangeStatus,
   digestFields,
   fieldsMatch,
+  validateCmsEnvironmentOperation,
+  type CmsEnvironmentGateResult,
+  type CmsEnvironmentValue,
   type StagingChangeRecord,
   type StagingCmsPageRecord,
   type StagingPageFields,
 } from "@worksocial/domain";
+
+export type StagingCmsApplyResult = {
+  change: StagingChangeRecord;
+  page: StagingCmsPageRecord | null;
+  note: string;
+  /** 0 when environment gate refuses mutate (T-X007). */
+  providerMutateCount: number;
+  environmentGate: CmsEnvironmentGateResult;
+};
 
 export type StagingCmsSimulator = {
   readonly mode: "SIMULATOR" | "LIVE_UNAVAILABLE";
@@ -25,13 +37,15 @@ export type StagingCmsSimulator = {
     pageId: string;
     desiredFields: StagingPageFields;
     nowIso: string;
+    /** CMS bound environment observed on the connection/site. */
+    boundEnvironment: CmsEnvironmentValue | string;
+    /** Environment the operator intended for this mutate. */
+    intendedEnvironment: CmsEnvironmentValue | string;
+    /** Mutate kind for the environment gate (default publish). */
+    operation?: "publish" | "repair";
     /** Simulate lost ack / unknown remote outcome. */
     forceUnknownRemote?: boolean;
-  }): {
-    change: StagingChangeRecord;
-    page: StagingCmsPageRecord | null;
-    note: string;
-  };
+  }): StagingCmsApplyResult;
   /**
    * Independent read — must not reuse desired fields from the caller.
    * Returns fields currently stored in the simulator ledger.
@@ -82,6 +96,35 @@ export function createStagingCmsSimulator(
       return page;
     },
     applyChange(input) {
+      const environmentGate = validateCmsEnvironmentOperation({
+        boundEnvironment: input.boundEnvironment,
+        intendedEnvironment: input.intendedEnvironment,
+        operation: input.operation ?? "publish",
+      });
+      if (!environmentGate.ok) {
+        const change: StagingChangeRecord = {
+          changeId: input.changeId,
+          missionId: input.missionId,
+          pageId: input.pageId,
+          desiredFields: input.desiredFields,
+          desiredDigest: digestFields(input.desiredFields),
+          status: StagingChangeStatus.MISMATCH,
+          appliedRevision: null,
+          observedDigest: null,
+          recoveryNote: environmentGate.reasons.join("; "),
+          createdAtIso: input.nowIso,
+          updatedAtIso: input.nowIso,
+        };
+        changes.set(change.changeId, change);
+        return {
+          change,
+          page: pages.get(input.pageId) ?? null,
+          note: `CMS environment gate refused mutate (${environmentGate.code}) — no production op; providerMutateCount=0`,
+          providerMutateCount: 0,
+          environmentGate,
+        };
+      }
+
       const existing = pages.get(input.pageId);
       if (!existing) {
         const change: StagingChangeRecord = {
@@ -102,6 +145,8 @@ export function createStagingCmsSimulator(
           change,
           page: null,
           note: "Staging apply failed — page missing in simulator.",
+          providerMutateCount: 0,
+          environmentGate,
         };
       }
 
@@ -126,6 +171,8 @@ export function createStagingCmsSimulator(
           page: existing,
           note:
             "UNKNOWN_REMOTE_OUTCOME — do not treat as verified. Use recovery path.",
+          providerMutateCount: 0,
+          environmentGate,
         };
       }
 
@@ -158,6 +205,8 @@ export function createStagingCmsSimulator(
         page: updated,
         note:
           "Staging CMS simulator accepted apply (ACCEPTED_PENDING). Independent read-back required — acceptance ≠ verified.",
+        providerMutateCount: 1,
+        environmentGate,
       };
     },
     independentRead(input) {

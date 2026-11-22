@@ -199,6 +199,11 @@ export const SoakProofKind = {
    * Orphan worker on deadline — process tree stopped (T-X012).
    */
   ORPHAN_WORKER_DEADLINE_TREE_STOPPED: "orphan_worker_deadline_tree_stopped",
+  /**
+   * Wrong CMS environment → no production op (T-X007).
+   */
+  WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP:
+    "wrong_cms_environment_no_production_op",
 } as const;
 
 export type SoakProofKindValue =
@@ -274,7 +279,8 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X001 requires HOST_SLEEP_MONITORING_COVERAGE_GAP.
  * T-X021 requires CONCURRENT_IDEMPOTENT_RELEASE (not retry-only NO_DUPLICATE_EFFECTS).
  * T-X008 requires FACT_CHANGES_AFTER_REVIEW_STALE (cited/support change; no publish).
- * T-X012 requires ORPHAN_WORKER_DEADLINE_TREE_STOPPED (process tree stopped on deadline).
+ * T-X012 requires ORPHAN_WORKER_DEADLINE_TREE_STOPPED
+ * T-X007 requires WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP (process tree stopped on deadline).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -329,6 +335,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X021",
   "T-X008",
   "T-X012",
+  "T-X007",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -767,6 +774,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE];
     case "T-X012":
       return [SoakProofKind.ORPHAN_WORKER_DEADLINE_TREE_STOPPED];
+    case "T-X007":
+      return [SoakProofKind.WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP];
     default:
       return [];
   }
@@ -862,6 +871,8 @@ export function mapProofToFixtureCases(
       return ["T-X008"];
     case SoakProofKind.ORPHAN_WORKER_DEADLINE_TREE_STOPPED:
       return ["T-X012"];
+    case SoakProofKind.WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP:
+      return ["T-X007"];
     default:
       return [];
   }
