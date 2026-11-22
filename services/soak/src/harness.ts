@@ -100,6 +100,7 @@ import { proofStopBeforeDispatchClaim } from "./stop-before-dispatch-proof.js";
 import { proofIndirectPromptInjectionExfilDenied } from "./indirect-prompt-injection-exfil-proof.js";
 import { proofIdempotencyKeyPayloadMismatch } from "./idempotency-key-payload-mismatch-proof.js";
 import { proofWorkerBrowserAuthStateOsDenied } from "./browser-auth-state-proof.js";
+import { proofReplayHistoricalNoRepeatIo } from "./replay-historical-workflow-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -694,6 +695,12 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofIndirectPromptInjectionExfilDenied(nowPlus(nowIso, 440_000)),
   );
+  proofs.push(
+    await proofReplayHistoricalNoRepeatIo(
+      durableDir,
+      nowPlus(nowIso, 430_000),
+    ),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -743,6 +750,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X022 fixture ACCEPTED via idempotency_key_payload_mismatch only — not live VERIFIED",
       "T-X065 fixture ACCEPTED via worker_browser_auth_state_os_denied only — not live VERIFIED",
       "T-X063 fixture ACCEPTED via indirect_prompt_injection_exfil_denied only — not live VERIFIED",
+      "T-X013 fixture ACCEPTED via replay_historical_no_repeat_io only — not live VERIFIED",
     ],
   };
 }
