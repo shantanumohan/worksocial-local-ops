@@ -168,6 +168,10 @@ export const SoakProofKind = {
    */
   PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT:
     "public_synthetic_flag_requires_server_grant",
+  /**
+   * Malicious prompt interpolation blocked — prompt via stdin, shell false (T-X010).
+   */
+  MALICIOUS_PROMPT_NO_SHELL_INJECTION: "malicious_prompt_no_shell_injection",
 } as const;
 
 export type SoakProofKindValue =
@@ -237,6 +241,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X011 requires OUTPUT_BOMB_BOUNDED_QUARANTINED (oversized stdout quarantined).
  * T-X003 requires SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION.
  * T-X050 requires PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT.
+ * T-X010 requires MALICIOUS_PROMPT_NO_SHELL_INJECTION.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -284,6 +289,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X011",
   "T-X003",
   "T-X050",
+  "T-X010",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -708,6 +714,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION];
     case "T-X050":
       return [SoakProofKind.PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT];
+    case "T-X010":
+      return [SoakProofKind.MALICIOUS_PROMPT_NO_SHELL_INJECTION];
     default:
       return [];
   }
@@ -788,6 +796,8 @@ export function mapProofToFixtureCases(
       return ["T-X003"];
     case SoakProofKind.PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT:
       return ["T-X050"];
+    case SoakProofKind.MALICIOUS_PROMPT_NO_SHELL_INJECTION:
+      return ["T-X010"];
     default:
       return [];
   }

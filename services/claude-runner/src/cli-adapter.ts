@@ -137,6 +137,108 @@ export function quarantineStdoutDelivery(
   };
 }
 
+/**
+ * Pure spawn plan for Claude CLI (T-X010).
+ * Prompt is never placed on argv — delivery is stdin only; shell is always false.
+ */
+export type ClaudeCliInvocationPlan =
+  | {
+      ok: true;
+      argv: readonly string[];
+      shell: false;
+      promptDelivery: "stdin";
+      /** Prompt kept separate from argv — never shell-interpolated. */
+      prompt: string;
+      agentName: string;
+      modelId: string;
+    }
+  | {
+      ok: false;
+      code: "FLAG_DENIED" | "INVALID_AGENT";
+      reason: string;
+    };
+
+export type PlanClaudeCliInvocationInput = {
+  agentName: string;
+  modelId: string;
+  prompt: string;
+  tools?: string;
+  extraArgs?: readonly string[];
+};
+
+/**
+ * Build a fixed-argv CLI plan. Malicious prompt content cannot become shell
+ * injection because it is never joined into a shell string or argv.
+ */
+export function planClaudeCliInvocation(
+  input: PlanClaudeCliInvocationInput,
+): ClaudeCliInvocationPlan {
+  if (!isRegisteredAgentName(input.agentName)) {
+    return {
+      ok: false,
+      code: "INVALID_AGENT",
+      reason: `Agent name must be a registered role A01–A30, got '${input.agentName}'`,
+    };
+  }
+
+  const tools = input.tools ?? DEFAULT_LIVE_CLI_TOOLS;
+  if (/\b(Bash|Edit|Write|MultiEdit|NotebookEdit)\b/i.test(tools)) {
+    return {
+      ok: false,
+      code: "FLAG_DENIED",
+      reason: "Bash/Edit/Write tools are not permitted on the live CLI path",
+    };
+  }
+
+  const argv = [
+    "--print",
+    "--output-format",
+    "json",
+    "--model",
+    input.modelId,
+    "--max-turns",
+    "4",
+    "--agent",
+    input.agentName,
+    "--tools",
+    tools,
+    "--setting-sources",
+    "",
+    ...(input.extraArgs ?? []),
+  ];
+
+  const flagCheck = validateCliArgs(argv);
+  if (!flagCheck.ok) {
+    return {
+      ok: false,
+      code: "FLAG_DENIED",
+      reason: flagCheck.reason ?? "Flag denied",
+    };
+  }
+
+  const joined = argv.join(" ").toLowerCase();
+  if (
+    joined.includes("dangerously-skip-permissions") ||
+    joined.includes("permission-mode=bypass")
+  ) {
+    return {
+      ok: false,
+      code: "FLAG_DENIED",
+      reason: "Permission bypass flags are never allowed",
+    };
+  }
+
+  return {
+    ok: true,
+    argv,
+    shell: false,
+    promptDelivery: "stdin",
+    prompt: input.prompt,
+    agentName: input.agentName,
+    modelId: input.modelId,
+  };
+}
+
 export function defaultClaudeExecutableCandidates(): string[] {
   const fromEnv = process.env.WORKSOCIAL_CLAUDE_CLI?.trim();
   const candidates = [
@@ -286,60 +388,20 @@ function readCliVersion(
 export function invokeClaudeCli(
   request: ClaudeCliInvokeRequest,
 ): Promise<ClaudeCliInvokeResult> {
-  if (!isRegisteredAgentName(request.agentName)) {
+  const plan = planClaudeCliInvocation({
+    agentName: request.agentName,
+    modelId: request.modelId,
+    prompt: request.prompt,
+    ...(request.tools !== undefined ? { tools: request.tools } : {}),
+    ...(request.extraArgs !== undefined
+      ? { extraArgs: request.extraArgs }
+      : {}),
+  });
+  if (!plan.ok) {
     return Promise.resolve({
       ok: false,
-      code: "INVALID_AGENT",
-      reason: `Agent name must be a registered role A01–A30, got '${request.agentName}'`,
-    });
-  }
-
-  const tools = request.tools ?? DEFAULT_LIVE_CLI_TOOLS;
-  // Refuse any tools string that would re-enable shell/edit by default.
-  if (/\b(Bash|Edit|Write|MultiEdit|NotebookEdit)\b/i.test(tools)) {
-    return Promise.resolve({
-      ok: false,
-      code: "FLAG_DENIED",
-      reason: "Bash/Edit/Write tools are not permitted on the live CLI path",
-    });
-  }
-
-  const args = [
-    "--print",
-    "--output-format",
-    "json",
-    "--model",
-    request.modelId,
-    "--max-turns",
-    "4",
-    "--agent",
-    request.agentName,
-    "--tools",
-    tools,
-    // Do not load user/project settings that may widen tool permissions.
-    "--setting-sources",
-    "",
-    ...(request.extraArgs ?? []),
-  ];
-
-  const flagCheck = validateCliArgs(args);
-  if (!flagCheck.ok) {
-    return Promise.resolve({
-      ok: false,
-      code: "FLAG_DENIED",
-      reason: flagCheck.reason ?? "Flag denied",
-    });
-  }
-
-  const joined = args.join(" ").toLowerCase();
-  if (
-    joined.includes("dangerously-skip-permissions") ||
-    joined.includes("permission-mode=bypass")
-  ) {
-    return Promise.resolve({
-      ok: false,
-      code: "FLAG_DENIED",
-      reason: "Permission bypass flags are never allowed",
+      code: plan.code,
+      reason: plan.reason,
     });
   }
 
@@ -357,9 +419,9 @@ export function invokeClaudeCli(
 
     let child;
     try {
-      child = spawn(request.executablePath, args, {
+      child = spawn(request.executablePath, [...plan.argv], {
         stdio: ["pipe", "pipe", "pipe"],
-        shell: false,
+        shell: plan.shell,
         cwd: request.cwd,
         env: {
           ...process.env,
@@ -438,7 +500,8 @@ export function invokeClaudeCli(
       });
     });
 
-    child.stdin.write(request.prompt);
+    // Prompt via stdin only — never interpolated into argv/shell.
+    child.stdin.write(plan.prompt);
     child.stdin.end();
   });
 }
