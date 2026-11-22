@@ -47,6 +47,7 @@
  * Launch workstream schedule mission outcome (T-US-025).
  * Missed schedule coalesce no burst republish (T-US-026).
  * Demand page improvement release receipt (T-US-027).
+ * Keyword proliferation → one useful page update (T-US-028).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -106,6 +107,7 @@ import { proofStandingAutonomyGrantControlReceipts } from "./standing-autonomy-g
 import { proofLaunchWorkstreamScheduleMissionOutcome } from "./workstream-schedule-launch-proof.js";
 import { proofMissedScheduleCoalesceNoBurst } from "./missed-schedule-coalesce-proof.js";
 import { proofDemandPageImprovementReleaseReceipt } from "./demand-page-improvement-proof.js";
+import { proofKeywordProliferationOneUsefulUpdate } from "./keyword-proliferation-gate-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -837,6 +839,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofDemandPageImprovementReleaseReceipt(nowPlus(nowIso, 770_000)),
   );
+  proofs.push(
+    proofKeywordProliferationOneUsefulUpdate(nowPlus(nowIso, 780_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -918,6 +923,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-025 fixture ACCEPTED via launch_workstream_schedule_mission_outcome only — not live VERIFIED",
       "T-US-026 fixture ACCEPTED via missed_schedule_coalesce_no_burst only — not live VERIFIED",
       "T-US-027 fixture ACCEPTED via demand_page_improvement_release_receipt only — not live VERIFIED",
+      "T-US-028 fixture ACCEPTED via keyword_proliferation_one_useful_update only — not live VERIFIED",
     ],
   };
 }

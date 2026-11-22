@@ -413,6 +413,14 @@ export const SoakProofKind = {
    */
   DEMAND_PAGE_IMPROVEMENT_RELEASE_RECEIPT:
     "demand_page_improvement_release_receipt",
+  /**
+   * Prefer one useful page update over keyword proliferation (T-US-028).
+   * Blocking decision + preserved inputs + recovery path when thin keyword
+   * pages are proposed; one useful update preferred; false success refused;
+   * live NOT_WIRED. Distinct from T-US-027 (release receipt path).
+   */
+  KEYWORD_PROLIFERATION_ONE_USEFUL_UPDATE:
+    "keyword_proliferation_one_useful_update",
 } as const;
 
 export type SoakProofKindValue =
@@ -526,6 +534,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-025 requires LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME (workstream launch + schedule + mission outcome; live NOT_WIRED).
  * T-US-026 requires MISSED_SCHEDULE_COALESCE_NO_BURST (missed publish slots coalesce; no burst republish; live NOT_WIRED).
  * T-US-027 requires DEMAND_PAGE_IMPROVEMENT_RELEASE_RECEIPT (demand→page improvement; release receipt + experiment window; live NOT_WIRED).
+ * T-US-028 requires KEYWORD_PROLIFERATION_ONE_USEFUL_UPDATE (prefer one useful page update; keyword proliferation refused; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -618,6 +627,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-025",
   "T-US-026",
   "T-US-027",
+  "T-US-028",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1132,6 +1142,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.MISSED_SCHEDULE_COALESCE_NO_BURST];
     case "T-US-027":
       return [SoakProofKind.DEMAND_PAGE_IMPROVEMENT_RELEASE_RECEIPT];
+    case "T-US-028":
+      return [SoakProofKind.KEYWORD_PROLIFERATION_ONE_USEFUL_UPDATE];
     default:
       return [];
   }
@@ -1302,6 +1314,8 @@ export function mapProofToFixtureCases(
       return ["T-US-026"];
     case SoakProofKind.DEMAND_PAGE_IMPROVEMENT_RELEASE_RECEIPT:
       return ["T-US-027"];
+    case SoakProofKind.KEYWORD_PROLIFERATION_ONE_USEFUL_UPDATE:
+      return ["T-US-028"];
     default:
       return [];
   }
