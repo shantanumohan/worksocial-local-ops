@@ -233,6 +233,11 @@ export const SoakProofKind = {
    * Offline history replay of mission control flow; not acceptPending short-circuit.
    */
   REPLAY_HISTORICAL_NO_REPEAT_IO: "replay_historical_no_repeat_io",
+  /**
+   * Disk full during evidence write — no partial COMPLETED manifest (T-X004).
+   */
+  DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED:
+    "disk_full_evidence_no_partial_completed",
 } as const;
 
 export type SoakProofKindValue =
@@ -309,6 +314,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X021 requires CONCURRENT_IDEMPOTENT_RELEASE (not retry-only NO_DUPLICATE_EFFECTS).
  * T-X022 requires IDEMPOTENCY_KEY_PAYLOAD_MISMATCH (business key digest conflict).
  * T-X065 requires WORKER_BROWSER_AUTH_STATE_OS_DENIED.
+ * T-X004 requires DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED (no partial COMPLETED manifest).
  * T-X027 requires UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL.
  * T-X008 requires FACT_CHANGES_AFTER_REVIEW_STALE (cited/support change; no publish).
  * T-X012 requires ORPHAN_WORKER_DEADLINE_TREE_STOPPED
@@ -377,7 +383,8 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X063",
   "T-X013",
   "T-X027",
-] as const;
+
+  "T-X004",] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
 
@@ -829,6 +836,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.INDIRECT_PROMPT_INJECTION_EXFIL_DENIED];
     case "T-X013":
       return [SoakProofKind.REPLAY_HISTORICAL_NO_REPEAT_IO];
+    case "T-X004":
+      return [SoakProofKind.DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED];
     default:
       return [];
   }
@@ -939,6 +948,8 @@ export function mapProofToFixtureCases(
       return ["T-X063"];
     case SoakProofKind.REPLAY_HISTORICAL_NO_REPEAT_IO:
       return ["T-X013"];
+    case SoakProofKind.DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED:
+      return ["T-X004"];
     default:
       return [];
   }

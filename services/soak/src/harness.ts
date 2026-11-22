@@ -102,6 +102,7 @@ import { proofIdempotencyKeyPayloadMismatch } from "./idempotency-key-payload-mi
 import { proofWorkerBrowserAuthStateOsDenied } from "./browser-auth-state-proof.js";
 import { proofUnknownUsageCancelHoldsResidual } from "./unknown-usage-cancel-proof.js";
 import { proofReplayHistoricalNoRepeatIo } from "./replay-historical-workflow-proof.js";
+import { proofDiskFullEvidenceNoPartialCompleted } from "./disk-full-evidence-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -703,6 +704,9 @@ export async function runSoakRecoveryHarness(input: {
       nowPlus(nowIso, 430_000),
     ),
   );
+  proofs.push(
+    proofDiskFullEvidenceNoPartialCompleted(nowPlus(nowIso, 460_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -754,6 +758,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X063 fixture ACCEPTED via indirect_prompt_injection_exfil_denied only — not live VERIFIED",
       "T-X013 fixture ACCEPTED via replay_historical_no_repeat_io only — not live VERIFIED",
       "T-X027 fixture ACCEPTED via unknown_usage_cancel_holds_residual only — not live VERIFIED",
+      "T-X004 fixture ACCEPTED via disk_full_evidence_no_partial_completed only — not live VERIFIED",
     ],
   };
 }

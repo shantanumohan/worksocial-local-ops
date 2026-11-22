@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x004",
+  "caseId": "T-X004",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X004 (Disk full during evidence write — no partial completed manifest)\nproof=disk_full_evidence_no_partial_completed applyCount=1 :: Happy-path evidence write → COMPLETED manifest published atomically | ENOSPC during evidence write → no completed manifest (tmp cleaned) | release:evidence atomicWriteEvidenceJson ENOSPC → no partial final artifact | Retry ENOSPC preserves prior COMPLETED (no delete-on-failure) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "disk_full_evidence_no_partial_completed"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x004.json",
+  "createdAtIso": "2026-11-22T19:06:35.797Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x004-6b500f54416f"
+}

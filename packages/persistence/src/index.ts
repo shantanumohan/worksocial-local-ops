@@ -328,6 +328,24 @@ export {
 } from "./soak-store.js";
 
 export {
+  atomicWriteEvidenceJson,
+  classifyEvidenceWriteFailure,
+  completedEvidenceManifestPath,
+  createDiskFullInjectedFs,
+  EvidenceManifestStatus,
+  isDiskFullError,
+  readCompletedEvidenceManifest,
+  stagingEvidenceManifestPath,
+  writeCompletedEvidenceManifest,
+  type AtomicWriteEvidenceResult,
+  type CompletedEvidenceManifest,
+  type EvidenceManifestStatusValue,
+  type EvidenceWriteFs,
+  type WriteEvidenceManifestResult,
+} from "./evidence-manifest-write.js";
+
+
+export {
   createFileRecoveryStore,
   createMemoryRecoveryStore,
   createPgRecoveryStore,

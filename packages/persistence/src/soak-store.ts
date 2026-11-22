@@ -4,8 +4,9 @@
  * (+ 022 for pilot observations).
  */
 
-import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { mkdirSync, readFileSync, existsSync } from "node:fs";
+import { atomicWriteEvidenceJson } from "./evidence-manifest-write.js";
+import { join } from "node:path";
 import {
   emptySoakAcceptanceState,
   type AcceptanceCaseEvidenceRecord,
@@ -44,11 +45,14 @@ export type SoakStore = {
   };
 };
 
+/** Soak evidence path uses the T-X004 atomic writer (ENOSPC-safe; no partial finals). */
 function atomicWriteJson(filePath: string, value: unknown): void {
-  mkdirSync(dirname(filePath), { recursive: true });
-  const tmp = `${filePath}.${process.pid}.tmp`;
-  writeFileSync(tmp, JSON.stringify(value, null, 2), "utf8");
-  renameSync(tmp, filePath);
+  const result = atomicWriteEvidenceJson({ filePath, value });
+  if (!result.ok) {
+    const err = new Error(result.reason) as NodeJS.ErrnoException;
+    err.code = result.code === "DISK_FULL" ? "ENOSPC" : "EIO";
+    throw err;
+  }
 }
 
 function readJsonFile<T>(filePath: string): T | null {

@@ -812,6 +812,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X013** is fixture ACCEPTED only via the replay historical workflow / no repeated external I/O proof (`REPLAY_HISTORICAL_NO_REPEAT_IO`) — record enqueue→accept→verify activity history, then replay the mission control flow from that history without re-invoking acceptPending/applyOnce; provider ledger must not grow. Distinct from mid-flight no-dup, crash-restart, and mere VERIFIED acceptPending short-circuit. Not sandbox/prod VERIFIED.
 
+**T-X004** is fixture ACCEPTED only via the disk-full evidence no partial completed proof (`DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED`) — ENOSPC during evidence write must not leave a COMPLETED manifest. Not sandbox/prod VERIFIED.
+
 **T-X027** is fixture ACCEPTED only via the unknown usage cancel holds residual proof (`UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL`). Not sandbox/prod VERIFIED.
 
 
@@ -838,7 +840,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X001 | Host sleeps during scheduled monitoring | Coverage gap honest; coalesce *(fixture ACCEPTED)* |
 | T-X002 | Two supervisors start together | Single host lease *(fixture ACCEPTED — competing-supervisor lease proof; not sandbox/prod VERIFIED)* |
 | T-X003 | Symlink escape after root verification | Write denied outside root *(fixture ACCEPTED — symlink escape after root verification proof; not sandbox/prod VERIFIED)* |
-| T-X004 | Disk full during evidence write | No partial completed manifest |
+| T-X004 | Disk full during evidence write | No partial completed manifest *(fixture ACCEPTED — disk-full evidence no-partial-completed proof; not sandbox/prod VERIFIED)* |
 | T-X005 | Forged browser role | Payload role ignored *(fixture ACCEPTED — forged browser role ignored proof; not sandbox/prod VERIFIED)* |
 | T-X006 | Cross-workspace object reference | Deny without leak *(fixture ACCEPTED — cross-workspace reference denied proof; not sandbox/prod VERIFIED)* |
 | T-X007 | Wrong CMS environment | No production op *(fixture ACCEPTED — wrong CMS environment no production op proof; not sandbox/prod VERIFIED)* |
@@ -917,7 +919,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 25 NOT_RUN + 1 fixture ACCEPTED (T-F24) |
 | T-US (behavior_acceptance) | 60 | 44 NOT_RUN + 16 fixture ACCEPTED (T-US-002, T-US-008, T-US-010, T-US-018, T-US-024, T-US-036, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-054, T-US-057, T-US-058, T-US-060) |
-| T-X (platform/security/resilience) | 73 | 34 NOT_RUN + 39 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X063, T-X065, T-X066, T-X069, T-X073) |
-| **Total** | **159** | **104 NOT_RUN + 55 fixture ACCEPTED** |
+| T-X (platform/security/resilience) | 73 | 31 NOT_RUN + 42 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X024, T-X027, T-X029, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X048, T-X049, T-X050, T-X053, T-X057, T-X058, T-X063, T-X065, T-X066, T-X069, T-X073) |
+| **Total** | **159** | **100 NOT_RUN + 59 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

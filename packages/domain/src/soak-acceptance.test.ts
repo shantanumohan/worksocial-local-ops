@@ -493,6 +493,14 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL),
     ).toEqual(["T-X027"]);
+    expect(expectedProofsForFixtureCase("T-X004")).toEqual([
+      SoakProofKind.DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED,
+      ),
+    ).toEqual(["T-X004"]);
   });
 
 });
