@@ -24,10 +24,12 @@ describe("platform-attribution (T-X059)", () => {
     ]);
     expect(projection.uniqueBookingCount).toBe(1);
     expect(projection.platformClaimCount).toBe(2);
-    expect(projection.claimsByPlatform).toEqual({
-      google_ads: 1,
-      meta_ads: 1,
-    });
+    expect(projection.claimsByPlatform.google_ads).toBe(1);
+    expect(projection.claimsByPlatform.meta_ads).toBe(1);
+    expect(projection.retainedClaims.map((c) => c.claimId).sort()).toEqual([
+      "c-google",
+      "c-meta",
+    ]);
     expect(projection.wouldDoubleCountIfSummed).toBe(true);
 
     const decision = refuseSilentPlatformSum(projection);
@@ -48,5 +50,27 @@ describe("platform-attribution (T-X059)", () => {
     expect(projection.platformClaimCount).toBe(1);
     expect(projection.wouldDoubleCountIfSummed).toBe(false);
     expect(refuseSilentPlatformSum(projection).allowed).toBe(true);
+  });
+
+  it("counts prototype-key platformIds without inheritance collision", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-toString",
+        platformId: "toString",
+        bookingId: "booking-proto",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "c-proto",
+        platformId: "__proto__",
+        bookingId: "booking-proto",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(projection.claimsByPlatform.toString).toBe(1);
+    expect(projection.claimsByPlatform.__proto__).toBe(1);
+    expect(projection.platformClaimCount).toBe(2);
+    expect(projection.uniqueBookingCount).toBe(1);
+    expect(projection.retainedClaims).toHaveLength(2);
   });
 });

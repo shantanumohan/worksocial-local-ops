@@ -19,7 +19,13 @@ export type UniqueOutcomeProjection = {
   uniqueBookingIds: string[];
   uniqueBookingCount: number;
   platformClaimCount: number;
+  /** Null-prototype record — platformId keys never collide with Object.prototype. */
   claimsByPlatform: Record<string, number>;
+  /**
+   * Retained individual claim rows (claimId / platformId / bookingId / claimedAtIso).
+   * Proves claims stay separate ledger identities, not only aggregate counts.
+   */
+  retainedClaims: PlatformAttributionClaim[];
   /** True when naive platform-sum would overstate unique bookings. */
   wouldDoubleCountIfSummed: boolean;
   reasons: string[];
@@ -32,17 +38,24 @@ export function projectUniqueOutcomes(
   claims: readonly PlatformAttributionClaim[],
 ): UniqueOutcomeProjection {
   const uniqueBookingIds = [...new Set(claims.map((c) => c.bookingId))].sort();
-  const claimsByPlatform: Record<string, number> = {};
+  const claimsByPlatform: Record<string, number> = Object.create(null);
   for (const claim of claims) {
-    claimsByPlatform[claim.platformId] =
-      (claimsByPlatform[claim.platformId] ?? 0) + 1;
+    const prev = Object.prototype.hasOwnProperty.call(
+      claimsByPlatform,
+      claim.platformId,
+    )
+      ? claimsByPlatform[claim.platformId]!
+      : 0;
+    claimsByPlatform[claim.platformId] = prev + 1;
   }
-  const platformClaimCount = claims.length;
+  const retainedClaims = claims.map((c) => ({ ...c }));
+  const platformClaimCount = retainedClaims.length;
   const uniqueBookingCount = uniqueBookingIds.length;
   const wouldDoubleCountIfSummed = platformClaimCount > uniqueBookingCount;
   const reasons = [
     `uniqueBookingCount=${uniqueBookingCount}`,
     `platformClaimCount=${platformClaimCount}`,
+    `retainedClaimIds=${retainedClaims.map((c) => c.claimId).join(",")}`,
     wouldDoubleCountIfSummed
       ? "platform claims exceed unique bookings — keep claims separate; do not sum into unique outcomes"
       : "platform claim count matches unique bookings",
@@ -52,6 +65,7 @@ export function projectUniqueOutcomes(
     uniqueBookingCount,
     platformClaimCount,
     claimsByPlatform,
+    retainedClaims,
     wouldDoubleCountIfSummed,
     reasons,
   };

@@ -3,14 +3,14 @@
   "caseId": "T-X014",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X014 (Approval wait survives restart)\nproof=crash_restart applyCount=1 :: Accepted ACCEPTED_PENDING applyCount=1 | Rehydrated ACCEPTED_PENDING after restart | Verified matched=true applyCount=1\nproof=job_continuity applyCount=1 :: Job job-d7a0863514290307 recorded | After restart created=false sameJob=true\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X014 (Approval wait survives restart)\nproof=crash_restart applyCount=1 :: Accepted ACCEPTED_PENDING applyCount=1 | Rehydrated ACCEPTED_PENDING after restart | Verified matched=true applyCount=1\nproof=job_continuity applyCount=1 :: Job job-a2fe75b982929af5 recorded | After restart created=false sameJob=true\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "crash_restart",
     "job_continuity"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x014.json",
-  "createdAtIso": "2026-11-22T19:49:03.809Z",
+  "createdAtIso": "2026-11-22T19:50:16.673Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x014-53b67223124a"
+  "uniqueSourceArtifactId": "art-fixture-t-x014-3a54d762a6ab"
 }
