@@ -970,6 +970,17 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-US-059"]);
   });
 
+  it("maps T-US-003 to BUSINESS_TRUTH_FOLDERS_RESTORE_SECRETS_EXCLUDED only", () => {
+    expect(expectedProofsForFixtureCase("T-US-003")).toEqual([
+      SoakProofKind.BUSINESS_TRUTH_FOLDERS_RESTORE_SECRETS_EXCLUDED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.BUSINESS_TRUTH_FOLDERS_RESTORE_SECRETS_EXCLUDED,
+      ),
+    ).toEqual(["T-US-003"]);
+  });
+
   it("maps T-F01 to CREATE_TRUSTED_LOCAL_WORKSPACE only", () => {
     expect(expectedProofsForFixtureCase("T-F01")).toEqual([
       SoakProofKind.CREATE_TRUSTED_LOCAL_WORKSPACE,

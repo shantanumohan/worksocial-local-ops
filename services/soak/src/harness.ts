@@ -135,6 +135,7 @@ import { proofKeyboardJourneyReducedMotion } from "./keyboard-journey-reduced-mo
 import { proofSharedBriefsRedactedPrivateRetained } from "./shared-briefs-redacted-private-retained-proof.js";
 import { proofCreateTrustedLocalWorkspace } from "./create-trusted-local-workspace-proof.js";
 import { proofChooseFoldersEstablishBusinessTruth } from "./choose-folders-establish-business-truth-proof.js";
+import { proofBusinessTruthFoldersRestoreSecretsExcluded } from "./business-truth-folders-proof.js";
 import { proofMapSitesPagesEditableSources } from "./map-sites-pages-editable-sources-proof.js";
 import { proofConnectGoogleAnalytics4 } from "./connect-google-analytics-4-proof.js";
 import { proofConnectSearchConsoleOrganicVisibility } from "./connect-search-console-organic-visibility-proof.js";
@@ -923,6 +924,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofChooseFoldersEstablishBusinessTruth(nowPlus(nowIso, 920_000)),
   );
+  proofs.push(
+    proofBusinessTruthFoldersRestoreSecretsExcluded(nowPlus(nowIso, 925_000)),
+  );
   proofs.push(proofMapSitesPagesEditableSources(nowPlus(nowIso, 930_000)));
   proofs.push(proofConnectGoogleAnalytics4(nowPlus(nowIso, 940_000)));
   proofs.push(
@@ -1124,6 +1128,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-039 fixture ACCEPTED via form_crm_continuous_verify_cadence_heartbeat only — not live VERIFIED",
       "T-US-043 fixture ACCEPTED via after_hours_handoff_acknowledged only — not live VERIFIED",
       "T-US-016 fixture ACCEPTED via claude_runtime_eval_auth_separated only — not live VERIFIED",
+      "T-US-003 fixture ACCEPTED via business_truth_folders_restore_secrets_excluded only — not live VERIFIED",
     ],
   };
 }

@@ -527,6 +527,15 @@ export const SoakProofKind = {
   SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED:
     "shared_briefs_redacted_private_retained",
   /**
+   * Choose folders / business truth — folders-ready happy-path summary
+   * (T-US-003). Artifact roots + durable secrets/database off sync,
+   * hours/capacity/prices/availability with owner/source, write/read +
+   * export/restore observed, secrets excluded from restore evidence;
+   * live NOT_WIRED. Distinct from T-F02 complete F02 evidence set.
+   */
+  BUSINESS_TRUTH_FOLDERS_RESTORE_SECRETS_EXCLUDED:
+    "business_truth_folders_restore_secrets_excluded",
+  /**
    * Create a trusted local workspace — complete F01 evidence set (T-F01).
    * Owner session, workspace revision, timestamped diagnostics (not online
    * badge), Observe authority, startup + recovery, blockers+next-actions;
@@ -931,6 +940,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-053 requires SECRETS_NEVER_IN_BROWSER_ASSETS (secrets never in browser assets; live NOT_WIRED).
  * T-US-055 requires KEYBOARD_JOURNEY_REDUCED_MOTION (complete keyboard journey with reduced motion; live NOT_WIRED).
  * T-US-059 requires SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED (shared briefs redacted; private evidence retained; live NOT_WIRED).
+ * T-US-003 requires BUSINESS_TRUTH_FOLDERS_RESTORE_SECRETS_EXCLUDED (folders-ready happy-path; live NOT_WIRED).
  * T-F01 requires CREATE_TRUSTED_LOCAL_WORKSPACE (complete F01 evidence set; live NOT_WIRED).
  * T-F02 requires CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH (complete F02 evidence set; live NOT_WIRED).
  * T-F03 requires MAP_SITES_PAGES_EDITABLE_SOURCES (complete F03 evidence set; live NOT_WIRED).
@@ -1098,6 +1108,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-001",
   "T-US-039",
   "T-US-043",
+  "T-US-003",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1642,6 +1653,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.KEYBOARD_JOURNEY_REDUCED_MOTION];
     case "T-US-059":
       return [SoakProofKind.SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED];
+    case "T-US-003":
+      return [SoakProofKind.BUSINESS_TRUTH_FOLDERS_RESTORE_SECRETS_EXCLUDED];
     case "T-F01":
       return [SoakProofKind.CREATE_TRUSTED_LOCAL_WORKSPACE];
     case "T-F02":
@@ -1902,6 +1915,8 @@ export function mapProofToFixtureCases(
       return ["T-US-055"];
     case SoakProofKind.SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED:
       return ["T-US-059"];
+    case SoakProofKind.BUSINESS_TRUTH_FOLDERS_RESTORE_SECRETS_EXCLUDED:
+      return ["T-US-003"];
     case SoakProofKind.CREATE_TRUSTED_LOCAL_WORKSPACE:
       return ["T-F01"];
     case SoakProofKind.CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH:
