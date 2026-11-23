@@ -19,6 +19,12 @@ import {
   type WritePathOutcomeEvidence,
 } from "./production-mapping.js";
 import { SupportLabel, type SupportLabelValue } from "./knowledge.js";
+import {
+  effectiveCapacityForLayout,
+  parseLayoutRequest,
+  type LayoutCapacities,
+  type RoomLayoutValue,
+} from "./layout-capacity.js";
 
 /** Page audit finding severity. */
 export const AuditSeverity = {
@@ -244,6 +250,11 @@ export type SemanticCatalogEntry = {
   /** Price omitted → unknown, never inferred as free. */
   priceKnown: boolean;
   priceLabel: string | null;
+  /**
+   * Optional per-layout capacities. When a query requests an explicit layout,
+   * filtering uses that layout's capacity (never a mismatched marketing max).
+   */
+  layoutCapacities?: LayoutCapacities;
   fixtureOnly: boolean;
 };
 
@@ -260,6 +271,8 @@ export type ParsedSearchConstraints = {
   category: SemanticCatalogEntry["category"] | null;
   location: string | null;
   requiredAmenities: string[];
+  /** Explicit seating layout when parsed from layout/seating/setup phrases. */
+  layout: RoomLayoutValue | null;
   /** Max price in minor currency units when parsed; null if absent. */
   priceMaxMinor: number | null;
   /** Raw price phrase retained for clarify/abstain when not enforceable. */
@@ -751,6 +764,29 @@ export function parseSearchConstraints(rawQuery: string): ParsedSearchConstraint
   else if (/event|reception|party/.test(q)) category = "Event";
   else if (/meeting|conference|boardroom/.test(q)) category = "Meeting";
 
+  // Explicit seating layout (layout/seating/setup/configuration). Ambiguous
+  // multi-layout phrases stay unresolved — never silently pick by enum order.
+  const layoutRequest = parseLayoutRequest(rawQuery);
+  let layout: RoomLayoutValue | null = null;
+  if (layoutRequest.status === "ok") {
+    layout = layoutRequest.layout;
+    // Prefer Meeting when an explicit seating layout is requested without a
+    // stronger Training/Office/Event signal beyond the layout word itself.
+    if (
+      category === "Training" &&
+      layout === "classroom" &&
+      !/\b(train|workshop)\b/i.test(q)
+    ) {
+      category = /meeting|conference|boardroom|room|space/.test(q)
+        ? "Meeting"
+        : category;
+    }
+  } else if (layoutRequest.status === "ambiguous") {
+    unresolvedConstraints.push(
+      `layout:ambiguous:${layoutRequest.matched.join(",")}`,
+    );
+  }
+
   // Location — never invert "not in X" into a positive hard filter.
   let location: string | null = null;
   const negatedLocationMatch = q.match(
@@ -886,6 +922,7 @@ export function parseSearchConstraints(rawQuery: string): ParsedSearchConstraint
     category,
     location,
     requiredAmenities,
+    layout,
     priceMaxMinor,
     priceRaw,
     dateRaw,
@@ -1031,11 +1068,27 @@ export function runSemanticSearch(input: {
       filterTrace.push("excluded: inaccessible");
       continue;
     }
-    if (constraints.people !== null && entry.capacity < constraints.people) {
-      filterTrace.push(
-        `capacity ${entry.capacity} < required ${constraints.people}`,
-      );
-      continue;
+    if (constraints.people !== null) {
+      if (constraints.layout) {
+        const layoutFilter = effectiveCapacityForLayout({
+          defaultCapacity: entry.capacity,
+          layoutCapacities: entry.layoutCapacities ?? null,
+          requestedLayout: constraints.layout,
+        });
+        if (layoutFilter.capacity < constraints.people) {
+          filterTrace.push(
+            layoutFilter.missingLayoutCapacity
+              ? `missing capacity for layout ${constraints.layout}; default/max ${entry.capacity} not substituted`
+              : `layout capacity ${layoutFilter.capacity} (${constraints.layout}) < required ${constraints.people}`,
+          );
+          continue;
+        }
+      } else if (entry.capacity < constraints.people) {
+        filterTrace.push(
+          `capacity ${entry.capacity} < required ${constraints.people}`,
+        );
+        continue;
+      }
     }
     if (constraints.category && entry.category !== constraints.category) {
       filterTrace.push(

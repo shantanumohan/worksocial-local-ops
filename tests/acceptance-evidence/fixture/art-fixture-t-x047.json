@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x047",
+  "caseId": "T-X047",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X047 (Layout-specific capacity mismatch — filter correctly)\nproof=layout_specific_capacity_mismatch_filters applyCount=1 :: parseSearchConstraints retains layout=classroom people=20 category=Meeting | runSemanticSearch classroom seating 20 → exchange only (hudson layout mismatch); status=unknown | classroom seating 10 → hudson admitted (layout capacity 12) | Counterfactual: marketing capacity 40 would wrongly allow classroom 20 | Ambiguous layout phrases → unresolved clarify (no silent pick) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "layout_specific_capacity_mismatch_filters"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x047.json",
+  "createdAtIso": "2026-11-23T06:49:42.842Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x047-6a3225be31b7"
+}

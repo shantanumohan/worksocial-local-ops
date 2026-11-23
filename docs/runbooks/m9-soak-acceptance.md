@@ -297,3 +297,6 @@ Suggested owner Windows flow (state off OneDrive):
 **T-X042** maps only to `SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS`.
 
 **T-X046** maps only to `UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION` (unsupported blog destination; no fake publication; never invent PUBLISHED_VERIFIED; distinct from T-US-022/T-X045; not live VERIFIED).
+
+
+**T-X047** maps only to `LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS`.
