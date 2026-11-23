@@ -624,6 +624,16 @@ export const SoakProofKind = {
    */
   LAUNCH_WORKSTREAM_RECURRING_SCHEDULE:
     "launch_workstream_recurring_schedule",
+  /**
+   * Turn demand into a page improvement — complete F14 evidence set (T-F14).
+   * Observations, intent-to-page, mission/brief, proposed answer/metadata/
+   * internal-links review, exact revision diff, independent QA, policy
+   * release receipt + experiment window, measurable change observation;
+   * unsafe claims refused; live NOT_WIRED. Distinct from T-US-027 release
+   * receipt summary, T-US-028 keyword proliferation, and T-US-035
+   * review/revise/release.
+   */
+  TURN_DEMAND_INTO_PAGE_IMPROVEMENT: "turn_demand_into_page_improvement",
 } as const;
 
 export type SoakProofKindValue =
@@ -762,6 +772,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F11 requires CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS (complete F11 evidence set; live NOT_WIRED).
  * T-F12 requires GRANT_STANDING_AUTONOMY_SAFELY (complete F12 evidence set; live NOT_WIRED).
  * T-F13 requires LAUNCH_WORKSTREAM_RECURRING_SCHEDULE (complete F13 evidence set; live NOT_WIRED).
+ * T-F14 requires TURN_DEMAND_INTO_PAGE_IMPROVEMENT (complete F14 evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -781,6 +792,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F11",
   "T-F12",
   "T-F13",
+  "T-F14",
   "T-F24",
   "T-US-047",
   "T-US-002",
@@ -1443,6 +1455,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.GRANT_STANDING_AUTONOMY_SAFELY];
     case "T-F13":
       return [SoakProofKind.LAUNCH_WORKSTREAM_RECURRING_SCHEDULE];
+    case "T-F14":
+      return [SoakProofKind.TURN_DEMAND_INTO_PAGE_IMPROVEMENT];
     default:
       return [];
   }
@@ -1663,6 +1677,8 @@ export function mapProofToFixtureCases(
       return ["T-F12"];
     case SoakProofKind.LAUNCH_WORKSTREAM_RECURRING_SCHEDULE:
       return ["T-F13"];
+    case SoakProofKind.TURN_DEMAND_INTO_PAGE_IMPROVEMENT:
+      return ["T-F14"];
     default:
       return [];
   }

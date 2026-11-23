@@ -1348,6 +1348,14 @@ export {
   type LaunchWorkstreamRecurringScheduleDecision,
 } from "./launch-workstream-recurring-schedule.js";
 export {
+  TURN_DEMAND_INTO_PAGE_IMPROVEMENT_RELATED_CASE_IDS,
+  evaluateTurnDemandIntoPageImprovement,
+  type TurnDemandIntoPageImprovementInput,
+  type TurnDemandIntoPageImprovementDecision,
+  type ProposedAnswerReview,
+  type MeasurableChangeObservation,
+} from "./turn-demand-into-page-improvement.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

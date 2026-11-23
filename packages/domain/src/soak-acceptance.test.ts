@@ -1065,4 +1065,13 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.LAUNCH_WORKSTREAM_RECURRING_SCHEDULE),
     ).toEqual(["T-F13"]);
   });
+
+  it("maps T-F14 to TURN_DEMAND_INTO_PAGE_IMPROVEMENT only", () => {
+    expect(expectedProofsForFixtureCase("T-F14")).toEqual([
+      SoakProofKind.TURN_DEMAND_INTO_PAGE_IMPROVEMENT,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.TURN_DEMAND_INTO_PAGE_IMPROVEMENT),
+    ).toEqual(["T-F14"]);
+  });
 });
