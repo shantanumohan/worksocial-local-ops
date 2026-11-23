@@ -242,6 +242,8 @@ Suggested owner Windows flow (state off OneDrive):
 **T-F05** maps only to `CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY` (complete F05 evidence package: identity+scopes+API readiness, domain/URL-prefix property bind, comparable-query config, observation batch+coverage+sitemap, intent→page map, daily schedule+watermark; unsafe claims refused; live NOT_WIRED; distinct from T-US-009 schedule/watermark summary; not live VERIFIED).
 
 **T-F06** maps only to `CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS` (complete F06 evidence package: project+access tier, identity+scopes, deny-write consent, client/manager bind+TEST badge, campaigns+conversions, event mapping+discrepancies, read receipt+watermark, READ_READY Analyze-only; unsafe claims refused; live NOT_WIRED; distinct from T-US-011 analyze-only save/reload and T-US-012 test vs production; not live VERIFIED).
+**T-US-011** maps only to `CONNECT_GOOGLE_ADS_ANALYZE_ONLY` (analyze-only save/reload; write/spend disabled; distinct from T-F06 complete package; not live VERIFIED).
+
 
 **T-F08** maps only to `CONNECT_CLAUDE_CODE_AND_TEST_API` (complete F08 evidence package: install+auth diagnostic, broker test-API bind, dated model catalog, budget policy+selected model, consented smoke+usage ledger, EVAL_ONLY test adapter enabled; unsafe claims refused; live NOT_WIRED; distinct from T-US-015 EVAL_ONLY connect summary and T-US-016 runtime vs API eval auth; not live VERIFIED).
 

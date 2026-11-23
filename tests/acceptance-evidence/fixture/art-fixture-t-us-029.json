@@ -8,8 +8,8 @@
     "campaign_manifest_distribution"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-029.json",
-  "createdAtIso": "2026-11-23T06:09:30.794Z",
+  "createdAtIso": "2026-11-23T06:16:02.021Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-029-35d1f47522b3"
+  "uniqueSourceArtifactId": "art-fixture-t-us-029-34fe739d51a6"
 }

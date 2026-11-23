@@ -202,6 +202,7 @@ import { proofDiagnoseRepairDefectResolvedOrHandoff } from "./diagnose-repair-de
 import { proofExactFinancialBoundariesPreserved } from "./exact-financial-boundaries-proof.js";
 import { proofConnectGa4ReadReadyNextSync } from "./connect-ga4-read-ready-proof.js";
 import { proofConnectGscScheduleWatermark } from "./connect-gsc-schedule-watermark-proof.js";
+import { proofConnectGoogleAdsAnalyzeOnlyWriteDisabled } from "./connect-google-ads-analyze-only-proof.js";
 import { proofPortableAnalysisArtifact } from "./portable-analysis-artifact-proof.js";
 import { proofTrustedWorkspaceReadinessBlockersNextActions } from "./trusted-workspace-readiness-proof.js";
 import { proofFormCrmContinuousVerifyCadenceHeartbeat } from "./form-crm-continuous-verify-proof.js";
@@ -1015,6 +1016,7 @@ export async function runSoakRecoveryHarness(input: {
   );
   proofs.push(proofConnectGa4ReadReadyNextSync(nowPlus(nowIso, 1260000)));
   proofs.push(proofConnectGscScheduleWatermark(nowPlus(nowIso, 1270000)));
+  proofs.push(proofConnectGoogleAdsAnalyzeOnlyWriteDisabled(nowPlus(nowIso, 1280000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1143,6 +1145,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-005 fixture ACCEPTED via site_page_editable_sources_baseline only — not live VERIFIED",
       "T-US-007 fixture ACCEPTED via connect_ga4_read_ready_next_sync only — not live VERIFIED",
       "T-US-009 fixture ACCEPTED via connect_gsc_schedule_watermark only — not live VERIFIED",
+      "T-US-011 fixture ACCEPTED via connect_google_ads_analyze_only only — not live VERIFIED",
     ],
   };
 }

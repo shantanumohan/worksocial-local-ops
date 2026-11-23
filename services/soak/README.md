@@ -97,6 +97,7 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-F25 Operate the daily owner review | Fixture **ACCEPTED** via `OPERATE_DAILY_OWNER_REVIEW` (complete evidence; not live VERIFIED) |
 | T-US-001 trusted workspace readiness | Fixture **ACCEPTED** via `TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS` (not live VERIFIED) |
 | T-US-041 diagnose/repair defect | Fixture **ACCEPTED** via `DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF` (not live VERIFIED) |
+| T-US-011 Google Ads analyze-only | Fixture **ACCEPTED** via `CONNECT_GOOGLE_ADS_ANALYZE_ONLY` (not live VERIFIED) |
 | T-US-007 Connect GA4 ready-read/next sync | Fixture **ACCEPTED** via `CONNECT_GA4_READ_READY_NEXT_SYNC` (not live VERIFIED; distinct from T-F04) |
 | T-F17 Run Claude and Gemini evaluation suites | Fixture **ACCEPTED** via `RUN_CLAUDE_GEMINI_EVALUATION_SUITES` (complete evidence; not live VERIFIED) |
 | T-F23 Test semantic search and improve no-result cases | Fixture **ACCEPTED** via `TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT` (complete evidence; not live VERIFIED) |
