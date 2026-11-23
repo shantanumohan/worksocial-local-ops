@@ -1094,4 +1094,15 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.REVIEW_PAID_MEDIA_RECOMMENDATIONS),
     ).toEqual(["T-F16"]);
   });
+
+  it("maps T-F20 to VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY only", () => {
+    expect(expectedProofsForFixtureCase("T-F20")).toEqual([
+      SoakProofKind.VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY,
+      ),
+    ).toEqual(["T-F20"]);
+  });
 });
