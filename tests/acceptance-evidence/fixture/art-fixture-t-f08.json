@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f08",
+  "caseId": "T-F08",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F08 (Connect Claude Code and the Claude test API)\nproof=connect_claude_code_and_test_api applyCount=1 :: complete F08 evidence package → CONNECT_CLAUDE_CODE_AND_TEST_API_EVIDENCE_RECORDED; install+auth diagnostic; broker test-API bind; dated model catalog; budget policy+selected model; consented smoke+usage ledger; EVAL_ONLY test adapter enabled; evalVerifiedLive=false; live NOT_WIRED | empty install diagnostic → INSTALLATION_DIAGNOSTIC_REQUIRED | empty test-API binding → TEST_API_BINDING_REQUIRED | empty model catalog → MODEL_CATALOG_REQUIRED | smokeTest=null → SMOKE_TEST_REQUIRED | attemptOperationalCapability → OPERATIONAL_CAPABILITY_REFUSED | claimLiveVerifiedEval → FALSE_LIVE_VERIFIED_EVAL_REFUSED | requestLiveEvalWiring → LIVE_EVAL_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveEvalWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-015 (EVAL_ONLY connect summary) and T-US-016 (runtime vs API eval auth) — complete F08 flow evidence package | proofRecordedAt=2026-11-21T19:16:10.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "connect_claude_code_and_test_api"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f08.json",
+  "createdAtIso": "2026-11-23T03:08:31.376Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f08-5a5127365bef"
+}

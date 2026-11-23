@@ -1282,6 +1282,19 @@ export {
   type ConnectGoogleAdsControlledAnalysisDecision,
 } from "./connect-google-ads-controlled-analysis.js";
 export {
+  CONNECT_CLAUDE_CODE_AND_TEST_API_RELATED_CASE_IDS,
+  evaluateConnectClaudeCodeAndTestApi,
+  type ClaudeCodeInstallationDiagnostic,
+  type ClaudeTestApiBinding,
+  type ClaudeModelCatalogEntry,
+  type ClaudeModelCatalog,
+  type ClaudeBudgetPolicy,
+  type ClaudeSmokeTestEvidence,
+  type ClaudeEvalOnlyReadyStatus,
+  type ConnectClaudeCodeAndTestApiInput,
+  type ConnectClaudeCodeAndTestApiDecision,
+} from "./connect-claude-code-and-test-api.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

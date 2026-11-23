@@ -568,6 +568,15 @@ export const SoakProofKind = {
    */
   CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS:
     "connect_google_ads_controlled_analysis",
+  /**
+   * Connect Claude Code and the Claude test API — complete F08 evidence set
+   * (T-F08). Install+auth diagnostic, broker test-API bind, dated model
+   * catalog, budget policy+selected model, consented smoke+usage ledger,
+   * EVAL_ONLY test adapter enabled; unsafe claims refused; live NOT_WIRED.
+   * Distinct from T-US-015 EVAL_ONLY connect summary and T-US-016 runtime vs
+   * API eval auth.
+   */
+  CONNECT_CLAUDE_CODE_AND_TEST_API: "connect_claude_code_and_test_api",
 } as const;
 
 export type SoakProofKindValue =
@@ -700,6 +709,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F04 requires CONNECT_GOOGLE_ANALYTICS_4 (complete F04 evidence set; live NOT_WIRED).
  * T-F05 requires CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY (complete F05 evidence set; live NOT_WIRED).
  * T-F06 requires CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS (complete F06 evidence set; live NOT_WIRED).
+ * T-F08 requires CONNECT_CLAUDE_CODE_AND_TEST_API (complete F08 evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -713,6 +723,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F04",
   "T-F05",
   "T-F06",
+  "T-F08",
   "T-F24",
   "T-US-047",
   "T-US-002",
@@ -1363,6 +1374,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY];
     case "T-F06":
       return [SoakProofKind.CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS];
+    case "T-F08":
+      return [SoakProofKind.CONNECT_CLAUDE_CODE_AND_TEST_API];
     default:
       return [];
   }
@@ -1571,6 +1584,8 @@ export function mapProofToFixtureCases(
       return ["T-F05"];
     case SoakProofKind.CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS:
       return ["T-F06"];
+    case SoakProofKind.CONNECT_CLAUDE_CODE_AND_TEST_API:
+      return ["T-F08"];
     default:
       return [];
   }
