@@ -143,6 +143,7 @@ import { proofLaunchWorkstreamRecurringSchedule } from "./launch-workstream-recu
 import { proofTurnDemandIntoPageImprovement } from "./turn-demand-into-page-improvement-proof.js";
 import { proofCreateAndDistributeOriginalCampaign } from "./create-and-distribute-original-campaign-proof.js";
 import { proofReviewPaidMediaRecommendations } from "./review-paid-media-recommendations-proof.js";
+import { proofVerifyFormToCrmJourneyContinuously } from "./verify-form-to-crm-journey-continuously-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -933,6 +934,9 @@ export async function runSoakRecoveryHarness(input: {
   );
   proofs.push(
     proofReviewPaidMediaRecommendations(nowPlus(nowIso, 1_050_000)),
+  );
+  proofs.push(
+    proofVerifyFormToCrmJourneyContinuously(nowPlus(nowIso, 1_060_000)),
   );
   const allPassed = proofs.every((p) => p.passed);
   return {

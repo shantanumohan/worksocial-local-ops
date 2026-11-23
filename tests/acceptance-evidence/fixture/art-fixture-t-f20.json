@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f20",
+  "caseId": "T-F20",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F20 (Verify a form-to-CRM journey continuously)\nproof=verify_form_to_crm_journey_continuously applyCount=1 :: complete F20 evidence package → VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY_EVIDENCE_RECORDED; canary identity; journey spec; safety gate; step timestamps+correlation; journey graph; pass end-to-end; cadence/heartbeat; journeyVerifiedLive=false; live Zoho NOT_WIRED | FAILED_OR_UNVERIFIED_STAGE+incident → named CRM_WRITE with owner | canaryIdentity=null → CANARY_IDENTITY_REQUIRED | journeySpec=null → JOURNEY_SPEC_REQUIRED | safetyGate=null → SAFETY_GATE_REQUIRED | stepEvidence=null → STEP_EVIDENCE_REQUIRED | journeyGraph=null → JOURNEY_GRAPH_REQUIRED | journeyOutcome=null → JOURNEY_OUTCOME_REQUIRED | failure without incident → INCIDENT_OWNER_REQUIRED_ON_FAILURE | cadenceHeartbeat=null → CADENCE_HEARTBEAT_REQUIRED | countSyntheticInCommerce → COMMERCE_POLLUTION_REFUSED | claimLiveVerifiedJourney → FALSE_LIVE_VERIFIED_JOURNEY_REFUSED | requestLiveZohoWiring → LIVE_ZOHO_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveZohoWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-039 (cadence/heartbeat summary), T-F10/T-US-019 (CRM map / failure→recovery), and T-US-040 (thank-you ≠ CRM) — complete F20 flow evidence package | proofRecordedAt=2026-11-21T19:17:40.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "verify_form_to_crm_journey_continuously"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f20.json",
+  "createdAtIso": "2026-11-23T04:20:18.099Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f20-33fdb1528cae"
+}

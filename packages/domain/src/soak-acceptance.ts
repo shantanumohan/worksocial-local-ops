@@ -658,6 +658,17 @@ export const SoakProofKind = {
    * T-F07/T-US-013/T-US-014 ChatGPT Ads connect.
    */
   REVIEW_PAID_MEDIA_RECOMMENDATIONS: "review_paid_media_recommendations",
+  /**
+   * Verify a form-to-CRM journey continuously — complete F20 evidence set
+   * (T-F20). Canary identity + target environment + test permission, journey
+   * spec + device, synthetic safety gate, step timestamps + correlation,
+   * journey graph, pass-or-named-failure (+incident/owner on failure),
+   * cadence/heartbeat within allowed load; unsafe claims refused; live Zoho
+   * NOT_WIRED. Distinct from T-US-039 cadence/heartbeat summary,
+   * T-F10/T-US-019 CRM map / failure→recovery, and T-US-040 thank-you ≠ CRM.
+   */
+  VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY:
+    "verify_form_to_crm_journey_continuously",
 } as const;
 
 export type SoakProofKindValue =
@@ -799,6 +810,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F14 requires TURN_DEMAND_INTO_PAGE_IMPROVEMENT (complete F14 evidence set; live NOT_WIRED).
  * T-F15 requires CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN (complete F15 evidence set; live NOT_WIRED).
  * T-F16 requires REVIEW_PAID_MEDIA_RECOMMENDATIONS (complete F16 evidence set; live NOT_WIRED).
+ * T-F20 requires VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY (complete F20 evidence set; live Zoho NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -821,6 +833,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F14",
   "T-F15",
   "T-F16",
+  "T-F20",
   "T-F24",
   "T-US-047",
   "T-US-002",
@@ -1489,6 +1502,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN];
     case "T-F16":
       return [SoakProofKind.REVIEW_PAID_MEDIA_RECOMMENDATIONS];
+    case "T-F20":
+      return [SoakProofKind.VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY];
     default:
       return [];
   }
@@ -1715,6 +1730,8 @@ export function mapProofToFixtureCases(
       return ["T-F15"];
     case SoakProofKind.REVIEW_PAID_MEDIA_RECOMMENDATIONS:
       return ["T-F16"];
+    case SoakProofKind.VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY:
+      return ["T-F20"];
     default:
       return [];
   }

@@ -1381,6 +1381,21 @@ export {
   type MutationOrExplicitFailure,
 } from "./review-paid-media-recommendations.js";
 export {
+  VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY_RELATED_CASE_IDS,
+  evaluateVerifyFormToCrmJourneyContinuously,
+  type VerifyFormToCrmJourneyContinuouslyInput,
+  type VerifyFormToCrmJourneyContinuouslyDecision,
+  type CanaryIdentityEvidence,
+  type JourneySpecification,
+  type SyntheticSafetyGate,
+  type JourneyStepEvidence,
+  type StepTimestampsCorrelation,
+  type JourneyGraphEvidence,
+  type JourneyOutcomeEvidence,
+  type IncidentOwnerEvidence,
+  type CadenceHeartbeatHistory,
+} from "./verify-form-to-crm-journey-continuously.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
