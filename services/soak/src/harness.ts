@@ -45,6 +45,7 @@
  * unsupported blog destination no fake publication (T-X046).
  * layout-specific capacity mismatch filters (T-X047).
  * wrong Zoho organization identity mismatch (T-X051).
+ * SSE gap after offline UI full-state resync (T-X062).
  * Google Ads test vs production access separated (T-US-012).
  * Connect Claude Code + test API EVAL_ONLY (T-US-015).
  * Connect Gemini Evaluation EVAL_ONLY (T-US-017).
@@ -118,6 +119,7 @@ import { proofSchemaDiffersFromPageGateFails } from "./schema-differs-from-page-
 import { proofUnsupportedBlogDestinationNoFakePublication } from "./unsupported-blog-destination-proof.js";
 import { proofLayoutSpecificCapacityMismatchFilters } from "./layout-capacity-mismatch-proof.js";
 import { proofWrongZohoOrganizationIdentityMismatch } from "./wrong-zoho-organization-proof.js";
+import { proofSseGapFullStateResync } from "./sse-gap-full-resync-proof.js";
 import { proofGoogleAdsTestProductionAccessSeparated } from "./google-ads-test-production-access-proof.js";
 import { proofConnectClaudeCodeTestApiEvalOnly } from "./claude-code-test-api-connect-proof.js";
 import { proofClaudeRuntimeEvalAuthSeparated } from "./claude-runtime-eval-auth-proof.js";
@@ -1046,6 +1048,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofWrongZohoOrganizationIdentityMismatch(nowPlus(nowIso, 1_340_000)),
   );
+  proofs.push(proofSseGapFullStateResync(nowPlus(nowIso, 1_350_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1181,6 +1184,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X046 fixture ACCEPTED via unsupported_blog_destination_no_fake_publication only — not live VERIFIED",
       "T-X047 fixture ACCEPTED via layout_specific_capacity_mismatch_filters only — not live VERIFIED",
       "T-X051 fixture ACCEPTED via wrong_zoho_organization_identity_mismatch only — not live VERIFIED",
+      "T-X062 fixture ACCEPTED via sse_gap_full_state_resync only — not live VERIFIED",
     ],
   };
 }

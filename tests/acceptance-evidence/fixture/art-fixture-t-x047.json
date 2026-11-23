@@ -8,8 +8,8 @@
     "layout_specific_capacity_mismatch_filters"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x047.json",
-  "createdAtIso": "2026-11-23T06:56:20.563Z",
+  "createdAtIso": "2026-11-23T07:02:17.464Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x047-363475c488fe"
+  "uniqueSourceArtifactId": "art-fixture-t-x047-ba202ccd4ac1"
 }
