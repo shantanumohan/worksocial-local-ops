@@ -1324,4 +1324,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-US-011"]);
   });
 
+  it("maps T-US-045 to SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON only", () => {
+    expect(expectedProofsForFixtureCase("T-US-045")).toEqual([
+      SoakProofKind.SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON,
+      ),
+    ).toEqual(["T-US-045"]);
+  });
+
 });

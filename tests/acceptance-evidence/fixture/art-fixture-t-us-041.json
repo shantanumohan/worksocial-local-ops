@@ -8,8 +8,8 @@
     "diagnose_repair_defect_resolved_or_handoff"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-041.json",
-  "createdAtIso": "2026-11-23T06:16:02.021Z",
+  "createdAtIso": "2026-11-23T06:21:06.966Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-041-34fe739d51a6"
+  "uniqueSourceArtifactId": "art-fixture-t-us-041-185e5f05bfb3"
 }
