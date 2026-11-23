@@ -1375,4 +1375,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-US-045"]);
   });
 
+  it("maps T-X051 to WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH only", () => {
+    expect(expectedProofsForFixtureCase("T-X051")).toEqual([
+      SoakProofKind.WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH,
+      ),
+    ).toEqual(["T-X051"]);
+  });
+
 });

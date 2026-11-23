@@ -108,3 +108,4 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-US-045 semantic search / no-result | Fixture **ACCEPTED** via `SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON` (not live VERIFIED) |
 
 | T-X047 layout-specific capacity mismatch | Fixture **ACCEPTED** via `LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS` (not live VERIFIED) |
+| T-X051 wrong Zoho organization | Fixture **ACCEPTED** via `WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH` (not live VERIFIED) |
