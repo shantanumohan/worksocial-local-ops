@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f12",
+  "caseId": "T-F12",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F12 (Grant standing autonomy safely)\nproof=grant_standing_autonomy_safely applyCount=1 :: complete F12 evidence package → GRANT_STANDING_AUTONOMY_SAFELY_EVIDENCE_RECORDED; scope snapshot; autonomy mode; versioned authority draft; policy constraints; policy test matrix; owner-signed grant + audit; pause/stop-writes/pause-replies control receipts; grantVerifiedLive=false; spend explicit; live NOT_WIRED | scope=null → SCOPE_SNAPSHOT_REQUIRED | autonomyMode=null → AUTONOMY_MODE_REQUIRED | authorityDraft invalid → AUTHORITY_DRAFT_REQUIRED | constraints=null → POLICY_CONSTRAINTS_REQUIRED | policyTestMatrix incomplete → POLICY_TEST_MATRIX_REQUIRED | unsigned → OWNER_SIGNATURE_REQUIRED | controlTests incomplete → CONTROL_TESTS_REQUIRED | agentSelfApprove → AGENT_SELF_APPROVE_REFUSED | requestAdSpendIncreaseAsSideEffect → AD_SPEND_SIDE_EFFECT_REFUSED | claimLiveVerifiedGrant → FALSE_LIVE_VERIFIED_GRANT_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-023 (control receipts readiness summary), T-US-024 (agent cannot widen grant), and T-US-060 (emergency stop at commit) — complete F12 flow evidence package | proofRecordedAt=2026-11-21T19:16:50.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "grant_standing_autonomy_safely"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f12.json",
+  "createdAtIso": "2026-11-23T03:40:12.177Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f12-5fec10a12a50"
+}

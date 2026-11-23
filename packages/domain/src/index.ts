@@ -1336,6 +1336,12 @@ export {
   type ConnectLocalSocialInboxChannelsDecision,
 } from "./connect-local-social-inbox-channels.js";
 export {
+  GRANT_STANDING_AUTONOMY_SAFELY_RELATED_CASE_IDS,
+  evaluateGrantStandingAutonomySafely,
+  type GrantStandingAutonomySafelyInput,
+  type GrantStandingAutonomySafelyDecision,
+} from "./grant-standing-autonomy-safely.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
