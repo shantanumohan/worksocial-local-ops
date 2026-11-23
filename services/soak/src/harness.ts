@@ -196,6 +196,7 @@ import { proofDiskFullEvidenceNoPartialCompleted } from "./disk-full-evidence-pr
 import { proofTestSemanticSearchImproveNoResult } from "./test-semantic-search-improve-no-result-proof.js";
 import { proofRunClaudeGeminiEvaluationSuites } from "./run-claude-gemini-evaluation-suites-proof.js";
 import { proofOperateDailyOwnerReview } from "./operate-daily-owner-review-proof.js";
+import { proofUnsafeFoldersUnresolvedFactsBlocked } from "./unsafe-folders-unresolved-facts-proof.js";
 import { proofDiagnoseRepairDefectResolvedOrHandoff } from "./diagnose-repair-defect-proof.js";
 import { proofExactFinancialBoundariesPreserved } from "./exact-financial-boundaries-proof.js";
 import { proofPortableAnalysisArtifact } from "./portable-analysis-artifact-proof.js";
@@ -1005,6 +1006,9 @@ export async function runSoakRecoveryHarness(input: {
     await proofClaudeRuntimeEvalAuthSeparated(nowPlus(nowIso, 1_195_000)),
   );
   proofs.push(proofAfterHoursHandoffAcknowledged(nowPlus(nowIso, 1_200_000)));
+  proofs.push(
+    proofUnsafeFoldersUnresolvedFactsBlocked(nowPlus(nowIso, 1_210_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1129,6 +1133,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-043 fixture ACCEPTED via after_hours_handoff_acknowledged only — not live VERIFIED",
       "T-US-016 fixture ACCEPTED via claude_runtime_eval_auth_separated only — not live VERIFIED",
       "T-US-003 fixture ACCEPTED via business_truth_folders_restore_secrets_excluded only — not live VERIFIED",
+      "T-US-004 fixture ACCEPTED via unsafe_folders_unresolved_facts_blocked only — not live VERIFIED",
     ],
   };
 }

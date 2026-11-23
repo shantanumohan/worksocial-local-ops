@@ -812,6 +812,12 @@ export const SoakProofKind = {
    * Distinct from T-F22 complete after-hours evidence set.
    */
   AFTER_HOURS_HANDOFF_ACKNOWLEDGED: "after_hours_handoff_acknowledged",
+  /**
+   * Unsafe folders / unresolved facts blocked; safe facts usable (T-US-004).
+   * Durable-on-sync refused; unresolved/conflict facts blocked from gates.
+   */
+  UNSAFE_FOLDERS_UNRESOLVED_FACTS_BLOCKED:
+    "unsafe_folders_unresolved_facts_blocked",
 } as const;
 
 export type SoakProofKindValue =
@@ -941,6 +947,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-055 requires KEYBOARD_JOURNEY_REDUCED_MOTION (complete keyboard journey with reduced motion; live NOT_WIRED).
  * T-US-059 requires SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED (shared briefs redacted; private evidence retained; live NOT_WIRED).
  * T-US-003 requires BUSINESS_TRUTH_FOLDERS_RESTORE_SECRETS_EXCLUDED (folders-ready happy-path; live NOT_WIRED).
+ * T-US-004 requires UNSAFE_FOLDERS_UNRESOLVED_FACTS_BLOCKED.
  * T-F01 requires CREATE_TRUSTED_LOCAL_WORKSPACE (complete F01 evidence set; live NOT_WIRED).
  * T-F02 requires CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH (complete F02 evidence set; live NOT_WIRED).
  * T-F03 requires MAP_SITES_PAGES_EDITABLE_SOURCES (complete F03 evidence set; live NOT_WIRED).
@@ -1109,6 +1116,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-039",
   "T-US-043",
   "T-US-003",
+  "T-US-004",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1715,6 +1723,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT];
     case "T-US-043":
       return [SoakProofKind.AFTER_HOURS_HANDOFF_ACKNOWLEDGED];
+    case "T-US-004":
+      return [SoakProofKind.UNSAFE_FOLDERS_UNRESOLVED_FACTS_BLOCKED];
     default:
       return [];
   }
@@ -1977,6 +1987,8 @@ export function mapProofToFixtureCases(
       return ["T-US-039"];
     case SoakProofKind.AFTER_HOURS_HANDOFF_ACKNOWLEDGED:
       return ["T-US-043"];
+    case SoakProofKind.UNSAFE_FOLDERS_UNRESOLVED_FACTS_BLOCKED:
+      return ["T-US-004"];
     default:
       return [];
   }
