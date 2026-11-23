@@ -669,6 +669,18 @@ export const SoakProofKind = {
    */
   VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY:
     "verify_form_to_crm_journey_continuously",
+  /**
+   * Handle after-hours messages and take over — complete F22 evidence set
+   * (T-F22). Response policy (coverage/allowed questions/escalation), inbound
+   * conversation + message versions, sources and allowed-action evaluation,
+   * message receipt + CRM lead link, ownership audit takeover, acknowledged
+   * morning handoff; competing replies and unsafe claims refused; live
+   * NOT_WIRED. Distinct from T-US-043 handoff summary, T-US-044/T-X053
+   * takeover-cancel, T-X055 unknown-policy escalate, and T-X056 bounded
+   * auto-reply loop.
+   */
+  HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER:
+    "handle_after_hours_messages_and_takeover",
 } as const;
 
 export type SoakProofKindValue =
@@ -811,6 +823,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F15 requires CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN (complete F15 evidence set; live NOT_WIRED).
  * T-F16 requires REVIEW_PAID_MEDIA_RECOMMENDATIONS (complete F16 evidence set; live NOT_WIRED).
  * T-F20 requires VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY (complete F20 evidence set; live Zoho NOT_WIRED).
+ * T-F22 requires HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER (complete F22 evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -834,6 +847,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F15",
   "T-F16",
   "T-F20",
+  "T-F22",
   "T-F24",
   "T-US-047",
   "T-US-002",
@@ -1504,6 +1518,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.REVIEW_PAID_MEDIA_RECOMMENDATIONS];
     case "T-F20":
       return [SoakProofKind.VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY];
+    case "T-F22":
+      return [SoakProofKind.HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER];
     default:
       return [];
   }
@@ -1732,6 +1748,8 @@ export function mapProofToFixtureCases(
       return ["T-F16"];
     case SoakProofKind.VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY:
       return ["T-F20"];
+    case SoakProofKind.HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER:
+      return ["T-F22"];
     default:
       return [];
   }

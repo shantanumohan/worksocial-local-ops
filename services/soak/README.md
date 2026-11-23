@@ -88,4 +88,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-F15 Create and distribute an original campaign | Fixture **ACCEPTED** via `CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN` (complete F15 evidence; not live VERIFIED) |
 | T-F16 Review Google and ChatGPT paid-media recommendations | Fixture **ACCEPTED** via `REVIEW_PAID_MEDIA_RECOMMENDATIONS` (complete F16 evidence; ChatGPT Ads ACCESS_BLOCKED; not live VERIFIED) |
 | T-F20 Verify a form-to-CRM journey continuously | Fixture **ACCEPTED** via `VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY` (complete F20 evidence; not live VERIFIED) |
+| T-F22 Handle after-hours messages and take over | Fixture **ACCEPTED** via `HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER` (complete F22 evidence; not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |

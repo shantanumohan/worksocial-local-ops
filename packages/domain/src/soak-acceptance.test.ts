@@ -1105,4 +1105,15 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-F20"]);
   });
+
+  it("maps T-F22 to HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER only", () => {
+    expect(expectedProofsForFixtureCase("T-F22")).toEqual([
+      SoakProofKind.HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER,
+      ),
+    ).toEqual(["T-F22"]);
+  });
 });

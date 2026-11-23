@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f22",
+  "caseId": "T-F22",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F22 (Handle after-hours messages and take over)\nproof=handle_after_hours_messages_and_takeover applyCount=1 :: complete F22 evidence package → HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER_EVIDENCE_RECORDED; response policy; inbound versions; sources/allowed-action; send+CRM lead; ownership audit takeover; acknowledged morning handoff; afterHoursVerifiedLive=false; live NOT_WIRED | responsePolicy=null → RESPONSE_POLICY_REQUIRED | approvedFacts=null → APPROVED_FACTS_REQUIRED | inboxConnectionReady=false → INBOX_CONNECTION_REQUIRED | inbound=null → INBOUND_CONVERSATION_REQUIRED | allowedAction=null → ALLOWED_ACTION_EVALUATION_REQUIRED | sendAndLead=null → POLICY_SEND_AND_LEAD_REQUIRED | ownershipAudit=null → OWNERSHIP_AUDIT_REQUIRED | morningHandoff=null → ACKNOWLEDGED_HANDOFF_REQUIRED | requestCompetingReplyAfterTakeover → COMPETING_REPLY_AFTER_TAKEOVER_REFUSED | claimLiveVerifiedAfterHours → FALSE_LIVE_VERIFIED_AFTER_HOURS_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-043 (acknowledged handoff summary), T-US-044/T-X053 (takeover cancels unsent), T-X055 (unknown policy escalate), and T-X056 (bounded auto-reply loop) — complete F22 flow evidence package | proofRecordedAt=2026-11-21T19:17:50.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "handle_after_hours_messages_and_takeover"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f22.json",
+  "createdAtIso": "2026-11-23T04:24:09.501Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f22-fac4c4e7436a"
+}
