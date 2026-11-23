@@ -142,6 +142,7 @@ import { proofGrantStandingAutonomySafely } from "./grant-standing-autonomy-safe
 import { proofLaunchWorkstreamRecurringSchedule } from "./launch-workstream-recurring-schedule-proof.js";
 import { proofTurnDemandIntoPageImprovement } from "./turn-demand-into-page-improvement-proof.js";
 import { proofCreateAndDistributeOriginalCampaign } from "./create-and-distribute-original-campaign-proof.js";
+import { proofReviewPaidMediaRecommendations } from "./review-paid-media-recommendations-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -930,6 +931,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofCreateAndDistributeOriginalCampaign(nowPlus(nowIso, 1_040_000)),
   );
+  proofs.push(
+    proofReviewPaidMediaRecommendations(nowPlus(nowIso, 1_050_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1038,6 +1042,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-F13 fixture ACCEPTED via launch_workstream_recurring_schedule only — not live VERIFIED",
       "T-F14 fixture ACCEPTED via turn_demand_into_page_improvement only — not live VERIFIED",
       "T-F15 fixture ACCEPTED via create_and_distribute_original_campaign only — not live VERIFIED",
+      "T-F16 fixture ACCEPTED via review_paid_media_recommendations only — not live VERIFIED",
     ],
   };
 }

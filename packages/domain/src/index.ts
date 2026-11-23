@@ -1368,6 +1368,19 @@ export {
   type DistributionReview,
 } from "./create-and-distribute-original-campaign.js";
 export {
+  REVIEW_PAID_MEDIA_RECOMMENDATIONS_RELATED_CASE_IDS,
+  evaluateReviewPaidMediaRecommendations,
+  type ReviewPaidMediaRecommendationsInput,
+  type ReviewPaidMediaRecommendationsDecision,
+  type ReadReadyAccountSelection,
+  type ReproducibleAnalysisDefinition,
+  type EvidenceBackedDiagnosis,
+  type TypedChangeProposal,
+  type RevisionBoundFinancialDiff,
+  type AuthorizationRecord,
+  type MutationOrExplicitFailure,
+} from "./review-paid-media-recommendations.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

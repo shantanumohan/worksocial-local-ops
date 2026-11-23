@@ -1085,4 +1085,13 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-F15"]);
   });
+
+  it("maps T-F16 to REVIEW_PAID_MEDIA_RECOMMENDATIONS only", () => {
+    expect(expectedProofsForFixtureCase("T-F16")).toEqual([
+      SoakProofKind.REVIEW_PAID_MEDIA_RECOMMENDATIONS,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.REVIEW_PAID_MEDIA_RECOMMENDATIONS),
+    ).toEqual(["T-F16"]);
+  });
 });
