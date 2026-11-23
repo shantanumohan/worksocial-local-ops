@@ -8,8 +8,8 @@
     "low_sample_trend_spike_insufficient_evidence"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x040.json",
-  "createdAtIso": "2026-11-23T05:44:17.974Z",
+  "createdAtIso": "2026-11-23T05:52:54.212Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x040-4c2824c7b3e3"
+  "uniqueSourceArtifactId": "art-fixture-t-x040-091c15590162"
 }

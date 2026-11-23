@@ -8,8 +8,8 @@
     "handle_after_hours_messages_and_takeover"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-f22.json",
-  "createdAtIso": "2026-11-23T05:44:17.974Z",
+  "createdAtIso": "2026-11-23T05:52:54.212Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-f22-4c2824c7b3e3"
+  "uniqueSourceArtifactId": "art-fixture-t-f22-091c15590162"
 }

@@ -238,6 +238,16 @@ export {
   type RestoreRehearsalEvidence,
 } from "./business-truth-folders.js";
 export {
+  UnsafeFolderDurableKind,
+  isUnsafeFolderDurableKind,
+  isUsableSafeFact,
+  partitionFactsByUsability,
+  evaluateUnsafeFoldersUnresolvedFactsGate,
+  type UnsafeFolderDurableKindValue,
+  type FolderPolicyVerdictInput,
+  type UnsafeFoldersUnresolvedFactsDecision,
+} from "./unsafe-folders-unresolved-facts.js";
+export {
   ReviewBindingStatus,
   ReviewBindingErrorCode,
   createReviewBinding,

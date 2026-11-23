@@ -981,6 +981,17 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-US-003"]);
   });
 
+  it("maps T-US-004 to UNSAFE_FOLDERS_UNRESOLVED_FACTS_BLOCKED only", () => {
+    expect(expectedProofsForFixtureCase("T-US-004")).toEqual([
+      SoakProofKind.UNSAFE_FOLDERS_UNRESOLVED_FACTS_BLOCKED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.UNSAFE_FOLDERS_UNRESOLVED_FACTS_BLOCKED,
+      ),
+    ).toEqual(["T-US-004"]);
+  });
+
   it("maps T-F01 to CREATE_TRUSTED_LOCAL_WORKSPACE only", () => {
     expect(expectedProofsForFixtureCase("T-F01")).toEqual([
       SoakProofKind.CREATE_TRUSTED_LOCAL_WORKSPACE,
