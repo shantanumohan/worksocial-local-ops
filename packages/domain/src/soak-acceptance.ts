@@ -874,6 +874,12 @@ export const SoakProofKind = {
    */
   WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH:
     "wrong_zoho_organization_identity_mismatch",
+  /**
+   * SSE gap after offline UI requires full-state resync (T-X062).
+   * Non-contiguous reconnect refuses incremental catch-up; snapshot must cover
+   * the gap and replace UI stateDigest.
+   */
+  SSE_GAP_FULL_STATE_RESYNC: "sse_gap_full_state_resync",
 } as const;
 
 export type SoakProofKindValue =
@@ -982,6 +988,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X046 requires UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION.
  * T-X047 requires LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS.
  * T-X051 requires WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH.
+ * T-X062 requires SSE_GAP_FULL_STATE_RESYNC.
  * T-US-012 requires GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED (test ≠ production).
  * T-US-015 requires CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY (runtime ≠ API readiness; EVAL_ONLY).
 * T-US-016 requires CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED.
@@ -1155,6 +1162,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X046",
   "T-X047",
   "T-X051",
+  "T-X062",
   "T-US-011",
   "T-US-012",
   "T-US-015",
@@ -1698,6 +1706,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS];
     case "T-X051":
       return [SoakProofKind.WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH];
+    case "T-X062":
+      return [SoakProofKind.SSE_GAP_FULL_STATE_RESYNC];
     case "T-US-011":
       return [SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY];
     case "T-US-012":
@@ -1980,6 +1990,8 @@ export function mapProofToFixtureCases(
       return ["T-X047"];
     case SoakProofKind.WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH:
       return ["T-X051"];
+    case SoakProofKind.SSE_GAP_FULL_STATE_RESYNC:
+      return ["T-X062"];
     case SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED:
       return ["T-US-012"];
     case SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY:

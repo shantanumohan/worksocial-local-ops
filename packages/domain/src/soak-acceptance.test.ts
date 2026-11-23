@@ -1386,4 +1386,13 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X051"]);
   });
 
+  it("maps T-X062 to SSE_GAP_FULL_STATE_RESYNC only", () => {
+    expect(expectedProofsForFixtureCase("T-X062")).toEqual([
+      SoakProofKind.SSE_GAP_FULL_STATE_RESYNC,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.SSE_GAP_FULL_STATE_RESYNC),
+    ).toEqual(["T-X062"]);
+  });
+
 });

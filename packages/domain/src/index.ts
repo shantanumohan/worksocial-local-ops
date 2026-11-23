@@ -330,6 +330,18 @@ export {
   type ValidateZohoOrganizationBindingResult,
 } from "./wrong-zoho-organization.js";
 export {
+  createSseUiCursor,
+  markSseUiOffline,
+  evaluateSseEventAfterOffline,
+  applySseFullStateResync,
+  SSE_GAP_FULL_RESYNC_RELATED_CASE_IDS,
+  type SseUiCursor,
+  type SseStreamEvent,
+  type SseFullStateSnapshot,
+  type SseReconnectDecisionCode,
+  type SseReconnectDecision,
+} from "./sse-gap-full-resync.js";
+export {
   SupportLabel,
   CollectionMethod,
   InstructionIngestionStatus,

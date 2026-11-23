@@ -300,3 +300,6 @@ Suggested owner Windows flow (state off OneDrive):
 
 
 **T-X047** maps only to `LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS`.
+
+
+**T-X062** maps only to `SSE_GAP_FULL_STATE_RESYNC` (offline SSE gap → full-state resync; not live VERIFIED).
