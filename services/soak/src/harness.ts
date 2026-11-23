@@ -130,6 +130,7 @@ import { proofKeyboardJourneyReducedMotion } from "./keyboard-journey-reduced-mo
 import { proofSharedBriefsRedactedPrivateRetained } from "./shared-briefs-redacted-private-retained-proof.js";
 import { proofCreateTrustedLocalWorkspace } from "./create-trusted-local-workspace-proof.js";
 import { proofChooseFoldersEstablishBusinessTruth } from "./choose-folders-establish-business-truth-proof.js";
+import { proofMapSitesPagesEditableSources } from "./map-sites-pages-editable-sources-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -890,6 +891,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofChooseFoldersEstablishBusinessTruth(nowPlus(nowIso, 920_000)),
   );
+  proofs.push(proofMapSitesPagesEditableSources(nowPlus(nowIso, 930_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -985,6 +987,8 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-055 fixture ACCEPTED via keyboard_journey_reduced_motion only — not live VERIFIED",
       "T-US-059 fixture ACCEPTED via shared_briefs_redacted_private_retained only — not live VERIFIED",
       "T-F01 fixture ACCEPTED via create_trusted_local_workspace only — not live VERIFIED",
+      "T-F02 fixture ACCEPTED via choose_folders_establish_business_truth only — not live VERIFIED",
+      "T-F03 fixture ACCEPTED via map_sites_pages_editable_sources only — not live VERIFIED",
     ],
   };
 }

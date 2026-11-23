@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f03",
+  "caseId": "T-F03",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F03 (Map sites, pages and editable sources)\nproof=map_sites_pages_editable_sources applyCount=1 :: complete F03 evidence package → MAP_SITES_PAGES_EDITABLE_SOURCES_EVIDENCE_RECORDED; inventory+exclusions; HTML/screenshot snapshot; source binding+deploy; journey owners; scope grant; baseline ID+checks; siteMapVerifiedLive=false; live NOT_WIRED | empty domain boundary → DOMAIN_BOUNDARY_REQUIRED | empty pilot snapshot → PILOT_SNAPSHOT_REQUIRED | claimFullCoverageDespiteIncompleteDiscovery → FULL_COVERAGE_DESPITE_INCOMPLETE_DISCOVERY_REFUSED | attemptPublishWrongEnvironment → WRONG_ENVIRONMENT_PUBLISH_REFUSED | redirectOutsideAllowedDomain → REDIRECT_OUTSIDE_ALLOWED_DOMAIN_REFUSED | attemptWriteUnboundPage → UNBOUND_PAGE_WRITE_REFUSED | claimLiveVerifiedSiteMap → FALSE_LIVE_VERIFIED_SITE_MAP_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-005 (baseline-ID happy-path summary) — complete F03 flow evidence package | proofRecordedAt=2026-11-21T19:15:30.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "map_sites_pages_editable_sources"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f03.json",
+  "createdAtIso": "2026-11-23T01:34:54.203Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f03-9da496065b6a"
+}
