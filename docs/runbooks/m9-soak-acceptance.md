@@ -292,3 +292,6 @@ Suggested owner Windows flow (state off OneDrive):
 
 
 **T-US-041** maps only to `DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF` (verified resolution or acknowledged handoff; CMS repair NOT_WIRED; not live VERIFIED).
+
+
+**T-X042** maps only to `SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS`.

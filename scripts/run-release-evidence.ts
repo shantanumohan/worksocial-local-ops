@@ -359,6 +359,9 @@ async function main(): Promise<void> {
     const hasTx041Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-X041",
     );
+    const hasTx042Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-X042",
+    );
     const hasUs012Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-US-012",
     );
@@ -669,6 +672,7 @@ async function main(): Promise<void> {
       "T-X039",
       "T-X040",
       "T-X041",
+      "T-X042",
       "T-X043",
       "T-X044",
       "T-X045",
@@ -840,7 +844,8 @@ async function main(): Promise<void> {
         hasUs011Accepted &&
         hasUs045Accepted &&
         hasTx041Accepted &&
-        accepted.length === 142 &&
+        hasTx042Accepted &&
+        accepted.length === 143 &&
         JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
@@ -855,7 +860,7 @@ async function main(): Promise<void> {
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X041 incomparable trend indices (reject/label) fixture ACCEPTED (total 142). Live VERIFIED forbidden. Not R1-complete.",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X042 schema-differs-from-page gate-fails fixture ACCEPTED (total 143). Live VERIFIED forbidden. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {

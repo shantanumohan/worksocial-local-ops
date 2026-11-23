@@ -8,8 +8,8 @@
     "indirect_prompt_injection_exfil_denied"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x063.json",
-  "createdAtIso": "2026-11-23T06:27:01.337Z",
+  "createdAtIso": "2026-11-23T06:31:54.380Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x063-6f4e29b15655"
+  "uniqueSourceArtifactId": "art-fixture-t-x063-32e2ba3928d5"
 }

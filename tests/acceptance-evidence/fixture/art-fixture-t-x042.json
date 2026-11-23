@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x042",
+  "caseId": "T-X042",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X042 (Schema differs from page — gate fails)\nproof=schema_differs_from_page_gate_fails applyCount=1 :: Persisted validateSchema: name absent from visible content → SCHEMA_VISIBLE_MISMATCH / PARTIAL | Persisted approveProposal rejected (PROPOSAL_GATE_FAILED / PARTIAL) — stays DRAFT | Persisted releasePilotPage: no gateway decision (still DRAFT after gate fail) | Positive control: matching schema → validateSchema PASS + approveProposal APPROVED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "schema_differs_from_page_gate_fails"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x042.json",
+  "createdAtIso": "2026-11-23T06:31:54.380Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x042-32e2ba3928d5"
+}

@@ -28,7 +28,8 @@
     "@worksocial/lead-capture": "workspace:*",
     "@worksocial/persistence": "workspace:*",
     "@worksocial/provider-adapters": "workspace:*",
-    "@worksocial/recovery": "workspace:*"
+    "@worksocial/recovery": "workspace:*",
+    "@worksocial/seo": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "22.10.2",
