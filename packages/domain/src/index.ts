@@ -1249,6 +1249,22 @@ export {
   type ConnectGoogleAnalytics4Decision,
 } from "./connect-google-analytics-4.js";
 export {
+  REQUIRED_GSC_GRANT_SCOPES,
+  GscPropertyKind,
+  CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY_RELATED_CASE_IDS,
+  evaluateConnectSearchConsoleOrganicVisibility,
+  type GscPropertyKindValue,
+  type GscConnectionIdentity,
+  type GscPropertyBinding,
+  type GscComparableQueryConfig,
+  type GscObservationRow,
+  type GscObservationBatch,
+  type GscIntentToPageMapping,
+  type GscDailyReadSchedule,
+  type ConnectSearchConsoleOrganicVisibilityInput,
+  type ConnectSearchConsoleOrganicVisibilityDecision,
+} from "./connect-search-console-organic-visibility.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

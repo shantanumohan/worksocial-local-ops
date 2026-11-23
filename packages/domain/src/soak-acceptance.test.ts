@@ -989,4 +989,15 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.CONNECT_GOOGLE_ANALYTICS_4),
     ).toEqual(["T-F04"]);
   });
+
+  it("maps T-F05 to CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY only", () => {
+    expect(expectedProofsForFixtureCase("T-F05")).toEqual([
+      SoakProofKind.CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY,
+      ),
+    ).toEqual(["T-F05"]);
+  });
 });
