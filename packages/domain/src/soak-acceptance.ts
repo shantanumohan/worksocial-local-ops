@@ -759,6 +759,11 @@ export const SoakProofKind = {
    */
   DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF:
     "diagnose_repair_defect_resolved_or_handoff",
+  /**
+   * Exact financial boundaries preserved on paid-media proposals (T-US-032).
+   * exactChange + financialDiff required; ChatGPT Ads stays ACCESS_BLOCKED.
+   */
+  EXACT_FINANCIAL_BOUNDARIES_PRESERVED: "exact_financial_boundaries_preserved",
 } as const;
 
 export type SoakProofKindValue =
@@ -910,6 +915,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F17 requires RUN_CLAUDE_GEMINI_EVALUATION_SUITES (complete evidence set; live NOT_WIRED).
  * T-F25 requires OPERATE_DAILY_OWNER_REVIEW (complete evidence set; live NOT_WIRED).
  * T-US-041 requires DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF.
+ * T-US-032 requires EXACT_FINANCIAL_BOUNDARIES_PRESERVED.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -1040,6 +1046,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-055",
   "T-US-059",
   "T-US-041",
+  "T-US-032",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1630,6 +1637,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.OPERATE_DAILY_OWNER_REVIEW];
     case "T-US-041":
       return [SoakProofKind.DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF];
+    case "T-US-032":
+      return [SoakProofKind.EXACT_FINANCIAL_BOUNDARIES_PRESERVED];
     default:
       return [];
   }
@@ -1876,6 +1885,8 @@ export function mapProofToFixtureCases(
       return ["T-F25"];
     case SoakProofKind.DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF:
       return ["T-US-041"];
+    case SoakProofKind.EXACT_FINANCIAL_BOUNDARIES_PRESERVED:
+      return ["T-US-032"];
     default:
       return [];
   }

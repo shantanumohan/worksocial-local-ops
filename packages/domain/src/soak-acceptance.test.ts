@@ -1199,4 +1199,13 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-US-041"]);
   });
 
+  it("maps T-US-032 to EXACT_FINANCIAL_BOUNDARIES_PRESERVED only", () => {
+    expect(expectedProofsForFixtureCase("T-US-032")).toEqual([
+      SoakProofKind.EXACT_FINANCIAL_BOUNDARIES_PRESERVED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.EXACT_FINANCIAL_BOUNDARIES_PRESERVED),
+    ).toEqual(["T-US-032"]);
+  });
+
 });
