@@ -3,13 +3,13 @@
   "caseId": "T-X012",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X012 (Orphan worker on deadline — process tree stopped)\nproof=orphan_worker_deadline_tree_stopped applyCount=1 :: Deadline not exceeded at +20s | Pre-deadline stop refused; worker+children still alive (no premature kill) | Post-deadline PROCESS_TREE_STOPPED: tree dead; foreign+sibling skipped | invokeClaudeCli tree-worker → TIMEOUT (deadline) | OS process tree stopped worker=3181 child=3188 | Outcome timed_out_stopped aligns with RoleRunStatus.TIMED_OUT (not VERIFIED) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X012 (Orphan worker on deadline — process tree stopped)\nproof=orphan_worker_deadline_tree_stopped applyCount=1 :: Deadline not exceeded at +20s | Pre-deadline stop refused; worker+children still alive (no premature kill) | Post-deadline PROCESS_TREE_STOPPED: tree dead; foreign+sibling skipped | invokeClaudeCli tree-worker → TIMEOUT (deadline) | OS process tree stopped worker=4330 child=4337 | Outcome timed_out_stopped aligns with RoleRunStatus.TIMED_OUT (not VERIFIED) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "orphan_worker_deadline_tree_stopped"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x012.json",
-  "createdAtIso": "2026-11-23T03:08:31.376Z",
+  "createdAtIso": "2026-11-23T03:16:04.439Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x012-5a5127365bef"
+  "uniqueSourceArtifactId": "art-fixture-t-x012-23e59e0a2623"
 }

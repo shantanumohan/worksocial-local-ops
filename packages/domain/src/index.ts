@@ -1295,6 +1295,23 @@ export {
   type ConnectClaudeCodeAndTestApiDecision,
 } from "./connect-claude-code-and-test-api.js";
 export {
+  GeminiIndependentTestMode,
+  GeminiIndependentDataUseDecision,
+  CONNECT_GEMINI_INDEPENDENT_TESTING_RELATED_CASE_IDS,
+  evaluateConnectGeminiIndependentTesting,
+  type GeminiIndependentTestModeValue,
+  type GeminiIndependentDataUseDecisionValue,
+  type GeminiCredentialBinding,
+  type GeminiModelCapabilityEntry,
+  type GeminiModelCapabilitySnapshot,
+  type GeminiEvaluationCondition,
+  type GeminiBudgetCap,
+  type GeminiProviderTestReceipt,
+  type GeminiEvalOnlyReadyStatus,
+  type ConnectGeminiIndependentTestingInput,
+  type ConnectGeminiIndependentTestingDecision,
+} from "./connect-gemini-independent-testing.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
