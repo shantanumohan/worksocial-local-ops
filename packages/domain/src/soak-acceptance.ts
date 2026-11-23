@@ -614,6 +614,16 @@ export const SoakProofKind = {
    * stop at commit.
    */
   GRANT_STANDING_AUTONOMY_SAFELY: "grant_standing_autonomy_safely",
+  /**
+   * Launch workstream + recurring schedule — complete F13 evidence set
+   * (T-F13). Objective/pilot scope, readiness gates, plan/assets/cost, dry
+   * rehearsal (NONE), frequency/timezone/cooldown, owner-reviewed launch
+   * receipt, mission outcome + next action; unsafe claims refused; live
+   * NOT_WIRED. Distinct from T-US-025 launch readiness summary, T-US-026
+   * missed-schedule coalesce, and T-X015 DST schedule no duplicates.
+   */
+  LAUNCH_WORKSTREAM_RECURRING_SCHEDULE:
+    "launch_workstream_recurring_schedule",
 } as const;
 
 export type SoakProofKindValue =
@@ -751,6 +761,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F10 requires MAP_CRM_FORMS_BOOKING_TRUTH (complete F10 evidence set; live Zoho NOT_WIRED).
  * T-F11 requires CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS (complete F11 evidence set; live NOT_WIRED).
  * T-F12 requires GRANT_STANDING_AUTONOMY_SAFELY (complete F12 evidence set; live NOT_WIRED).
+ * T-F13 requires LAUNCH_WORKSTREAM_RECURRING_SCHEDULE (complete F13 evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -769,6 +780,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F10",
   "T-F11",
   "T-F12",
+  "T-F13",
   "T-F24",
   "T-US-047",
   "T-US-002",
@@ -1429,6 +1441,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS];
     case "T-F12":
       return [SoakProofKind.GRANT_STANDING_AUTONOMY_SAFELY];
+    case "T-F13":
+      return [SoakProofKind.LAUNCH_WORKSTREAM_RECURRING_SCHEDULE];
     default:
       return [];
   }
@@ -1647,6 +1661,8 @@ export function mapProofToFixtureCases(
       return ["T-F11"];
     case SoakProofKind.GRANT_STANDING_AUTONOMY_SAFELY:
       return ["T-F12"];
+    case SoakProofKind.LAUNCH_WORKSTREAM_RECURRING_SCHEDULE:
+      return ["T-F13"];
     default:
       return [];
   }
