@@ -1415,4 +1415,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X068"]);
   });
 
+  it("maps T-X072 to CUSTOMER_DATA_EVAL_REDACTION_BLOCKS only", () => {
+    expect(expectedProofsForFixtureCase("T-X072")).toEqual([
+      SoakProofKind.CUSTOMER_DATA_EVAL_REDACTION_BLOCKS,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.CUSTOMER_DATA_EVAL_REDACTION_BLOCKS,
+      ),
+    ).toEqual(["T-X072"]);
+  });
+
 });

@@ -127,6 +127,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X061": "Keyboard review and focus restore — A11y",
   "T-X062": "SSE gap after offline UI — full-state resync",
   "T-X068": "Thirty alerts one outage — grouped incident",
+  "T-X072": "Customer data leaks into evaluation — redaction blocks",
   "T-X030": "Rate-limit with deadline — bounded backoff",
   "T-US-056": "Honest outage; durable hosted contact path",
   "T-US-011": "Connect Google Ads analyze-only — write disabled",
@@ -455,6 +456,7 @@ export function compileAcceptanceEvidence(
     "T-X062 fixture ACCEPTED only via SSE_GAP_FULL_STATE_RESYNC",
     "T-X061 fixture ACCEPTED only via KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG",
     "T-X068 fixture ACCEPTED only via THIRTY_ALERTS_ONE_OUTAGE_GROUPED",
+    "T-X072 fixture ACCEPTED only via CUSTOMER_DATA_EVAL_REDACTION_BLOCKS",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

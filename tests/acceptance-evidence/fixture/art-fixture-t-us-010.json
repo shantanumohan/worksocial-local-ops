@@ -8,8 +8,8 @@
     "gsc_omitted_rows_unknown_not_zero"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-010.json",
-  "createdAtIso": "2026-11-23T07:15:44.747Z",
+  "createdAtIso": "2026-11-23T07:23:17.818Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-010-3d602cf8d12d"
+  "uniqueSourceArtifactId": "art-fixture-t-us-010-dc53e03c78f2"
 }
