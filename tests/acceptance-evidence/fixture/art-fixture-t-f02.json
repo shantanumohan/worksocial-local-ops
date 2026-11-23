@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f02",
+  "caseId": "T-F02",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F02 (Choose folders and establish business truth)\nproof=choose_folders_establish_business_truth applyCount=1 :: complete F02 evidence package → CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH_EVIDENCE_RECORDED; write/read probe ok; durable off sync; duplicates detected; critical claims owner+source; secretsExcluded; businessTruthVerifiedLive=false; live NOT_WIRED | empty roots → REGISTERED_ROOTS_REQUIRED | failed write probe → WRITE_READ_PROBE_REQUIRED | database on sync path → DURABLE_ON_SYNC_PATH_REFUSED | duplicateDetectionCompleted=false → DUPLICATE_DETECTION_REQUIRED | attemptPublicClaimFromUnresolved → PUBLIC_CLAIM_FROM_UNRESOLVED_REFUSED | claimLiveVerifiedBusinessTruth → FALSE_LIVE_VERIFIED_BUSINESS_TRUTH_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-003 (folders-ready happy-path summary) — complete F02 flow evidence package | proofRecordedAt=2026-11-21T19:15:20.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "choose_folders_establish_business_truth"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f02.json",
+  "createdAtIso": "2026-11-23T01:23:36.457Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f02-9902c51083e2"
+}

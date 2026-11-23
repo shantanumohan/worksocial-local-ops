@@ -143,6 +143,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-055": "Complete keyboard journey with reduced motion",
   "T-US-059": "Shared briefs redacted; private evidence retained",
   "T-F01": "Create a trusted local workspace",
+  "T-F02": "Choose folders and establish business truth",
 };
 
 function relatedProofsForCase(
@@ -364,6 +365,7 @@ export function compileAcceptanceEvidence(
     "T-US-055 fixture ACCEPTED only via KEYBOARD_JOURNEY_REDUCED_MOTION",
     "T-US-059 fixture ACCEPTED only via SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED",
     "T-F01 fixture ACCEPTED only via CREATE_TRUSTED_LOCAL_WORKSPACE",
+    "T-F02 fixture ACCEPTED only via CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

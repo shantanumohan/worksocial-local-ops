@@ -8,8 +8,8 @@
     "connect_local_social_inbox_test_artifact"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-021.json",
-  "createdAtIso": "2026-11-23T01:16:52.939Z",
+  "createdAtIso": "2026-11-23T01:23:36.457Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-021-f2272e08a12c"
+  "uniqueSourceArtifactId": "art-fixture-t-us-021-9902c51083e2"
 }

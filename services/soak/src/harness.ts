@@ -129,6 +129,7 @@ import { proofSecretsNeverBrowserAssets } from "./secrets-never-browser-assets-p
 import { proofKeyboardJourneyReducedMotion } from "./keyboard-journey-reduced-motion-proof.js";
 import { proofSharedBriefsRedactedPrivateRetained } from "./shared-briefs-redacted-private-retained-proof.js";
 import { proofCreateTrustedLocalWorkspace } from "./create-trusted-local-workspace-proof.js";
+import { proofChooseFoldersEstablishBusinessTruth } from "./choose-folders-establish-business-truth-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -886,6 +887,9 @@ export async function runSoakRecoveryHarness(input: {
     proofSharedBriefsRedactedPrivateRetained(nowPlus(nowIso, 900_000)),
   );
   proofs.push(proofCreateTrustedLocalWorkspace(nowPlus(nowIso, 910_000)));
+  proofs.push(
+    proofChooseFoldersEstablishBusinessTruth(nowPlus(nowIso, 920_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,

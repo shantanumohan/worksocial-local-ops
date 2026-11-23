@@ -40,7 +40,7 @@ Required evidence:
 - Explicit blockers and next action for each.
 
 ### T-F02 - Choose folders and establish business truth
-Level: full_stack_e2e | Status: NOT_RUN
+Level: full_stack_e2e | Status: ACCEPTED *(fixture ACCEPTED — choose folders establish business truth complete F02 evidence; not sandbox/prod VERIFIED)*
 Requirements: RQ-002, RQ-005, RQ-033, RQ-036 | Flows: F02 | Screens: SC-20
 Environment: controlled_local_stack_then_authorized_canary_where_required
 
@@ -808,6 +808,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-F01** is fixture ACCEPTED only via the create trusted local workspace complete F01 evidence proof (`CREATE_TRUSTED_LOCAL_WORKSPACE`) — owner session, workspace configuration revision, timestamped diagnostics (not a decorative online badge), Observe initial authority, startup result + recovery test, and explicit blockers with next actions; public writes refused; live provider wiring stays **NOT_WIRED**. Distinct from T-US-001 readiness blockers/next-actions summary. Never silently VERIFIED for live.
 
+**T-F02** is fixture ACCEPTED only via the choose folders establish business truth complete F02 evidence proof (`CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH`) — registered root IDs + write/read probe, storage-risk checks, ingestion manifest with duplicate detection, business fact records with unresolved conflicts, signed fact revision + impacted assets, and restore rehearsal evidence with secrets excluded; public claims from unresolved refused; live provider wiring stays **NOT_WIRED**. Distinct from T-US-003 folders-ready happy-path summary. Never silently VERIFIED for live.
+
 **T-F24 / T-US-047** are fixture ACCEPTED only via the recover / rotate / reconcile / offboard proof (`RECOVER_ROTATE_RECONCILE`) with the complete F24 evidence set (health timeline, capability stop, rotation record without secrets, reconciliation receipts, recovery test, offboarding manifest + residual obligations). Live provider revoke remains **NOT_WIRED**; never silently VERIFIED for live.
 
 **T-US-002 / T-X002** are fixture ACCEPTED only via the competing-supervisor / singleton host-lease proof (`COMPETING_SUPERVISOR_LEASE`) — second live generation refused, dead-holder reclaim allowed, ownership kill auth fail-closed. Not sandbox/prod VERIFIED.
@@ -1002,9 +1004,9 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 
 | Family | Count | Status |
 |---|---:|---|
-| T-F (full_stack_e2e) | 26 | 24 NOT_RUN + 2 fixture ACCEPTED (T-F01, T-F24) |
+| T-F (full_stack_e2e) | 26 | 23 NOT_RUN + 3 fixture ACCEPTED (T-F01, T-F02, T-F24) |
 | T-US (behavior_acceptance) | 60 | 17 NOT_RUN + 43 fixture ACCEPTED (T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-015, T-US-017, T-US-018, T-US-019, T-US-020, T-US-021, T-US-022, T-US-023, T-US-024, T-US-025, T-US-026, T-US-027, T-US-028, T-US-029, T-US-030, T-US-031, T-US-033, T-US-034, T-US-035, T-US-036, T-US-038, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-049, T-US-050, T-US-051, T-US-052, T-US-053, T-US-054, T-US-055, T-US-057, T-US-058, T-US-059, T-US-060) |
 | T-X (platform/security/resilience) | 73 | 14 NOT_RUN + 59 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X023, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X030, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X040, T-X043, T-X044, T-X045, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X063, T-X065, T-X066, T-X069, T-X070, T-X073) |
-| **Total** | **159** | **56 NOT_RUN + 103 fixture ACCEPTED** |
+| **Total** | **159** | **55 NOT_RUN + 104 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.
