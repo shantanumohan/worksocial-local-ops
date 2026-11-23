@@ -924,6 +924,18 @@ export {
   type AutomatedResponseLoopDecision,
 } from "./automated-response-loop.js";
 export {
+  evaluateSsrfHop,
+  evaluateSsrfRedirectDnsRebindChain,
+  isPrivateOrLocalAddress,
+  isPrivateOrLocalHostname,
+  SSRF_REDIRECT_DNS_REBIND_RELATED_CASE_IDS,
+  type SsrfChainCode,
+  type SsrfChainDecision,
+  type SsrfHop,
+  type SsrfHopBlockCode,
+  type SsrfHopVerdict,
+} from "./ssrf-redirect-dns-rebind.js";
+export {
   assertEvalPromptHasNoCustomerPii,
   containsRawCustomerPii,
   prepareCustomerDataForEvaluation,
