@@ -1288,6 +1288,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-US-043"]);
   });
 
+  it("maps T-US-007 to CONNECT_GA4_READ_READY_NEXT_SYNC only", () => {
+    expect(expectedProofsForFixtureCase("T-US-007")).toEqual([
+      SoakProofKind.CONNECT_GA4_READ_READY_NEXT_SYNC,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CONNECT_GA4_READ_READY_NEXT_SYNC),
+    ).toEqual(["T-US-007"]);
+  });
+
   it("maps T-US-005 to SITE_PAGE_EDITABLE_SOURCES_BASELINE only", () => {
     expect(expectedProofsForFixtureCase("T-US-005")).toEqual([
       SoakProofKind.SITE_PAGE_EDITABLE_SOURCES_BASELINE,

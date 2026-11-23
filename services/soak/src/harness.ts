@@ -200,6 +200,7 @@ import { proofUnsafeFoldersUnresolvedFactsBlocked } from "./unsafe-folders-unres
 import { proofSitePageEditableSourcesBaseline } from "./site-page-editable-sources-proof.js";
 import { proofDiagnoseRepairDefectResolvedOrHandoff } from "./diagnose-repair-defect-proof.js";
 import { proofExactFinancialBoundariesPreserved } from "./exact-financial-boundaries-proof.js";
+import { proofConnectGa4ReadReadyNextSync } from "./connect-ga4-read-ready-proof.js";
 import { proofPortableAnalysisArtifact } from "./portable-analysis-artifact-proof.js";
 import { proofTrustedWorkspaceReadinessBlockersNextActions } from "./trusted-workspace-readiness-proof.js";
 import { proofFormCrmContinuousVerifyCadenceHeartbeat } from "./form-crm-continuous-verify-proof.js";
@@ -1011,6 +1012,7 @@ export async function runSoakRecoveryHarness(input: {
     proofUnsafeFoldersUnresolvedFactsBlocked(nowPlus(nowIso, 1_210_000)),
     proofSitePageEditableSourcesBaseline(nowPlus(nowIso, 1_220_000)),
   );
+  proofs.push(proofConnectGa4ReadReadyNextSync(nowPlus(nowIso, 1260000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1137,6 +1139,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-003 fixture ACCEPTED via business_truth_folders_restore_secrets_excluded only — not live VERIFIED",
       "T-US-004 fixture ACCEPTED via unsafe_folders_unresolved_facts_blocked only — not live VERIFIED",
       "T-US-005 fixture ACCEPTED via site_page_editable_sources_baseline only — not live VERIFIED",
+      "T-US-007 fixture ACCEPTED via connect_ga4_read_ready_next_sync only — not live VERIFIED",
     ],
   };
 }
