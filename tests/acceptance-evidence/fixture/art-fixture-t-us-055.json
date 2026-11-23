@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-055",
+  "caseId": "T-US-055",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-055 (Complete keyboard journey with reduced motion)\nproof=keyboard_journey_reduced_motion applyCount=1 :: nav→content→dialog→CTA keyboard journey + reduced motion → KEYBOARD_JOURNEY_REDUCED_MOTION_COMPLETED; journeyVerifiedLive=false; live NOT_WIRED | empty steps → JOURNEY_STEPS_REQUIRED | prefersReducedMotion=false → REDUCED_MOTION_PREFERENCE_REQUIRED | motion despite reduced preference → REDUCED_MOTION_VIOLATION | missing focus ring → FOCUS_RING_REQUIRED | pointer-required CTA → POINTER_REQUIRED_STEP_REFUSED | partial steps → INCOMPLETE_KEYBOARD_JOURNEY | claimLiveVerifiedJourney → FALSE_LIVE_VERIFIED_JOURNEY_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-X061 (dialog focus restore), T-US-051 (design/release readiness packet) | proofRecordedAt=2026-11-21T19:14:50.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "keyboard_journey_reduced_motion"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-055.json",
+  "createdAtIso": "2026-11-23T01:02:30.926Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-055-98edfb9ffa57"
+}

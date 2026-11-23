@@ -70,4 +70,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-US-050 Owner brief groups root cause; actionable | Fixture **ACCEPTED** via `OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE` (not live VERIFIED) |
 | T-US-051 Design/release readiness — release acceptance packet | Fixture **ACCEPTED** via `DESIGN_RELEASE_READINESS_PACKET` (not live VERIFIED) |
 | T-US-053 Secrets never in browser assets | Fixture **ACCEPTED** via `SECRETS_NEVER_IN_BROWSER_ASSETS` (not live VERIFIED) |
+| T-US-055 Complete keyboard journey with reduced motion | Fixture **ACCEPTED** via `KEYBOARD_JOURNEY_REDUCED_MOTION` (not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |

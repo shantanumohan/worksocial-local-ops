@@ -931,4 +931,13 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.SECRETS_NEVER_IN_BROWSER_ASSETS),
     ).toEqual(["T-US-053"]);
   });
+
+  it("maps T-US-055 to KEYBOARD_JOURNEY_REDUCED_MOTION only", () => {
+    expect(expectedProofsForFixtureCase("T-US-055")).toEqual([
+      SoakProofKind.KEYBOARD_JOURNEY_REDUCED_MOTION,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.KEYBOARD_JOURNEY_REDUCED_MOTION),
+    ).toEqual(["T-US-055"]);
+  });
 });
