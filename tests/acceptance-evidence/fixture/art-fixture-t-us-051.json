@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-051",
+  "caseId": "T-US-051",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-051 (Design/release readiness — release acceptance packet)\nproof=design_release_readiness_packet applyCount=1 :: complete context+trace+a11y+states+SC-01..SC-25+packet → DESIGN_RELEASE_READINESS_PACKET_RECORDED; calibrationVerifiedLive=false; live NOT_WIRED | empty interactionTrace → INTERACTION_TRACE_REQUIRED | unresolved a11y blocker → ACCESSIBILITY_BLOCKER_UNRESOLVED | partial stateCoverage → STATE_COVERAGE_INCOMPLETE | partial coverageRegister → SCREEN_COVERAGE_INCOMPLETE | approveWithoutOutcomeEvidence → OUTCOME_EVIDENCE_REQUIRED | claimLiveVerifiedCalibration → FALSE_LIVE_VERIFIED_CALIBRATION_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | attemptProductionWrite → PRODUCTION_WRITE_REFUSED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-035 (review/revise/release), T-US-049 (daily owner review), T-US-055 (keyboard journey) | proofRecordedAt=2026-11-21T19:14:30.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "design_release_readiness_packet"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-051.json",
+  "createdAtIso": "2026-11-23T00:43:29.209Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-051-7bc377f4896f"
+}

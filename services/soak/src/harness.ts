@@ -124,6 +124,7 @@ import { proofProviderErrorNotPass } from "./provider-error-not-pass-proof.js";
 import { proofReviewReviseRelease } from "./review-revise-release-proof.js";
 import { proofDailyOwnerReview } from "./daily-owner-review-proof.js";
 import { proofOwnerBriefRootCause } from "./owner-brief-root-cause-proof.js";
+import { proofDesignReleaseReadiness } from "./design-release-readiness-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -874,6 +875,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofReviewReviseRelease(nowPlus(nowIso, 840_000)));
   proofs.push(proofDailyOwnerReview(nowPlus(nowIso, 850_000)));
   proofs.push(proofOwnerBriefRootCause(nowPlus(nowIso, 860_000)));
+  proofs.push(proofDesignReleaseReadiness(nowPlus(nowIso, 870_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,

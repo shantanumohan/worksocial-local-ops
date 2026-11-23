@@ -1130,6 +1130,22 @@ export {
   type OwnerBriefRootCauseDecision,
 } from "./owner-brief-root-cause.js";
 export {
+  REQUIRED_SCREEN_IDS,
+  REQUIRED_UI_STATES,
+  DESIGN_RELEASE_READINESS_RELATED_CASE_IDS,
+  evaluateDesignReleaseReadiness,
+  type RequiredScreenId,
+  type UiStateKind,
+  type DesignTestContext,
+  type InteractionTraceStep,
+  type AccessibilityFinding,
+  type StateCoverageEntry,
+  type ScreenCoverageEntry,
+  type ReleaseAcceptancePacket,
+  type DesignReleaseReadinessInput,
+  type DesignReleaseReadinessDecision,
+} from "./design-release-readiness.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
