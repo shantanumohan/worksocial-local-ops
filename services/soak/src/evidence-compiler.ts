@@ -60,6 +60,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-057": "Cross-workspace resource substitution rejected",
   "T-US-024": "Agent cannot widen its own grant",
   "T-US-042": "Repair cannot weaken protected tests",
+  "T-US-043": "After-hours + takeover — acknowledged handoff",
   "T-X057": "Repair disables failing test — rejected",
   "T-US-044": "Takeover cancels unsent agent replies",
   "T-X053": "Takeover races queued reply — version invalidates send",
@@ -422,6 +423,7 @@ export function compileAcceptanceEvidence(
     "T-US-037 fixture ACCEPTED only via PORTABLE_ANALYSIS_ARTIFACT",
     "T-US-001 fixture ACCEPTED only via TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS",
     "T-US-039 fixture ACCEPTED only via FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT",
+    "T-US-043 fixture ACCEPTED only via AFTER_HOURS_HANDOFF_ACKNOWLEDGED",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

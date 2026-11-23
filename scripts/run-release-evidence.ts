@@ -516,6 +516,10 @@ async function main(): Promise<void> {
       (c: { caseId: string }) => c.caseId === "T-US-039",
     );
 
+    const hasTus043Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-US-043",
+    );
+
     const expectedAccepted = [
       "T-F01",
       "T-F02",
@@ -575,6 +579,7 @@ async function main(): Promise<void> {
       "T-US-040",
       "T-US-041",
       "T-US-042",
+      "T-US-043",
       "T-US-044",
       "T-US-046",
       "T-US-047",
@@ -789,7 +794,8 @@ async function main(): Promise<void> {
         hasTus037Accepted &&
         hasUs001Accepted &&
         hasTus039Accepted &&
-        accepted.length === 132 &&
+        hasTus043Accepted &&
+        accepted.length === 133 &&
         JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
@@ -804,7 +810,7 @@ async function main(): Promise<void> {
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-US-056 honest outage durable hosted contact path fixture ACCEPTED (total 132). Live VERIFIED forbidden. T-X030 via rate-limit bounded backoff preserves deadline. Not R1-complete.",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-US-043 after-hours-handoff-acknowledged fixture ACCEPTED (total 133). Live VERIFIED forbidden. T-X030 via rate-limit bounded backoff preserves deadline. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {

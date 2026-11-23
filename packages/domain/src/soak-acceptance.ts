@@ -792,6 +792,12 @@ export const SoakProofKind = {
    */
   FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT:
     "form_crm_continuous_verify_cadence_heartbeat",
+  /**
+   * After-hours + takeover — acknowledged handoff (T-US-043).
+   * Outside coverage refuses drafts; handoff stops agent send; ack required.
+   * Distinct from T-F22 complete after-hours evidence set.
+   */
+  AFTER_HOURS_HANDOFF_ACKNOWLEDGED: "after_hours_handoff_acknowledged",
 } as const;
 
 export type SoakProofKindValue =
@@ -948,6 +954,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-037 requires PORTABLE_ANALYSIS_ARTIFACT (portable brief; live NOT_WIRED).
  * T-US-001 requires TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS.
  * T-US-039 requires FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT.
+ * T-US-043 requires AFTER_HOURS_HANDOFF_ACKNOWLEDGED.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -1083,6 +1090,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-037",
   "T-US-001",
   "T-US-039",
+  "T-US-043",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1683,6 +1691,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS];
     case "T-US-039":
       return [SoakProofKind.FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT];
+    case "T-US-043":
+      return [SoakProofKind.AFTER_HOURS_HANDOFF_ACKNOWLEDGED];
     default:
       return [];
   }
@@ -1939,6 +1949,8 @@ export function mapProofToFixtureCases(
       return ["T-US-001"];
     case SoakProofKind.FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT:
       return ["T-US-039"];
+    case SoakProofKind.AFTER_HOURS_HANDOFF_ACKNOWLEDGED:
+      return ["T-US-043"];
     default:
       return [];
   }
