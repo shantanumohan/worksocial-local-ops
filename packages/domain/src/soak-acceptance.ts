@@ -523,6 +523,16 @@ export const SoakProofKind = {
    * blockers summary.
    */
   CREATE_TRUSTED_LOCAL_WORKSPACE: "create_trusted_local_workspace",
+  /**
+   * Choose folders and establish business truth — complete F02 evidence set
+   * (T-F02). Registered roots + write/read probe, storage-risk checks,
+   * ingestion manifest + duplicate detection, business facts + unresolved
+   * conflicts, signed revision + impacted assets, restore with secrets
+   * excluded; public claims from unresolved refused; live NOT_WIRED.
+   * Distinct from T-US-003 folders-ready happy-path summary.
+   */
+  CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH:
+    "choose_folders_establish_business_truth",
 } as const;
 
 export type SoakProofKindValue =
@@ -650,6 +660,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-055 requires KEYBOARD_JOURNEY_REDUCED_MOTION (complete keyboard journey with reduced motion; live NOT_WIRED).
  * T-US-059 requires SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED (shared briefs redacted; private evidence retained; live NOT_WIRED).
  * T-F01 requires CREATE_TRUSTED_LOCAL_WORKSPACE (complete F01 evidence set; live NOT_WIRED).
+ * T-F02 requires CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH (complete F02 evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -658,6 +669,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-048",
   "T-X066",
   "T-F01",
+  "T-F02",
   "T-F24",
   "T-US-047",
   "T-US-002",
@@ -1298,6 +1310,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED];
     case "T-F01":
       return [SoakProofKind.CREATE_TRUSTED_LOCAL_WORKSPACE];
+    case "T-F02":
+      return [SoakProofKind.CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH];
     default:
       return [];
   }
@@ -1496,6 +1510,8 @@ export function mapProofToFixtureCases(
       return ["T-US-059"];
     case SoakProofKind.CREATE_TRUSTED_LOCAL_WORKSPACE:
       return ["T-F01"];
+    case SoakProofKind.CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH:
+      return ["T-F02"];
     default:
       return [];
   }

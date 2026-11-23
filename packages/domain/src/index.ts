@@ -1197,6 +1197,24 @@ export {
   type CreateTrustedLocalWorkspaceDecision,
 } from "./create-trusted-local-workspace.js";
 export {
+  FolderRootKind,
+  REQUIRED_FOLDER_ROOT_KINDS,
+  CriticalPilotClaimCategory,
+  REQUIRED_CRITICAL_PILOT_CLAIM_CATEGORIES,
+  CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH_RELATED_CASE_IDS,
+  evaluateChooseFoldersEstablishBusinessTruth,
+  type FolderRootKindValue,
+  type CriticalPilotClaimCategoryValue,
+  type RegisteredFolderRoot,
+  type StorageRiskCheck,
+  type IngestionManifestEntry,
+  type BusinessFactRecord,
+  type SignedFactRevision,
+  type RestoreRehearsalRecord,
+  type ChooseFoldersEstablishBusinessTruthInput,
+  type ChooseFoldersEstablishBusinessTruthDecision,
+} from "./choose-folders-establish-business-truth.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

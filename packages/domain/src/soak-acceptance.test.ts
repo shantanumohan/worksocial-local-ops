@@ -960,4 +960,15 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.CREATE_TRUSTED_LOCAL_WORKSPACE),
     ).toEqual(["T-F01"]);
   });
+
+  it("maps T-F02 to CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH only", () => {
+    expect(expectedProofsForFixtureCase("T-F02")).toEqual([
+      SoakProofKind.CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH,
+      ),
+    ).toEqual(["T-F02"]);
+  });
 });

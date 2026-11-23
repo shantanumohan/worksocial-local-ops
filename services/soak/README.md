@@ -73,4 +73,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-US-055 Complete keyboard journey with reduced motion | Fixture **ACCEPTED** via `KEYBOARD_JOURNEY_REDUCED_MOTION` (not live VERIFIED) |
 | T-US-059 Shared briefs redacted; private evidence retained | Fixture **ACCEPTED** via `SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED` (not live VERIFIED) |
 | T-F01 Create a trusted local workspace | Fixture **ACCEPTED** via `CREATE_TRUSTED_LOCAL_WORKSPACE` (complete F01 evidence; not live VERIFIED) |
+| T-F02 Choose folders and establish business truth | Fixture **ACCEPTED** via `CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH` (complete F02 evidence; not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |

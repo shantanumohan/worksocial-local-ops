@@ -3,13 +3,13 @@
   "caseId": "T-X029",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X029 (Token rotates to different account)\nproof=explicit_account_rebind applyCount=1 :: Seeded connection=conn-old-rebind-723889c5 account=fixture-account-alpha | Silent different-account rotate denied (REBIND_REQUIRED) — not treated as transparent refresh | Blank observedAccountLabel denied (ACCOUNT_IDENTITY_REQUIRED) — no silent different-account bind | Explicit rebind complete old=conn-old-rebind-723889c5→ROTATED_AWAY new=conn-new-rebind-723889c5 account=fixture-account-beta | silentRefreshRejected=true catalogCaseId=T-X029 liveProviderRevoke=NOT_WIRED externalEffects=NONE | Measured broker putReference during rebind applyAttemptCount=1 | Successor connectionId collision rejected (CONNECTION_ID_COLLISION) | Old connection leases denied (CONNECTION_ROTATED_AWAY) | New connection lease granted leaseId=lease-94461ea8-b3fe-4fe7-acab-17d98683fb19 | Same-account rebind correctly denied (use rotate for same-account refresh) | Audit retained and redacted; no secret material in records | liveProviderRevocation=NOT_WIRED externalEffects=NONE — never silently VERIFIED for live\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X029 (Token rotates to different account)\nproof=explicit_account_rebind applyCount=1 :: Seeded connection=conn-old-rebind-5256cbbf account=fixture-account-alpha | Silent different-account rotate denied (REBIND_REQUIRED) — not treated as transparent refresh | Blank observedAccountLabel denied (ACCOUNT_IDENTITY_REQUIRED) — no silent different-account bind | Explicit rebind complete old=conn-old-rebind-5256cbbf→ROTATED_AWAY new=conn-new-rebind-5256cbbf account=fixture-account-beta | silentRefreshRejected=true catalogCaseId=T-X029 liveProviderRevoke=NOT_WIRED externalEffects=NONE | Measured broker putReference during rebind applyAttemptCount=1 | Successor connectionId collision rejected (CONNECTION_ID_COLLISION) | Old connection leases denied (CONNECTION_ROTATED_AWAY) | New connection lease granted leaseId=lease-aac434a5-8103-4a1c-a971-0b519ddae972 | Same-account rebind correctly denied (use rotate for same-account refresh) | Audit retained and redacted; no secret material in records | liveProviderRevocation=NOT_WIRED externalEffects=NONE — never silently VERIFIED for live\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "explicit_account_rebind"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x029.json",
-  "createdAtIso": "2026-11-23T01:16:52.939Z",
+  "createdAtIso": "2026-11-23T01:23:36.457Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x029-f2272e08a12c"
+  "uniqueSourceArtifactId": "art-fixture-t-x029-9902c51083e2"
 }
