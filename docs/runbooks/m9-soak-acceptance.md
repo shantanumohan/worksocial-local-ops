@@ -235,6 +235,8 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-F04** maps only to `CONNECT_GOOGLE_ANALYTICS_4` (complete F04 evidence package: scopes+identity, property→site bind, versioned event dictionary+owner+gaps, sample report request/rows/coverage, three measurement outcomes, READ_READY+next sync; unsafe claims refused; live NOT_WIRED; distinct from T-US-007 ready-read/next-sync summary; not live VERIFIED).
 
+**T-US-009** maps only to `CONNECT_GSC_SCHEDULE_WATERMARK` (schedule/watermark summary; applyAttemptCount=0; distinct from T-F05; not live VERIFIED).
+
 **T-US-007** maps only to `CONNECT_GA4_READ_READY_NEXT_SYNC` (ready-read/next-sync summary; live NOT_WIRED; distinct from T-F04; not live VERIFIED).
 
 **T-F05** maps only to `CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY` (complete F05 evidence package: identity+scopes+API readiness, domain/URL-prefix property bind, comparable-query config, observation batch+coverage+sitemap, intent→page map, daily schedule+watermark; unsafe claims refused; live NOT_WIRED; distinct from T-US-009 schedule/watermark summary; not live VERIFIED).

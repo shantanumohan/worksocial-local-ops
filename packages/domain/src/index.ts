@@ -1329,6 +1329,22 @@ export {
   type Ga4ConnectReadReadyResult,
 } from "./ga4-connect-read-ready.js";
 export {
+  DEFAULT_GSC_DAILY_READ_INTERVAL_MS,
+  GscConnectSaveMode,
+  CONNECT_GSC_SCHEDULE_WATERMARK_RELATED_CASE_IDS,
+  validateGscScheduleWatermarkProperty,
+  saveGscReadOnlyConnection,
+  fixtureGscPropertyBinding,
+  type GscConnectSaveModeValue,
+  type GscScheduleWatermarkPropertyBinding,
+  type GscScheduleWatermarkComparableQuery,
+  type GscScheduleWatermarkIntentMapping,
+  type GscScheduleWatermarkObservationRow,
+  type GscConnectScheduleWatermarkInput,
+  type GscConnectScheduleWatermarkResult,
+  type GscScheduleWatermarkPropertyValidation,
+} from "./gsc-connect-schedule-watermark.js";
+export {
   REQUIRED_GSC_GRANT_SCOPES,
   GscPropertyKind,
   CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY_RELATED_CASE_IDS,

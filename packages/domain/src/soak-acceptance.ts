@@ -829,6 +829,12 @@ export const SoakProofKind = {
    * Distinct from T-F04 complete CONNECT_GOOGLE_ANALYTICS_4 evidence package.
    */
   CONNECT_GA4_READ_READY_NEXT_SYNC: "connect_ga4_read_ready_next_sync",
+  /**
+   * Connect Search Console schedule + source watermark summary (T-US-009).
+   * Read-only fixture save; WRITE refused; live NOT_WIRED. Distinct from
+   * T-F05 complete organic-visibility evidence package.
+   */
+  CONNECT_GSC_SCHEDULE_WATERMARK: "connect_gsc_schedule_watermark",
 } as const;
 
 export type SoakProofKindValue =
@@ -987,6 +993,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-041 requires DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF.
  * T-US-032 requires EXACT_FINANCIAL_BOUNDARIES_PRESERVED.
  * T-US-007 requires CONNECT_GA4_READ_READY_NEXT_SYNC (ready-read/next-sync summary; distinct from T-F04).
+ * T-US-009 requires CONNECT_GSC_SCHEDULE_WATERMARK (schedule/watermark summary; live NOT_WIRED).
  * T-US-037 requires PORTABLE_ANALYSIS_ARTIFACT (portable brief; live NOT_WIRED).
  * T-US-001 requires TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS.
  * T-US-039 requires FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT.
@@ -1132,6 +1139,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-004",
   "T-US-005",
   "T-US-007",
+  "T-US-009",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1744,6 +1752,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.SITE_PAGE_EDITABLE_SOURCES_BASELINE];
     case "T-US-007":
       return [SoakProofKind.CONNECT_GA4_READ_READY_NEXT_SYNC];
+    case "T-US-009":
+      return [SoakProofKind.CONNECT_GSC_SCHEDULE_WATERMARK];
     default:
       return [];
   }
@@ -2012,6 +2022,8 @@ export function mapProofToFixtureCases(
       return ["T-US-005"];
     case SoakProofKind.CONNECT_GA4_READ_READY_NEXT_SYNC:
       return ["T-US-007"];
+    case SoakProofKind.CONNECT_GSC_SCHEDULE_WATERMARK:
+      return ["T-US-009"];
     default:
       return [];
   }

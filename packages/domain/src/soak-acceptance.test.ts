@@ -1306,4 +1306,13 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-US-005"]);
   });
 
+  it("maps T-US-009 to CONNECT_GSC_SCHEDULE_WATERMARK only", () => {
+    expect(expectedProofsForFixtureCase("T-US-009")).toEqual([
+      SoakProofKind.CONNECT_GSC_SCHEDULE_WATERMARK,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CONNECT_GSC_SCHEDULE_WATERMARK),
+    ).toEqual(["T-US-009"]);
+  });
+
 });

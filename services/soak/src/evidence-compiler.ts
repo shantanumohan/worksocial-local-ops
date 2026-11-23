@@ -149,6 +149,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-004": "Unsafe folders / unresolved facts blocked; safe facts usable",
   "T-US-005": "Map sites, pages and editable sources — baseline ID and checks",
   "T-US-007": "Connect GA4 — ready-read and next sync",
+  "T-US-009": "Connect Search Console schedule and source watermark",
   "T-F01": "Create a trusted local workspace",
   "T-F02": "Choose folders and establish business truth",
   "T-F03": "Map sites, pages and editable sources",
