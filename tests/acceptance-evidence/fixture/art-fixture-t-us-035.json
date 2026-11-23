@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-035",
+  "caseId": "T-US-035",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-035 (Review/revise/release — release receipt or blocked exception)\nproof=review_revise_release_receipt_or_blocked applyCount=1 :: approve+receipt → REVIEW_RELEASE_RECEIPT_RECORDED; releaseVerifiedLive=false; live NOT_WIRED | reject+blockedException → REVIEW_BLOCKED_EXCEPTION_RECORDED; no silent release | author==reviewer → SELF_APPROVAL_FORBIDDEN | revisionChangedAfterDecision → STALE_APPROVAL_INVALIDATED | approve without receipt/exception → RELEASE_OUTCOME_REQUIRED | claimLiveVerifiedRelease → FALSE_LIVE_VERIFIED_RELEASE_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | attemptProductionWrite → PRODUCTION_WRITE_REFUSED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-027 (demand page release), T-US-036/T-X019 (stale approval), T-US-054/T-X018 (self-approval alone) | proofRecordedAt=2026-11-21T19:14:00.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "review_revise_release_receipt_or_blocked"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-035.json",
+  "createdAtIso": "2026-11-23T00:23:14.408Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-035-6be93493a998"
+}

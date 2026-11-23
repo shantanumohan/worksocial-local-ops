@@ -1099,6 +1099,15 @@ export {
   type ProviderErrorNotPassDecision,
 } from "./provider-error-not-pass.js";
 export {
+  REVIEW_REVISE_RELEASE_RELATED_CASE_IDS,
+  evaluateReviewReviseRelease,
+  type ReviewDecisionKind,
+  type QaGateStatus,
+  type ReviewQaGate,
+  type ReviewReviseReleaseInput,
+  type ReviewReviseReleaseDecision,
+} from "./review-revise-release.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
