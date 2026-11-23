@@ -742,7 +742,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 - **T-US-033** Claude/Gemini eval suites (F17/SC-14) — adjudication + backlog. *(fixture ACCEPTED — eval suite adjudication + backlog proof; not sandbox/prod VERIFIED)*
 - **T-US-035** Review/revise/release (F18/SC-05) — release receipt or blocked exception. *(fixture ACCEPTED — review/revise/release receipt-or-blocked proof; not sandbox/prod VERIFIED)*
 - **T-US-037** Analyze and hypothesis (F19/SC-12) — portable analysis artifact. *(fixture ACCEPTED — portable analysis artifact proof; not sandbox/prod VERIFIED)*
-- **T-US-039** Form→CRM continuous verify (F20/SC-15) — cadence/heartbeat.
+- **T-US-039** Form→CRM continuous verify (F20/SC-15) — cadence/heartbeat. *(fixture ACCEPTED — form→CRM continuous verify cadence/heartbeat proof; not sandbox/prod VERIFIED)*
 - **T-US-041** Diagnose/repair defect (F21/SC-21) — verified resolution or handoff. *(fixture ACCEPTED — diagnose/repair defect resolved or handoff proof; not sandbox/prod VERIFIED)*
 - **T-US-043** After-hours + takeover (F22/SC-17) — acknowledged handoff.
 - **T-US-045** Semantic search / no-result (F23/SC-11) — evaluation comparison.
