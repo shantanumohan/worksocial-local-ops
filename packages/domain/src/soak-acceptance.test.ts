@@ -893,4 +893,15 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-US-035"]);
   });
+
+  it("maps T-US-049 to DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE only", () => {
+    expect(expectedProofsForFixtureCase("T-US-049")).toEqual([
+      SoakProofKind.DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE,
+      ),
+    ).toEqual(["T-US-049"]);
+  });
 });

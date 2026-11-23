@@ -468,6 +468,15 @@ export const SoakProofKind = {
    */
   REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED:
     "review_revise_release_receipt_or_blocked",
+  /**
+   * Daily owner review — reviewed operating knowledge (T-US-049 / F25).
+   * Evidence-backed brief, completed-work ledger, decision records,
+   * outcome/cost (synthetic excluded), bounded mission, versioned playbook
+   * without silent authority expansion; live NOT_WIRED. Distinct from
+   * T-US-050 / T-US-025 / T-US-035.
+   */
+  DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE:
+    "daily_owner_review_operating_knowledge",
 } as const;
 
 export type SoakProofKindValue =
@@ -588,6 +597,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-033 requires EVAL_SUITE_ADJUDICATION_BACKLOG (Claude/Gemini eval suite adjudication + linked backlog; live NOT_WIRED).
  * T-US-034 requires PROVIDER_ERROR_NOT_PASS (provider error ≠ bad answer or pass; live NOT_WIRED).
  * T-US-035 requires REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED (review/revise/release receipt or blocked exception; live NOT_WIRED).
+ * T-US-049 requires DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE (daily owner review reviewed operating knowledge; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -687,6 +697,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-033",
   "T-US-034",
   "T-US-035",
+  "T-US-049",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1215,6 +1226,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.PROVIDER_ERROR_NOT_PASS];
     case "T-US-035":
       return [SoakProofKind.REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED];
+    case "T-US-049":
+      return [SoakProofKind.DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE];
     default:
       return [];
   }
@@ -1399,6 +1412,8 @@ export function mapProofToFixtureCases(
       return ["T-US-034"];
     case SoakProofKind.REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED:
       return ["T-US-035"];
+    case SoakProofKind.DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE:
+      return ["T-US-049"];
     default:
       return [];
   }

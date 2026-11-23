@@ -136,6 +136,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-033": "Claude/Gemini eval suites — adjudication + backlog",
   "T-US-034": "Provider error ≠ bad answer or pass",
   "T-US-035": "Review/revise/release — release receipt or blocked exception",
+  "T-US-049": "Daily owner review — reviewed operating knowledge",
 };
 
 function relatedProofsForCase(
@@ -350,6 +351,7 @@ export function compileAcceptanceEvidence(
     "T-US-033 fixture ACCEPTED only via EVAL_SUITE_ADJUDICATION_BACKLOG",
     "T-US-034 fixture ACCEPTED only via PROVIDER_ERROR_NOT_PASS",
     "T-US-035 fixture ACCEPTED only via REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED",
+    "T-US-049 fixture ACCEPTED only via DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

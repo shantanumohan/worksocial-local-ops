@@ -54,6 +54,7 @@
  * Eval suite adjudication + backlog (T-US-033).
  * Provider error ≠ bad answer or pass (T-US-034).
  * Review/revise/release receipt or blocked exception (T-US-035).
+ * Daily owner review operating knowledge (T-US-049).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -120,6 +121,7 @@ import { proofPaidMediaRecommendationMutationOrFailure } from "./paid-media-reco
 import { proofEvalSuiteAdjudicationBacklog } from "./eval-suite-adjudication-proof.js";
 import { proofProviderErrorNotPass } from "./provider-error-not-pass-proof.js";
 import { proofReviewReviseRelease } from "./review-revise-release-proof.js";
+import { proofDailyOwnerReview } from "./daily-owner-review-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -868,6 +870,7 @@ export async function runSoakRecoveryHarness(input: {
   );
   proofs.push(proofProviderErrorNotPass(nowPlus(nowIso, 830_000)));
   proofs.push(proofReviewReviseRelease(nowPlus(nowIso, 840_000)));
+  proofs.push(proofDailyOwnerReview(nowPlus(nowIso, 850_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -956,6 +959,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-033 fixture ACCEPTED via eval_suite_adjudication_backlog only — not live VERIFIED",
       "T-US-034 fixture ACCEPTED via provider_error_not_pass only — not live VERIFIED",
       "T-US-035 fixture ACCEPTED via review_revise_release_receipt_or_blocked only — not live VERIFIED",
+      "T-US-049 fixture ACCEPTED via daily_owner_review_operating_knowledge only — not live VERIFIED",
     ],
   };
 }
