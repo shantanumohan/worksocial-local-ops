@@ -604,6 +604,16 @@ export const SoakProofKind = {
    * destination capabilities, and T-X045 partial campaign destinations.
    */
   CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS: "connect_local_social_inbox_channels",
+  /**
+   * Grant standing autonomy safely — complete F12 evidence set (T-F12).
+   * Scope snapshot, autonomy mode, versioned authority draft, policy
+   * constraints, policy test matrix, owner-signed grant + audit, pause /
+   * stop-writes / pause-replies control receipts; unsafe claims refused;
+   * live NOT_WIRED. Distinct from T-US-023 control-receipts readiness
+   * summary, T-US-024 agent cannot widen grant, and T-US-060 emergency
+   * stop at commit.
+   */
+  GRANT_STANDING_AUTONOMY_SAFELY: "grant_standing_autonomy_safely",
 } as const;
 
 export type SoakProofKindValue =
@@ -740,6 +750,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F09 requires CONNECT_GEMINI_INDEPENDENT_TESTING (complete F09 evidence set; live NOT_WIRED).
  * T-F10 requires MAP_CRM_FORMS_BOOKING_TRUTH (complete F10 evidence set; live Zoho NOT_WIRED).
  * T-F11 requires CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS (complete F11 evidence set; live NOT_WIRED).
+ * T-F12 requires GRANT_STANDING_AUTONOMY_SAFELY (complete F12 evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -757,6 +768,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F09",
   "T-F10",
   "T-F11",
+  "T-F12",
   "T-F24",
   "T-US-047",
   "T-US-002",
@@ -1415,6 +1427,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.MAP_CRM_FORMS_BOOKING_TRUTH];
     case "T-F11":
       return [SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS];
+    case "T-F12":
+      return [SoakProofKind.GRANT_STANDING_AUTONOMY_SAFELY];
     default:
       return [];
   }
@@ -1631,6 +1645,8 @@ export function mapProofToFixtureCases(
       return ["T-F10"];
     case SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS:
       return ["T-F11"];
+    case SoakProofKind.GRANT_STANDING_AUTONOMY_SAFELY:
+      return ["T-F12"];
     default:
       return [];
   }

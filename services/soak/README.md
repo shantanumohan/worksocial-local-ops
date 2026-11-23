@@ -82,4 +82,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-F09 Connect Gemini for independent testing | Fixture **ACCEPTED** via `CONNECT_GEMINI_INDEPENDENT_TESTING` (complete F09 evidence; not live VERIFIED) |
 | T-F10 Map CRM, forms and booking truth | Fixture **ACCEPTED** via `MAP_CRM_FORMS_BOOKING_TRUTH` (complete F10 evidence; not live VERIFIED) |
 | T-F11 Connect local, social and inbox channels | Fixture **ACCEPTED** via `CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS` (complete F11 evidence; not live VERIFIED) |
+| T-F12 Grant standing autonomy safely | Fixture **ACCEPTED** via `GRANT_STANDING_AUTONOMY_SAFELY` (complete F12 evidence; not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |

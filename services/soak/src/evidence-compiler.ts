@@ -152,6 +152,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-F09": "Connect Gemini for independent testing",
   "T-F10": "Map CRM, forms and booking truth",
   "T-F11": "Connect local, social and inbox channels",
+  "T-F12": "Grant standing autonomy safely",
 };
 
 function relatedProofsForCase(
@@ -382,6 +383,7 @@ export function compileAcceptanceEvidence(
     "T-F09 fixture ACCEPTED only via CONNECT_GEMINI_INDEPENDENT_TESTING",
     "T-F10 fixture ACCEPTED only via MAP_CRM_FORMS_BOOKING_TRUTH",
     "T-F11 fixture ACCEPTED only via CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS",
+    "T-F12 fixture ACCEPTED only via GRANT_STANDING_AUTONOMY_SAFELY",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

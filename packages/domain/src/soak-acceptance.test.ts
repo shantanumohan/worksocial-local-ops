@@ -1047,4 +1047,13 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS),
     ).toEqual(["T-F11"]);
   });
+
+  it("maps T-F12 to GRANT_STANDING_AUTONOMY_SAFELY only", () => {
+    expect(expectedProofsForFixtureCase("T-F12")).toEqual([
+      SoakProofKind.GRANT_STANDING_AUTONOMY_SAFELY,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.GRANT_STANDING_AUTONOMY_SAFELY),
+    ).toEqual(["T-F12"]);
+  });
 });
