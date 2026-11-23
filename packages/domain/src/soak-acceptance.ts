@@ -506,6 +506,15 @@ export const SoakProofKind = {
    * live NOT_WIRED. Distinct from T-X061 / T-US-051.
    */
   KEYBOARD_JOURNEY_REDUCED_MOTION: "keyboard_journey_reduced_motion",
+  /**
+   * Shared briefs redacted; private evidence retained (T-US-059).
+   * Shareable brief must be redacted with no private fields; private
+   * evidence retained in private vault (not discarded / not in shared
+   * export); live NOT_WIRED. Distinct from T-US-050 / T-US-053 /
+   * redactEvidenceSummary.
+   */
+  SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED:
+    "shared_briefs_redacted_private_retained",
 } as const;
 
 export type SoakProofKindValue =
@@ -631,6 +640,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-051 requires DESIGN_RELEASE_READINESS_PACKET (design/release readiness release acceptance packet; live NOT_WIRED).
  * T-US-053 requires SECRETS_NEVER_IN_BROWSER_ASSETS (secrets never in browser assets; live NOT_WIRED).
  * T-US-055 requires KEYBOARD_JOURNEY_REDUCED_MOTION (complete keyboard journey with reduced motion; live NOT_WIRED).
+ * T-US-059 requires SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED (shared briefs redacted; private evidence retained; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -735,6 +745,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-051",
   "T-US-053",
   "T-US-055",
+  "T-US-059",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1273,6 +1284,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.SECRETS_NEVER_IN_BROWSER_ASSETS];
     case "T-US-055":
       return [SoakProofKind.KEYBOARD_JOURNEY_REDUCED_MOTION];
+    case "T-US-059":
+      return [SoakProofKind.SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED];
     default:
       return [];
   }
@@ -1467,6 +1480,8 @@ export function mapProofToFixtureCases(
       return ["T-US-053"];
     case SoakProofKind.KEYBOARD_JOURNEY_REDUCED_MOTION:
       return ["T-US-055"];
+    case SoakProofKind.SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED:
+      return ["T-US-059"];
     default:
       return [];
   }

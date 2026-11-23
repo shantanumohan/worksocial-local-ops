@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-059",
+  "caseId": "T-US-059",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-059 (Shared briefs redacted; private evidence retained)\nproof=shared_briefs_redacted_private_retained applyCount=1 :: redacted shared brief + private vault retention → SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED; shareVerifiedLive=false; live NOT_WIRED | empty shareId → SHARE_PACKAGE_REQUIRED | attemptShareUnredactedBrief → UNREDACTED_SHARED_BRIEF_REFUSED | customer_contact in shared brief → PRIVATE_FIELDS_IN_SHARED_BRIEF_REFUSED | discarded private evidence → PRIVATE_EVIDENCE_NOT_RETAINED_REFUSED | private evidence in shared export → PRIVATE_EVIDENCE_IN_SHARED_EXPORT_REFUSED | attemptDiscardPrivateEvidenceOnShare → DISCARD_PRIVATE_EVIDENCE_ON_SHARE_REFUSED | claimLiveVerifiedShare → FALSE_LIVE_VERIFIED_SHARE_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-050 (owner brief root-cause), T-US-053 (secrets never in browser assets), redactEvidenceSummary (string scrub) | proofRecordedAt=2026-11-21T19:15:00.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "shared_briefs_redacted_private_retained"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-059.json",
+  "createdAtIso": "2026-11-23T01:08:44.205Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-059-8dfab3e33b0b"
+}

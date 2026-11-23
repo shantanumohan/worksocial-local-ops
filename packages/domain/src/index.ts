@@ -1166,6 +1166,20 @@ export {
   type KeyboardJourneyReducedMotionDecision,
 } from "./keyboard-journey-reduced-motion.js";
 export {
+  BriefAudience,
+  PrivateFieldKind,
+  PrivateEvidenceRetentionStore,
+  SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED_RELATED_CASE_IDS,
+  evaluateSharedBriefsRedactedPrivateRetained,
+  type BriefAudienceValue,
+  type PrivateFieldKindValue,
+  type PrivateEvidenceRetentionStoreValue,
+  type SharedBriefSample,
+  type PrivateEvidenceSample,
+  type SharedBriefsRedactedPrivateRetainedInput,
+  type SharedBriefsRedactedPrivateRetainedDecision,
+} from "./shared-briefs-redacted-private-retained.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
