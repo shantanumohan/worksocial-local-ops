@@ -885,6 +885,10 @@ export const SoakProofKind = {
    * Overlay captures trigger; Tab trap; close restores or FOCUS_LOST.
    */
   KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG: "keyboard_focus_restore_after_dialog",
+  /**
+   * Thirty alerts for one outage collapse into one grouped incident (T-X068).
+   */
+  THIRTY_ALERTS_ONE_OUTAGE_GROUPED: "thirty_alerts_one_outage_grouped",
 } as const;
 
 export type SoakProofKindValue =
@@ -995,6 +999,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X051 requires WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH.
  * T-X062 requires SSE_GAP_FULL_STATE_RESYNC.
  * T-X061 requires KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG.
+ * T-X068 requires THIRTY_ALERTS_ONE_OUTAGE_GROUPED.
  * T-US-012 requires GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED (test ≠ production).
  * T-US-015 requires CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY (runtime ≠ API readiness; EVAL_ONLY).
 * T-US-016 requires CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED.
@@ -1170,6 +1175,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X051",
   "T-X061",
   "T-X062",
+  "T-X068",
   "T-US-011",
   "T-US-012",
   "T-US-015",
@@ -1717,6 +1723,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG];
     case "T-X062":
       return [SoakProofKind.SSE_GAP_FULL_STATE_RESYNC];
+    case "T-X068":
+      return [SoakProofKind.THIRTY_ALERTS_ONE_OUTAGE_GROUPED];
     case "T-US-011":
       return [SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY];
     case "T-US-012":
@@ -2003,6 +2011,8 @@ export function mapProofToFixtureCases(
       return ["T-X061"];
     case SoakProofKind.SSE_GAP_FULL_STATE_RESYNC:
       return ["T-X062"];
+    case SoakProofKind.THIRTY_ALERTS_ONE_OUTAGE_GROUPED:
+      return ["T-X068"];
     case SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED:
       return ["T-US-012"];
     case SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY:

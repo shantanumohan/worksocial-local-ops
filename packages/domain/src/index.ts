@@ -355,6 +355,15 @@ export {
   type KeyboardFocusRestoreDecision,
 } from "./keyboard-focus-restore.js";
 export {
+  AlertSeverity,
+  createProbeAlert,
+  groupAlertsIntoIncidents,
+  ALERT_OUTAGE_GROUPING_RELATED_CASE_IDS,
+  type AlertSeverityValue,
+  type ProbeAlertRecord,
+  type GroupedIncidentRecord,
+} from "./alert-outage-grouping.js";
+export {
   SupportLabel,
   CollectionMethod,
   InstructionIngestionStatus,

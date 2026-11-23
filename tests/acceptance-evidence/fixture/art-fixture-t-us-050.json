@@ -8,8 +8,8 @@
     "owner_brief_root_cause_actionable"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-050.json",
-  "createdAtIso": "2026-11-23T07:09:07.558Z",
+  "createdAtIso": "2026-11-23T07:15:44.747Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-050-1c188461efb4"
+  "uniqueSourceArtifactId": "art-fixture-t-us-050-3d602cf8d12d"
 }
