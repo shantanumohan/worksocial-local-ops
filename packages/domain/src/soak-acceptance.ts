@@ -697,6 +697,20 @@ export const SoakProofKind = {
    * Review, revise and release a change — complete F18 evidence set (T-F18).
    */
   REVIEW_REVISE_AND_RELEASE_A_CHANGE: "review_revise_and_release_a_change",
+  /**
+   * Calibrate the design and release readiness — complete F26 evidence set
+   * (T-F26). Working prototype + agreed acceptance cases, test context,
+   * configure-to-outcome interaction trace, accessibility findings,
+   * dangerous-actions review, empty/loading/stale/partial/failed state
+   * coverage, handoff-requirements vs implemented-behavior comparison,
+   * SC-01..SC-25 route-state verification register, and release acceptance
+   * packet with outcome evidence; evidence-free approval and live claims
+   * refused; live NOT_WIRED. Distinct from T-US-051 design/release readiness
+   * packet summary, T-US-035 review/revise/release, T-US-049 daily owner
+   * review, and T-US-055 keyboard journey.
+   */
+  CALIBRATE_DESIGN_RELEASE_READINESS:
+    "calibrate_design_release_readiness",
 } as const;
 
 export type SoakProofKindValue =
@@ -842,6 +856,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F22 requires HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER (complete F22 evidence set; live NOT_WIRED).
  * T-F19 requires ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS (complete F19 evidence set; live NOT_WIRED).
  * T-F18 requires REVIEW_REVISE_AND_RELEASE_A_CHANGE (complete F18 evidence set; live NOT_WIRED).
+ * T-F26 requires CALIBRATE_DESIGN_RELEASE_READINESS (complete F26 evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -869,6 +884,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F19",
   "T-F22",
   "T-F24",
+  "T-F26",
   "T-US-047",
   "T-US-002",
   "T-X002",
@@ -1544,6 +1560,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS];
     case "T-F22":
       return [SoakProofKind.HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER];
+    case "T-F26":
+      return [SoakProofKind.CALIBRATE_DESIGN_RELEASE_READINESS];
     default:
       return [];
   }
@@ -1778,6 +1796,8 @@ export function mapProofToFixtureCases(
       return ["T-F19"];
     case SoakProofKind.HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER:
       return ["T-F22"];
+    case SoakProofKind.CALIBRATE_DESIGN_RELEASE_READINESS:
+      return ["T-F26"];
     default:
       return [];
   }

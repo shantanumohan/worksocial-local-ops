@@ -147,6 +147,7 @@ import { proofVerifyFormToCrmJourneyContinuously } from "./verify-form-to-crm-jo
 import { proofHandleAfterHoursMessagesAndTakeover } from "./handle-after-hours-messages-and-takeover-proof.js";
 import { proofAnalyzePerformanceAndTestHypothesis } from "./analyze-performance-and-test-hypothesis-proof.js";
 import { proofReviewReviseAndReleaseAChange } from "./review-revise-and-release-a-change-proof.js";
+import { proofCalibrateDesignReleaseReadiness } from "./calibrate-design-release-readiness-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -950,6 +951,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofReviewReviseAndReleaseAChange(nowPlus(nowIso, 1_090_000)),
   );
+  proofs.push(
+    proofCalibrateDesignReleaseReadiness(nowPlus(nowIso, 1_100_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -959,6 +963,7 @@ export async function runSoakRecoveryHarness(input: {
         ? "All soak recovery proofs passed (fixture / LOCAL_DURABLE)"
         : "One or more soak recovery proofs failed",
       "External effects: NONE — fake provider only",
+      "T-F26 fixture ACCEPTED via calibrate_design_release_readiness only — not live VERIFIED",
       "T-X015 fixture ACCEPTED via dst_recurring_schedule_no_duplicates only — not live VERIFIED",
       "T-X025 fixture ACCEPTED via external_human_edit_conflict_retained only — not live VERIFIED",
       "T-X026 fixture ACCEPTED via concurrent_final_budget_reservation_cap only — not live VERIFIED",
