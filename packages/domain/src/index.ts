@@ -342,6 +342,19 @@ export {
   type SseReconnectDecision,
 } from "./sse-gap-full-resync.js";
 export {
+  emptyFocusSession,
+  openOverlayFocus,
+  cycleDialogFocus,
+  markTriggerUnrestorable,
+  closeOverlayRestoreFocus,
+  evaluateKeyboardFocusRestoreReview,
+  KEYBOARD_FOCUS_RESTORE_RELATED_CASE_IDS,
+  type FocusTargetId,
+  type FocusSession,
+  type KeyboardFocusRestoreCode,
+  type KeyboardFocusRestoreDecision,
+} from "./keyboard-focus-restore.js";
+export {
   SupportLabel,
   CollectionMethod,
   InstructionIngestionStatus,

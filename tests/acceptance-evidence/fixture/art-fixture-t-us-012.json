@@ -8,8 +8,8 @@
     "google_ads_test_production_access_separated"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-012.json",
-  "createdAtIso": "2026-11-23T07:02:17.464Z",
+  "createdAtIso": "2026-11-23T07:09:07.558Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-012-ba202ccd4ac1"
+  "uniqueSourceArtifactId": "art-fixture-t-us-012-1c188461efb4"
 }

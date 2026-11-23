@@ -124,6 +124,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X046": "Unsupported blog destination — no fake publication",
   "T-X047": "Layout-specific capacity mismatch — filter correctly",
   "T-X051": "Wrong Zoho organization — identity mismatch blocks",
+  "T-X061": "Keyboard review and focus restore — A11y",
   "T-X062": "SSE gap after offline UI — full-state resync",
   "T-X030": "Rate-limit with deadline — bounded backoff",
   "T-US-056": "Honest outage; durable hosted contact path",
@@ -451,6 +452,7 @@ export function compileAcceptanceEvidence(
     "T-X047 fixture ACCEPTED only via LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS",
     "T-X051 fixture ACCEPTED only via WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH",
     "T-X062 fixture ACCEPTED only via SSE_GAP_FULL_STATE_RESYNC",
+    "T-X061 fixture ACCEPTED only via KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

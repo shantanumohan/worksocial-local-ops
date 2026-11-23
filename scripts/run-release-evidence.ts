@@ -374,6 +374,9 @@ async function main(): Promise<void> {
     const hasTx062Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-X062",
     );
+    const hasTx061Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-X061",
+    );
     const hasUs012Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-US-012",
     );
@@ -703,6 +706,7 @@ async function main(): Promise<void> {
       "T-X058",
       "T-X059",
       "T-X060",
+      "T-X061",
       "T-X062",
       "T-X063",
       "T-X065",
@@ -865,7 +869,8 @@ async function main(): Promise<void> {
         hasTx047Accepted &&
         hasTx051Accepted &&
         hasTx062Accepted &&
-        accepted.length === 147 &&
+        hasTx061Accepted &&
+        accepted.length === 148 &&
         JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
@@ -880,7 +885,7 @@ async function main(): Promise<void> {
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X062 SSE gap full-state resync fixture ACCEPTED (total 147). Live VERIFIED forbidden. Not R1-complete.",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X061 keyboard focus restore after dialog fixture ACCEPTED (total 148). Live VERIFIED forbidden. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {

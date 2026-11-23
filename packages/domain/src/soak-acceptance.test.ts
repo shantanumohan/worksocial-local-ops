@@ -1395,4 +1395,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X062"]);
   });
 
+  it("maps T-X061 to KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG only", () => {
+    expect(expectedProofsForFixtureCase("T-X061")).toEqual([
+      SoakProofKind.KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG,
+      ),
+    ).toEqual(["T-X061"]);
+  });
+
 });

@@ -120,6 +120,7 @@ import { proofUnsupportedBlogDestinationNoFakePublication } from "./unsupported-
 import { proofLayoutSpecificCapacityMismatchFilters } from "./layout-capacity-mismatch-proof.js";
 import { proofWrongZohoOrganizationIdentityMismatch } from "./wrong-zoho-organization-proof.js";
 import { proofSseGapFullStateResync } from "./sse-gap-full-resync-proof.js";
+import { proofKeyboardFocusRestoreAfterDialog } from "./keyboard-focus-restore-proof.js";
 import { proofGoogleAdsTestProductionAccessSeparated } from "./google-ads-test-production-access-proof.js";
 import { proofConnectClaudeCodeTestApiEvalOnly } from "./claude-code-test-api-connect-proof.js";
 import { proofClaudeRuntimeEvalAuthSeparated } from "./claude-runtime-eval-auth-proof.js";
@@ -1049,6 +1050,9 @@ export async function runSoakRecoveryHarness(input: {
     proofWrongZohoOrganizationIdentityMismatch(nowPlus(nowIso, 1_340_000)),
   );
   proofs.push(proofSseGapFullStateResync(nowPlus(nowIso, 1_350_000)));
+  proofs.push(
+    proofKeyboardFocusRestoreAfterDialog(nowPlus(nowIso, 1_360_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1185,6 +1189,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X047 fixture ACCEPTED via layout_specific_capacity_mismatch_filters only — not live VERIFIED",
       "T-X051 fixture ACCEPTED via wrong_zoho_organization_identity_mismatch only — not live VERIFIED",
       "T-X062 fixture ACCEPTED via sse_gap_full_state_resync only — not live VERIFIED",
+      "T-X061 fixture ACCEPTED via keyboard_focus_restore_after_dialog only — not live VERIFIED",
     ],
   };
 }

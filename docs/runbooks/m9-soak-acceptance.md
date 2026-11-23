@@ -303,3 +303,5 @@ Suggested owner Windows flow (state off OneDrive):
 
 
 **T-X062** maps only to `SSE_GAP_FULL_STATE_RESYNC` (offline SSE gap → full-state resync; not live VERIFIED).
+
+**T-X061** maps only to `KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG` (dialog open/trap/restore or FOCUS_LOST; not live VERIFIED).
