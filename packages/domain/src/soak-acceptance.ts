@@ -731,6 +731,17 @@ export const SoakProofKind = {
    */
   TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT:
     "test_semantic_search_improve_no_result",
+  /**
+   * Run Claude and Gemini evaluation suites — complete F17 evidence set
+   * (T-F17). EVAL_ONLY Claude+Gemini connections, curated corpus, budget
+   * consent, dual suite selection, condition manifests, redaction check,
+   * bounded run authorization, case-level outcomes, human adjudication +
+   * linked backlog; unsafe claims refused; live NOT_WIRED. Distinct from
+   * T-US-033 adjudication summary, T-US-015/T-US-017 connect,
+   * T-US-018/T-X037 operational tool forbid, and T-X038 no-grounding.
+   */
+  RUN_CLAUDE_GEMINI_EVALUATION_SUITES:
+    "run_claude_gemini_evaluation_suites",
 } as const;
 
 export type SoakProofKindValue =
@@ -879,6 +890,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F21 requires DIAGNOSE_AND_REPAIR_PERMITTED_DEFECT (complete F21 evidence set; live NOT_WIRED).
  * T-F26 requires CALIBRATE_DESIGN_RELEASE_READINESS (complete F26 evidence set; live NOT_WIRED).
  * T-F23 requires TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT (complete evidence set; live NOT_WIRED).
+ * T-F17 requires RUN_CLAUDE_GEMINI_EVALUATION_SUITES (complete evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -907,6 +919,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F19",
   "T-F22",
   "T-F23",
+  "T-F17",
   "T-F24",
   "T-F26",
   "T-US-047",
@@ -1590,6 +1603,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CALIBRATE_DESIGN_RELEASE_READINESS];
     case "T-F23":
       return [SoakProofKind.TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT];
+    case "T-F17":
+      return [SoakProofKind.RUN_CLAUDE_GEMINI_EVALUATION_SUITES];
     default:
       return [];
   }
@@ -1830,6 +1845,8 @@ export function mapProofToFixtureCases(
       return ["T-F26"];
     case SoakProofKind.TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT:
       return ["T-F23"];
+    case SoakProofKind.RUN_CLAUDE_GEMINI_EVALUATION_SUITES:
+      return ["T-F17"];
     default:
       return [];
   }
