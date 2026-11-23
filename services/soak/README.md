@@ -73,6 +73,7 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-US-053 Secrets never in browser assets | Fixture **ACCEPTED** via `SECRETS_NEVER_IN_BROWSER_ASSETS` (not live VERIFIED) |
 | T-US-055 Complete keyboard journey with reduced motion | Fixture **ACCEPTED** via `KEYBOARD_JOURNEY_REDUCED_MOTION` (not live VERIFIED) |
 | T-US-059 Shared briefs redacted; private evidence retained | Fixture **ACCEPTED** via `SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED` (not live VERIFIED) |
+| T-US-003 business truth folders | Fixture **ACCEPTED** via `BUSINESS_TRUTH_FOLDERS_RESTORE_SECRETS_EXCLUDED` (not live VERIFIED) |
 | T-F01 Create a trusted local workspace | Fixture **ACCEPTED** via `CREATE_TRUSTED_LOCAL_WORKSPACE` (complete F01 evidence; not live VERIFIED) |
 | T-F02 Choose folders and establish business truth | Fixture **ACCEPTED** via `CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH` (complete F02 evidence; not live VERIFIED) |
 | T-F03 Map sites, pages and editable sources | Fixture **ACCEPTED** via `MAP_SITES_PAGES_EDITABLE_SOURCES` (complete F03 evidence; not live VERIFIED) |

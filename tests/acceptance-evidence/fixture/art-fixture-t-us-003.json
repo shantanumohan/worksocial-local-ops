@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-003",
+  "caseId": "T-US-003",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-003 (Choose folders / business truth — restore evidence; secrets excluded)\nproof=business_truth_folders_restore_secrets_excluded applyCount=1 :: Write/read probe passed on content/reports/backup/db/secrets | Registered content id=root-content syncPath=false | Registered reports id=root-reports syncPath=false | Registered encrypted_backup id=root-encrypted_backup syncPath=false | Registered database id=root-database syncPath=false | Registered secrets id=root-secrets syncPath=false | Negative control: secrets under sync path → DURABLE_ON_SYNC_PATH | Export/restore rehearsal matched; secrets excluded from restore evidence | Domain ready: categories=hours,capacity,prices,availability usable=3 blocked=1 restoreMatched=true secretsExcluded=true | proofClock=2026-11-21T19:15:25.000Z | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "business_truth_folders_restore_secrets_excluded"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-003.json",
+  "createdAtIso": "2026-11-23T05:44:17.974Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-003-4c2824c7b3e3"
+}

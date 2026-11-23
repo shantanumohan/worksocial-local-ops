@@ -223,6 +223,21 @@ export {
   type VenueMediaPublishGateDecision,
 } from "./venue-media-license.js";
 export {
+  BusinessTruthArtifactKind,
+  BusinessTruthClaimCategory,
+  BusinessTruthDurableKind,
+  REQUIRED_BUSINESS_TRUTH_CLAIM_CATEGORIES,
+  buildRestoreRehearsalEvidence,
+  evaluateBusinessTruthFoldersSetup,
+  type BusinessTruthArtifactKindValue,
+  type BusinessTruthClaimCategoryValue,
+  type BusinessTruthDurableKindValue,
+  type BusinessTruthFactInput,
+  type BusinessTruthFoldersDecision,
+  type RegisteredRootSummary,
+  type RestoreRehearsalEvidence,
+} from "./business-truth-folders.js";
+export {
   ReviewBindingStatus,
   ReviewBindingErrorCode,
   createReviewBinding,
