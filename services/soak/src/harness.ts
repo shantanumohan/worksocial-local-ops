@@ -133,6 +133,7 @@ import { proofChooseFoldersEstablishBusinessTruth } from "./choose-folders-estab
 import { proofMapSitesPagesEditableSources } from "./map-sites-pages-editable-sources-proof.js";
 import { proofConnectGoogleAnalytics4 } from "./connect-google-analytics-4-proof.js";
 import { proofConnectSearchConsoleOrganicVisibility } from "./connect-search-console-organic-visibility-proof.js";
+import { proofConnectGoogleAdsControlledAnalysis } from "./connect-google-ads-controlled-analysis-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -898,6 +899,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofConnectSearchConsoleOrganicVisibility(nowPlus(nowIso, 950_000)),
   );
+  proofs.push(
+    proofConnectGoogleAdsControlledAnalysis(nowPlus(nowIso, 960_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -997,6 +1001,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-F03 fixture ACCEPTED via map_sites_pages_editable_sources only — not live VERIFIED",
       "T-F04 fixture ACCEPTED via connect_google_analytics_4 only — not live VERIFIED",
       "T-F05 fixture ACCEPTED via connect_search_console_organic_visibility only — not live VERIFIED",
+      "T-F06 fixture ACCEPTED via connect_google_ads_controlled_analysis only — not live VERIFIED",
     ],
   };
 }

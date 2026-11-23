@@ -558,6 +558,16 @@ export const SoakProofKind = {
    */
   CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY:
     "connect_search_console_organic_visibility",
+  /**
+   * Connect Google Ads for controlled analysis — complete F06 evidence set
+   * (T-F06). Project+access tier, identity+scopes, deny-write consent,
+   * client/manager bind+TEST badge, campaigns+conversions, event
+   * mapping+discrepancies, read receipt+watermark, READ_READY Analyze-only;
+   * unsafe claims refused; live NOT_WIRED. Distinct from T-US-011 analyze-only
+   * save/reload summary and T-US-012 test vs production separation.
+   */
+  CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS:
+    "connect_google_ads_controlled_analysis",
 } as const;
 
 export type SoakProofKindValue =
@@ -689,6 +699,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F03 requires MAP_SITES_PAGES_EDITABLE_SOURCES (complete F03 evidence set; live NOT_WIRED).
  * T-F04 requires CONNECT_GOOGLE_ANALYTICS_4 (complete F04 evidence set; live NOT_WIRED).
  * T-F05 requires CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY (complete F05 evidence set; live NOT_WIRED).
+ * T-F06 requires CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS (complete F06 evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -701,6 +712,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F03",
   "T-F04",
   "T-F05",
+  "T-F06",
   "T-F24",
   "T-US-047",
   "T-US-002",
@@ -1349,6 +1361,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CONNECT_GOOGLE_ANALYTICS_4];
     case "T-F05":
       return [SoakProofKind.CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY];
+    case "T-F06":
+      return [SoakProofKind.CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS];
     default:
       return [];
   }
@@ -1555,6 +1569,8 @@ export function mapProofToFixtureCases(
       return ["T-F04"];
     case SoakProofKind.CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY:
       return ["T-F05"];
+    case SoakProofKind.CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS:
+      return ["T-F06"];
     default:
       return [];
   }
