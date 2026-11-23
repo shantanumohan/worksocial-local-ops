@@ -800,7 +800,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 
 Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | Environment: fixture/integration; live only when separately approved.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X023, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X030, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X040, T-X041, T-X042, T-X043, T-X044, T-X045, T-X046, T-X047, T-X048, T-X049, T-X050, T-X051, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X061, T-X062, T-X063, T-X064, T-X065, T-X066, T-X068, T-X069, T-X070, T-X071, T-X072, T-X073.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X023, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X030, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X040, T-X041, T-X042, T-X043, T-X044, T-X045, T-X046, T-X047, T-X048, T-X049, T-X050, T-X051, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X061, T-X062, T-X063, T-X064, T-X065, T-X066, T-X067, T-X068, T-X069, T-X070, T-X071, T-X072, T-X073.
 
 **T-X021** is fixture ACCEPTED only via `CONCURRENT_IDEMPOTENT_RELEASE` (barrier+mutex one dispatch; not retry-only NO_DUPLICATE_EFFECTS). Not sandbox/prod VERIFIED.
 
@@ -991,6 +991,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X071** is fixture ACCEPTED only via the host-offline public discovery honest unavailability proof (`HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE`) — offline host → `UNAVAILABLE`/`HOST_OFFLINE`; claimed `AVAILABLE` refused; no inventing ranks or active coverage. Distinct from T-X001 host-sleep monitoring coverage gaps. ChatGPT Ads stays ACCESS_BLOCKED. Not sandbox/prod VERIFIED.
 
+**T-X067** is fixture ACCEPTED only via the incompatible workflow upgrade blocked-or-retained proof (`INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED`) — in-flight RUNNING/APPLYING instances refuse breaking / cross-epoch definition upgrades and retain the compatible pin; compatible same-epoch upgrades may apply. Not sandbox/prod VERIFIED.
+
 **T-X072** is fixture ACCEPTED only via the customer data eval redaction blocks proof (`CUSTOMER_DATA_EVAL_REDACTION_BLOCKS`) — raw customer PII cannot enter EVAL_ONLY; redact yields `REDACTED_FOR_EVAL`, raw passthrough is `CUSTOMER_DATA_LEAK_BLOCKED`. Distinct from EVAL_ONLY tool forbid (T-US-018/T-X037). Not sandbox/prod VERIFIED.
 
 **T-X045** is fixture ACCEPTED only via the partial campaign destinations / per-destination states proof (`PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE`) — mixed VERIFIED/FAILED/UNKNOWN_REMOTE yields PARTIAL; ACCEPTED_PENDING stays distinct from VERIFIED; recoverable destinations exclude verified peers. Not sandbox/prod VERIFIED.
@@ -1086,7 +1088,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X064 | SSRF redirect and DNS rebind | Blocked every hop *(fixture ACCEPTED — SSRF redirect/DNS rebind every-hop proof; not sandbox/prod VERIFIED)* |
 | T-X065 | Worker reads browser auth state | OS deny *(fixture ACCEPTED — worker browser-auth OS deny; not sandbox/prod VERIFIED)* |
 | T-X066 | Backup omits remote receipt | Reconcile; no duplicate *(fixture ACCEPTED — backup/omit-receipt proof; not sandbox/prod VERIFIED)* |
-| T-X067 | Incompatible workflow upgrade | Blocked or compatible retained |
+| T-X067 | Incompatible workflow upgrade | Blocked or compatible retained *(fixture ACCEPTED — incompatible workflow upgrade blocked or retained proof; not sandbox/prod VERIFIED)* |
 | T-X068 | Thirty alerts one outage | Grouped incident *(fixture ACCEPTED — thirty alerts one outage grouped proof; not sandbox/prod VERIFIED)* |
 | T-X069 | Imported document becomes instructions | Quarantined as data *(fixture ACCEPTED)* |
 | T-X070 | Validated payload not collected | Separate failure states *(fixture ACCEPTED — validated payload not collected separate failure states proof; not sandbox/prod VERIFIED)* |
@@ -1100,7 +1102,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 1 NOT_RUN + 25 fixture ACCEPTED (T-F01, T-F02, T-F03, T-F04, T-F05, T-F06, T-F08, T-F09, T-F10, T-F11, T-F12, T-F13, T-F14, T-F15, T-F16, T-F17, T-F18, T-F19, T-F20, T-F21, T-F22, T-F23, T-F24, T-F25, T-F26) |
 | T-US (behavior_acceptance) | 60 | 2 NOT_RUN + 58 fixture ACCEPTED (T-US-001, T-US-002, T-US-003, T-US-004, T-US-005, T-US-006, T-US-007, T-US-008, T-US-009, T-US-010, T-US-011, T-US-012, T-US-015, T-US-016, T-US-017, T-US-018, T-US-019, T-US-020, T-US-021, T-US-022, T-US-023, T-US-024, T-US-025, T-US-026, T-US-027, T-US-028, T-US-029, T-US-030, T-US-031, T-US-032, T-US-033, T-US-034, T-US-035, T-US-036, T-US-037, T-US-038, T-US-039, T-US-040, T-US-041, T-US-042, T-US-043, T-US-044, T-US-045, T-US-046, T-US-047, T-US-048, T-US-049, T-US-050, T-US-051, T-US-052, T-US-053, T-US-054, T-US-055, T-US-056, T-US-057, T-US-058, T-US-059, T-US-060) |
-| T-X (platform/security/resilience) | 73 | 4 NOT_RUN + 69 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X023, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X030, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X040, T-X041, T-X042, T-X043, T-X044, T-X045, T-X046, T-X047, T-X048, T-X049, T-X050, T-X051, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X061, T-X062, T-X063, T-X064, T-X065, T-X066, T-X068, T-X069, T-X070, T-X071, T-X072, T-X073) |
-| **Total** | **159** | **7 NOT_RUN + 152 fixture ACCEPTED** |
+| T-X (platform/security/resilience) | 73 | 3 NOT_RUN + 70 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X023, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X030, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X040, T-X041, T-X042, T-X043, T-X044, T-X045, T-X046, T-X047, T-X048, T-X049, T-X050, T-X051, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X061, T-X062, T-X063, T-X064, T-X065, T-X066, T-X067, T-X068, T-X069, T-X070, T-X071, T-X072, T-X073) |
+| **Total** | **159** | **6 NOT_RUN + 153 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

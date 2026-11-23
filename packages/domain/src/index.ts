@@ -924,6 +924,19 @@ export {
   type AutomatedResponseLoopDecision,
 } from "./automated-response-loop.js";
 export {
+  WorkflowInstancePhase,
+  WorkflowUpgradeCode,
+  createWorkflowInstance,
+  evaluateWorkflowDefinitionUpgrade,
+  INCOMPATIBLE_WORKFLOW_UPGRADE_RELATED_CASE_IDS,
+  type WorkflowInstancePhaseValue,
+  type WorkflowDefinitionPin,
+  type WorkflowInstanceRecord,
+  type WorkflowUpgradeCodeValue,
+  type ProposedWorkflowDefinition,
+  type WorkflowUpgradeDecision,
+} from "./incompatible-workflow-upgrade.js";
+export {
   evaluateSsrfHop,
   evaluateSsrfRedirectDnsRebindChain,
   isPrivateOrLocalAddress,
