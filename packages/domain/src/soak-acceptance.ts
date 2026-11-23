@@ -477,6 +477,13 @@ export const SoakProofKind = {
    */
   DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE:
     "daily_owner_review_operating_knowledge",
+  /**
+   * Owner brief groups root cause; actionable (T-US-050).
+   * Repeated incident signals fold into root-cause groups with actionable
+   * next steps; ungrouped floods and non-actionable groups refused; live
+   * NOT_WIRED. Distinct from T-US-049 / T-X068.
+   */
+  OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE: "owner_brief_root_cause_actionable",
 } as const;
 
 export type SoakProofKindValue =
@@ -598,6 +605,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-034 requires PROVIDER_ERROR_NOT_PASS (provider error ≠ bad answer or pass; live NOT_WIRED).
  * T-US-035 requires REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED (review/revise/release receipt or blocked exception; live NOT_WIRED).
  * T-US-049 requires DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE (daily owner review reviewed operating knowledge; live NOT_WIRED).
+ * T-US-050 requires OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE (owner brief groups root cause; actionable; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -698,6 +706,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-034",
   "T-US-035",
   "T-US-049",
+  "T-US-050",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1228,6 +1237,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED];
     case "T-US-049":
       return [SoakProofKind.DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE];
+    case "T-US-050":
+      return [SoakProofKind.OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE];
     default:
       return [];
   }
@@ -1414,6 +1425,8 @@ export function mapProofToFixtureCases(
       return ["T-US-035"];
     case SoakProofKind.DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE:
       return ["T-US-049"];
+    case SoakProofKind.OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE:
+      return ["T-US-050"];
     default:
       return [];
   }

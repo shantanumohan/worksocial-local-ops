@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-050",
+  "caseId": "T-US-050",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-050 (Owner brief groups root cause; actionable)\nproof=owner_brief_root_cause_actionable applyCount=1 :: 4 signals → 2 root-cause groups with actions → OWNER_BRIEF_ROOT_CAUSE_GROUPED_ACTIONABLE; briefVerifiedLive=false; live NOT_WIRED | emitUngroupedFlood with shared root cause → UNGROUPED_FLOOD_REFUSED | omitActionOnGroup → NON_ACTIONABLE_GROUP_REFUSED | groupCount≠distinct root causes → GROUPING_MISMATCH | attemptProductionWrite → PRODUCTION_WRITE_REFUSED | claimLiveVerifiedBrief → FALSE_LIVE_VERIFIED_BRIEF_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-049 (operating knowledge) and T-X068 (thirty alerts one outage) | proofRecordedAt=2026-11-21T19:14:20.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "owner_brief_root_cause_actionable"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-050.json",
+  "createdAtIso": "2026-11-23T00:37:07.751Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-050-36a8c6eab1f7"
+}

@@ -67,4 +67,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-US-034 Provider error ≠ bad answer or pass | Fixture **ACCEPTED** via `PROVIDER_ERROR_NOT_PASS` (not live VERIFIED) |
 | T-US-035 Review/revise/release — release receipt or blocked exception | Fixture **ACCEPTED** via `REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED` (not live VERIFIED) |
 | T-US-049 Daily owner review — reviewed operating knowledge | Fixture **ACCEPTED** via `DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE` (not live VERIFIED) |
+| T-US-050 Owner brief groups root cause; actionable | Fixture **ACCEPTED** via `OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE` (not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |
