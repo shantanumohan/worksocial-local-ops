@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f01",
+  "caseId": "T-F01",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F01 (Create a trusted local workspace)\nproof=create_trusted_local_workspace applyCount=1 :: complete F01 evidence package → CREATE_TRUSTED_LOCAL_WORKSPACE_EVIDENCE_RECORDED; Observe denies publish; workspaceVerifiedLive=false; live NOT_WIRED | empty ownerId → OWNER_SESSION_REQUIRED | empty workspaceConfigRevision → WORKSPACE_CONFIG_REVISION_REQUIRED | online_badge only → DECORATIVE_ONLINE_BADGE_REFUSED | attemptPublicWrite → PUBLIC_WRITE_REFUSED | claimLiveVerifiedWorkspace → FALSE_LIVE_VERIFIED_WORKSPACE_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | blocker without nextAction → BLOCKER_NEXT_ACTION_REQUIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-001 (readiness blockers/next-actions summary) — complete F01 flow evidence package | proofRecordedAt=2026-11-21T19:15:10.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "create_trusted_local_workspace"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f01.json",
+  "createdAtIso": "2026-11-23T01:16:52.939Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f01-f2272e08a12c"
+}

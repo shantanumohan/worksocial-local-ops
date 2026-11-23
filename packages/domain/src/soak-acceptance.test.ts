@@ -951,4 +951,13 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-US-059"]);
   });
+
+  it("maps T-F01 to CREATE_TRUSTED_LOCAL_WORKSPACE only", () => {
+    expect(expectedProofsForFixtureCase("T-F01")).toEqual([
+      SoakProofKind.CREATE_TRUSTED_LOCAL_WORKSPACE,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CREATE_TRUSTED_LOCAL_WORKSPACE),
+    ).toEqual(["T-F01"]);
+  });
 });
