@@ -165,6 +165,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-F26": "Calibrate the design and release readiness",
   "T-F23": "Test semantic search and improve no-result cases",
   "T-F17": "Run Claude and Gemini evaluation suites",
+  "T-F25": "Operate the daily owner review",
 };
 
 function relatedProofsForCase(
@@ -408,6 +409,7 @@ export function compileAcceptanceEvidence(
     "T-F26 fixture ACCEPTED only via CALIBRATE_DESIGN_RELEASE_READINESS",
     "T-F23 fixture ACCEPTED only via TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT",
     "T-F17 fixture ACCEPTED only via RUN_CLAUDE_GEMINI_EVALUATION_SUITES",
+    "T-F25 fixture ACCEPTED only via OPERATE_DAILY_OWNER_REVIEW",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

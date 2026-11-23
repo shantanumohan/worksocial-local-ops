@@ -189,6 +189,7 @@ import { proofReplayHistoricalNoRepeatIo } from "./replay-historical-workflow-pr
 import { proofDiskFullEvidenceNoPartialCompleted } from "./disk-full-evidence-proof.js";
 import { proofTestSemanticSearchImproveNoResult } from "./test-semantic-search-improve-no-result-proof.js";
 import { proofRunClaudeGeminiEvaluationSuites } from "./run-claude-gemini-evaluation-suites-proof.js";
+import { proofOperateDailyOwnerReview } from "./operate-daily-owner-review-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -966,6 +967,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofRunClaudeGeminiEvaluationSuites(nowPlus(nowIso, 1120000)),
   );
+  proofs.push(
+    proofOperateDailyOwnerReview(nowPlus(nowIso, 1130000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1080,6 +1084,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-F18 fixture ACCEPTED via review_revise_and_release_a_change only — not live VERIFIED",
       "T-F23 fixture ACCEPTED via test_semantic_search_improve_no_result only — not live VERIFIED",
       "T-F17 fixture ACCEPTED via run_claude_gemini_evaluation_suites only — not live VERIFIED",
+      "T-F25 fixture ACCEPTED via operate_daily_owner_review only — not live VERIFIED",
     ],
   };
 }

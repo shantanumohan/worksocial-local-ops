@@ -1179,4 +1179,13 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-F17"]);
   });
 
+  it("maps T-F25 to OPERATE_DAILY_OWNER_REVIEW only", () => {
+    expect(expectedProofsForFixtureCase("T-F25")).toEqual([
+      SoakProofKind.OPERATE_DAILY_OWNER_REVIEW,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OPERATE_DAILY_OWNER_REVIEW),
+    ).toEqual(["T-F25"]);
+  });
+
 });

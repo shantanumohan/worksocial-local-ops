@@ -259,6 +259,8 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-F17** maps only to `RUN_CLAUDE_GEMINI_EVALUATION_SUITES` (complete F17 evidence package; live NOT_WIRED; distinct from T-US-033; not live VERIFIED).
 
+**T-F25** maps only to `OPERATE_DAILY_OWNER_REVIEW` (complete F25 evidence package; unsafe claims refused; live NOT_WIRED; distinct from T-US-049; not live VERIFIED).
+
 **T-F22** maps only to `HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER` (complete F22 evidence package: response policy, inbound versions, sources/allowed-action, send+CRM lead, ownership audit takeover, acknowledged morning handoff; competing replies refused; live NOT_WIRED; distinct from T-US-043 handoff summary, T-US-044/T-X053 takeover-cancel, T-X055 unknown-policy escalate, and T-X056 bounded auto-reply loop; not live VERIFIED).
 
 
