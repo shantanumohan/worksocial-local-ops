@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f21",
+  "caseId": "T-F21",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F21 (Diagnose and repair a permitted defect)\nproof=diagnose_and_repair_permitted_defect applyCount=1 :: complete F21 evidence package → DIAGNOSE_AND_REPAIR_PERMITTED_DEFECT_EVIDENCE_RECORDED; incident bundle; source binding; bounded policy; repair plan+lease; patch/diff+regression+ledger; independent review; canary read-back+repeated journey; verified resolution; repairVerifiedLive=false; live NOT_WIRED | ACKNOWLEDGED_HUMAN_HANDOFF close → defectRecoveredOrEscalatedRecorded | incident=null → INCIDENT_BUNDLE_REQUIRED | sourceBinding=null → SOURCE_BINDING_REQUIRED | repairPolicy=null → BOUNDED_REPAIR_POLICY_REQUIRED | repairPlan=null → REPAIR_PLAN_REQUIRED | patchAndTests=null → PATCH_AND_TESTS_REQUIRED | author===reviewer → AUTHOR_SELF_APPROVE_REFUSED | independentReview=null → INDEPENDENT_REVIEW_REQUIRED | canaryRelease=null → CANARY_RELEASE_REQUIRED | closeOutcome=null → CLOSE_OUTCOME_REQUIRED | requestWeakenTest → WEAKEN_TEST_REFUSED | claimLiveVerifiedRepair → FALSE_LIVE_VERIFIED_REPAIR_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-041 (canary resolve/handoff path), T-X010/T-US-042 (weaken-test reject), and T-X011 (attempt-limit escalate) — complete F21 flow evidence package | proofRecordedAt=2026-11-21T19:18:20.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "diagnose_and_repair_permitted_defect"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f21.json",
+  "createdAtIso": "2026-11-23T04:46:09.450Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f21-0a6b2c42778c"
+}

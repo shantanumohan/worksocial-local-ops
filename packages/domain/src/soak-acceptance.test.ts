@@ -1140,6 +1140,17 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-F18"]);
   });
 
+  it("maps T-F21 to DIAGNOSE_AND_REPAIR_PERMITTED_DEFECT only", () => {
+    expect(expectedProofsForFixtureCase("T-F21")).toEqual([
+      SoakProofKind.DIAGNOSE_AND_REPAIR_PERMITTED_DEFECT,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.DIAGNOSE_AND_REPAIR_PERMITTED_DEFECT,
+      ),
+    ).toEqual(["T-F21"]);
+  });
+
   it("maps T-F26 to CALIBRATE_DESIGN_RELEASE_READINESS only", () => {
     expect(expectedProofsForFixtureCase("T-F26")).toEqual([
       SoakProofKind.CALIBRATE_DESIGN_RELEASE_READINESS,
@@ -1160,3 +1171,4 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-F23"]);
   });
 });
+

@@ -709,6 +709,16 @@ export const SoakProofKind = {
    * packet summary, T-US-035 review/revise/release, T-US-049 daily owner
    * review, and T-US-055 keyboard journey.
    */
+  /**
+   * Diagnose and repair a permitted defect — complete F21 evidence set
+   * (T-F21). Incident bundle, source binding, bounded repair policy, repair
+   * plan, patch+tests+attempt ledger, independent review, canary release,
+   * verified resolution or human handoff; unsafe claims refused; live
+   * NOT_WIRED. Distinct from T-US-041 resolve/handoff, T-US-042/T-X057
+   * weaken-test reject, and T-X058 attempt-limit escalate.
+   */
+  DIAGNOSE_AND_REPAIR_PERMITTED_DEFECT:
+    "diagnose_and_repair_permitted_defect",
   CALIBRATE_DESIGN_RELEASE_READINESS:
     "calibrate_design_release_readiness",
   /**
@@ -866,6 +876,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F22 requires HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER (complete F22 evidence set; live NOT_WIRED).
  * T-F19 requires ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS (complete F19 evidence set; live NOT_WIRED).
  * T-F18 requires REVIEW_REVISE_AND_RELEASE_A_CHANGE (complete F18 evidence set; live NOT_WIRED).
+ * T-F21 requires DIAGNOSE_AND_REPAIR_PERMITTED_DEFECT (complete F21 evidence set; live NOT_WIRED).
  * T-F26 requires CALIBRATE_DESIGN_RELEASE_READINESS (complete F26 evidence set; live NOT_WIRED).
  * T-F23 requires TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT (complete evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
@@ -892,6 +903,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F16",
   "T-F18",
   "T-F20",
+  "T-F21",
   "T-F19",
   "T-F22",
   "T-F23",
@@ -1566,6 +1578,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.REVIEW_PAID_MEDIA_RECOMMENDATIONS];
     case "T-F20":
       return [SoakProofKind.VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY];
+    case "T-F21":
+      return [SoakProofKind.DIAGNOSE_AND_REPAIR_PERMITTED_DEFECT];
     case "T-F18":
       return [SoakProofKind.REVIEW_REVISE_AND_RELEASE_A_CHANGE];
     case "T-F19":
@@ -1804,6 +1818,8 @@ export function mapProofToFixtureCases(
       return ["T-F16"];
     case SoakProofKind.VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY:
       return ["T-F20"];
+    case SoakProofKind.DIAGNOSE_AND_REPAIR_PERMITTED_DEFECT:
+      return ["T-F21"];
     case SoakProofKind.REVIEW_REVISE_AND_RELEASE_A_CHANGE:
       return ["T-F18"];
     case SoakProofKind.ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS:
