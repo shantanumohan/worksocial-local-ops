@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-034",
+  "caseId": "T-US-034",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-034 (Provider error ≠ bad answer or pass)\nproof=provider_error_not_pass applyCount=1 :: provider_error distinct → PROVIDER_ERROR_DISTINCT_FROM_GRADED_ANSWER; gradedDenominator=2 (pass+fail); passRate=0.5; provider_error excluded | provider_error claimedGradedAs=fail → PROVIDER_ERROR_MISGRADED_AS_ANSWER | provider_error claimedGradedAs=pass → PROVIDER_ERROR_MISGRADED_AS_ANSWER | reportDenominatorHonest=false → PASS_RATE_DENOMINATOR_DISHONEST | claimLiveVerifiedGrading → FALSE_LIVE_VERIFIED_GRADING_REFUSED | requestLiveEvalWiring → LIVE_EVAL_WIRING_NOT_WIRED | attemptProductionWrite → PRODUCTION_WRITE_REFUSED | liveProviderSuccessClaimed=false liveEvalWiring=NOT_WIRED externalEffects=NONE | Distinct from T-X039/T-US-058 (metric denominators), T-US-033 (adjudication+backlog), T-X038 (no-grounding) | proofRecordedAt=2026-11-21T19:13:50.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "provider_error_not_pass"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-034.json",
+  "createdAtIso": "2026-11-23T00:14:51.390Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-034-66210a258576"
+}

@@ -453,6 +453,13 @@ export const SoakProofKind = {
    * NOT_WIRED. Distinct from T-US-015 / T-US-017 / T-US-018 / T-X037 / T-X038.
    */
   EVAL_SUITE_ADJUDICATION_BACKLOG: "eval_suite_adjudication_backlog",
+  /**
+   * Provider error ≠ bad answer or pass (T-US-034).
+   * Distinct outcome statuses; provider_error never graded as pass/fail;
+   * pass-rate denominator excludes infrastructure errors; live NOT_WIRED.
+   * Distinct from T-X039/T-US-058 / T-US-033 / T-X038.
+   */
+  PROVIDER_ERROR_NOT_PASS: "provider_error_not_pass",
 } as const;
 
 export type SoakProofKindValue =
@@ -571,6 +578,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-030 requires UNCERTAIN_POST_RECONCILE_BEFORE_RETRY (uncertain post reconcile before retry; live NOT_WIRED).
  * T-US-031 requires PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE (paid-media recommendation decision + honest execute failure; live NOT_WIRED).
  * T-US-033 requires EVAL_SUITE_ADJUDICATION_BACKLOG (Claude/Gemini eval suite adjudication + linked backlog; live NOT_WIRED).
+ * T-US-034 requires PROVIDER_ERROR_NOT_PASS (provider error ≠ bad answer or pass; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -668,6 +676,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-030",
   "T-US-031",
   "T-US-033",
+  "T-US-034",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1192,6 +1201,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE];
     case "T-US-033":
       return [SoakProofKind.EVAL_SUITE_ADJUDICATION_BACKLOG];
+    case "T-US-034":
+      return [SoakProofKind.PROVIDER_ERROR_NOT_PASS];
     default:
       return [];
   }
@@ -1372,6 +1383,8 @@ export function mapProofToFixtureCases(
       return ["T-US-031"];
     case SoakProofKind.EVAL_SUITE_ADJUDICATION_BACKLOG:
       return ["T-US-033"];
+    case SoakProofKind.PROVIDER_ERROR_NOT_PASS:
+      return ["T-US-034"];
     default:
       return [];
   }
