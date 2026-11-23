@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f25",
+  "caseId": "T-F25",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F25 (Operate the daily owner review)\nproof=operate_daily_owner_review applyCount=1 :: complete F25 evidence package → OPERATE_DAILY_OWNER_REVIEW_EVIDENCE_RECORDED; morning brief; overnight inspection; completed-work ledger; exception decisions; qualified demand; outcome/cost synthetic excluded; bounded mission; reviewed operating knowledge; reviewVerifiedLive=false; live NOT_WIRED | morningBrief=null → MORNING_BRIEF_REQUIRED | overnightInspection=null → OVERNIGHT_INSPECTION_REQUIRED | completedWorkLedger=null → COMPLETED_WORK_LEDGER_REQUIRED | decisionRecords=null → DECISION_RECORDS_REQUIRED | manufactureUrgencyWithNoFindings → MANUFACTURED_URGENCY_REFUSED | qualifiedDemand=null → QUALIFIED_DEMAND_REQUIRED | outcomeCostView=null → OUTCOME_COST_VIEW_REQUIRED | celebrateLiftOnPendingData → PENDING_DATA_LIFT_CELEBRATION_REFUSED | newBoundedMission=null → BOUNDED_MISSION_REQUIRED | withinApprovedScope=false → MISSION_OUTSIDE_APPROVED_SCOPE | reviewedOperatingKnowledge=null → OPERATING_KNOWLEDGE_REQUIRED | expandsAuthoritySilently → SILENT_AUTHORITY_EXPANSION_REFUSED | attemptProductionWrite → PRODUCTION_WRITE_REFUSED | claimLiveVerifiedReview → FALSE_LIVE_VERIFIED_REVIEW_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-049 (operating-knowledge happy-path summary), T-US-050 (root-cause brief), T-US-025 (launch workstream), and T-US-035 (review/revise/release) — complete F25 flow evidence package | proofRecordedAt=2026-11-21T19:18:50.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "operate_daily_owner_review"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f25.json",
+  "createdAtIso": "2026-11-23T04:50:54.952Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f25-8e7d59bb4b29"
+}

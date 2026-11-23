@@ -146,7 +146,7 @@ export function createFileSoakStore(stateDir: string): SoakStore {
         artifacts: [
           ...current.artifacts.filter((a) => a.artifactId !== artifact.artifactId),
           artifact,
-        ].slice(-250),
+        ].slice(-500),
       }));
     },
 

@@ -1490,6 +1490,15 @@ export {
   type ProviderSuiteRunEvidence,
 } from "./run-claude-gemini-evaluation-suites.js";
 export {
+  OPERATE_DAILY_OWNER_REVIEW_RELATED_CASE_IDS,
+  evaluateOperateDailyOwnerReview,
+  type OperateDailyOwnerReviewInput,
+  type OperateDailyOwnerReviewDecision,
+  type MorningBriefEvidence,
+  type OvernightChangeInspection,
+  type QualifiedDemandView,
+} from "./operate-daily-owner-review.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

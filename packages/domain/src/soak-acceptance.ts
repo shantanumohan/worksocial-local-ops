@@ -742,6 +742,17 @@ export const SoakProofKind = {
    */
   RUN_CLAUDE_GEMINI_EVALUATION_SUITES:
     "run_claude_gemini_evaluation_suites",
+  /**
+   * Operate the daily owner review — complete F25 evidence set (T-F25).
+   * Morning brief + overnight inspection + completed-work ledger, exception
+   * decisions, qualified demand + outcome/cost (synthetic excluded), bounded
+   * mission, reviewed operating knowledge; unsafe claims refused; live
+   * NOT_WIRED. Distinct from T-US-049 operating-knowledge summary, T-US-050
+   * root-cause brief, T-US-025 launch workstream, and T-US-035
+   * review/revise/release.
+   */
+  OPERATE_DAILY_OWNER_REVIEW:
+    "operate_daily_owner_review",
 } as const;
 
 export type SoakProofKindValue =
@@ -891,6 +902,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F26 requires CALIBRATE_DESIGN_RELEASE_READINESS (complete F26 evidence set; live NOT_WIRED).
  * T-F23 requires TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT (complete evidence set; live NOT_WIRED).
  * T-F17 requires RUN_CLAUDE_GEMINI_EVALUATION_SUITES (complete evidence set; live NOT_WIRED).
+ * T-F25 requires OPERATE_DAILY_OWNER_REVIEW (complete evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -920,6 +932,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F22",
   "T-F23",
   "T-F17",
+  "T-F25",
   "T-F24",
   "T-F26",
   "T-US-047",
@@ -1605,6 +1618,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT];
     case "T-F17":
       return [SoakProofKind.RUN_CLAUDE_GEMINI_EVALUATION_SUITES];
+    case "T-F25":
+      return [SoakProofKind.OPERATE_DAILY_OWNER_REVIEW];
     default:
       return [];
   }
@@ -1847,6 +1862,8 @@ export function mapProofToFixtureCases(
       return ["T-F23"];
     case SoakProofKind.RUN_CLAUDE_GEMINI_EVALUATION_SUITES:
       return ["T-F17"];
+    case SoakProofKind.OPERATE_DAILY_OWNER_REVIEW:
+      return ["T-F25"];
     default:
       return [];
   }
