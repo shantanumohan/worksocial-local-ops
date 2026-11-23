@@ -8,8 +8,8 @@
     "mocked_connector_not_production_ready"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-052.json",
-  "createdAtIso": "2026-11-23T06:40:21.128Z",
+  "createdAtIso": "2026-11-23T06:49:42.842Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-052-8880c25cd809"
+  "uniqueSourceArtifactId": "art-fixture-t-us-052-6a3225be31b7"
 }

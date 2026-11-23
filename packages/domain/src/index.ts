@@ -1704,3 +1704,16 @@ export {
   type BrowserAuthStateAccessRequest,
   type BrowserAuthStateAccessDecision,
 } from "./browser-auth-isolation.js";
+export {
+  RoomLayout,
+  parseRequestedLayout,
+  parseLayoutRequest,
+  effectiveCapacityForLayout,
+  filterByLayoutCapacity,
+  filterInventoryByLayoutCapacity,
+  type RoomLayoutValue,
+  type LayoutCapacities,
+  type ParsedLayoutRequest,
+  type EffectiveLayoutCapacity,
+  type LayoutCapacityFilterResult,
+} from "./layout-capacity.js";

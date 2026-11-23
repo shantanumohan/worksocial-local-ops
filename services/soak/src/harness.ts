@@ -43,6 +43,7 @@
  * incomparable trend indices rejected/labeled (T-X041).
  * schema differs from page gate fails (T-X042).
  * unsupported blog destination no fake publication (T-X046).
+ * layout-specific capacity mismatch filters (T-X047).
  * Google Ads test vs production access separated (T-US-012).
  * Connect Claude Code + test API EVAL_ONLY (T-US-015).
  * Connect Gemini Evaluation EVAL_ONLY (T-US-017).
@@ -114,6 +115,7 @@ import { proofLowSampleTrendSpikeInsufficientEvidence } from "./low-sample-trend
 import { proofIncomparableTrendIndicesRejected } from "./incomparable-trend-indices-proof.js";
 import { proofSchemaDiffersFromPageGateFails } from "./schema-differs-from-page-proof.js";
 import { proofUnsupportedBlogDestinationNoFakePublication } from "./unsupported-blog-destination-proof.js";
+import { proofLayoutSpecificCapacityMismatchFilters } from "./layout-capacity-mismatch-proof.js";
 import { proofGoogleAdsTestProductionAccessSeparated } from "./google-ads-test-production-access-proof.js";
 import { proofConnectClaudeCodeTestApiEvalOnly } from "./claude-code-test-api-connect-proof.js";
 import { proofClaudeRuntimeEvalAuthSeparated } from "./claude-runtime-eval-auth-proof.js";
@@ -1036,6 +1038,9 @@ export async function runSoakRecoveryHarness(input: {
       nowPlus(nowIso, 1_320_000),
     ),
   );
+  proofs.push(
+    proofLayoutSpecificCapacityMismatchFilters(nowPlus(nowIso, 1_330_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1169,6 +1174,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X041 fixture ACCEPTED via incomparable_trend_indices_rejected only — not live VERIFIED",
       "T-X042 fixture ACCEPTED via schema_differs_from_page_gate_fails only — not live VERIFIED",
       "T-X046 fixture ACCEPTED via unsupported_blog_destination_no_fake_publication only — not live VERIFIED",
+      "T-X047 fixture ACCEPTED via layout_specific_capacity_mismatch_filters only — not live VERIFIED",
     ],
   };
 }

@@ -863,6 +863,12 @@ export const SoakProofKind = {
    */
   UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION:
     "unsupported_blog_destination_no_fake_publication",
+  /**
+   * Layout-specific capacity mismatch → filter correctly (T-X047).
+   * Requested layout capacity wins; marketing max / mismatched layout must not admit.
+   */
+  LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS:
+    "layout_specific_capacity_mismatch_filters",
 } as const;
 
 export type SoakProofKindValue =
@@ -969,6 +975,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X041 requires INCOMPARABLE_TREND_INDICES_REJECTED (reject/label).
  * T-X042 requires SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS (schema ≠ page → gate fails).
  * T-X046 requires UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION.
+ * T-X047 requires LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS.
  * T-US-012 requires GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED (test ≠ production).
  * T-US-015 requires CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY (runtime ≠ API readiness; EVAL_ONLY).
 * T-US-016 requires CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED.
@@ -1140,6 +1147,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X041",
   "T-X042",
   "T-X046",
+  "T-X047",
   "T-US-011",
   "T-US-012",
   "T-US-015",
@@ -1679,6 +1687,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS];
     case "T-X046":
       return [SoakProofKind.UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION];
+    case "T-X047":
+      return [SoakProofKind.LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS];
     case "T-US-011":
       return [SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY];
     case "T-US-012":
@@ -1957,6 +1967,8 @@ export function mapProofToFixtureCases(
       return ["T-X042"];
     case SoakProofKind.UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION:
       return ["T-X046"];
+    case SoakProofKind.LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS:
+      return ["T-X047"];
     case SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED:
       return ["T-US-012"];
     case SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY:

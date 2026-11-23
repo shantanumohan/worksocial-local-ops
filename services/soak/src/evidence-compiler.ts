@@ -122,6 +122,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X041": "Incomparable trend indices — reject/label",
   "T-X042": "Schema differs from page — gate fails",
   "T-X046": "Unsupported blog destination — no fake publication",
+  "T-X047": "Layout-specific capacity mismatch — filter correctly",
   "T-X030": "Rate-limit with deadline — bounded backoff",
   "T-US-056": "Honest outage; durable hosted contact path",
   "T-US-011": "Connect Google Ads analyze-only — write disabled",
@@ -445,6 +446,7 @@ export function compileAcceptanceEvidence(
     "T-X041 fixture ACCEPTED only via INCOMPARABLE_TREND_INDICES_REJECTED",
     "T-X042 fixture ACCEPTED only via SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS",
     "T-X046 fixture ACCEPTED only via UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION",
+    "T-X047 fixture ACCEPTED only via LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
