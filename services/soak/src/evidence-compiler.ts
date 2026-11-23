@@ -148,6 +148,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-003": "Choose folders / business truth — restore evidence; secrets excluded",
   "T-US-004": "Unsafe folders / unresolved facts blocked; safe facts usable",
   "T-US-005": "Map sites, pages and editable sources — baseline ID and checks",
+  "T-US-007": "Connect GA4 — ready-read and next sync",
   "T-F01": "Create a trusted local workspace",
   "T-F02": "Choose folders and establish business truth",
   "T-F03": "Map sites, pages and editable sources",
@@ -432,6 +433,7 @@ export function compileAcceptanceEvidence(
     "T-US-001 fixture ACCEPTED only via TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS",
     "T-US-039 fixture ACCEPTED only via FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT",
     "T-US-043 fixture ACCEPTED only via AFTER_HOURS_HANDOFF_ACKNOWLEDGED",
+    "T-US-007 fixture ACCEPTED only via CONNECT_GA4_READ_READY_NEXT_SYNC",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

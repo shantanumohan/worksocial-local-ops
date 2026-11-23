@@ -29,7 +29,7 @@ describe("soak service (M9)", () => {
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(125);
+    expect(result.proofs).toHaveLength(126);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(
       result.proofs.every((p) =>
@@ -43,7 +43,8 @@ describe("soak service (M9)", () => {
         p.kind === SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_TEST_ARTIFACT ||
         p.kind === SoakProofKind.UNSUPPORTED_DESTINATION_CAPABILITIES_RESPECTED ||
         p.kind === SoakProofKind.STANDING_AUTONOMY_GRANT_CONTROL_RECEIPTS ||
-        p.kind === SoakProofKind.LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME
+        p.kind === SoakProofKind.LAUNCH_WORKSTREAM_SCHEDULE_MISSION_OUTCOME ||
+        p.kind === SoakProofKind.CONNECT_GA4_READ_READY_NEXT_SYNC
           ? p.applyAttemptCount === 0
           : p.applyAttemptCount === 1, // T-US-026 coalesce counts one catch-up apply
       ),
@@ -492,6 +493,11 @@ describe("soak service (M9)", () => {
     ).toBe(true);
     expect(
       result.proofs.some(
+        (p) => p.kind === SoakProofKind.CONNECT_GA4_READ_READY_NEXT_SYNC,
+      ),
+    ).toBe(true);
+    expect(
+      result.proofs.some(
         (p) =>
           p.kind === SoakProofKind.CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY,
       ),
@@ -701,6 +707,7 @@ describe("soak service (M9)", () => {
       "T-US-004",
       "T-US-005",
       "T-US-006",
+      "T-US-007",
       "T-US-008",
       "T-US-010",
       "T-US-012",
@@ -983,7 +990,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(137);
+    expect(soak.ownerReport().acceptedCases.length).toBe(138);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {

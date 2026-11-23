@@ -1316,6 +1316,19 @@ export {
   type ConnectGoogleAnalytics4Decision,
 } from "./connect-google-analytics-4.js";
 export {
+  DEFAULT_GA4_READ_SYNC_INTERVAL_MS,
+  GA4_READ_ONLY_SCOPES,
+  Ga4ConnectSaveMode,
+  CONNECT_GA4_READ_READY_RELATED_CASE_IDS,
+  saveGa4ReadOnlyConnection,
+  fixtureGa4PropertyBinding,
+  type Ga4ConnectSaveModeValue,
+  type Ga4ConnectSummaryEventEntry,
+  type Ga4ConnectSummarySampleRow,
+  type Ga4ConnectReadReadyInput,
+  type Ga4ConnectReadReadyResult,
+} from "./ga4-connect-read-ready.js";
+export {
   REQUIRED_GSC_GRANT_SCOPES,
   GscPropertyKind,
   CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY_RELATED_CASE_IDS,
