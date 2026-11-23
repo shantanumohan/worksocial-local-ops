@@ -3,13 +3,13 @@
   "caseId": "T-US-054",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-US-054 (Independent approval enforced (no ordinary self-approval))\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-a9229de9 reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-US-054 (Independent approval enforced (no ordinary self-approval))\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | Independent A25 path ok binding=bind-ok-32c6c212 reviewer=A25 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "self_approval_rejected"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-054.json",
-  "createdAtIso": "2026-11-23T03:01:14.908Z",
+  "createdAtIso": "2026-11-23T03:08:31.376Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-054-bb22427914b1"
+  "uniqueSourceArtifactId": "art-fixture-t-us-054-5a5127365bef"
 }

@@ -1011,4 +1011,13 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-F06"]);
   });
+
+  it("maps T-F08 to CONNECT_CLAUDE_CODE_AND_TEST_API only", () => {
+    expect(expectedProofsForFixtureCase("T-F08")).toEqual([
+      SoakProofKind.CONNECT_CLAUDE_CODE_AND_TEST_API,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CONNECT_CLAUDE_CODE_AND_TEST_API),
+    ).toEqual(["T-F08"]);
+  });
 });
