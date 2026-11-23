@@ -1170,5 +1170,13 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT),
     ).toEqual(["T-F23"]);
   });
-});
+  it("maps T-F17 to RUN_CLAUDE_GEMINI_EVALUATION_SUITES only", () => {
+    expect(expectedProofsForFixtureCase("T-F17")).toEqual([
+      SoakProofKind.RUN_CLAUDE_GEMINI_EVALUATION_SUITES,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.RUN_CLAUDE_GEMINI_EVALUATION_SUITES),
+    ).toEqual(["T-F17"]);
+  });
 
+});

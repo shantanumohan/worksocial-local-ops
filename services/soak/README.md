@@ -92,6 +92,7 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-F26 Calibrate the design and release readiness | Fixture **ACCEPTED** via `CALIBRATE_DESIGN_RELEASE_READINESS` (complete F26 evidence; not live VERIFIED) |
 | T-F20 Verify a form-to-CRM journey continuously | Fixture **ACCEPTED** via `VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY` (complete F20 evidence; not live VERIFIED) |
 | T-F22 Handle after-hours messages and take over | Fixture **ACCEPTED** via `HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER` (complete F22 evidence; not live VERIFIED) |
+| T-F17 Run Claude and Gemini evaluation suites | Fixture **ACCEPTED** via `RUN_CLAUDE_GEMINI_EVALUATION_SUITES` (complete evidence; not live VERIFIED) |
 | T-F23 Test semantic search and improve no-result cases | Fixture **ACCEPTED** via `TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT` (complete evidence; not live VERIFIED) |
 | T-F19 Analyze performance and test a hypothesis | Fixture **ACCEPTED** via `ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS` (complete F19 evidence; not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |

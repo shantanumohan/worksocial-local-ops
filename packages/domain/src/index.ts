@@ -1477,6 +1477,19 @@ export {
   type EvaluationComparisonEvidence,
 } from "./test-semantic-search-improve-no-result.js";
 export {
+  RUN_CLAUDE_GEMINI_EVALUATION_SUITES_RELATED_CASE_IDS,
+  evaluateRunClaudeGeminiEvaluationSuites,
+  type RunClaudeGeminiEvaluationSuitesInput,
+  type RunClaudeGeminiEvaluationSuitesDecision,
+  type EvalOnlyProviderConnection,
+  type CuratedEvalCorpus,
+  type EvalBudgetConsent,
+  type SuiteSelection,
+  type CaseLevelOutcomeArtifact,
+  type HumanAdjudicationRecord,
+  type ProviderSuiteRunEvidence,
+} from "./run-claude-gemini-evaluation-suites.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
