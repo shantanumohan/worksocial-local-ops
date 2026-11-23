@@ -764,6 +764,12 @@ export const SoakProofKind = {
    * exactChange + financialDiff required; ChatGPT Ads stays ACCESS_BLOCKED.
    */
   EXACT_FINANCIAL_BOUNDARIES_PRESERVED: "exact_financial_boundaries_preserved",
+  /**
+   * Analyze and hypothesis — portable analysis artifact (T-US-037).
+   * Fixture definition/hypothesis/redacted brief JSON round-trip; LIVE refused.
+   * Distinct from T-F19 complete F19 evidence set.
+   */
+  PORTABLE_ANALYSIS_ARTIFACT: "portable_analysis_artifact",
 } as const;
 
 export type SoakProofKindValue =
@@ -916,6 +922,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F25 requires OPERATE_DAILY_OWNER_REVIEW (complete evidence set; live NOT_WIRED).
  * T-US-041 requires DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF.
  * T-US-032 requires EXACT_FINANCIAL_BOUNDARIES_PRESERVED.
+ * T-US-037 requires PORTABLE_ANALYSIS_ARTIFACT (portable brief; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -1047,6 +1054,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-059",
   "T-US-041",
   "T-US-032",
+  "T-US-037",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1639,6 +1647,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF];
     case "T-US-032":
       return [SoakProofKind.EXACT_FINANCIAL_BOUNDARIES_PRESERVED];
+    case "T-US-037":
+      return [SoakProofKind.PORTABLE_ANALYSIS_ARTIFACT];
     default:
       return [];
   }
@@ -1887,6 +1897,8 @@ export function mapProofToFixtureCases(
       return ["T-US-041"];
     case SoakProofKind.EXACT_FINANCIAL_BOUNDARIES_PRESERVED:
       return ["T-US-032"];
+    case SoakProofKind.PORTABLE_ANALYSIS_ARTIFACT:
+      return ["T-US-037"];
     default:
       return [];
   }
