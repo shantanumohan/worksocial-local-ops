@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x046",
+  "caseId": "T-X046",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X046 (Unsupported blog destination — no fake publication)\nproof=unsupported_blog_destination_no_fake_publication applyCount=1 :: Fixture article approved for canonical distribute | Owned CMS peer VERIFIED via runCanonicalDistribution | runCanonicalDistribution unsupported dest → FAILED/UNSUPPORTED_ACTION with null receipt/gateway/durable ids | Distribution PARTIAL with orchestration detail 'Rejected unsupported destination' | No PUBLISHED_VERIFIED receipt persisted for unsupported blog destination | Domain release gate blocks OTHER_BLOG without fixture adapter | ChatGPT Hub full-blog variant rejected (VARIANT_FORMAT_REJECTED) | Positive control: owned CMS full-article draft allowed | liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "unsupported_blog_destination_no_fake_publication"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x046.json",
+  "createdAtIso": "2026-11-23T06:40:21.128Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x046-8880c25cd809"
+}

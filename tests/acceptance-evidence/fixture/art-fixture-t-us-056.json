@@ -8,8 +8,8 @@
     "honest_outage_hosted_contact_path"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-056.json",
-  "createdAtIso": "2026-11-23T06:31:54.380Z",
+  "createdAtIso": "2026-11-23T06:40:21.128Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-056-32e2ba3928d5"
+  "uniqueSourceArtifactId": "art-fixture-t-us-056-8880c25cd809"
 }

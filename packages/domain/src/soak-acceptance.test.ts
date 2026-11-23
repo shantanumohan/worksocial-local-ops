@@ -731,6 +731,17 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X042"]);
   });
 
+  it("maps T-X046 to UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION only", () => {
+    expect(expectedProofsForFixtureCase("T-X046")).toEqual([
+      SoakProofKind.UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION,
+      ),
+    ).toEqual(["T-X046"]);
+  });
+
   it("maps T-US-012 to GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED only", () => {
     expect(expectedProofsForFixtureCase("T-US-012")).toEqual([
       SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED,

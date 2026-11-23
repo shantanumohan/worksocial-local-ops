@@ -29,7 +29,7 @@ describe("soak service (M9)", () => {
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(131);
+    expect(result.proofs).toHaveLength(132);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(
       result.proofs.every((p) =>
@@ -360,6 +360,13 @@ describe("soak service (M9)", () => {
     expect(
       result.proofs.some(
         (p) => p.kind === SoakProofKind.SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS,
+      ),
+    ).toBe(true);
+    expect(
+      result.proofs.some(
+        (p) =>
+          p.kind ===
+          SoakProofKind.UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION,
       ),
     ).toBe(true);
     expect(
@@ -831,6 +838,7 @@ describe("soak service (M9)", () => {
       "T-X043",
       "T-X044",
       "T-X045",
+      "T-X046",
       "T-X048",
       "T-X049",
       "T-X050",
@@ -1025,7 +1033,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(143);
+    expect(soak.ownerReport().acceptedCases.length).toBe(144);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {
