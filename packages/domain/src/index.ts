@@ -320,6 +320,16 @@ export {
   type ExternalEditStagingState,
 } from "./external-human-edit-staging.js";
 export {
+  ZohoOrganizationEnvironment,
+  ZohoOrganizationDecisionCode,
+  WRONG_ZOHO_ORGANIZATION_RELATED_CASE_IDS,
+  validateZohoOrganizationBinding,
+  type ZohoOrganizationEnvironmentValue,
+  type ZohoOrganizationDecisionCodeValue,
+  type ValidateZohoOrganizationBindingInput,
+  type ValidateZohoOrganizationBindingResult,
+} from "./wrong-zoho-organization.js";
+export {
   SupportLabel,
   CollectionMethod,
   InstructionIngestionStatus,
