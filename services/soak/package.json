@@ -18,16 +18,17 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@worksocial/action-gateway": "workspace:*",
     "@worksocial/claude-runner": "workspace:*",
+    "@worksocial/content": "workspace:*",
     "@worksocial/credential-broker": "workspace:*",
     "@worksocial/credential-rotation": "workspace:*",
     "@worksocial/domain": "workspace:*",
+    "@worksocial/evaluation-worker": "workspace:*",
+    "@worksocial/lead-capture": "workspace:*",
     "@worksocial/persistence": "workspace:*",
     "@worksocial/provider-adapters": "workspace:*",
-    "@worksocial/recovery": "workspace:*",
-    "@worksocial/lead-capture": "workspace:*",
-    "@worksocial/action-gateway": "workspace:*",
-    "@worksocial/content": "workspace:*"
+    "@worksocial/recovery": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "22.10.2",

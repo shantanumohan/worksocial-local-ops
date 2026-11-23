@@ -559,6 +559,9 @@ importers:
       '@worksocial/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@worksocial/evaluation-worker':
+        specifier: workspace:*
+        version: link:../evaluation-worker
       '@worksocial/lead-capture':
         specifier: workspace:*
         version: link:../lead-capture

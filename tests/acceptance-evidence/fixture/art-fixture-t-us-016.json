@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-016",
+  "caseId": "T-US-016",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-016 (Claude runtime vs API eval auth separated)\nproof=claude_runtime_eval_auth_separated applyCount=1 :: credential-broker mint denied for claude-runner (PRINCIPAL_DENIED) | credential-broker mint denied for evaluation-worker (PRINCIPAL_DENIED) | action-gateway mint of operational publish handle ok | claude-runner cannot reveal gateway-minted handle (auth material separated) | evaluation-worker cannot reveal gateway-minted handle (auth material separated) | evaluation-worker principal has no gateway-write / production effect credentials | Claude live API eval connect refused LIVE_NOT_WIRED (fixture EVAL_ONLY only) | Claude EVAL_ONLY fixture suite runs on evaluation-worker (API eval auth) | evaluation-worker attemptTool(PUBLISH) forbidden | evaluation-worker budget exhausts on over-limit reserve (isolated eval pool) | claude-runner operational budget unchanged after eval budget exhaust | Claude runtime modes (LIVE_CLI|FIXTURE) remain distinct from evaluation-worker principal | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "claude_runtime_eval_auth_separated"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-016.json",
+  "createdAtIso": "2026-11-23T05:38:01.058Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-016-978fe5be27a0"
+}

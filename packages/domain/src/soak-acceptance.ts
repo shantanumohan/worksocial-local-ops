@@ -352,6 +352,11 @@ export const SoakProofKind = {
   CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY:
     "connect_claude_code_test_api_eval_only",
   /**
+   * Claude runtime vs API eval auth separated (T-US-016).
+   * EVAL_ONLY API connection + evaluation-worker isolation ≠ Claude LIVE_CLI runtime auth.
+   */
+  CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED: "claude_runtime_eval_auth_separated",
+  /**
    * Connect Gemini Evaluation as EVAL_ONLY (T-US-017).
    * Data-use decision, broker credential, model snapshot, test mode;
    * live NOT_WIRED; cannot publish or respond to customers.
@@ -903,6 +908,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X040 requires LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE (research only; not publish).
  * T-US-012 requires GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED (test ≠ production).
  * T-US-015 requires CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY (runtime ≠ API readiness; EVAL_ONLY).
+* T-US-016 requires CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED.
  * T-US-017 requires CONNECT_GEMINI_EVALUATION_EVAL_ONLY (Gemini EVAL_ONLY connect; live NOT_WIRED).
  * T-US-019 requires MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY (CRM/forms/booking map + failure/recovery; live Zoho NOT_WIRED).
  * T-US-020 requires SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION (classified canary; no commerce pollution).
@@ -1063,6 +1069,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X040",
   "T-US-012",
   "T-US-015",
+  "T-US-016",
   "T-US-017",
   "T-US-019",
   "T-US-020",
@@ -1589,6 +1596,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED];
     case "T-US-015":
       return [SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY];
+    case "T-US-016":
+      return [SoakProofKind.CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED];
     case "T-US-017":
       return [SoakProofKind.CONNECT_GEMINI_EVALUATION_EVAL_ONLY];
     case "T-US-019":
@@ -1847,6 +1856,8 @@ export function mapProofToFixtureCases(
       return ["T-US-012"];
     case SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY:
       return ["T-US-015"];
+    case SoakProofKind.CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED:
+      return ["T-US-016"];
     case SoakProofKind.CONNECT_GEMINI_EVALUATION_EVAL_ONLY:
       return ["T-US-017"];
     case SoakProofKind.MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY:

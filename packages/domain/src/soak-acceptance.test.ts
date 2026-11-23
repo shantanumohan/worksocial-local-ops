@@ -735,6 +735,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-US-015"]);
   });
 
+  it("maps T-US-016 to CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED only", () => {
+    expect(expectedProofsForFixtureCase("T-US-016")).toEqual([
+      SoakProofKind.CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED),
+    ).toEqual(["T-US-016"]);
+  });
+
   it("maps T-US-017 to CONNECT_GEMINI_EVALUATION_EVAL_ONLY only", () => {
     expect(expectedProofsForFixtureCase("T-US-017")).toEqual([
       SoakProofKind.CONNECT_GEMINI_EVALUATION_EVAL_ONLY,

@@ -50,6 +50,7 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-X040 low-sample trend spike | Fixture **ACCEPTED** via `LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE` (not live VERIFIED) |
 | T-US-012 Google Ads test vs production | Fixture **ACCEPTED** via `GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED` (not live VERIFIED) |
 | T-US-015 Connect Claude Code + test API | Fixture **ACCEPTED** via `CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY` (not live VERIFIED) |
+| T-US-016 Claude runtime vs API eval auth | Fixture **ACCEPTED** via `CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED` (not live VERIFIED) |
 | T-US-017 Connect Gemini evaluation | Fixture **ACCEPTED** via `CONNECT_GEMINI_EVALUATION_EVAL_ONLY` (not live VERIFIED) |
 | T-US-019 Map CRM/forms/booking | Fixture **ACCEPTED** via `MAP_CRM_FORMS_BOOKING_FAILURE_RECOVERY` (not live VERIFIED) |
 | T-US-020 Synthetic leads classified | Fixture **ACCEPTED** via `SYNTHETIC_LEADS_CLASSIFIED_NO_COMMERCE_POLLUTION` (not live VERIFIED) |

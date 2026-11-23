@@ -37,6 +37,9 @@
       "path": "../credential-rotation"
     },
     {
+      "path": "../evaluation-worker"
+    },
+    {
       "path": "../lead-capture"
     },
     {
