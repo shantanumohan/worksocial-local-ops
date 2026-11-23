@@ -1217,4 +1217,16 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-US-037"]);
   });
 
+  it("maps T-US-001 to TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS only", () => {
+    expect(expectedProofsForFixtureCase("T-US-001")).toEqual([
+      SoakProofKind.TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS,
+      ),
+    ).toEqual(["T-US-001"]);
+  });
+
+
 });

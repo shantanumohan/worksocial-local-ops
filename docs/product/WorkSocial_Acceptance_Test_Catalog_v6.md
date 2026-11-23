@@ -672,7 +672,7 @@ Required evidence:
 
 Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixture ACCEPTED below | Environment fixture_or_sandbox; live evidence separately authorized.
 
-**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-015, T-US-017, T-US-018, T-US-019, T-US-020, T-US-021, T-US-022, T-US-023, T-US-024, T-US-025, T-US-026, T-US-027, T-US-028, T-US-029, T-US-030, T-US-031, T-US-033, T-US-034, T-US-035, T-US-036, T-US-037, T-US-038, T-US-040, T-US-041, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-049, T-US-050, T-US-051, T-US-052, T-US-053, T-US-054, T-US-055, T-US-057, T-US-058, T-US-059, T-US-060.
+**Fixture ACCEPTED (M9 soak evidence, not live VERIFIED):** T-US-001, T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-015, T-US-017, T-US-018, T-US-019, T-US-020, T-US-021, T-US-022, T-US-023, T-US-024, T-US-025, T-US-026, T-US-027, T-US-028, T-US-029, T-US-030, T-US-031, T-US-033, T-US-034, T-US-035, T-US-036, T-US-037, T-US-038, T-US-040, T-US-041, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-049, T-US-050, T-US-051, T-US-052, T-US-053, T-US-054, T-US-055, T-US-057, T-US-058, T-US-059, T-US-060.
 
 **T-US-012** is fixture ACCEPTED only via the Google Ads test vs production access separated proof (`GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED`) — TEST credential cannot reach PRODUCTION customer (and reverse); LIVE stays NOT_WIRED; mutate never authorized from this gate. Distinct from T-X034 (ChatGPT Ads SANDBOX→LIVE) and T-US-011 (analyze-only connect). Not sandbox/prod VERIFIED.
 
@@ -723,7 +723,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 **T-US-059** is fixture ACCEPTED only via the shared briefs redacted / private evidence retained proof (`SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED`) — shareable brief must be redacted with zero private fields; private evidence retained in private vault (not discarded, not shipped into shared export); unredacted share / discard-on-share / private-field leak refused; live provider wiring stays NOT_WIRED. Distinct from T-US-050 (owner brief root-cause), T-US-053 (secrets never in browser assets), and soak `redactEvidenceSummary` (string scrub). Not sandbox/prod VERIFIED.
 
 ### Happy-path / documented flow completions
-- **T-US-001** Create a trusted local workspace (F01/SC-02) — blockers and next actions.
+- **T-US-001** Create a trusted local workspace (F01/SC-02) — blockers and next actions. *(fixture ACCEPTED — trusted workspace readiness blockers/next-actions proof; not sandbox/prod VERIFIED)*
 - **T-US-003** Choose folders and establish business truth (F02/SC-20) — restore evidence; secrets excluded.
 - **T-US-005** Map sites, pages and editable sources (F03/SC-06) — baseline ID and checks.
 - **T-US-007** Connect GA4 (F04/SC-18) — ready-read and next sync.
@@ -847,6 +847,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 **T-US-041** is fixture ACCEPTED only via the diagnose/repair defect resolved or handoff proof (`DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF`) — inject fixture defect → canary fail; restore patches → canary pass → release `SUCCESS` resolves the incident; release `FAILURE` does not invent success and creates an acknowledged human handoff. Live CMS repair remains **NOT_WIRED**. Distinct from T-F21 complete permitted-defect evidence set. Not sandbox/prod VERIFIED.
 
 **T-US-032** is fixture ACCEPTED only via the exact financial boundaries preserved proof (`EXACT_FINANCIAL_BOUNDARIES_PRESERVED`) — paid-media proposals require non-blank `exactChange` and preserve `financialDiff` verbatim; ChatGPT Ads stays `ACCESS_BLOCKED`; live mutations remain `NOT_WIRED`. Not sandbox/prod VERIFIED.
+
+**T-US-001** is fixture ACCEPTED only via the trusted workspace readiness blockers/next-actions proof (`TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS`) — host/Claude/providers/workstreams readiness summary with explicit blockers and next actions; Observe denies publish; ChatGPT Ads ACCESS_BLOCKED; no public writes. Distinct from T-F01 complete F01 evidence set. Not sandbox/prod VERIFIED.
 
 **T-US-037** is fixture ACCEPTED only via the portable analysis artifact proof (`PORTABLE_ANALYSIS_ARTIFACT`) — fixture analysis definition + complete hypothesis + redacted decision brief JSON round-trip; LIVE definition/hypothesis refused. Distinct from T-F19 complete F19 evidence set. Not sandbox/prod VERIFIED.
 
@@ -1056,8 +1058,8 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 |---|---:|---|
 | T-F (full_stack_e2e) | 26 | 1 NOT_RUN + 25 fixture ACCEPTED (T-F01, T-F02, T-F03, T-F04, T-F05, T-F06, T-F08, T-F09, T-F10, T-F11, T-F12, T-F13, T-F14, T-F15, T-F16, T-F17, T-F18, T-F19, T-F20, T-F21, T-F22, T-F23, T-F24, T-F25, T-F26) |
 | T-F (full_stack_e2e) | 26 | 4 NOT_RUN + 22 fixture ACCEPTED (T-F01, T-F02, T-F03, T-F04, T-F05, T-F06, T-F08, T-F09, T-F10, T-F11, T-F12, T-F13, T-F14, T-F15, T-F16, T-F18, T-F19, T-F20, T-F21, T-F22, T-F24, T-F26) |
-| T-US (behavior_acceptance) | 60 | 14 NOT_RUN + 46 fixture ACCEPTED (T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-015, T-US-017, T-US-018, T-US-019, T-US-020, T-US-021, T-US-022, T-US-023, T-US-024, T-US-025, T-US-026, T-US-027, T-US-028, T-US-029, T-US-030, T-US-031, T-US-032, T-US-033, T-US-034, T-US-035, T-US-036, T-US-037, T-US-038, T-US-040, T-US-041, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-049, T-US-050, T-US-051, T-US-052, T-US-053, T-US-054, T-US-055, T-US-057, T-US-058, T-US-059, T-US-060) |
+| T-US (behavior_acceptance) | 60 | 13 NOT_RUN + 47 fixture ACCEPTED (T-US-001, T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-015, T-US-017, T-US-018, T-US-019, T-US-020, T-US-021, T-US-022, T-US-023, T-US-024, T-US-025, T-US-026, T-US-027, T-US-028, T-US-029, T-US-030, T-US-031, T-US-032, T-US-033, T-US-034, T-US-035, T-US-036, T-US-037, T-US-038, T-US-040, T-US-041, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-049, T-US-050, T-US-051, T-US-052, T-US-053, T-US-054, T-US-055, T-US-057, T-US-058, T-US-059, T-US-060) |
 | T-X (platform/security/resilience) | 73 | 14 NOT_RUN + 59 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X023, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X030, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X040, T-X043, T-X044, T-X045, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X063, T-X065, T-X066, T-X069, T-X070, T-X073) |
-| **Total** | **159** | **30 NOT_RUN + 129 fixture ACCEPTED** |
+| **Total** | **159** | **29 NOT_RUN + 130 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.
