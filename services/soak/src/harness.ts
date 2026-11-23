@@ -132,6 +132,7 @@ import { proofCreateTrustedLocalWorkspace } from "./create-trusted-local-workspa
 import { proofChooseFoldersEstablishBusinessTruth } from "./choose-folders-establish-business-truth-proof.js";
 import { proofMapSitesPagesEditableSources } from "./map-sites-pages-editable-sources-proof.js";
 import { proofConnectGoogleAnalytics4 } from "./connect-google-analytics-4-proof.js";
+import { proofConnectSearchConsoleOrganicVisibility } from "./connect-search-console-organic-visibility-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -894,6 +895,9 @@ export async function runSoakRecoveryHarness(input: {
   );
   proofs.push(proofMapSitesPagesEditableSources(nowPlus(nowIso, 930_000)));
   proofs.push(proofConnectGoogleAnalytics4(nowPlus(nowIso, 940_000)));
+  proofs.push(
+    proofConnectSearchConsoleOrganicVisibility(nowPlus(nowIso, 950_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -992,6 +996,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-F02 fixture ACCEPTED via choose_folders_establish_business_truth only — not live VERIFIED",
       "T-F03 fixture ACCEPTED via map_sites_pages_editable_sources only — not live VERIFIED",
       "T-F04 fixture ACCEPTED via connect_google_analytics_4 only — not live VERIFIED",
+      "T-F05 fixture ACCEPTED via connect_search_console_organic_visibility only — not live VERIFIED",
     ],
   };
 }

@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f05",
+  "caseId": "T-F05",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F05 (Connect Search Console and organic visibility)\nproof=connect_search_console_organic_visibility applyCount=1 :: complete F05 evidence package → CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY_EVIDENCE_RECORDED; identity+scopes+API readiness; property bind; comparable-query config; observation batch+coverage+sitemap; intent→page map; daily schedule+watermark; gscVerifiedLive=false; live NOT_WIRED | empty connection identity → CONNECTION_IDENTITY_REQUIRED | empty propertyId → PROPERTY_BINDING_REQUIRED | empty comparable-query → COMPARABLE_QUERY_CONFIG_REQUIRED | empty observation batch → OBSERVATION_BATCH_REQUIRED | attemptWriteSave → WRITE_SAVE_REFUSED | inventZeroFromOmittedRows → OMITTED_ZERO_DEMAND_CLAIM_REFUSED | claimLiveVerifiedGsc → FALSE_LIVE_VERIFIED_GSC_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-009 (schedule/watermark summary) — complete F05 flow evidence package | proofRecordedAt=2026-11-21T19:15:50.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "connect_search_console_organic_visibility"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f05.json",
+  "createdAtIso": "2026-11-23T02:34:17.052Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f05-7d5b01a5cdac"
+}

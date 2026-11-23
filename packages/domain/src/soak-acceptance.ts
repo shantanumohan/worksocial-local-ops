@@ -549,6 +549,15 @@ export const SoakProofKind = {
    * T-US-007 ready-read/next-sync summary.
    */
   CONNECT_GOOGLE_ANALYTICS_4: "connect_google_analytics_4",
+  /**
+   * Connect Search Console and organic visibility — complete F05 evidence set
+   * (T-F05). Identity+scopes+API readiness, domain/URL-prefix property bind,
+   * comparable-query config, observation batch+coverage+sitemap, intent→page
+   * map, daily schedule+watermark; unsafe claims refused; live NOT_WIRED.
+   * Distinct from T-US-009 schedule/watermark summary.
+   */
+  CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY:
+    "connect_search_console_organic_visibility",
 } as const;
 
 export type SoakProofKindValue =
@@ -679,6 +688,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F02 requires CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH (complete F02 evidence set; live NOT_WIRED).
  * T-F03 requires MAP_SITES_PAGES_EDITABLE_SOURCES (complete F03 evidence set; live NOT_WIRED).
  * T-F04 requires CONNECT_GOOGLE_ANALYTICS_4 (complete F04 evidence set; live NOT_WIRED).
+ * T-F05 requires CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY (complete F05 evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -690,6 +700,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F02",
   "T-F03",
   "T-F04",
+  "T-F05",
   "T-F24",
   "T-US-047",
   "T-US-002",
@@ -1336,6 +1347,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.MAP_SITES_PAGES_EDITABLE_SOURCES];
     case "T-F04":
       return [SoakProofKind.CONNECT_GOOGLE_ANALYTICS_4];
+    case "T-F05":
+      return [SoakProofKind.CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY];
     default:
       return [];
   }
@@ -1540,6 +1553,8 @@ export function mapProofToFixtureCases(
       return ["T-F03"];
     case SoakProofKind.CONNECT_GOOGLE_ANALYTICS_4:
       return ["T-F04"];
+    case SoakProofKind.CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY:
+      return ["T-F05"];
     default:
       return [];
   }
