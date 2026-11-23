@@ -498,6 +498,98 @@ export function registerDemandObservation(input: {
 }
 
 /**
+ * Trend-index comparison gate (T-X041): never divide arbitrary indices from
+ * different incomparable data extracts. Same non-empty comparability group,
+ * unit, and sourceSystem are required before a ratio is allowed. Otherwise
+ * reject and label — do not invent a cross-extract change.
+ */
+export type TrendIndexComparison =
+  | {
+      kind: "comparable";
+      ratio: number;
+      comparabilityGroup: string;
+      label: "comparable";
+    }
+  | {
+      kind: "rejected";
+      reason:
+        | "non_trend"
+        | "missing_value"
+        | "missing_comparability_group"
+        | "incomparable_group"
+        | "unit_mismatch"
+        | "source_mismatch"
+        | "zero_baseline";
+      label: "incomparable" | "unlabeled" | "invalid";
+    };
+
+export function compareTrendIndices(
+  left: Pick<
+    DemandObservation,
+    | "kind"
+    | "rawValue"
+    | "unit"
+    | "comparabilityGroup"
+    | "sourceSystem"
+  >,
+  right: Pick<
+    DemandObservation,
+    | "kind"
+    | "rawValue"
+    | "unit"
+    | "comparabilityGroup"
+    | "sourceSystem"
+  >,
+): TrendIndexComparison {
+  if (
+    left.kind !== DemandSignalKind.TREND ||
+    right.kind !== DemandSignalKind.TREND
+  ) {
+    return { kind: "rejected", reason: "non_trend", label: "invalid" };
+  }
+  if (left.rawValue === null || right.rawValue === null) {
+    return { kind: "rejected", reason: "missing_value", label: "invalid" };
+  }
+  const leftGroup = left.comparabilityGroup?.trim() || null;
+  const rightGroup = right.comparabilityGroup?.trim() || null;
+  if (leftGroup === null || rightGroup === null) {
+    return {
+      kind: "rejected",
+      reason: "missing_comparability_group",
+      label: "unlabeled",
+    };
+  }
+  if (leftGroup !== rightGroup) {
+    return {
+      kind: "rejected",
+      reason: "incomparable_group",
+      label: "incomparable",
+    };
+  }
+  const leftUnit = left.unit?.trim() || null;
+  const rightUnit = right.unit?.trim() || null;
+  if (leftUnit === null || rightUnit === null || leftUnit !== rightUnit) {
+    return { kind: "rejected", reason: "unit_mismatch", label: "incomparable" };
+  }
+  if (left.sourceSystem.trim() !== right.sourceSystem.trim()) {
+    return {
+      kind: "rejected",
+      reason: "source_mismatch",
+      label: "incomparable",
+    };
+  }
+  if (left.rawValue === 0) {
+    return { kind: "rejected", reason: "zero_baseline", label: "invalid" };
+  }
+  return {
+    kind: "comparable",
+    ratio: right.rawValue / left.rawValue,
+    comparabilityGroup: leftGroup,
+    label: "comparable",
+  };
+}
+
+/**
  * Ingest a proposed claim from an untrusted source (upload, model, SERP stub).
  * Always returns HYPOTHESIS when unsourced; never promotes to SUPPORTED here.
  */

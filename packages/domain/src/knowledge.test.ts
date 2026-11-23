@@ -11,6 +11,7 @@ import {
   ingestClaimAsHypothesis,
   listFactOutcomesForLearning,
   registerDemandObservation,
+  compareTrendIndices,
   registerFact,
 } from "./knowledge.js";
 import { OutcomeEvidenceSource, OutcomeLabel } from "./production-mapping.js";
@@ -271,6 +272,68 @@ describe("demand observations", () => {
       fixtureOnly: true,
     });
     expect(obs.supportLabel).toBe(SupportLabel.SUPPORTED);
+  });
+
+  it("rejects incomparable trend indices and allows same-group ratios", () => {
+    const base = {
+      kind: DemandSignalKind.TREND,
+      unit: "relative_interest_index",
+      sourceSystem: "trends_fixture_a",
+      rawValue: 50,
+      comparabilityGroup: "extract-week-2026-W45",
+    } as const;
+    const sameGroup = compareTrendIndices(base, {
+      ...base,
+      rawValue: 75,
+    });
+    expect(sameGroup).toEqual({
+      kind: "comparable",
+      ratio: 1.5,
+      comparabilityGroup: "extract-week-2026-W45",
+      label: "comparable",
+    });
+
+    const otherExtract = compareTrendIndices(base, {
+      ...base,
+      rawValue: 80,
+      comparabilityGroup: "extract-week-2026-W46-rescale",
+    });
+    expect(otherExtract).toEqual({
+      kind: "rejected",
+      reason: "incomparable_group",
+      label: "incomparable",
+    });
+
+    const unlabeled = compareTrendIndices(
+      { ...base, comparabilityGroup: null },
+      { ...base, rawValue: 60, comparabilityGroup: null },
+    );
+    expect(unlabeled).toEqual({
+      kind: "rejected",
+      reason: "missing_comparability_group",
+      label: "unlabeled",
+    });
+
+    const unitMismatch = compareTrendIndices(base, {
+      ...base,
+      rawValue: 60,
+      unit: "search_volume",
+    });
+    expect(unitMismatch.kind).toBe("rejected");
+    if (unitMismatch.kind === "rejected") {
+      expect(unitMismatch.reason).toBe("unit_mismatch");
+    }
+
+    const sourceMismatch = compareTrendIndices(base, {
+      ...base,
+      rawValue: 60,
+      sourceSystem: "trends_fixture_b",
+    });
+    expect(sourceMismatch).toEqual({
+      kind: "rejected",
+      reason: "source_mismatch",
+      label: "incomparable",
+    });
   });
 });
 
