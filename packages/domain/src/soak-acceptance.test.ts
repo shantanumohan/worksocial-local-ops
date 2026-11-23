@@ -1208,4 +1208,13 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-US-032"]);
   });
 
+  it("maps T-US-037 to PORTABLE_ANALYSIS_ARTIFACT only", () => {
+    expect(expectedProofsForFixtureCase("T-US-037")).toEqual([
+      SoakProofKind.PORTABLE_ANALYSIS_ARTIFACT,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.PORTABLE_ANALYSIS_ARTIFACT),
+    ).toEqual(["T-US-037"]);
+  });
+
 });

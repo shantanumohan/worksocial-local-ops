@@ -57,6 +57,7 @@
  * Daily owner review operating knowledge (T-US-049).
  * Owner brief root-cause actionable (T-US-050).
  * exact financial boundaries preserved (T-US-032).
+ * portable analysis artifact (T-US-037).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -193,6 +194,7 @@ import { proofRunClaudeGeminiEvaluationSuites } from "./run-claude-gemini-evalua
 import { proofOperateDailyOwnerReview } from "./operate-daily-owner-review-proof.js";
 import { proofDiagnoseRepairDefectResolvedOrHandoff } from "./diagnose-repair-defect-proof.js";
 import { proofExactFinancialBoundariesPreserved } from "./exact-financial-boundaries-proof.js";
+import { proofPortableAnalysisArtifact } from "./portable-analysis-artifact-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -979,6 +981,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofExactFinancialBoundariesPreserved(nowPlus(nowIso, 1150000)),
   );
+  proofs.push(proofPortableAnalysisArtifact(nowPlus(nowIso, 1_160_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1096,6 +1099,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-F25 fixture ACCEPTED via operate_daily_owner_review only — not live VERIFIED",
       "T-US-041 fixture ACCEPTED via diagnose_repair_defect_resolved_or_handoff only — not live VERIFIED",
       "T-US-032 fixture ACCEPTED via exact_financial_boundaries_preserved only — not live VERIFIED",
+      "T-US-037 fixture ACCEPTED via portable_analysis_artifact only — not live VERIFIED",
     ],
   };
 }
