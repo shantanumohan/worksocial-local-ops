@@ -438,6 +438,14 @@ export const SoakProofKind = {
    */
   UNCERTAIN_POST_RECONCILE_BEFORE_RETRY:
     "uncertain_post_reconcile_before_retry",
+  /**
+   * Paid-media recommendations — verified mutation or failure (T-US-031 / F16).
+   * Decision recorded; execute yields honest LIVE_MUTATION_NOT_WIRED failure;
+   * ChatGPT Ads ACCESS_BLOCKED; false live verified claims refused; live
+   * NOT_WIRED. Distinct from T-US-011 / T-US-012 / T-US-032 / T-X034–T-X036.
+   */
+  PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE:
+    "paid_media_recommendation_mutation_or_failure",
 } as const;
 
 export type SoakProofKindValue =
@@ -554,6 +562,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-028 requires KEYWORD_PROLIFERATION_ONE_USEFUL_UPDATE (prefer one useful page update; keyword proliferation refused; live NOT_WIRED).
  * T-US-029 requires CAMPAIGN_MANIFEST_DISTRIBUTION (original campaign distribution campaign manifest; live NOT_WIRED).
  * T-US-030 requires UNCERTAIN_POST_RECONCILE_BEFORE_RETRY (uncertain post reconcile before retry; live NOT_WIRED).
+ * T-US-031 requires PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE (paid-media recommendation decision + honest execute failure; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -649,6 +658,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-028",
   "T-US-029",
   "T-US-030",
+  "T-US-031",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1169,6 +1179,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CAMPAIGN_MANIFEST_DISTRIBUTION];
     case "T-US-030":
       return [SoakProofKind.UNCERTAIN_POST_RECONCILE_BEFORE_RETRY];
+    case "T-US-031":
+      return [SoakProofKind.PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE];
     default:
       return [];
   }
@@ -1345,6 +1357,8 @@ export function mapProofToFixtureCases(
       return ["T-US-029"];
     case SoakProofKind.UNCERTAIN_POST_RECONCILE_BEFORE_RETRY:
       return ["T-US-030"];
+    case SoakProofKind.PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE:
+      return ["T-US-031"];
     default:
       return [];
   }

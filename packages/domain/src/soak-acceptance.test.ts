@@ -853,4 +853,15 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-US-030"]);
   });
+
+  it("maps T-US-031 to PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE only", () => {
+    expect(expectedProofsForFixtureCase("T-US-031")).toEqual([
+      SoakProofKind.PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE,
+      ),
+    ).toEqual(["T-US-031"]);
+  });
 });

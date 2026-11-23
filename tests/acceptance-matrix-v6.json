@@ -14,8 +14,8 @@
     "userStories": 60,
     "experience": 73,
     "all": 159,
-    "notRun": 67,
-    "accepted": 92
+    "notRun": 66,
+    "accepted": 93
   },
   "cases": [
     {
@@ -1074,13 +1074,16 @@
       "kind": "user_story",
       "level": "behavior_acceptance",
       "title": "Paid-media recommendations (F16/SC-13) \u2014 verified mutation or failure.",
-      "status": "NOT_RUN",
+      "status": "ACCEPTED",
       "environment": "fixture_or_sandbox",
       "fixtureClass": "fixture_sandbox_or_authorized_production",
       "family": "happy_path",
       "gates": [],
       "catalogPath": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md",
-      "definitionShape": "list_item"
+      "definitionShape": "list_item",
+      "resultEnvironment": "fixture",
+      "evidenceArtifactId": "art-fixture-t-us-031",
+      "evidenceNote": "Fixture paid-media-recommendation mutation-or-failure proof only \u2014 decision recorded; approve+execute yields honest LIVE_MUTATION_NOT_WIRED failure; ChatGPT Ads ACCESS_BLOCKED; false live-verified mutation refused; live NOT_WIRED; not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-US-032",
@@ -2625,11 +2628,11 @@
   "summary": {
     "total": 159,
     "byStatus": {
-      "NOT_RUN": 68,
-      "ACCEPTED": 91
+      "NOT_RUN": 66,
+      "ACCEPTED": 93
     },
     "blockingOpen": 0,
-    "generatedAt": "2026-11-22T23:50:00.000Z",
+    "generatedAt": "2026-11-23T00:01:36.000Z",
     "source": "docs/product/WorkSocial_Acceptance_Test_Catalog_v6.md"
   }
 }

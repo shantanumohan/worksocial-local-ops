@@ -1068,6 +1068,16 @@ export {
   type UncertainPostReconcileDecision,
 } from "./uncertain-post-reconcile.js";
 export {
+  PAID_MEDIA_RECOMMENDATION_MUTATION_RELATED_CASE_IDS,
+  evaluatePaidMediaRecommendationMutation,
+  type PaidMediaRecommendationPlatform,
+  type PaidMediaRecommendationSelection,
+  type PaidMediaDeliveryInspection,
+  type PaidMediaRecommendationProposal,
+  type PaidMediaRecommendationMutationInput,
+  type PaidMediaRecommendationMutationDecision,
+} from "./paid-media-recommendation-mutation.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

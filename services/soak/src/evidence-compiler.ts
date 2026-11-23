@@ -132,6 +132,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-028": "Prefer one useful page update over keyword proliferation",
   "T-US-029": "Original campaign distribution — campaign manifest",
   "T-US-030": "Uncertain post: reconcile before retry",
+  "T-US-031": "Paid-media recommendations — verified mutation or failure",
 };
 
 function relatedProofsForCase(
@@ -342,6 +343,7 @@ export function compileAcceptanceEvidence(
     "T-US-028 fixture ACCEPTED only via KEYWORD_PROLIFERATION_ONE_USEFUL_UPDATE",
     "T-US-029 fixture ACCEPTED only via CAMPAIGN_MANIFEST_DISTRIBUTION",
     "T-US-030 fixture ACCEPTED only via UNCERTAIN_POST_RECONCILE_BEFORE_RETRY",
+    "T-US-031 fixture ACCEPTED only via PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

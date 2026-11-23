@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-031",
+  "caseId": "T-US-031",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-031 (Paid-media recommendations — verified mutation or failure)\nproof=paid_media_recommendation_mutation_or_failure applyCount=1 :: approve+execute → DECISION_RECORDED_EXECUTE_FAILURE; honest LIVE_MUTATION_NOT_WIRED failure; mutationVerified=false | decline → DECLINE_RECORDED_NO_EXECUTE; no mutate | ChatGPT Ads without transport/entitlement → CHATGPT_ADS_ACCESS_BLOCKED | sharedBudgetAffected + unknown impact → SHARED_BUDGET_UNKNOWN | deliveryInspectedBeforeConversion=false → DELIVERY_NOT_INSPECTED | claimLiveVerifiedMutation → FALSE_LIVE_VERIFIED_MUTATION_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-011 (analyze-only), T-US-012 (test vs production), T-US-032 (financial boundaries), T-X034–T-X036 (Ads edge cases) | proofRecordedAt=2026-11-21T19:13:30.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "paid_media_recommendation_mutation_or_failure"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-031.json",
+  "createdAtIso": "2026-11-23T00:02:22.833Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-031-36d76125f349"
+}
