@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f11",
+  "caseId": "T-F11",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F11 (Connect local, social and inbox channels)\nproof=connect_local_social_inbox_channels applyCount=1 :: complete F11 evidence package → CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS_EVIDENCE_RECORDED; account/asset IDs; auth results; per-action capability matrices; destination contracts; support policy; authorized test artifact with readyCapability; channelsVerifiedLive=false; live NOT_WIRED | destinations=[] → DESTINATIONS_REQUIRED | authResult=NEEDS_HUMAN_VERIFICATION → AUTH_RESULT_REQUIRED | capabilityMatrix=null → CAPABILITY_MATRIX_REQUIRED | destinationContract=null → DESTINATION_CONTRACT_REQUIRED | supportPolicy=null → SUPPORT_POLICY_REQUIRED | authorizedTestArtifact=null → AUTHORIZED_TEST_ARTIFACT_REQUIRED | attemptLivePublish → LIVE_PUBLISH_REFUSED | claimLiveVerifiedChannels → FALSE_LIVE_VERIFIED_CHANNELS_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-021 (connect readiness summary), T-US-022 (unsupported destination capabilities), and T-X045 (partial campaign destinations) — complete F11 flow evidence package | proofRecordedAt=2026-11-21T19:16:40.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "connect_local_social_inbox_channels"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f11.json",
+  "createdAtIso": "2026-11-23T03:31:39.902Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f11-5d2a80b47174"
+}

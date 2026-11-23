@@ -137,6 +137,7 @@ import { proofConnectGoogleAdsControlledAnalysis } from "./connect-google-ads-co
 import { proofConnectClaudeCodeAndTestApi } from "./connect-claude-code-and-test-api-proof.js";
 import { proofConnectGeminiIndependentTesting } from "./connect-gemini-independent-testing-proof.js";
 import { proofMapCrmFormsBookingTruth } from "./map-crm-forms-booking-truth-proof.js";
+import { proofConnectLocalSocialInboxChannels } from "./connect-local-social-inbox-channels-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -910,6 +911,9 @@ export async function runSoakRecoveryHarness(input: {
     proofConnectGeminiIndependentTesting(nowPlus(nowIso, 980_000)),
   );
   proofs.push(proofMapCrmFormsBookingTruth(nowPlus(nowIso, 990_000)));
+  proofs.push(
+    proofConnectLocalSocialInboxChannels(nowPlus(nowIso, 1_000_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1013,6 +1017,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-F08 fixture ACCEPTED via connect_claude_code_and_test_api only — not live VERIFIED",
       "T-F09 fixture ACCEPTED via connect_gemini_independent_testing only — not live VERIFIED",
       "T-F10 fixture ACCEPTED via map_crm_forms_booking_truth only — not live VERIFIED",
+      "T-F11 fixture ACCEPTED via connect_local_social_inbox_channels only — not live VERIFIED",
     ],
   };
 }

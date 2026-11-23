@@ -265,7 +265,7 @@ Required evidence:
 - Passing failure/recovery scenario.
 
 ### T-F11 - Connect local, social and inbox channels
-Level: full_stack_e2e | Status: NOT_RUN
+Level: full_stack_e2e | Status: ACCEPTED *(fixture ACCEPTED — connect local/social/inbox channels complete F11 evidence; not sandbox/prod VERIFIED)*
 Requirements: RQ-013, RQ-022 | Flows: F11 | Screens: SC-18
 Environment: controlled_local_stack_then_authorized_canary_where_required
 
@@ -824,6 +824,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-F10** is fixture ACCEPTED only via the map CRM/forms/booking truth complete F10 evidence proof (`MAP_CRM_FORMS_BOOKING_TRUTH`) — Zoho organization/region/environment binding, form→CRM field contract with assignment rules, canary grant + retention policy, booking inventory/receipt capability matrix, correlated journey evidence, and a passing failure→recovery scenario; live booking mutate, commerce pollution, production environment, and false live-verified claims refused; live Zoho wiring stays **NOT_WIRED**. Distinct from T-US-019 failure/recovery readiness summary, T-US-039 continuous cadence/heartbeat, and T-US-040 thank-you ≠ CRM. Never silently VERIFIED for live.
 
+**T-F11** is fixture ACCEPTED only via the connect local/social/inbox channels complete F11 evidence proof (`CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS`) — per-destination account/asset IDs, authentication results, per-action capability matrices, destination contracts (approved formats + location boundaries), support hours policy with escalation recipients, and an authorized test artifact with ready capability; live publish, false live-verified claims, and live provider wiring refused; live provider wiring stays **NOT_WIRED**. Distinct from T-US-021 connect readiness summary, T-US-022 unsupported destination capabilities, and T-X045 partial campaign destinations. Never silently VERIFIED for live.
+
 **T-F24 / T-US-047** are fixture ACCEPTED only via the recover / rotate / reconcile / offboard proof (`RECOVER_ROTATE_RECONCILE`) with the complete F24 evidence set (health timeline, capability stop, rotation record without secrets, reconciliation receipts, recovery test, offboarding manifest + residual obligations). Live provider revoke remains **NOT_WIRED**; never silently VERIFIED for live.
 
 **T-US-002 / T-X002** are fixture ACCEPTED only via the competing-supervisor / singleton host-lease proof (`COMPETING_SUPERVISOR_LEASE`) — second live generation refused, dead-holder reclaim allowed, ownership kill auth fail-closed. Not sandbox/prod VERIFIED.
@@ -1018,9 +1020,9 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 
 | Family | Count | Status |
 |---|---:|---|
-| T-F (full_stack_e2e) | 26 | 16 NOT_RUN + 10 fixture ACCEPTED (T-F01, T-F02, T-F03, T-F04, T-F05, T-F06, T-F08, T-F09, T-F10, T-F24) |
+| T-F (full_stack_e2e) | 26 | 15 NOT_RUN + 11 fixture ACCEPTED (T-F01, T-F02, T-F03, T-F04, T-F05, T-F06, T-F08, T-F09, T-F10, T-F11, T-F24) |
 | T-US (behavior_acceptance) | 60 | 17 NOT_RUN + 43 fixture ACCEPTED (T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-015, T-US-017, T-US-018, T-US-019, T-US-020, T-US-021, T-US-022, T-US-023, T-US-024, T-US-025, T-US-026, T-US-027, T-US-028, T-US-029, T-US-030, T-US-031, T-US-033, T-US-034, T-US-035, T-US-036, T-US-038, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-049, T-US-050, T-US-051, T-US-052, T-US-053, T-US-054, T-US-055, T-US-057, T-US-058, T-US-059, T-US-060) |
 | T-X (platform/security/resilience) | 73 | 14 NOT_RUN + 59 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X023, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X030, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X040, T-X043, T-X044, T-X045, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X063, T-X065, T-X066, T-X069, T-X070, T-X073) |
-| **Total** | **159** | **48 NOT_RUN + 111 fixture ACCEPTED** |
+| **Total** | **159** | **47 NOT_RUN + 112 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

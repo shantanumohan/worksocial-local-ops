@@ -595,6 +595,15 @@ export const SoakProofKind = {
    * continuous cadence, and T-US-040 thank-you ≠ CRM.
    */
   MAP_CRM_FORMS_BOOKING_TRUTH: "map_crm_forms_booking_truth",
+  /**
+   * Connect local, social and inbox channels — complete F11 evidence set
+   * (T-F11). Account/asset IDs, auth results, per-action capability
+   * matrices, destination contracts, support policy, authorized test
+   * artifact with ready capability; unsafe claims refused; live NOT_WIRED.
+   * Distinct from T-US-021 connect readiness summary, T-US-022 unsupported
+   * destination capabilities, and T-X045 partial campaign destinations.
+   */
+  CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS: "connect_local_social_inbox_channels",
 } as const;
 
 export type SoakProofKindValue =
@@ -730,6 +739,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F08 requires CONNECT_CLAUDE_CODE_AND_TEST_API (complete F08 evidence set; live NOT_WIRED).
  * T-F09 requires CONNECT_GEMINI_INDEPENDENT_TESTING (complete F09 evidence set; live NOT_WIRED).
  * T-F10 requires MAP_CRM_FORMS_BOOKING_TRUTH (complete F10 evidence set; live Zoho NOT_WIRED).
+ * T-F11 requires CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS (complete F11 evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -746,6 +756,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F08",
   "T-F09",
   "T-F10",
+  "T-F11",
   "T-F24",
   "T-US-047",
   "T-US-002",
@@ -1402,6 +1413,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CONNECT_GEMINI_INDEPENDENT_TESTING];
     case "T-F10":
       return [SoakProofKind.MAP_CRM_FORMS_BOOKING_TRUTH];
+    case "T-F11":
+      return [SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS];
     default:
       return [];
   }
@@ -1616,6 +1629,8 @@ export function mapProofToFixtureCases(
       return ["T-F09"];
     case SoakProofKind.MAP_CRM_FORMS_BOOKING_TRUTH:
       return ["T-F10"];
+    case SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS:
+      return ["T-F11"];
     default:
       return [];
   }

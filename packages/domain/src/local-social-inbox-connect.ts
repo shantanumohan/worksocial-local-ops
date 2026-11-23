@@ -121,7 +121,6 @@ export type LocalSocialInboxConnectDecision =
 
 export const LOCAL_SOCIAL_INBOX_CONNECT_RELATED_CASE_IDS = [
   "T-US-021",
-  "T-F11",
 ] as const;
 
 type DestinationGateFailureCode =
@@ -235,7 +234,7 @@ export function evaluateLocalSocialInboxConnect(
       testArtifactReady,
       ...base,
       reasons: [
-        "At least one local/social/inbox destination required (T-US-021 / T-F11)",
+        "At least one local/social/inbox destination required (T-US-021)",
       ],
     };
   }
@@ -278,7 +277,7 @@ export function evaluateLocalSocialInboxConnect(
       testArtifactReady: false,
       ...base,
       reasons: [
-        "Specifically authorized fixture test artifact required before connect ready (T-US-021 / T-F11)",
+        "Specifically authorized fixture test artifact required before connect ready (T-US-021)",
       ],
     };
   }
