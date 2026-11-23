@@ -541,6 +541,14 @@ export const SoakProofKind = {
    * T-US-005 baseline-ID happy-path summary.
    */
   MAP_SITES_PAGES_EDITABLE_SOURCES: "map_sites_pages_editable_sources",
+  /**
+   * Connect Google Analytics 4 — complete F04 evidence set (T-F04).
+   * Scopes+identity, property→site bind, versioned event dictionary+owner+gaps,
+   * sample report request/rows/coverage, three measurement outcomes,
+   * READ_READY+next sync; unsafe claims refused; live NOT_WIRED. Distinct from
+   * T-US-007 ready-read/next-sync summary.
+   */
+  CONNECT_GOOGLE_ANALYTICS_4: "connect_google_analytics_4",
 } as const;
 
 export type SoakProofKindValue =
@@ -670,6 +678,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F01 requires CREATE_TRUSTED_LOCAL_WORKSPACE (complete F01 evidence set; live NOT_WIRED).
  * T-F02 requires CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH (complete F02 evidence set; live NOT_WIRED).
  * T-F03 requires MAP_SITES_PAGES_EDITABLE_SOURCES (complete F03 evidence set; live NOT_WIRED).
+ * T-F04 requires CONNECT_GOOGLE_ANALYTICS_4 (complete F04 evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -680,6 +689,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F01",
   "T-F02",
   "T-F03",
+  "T-F04",
   "T-F24",
   "T-US-047",
   "T-US-002",
@@ -1324,6 +1334,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH];
     case "T-F03":
       return [SoakProofKind.MAP_SITES_PAGES_EDITABLE_SOURCES];
+    case "T-F04":
+      return [SoakProofKind.CONNECT_GOOGLE_ANALYTICS_4];
     default:
       return [];
   }
@@ -1526,6 +1538,8 @@ export function mapProofToFixtureCases(
       return ["T-F02"];
     case SoakProofKind.MAP_SITES_PAGES_EDITABLE_SOURCES:
       return ["T-F03"];
+    case SoakProofKind.CONNECT_GOOGLE_ANALYTICS_4:
+      return ["T-F04"];
     default:
       return [];
   }

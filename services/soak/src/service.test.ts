@@ -29,7 +29,7 @@ describe("soak service (M9)", () => {
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(93);
+    expect(result.proofs).toHaveLength(94);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(
       result.proofs.every((p) =>
@@ -475,9 +475,14 @@ describe("soak service (M9)", () => {
         (p) => p.kind === SoakProofKind.MAP_SITES_PAGES_EDITABLE_SOURCES,
       ),
     ).toBe(true);
+    expect(
+      result.proofs.some(
+        (p) => p.kind === SoakProofKind.CONNECT_GOOGLE_ANALYTICS_4,
+      ),
+    ).toBe(true);
   });
 
-  it("compiles fixture ACCEPTED for complete proof sets including T-F03", async () => {
+  it("compiles fixture ACCEPTED for complete proof sets including T-F04", async () => {
     const harness = await runSoakRecoveryHarness({
       stateDir: dir,
       nowIso: "2026-11-21T18:00:00.000Z",
@@ -496,6 +501,7 @@ describe("soak service (M9)", () => {
       "T-F01",
       "T-F02",
       "T-F03",
+      "T-F04",
       "T-F24",
       "T-US-002",
       "T-US-006",
@@ -774,7 +780,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(105);
+    expect(soak.ownerReport().acceptedCases.length).toBe(106);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {

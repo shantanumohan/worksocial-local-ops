@@ -75,4 +75,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-F01 Create a trusted local workspace | Fixture **ACCEPTED** via `CREATE_TRUSTED_LOCAL_WORKSPACE` (complete F01 evidence; not live VERIFIED) |
 | T-F02 Choose folders and establish business truth | Fixture **ACCEPTED** via `CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH` (complete F02 evidence; not live VERIFIED) |
 | T-F03 Map sites, pages and editable sources | Fixture **ACCEPTED** via `MAP_SITES_PAGES_EDITABLE_SOURCES` (complete F03 evidence; not live VERIFIED) |
+| T-F04 Connect Google Analytics 4 | Fixture **ACCEPTED** via `CONNECT_GOOGLE_ANALYTICS_4` (complete F04 evidence; not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |
