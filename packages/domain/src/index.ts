@@ -1292,6 +1292,15 @@ export {
   type MapSitesPagesEditableSourcesDecision,
 } from "./map-sites-pages-editable-sources.js";
 export {
+  SitePageMapDecisionCode,
+  SITE_PAGE_EDITABLE_SOURCES_RELATED_CASE_IDS,
+  evaluateSitePageEditableSources,
+  type SitePageMapDecisionCodeValue,
+  type SitePageEditableSourcesInput,
+  type SitePageInventorySummary,
+  type SitePageEditableSourcesDecision,
+} from "./site-page-editable-sources.js";
+export {
   REQUIRED_GA4_GRANT_SCOPES,
   CONNECT_GOOGLE_ANALYTICS_4_RELATED_CASE_IDS,
   evaluateConnectGoogleAnalytics4,

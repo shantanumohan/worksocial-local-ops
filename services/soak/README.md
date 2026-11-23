@@ -102,3 +102,4 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-F19 Analyze performance and test a hypothesis | Fixture **ACCEPTED** via `ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS` (complete F19 evidence; not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |
 | T-US-056 honest outage hosted contact | Fixture **ACCEPTED** via `HONEST_OUTAGE_HOSTED_CONTACT_PATH` (not live VERIFIED) |
+| T-US-005 site/page/editable sources baseline | Fixture **ACCEPTED** via `SITE_PAGE_EDITABLE_SOURCES_BASELINE` (baseline ID happy-path; distinct from T-F03; not live VERIFIED) |

@@ -1288,5 +1288,13 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-US-043"]);
   });
 
+  it("maps T-US-005 to SITE_PAGE_EDITABLE_SOURCES_BASELINE only", () => {
+    expect(expectedProofsForFixtureCase("T-US-005")).toEqual([
+      SoakProofKind.SITE_PAGE_EDITABLE_SOURCES_BASELINE,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.SITE_PAGE_EDITABLE_SOURCES_BASELINE),
+    ).toEqual(["T-US-005"]);
+  });
 
 });

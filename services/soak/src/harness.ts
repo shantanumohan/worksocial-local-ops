@@ -197,6 +197,7 @@ import { proofTestSemanticSearchImproveNoResult } from "./test-semantic-search-i
 import { proofRunClaudeGeminiEvaluationSuites } from "./run-claude-gemini-evaluation-suites-proof.js";
 import { proofOperateDailyOwnerReview } from "./operate-daily-owner-review-proof.js";
 import { proofUnsafeFoldersUnresolvedFactsBlocked } from "./unsafe-folders-unresolved-facts-proof.js";
+import { proofSitePageEditableSourcesBaseline } from "./site-page-editable-sources-proof.js";
 import { proofDiagnoseRepairDefectResolvedOrHandoff } from "./diagnose-repair-defect-proof.js";
 import { proofExactFinancialBoundariesPreserved } from "./exact-financial-boundaries-proof.js";
 import { proofPortableAnalysisArtifact } from "./portable-analysis-artifact-proof.js";
@@ -1008,6 +1009,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofAfterHoursHandoffAcknowledged(nowPlus(nowIso, 1_200_000)));
   proofs.push(
     proofUnsafeFoldersUnresolvedFactsBlocked(nowPlus(nowIso, 1_210_000)),
+    proofSitePageEditableSourcesBaseline(nowPlus(nowIso, 1_220_000)),
   );
   const allPassed = proofs.every((p) => p.passed);
   return {
@@ -1134,6 +1136,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-016 fixture ACCEPTED via claude_runtime_eval_auth_separated only — not live VERIFIED",
       "T-US-003 fixture ACCEPTED via business_truth_folders_restore_secrets_excluded only — not live VERIFIED",
       "T-US-004 fixture ACCEPTED via unsafe_folders_unresolved_facts_blocked only — not live VERIFIED",
+      "T-US-005 fixture ACCEPTED via site_page_editable_sources_baseline only — not live VERIFIED",
     ],
   };
 }
