@@ -1029,4 +1029,13 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.CONNECT_GEMINI_INDEPENDENT_TESTING),
     ).toEqual(["T-F09"]);
   });
+
+  it("maps T-F10 to MAP_CRM_FORMS_BOOKING_TRUTH only", () => {
+    expect(expectedProofsForFixtureCase("T-F10")).toEqual([
+      SoakProofKind.MAP_CRM_FORMS_BOOKING_TRUTH,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.MAP_CRM_FORMS_BOOKING_TRUTH),
+    ).toEqual(["T-F10"]);
+  });
 });

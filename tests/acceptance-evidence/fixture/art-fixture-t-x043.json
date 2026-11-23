@@ -8,8 +8,8 @@
     "optimization_breaks_cta_journey_fails"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x043.json",
-  "createdAtIso": "2026-11-23T03:16:04.439Z",
+  "createdAtIso": "2026-11-23T03:23:46.681Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x043-23e59e0a2623"
+  "uniqueSourceArtifactId": "art-fixture-t-x043-8aea05b09109"
 }

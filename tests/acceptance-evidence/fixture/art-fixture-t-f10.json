@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f10",
+  "caseId": "T-F10",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F10 (Map CRM, forms and booking truth)\nproof=map_crm_forms_booking_truth applyCount=1 :: complete F10 evidence package → MAP_CRM_FORMS_BOOKING_TRUTH_EVIDENCE_RECORDED; environment binding; form→CRM contract; canary grant/retention; booking capability matrix; correlated journey; failure/recovery passed; crmMapVerifiedLive=false; live Zoho NOT_WIRED | environmentBinding=null → ENVIRONMENT_BINDING_REQUIRED | formCrmContract=null → FORM_CRM_CONTRACT_REQUIRED | canaryGrantRetention=null → CANARY_GRANT_RETENTION_REQUIRED | bookingCapabilityMatrix=null → BOOKING_CAPABILITY_MATRIX_REQUIRED | correlatedJourney=null → CORRELATED_JOURNEY_REQUIRED | failureRecovery=null → FAILURE_RECOVERY_REQUIRED | attemptBookingLiveMutate → BOOKING_LIVE_MUTATE_REFUSED | countSyntheticInCommerce → COMMERCE_POLLUTION_REFUSED | claimLiveVerifiedMap → FALSE_LIVE_VERIFIED_MAP_REFUSED | requestLiveZohoWiring → LIVE_ZOHO_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveZohoWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-019 (failure/recovery readiness summary), T-US-039 (continuous cadence), and T-US-040 (thank-you ≠ CRM) — complete F10 flow evidence package | proofRecordedAt=2026-11-21T19:16:30.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "map_crm_forms_booking_truth"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f10.json",
+  "createdAtIso": "2026-11-23T03:23:46.681Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f10-8aea05b09109"
+}

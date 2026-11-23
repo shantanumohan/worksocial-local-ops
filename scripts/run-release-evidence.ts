@@ -449,6 +449,9 @@ async function main(): Promise<void> {
     const hasTf09Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-F09",
     );
+    const hasTf10Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-F10",
+    );
     const expectedAccepted = [
       "T-F01",
       "T-F02",
@@ -458,6 +461,7 @@ async function main(): Promise<void> {
       "T-F06",
       "T-F08",
       "T-F09",
+      "T-F10",
       "T-F24",
       "T-US-002",
       "T-US-006",
@@ -678,7 +682,8 @@ async function main(): Promise<void> {
         hasTf06Accepted &&
         hasTf08Accepted &&
         hasTf09Accepted &&
-        accepted.length === 110 &&
+        hasTf10Accepted &&
+        accepted.length === 111 &&
         JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
@@ -693,7 +698,7 @@ async function main(): Promise<void> {
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-F09 connect-gemini-independent-testing fixture ACCEPTED (total 110). Live VERIFIED forbidden. Not R1-complete.",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-F10 map-crm-forms-booking-truth fixture ACCEPTED (total 111). Live VERIFIED forbidden. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {

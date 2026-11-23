@@ -1312,6 +1312,19 @@ export {
   type ConnectGeminiIndependentTestingDecision,
 } from "./connect-gemini-independent-testing.js";
 export {
+  MAP_CRM_FORMS_BOOKING_TRUTH_RELATED_CASE_IDS,
+  evaluateMapCrmFormsBookingTruth,
+  type CrmEnvironmentBinding,
+  type FormCrmFieldMapping,
+  type FormCrmContract,
+  type CanaryGrantRetention,
+  type BookingCapabilityMatrix,
+  type CorrelatedJourneyEvidence,
+  type FailureRecoveryEvidence,
+  type MapCrmFormsBookingTruthInput,
+  type MapCrmFormsBookingTruthDecision,
+} from "./map-crm-forms-booking-truth.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
