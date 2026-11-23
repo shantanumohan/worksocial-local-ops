@@ -1215,6 +1215,25 @@ export {
   type ChooseFoldersEstablishBusinessTruthDecision,
 } from "./choose-folders-establish-business-truth.js";
 export {
+  SourceBindingKind,
+  JourneyDestinationKind,
+  REQUIRED_JOURNEY_DESTINATION_KINDS,
+  MAP_SITES_PAGES_EDITABLE_SOURCES_RELATED_CASE_IDS,
+  evaluateMapSitesPagesEditableSources,
+  type SourceBindingKindValue,
+  type JourneyDestinationKindValue,
+  type DomainBoundaryRecord,
+  type SiteInventoryRecord,
+  type PilotPageSnapshot,
+  type SourceBindingRecord,
+  type JourneyGraphNode,
+  type ScopeGrantDraft,
+  type BaselineCheckResult,
+  type BaselineEvidenceRecord,
+  type MapSitesPagesEditableSourcesInput,
+  type MapSitesPagesEditableSourcesDecision,
+} from "./map-sites-pages-editable-sources.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

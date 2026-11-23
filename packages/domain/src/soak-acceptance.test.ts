@@ -971,4 +971,13 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-F02"]);
   });
+
+  it("maps T-F03 to MAP_SITES_PAGES_EDITABLE_SOURCES only", () => {
+    expect(expectedProofsForFixtureCase("T-F03")).toEqual([
+      SoakProofKind.MAP_SITES_PAGES_EDITABLE_SOURCES,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.MAP_SITES_PAGES_EDITABLE_SOURCES),
+    ).toEqual(["T-F03"]);
+  });
 });

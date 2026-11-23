@@ -533,6 +533,14 @@ export const SoakProofKind = {
    */
   CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH:
     "choose_folders_establish_business_truth",
+  /**
+   * Map sites, pages and editable sources — complete F03 evidence set (T-F03).
+   * Domain/URL inventory + exclusions, timestamped HTML/screenshot, source
+   * binding + deploy target, journey graph with owners, scope grant, baseline
+   * ID + checks; unsafe claims refused; live NOT_WIRED. Distinct from
+   * T-US-005 baseline-ID happy-path summary.
+   */
+  MAP_SITES_PAGES_EDITABLE_SOURCES: "map_sites_pages_editable_sources",
 } as const;
 
 export type SoakProofKindValue =
@@ -661,6 +669,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-059 requires SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED (shared briefs redacted; private evidence retained; live NOT_WIRED).
  * T-F01 requires CREATE_TRUSTED_LOCAL_WORKSPACE (complete F01 evidence set; live NOT_WIRED).
  * T-F02 requires CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH (complete F02 evidence set; live NOT_WIRED).
+ * T-F03 requires MAP_SITES_PAGES_EDITABLE_SOURCES (complete F03 evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -670,6 +679,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X066",
   "T-F01",
   "T-F02",
+  "T-F03",
   "T-F24",
   "T-US-047",
   "T-US-002",
@@ -1312,6 +1322,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CREATE_TRUSTED_LOCAL_WORKSPACE];
     case "T-F02":
       return [SoakProofKind.CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH];
+    case "T-F03":
+      return [SoakProofKind.MAP_SITES_PAGES_EDITABLE_SOURCES];
     default:
       return [];
   }
@@ -1512,6 +1524,8 @@ export function mapProofToFixtureCases(
       return ["T-F01"];
     case SoakProofKind.CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH:
       return ["T-F02"];
+    case SoakProofKind.MAP_SITES_PAGES_EDITABLE_SOURCES:
+      return ["T-F03"];
     default:
       return [];
   }
