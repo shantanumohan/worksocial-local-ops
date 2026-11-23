@@ -1425,6 +1425,20 @@ export {
 } from "./analyze-performance-and-test-hypothesis.js";
 
 export {
+  REVIEW_REVISE_AND_RELEASE_A_CHANGE_RELATED_CASE_IDS,
+  evaluateReviewReviseAndReleaseAChange,
+  type ReviewReviseAndReleaseAChangeInput,
+  type ReviewReviseAndReleaseAChangeDecision,
+  type ReviewQueueSelection,
+  type WhyProposedEvidence,
+  type BeforeAfterCompare,
+  type SourceDrawer,
+  type InspectedGate,
+  type F18QaBundle,
+  type F18DecisionRecord,
+  type F18ReleaseTrack,
+} from "./review-revise-and-release-a-change.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

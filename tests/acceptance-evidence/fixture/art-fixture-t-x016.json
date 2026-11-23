@@ -8,8 +8,8 @@
     "stop_before_dispatch_no_mutation"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x016.json",
-  "createdAtIso": "2026-11-23T04:25:55.128Z",
+  "createdAtIso": "2026-11-23T04:31:11.730Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x016-7ac677b2bb7c"
+  "uniqueSourceArtifactId": "art-fixture-t-x016-4664aea83aa4"
 }
