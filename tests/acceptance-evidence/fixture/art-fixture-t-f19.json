@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f19",
+  "caseId": "T-F19",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F19 (Analyze performance and test a hypothesis)\nproof=analyze_performance_and_test_hypothesis applyCount=1 :: complete F19 evidence package → ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS_EVIDENCE_RECORDED; analysis definition; metric definitions/denominators; view; inspection; discrepancy; reconciliation; hypothesis+measurement; experiment; redacted portable brief; analysisVerifiedLive=false; live NOT_WIRED | analysisDefinition=null → ANALYSIS_DEFINITION_REQUIRED | metricDefinitions=null → METRIC_DEFINITIONS_REQUIRED | viewSelection=null → VIEW_SELECTION_REQUIRED | inspection=null → INSPECTION_REQUIRED | discrepancy=null → DISCREPANCY_INVESTIGATION_REQUIRED | reconciliation=null → RECONCILIATION_WORKSHEET_REQUIRED | hypothesisPlan=null → HYPOTHESIS_MEASUREMENT_PLAN_REQUIRED | experiment=null → EXPERIMENT_RECORD_REQUIRED | portableBrief=null → PORTABLE_DECISION_BRIEF_REQUIRED | claimVanityScoreDecision → VANITY_SCORE_DECISION_REFUSED | claimLiveVerifiedAnalysis → FALSE_LIVE_VERIFIED_ANALYSIS_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-037 (portable analysis artifact summary), T-US-031 (paid-media recommendation), T-US-058/T-X039 (metric denominators honesty alone), and T-X060 (currency/timezone mismatch) — complete F19 flow evidence package | proofRecordedAt=2026-11-21T19:18:00.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "analyze_performance_and_test_hypothesis"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f19.json",
+  "createdAtIso": "2026-11-23T04:25:55.128Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f19-7ac677b2bb7c"
+}

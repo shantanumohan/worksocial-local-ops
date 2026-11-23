@@ -145,6 +145,7 @@ import { proofCreateAndDistributeOriginalCampaign } from "./create-and-distribut
 import { proofReviewPaidMediaRecommendations } from "./review-paid-media-recommendations-proof.js";
 import { proofVerifyFormToCrmJourneyContinuously } from "./verify-form-to-crm-journey-continuously-proof.js";
 import { proofHandleAfterHoursMessagesAndTakeover } from "./handle-after-hours-messages-and-takeover-proof.js";
+import { proofAnalyzePerformanceAndTestHypothesis } from "./analyze-performance-and-test-hypothesis-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -941,6 +942,9 @@ export async function runSoakRecoveryHarness(input: {
   );
   proofs.push(
     proofHandleAfterHoursMessagesAndTakeover(nowPlus(nowIso, 1_070_000)),
+  );
+  proofs.push(
+    proofAnalyzePerformanceAndTestHypothesis(nowPlus(nowIso, 1_080_000)),
   );
   const allPassed = proofs.every((p) => p.passed);
   return {

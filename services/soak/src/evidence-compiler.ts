@@ -159,6 +159,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-F16": "Review Google and ChatGPT paid-media recommendations",
   "T-F20": "Verify a form-to-CRM journey continuously",
   "T-F22": "Handle after-hours messages and take over",
+  "T-F19": "Analyze performance and test a hypothesis",
 };
 
 function relatedProofsForCase(
@@ -396,6 +397,7 @@ export function compileAcceptanceEvidence(
     "T-F16 fixture ACCEPTED only via REVIEW_PAID_MEDIA_RECOMMENDATIONS",
     "T-F20 fixture ACCEPTED only via VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY",
     "T-F22 fixture ACCEPTED only via HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER",
+    "T-F19 fixture ACCEPTED only via ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

@@ -1409,6 +1409,22 @@ export {
   type AcknowledgedMorningHandoffEvidence,
 } from "./handle-after-hours-messages-and-takeover.js";
 export {
+  ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS_RELATED_CASE_IDS,
+  evaluateAnalyzePerformanceAndTestHypothesis,
+  type AnalyzePerformanceAndTestHypothesisInput,
+  type AnalyzePerformanceAndTestHypothesisDecision,
+  type AnalysisScopeDefinition,
+  type MetricDefinition,
+  type AnalysisViewSelection,
+  type ChannelOrPageInspection,
+  type DiscrepancyInvestigation,
+  type ReconciliationWorksheet,
+  type HypothesisMeasurementPlan,
+  type ExperimentRecord,
+  type PortableDecisionBrief,
+} from "./analyze-performance-and-test-hypothesis.js";
+
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
