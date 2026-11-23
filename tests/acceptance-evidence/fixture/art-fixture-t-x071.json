@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x071",
+  "caseId": "T-X071",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X071 (Local host offline public discovery — honest unavailability)\nproof=host_offline_public_discovery_unavailable applyCount=1 :: Host ONLINE + prior success → AVAILABLE; chatgptAdsAccess=ACCESS_BLOCKED | Host OFFLINE → UNAVAILABLE/HOST_OFFLINE; activeCoverageClaimed=false; no invented rank | Claimed AVAILABLE while OFFLINE → CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "host_offline_public_discovery_unavailable"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x071.json",
+  "createdAtIso": "2026-11-23T07:37:24.105Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x071-8dab75955e54"
+}

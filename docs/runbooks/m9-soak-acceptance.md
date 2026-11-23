@@ -308,4 +308,6 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X068** maps only to `THIRTY_ALERTS_ONE_OUTAGE_GROUPED` (thirty alerts sharing one outageKey → one grouped incident; not live VERIFIED).
 
-**T-X064** maps only to `SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP` (redirect + DNS rebind blocked every hop; fixture only; not live VERIFIED).
+**T-X064**, **T-X071** maps only to `SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP` (redirect + DNS rebind blocked every hop; fixture only; not live VERIFIED).
+
+**T-X071** maps only to `HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE` (offline host → honest UNAVAILABLE/HOST_OFFLINE; not live VERIFIED).

@@ -106,6 +106,7 @@ import { proofReplySentCrmReconcilesNoResend } from "./reply-sent-crm-reconcile-
 import { proofUnknownPolicyQuestionEscalatesWithoutPromise } from "./unknown-policy-question-proof.js";
 import { proofAutomatedResponseLoopBoundedHandoff } from "./automated-response-loop-proof.js";
 import { proofSsrfRedirectDnsRebindBlockedEveryHop } from "./ssrf-redirect-dns-rebind-proof.js";
+import { proofHostOfflinePublicDiscoveryUnavailable } from "./host-offline-public-discovery-proof.js";
 import { proofDuplicatePlatformAttributionOneBooking } from "./duplicate-platform-attribution-proof.js";
 import { proofCurrencyTimezoneMismatchNoSilentSum } from "./currency-timezone-mismatch-proof.js";
 import { proofValidatedPayloadNotCollectedSeparateStates } from "./validated-payload-not-collected-proof.js";
@@ -1065,6 +1066,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofSsrfRedirectDnsRebindBlockedEveryHop(nowPlus(nowIso, 1_390_000)),
   );
+  proofs.push(
+    proofHostOfflinePublicDiscoveryUnavailable(nowPlus(nowIso, 1_400_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1205,6 +1209,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X068 fixture ACCEPTED via thirty_alerts_one_outage_grouped only — not live VERIFIED",
       "T-X072 fixture ACCEPTED via customer_data_eval_redaction_blocks only — not live VERIFIED",
       "T-X064 fixture ACCEPTED via ssrf_redirect_dns_rebind_blocked_every_hop only — not live VERIFIED",
+      "T-X071 fixture ACCEPTED via host_offline_public_discovery_unavailable only — not live VERIFIED",
     ],
   };
 }

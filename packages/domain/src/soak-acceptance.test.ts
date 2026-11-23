@@ -1437,4 +1437,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X064"]);
   });
 
+  it("maps T-X071 to HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE only", () => {
+    expect(expectedProofsForFixtureCase("T-X071")).toEqual([
+      SoakProofKind.HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE,
+      ),
+    ).toEqual(["T-X071"]);
+  });
+
 });

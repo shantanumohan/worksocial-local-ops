@@ -936,6 +936,19 @@ export {
   type SsrfHopVerdict,
 } from "./ssrf-redirect-dns-rebind.js";
 export {
+  HostDiscoveryLiveness,
+  PublicDiscoveryAvailability,
+  PublicDiscoveryUnavailableReason,
+  PublicDiscoveryDecisionCode,
+  evaluateHostOfflinePublicDiscovery,
+  HOST_OFFLINE_PUBLIC_DISCOVERY_RELATED_CASE_IDS,
+  type HostDiscoveryLivenessValue,
+  type PublicDiscoveryAvailabilityValue,
+  type PublicDiscoveryUnavailableReasonValue,
+  type PublicDiscoveryDecisionCodeValue,
+  type PublicDiscoveryObservation,
+} from "./host-offline-public-discovery.js";
+export {
   assertEvalPromptHasNoCustomerPii,
   containsRawCustomerPii,
   prepareCustomerDataForEvaluation,
