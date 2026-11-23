@@ -880,6 +880,11 @@ export const SoakProofKind = {
    * the gap and replace UI stateDigest.
    */
   SSE_GAP_FULL_STATE_RESYNC: "sse_gap_full_state_resync",
+  /**
+   * Keyboard review and focus restore after dialog close (T-X061).
+   * Overlay captures trigger; Tab trap; close restores or FOCUS_LOST.
+   */
+  KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG: "keyboard_focus_restore_after_dialog",
 } as const;
 
 export type SoakProofKindValue =
@@ -989,6 +994,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X047 requires LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS.
  * T-X051 requires WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH.
  * T-X062 requires SSE_GAP_FULL_STATE_RESYNC.
+ * T-X061 requires KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG.
  * T-US-012 requires GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED (test ≠ production).
  * T-US-015 requires CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY (runtime ≠ API readiness; EVAL_ONLY).
 * T-US-016 requires CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED.
@@ -1162,6 +1168,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X046",
   "T-X047",
   "T-X051",
+  "T-X061",
   "T-X062",
   "T-US-011",
   "T-US-012",
@@ -1706,6 +1713,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS];
     case "T-X051":
       return [SoakProofKind.WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH];
+    case "T-X061":
+      return [SoakProofKind.KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG];
     case "T-X062":
       return [SoakProofKind.SSE_GAP_FULL_STATE_RESYNC];
     case "T-US-011":
@@ -1990,6 +1999,8 @@ export function mapProofToFixtureCases(
       return ["T-X047"];
     case SoakProofKind.WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH:
       return ["T-X051"];
+    case SoakProofKind.KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG:
+      return ["T-X061"];
     case SoakProofKind.SSE_GAP_FULL_STATE_RESYNC:
       return ["T-X062"];
     case SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED:
