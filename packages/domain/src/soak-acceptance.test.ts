@@ -1248,5 +1248,14 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-US-039"]);
   });
 
+  it("maps T-US-043 to AFTER_HOURS_HANDOFF_ACKNOWLEDGED only", () => {
+    expect(expectedProofsForFixtureCase("T-US-043")).toEqual([
+      SoakProofKind.AFTER_HOURS_HANDOFF_ACKNOWLEDGED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.AFTER_HOURS_HANDOFF_ACKNOWLEDGED),
+    ).toEqual(["T-US-043"]);
+  });
+
 
 });

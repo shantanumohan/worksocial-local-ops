@@ -199,6 +199,7 @@ import { proofExactFinancialBoundariesPreserved } from "./exact-financial-bounda
 import { proofPortableAnalysisArtifact } from "./portable-analysis-artifact-proof.js";
 import { proofTrustedWorkspaceReadinessBlockersNextActions } from "./trusted-workspace-readiness-proof.js";
 import { proofFormCrmContinuousVerifyCadenceHeartbeat } from "./form-crm-continuous-verify-proof.js";
+import { proofAfterHoursHandoffAcknowledged } from "./after-hours-handoff-ack-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -995,6 +996,7 @@ export async function runSoakRecoveryHarness(input: {
     proofFormCrmContinuousVerifyCadenceHeartbeat(nowPlus(nowIso, 1_180_000)),
   );
   proofs.push(proofHonestOutageHostedContact(nowPlus(nowIso, 1_190_000)));
+  proofs.push(proofAfterHoursHandoffAcknowledged(nowPlus(nowIso, 1_200_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1116,6 +1118,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-037 fixture ACCEPTED via portable_analysis_artifact only — not live VERIFIED",
       "T-US-001 fixture ACCEPTED via trusted_workspace_readiness_blockers_next_actions only — not live VERIFIED",
       "T-US-039 fixture ACCEPTED via form_crm_continuous_verify_cadence_heartbeat only — not live VERIFIED",
+      "T-US-043 fixture ACCEPTED via after_hours_handoff_acknowledged only — not live VERIFIED",
     ],
   };
 }

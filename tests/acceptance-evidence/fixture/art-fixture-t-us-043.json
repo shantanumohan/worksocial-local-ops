@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-043",
+  "caseId": "T-US-043",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-043 (After-hours + takeover — acknowledged handoff)\nproof=after_hours_handoff_acknowledged applyCount=1 :: Empty coverageWindows → OUTSIDE_COVERAGE (after-hours fail-closed) | Full-day coverage → grounded concierge draft allowed | Human/sensitive request → HUMAN_REQUESTED (no auto-reply) | createHandoff → acknowledged=false; status=handed_off; agentSendAllowed=false | acknowledgeHandoff → acknowledged=true at 2026-11-21T19:20:00.000Z | Post-handoff draft → CONVERSATION_TAKEOVER (no competing agent reply) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "after_hours_handoff_acknowledged"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-043.json",
+  "createdAtIso": "2026-11-23T05:32:29.880Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-043-76157fd8728d"
+}
