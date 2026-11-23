@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f04",
+  "caseId": "T-F04",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F04 (Connect Google Analytics 4)\nproof=connect_google_analytics_4 applyCount=1 :: complete F04 evidence package → CONNECT_GOOGLE_ANALYTICS_4_EVIDENCE_RECORDED; scopes+identity; property→site bind; versioned event dictionary+owner+gaps; sample report request/rows/coverage; three measurement outcomes; READ_READY+next sync; ga4VerifiedLive=false; live NOT_WIRED | empty connection identity → CONNECTION_IDENTITY_REQUIRED | UA property kind → WRONG_PROPERTY_KIND_REFUSED | empty sample report → SAMPLE_REPORT_REQUIRED | unmapped event without gapReason → EVENT_DICTIONARY_REQUIRED | attemptWriteSave → WRITE_SAVE_REFUSED | claimDeliveredConversionFromDebug → DEBUG_DELIVERED_CONVERSION_CLAIM_REFUSED | claimLiveVerifiedGa4 → FALSE_LIVE_VERIFIED_GA4_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-007 (ready-read/next-sync summary) — complete F04 flow evidence package | proofRecordedAt=2026-11-21T19:15:40.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "connect_google_analytics_4"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f04.json",
+  "createdAtIso": "2026-11-23T01:59:31.568Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f04-9364817e61c3"
+}

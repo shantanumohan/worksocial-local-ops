@@ -980,4 +980,13 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.MAP_SITES_PAGES_EDITABLE_SOURCES),
     ).toEqual(["T-F03"]);
   });
+
+  it("maps T-F04 to CONNECT_GOOGLE_ANALYTICS_4 only", () => {
+    expect(expectedProofsForFixtureCase("T-F04")).toEqual([
+      SoakProofKind.CONNECT_GOOGLE_ANALYTICS_4,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CONNECT_GOOGLE_ANALYTICS_4),
+    ).toEqual(["T-F04"]);
+  });
 });

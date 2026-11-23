@@ -1234,6 +1234,21 @@ export {
   type MapSitesPagesEditableSourcesDecision,
 } from "./map-sites-pages-editable-sources.js";
 export {
+  REQUIRED_GA4_GRANT_SCOPES,
+  CONNECT_GOOGLE_ANALYTICS_4_RELATED_CASE_IDS,
+  evaluateConnectGoogleAnalytics4,
+  type Ga4ConnectionIdentity,
+  type Ga4PropertyToSiteBinding,
+  type Ga4EventDictionaryEntry,
+  type Ga4EventDictionary,
+  type Ga4SampleReportRow,
+  type Ga4SampleReport,
+  type Ga4MeasurementTests,
+  type Ga4ReadReadyStatus,
+  type ConnectGoogleAnalytics4Input,
+  type ConnectGoogleAnalytics4Decision,
+} from "./connect-google-analytics-4.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
