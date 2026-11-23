@@ -440,7 +440,7 @@ Required evidence:
 - Adjudication plus linked backlog item.
 
 ### T-F18 - Review, revise and release a change
-Level: full_stack_e2e | Status: NOT_RUN
+Level: full_stack_e2e | Status: ACCEPTED *(fixture ACCEPTED — review revise and release a change complete F18 evidence; not sandbox/prod VERIFIED)*
 Requirements: RQ-008, RQ-009, RQ-011 | Flows: F18 | Screens: SC-05
 Environment: controlled_local_stack_then_authorized_canary_where_required
 
@@ -840,6 +840,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-F22** is fixture ACCEPTED only via the handle after-hours messages and take over complete F22 evidence proof (`HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER`) — response policy (coverage hours, allowed questions, escalation owner), inbound conversation + message versions, sources and allowed-action evaluation, message receipt + CRM lead link, ownership audit takeover, and acknowledged morning handoff; competing replies, false live-verified claims, and live provider wiring refused; live provider wiring stays **NOT_WIRED**. Distinct from T-US-043 acknowledged handoff summary, T-US-044/T-X053 takeover cancels unsent, T-X055 unknown-policy escalate, and T-X056 bounded auto-reply loop. Never silently VERIFIED for live.
 
+**T-F18** is fixture ACCEPTED only via the review, revise and release a change complete F18 evidence proof (`REVIEW_REVISE_AND_RELEASE_A_CHANGE`) — review-queue selection, why-proposed evidence summary, human-readable before/after + source drawer, technical/factual/policy gate inspection, QA bundle, independent decision bound to exact revision + policy, and release track/verify (receipt or blocked exception); self-approval, stale approval, production write, false live-verified claims, and live provider wiring refused; live provider wiring stays **NOT_WIRED**. Distinct from T-US-035 receipt-or-blocked summary, T-US-036/T-X019 stale approval, and T-US-054/T-X018 self-approval alone. Never silently VERIFIED for live.
+
 **T-F19** is fixture ACCEPTED only via the analyze performance and test a hypothesis complete F19 evidence proof (`ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS`) — saved analysis definition (site/period/comparison/timezone), metric definitions with honest denominators, acquisition/journey/revenue view, channel/page inspection, discrepancy investigation with annotations and drill-through, reconciliation worksheet, hypothesis + measurement plan, experiment record, and redacted portable decision brief with a supported decision (not a vanity score); vanity-score claims, false live-verified claims, and live provider wiring refused; live provider wiring stays **NOT_WIRED**. Distinct from T-US-037 portable-artifact summary, T-US-031 paid-media recommendation, T-US-058/T-X039 metric denominators honesty alone, and T-X060 currency/timezone mismatch. Never silently VERIFIED for live.
 
 **T-F24 / T-US-047** are fixture ACCEPTED only via the recover / rotate / reconcile / offboard proof (`RECOVER_ROTATE_RECONCILE`) with the complete F24 evidence set (health timeline, capability stop, rotation record without secrets, reconciliation receipts, recovery test, offboarding manifest + residual obligations). Live provider revoke remains **NOT_WIRED**; never silently VERIFIED for live.
@@ -1036,9 +1038,9 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 
 | Family | Count | Status |
 |---|---:|---|
-| T-F (full_stack_e2e) | 26 | 7 NOT_RUN + 19 fixture ACCEPTED (T-F01, T-F02, T-F03, T-F04, T-F05, T-F06, T-F08, T-F09, T-F10, T-F11, T-F12, T-F13, T-F14, T-F15, T-F16, T-F19, T-F20, T-F22, T-F24) |
+| T-F (full_stack_e2e) | 26 | 7 NOT_RUN + 19 fixture ACCEPTED (T-F01, T-F02, T-F03, T-F04, T-F05, T-F06, T-F08, T-F09, T-F10, T-F11, T-F12, T-F13, T-F14, T-F15, T-F16, T-F18, T-F19, T-F20, T-F22, T-F24) |
 | T-US (behavior_acceptance) | 60 | 17 NOT_RUN + 43 fixture ACCEPTED (T-US-002, T-US-006, T-US-008, T-US-010, T-US-012, T-US-015, T-US-017, T-US-018, T-US-019, T-US-020, T-US-021, T-US-022, T-US-023, T-US-024, T-US-025, T-US-026, T-US-027, T-US-028, T-US-029, T-US-030, T-US-031, T-US-033, T-US-034, T-US-035, T-US-036, T-US-038, T-US-040, T-US-042, T-US-044, T-US-046, T-US-047, T-US-048, T-US-049, T-US-050, T-US-051, T-US-052, T-US-053, T-US-054, T-US-055, T-US-057, T-US-058, T-US-059, T-US-060) |
 | T-X (platform/security/resilience) | 73 | 14 NOT_RUN + 59 fixture ACCEPTED (T-X001, T-X002, T-X003, T-X004, T-X005, T-X006, T-X007, T-X008, T-X009, T-X010, T-X011, T-X012, T-X013, T-X014, T-X015, T-X016, T-X017, T-X018, T-X019, T-X020, T-X021, T-X022, T-X023, T-X024, T-X025, T-X026, T-X027, T-X028, T-X029, T-X030, T-X031, T-X032, T-X033, T-X037, T-X038, T-X039, T-X040, T-X043, T-X044, T-X045, T-X048, T-X049, T-X050, T-X052, T-X053, T-X054, T-X055, T-X056, T-X057, T-X058, T-X059, T-X060, T-X063, T-X065, T-X066, T-X069, T-X070, T-X073) |
-| **Total** | **159** | **39 NOT_RUN + 120 fixture ACCEPTED** |
+| **Total** | **159** | **38 NOT_RUN + 121 fixture ACCEPTED** |
 
 Fixture ACCEPTED ≠ sandbox-verified ≠ authorized-production VERIFIED. Never silently VERIFIED for live. External effects for the M9 fixture harness: **NONE**.

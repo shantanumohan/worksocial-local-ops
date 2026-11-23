@@ -146,6 +146,7 @@ import { proofReviewPaidMediaRecommendations } from "./review-paid-media-recomme
 import { proofVerifyFormToCrmJourneyContinuously } from "./verify-form-to-crm-journey-continuously-proof.js";
 import { proofHandleAfterHoursMessagesAndTakeover } from "./handle-after-hours-messages-and-takeover-proof.js";
 import { proofAnalyzePerformanceAndTestHypothesis } from "./analyze-performance-and-test-hypothesis-proof.js";
+import { proofReviewReviseAndReleaseAChange } from "./review-revise-and-release-a-change-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -946,6 +947,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofAnalyzePerformanceAndTestHypothesis(nowPlus(nowIso, 1_080_000)),
   );
+  proofs.push(
+    proofReviewReviseAndReleaseAChange(nowPlus(nowIso, 1_090_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1055,6 +1059,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-F14 fixture ACCEPTED via turn_demand_into_page_improvement only — not live VERIFIED",
       "T-F15 fixture ACCEPTED via create_and_distribute_original_campaign only — not live VERIFIED",
       "T-F16 fixture ACCEPTED via review_paid_media_recommendations only — not live VERIFIED",
+      "T-F18 fixture ACCEPTED via review_revise_and_release_a_change only — not live VERIFIED",
     ],
   };
 }

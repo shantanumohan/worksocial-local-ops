@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f18",
+  "caseId": "T-F18",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F18 (Review, revise and release a change)\nproof=review_revise_and_release_a_change applyCount=1 :: complete F18 evidence package → REVIEW_REVISE_AND_RELEASE_A_CHANGE_EVIDENCE_RECORDED; review-queue selection; why-proposed; before/after + source drawer; technical/factual/policy gates; QA; independent decision bound to revision+policy; release track/verify; releaseVerifiedLive=false; live NOT_WIRED | reject + blockedException → BLOCKED_EXCEPTION_TRACKED with FACTUAL_GATE_CONFLICT | queueSelection=null → REVIEW_QUEUE_SELECTION_REQUIRED | whyProposed=null → WHY_PROPOSED_EVIDENCE_REQUIRED | beforeAfter=null → BEFORE_AFTER_COMPARE_REQUIRED | sourceDrawer=null → SOURCE_DRAWER_REQUIRED | gateInspection=null → GATE_INSPECTION_REQUIRED | qa=null → QA_BUNDLE_REQUIRED | decision=null → DECISION_RECORD_REQUIRED | self-approval → SELF_APPROVAL_FORBIDDEN | revisionChangedAfterDecision → STALE_APPROVAL_INVALIDATED | releaseTrack=null → RELEASE_TRACK_REQUIRED | attemptProductionWrite → PRODUCTION_WRITE_REFUSED | claimLiveVerifiedRelease → FALSE_LIVE_VERIFIED_RELEASE_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-035 (review/revise/release receipt-or-blocked summary), T-US-036/T-X019 (stale approval), and T-US-054/T-X018 (self-approval alone) — complete F18 flow evidence package | proofRecordedAt=2026-11-21T19:18:10.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "review_revise_and_release_a_change"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f18.json",
+  "createdAtIso": "2026-11-23T04:31:11.730Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f18-4664aea83aa4"
+}

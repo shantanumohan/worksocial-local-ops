@@ -160,6 +160,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-F20": "Verify a form-to-CRM journey continuously",
   "T-F22": "Handle after-hours messages and take over",
   "T-F19": "Analyze performance and test a hypothesis",
+  "T-F18": "Review, revise and release a change",
 };
 
 function relatedProofsForCase(
@@ -398,6 +399,7 @@ export function compileAcceptanceEvidence(
     "T-F20 fixture ACCEPTED only via VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY",
     "T-F22 fixture ACCEPTED only via HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER",
     "T-F19 fixture ACCEPTED only via ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS",
+    "T-F18 fixture ACCEPTED only via REVIEW_REVISE_AND_RELEASE_A_CHANGE",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

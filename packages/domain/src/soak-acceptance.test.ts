@@ -1128,4 +1128,16 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-F19"]);
   });
 
+
+  it("maps T-F18 to REVIEW_REVISE_AND_RELEASE_A_CHANGE only", () => {
+    expect(expectedProofsForFixtureCase("T-F18")).toEqual([
+      SoakProofKind.REVIEW_REVISE_AND_RELEASE_A_CHANGE,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.REVIEW_REVISE_AND_RELEASE_A_CHANGE,
+      ),
+    ).toEqual(["T-F18"]);
+  });
+
 });

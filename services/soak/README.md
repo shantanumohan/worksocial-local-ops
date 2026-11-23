@@ -87,6 +87,7 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-F14 Turn demand into a page improvement | Fixture **ACCEPTED** via `TURN_DEMAND_INTO_PAGE_IMPROVEMENT` (complete F14 evidence; not live VERIFIED) |
 | T-F15 Create and distribute an original campaign | Fixture **ACCEPTED** via `CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN` (complete F15 evidence; not live VERIFIED) |
 | T-F16 Review Google and ChatGPT paid-media recommendations | Fixture **ACCEPTED** via `REVIEW_PAID_MEDIA_RECOMMENDATIONS` (complete F16 evidence; ChatGPT Ads ACCESS_BLOCKED; not live VERIFIED) |
+| T-F18 Review, revise and release a change | Fixture **ACCEPTED** via `REVIEW_REVISE_AND_RELEASE_A_CHANGE` (complete F18 evidence; not live VERIFIED) |
 | T-F20 Verify a form-to-CRM journey continuously | Fixture **ACCEPTED** via `VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY` (complete F20 evidence; not live VERIFIED) |
 | T-F22 Handle after-hours messages and take over | Fixture **ACCEPTED** via `HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER` (complete F22 evidence; not live VERIFIED) |
 | T-F19 Analyze performance and test a hypothesis | Fixture **ACCEPTED** via `ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS` (complete F19 evidence; not live VERIFIED) |
