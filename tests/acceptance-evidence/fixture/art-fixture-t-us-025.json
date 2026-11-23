@@ -8,8 +8,8 @@
     "launch_workstream_schedule_mission_outcome"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-025.json",
-  "createdAtIso": "2026-11-22T23:54:55.880Z",
+  "createdAtIso": "2026-11-23T00:02:22.833Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-025-5d7454fabbbd"
+  "uniqueSourceArtifactId": "art-fixture-t-us-025-36d76125f349"
 }
