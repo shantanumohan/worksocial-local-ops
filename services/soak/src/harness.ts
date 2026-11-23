@@ -114,6 +114,7 @@ import { proofKeywordProliferationOneUsefulUpdate } from "./keyword-proliferatio
 import { proofCampaignManifestDistribution } from "./campaign-manifest-distribution-proof.js";
 import { proofUncertainPostReconcileBeforeRetry } from "./uncertain-post-reconcile-proof.js";
 import { proofPaidMediaRecommendationMutationOrFailure } from "./paid-media-recommendation-mutation-proof.js";
+import { proofEvalSuiteAdjudicationBacklog } from "./eval-suite-adjudication-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -856,6 +857,9 @@ export async function runSoakRecoveryHarness(input: {
   );
   proofs.push(
     proofPaidMediaRecommendationMutationOrFailure(nowPlus(nowIso, 810_000)),
+  );
+  proofs.push(
+    proofEvalSuiteAdjudicationBacklog(nowPlus(nowIso, 820_000)),
   );
   const allPassed = proofs.every((p) => p.passed);
   return {

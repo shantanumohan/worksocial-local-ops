@@ -1078,6 +1078,17 @@ export {
   type PaidMediaRecommendationMutationDecision,
 } from "./paid-media-recommendation-mutation.js";
 export {
+  EVAL_SUITE_ADJUDICATION_RELATED_CASE_IDS,
+  evaluateEvalSuiteAdjudication,
+  type EvalSuiteProvider,
+  type EvalSuiteSurfaceLabel,
+  type EvalSuiteConditionManifest,
+  type EvalSuiteCaseArtifact,
+  type EvalSuiteBacklogItem,
+  type EvalSuiteAdjudicationInput,
+  type EvalSuiteAdjudicationDecision,
+} from "./eval-suite-adjudication.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

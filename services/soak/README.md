@@ -63,4 +63,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-US-029 Original campaign distribution — campaign manifest | Fixture **ACCEPTED** via `CAMPAIGN_MANIFEST_DISTRIBUTION` (not live VERIFIED) |
 | T-US-030 Uncertain post: reconcile before retry | Fixture **ACCEPTED** via `UNCERTAIN_POST_RECONCILE_BEFORE_RETRY` (not live VERIFIED) |
 | T-US-031 Paid-media recommendations — verified mutation or failure | Fixture **ACCEPTED** via `PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE` (not live VERIFIED) |
+| T-US-033 Claude/Gemini eval suites — adjudication + backlog | Fixture **ACCEPTED** via `EVAL_SUITE_ADJUDICATION_BACKLOG` (not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |

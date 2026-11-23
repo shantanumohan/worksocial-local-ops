@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-033",
+  "caseId": "T-US-033",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-033 (Claude/Gemini eval suites — adjudication + backlog)\nproof=eval_suite_adjudication_backlog applyCount=1 :: authorized suite → EVAL_SUITE_ADJUDICATED_BACKLOG_LINKED; failed case linked to backlog; productionWrites=false | gemini provider → EVAL_SUITE_ADJUDICATED_BACKLOG_LINKED | failed case without backlog link → ADJUDICATION_BACKLOG_UNLINKED | runAuthorized=false → RUN_AUTHORIZATION_REQUIRED | fixtureRedactionChecked=false → FIXTURE_REDACTION_CHECK_REQUIRED | attemptProductionWrite → PRODUCTION_WRITE_REFUSED | claimLiveVerifiedSuite → FALSE_LIVE_VERIFIED_SUITE_REFUSED | requestLiveEvalWiring → LIVE_EVAL_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveEvalWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-015 (Claude Code + test API), T-US-017 (Gemini connect), T-US-018/T-X037 (operational tool forbid), T-X038 (no-grounding) | proofRecordedAt=2026-11-21T19:13:40.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "eval_suite_adjudication_backlog"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-033.json",
+  "createdAtIso": "2026-11-23T00:09:16.555Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-033-7e76b18aea20"
+}
