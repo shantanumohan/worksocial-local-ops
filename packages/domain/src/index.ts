@@ -1439,6 +1439,20 @@ export {
   type F18ReleaseTrack,
 } from "./review-revise-and-release-a-change.js";
 export {
+  DIAGNOSE_AND_REPAIR_PERMITTED_DEFECT_RELATED_CASE_IDS,
+  evaluateDiagnoseAndRepairPermittedDefect,
+  type DiagnoseAndRepairPermittedDefectInput,
+  type DiagnoseAndRepairPermittedDefectDecision,
+  type IncidentBundleEvidence,
+  type SourceBindingEvidence,
+  type BoundedRepairPolicy,
+  type RepairPlanEvidence,
+  type PatchAndTestEvidence,
+  type IndependentReviewEvidence,
+  type CanaryReleaseEvidence,
+  type CloseOutcomeEvidence,
+} from "./diagnose-and-repair-permitted-defect.js";
+export {
   CALIBRATE_DESIGN_RELEASE_READINESS_RELATED_CASE_IDS,
   evaluateCalibrateDesignReleaseReadiness,
   type CalibrateDesignReleaseReadinessInput,
