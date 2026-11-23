@@ -10,7 +10,7 @@ Fixture (LOCAL_DURABLE) proofs:
 4. Unknown-remote reconcile reads the provider ledger before verify
 5. Backup that omits the remote receipt → restore → reconcile from remote SoR → no duplicate apply (**T-X066**)
 6. Recover → capability stop → rotate (no secrets) → reconcile → offboard (**T-F24** / **T-US-047**)
-7. Competing supervisors / singleton host lease — second live generation refused; dead-holder reclaim; ownership fail-closed (**T-US-002** / **T-X002**)
+7. Competing supervisors / singleton host lease — second live generation refused; dead-holder reclaim; ownership fail-closed (**T-US-001**, **T-US-002** / **T-X002**)
 8. Self-approval rejected; independent A25 required (**T-X018** / **T-US-054**)
 9. Offboard ACTIVE_TOKEN residual — incomplete until live revoke (**T-X073**)
 10. Emergency stop / outbound stop checked at commit (**T-US-060**)
@@ -260,6 +260,8 @@ Suggested owner Windows flow (state off OneDrive):
 **T-F17** maps only to `RUN_CLAUDE_GEMINI_EVALUATION_SUITES` (complete F17 evidence package; live NOT_WIRED; distinct from T-US-033; not live VERIFIED).
 
 **T-F25** maps only to `OPERATE_DAILY_OWNER_REVIEW` (complete F25 evidence package; unsafe claims refused; live NOT_WIRED; distinct from T-US-049; not live VERIFIED).
+
+**T-US-001** maps only to `TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS` (host/Claude/providers/workstreams blockers + next actions; Observe; Ads ACCESS_BLOCKED; distinct from T-F01; not live VERIFIED).
 
 **T-F22** maps only to `HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER` (complete F22 evidence package: response policy, inbound versions, sources/allowed-action, send+CRM lead, ownership audit takeover, acknowledged morning handoff; competing replies refused; live NOT_WIRED; distinct from T-US-043 handoff summary, T-US-044/T-X053 takeover-cancel, T-X055 unknown-policy escalate, and T-X056 bounded auto-reply loop; not live VERIFIED).
 

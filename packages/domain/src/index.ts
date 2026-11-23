@@ -877,6 +877,23 @@ export {
   type PayloadIntakeDecision,
 } from "./validated-payload-collection.js";
 export {
+  ReadinessDimension,
+  ReadinessState,
+  HostProbeCategory,
+  REQUIRED_HOST_PROBE_CATEGORIES,
+  TRUSTED_WORKSPACE_READINESS_RELATED_CASE_IDS,
+  evaluateTrustedWorkspaceReadiness,
+  observeModeBlocksActionClass,
+  type DimensionObservation,
+  type ExternalEffectsHonesty,
+  type HostDiagnosticProbe,
+  type HostProbeCategoryValue,
+  type ReadinessDimensionValue,
+  type ReadinessStateValue,
+  type TrustedWorkspaceInput,
+  type TrustedWorkspaceReadiness,
+} from "./trusted-workspace-readiness.js";
+export {
   DEFAULT_INITIAL_BACKOFF_SECONDS,
   DEFAULT_BACKOFF_MULTIPLIER,
   DEFAULT_MAX_BACKOFF_SECONDS,

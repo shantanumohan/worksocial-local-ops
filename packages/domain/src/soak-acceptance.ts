@@ -770,6 +770,14 @@ export const SoakProofKind = {
    * Distinct from T-F19 complete F19 evidence set.
    */
   PORTABLE_ANALYSIS_ARTIFACT: "portable_analysis_artifact",
+  /**
+   * Trusted local workspace readiness — blockers + next actions (T-US-001).
+   * Host/Claude/providers/workstreams dimensions with explicit blockers and
+   * next actions under Observe; Ads three-part gate ACCESS_BLOCKED; public
+   * write → PRESENT effects. Distinct from T-F01 complete F01 evidence set.
+   */
+  TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS:
+    "trusted_workspace_readiness_blockers_next_actions",
 } as const;
 
 export type SoakProofKindValue =
@@ -923,6 +931,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-041 requires DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF.
  * T-US-032 requires EXACT_FINANCIAL_BOUNDARIES_PRESERVED.
  * T-US-037 requires PORTABLE_ANALYSIS_ARTIFACT (portable brief; live NOT_WIRED).
+ * T-US-001 requires TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -1055,6 +1064,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-041",
   "T-US-032",
   "T-US-037",
+  "T-US-001",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1649,6 +1659,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.EXACT_FINANCIAL_BOUNDARIES_PRESERVED];
     case "T-US-037":
       return [SoakProofKind.PORTABLE_ANALYSIS_ARTIFACT];
+    case "T-US-001":
+      return [SoakProofKind.TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS];
     default:
       return [];
   }
@@ -1899,6 +1911,8 @@ export function mapProofToFixtureCases(
       return ["T-US-032"];
     case SoakProofKind.PORTABLE_ANALYSIS_ARTIFACT:
       return ["T-US-037"];
+    case SoakProofKind.TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS:
+      return ["T-US-001"];
     default:
       return [];
   }

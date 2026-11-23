@@ -169,6 +169,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-041": "Diagnose/repair defect — verified resolution or handoff",
   "T-US-032": "Exact financial boundaries preserved",
   "T-US-037": "Analyze and hypothesis — portable analysis artifact",
+  "T-US-001": "Create a trusted local workspace — blockers and next actions",
 };
 
 function relatedProofsForCase(
@@ -416,6 +417,7 @@ export function compileAcceptanceEvidence(
     "T-US-041 fixture ACCEPTED only via DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF",
     "T-US-032 fixture ACCEPTED only via EXACT_FINANCIAL_BOUNDARIES_PRESERVED",
     "T-US-037 fixture ACCEPTED only via PORTABLE_ANALYSIS_ARTIFACT",
+    "T-US-001 fixture ACCEPTED only via TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

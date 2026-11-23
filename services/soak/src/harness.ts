@@ -58,6 +58,7 @@
  * Owner brief root-cause actionable (T-US-050).
  * exact financial boundaries preserved (T-US-032).
  * portable analysis artifact (T-US-037).
+ * trusted workspace readiness blockers + next actions (T-US-001).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -195,6 +196,7 @@ import { proofOperateDailyOwnerReview } from "./operate-daily-owner-review-proof
 import { proofDiagnoseRepairDefectResolvedOrHandoff } from "./diagnose-repair-defect-proof.js";
 import { proofExactFinancialBoundariesPreserved } from "./exact-financial-boundaries-proof.js";
 import { proofPortableAnalysisArtifact } from "./portable-analysis-artifact-proof.js";
+import { proofTrustedWorkspaceReadinessBlockersNextActions } from "./trusted-workspace-readiness-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -982,6 +984,11 @@ export async function runSoakRecoveryHarness(input: {
     proofExactFinancialBoundariesPreserved(nowPlus(nowIso, 1150000)),
   );
   proofs.push(proofPortableAnalysisArtifact(nowPlus(nowIso, 1_160_000)));
+  proofs.push(
+    proofTrustedWorkspaceReadinessBlockersNextActions(
+      nowPlus(nowIso, 1_170_000),
+    ),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1100,6 +1107,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-041 fixture ACCEPTED via diagnose_repair_defect_resolved_or_handoff only — not live VERIFIED",
       "T-US-032 fixture ACCEPTED via exact_financial_boundaries_preserved only — not live VERIFIED",
       "T-US-037 fixture ACCEPTED via portable_analysis_artifact only — not live VERIFIED",
+      "T-US-001 fixture ACCEPTED via trusted_workspace_readiness_blockers_next_actions only — not live VERIFIED",
     ],
   };
 }
