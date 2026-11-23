@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f23",
+  "caseId": "T-F23",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F23 (Test semantic search and improve no-result cases)\nproof=test_semantic_search_improve_no_result applyCount=1 :: complete F23 evidence package → TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT_EVIDENCE_RECORDED; approved catalog/ownership; parsed intent+ambiguities; eligibility filter trace; answer/handoff review; judgment; remediation; golden evaluation comparison; searchVerifiedLive=false; live NOT_WIRED | catalogOwnership=null → CATALOG_OWNERSHIP_REQUIRED | parsedIntent=null → PARSED_INTENT_REQUIRED | eligibility=null → ELIGIBILITY_INSPECTION_REQUIRED | answerHandoff=null → ANSWER_HANDOFF_REVIEW_REQUIRED | judgment=null → JUDGMENT_RECORD_REQUIRED | remediation=null → REMEDIATION_TASK_REQUIRED | evaluationComparison=null → EVALUATION_COMPARISON_REQUIRED | requestSilentFalseMatch → SILENT_FALSE_MATCH_REFUSED | claimLiveVerifiedSearch → FALSE_LIVE_VERIFIED_SEARCH_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-045 (evaluation-comparison focused no-result→golden path), T-US-046/T-X048 (hard search constraints), and T-X038 (eval no-grounding) — complete F23 flow evidence package | proofRecordedAt=2026-11-21T19:18:30.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "test_semantic_search_improve_no_result"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f23.json",
+  "createdAtIso": "2026-11-23T04:40:16.054Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f23-7d4e415824c2"
+}

@@ -1140,7 +1140,6 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-F18"]);
   });
 
-});
   it("maps T-F26 to CALIBRATE_DESIGN_RELEASE_READINESS only", () => {
     expect(expectedProofsForFixtureCase("T-F26")).toEqual([
       SoakProofKind.CALIBRATE_DESIGN_RELEASE_READINESS,
@@ -1152,3 +1151,12 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-F26"]);
   });
 
+  it("maps T-F23 to TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT only", () => {
+    expect(expectedProofsForFixtureCase("T-F23")).toEqual([
+      SoakProofKind.TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT),
+    ).toEqual(["T-F23"]);
+  });
+});

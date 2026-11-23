@@ -711,6 +711,16 @@ export const SoakProofKind = {
    */
   CALIBRATE_DESIGN_RELEASE_READINESS:
     "calibrate_design_release_readiness",
+  /**
+   * Test semantic search and improve no-result cases — complete F23 evidence
+   * set (T-F23). Approved catalog + field ownership, parsed intent with
+   * ambiguities, eligibility filter trace, answer/handoff review, judgment,
+   * remediation, golden evaluation comparison; unsafe claims refused; live
+   * NOT_WIRED. Distinct from T-US-045 evaluation-comparison focused path,
+   * T-US-046/T-X048 hard constraints, and T-X038 eval no-grounding.
+   */
+  TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT:
+    "test_semantic_search_improve_no_result",
 } as const;
 
 export type SoakProofKindValue =
@@ -857,6 +867,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F19 requires ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS (complete F19 evidence set; live NOT_WIRED).
  * T-F18 requires REVIEW_REVISE_AND_RELEASE_A_CHANGE (complete F18 evidence set; live NOT_WIRED).
  * T-F26 requires CALIBRATE_DESIGN_RELEASE_READINESS (complete F26 evidence set; live NOT_WIRED).
+ * T-F23 requires TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT (complete evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -883,6 +894,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F20",
   "T-F19",
   "T-F22",
+  "T-F23",
   "T-F24",
   "T-F26",
   "T-US-047",
@@ -1562,6 +1574,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER];
     case "T-F26":
       return [SoakProofKind.CALIBRATE_DESIGN_RELEASE_READINESS];
+    case "T-F23":
+      return [SoakProofKind.TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT];
     default:
       return [];
   }
@@ -1798,6 +1812,8 @@ export function mapProofToFixtureCases(
       return ["T-F22"];
     case SoakProofKind.CALIBRATE_DESIGN_RELEASE_READINESS:
       return ["T-F26"];
+    case SoakProofKind.TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT:
+      return ["T-F23"];
     default:
       return [];
   }
