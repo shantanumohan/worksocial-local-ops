@@ -186,6 +186,7 @@ import { proofUnknownUsageCancelHoldsResidual } from "./unknown-usage-cancel-pro
 import { proofActualCostExceedsEstimateOverrunVisible } from "./actual-cost-exceeds-estimate-proof.js";
 import { proofReplayHistoricalNoRepeatIo } from "./replay-historical-workflow-proof.js";
 import { proofDiskFullEvidenceNoPartialCompleted } from "./disk-full-evidence-proof.js";
+import { proofTestSemanticSearchImproveNoResult } from "./test-semantic-search-improve-no-result-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -954,6 +955,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofCalibrateDesignReleaseReadiness(nowPlus(nowIso, 1_100_000)),
   );
+  proofs.push(
+    proofTestSemanticSearchImproveNoResult(nowPlus(nowIso, 1110000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1065,6 +1069,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-F15 fixture ACCEPTED via create_and_distribute_original_campaign only — not live VERIFIED",
       "T-F16 fixture ACCEPTED via review_paid_media_recommendations only — not live VERIFIED",
       "T-F18 fixture ACCEPTED via review_revise_and_release_a_change only — not live VERIFIED",
+      "T-F23 fixture ACCEPTED via test_semantic_search_improve_no_result only — not live VERIFIED",
     ],
   };
 }

@@ -1450,6 +1450,19 @@ export {
   type RouteStateVerification,
 } from "./calibrate-design-release-readiness.js";
 export {
+  TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT_RELATED_CASE_IDS,
+  evaluateTestSemanticSearchImproveNoResult,
+  type TestSemanticSearchImproveNoResultInput,
+  type TestSemanticSearchImproveNoResultDecision,
+  type ApprovedCatalogOwnership,
+  type ParsedIntentEvidence,
+  type CandidateEligibilityInspection,
+  type AnswerHandoffReview,
+  type JudgmentEvidence,
+  type RemediationEvidence,
+  type EvaluationComparisonEvidence,
+} from "./test-semantic-search-improve-no-result.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
