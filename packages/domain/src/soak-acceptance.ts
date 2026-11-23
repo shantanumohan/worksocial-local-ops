@@ -586,6 +586,15 @@ export const SoakProofKind = {
    * summary and T-US-018/T-X037 operational tool forbid.
    */
   CONNECT_GEMINI_INDEPENDENT_TESTING: "connect_gemini_independent_testing",
+  /**
+   * Map CRM, forms and booking truth — complete F10 evidence set (T-F10).
+   * Zoho org/region/environment binding, form→CRM contract, canary
+   * grant/retention, booking capability matrix, correlated journey,
+   * passing failure/recovery; unsafe claims refused; live Zoho NOT_WIRED.
+   * Distinct from T-US-019 failure/recovery readiness summary, T-US-039
+   * continuous cadence, and T-US-040 thank-you ≠ CRM.
+   */
+  MAP_CRM_FORMS_BOOKING_TRUTH: "map_crm_forms_booking_truth",
 } as const;
 
 export type SoakProofKindValue =
@@ -720,6 +729,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F06 requires CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS (complete F06 evidence set; live NOT_WIRED).
  * T-F08 requires CONNECT_CLAUDE_CODE_AND_TEST_API (complete F08 evidence set; live NOT_WIRED).
  * T-F09 requires CONNECT_GEMINI_INDEPENDENT_TESTING (complete F09 evidence set; live NOT_WIRED).
+ * T-F10 requires MAP_CRM_FORMS_BOOKING_TRUTH (complete F10 evidence set; live Zoho NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -735,6 +745,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F06",
   "T-F08",
   "T-F09",
+  "T-F10",
   "T-F24",
   "T-US-047",
   "T-US-002",
@@ -1389,6 +1400,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CONNECT_CLAUDE_CODE_AND_TEST_API];
     case "T-F09":
       return [SoakProofKind.CONNECT_GEMINI_INDEPENDENT_TESTING];
+    case "T-F10":
+      return [SoakProofKind.MAP_CRM_FORMS_BOOKING_TRUTH];
     default:
       return [];
   }
@@ -1601,6 +1614,8 @@ export function mapProofToFixtureCases(
       return ["T-F08"];
     case SoakProofKind.CONNECT_GEMINI_INDEPENDENT_TESTING:
       return ["T-F09"];
+    case SoakProofKind.MAP_CRM_FORMS_BOOKING_TRUTH:
+      return ["T-F10"];
     default:
       return [];
   }
