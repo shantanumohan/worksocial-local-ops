@@ -110,6 +110,7 @@ import { proofHonestOutageHostedContact } from "./honest-outage-hosted-contact-p
 import { proofLowSampleTrendSpikeInsufficientEvidence } from "./low-sample-trend-spike-proof.js";
 import { proofGoogleAdsTestProductionAccessSeparated } from "./google-ads-test-production-access-proof.js";
 import { proofConnectClaudeCodeTestApiEvalOnly } from "./claude-code-test-api-connect-proof.js";
+import { proofClaudeRuntimeEvalAuthSeparated } from "./claude-runtime-eval-auth-proof.js";
 import { proofConnectGeminiEvaluationEvalOnly } from "./gemini-evaluation-connect-proof.js";
 import { proofMapCrmFormsBookingFailureRecovery } from "./crm-forms-booking-map-proof.js";
 import { proofSyntheticLeadsClassifiedNoCommercePollution } from "./synthetic-lead-classification-proof.js";
@@ -996,6 +997,9 @@ export async function runSoakRecoveryHarness(input: {
     proofFormCrmContinuousVerifyCadenceHeartbeat(nowPlus(nowIso, 1_180_000)),
   );
   proofs.push(proofHonestOutageHostedContact(nowPlus(nowIso, 1_190_000)));
+  proofs.push(
+    await proofClaudeRuntimeEvalAuthSeparated(nowPlus(nowIso, 1_195_000)),
+  );
   proofs.push(proofAfterHoursHandoffAcknowledged(nowPlus(nowIso, 1_200_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
@@ -1119,6 +1123,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-001 fixture ACCEPTED via trusted_workspace_readiness_blockers_next_actions only — not live VERIFIED",
       "T-US-039 fixture ACCEPTED via form_crm_continuous_verify_cadence_heartbeat only — not live VERIFIED",
       "T-US-043 fixture ACCEPTED via after_hours_handoff_acknowledged only — not live VERIFIED",
+      "T-US-016 fixture ACCEPTED via claude_runtime_eval_auth_separated only — not live VERIFIED",
     ],
   };
 }
