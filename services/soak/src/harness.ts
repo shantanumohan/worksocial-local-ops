@@ -51,6 +51,8 @@
  * Original campaign distribution campaign manifest (T-US-029).
  * Uncertain post reconcile before retry (T-US-030).
  * Paid-media recommendation mutation or failure (T-US-031).
+ * Eval suite adjudication + backlog (T-US-033).
+ * Provider error ≠ bad answer or pass (T-US-034).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -115,6 +117,7 @@ import { proofCampaignManifestDistribution } from "./campaign-manifest-distribut
 import { proofUncertainPostReconcileBeforeRetry } from "./uncertain-post-reconcile-proof.js";
 import { proofPaidMediaRecommendationMutationOrFailure } from "./paid-media-recommendation-mutation-proof.js";
 import { proofEvalSuiteAdjudicationBacklog } from "./eval-suite-adjudication-proof.js";
+import { proofProviderErrorNotPass } from "./provider-error-not-pass-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -861,6 +864,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofEvalSuiteAdjudicationBacklog(nowPlus(nowIso, 820_000)),
   );
+  proofs.push(proofProviderErrorNotPass(nowPlus(nowIso, 830_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,

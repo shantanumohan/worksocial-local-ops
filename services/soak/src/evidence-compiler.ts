@@ -134,6 +134,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-030": "Uncertain post: reconcile before retry",
   "T-US-031": "Paid-media recommendations — verified mutation or failure",
   "T-US-033": "Claude/Gemini eval suites — adjudication + backlog",
+  "T-US-034": "Provider error ≠ bad answer or pass",
 };
 
 function relatedProofsForCase(
@@ -346,6 +347,7 @@ export function compileAcceptanceEvidence(
     "T-US-030 fixture ACCEPTED only via UNCERTAIN_POST_RECONCILE_BEFORE_RETRY",
     "T-US-031 fixture ACCEPTED only via PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE",
     "T-US-033 fixture ACCEPTED only via EVAL_SUITE_ADJUDICATION_BACKLOG",
+    "T-US-034 fixture ACCEPTED only via PROVIDER_ERROR_NOT_PASS",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

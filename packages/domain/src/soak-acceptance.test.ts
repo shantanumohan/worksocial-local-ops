@@ -873,4 +873,13 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.EVAL_SUITE_ADJUDICATION_BACKLOG),
     ).toEqual(["T-US-033"]);
   });
+
+  it("maps T-US-034 to PROVIDER_ERROR_NOT_PASS only", () => {
+    expect(expectedProofsForFixtureCase("T-US-034")).toEqual([
+      SoakProofKind.PROVIDER_ERROR_NOT_PASS,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.PROVIDER_ERROR_NOT_PASS),
+    ).toEqual(["T-US-034"]);
+  });
 });
