@@ -265,6 +265,8 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-US-004** maps only to `UNSAFE_FOLDERS_UNRESOLVED_FACTS_BLOCKED` (unsafe folders / unresolved facts blocked; safe facts usable; not live VERIFIED).
 
+**T-US-005** maps only to `SITE_PAGE_EDITABLE_SOURCES_BASELINE` (baseline-ID happy-path; distinct from T-F03 complete F03 evidence; not live VERIFIED).
+
 **T-US-001** maps only to `TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS` (host/Claude/providers/workstreams blockers + next actions; Observe; Ads ACCESS_BLOCKED; distinct from T-F01; not live VERIFIED).
 
 **T-F22** maps only to `HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER` (complete F22 evidence package: response policy, inbound versions, sources/allowed-action, send+CRM lead, ownership audit takeover, acknowledged morning handoff; competing replies refused; live NOT_WIRED; distinct from T-US-043 handoff summary, T-US-044/T-X053 takeover-cancel, T-X055 unknown-policy escalate, and T-X056 bounded auto-reply loop; not live VERIFIED).

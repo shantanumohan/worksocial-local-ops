@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-005",
+  "caseId": "T-US-005",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-005 (Map sites, pages and editable sources — baseline ID and checks)\nproof=site_page_editable_sources_baseline applyCount=1 :: Healthy map minted baseline 2ef333032be4227898d4aaa467a442e5 with proven release path | Foreign host refused — domain mismatch, no baseline ID | Declared path must match pilot URL pathname | Segment-safe boundary rejects /admin prefix vs /administrator | Snapshot canonical must match pilot URL | Pilot path outside editable subset refused | Missing CRM destination blocks release path | Failing deterministic page checks block baseline ID | Unproven ownership refuses release path / baseline | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "site_page_editable_sources_baseline"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-005.json",
+  "createdAtIso": "2026-11-23T05:58:19.376Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-005-d9786b9f7161"
+}

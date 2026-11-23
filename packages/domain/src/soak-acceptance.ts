@@ -818,6 +818,11 @@ export const SoakProofKind = {
    */
   UNSAFE_FOLDERS_UNRESOLVED_FACTS_BLOCKED:
     "unsafe_folders_unresolved_facts_blocked",
+  /**
+   * Map sites/pages/editable sources — baseline ID happy-path (T-US-005).
+   * Distinct from T-F03 complete F03 evidence set (`MAP_SITES_PAGES_EDITABLE_SOURCES`).
+   */
+  SITE_PAGE_EDITABLE_SOURCES_BASELINE: "site_page_editable_sources_baseline",
 } as const;
 
 export type SoakProofKindValue =
@@ -948,6 +953,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-059 requires SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED (shared briefs redacted; private evidence retained; live NOT_WIRED).
  * T-US-003 requires BUSINESS_TRUTH_FOLDERS_RESTORE_SECRETS_EXCLUDED (folders-ready happy-path; live NOT_WIRED).
  * T-US-004 requires UNSAFE_FOLDERS_UNRESOLVED_FACTS_BLOCKED.
+ * T-US-005 requires SITE_PAGE_EDITABLE_SOURCES_BASELINE (baseline-ID happy-path; live NOT_WIRED).
  * T-F01 requires CREATE_TRUSTED_LOCAL_WORKSPACE (complete F01 evidence set; live NOT_WIRED).
  * T-F02 requires CHOOSE_FOLDERS_ESTABLISH_BUSINESS_TRUTH (complete F02 evidence set; live NOT_WIRED).
  * T-F03 requires MAP_SITES_PAGES_EDITABLE_SOURCES (complete F03 evidence set; live NOT_WIRED).
@@ -1117,6 +1123,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-043",
   "T-US-003",
   "T-US-004",
+  "T-US-005",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1725,6 +1732,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.AFTER_HOURS_HANDOFF_ACKNOWLEDGED];
     case "T-US-004":
       return [SoakProofKind.UNSAFE_FOLDERS_UNRESOLVED_FACTS_BLOCKED];
+    case "T-US-005":
+      return [SoakProofKind.SITE_PAGE_EDITABLE_SOURCES_BASELINE];
     default:
       return [];
   }
@@ -1989,6 +1998,8 @@ export function mapProofToFixtureCases(
       return ["T-US-043"];
     case SoakProofKind.UNSAFE_FOLDERS_UNRESOLVED_FACTS_BLOCKED:
       return ["T-US-004"];
+    case SoakProofKind.SITE_PAGE_EDITABLE_SOURCES_BASELINE:
+      return ["T-US-005"];
     default:
       return [];
   }
