@@ -120,6 +120,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X023": "Eventual consistency false not-found — no unsafe retry",
   "T-X040": "Low-sample trend spike stays insufficient evidence (research only)",
   "T-X041": "Incomparable trend indices — reject/label",
+  "T-X042": "Schema differs from page — gate fails",
   "T-X030": "Rate-limit with deadline — bounded backoff",
   "T-US-056": "Honest outage; durable hosted contact path",
   "T-US-011": "Connect Google Ads analyze-only — write disabled",
@@ -441,6 +442,7 @@ export function compileAcceptanceEvidence(
     "T-US-045 fixture ACCEPTED only via SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON",
     "T-US-007 fixture ACCEPTED only via CONNECT_GA4_READ_READY_NEXT_SYNC",
     "T-X041 fixture ACCEPTED only via INCOMPARABLE_TREND_INDICES_REJECTED",
+    "T-X042 fixture ACCEPTED only via SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

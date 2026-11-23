@@ -345,6 +345,11 @@ export const SoakProofKind = {
    */
   INCOMPARABLE_TREND_INDICES_REJECTED: "incomparable_trend_indices_rejected",
   /**
+   * Schema differs from page → gate fails (T-X042).
+   * SCHEMA_VISIBLE_MISMATCH / PARTIAL blocks SEO proposal release.
+   */
+  SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS: "schema_differs_from_page_gate_fails",
+  /**
    * Google Ads test vs production access separated (T-US-012).
    * Cross-tier credential→customer refused; LIVE NOT_WIRED; mutate never authorized.
    */
@@ -956,6 +961,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-056 requires HONEST_OUTAGE_HOSTED_CONTACT_PATH.
  * T-X040 requires LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE (research only; not publish).
  * T-X041 requires INCOMPARABLE_TREND_INDICES_REJECTED (reject/label).
+ * T-X042 requires SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS (schema ≠ page → gate fails).
  * T-US-012 requires GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED (test ≠ production).
  * T-US-015 requires CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY (runtime ≠ API readiness; EVAL_ONLY).
 * T-US-016 requires CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED.
@@ -1125,6 +1131,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-056",
   "T-X040",
   "T-X041",
+  "T-X042",
   "T-US-011",
   "T-US-012",
   "T-US-015",
@@ -1660,6 +1667,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE];
     case "T-X041":
       return [SoakProofKind.INCOMPARABLE_TREND_INDICES_REJECTED];
+    case "T-X042":
+      return [SoakProofKind.SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS];
     case "T-US-011":
       return [SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY];
     case "T-US-012":
@@ -1934,6 +1943,8 @@ export function mapProofToFixtureCases(
       return ["T-X040"];
     case SoakProofKind.INCOMPARABLE_TREND_INDICES_REJECTED:
       return ["T-X041"];
+    case SoakProofKind.SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS:
+      return ["T-X042"];
     case SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED:
       return ["T-US-012"];
     case SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY:
