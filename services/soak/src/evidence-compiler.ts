@@ -167,6 +167,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-F17": "Run Claude and Gemini evaluation suites",
   "T-F25": "Operate the daily owner review",
   "T-US-041": "Diagnose/repair defect — verified resolution or handoff",
+  "T-US-032": "Exact financial boundaries preserved",
 };
 
 function relatedProofsForCase(
@@ -412,6 +413,7 @@ export function compileAcceptanceEvidence(
     "T-F17 fixture ACCEPTED only via RUN_CLAUDE_GEMINI_EVALUATION_SUITES",
     "T-F25 fixture ACCEPTED only via OPERATE_DAILY_OWNER_REVIEW",
     "T-US-041 fixture ACCEPTED only via DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF",
+    "T-US-032 fixture ACCEPTED only via EXACT_FINANCIAL_BOUNDARIES_PRESERVED",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

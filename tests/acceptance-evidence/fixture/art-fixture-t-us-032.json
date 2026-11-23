@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-032",
+  "caseId": "T-US-032",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-032 (Exact financial boundaries preserved)\nproof=exact_financial_boundaries_preserved applyCount=1 :: Blank exactChange → INCOMPLETE_PROPOSAL (exact boundary required) | Google Ads proposal preserves exactChange + financialDiff (5000→7500 minor; no silent rewrite) | Channel status: Google Ads writeReady=false; ChatGPT Ads ACCESS_BLOCKED; liveMutation NOT_WIRED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "exact_financial_boundaries_preserved"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-032.json",
+  "createdAtIso": "2026-11-23T05:04:39.007Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-032-8fae8d491e18"
+}

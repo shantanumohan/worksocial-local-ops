@@ -56,6 +56,7 @@
  * Review/revise/release receipt or blocked exception (T-US-035).
  * Daily owner review operating knowledge (T-US-049).
  * Owner brief root-cause actionable (T-US-050).
+ * exact financial boundaries preserved (T-US-032).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -191,6 +192,7 @@ import { proofTestSemanticSearchImproveNoResult } from "./test-semantic-search-i
 import { proofRunClaudeGeminiEvaluationSuites } from "./run-claude-gemini-evaluation-suites-proof.js";
 import { proofOperateDailyOwnerReview } from "./operate-daily-owner-review-proof.js";
 import { proofDiagnoseRepairDefectResolvedOrHandoff } from "./diagnose-repair-defect-proof.js";
+import { proofExactFinancialBoundariesPreserved } from "./exact-financial-boundaries-proof.js";
 
 type FileLedgerSnapshot = {
   version: 1;
@@ -974,6 +976,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofDiagnoseRepairDefectResolvedOrHandoff(nowPlus(nowIso, 1140000)),
   );
+  proofs.push(
+    proofExactFinancialBoundariesPreserved(nowPlus(nowIso, 1150000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1090,6 +1095,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-F17 fixture ACCEPTED via run_claude_gemini_evaluation_suites only — not live VERIFIED",
       "T-F25 fixture ACCEPTED via operate_daily_owner_review only — not live VERIFIED",
       "T-US-041 fixture ACCEPTED via diagnose_repair_defect_resolved_or_handoff only — not live VERIFIED",
+      "T-US-032 fixture ACCEPTED via exact_financial_boundaries_preserved only — not live VERIFIED",
     ],
   };
 }
