@@ -1157,6 +1157,15 @@ export {
   type SecretsNeverBrowserAssetsDecision,
 } from "./secrets-never-browser-assets.js";
 export {
+  KeyboardJourneyStepKind,
+  KEYBOARD_JOURNEY_REDUCED_MOTION_RELATED_CASE_IDS,
+  evaluateKeyboardJourneyReducedMotion,
+  type KeyboardJourneyStepKindValue,
+  type KeyboardJourneyStep,
+  type KeyboardJourneyReducedMotionInput,
+  type KeyboardJourneyReducedMotionDecision,
+} from "./keyboard-journey-reduced-motion.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

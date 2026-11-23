@@ -499,6 +499,13 @@ export const SoakProofKind = {
    * Distinct from T-X065 / T-X005 / T-F24/T-US-047 / T-X063.
    */
   SECRETS_NEVER_IN_BROWSER_ASSETS: "secrets_never_in_browser_assets",
+  /**
+   * Complete keyboard journey with reduced motion (T-US-055).
+   * Nav→content→dialog→CTA keyboard path with prefers-reduced-motion
+   * honored; motion violations / missing focus / pointer-only refused;
+   * live NOT_WIRED. Distinct from T-X061 / T-US-051.
+   */
+  KEYBOARD_JOURNEY_REDUCED_MOTION: "keyboard_journey_reduced_motion",
 } as const;
 
 export type SoakProofKindValue =
@@ -623,6 +630,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-050 requires OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE (owner brief groups root cause; actionable; live NOT_WIRED).
  * T-US-051 requires DESIGN_RELEASE_READINESS_PACKET (design/release readiness release acceptance packet; live NOT_WIRED).
  * T-US-053 requires SECRETS_NEVER_IN_BROWSER_ASSETS (secrets never in browser assets; live NOT_WIRED).
+ * T-US-055 requires KEYBOARD_JOURNEY_REDUCED_MOTION (complete keyboard journey with reduced motion; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -726,6 +734,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-050",
   "T-US-051",
   "T-US-053",
+  "T-US-055",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1262,6 +1271,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.DESIGN_RELEASE_READINESS_PACKET];
     case "T-US-053":
       return [SoakProofKind.SECRETS_NEVER_IN_BROWSER_ASSETS];
+    case "T-US-055":
+      return [SoakProofKind.KEYBOARD_JOURNEY_REDUCED_MOTION];
     default:
       return [];
   }
@@ -1454,6 +1465,8 @@ export function mapProofToFixtureCases(
       return ["T-US-051"];
     case SoakProofKind.SECRETS_NEVER_IN_BROWSER_ASSETS:
       return ["T-US-053"];
+    case SoakProofKind.KEYBOARD_JOURNEY_REDUCED_MOTION:
+      return ["T-US-055"];
     default:
       return [];
   }
