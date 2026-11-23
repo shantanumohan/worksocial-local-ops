@@ -147,6 +147,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-F03": "Map sites, pages and editable sources",
   "T-F04": "Connect Google Analytics 4",
   "T-F05": "Connect Search Console and organic visibility",
+  "T-F06": "Connect Google Ads for controlled analysis",
 };
 
 function relatedProofsForCase(
@@ -372,6 +373,7 @@ export function compileAcceptanceEvidence(
     "T-F03 fixture ACCEPTED only via MAP_SITES_PAGES_EDITABLE_SOURCES",
     "T-F04 fixture ACCEPTED only via CONNECT_GOOGLE_ANALYTICS_4",
     "T-F05 fixture ACCEPTED only via CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY",
+    "T-F06 fixture ACCEPTED only via CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

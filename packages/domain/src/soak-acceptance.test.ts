@@ -1000,4 +1000,15 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-F05"]);
   });
+
+  it("maps T-F06 to CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS only", () => {
+    expect(expectedProofsForFixtureCase("T-F06")).toEqual([
+      SoakProofKind.CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS,
+      ),
+    ).toEqual(["T-F06"]);
+  });
 });

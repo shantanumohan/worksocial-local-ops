@@ -1265,6 +1265,23 @@ export {
   type ConnectSearchConsoleOrganicVisibilityDecision,
 } from "./connect-search-console-organic-visibility.js";
 export {
+  REQUIRED_GOOGLE_ADS_GRANT_SCOPES,
+  GoogleAdsCapability,
+  CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS_RELATED_CASE_IDS,
+  evaluateConnectGoogleAdsControlledAnalysis,
+  type GoogleAdsCapabilityValue,
+  type GoogleAdsProjectAccessEvidence,
+  type GoogleAdsConnectionIdentity,
+  type GoogleAdsAccountBinding,
+  type GoogleAdsCampaignSnapshot,
+  type GoogleAdsConversionAction,
+  type GoogleAdsEventMapping,
+  type GoogleAdsReadReceipt,
+  type GoogleAdsReadReadyStatus,
+  type ConnectGoogleAdsControlledAnalysisInput,
+  type ConnectGoogleAdsControlledAnalysisDecision,
+} from "./connect-google-ads-controlled-analysis.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

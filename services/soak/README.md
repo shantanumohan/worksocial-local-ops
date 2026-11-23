@@ -77,4 +77,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-F03 Map sites, pages and editable sources | Fixture **ACCEPTED** via `MAP_SITES_PAGES_EDITABLE_SOURCES` (complete F03 evidence; not live VERIFIED) |
 | T-F04 Connect Google Analytics 4 | Fixture **ACCEPTED** via `CONNECT_GOOGLE_ANALYTICS_4` (complete F04 evidence; not live VERIFIED) |
 | T-F05 Connect Search Console and organic visibility | Fixture **ACCEPTED** via `CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY` (complete F05 evidence; not live VERIFIED) |
+| T-F06 Connect Google Ads for controlled analysis | Fixture **ACCEPTED** via `CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS` (complete F06 evidence; not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |

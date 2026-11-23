@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f06",
+  "caseId": "T-F06",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F06 (Connect Google Ads for controlled analysis)\nproof=connect_google_ads_controlled_analysis applyCount=1 :: complete F06 evidence package → CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS_EVIDENCE_RECORDED; project+access tier; identity+scopes; deny-write consent; client/manager bind+TEST badge; campaigns+conversions; event mapping+discrepancies; read receipt+watermark; READ_READY Analyze-only; adsVerifiedLive=false; live NOT_WIRED | empty project access → PROJECT_ACCESS_REQUIRED | denyWriteConsent=false → DENY_WRITE_CONSENT_REQUIRED | PRODUCTION tier on fixture → PRODUCTION_TIER_ON_FIXTURE_REFUSED | empty inventory → INVENTORY_REQUIRED | attemptWriteSave → WRITE_SAVE_REFUSED | claimLiveVerifiedAds → FALSE_LIVE_VERIFIED_ADS_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-011 (analyze-only save/reload summary) and T-US-012 (test vs production access) — complete F06 flow evidence package | proofRecordedAt=2026-11-21T19:16:00.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "connect_google_ads_controlled_analysis"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f06.json",
+  "createdAtIso": "2026-11-23T03:01:14.908Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f06-bb22427914b1"
+}
