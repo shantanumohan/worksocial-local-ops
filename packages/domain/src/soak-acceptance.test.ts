@@ -904,4 +904,13 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-US-049"]);
   });
+
+  it("maps T-US-050 to OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE only", () => {
+    expect(expectedProofsForFixtureCase("T-US-050")).toEqual([
+      SoakProofKind.OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE),
+    ).toEqual(["T-US-050"]);
+  });
 });

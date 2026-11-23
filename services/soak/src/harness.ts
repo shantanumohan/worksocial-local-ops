@@ -55,6 +55,7 @@
  * Provider error ≠ bad answer or pass (T-US-034).
  * Review/revise/release receipt or blocked exception (T-US-035).
  * Daily owner review operating knowledge (T-US-049).
+ * Owner brief root-cause actionable (T-US-050).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -122,6 +123,7 @@ import { proofEvalSuiteAdjudicationBacklog } from "./eval-suite-adjudication-pro
 import { proofProviderErrorNotPass } from "./provider-error-not-pass-proof.js";
 import { proofReviewReviseRelease } from "./review-revise-release-proof.js";
 import { proofDailyOwnerReview } from "./daily-owner-review-proof.js";
+import { proofOwnerBriefRootCause } from "./owner-brief-root-cause-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -871,6 +873,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofProviderErrorNotPass(nowPlus(nowIso, 830_000)));
   proofs.push(proofReviewReviseRelease(nowPlus(nowIso, 840_000)));
   proofs.push(proofDailyOwnerReview(nowPlus(nowIso, 850_000)));
+  proofs.push(proofOwnerBriefRootCause(nowPlus(nowIso, 860_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -960,6 +963,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-034 fixture ACCEPTED via provider_error_not_pass only — not live VERIFIED",
       "T-US-035 fixture ACCEPTED via review_revise_release_receipt_or_blocked only — not live VERIFIED",
       "T-US-049 fixture ACCEPTED via daily_owner_review_operating_knowledge only — not live VERIFIED",
+      "T-US-050 fixture ACCEPTED via owner_brief_root_cause_actionable only — not live VERIFIED",
     ],
   };
 }
