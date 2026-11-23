@@ -1116,4 +1116,16 @@ describe("soak-acceptance domain", () => {
       ),
     ).toEqual(["T-F22"]);
   });
+
+  it("maps T-F19 to ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS only", () => {
+    expect(expectedProofsForFixtureCase("T-F19")).toEqual([
+      SoakProofKind.ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS,
+      ),
+    ).toEqual(["T-F19"]);
+  });
+
 });

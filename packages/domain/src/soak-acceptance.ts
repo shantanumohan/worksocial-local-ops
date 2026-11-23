@@ -681,6 +681,18 @@ export const SoakProofKind = {
    */
   HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER:
     "handle_after_hours_messages_and_takeover",
+  /**
+   * Analyze performance and test a hypothesis — complete F19 evidence set
+   * (T-F19). Saved analysis definition, metric definitions/denominators,
+   * view selection, channel/page inspection, discrepancy investigation,
+   * reconciliation worksheet, hypothesis+measurement plan, experiment
+   * record, redacted portable decision brief; vanity-score and live claims
+   * refused; live NOT_WIRED. Distinct from T-US-037 portable-artifact
+   * summary, T-US-031 paid-media recommendation, T-US-058/T-X039 metric
+   * denominators, and T-X060 currency/timezone mismatch.
+   */
+  ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS:
+    "analyze_performance_and_test_hypothesis",
 } as const;
 
 export type SoakProofKindValue =
@@ -824,6 +836,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F16 requires REVIEW_PAID_MEDIA_RECOMMENDATIONS (complete F16 evidence set; live NOT_WIRED).
  * T-F20 requires VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY (complete F20 evidence set; live Zoho NOT_WIRED).
  * T-F22 requires HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER (complete F22 evidence set; live NOT_WIRED).
+ * T-F19 requires ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS (complete F19 evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -847,6 +860,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F15",
   "T-F16",
   "T-F20",
+  "T-F19",
   "T-F22",
   "T-F24",
   "T-US-047",
@@ -1518,6 +1532,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.REVIEW_PAID_MEDIA_RECOMMENDATIONS];
     case "T-F20":
       return [SoakProofKind.VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY];
+    case "T-F19":
+      return [SoakProofKind.ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS];
     case "T-F22":
       return [SoakProofKind.HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER];
     default:
@@ -1748,6 +1764,8 @@ export function mapProofToFixtureCases(
       return ["T-F16"];
     case SoakProofKind.VERIFY_FORM_TO_CRM_JOURNEY_CONTINUOUSLY:
       return ["T-F20"];
+    case SoakProofKind.ANALYZE_PERFORMANCE_AND_TEST_HYPOTHESIS:
+      return ["T-F19"];
     case SoakProofKind.HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER:
       return ["T-F22"];
     default:
