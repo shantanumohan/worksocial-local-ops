@@ -3,13 +3,13 @@
   "caseId": "T-X025",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X025 (External human edit during staging — conflict retained)\nproof=external_human_edit_conflict_retained applyCount=1 :: Staged against base rev-1 → STAGED_PENDING changeId=chg-ext-edit-522ca4e3 | External human edit → CONFLICT_RETAINED humanRev=rev-3 | Blind overwrite refused (OVERWRITE_FORBIDDEN); human fields preserved; attempts=1 | Independent verify → CONFLICT_RETAINED; verifiedClaimed=false (ACCEPTED≠VERIFIED) | Pre-stage human edit → BASE_REVISION_MISMATCH (BASE_REVISION_MISMATCH) | liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X025 (External human edit during staging — conflict retained)\nproof=external_human_edit_conflict_retained applyCount=1 :: Staged against base rev-1 → STAGED_PENDING changeId=chg-ext-edit-7b43e98d | External human edit → CONFLICT_RETAINED humanRev=rev-3 | Blind overwrite refused (OVERWRITE_FORBIDDEN); human fields preserved; attempts=1 | Independent verify → CONFLICT_RETAINED; verifiedClaimed=false (ACCEPTED≠VERIFIED) | Pre-stage human edit → BASE_REVISION_MISMATCH (BASE_REVISION_MISMATCH) | liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "external_human_edit_conflict_retained"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x025.json",
-  "createdAtIso": "2026-11-23T04:31:11.730Z",
+  "createdAtIso": "2026-11-23T04:36:47.216Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x025-4664aea83aa4"
+  "uniqueSourceArtifactId": "art-fixture-t-x025-e3470f34bf7a"
 }

@@ -1141,3 +1141,14 @@ describe("soak-acceptance domain", () => {
   });
 
 });
+  it("maps T-F26 to CALIBRATE_DESIGN_RELEASE_READINESS only", () => {
+    expect(expectedProofsForFixtureCase("T-F26")).toEqual([
+      SoakProofKind.CALIBRATE_DESIGN_RELEASE_READINESS,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.CALIBRATE_DESIGN_RELEASE_READINESS,
+      ),
+    ).toEqual(["T-F26"]);
+  });
+
