@@ -484,6 +484,14 @@ export const SoakProofKind = {
    * NOT_WIRED. Distinct from T-US-049 / T-X068.
    */
   OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE: "owner_brief_root_cause_actionable",
+  /**
+   * Design/release readiness — release acceptance packet (T-US-051 / F26).
+   * Test context, interaction trace, accessibility findings, state coverage
+   * matrix, SC-01..SC-25 coverage register, and outcome-evidence packet;
+   * incomplete coverage and evidence-free approve refused; live NOT_WIRED.
+   * Distinct from T-US-035 / T-US-049 / T-US-055.
+   */
+  DESIGN_RELEASE_READINESS_PACKET: "design_release_readiness_packet",
 } as const;
 
 export type SoakProofKindValue =
@@ -606,6 +614,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-035 requires REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED (review/revise/release receipt or blocked exception; live NOT_WIRED).
  * T-US-049 requires DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE (daily owner review reviewed operating knowledge; live NOT_WIRED).
  * T-US-050 requires OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE (owner brief groups root cause; actionable; live NOT_WIRED).
+ * T-US-051 requires DESIGN_RELEASE_READINESS_PACKET (design/release readiness release acceptance packet; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -707,6 +716,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-035",
   "T-US-049",
   "T-US-050",
+  "T-US-051",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1239,6 +1249,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE];
     case "T-US-050":
       return [SoakProofKind.OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE];
+    case "T-US-051":
+      return [SoakProofKind.DESIGN_RELEASE_READINESS_PACKET];
     default:
       return [];
   }
@@ -1427,6 +1439,8 @@ export function mapProofToFixtureCases(
       return ["T-US-049"];
     case SoakProofKind.OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE:
       return ["T-US-050"];
+    case SoakProofKind.DESIGN_RELEASE_READINESS_PACKET:
+      return ["T-US-051"];
     default:
       return [];
   }

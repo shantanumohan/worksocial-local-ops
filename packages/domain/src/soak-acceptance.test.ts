@@ -913,4 +913,13 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE),
     ).toEqual(["T-US-050"]);
   });
+
+  it("maps T-US-051 to DESIGN_RELEASE_READINESS_PACKET only", () => {
+    expect(expectedProofsForFixtureCase("T-US-051")).toEqual([
+      SoakProofKind.DESIGN_RELEASE_READINESS_PACKET,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.DESIGN_RELEASE_READINESS_PACKET),
+    ).toEqual(["T-US-051"]);
+  });
 });
