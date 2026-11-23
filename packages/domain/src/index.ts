@@ -924,6 +924,18 @@ export {
   type AutomatedResponseLoopDecision,
 } from "./automated-response-loop.js";
 export {
+  assertEvalPromptHasNoCustomerPii,
+  containsRawCustomerPii,
+  prepareCustomerDataForEvaluation,
+  redactTextForEvaluation,
+  CUSTOMER_EVAL_REDACTION_RELATED_CASE_IDS,
+  type CustomerEvalRedactionDecision,
+  type CustomerEvalRedactionMode,
+  type CustomerEvalSourceRecord,
+  type EvalSafeCustomerPayload,
+  type KnownCustomerIdentifiers,
+} from "./customer-eval-redaction.js";
+export {
   projectUniqueOutcomes,
   refuseSilentPlatformSum,
   DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS,

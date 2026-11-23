@@ -122,6 +122,7 @@ import { proofWrongZohoOrganizationIdentityMismatch } from "./wrong-zoho-organiz
 import { proofSseGapFullStateResync } from "./sse-gap-full-resync-proof.js";
 import { proofKeyboardFocusRestoreAfterDialog } from "./keyboard-focus-restore-proof.js";
 import { proofThirtyAlertsOneOutageGrouped } from "./alert-outage-grouping-proof.js";
+import { proofCustomerDataEvalRedactionBlocks } from "./customer-eval-redaction-proof.js";
 import { proofGoogleAdsTestProductionAccessSeparated } from "./google-ads-test-production-access-proof.js";
 import { proofConnectClaudeCodeTestApiEvalOnly } from "./claude-code-test-api-connect-proof.js";
 import { proofClaudeRuntimeEvalAuthSeparated } from "./claude-runtime-eval-auth-proof.js";
@@ -1057,6 +1058,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofThirtyAlertsOneOutageGrouped(nowPlus(nowIso, 1_370_000)),
   );
+  proofs.push(
+    proofCustomerDataEvalRedactionBlocks(nowPlus(nowIso, 1_380_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1195,6 +1199,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X062 fixture ACCEPTED via sse_gap_full_state_resync only — not live VERIFIED",
       "T-X061 fixture ACCEPTED via keyboard_focus_restore_after_dialog only — not live VERIFIED",
       "T-X068 fixture ACCEPTED via thirty_alerts_one_outage_grouped only — not live VERIFIED",
+      "T-X072 fixture ACCEPTED via customer_data_eval_redaction_blocks only — not live VERIFIED",
     ],
   };
 }

@@ -1,0 +1,248 @@
+/**
+ * T-X072 — Customer data leaks into evaluation: redaction blocks.
+ *
+ * Raw customer PII (display name, email, phone, identifiers in free text)
+ * must not enter EVAL_ONLY prompts/payloads. Callers either redact into a
+ * fixture-safe payload (`REDACTED_FOR_EVAL`) or are refused when they insist
+ * on raw passthrough (`CUSTOMER_DATA_LEAK_BLOCKED`).
+ *
+ * Distinct from EVAL_ONLY tool forbid (T-US-018/T-X037) and soak evidence
+ * summary redaction helpers. External effects: NONE. ChatGPT Ads stays blocked.
+ */
+
+export type CustomerEvalSourceRecord = {
+  customerDisplayName: string;
+  customerEmail: string | null;
+  customerPhone: string | null;
+  messageBody: string;
+  conversationId: string;
+  /** Non-PII fixture context safe for evaluation. */
+  intentLabel: string;
+};
+
+export type EvalSafeCustomerPayload = {
+  customerDisplayName: "[REDACTED_NAME]";
+  customerEmail: "[REDACTED_EMAIL]" | null;
+  customerPhone: "[REDACTED_PHONE]" | null;
+  messageBody: string;
+  conversationId: string;
+  intentLabel: string;
+  redacted: true;
+  redactedFields: readonly string[];
+};
+
+export type CustomerEvalRedactionMode = "redact" | "raw_passthrough";
+
+export type CustomerEvalRedactionDecision =
+  | {
+      allowed: true;
+      code: "REDACTED_FOR_EVAL";
+      payload: EvalSafeCustomerPayload;
+      reasons: string[];
+      externalEffects: "NONE";
+    }
+  | {
+      allowed: false;
+      code: "CUSTOMER_DATA_LEAK_BLOCKED";
+      payload: null;
+      reasons: string[];
+      externalEffects: "NONE";
+    };
+
+export type KnownCustomerIdentifiers = {
+  displayName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+};
+
+const EMAIL_RE = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
+const PHONE_RE =
+  /(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)\d{3}[-.\s]?\d{4}/;
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function knownTokens(known?: KnownCustomerIdentifiers | null): string[] {
+  if (!known) return [];
+  return [known.displayName, known.email, known.phone]
+    .map((v) => (typeof v === "string" ? v.trim() : ""))
+    .filter((v) => v.length > 0);
+}
+
+function containsKnownIdentifier(
+  text: string,
+  known?: KnownCustomerIdentifiers | null,
+): boolean {
+  for (const token of knownTokens(known)) {
+    const re = new RegExp(escapeRegExp(token), "i");
+    if (re.test(text)) return true;
+  }
+  return false;
+}
+
+function redactKnownIdentifiers(
+  raw: string,
+  known?: KnownCustomerIdentifiers | null,
+): string {
+  let out = raw;
+  // Longest-first so full display names redact before shorter fragments.
+  const tokens = knownTokens(known).sort((a, b) => b.length - a.length);
+  for (const token of tokens) {
+    const re = new RegExp(escapeRegExp(token), "gi");
+    out = out.replace(re, "[REDACTED_NAME]");
+  }
+  return out;
+}
+
+/** Strip emails/phones and optional known identifiers from free text. */
+export function redactTextForEvaluation(
+  raw: string,
+  known?: KnownCustomerIdentifiers | null,
+): string {
+  return redactKnownIdentifiers(
+    raw
+      .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[REDACTED_EMAIL]")
+      .replace(
+        /(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)\d{3}[-.\s]?\d{4}/g,
+        "[REDACTED_PHONE]",
+      ),
+    known,
+  );
+}
+
+/** True when text still contains raw email, phone, or known identifiers. */
+export function containsRawCustomerPii(
+  text: string,
+  known?: KnownCustomerIdentifiers | null,
+): boolean {
+  return (
+    EMAIL_RE.test(text) ||
+    PHONE_RE.test(text) ||
+    containsKnownIdentifier(text, known)
+  );
+}
+
+function sourceHasIdentifiablePii(source: CustomerEvalSourceRecord): boolean {
+  if (source.customerDisplayName.trim().length > 0) return true;
+  if (source.customerEmail && source.customerEmail.trim().length > 0) return true;
+  if (source.customerPhone && source.customerPhone.trim().length > 0) return true;
+  if (containsRawCustomerPii(source.messageBody)) return true;
+  return false;
+}
+
+/**
+ * Prepare customer-origin data for an EVAL_ONLY surface.
+ * Raw passthrough with identifiable PII is blocked; redact mode yields a
+ * fixture-safe payload that evaluation may consume.
+ */
+export function prepareCustomerDataForEvaluation(input: {
+  source: CustomerEvalSourceRecord;
+  mode: CustomerEvalRedactionMode;
+}): CustomerEvalRedactionDecision {
+  const { source, mode } = input;
+  const known: KnownCustomerIdentifiers = {
+    displayName: source.customerDisplayName,
+    email: source.customerEmail,
+    phone: source.customerPhone,
+  };
+
+  if (mode === "raw_passthrough" && sourceHasIdentifiablePii(source)) {
+    return {
+      allowed: false,
+      code: "CUSTOMER_DATA_LEAK_BLOCKED",
+      payload: null,
+      reasons: [
+        "Raw customer PII cannot enter evaluation — redaction required (T-X072)",
+      ],
+      externalEffects: "NONE",
+    };
+  }
+
+  const redactedFields: string[] = [];
+  if (source.customerDisplayName.trim().length > 0) {
+    redactedFields.push("customerDisplayName");
+  }
+  if (source.customerEmail && source.customerEmail.trim().length > 0) {
+    redactedFields.push("customerEmail");
+  }
+  if (source.customerPhone && source.customerPhone.trim().length > 0) {
+    redactedFields.push("customerPhone");
+  }
+  const redactedBody = redactTextForEvaluation(source.messageBody, known);
+  if (redactedBody !== source.messageBody) {
+    redactedFields.push("messageBody");
+  }
+
+  const payload: EvalSafeCustomerPayload = {
+    customerDisplayName: "[REDACTED_NAME]",
+    customerEmail:
+      source.customerEmail && source.customerEmail.trim().length > 0
+        ? "[REDACTED_EMAIL]"
+        : null,
+    customerPhone:
+      source.customerPhone && source.customerPhone.trim().length > 0
+        ? "[REDACTED_PHONE]"
+        : null,
+    messageBody: redactedBody,
+    conversationId: source.conversationId,
+    intentLabel: source.intentLabel,
+    redacted: true,
+    redactedFields,
+  };
+
+  if (containsRawCustomerPii(payload.messageBody, known)) {
+    return {
+      allowed: false,
+      code: "CUSTOMER_DATA_LEAK_BLOCKED",
+      payload: null,
+      reasons: [
+        "Redaction left residual customer PII in evaluation payload — blocked (T-X072)",
+      ],
+      externalEffects: "NONE",
+    };
+  }
+
+  return {
+    allowed: true,
+    code: "REDACTED_FOR_EVAL",
+    payload,
+    reasons: [
+      redactedFields.length > 0
+        ? `Redacted fields for evaluation: ${redactedFields.join(", ")}`
+        : "No identifiable customer PII present; eval payload marked redacted",
+    ],
+    externalEffects: "NONE",
+  };
+}
+
+/**
+ * Fail-closed check that an EVAL_ONLY prompt string does not embed raw PII.
+ * Pass `known` when the caller has the customer's display name / email / phone
+ * so embedded names in free text are also refused.
+ */
+export function assertEvalPromptHasNoCustomerPii(
+  prompt: string,
+  known?: KnownCustomerIdentifiers | null,
+): {
+  ok: boolean;
+  code: "EVAL_PROMPT_CLEAN" | "CUSTOMER_DATA_LEAK_BLOCKED";
+  reasons: string[];
+} {
+  if (containsRawCustomerPii(prompt, known)) {
+    return {
+      ok: false,
+      code: "CUSTOMER_DATA_LEAK_BLOCKED",
+      reasons: [
+        "Evaluation prompt contains raw customer identifiers — blocked (T-X072)",
+      ],
+    };
+  }
+  return {
+    ok: true,
+    code: "EVAL_PROMPT_CLEAN",
+    reasons: ["Evaluation prompt has no raw customer identifiers"],
+  };
+}
+
+export const CUSTOMER_EVAL_REDACTION_RELATED_CASE_IDS = ["T-X072"] as const;
