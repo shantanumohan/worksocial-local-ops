@@ -922,4 +922,13 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.DESIGN_RELEASE_READINESS_PACKET),
     ).toEqual(["T-US-051"]);
   });
+
+  it("maps T-US-053 to SECRETS_NEVER_IN_BROWSER_ASSETS only", () => {
+    expect(expectedProofsForFixtureCase("T-US-053")).toEqual([
+      SoakProofKind.SECRETS_NEVER_IN_BROWSER_ASSETS,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.SECRETS_NEVER_IN_BROWSER_ASSETS),
+    ).toEqual(["T-US-053"]);
+  });
 });

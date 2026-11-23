@@ -139,6 +139,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-US-049": "Daily owner review — reviewed operating knowledge",
   "T-US-050": "Owner brief groups root cause; actionable",
   "T-US-051": "Design/release readiness — release acceptance packet",
+  "T-US-053": "Secrets never in browser assets",
 };
 
 function relatedProofsForCase(
@@ -356,6 +357,7 @@ export function compileAcceptanceEvidence(
     "T-US-049 fixture ACCEPTED only via DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE",
     "T-US-050 fixture ACCEPTED only via OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE",
     "T-US-051 fixture ACCEPTED only via DESIGN_RELEASE_READINESS_PACKET",
+    "T-US-053 fixture ACCEPTED only via SECRETS_NEVER_IN_BROWSER_ASSETS",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
