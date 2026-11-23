@@ -835,6 +835,11 @@ export const SoakProofKind = {
    * T-F05 complete organic-visibility evidence package.
    */
   CONNECT_GSC_SCHEDULE_WATERMARK: "connect_gsc_schedule_watermark",
+  /**
+   * Connect Google Ads analyze-only — write/spend disabled save/reload (T-US-011).
+   * Live provider wiring NOT_WIRED. Distinct from T-F06 complete F06 package and T-US-012.
+   */
+  CONNECT_GOOGLE_ADS_ANALYZE_ONLY: "connect_google_ads_analyze_only",
 } as const;
 
 export type SoakProofKindValue =
@@ -1104,6 +1109,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X030",
   "T-US-056",
   "T-X040",
+  "T-US-011",
   "T-US-012",
   "T-US-015",
   "T-US-016",
@@ -1634,6 +1640,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.HONEST_OUTAGE_HOSTED_CONTACT_PATH];
     case "T-X040":
       return [SoakProofKind.LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE];
+    case "T-US-011":
+      return [SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY];
     case "T-US-012":
       return [SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED];
     case "T-US-015":
@@ -2022,6 +2030,8 @@ export function mapProofToFixtureCases(
       return ["T-US-005"];
     case SoakProofKind.CONNECT_GA4_READ_READY_NEXT_SYNC:
       return ["T-US-007"];
+    case SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY:
+      return ["T-US-011"];
     case SoakProofKind.CONNECT_GSC_SCHEDULE_WATERMARK:
       return ["T-US-009"];
     default:

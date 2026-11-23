@@ -1315,4 +1315,13 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-US-009"]);
   });
 
+  it("maps T-US-011 to CONNECT_GOOGLE_ADS_ANALYZE_ONLY only", () => {
+    expect(expectedProofsForFixtureCase("T-US-011")).toEqual([
+      SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY),
+    ).toEqual(["T-US-011"]);
+  });
+
 });

@@ -1378,6 +1378,18 @@ export {
   type ConnectGoogleAdsControlledAnalysisDecision,
 } from "./connect-google-ads-controlled-analysis.js";
 export {
+  CONNECT_GOOGLE_ADS_ANALYZE_ONLY_RELATED_CASE_IDS,
+  createGoogleAdsAnalyzeOnlyFixtureStore,
+  fixtureGoogleAdsAnalyzeOnlyInput,
+  loadGoogleAdsAnalyzeOnlyBinding,
+  persistGoogleAdsAnalyzeOnlyBinding,
+  saveGoogleAdsAnalyzeOnlyConnection,
+  type GoogleAdsAnalyzeOnlyBinding,
+  type GoogleAdsAnalyzeOnlyFixtureStore,
+  type GoogleAdsAnalyzeOnlyInput,
+  type GoogleAdsAnalyzeOnlyResult,
+} from "./google-ads-analyze-only.js";
+export {
   CONNECT_CLAUDE_CODE_AND_TEST_API_RELATED_CASE_IDS,
   evaluateConnectClaudeCodeAndTestApi,
   type ClaudeCodeInstallationDiagnostic,
