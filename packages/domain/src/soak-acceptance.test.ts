@@ -1074,4 +1074,15 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.TURN_DEMAND_INTO_PAGE_IMPROVEMENT),
     ).toEqual(["T-F14"]);
   });
+
+  it("maps T-F15 to CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN only", () => {
+    expect(expectedProofsForFixtureCase("T-F15")).toEqual([
+      SoakProofKind.CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN,
+      ),
+    ).toEqual(["T-F15"]);
+  });
 });

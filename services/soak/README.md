@@ -85,4 +85,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-F12 Grant standing autonomy safely | Fixture **ACCEPTED** via `GRANT_STANDING_AUTONOMY_SAFELY` (complete F12 evidence; not live VERIFIED) |
 | T-F13 Launch a workstream and recurring schedule | Fixture **ACCEPTED** via `LAUNCH_WORKSTREAM_RECURRING_SCHEDULE` (complete F13 evidence; not live VERIFIED) |
 | T-F14 Turn demand into a page improvement | Fixture **ACCEPTED** via `TURN_DEMAND_INTO_PAGE_IMPROVEMENT` (complete F14 evidence; not live VERIFIED) |
+| T-F15 Create and distribute an original campaign | Fixture **ACCEPTED** via `CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN` (complete F15 evidence; not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |

@@ -634,6 +634,18 @@ export const SoakProofKind = {
    * review/revise/release.
    */
   TURN_DEMAND_INTO_PAGE_IMPROVEMENT: "turn_demand_into_page_improvement",
+  /**
+   * Create and distribute an original campaign — complete F15 evidence set
+   * (T-F15). Approved facts + venue media + authorized capabilities, brief
+   * with source IDs and outcome, versioned draft, QA, per-destination
+   * previews, canonical publish, provider outcomes, campaign manifest,
+   * measurement, distribution review; unsafe claims refused; live NOT_WIRED.
+   * Distinct from T-US-029 campaign-manifest summary, T-X045 partial
+   * destinations, T-US-022 unsupported capabilities, and T-US-030 uncertain
+   * post reconcile.
+   */
+  CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN:
+    "create_and_distribute_original_campaign",
 } as const;
 
 export type SoakProofKindValue =
@@ -773,6 +785,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F12 requires GRANT_STANDING_AUTONOMY_SAFELY (complete F12 evidence set; live NOT_WIRED).
  * T-F13 requires LAUNCH_WORKSTREAM_RECURRING_SCHEDULE (complete F13 evidence set; live NOT_WIRED).
  * T-F14 requires TURN_DEMAND_INTO_PAGE_IMPROVEMENT (complete F14 evidence set; live NOT_WIRED).
+ * T-F15 requires CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN (complete F15 evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -793,6 +806,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F12",
   "T-F13",
   "T-F14",
+  "T-F15",
   "T-F24",
   "T-US-047",
   "T-US-002",
@@ -1457,6 +1471,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.LAUNCH_WORKSTREAM_RECURRING_SCHEDULE];
     case "T-F14":
       return [SoakProofKind.TURN_DEMAND_INTO_PAGE_IMPROVEMENT];
+    case "T-F15":
+      return [SoakProofKind.CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN];
     default:
       return [];
   }
@@ -1679,6 +1695,8 @@ export function mapProofToFixtureCases(
       return ["T-F13"];
     case SoakProofKind.TURN_DEMAND_INTO_PAGE_IMPROVEMENT:
       return ["T-F14"];
+    case SoakProofKind.CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN:
+      return ["T-F15"];
     default:
       return [];
   }

@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f15",
+  "caseId": "T-F15",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F15 (Create and distribute an original campaign)\nproof=create_and_distribute_original_campaign applyCount=1 :: complete F15 evidence package → CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN_EVIDENCE_RECORDED; approved facts; venue media; authorized capabilities; brief+outcome; versioned draft; QA; previews; canonical publish; provider outcomes; campaign manifest; measurement; distribution review; distributionVerifiedLive=false; live NOT_WIRED | approvedFacts=null → APPROVED_FACTS_REQUIRED | venueMedia=null → VENUE_MEDIA_REQUIRED | authorizedCapabilities=null → AUTHORIZED_CAPABILITIES_REQUIRED | brief=null → BRIEF_OUTCOME_REQUIRED | draft=null → DRAFT_REQUIRED | qa=null → QA_FINDINGS_REQUIRED | destinationPreviews=null → DESTINATION_PREVIEWS_REQUIRED | canonicalPublish=null → CANONICAL_PUBLISH_REQUIRED | destinationOutcomes=null → PROVIDER_OUTCOMES_REQUIRED | measurement=null → MEASUREMENT_STATE_REQUIRED | campaignManifestId=null → CAMPAIGN_MANIFEST_REQUIRED | distributionReview=null → DISTRIBUTION_REVIEW_REQUIRED | requestUnauthorizedDestinationPublish → UNAUTHORIZED_DESTINATION_PUBLISH_REFUSED | claimLiveVerifiedDistribution → FALSE_LIVE_VERIFIED_DISTRIBUTION_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-029 (campaign manifest happy-path summary), T-X045 (partial destinations), T-US-022 (unsupported capabilities), and T-US-030 (uncertain post reconcile) — complete F15 flow evidence package | proofRecordedAt=2026-11-21T19:17:20.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "create_and_distribute_original_campaign"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f15.json",
+  "createdAtIso": "2026-11-23T04:07:03.739Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f15-27b9b8d22363"
+}
