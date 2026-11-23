@@ -467,6 +467,9 @@ async function main(): Promise<void> {
     const hasTf15Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-F15",
     );
+    const hasTf16Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-F16",
+    );
     const expectedAccepted = [
       "T-F01",
       "T-F02",
@@ -482,6 +485,7 @@ async function main(): Promise<void> {
       "T-F13",
       "T-F14",
       "T-F15",
+      "T-F16",
       "T-F24",
       "T-US-002",
       "T-US-006",
@@ -708,7 +712,8 @@ async function main(): Promise<void> {
         hasTf13Accepted &&
         hasTf14Accepted &&
         hasTf15Accepted &&
-        accepted.length === 116 &&
+        hasTf16Accepted &&
+        accepted.length === 117 &&
         JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
@@ -723,7 +728,7 @@ async function main(): Promise<void> {
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-F15 create-and-distribute-original-campaign fixture ACCEPTED (total 116). Live VERIFIED forbidden. Not R1-complete.",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-F16 review-paid-media-recommendations fixture ACCEPTED (total 117). Live VERIFIED forbidden. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {

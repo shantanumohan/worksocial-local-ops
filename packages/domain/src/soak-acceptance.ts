@@ -646,6 +646,18 @@ export const SoakProofKind = {
    */
   CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN:
     "create_and_distribute_original_campaign",
+  /**
+   * Review Google and ChatGPT paid-media recommendations — complete F16
+   * evidence set (T-F16). Read-ready selection + comparable settled data,
+   * reproducible analysis definition, evidence-backed diagnosis, typed change
+   * proposal, revision-bound financial diff, authorization record, verified
+   * mutation or explicit failure; ChatGPT Ads ACCESS_BLOCKED without
+   * transport/entitlement; unsafe claims refused; live NOT_WIRED. Distinct
+   * from T-US-031 decision+execute-failure summary, T-US-011 analyze-only,
+   * T-US-012 test vs production, T-US-032 exact financial boundaries, and
+   * T-F07/T-US-013/T-US-014 ChatGPT Ads connect.
+   */
+  REVIEW_PAID_MEDIA_RECOMMENDATIONS: "review_paid_media_recommendations",
 } as const;
 
 export type SoakProofKindValue =
@@ -786,6 +798,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F13 requires LAUNCH_WORKSTREAM_RECURRING_SCHEDULE (complete F13 evidence set; live NOT_WIRED).
  * T-F14 requires TURN_DEMAND_INTO_PAGE_IMPROVEMENT (complete F14 evidence set; live NOT_WIRED).
  * T-F15 requires CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN (complete F15 evidence set; live NOT_WIRED).
+ * T-F16 requires REVIEW_PAID_MEDIA_RECOMMENDATIONS (complete F16 evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -807,6 +820,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F13",
   "T-F14",
   "T-F15",
+  "T-F16",
   "T-F24",
   "T-US-047",
   "T-US-002",
@@ -1473,6 +1487,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.TURN_DEMAND_INTO_PAGE_IMPROVEMENT];
     case "T-F15":
       return [SoakProofKind.CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN];
+    case "T-F16":
+      return [SoakProofKind.REVIEW_PAID_MEDIA_RECOMMENDATIONS];
     default:
       return [];
   }
@@ -1697,6 +1713,8 @@ export function mapProofToFixtureCases(
       return ["T-F14"];
     case SoakProofKind.CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN:
       return ["T-F15"];
+    case SoakProofKind.REVIEW_PAID_MEDIA_RECOMMENDATIONS:
+      return ["T-F16"];
     default:
       return [];
   }

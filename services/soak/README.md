@@ -86,4 +86,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-F13 Launch a workstream and recurring schedule | Fixture **ACCEPTED** via `LAUNCH_WORKSTREAM_RECURRING_SCHEDULE` (complete F13 evidence; not live VERIFIED) |
 | T-F14 Turn demand into a page improvement | Fixture **ACCEPTED** via `TURN_DEMAND_INTO_PAGE_IMPROVEMENT` (complete F14 evidence; not live VERIFIED) |
 | T-F15 Create and distribute an original campaign | Fixture **ACCEPTED** via `CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN` (complete F15 evidence; not live VERIFIED) |
+| T-F16 Review Google and ChatGPT paid-media recommendations | Fixture **ACCEPTED** via `REVIEW_PAID_MEDIA_RECOMMENDATIONS` (complete F16 evidence; ChatGPT Ads ACCESS_BLOCKED; not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |

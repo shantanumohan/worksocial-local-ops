@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f16",
+  "caseId": "T-F16",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F16 (Review Google and ChatGPT paid-media recommendations)\nproof=review_paid_media_recommendations applyCount=1 :: complete F16 evidence package → REVIEW_PAID_MEDIA_RECOMMENDATIONS_EVIDENCE_RECORDED; read-ready selection; reproducible analysis definition; evidence-backed diagnosis; typed change proposal; revision-bound financial diff; authorization record; verified mutation or explicit failure; mutationVerifiedLive=false; ChatGPT Ads ACCESS_BLOCKED; live NOT_WIRED | selection=null → SELECTION_REQUIRED | CHATGPT_ADS without transport/entitlement → ACCESS_BLOCKED | analysisDefinition=null → ANALYSIS_DEFINITION_REQUIRED | diagnosis=null → DIAGNOSIS_REQUIRED | proposal=null → TYPED_PROPOSAL_REQUIRED | sharedBudgetImpactKnown=false → SHARED_BUDGET_UNKNOWN | authorization=[REDACTED] → AUTHORIZATION_REQUIRED | mutationOrFailure=null → MUTATION_OR_FAILURE_REQUIRED | claimLiveVerifiedMutation → FALSE_LIVE_VERIFIED_MUTATION_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-031 (decision+execute-failure summary), T-US-011 (analyze-only), T-US-012 (test vs production), T-US-032 (exact financial boundaries), and T-F07/T-US-013/T-US-014 (ChatGPT Ads connect) — complete F16 flow evidence package | proofRecordedAt=2026-11-21T19:17:30.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "review_paid_media_recommendations"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f16.json",
+  "createdAtIso": "2026-11-23T04:16:58.068Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f16-6f468343aeee"
+}

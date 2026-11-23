@@ -156,6 +156,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-F13": "Launch a workstream and recurring schedule",
   "T-F14": "Turn demand into a page improvement",
   "T-F15": "Create and distribute an original campaign",
+  "T-F16": "Review Google and ChatGPT paid-media recommendations",
 };
 
 function relatedProofsForCase(
@@ -390,6 +391,7 @@ export function compileAcceptanceEvidence(
     "T-F13 fixture ACCEPTED only via LAUNCH_WORKSTREAM_RECURRING_SCHEDULE",
     "T-F14 fixture ACCEPTED only via TURN_DEMAND_INTO_PAGE_IMPROVEMENT",
     "T-F15 fixture ACCEPTED only via CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN",
+    "T-F16 fixture ACCEPTED only via REVIEW_PAID_MEDIA_RECOMMENDATIONS",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
