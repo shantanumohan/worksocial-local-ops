@@ -1180,6 +1180,23 @@ export {
   type SharedBriefsRedactedPrivateRetainedDecision,
 } from "./shared-briefs-redacted-private-retained.js";
 export {
+  InitialOperatingMode,
+  DiagnosticProbeKind,
+  REQUIRED_DIAGNOSTIC_KINDS,
+  CREATE_TRUSTED_LOCAL_WORKSPACE_RELATED_CASE_IDS,
+  evaluateCreateTrustedLocalWorkspace,
+  type InitialOperatingModeValue,
+  type DiagnosticProbeKindValue,
+  type OwnerSessionRecord,
+  type TimestampedDiagnostic,
+  type InitialAuthorityDecision,
+  type StartupResultRecord,
+  type RecoveryTestRecord,
+  type BlockerNextAction,
+  type CreateTrustedLocalWorkspaceInput,
+  type CreateTrustedLocalWorkspaceDecision,
+} from "./create-trusted-local-workspace.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
