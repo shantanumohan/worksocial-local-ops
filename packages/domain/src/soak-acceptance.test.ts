@@ -940,4 +940,15 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.KEYBOARD_JOURNEY_REDUCED_MOTION),
     ).toEqual(["T-US-055"]);
   });
+
+  it("maps T-US-059 to SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED only", () => {
+    expect(expectedProofsForFixtureCase("T-US-059")).toEqual([
+      SoakProofKind.SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED,
+      ),
+    ).toEqual(["T-US-059"]);
+  });
 });

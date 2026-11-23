@@ -71,4 +71,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-US-051 Design/release readiness — release acceptance packet | Fixture **ACCEPTED** via `DESIGN_RELEASE_READINESS_PACKET` (not live VERIFIED) |
 | T-US-053 Secrets never in browser assets | Fixture **ACCEPTED** via `SECRETS_NEVER_IN_BROWSER_ASSETS` (not live VERIFIED) |
 | T-US-055 Complete keyboard journey with reduced motion | Fixture **ACCEPTED** via `KEYBOARD_JOURNEY_REDUCED_MOTION` (not live VERIFIED) |
+| T-US-059 Shared briefs redacted; private evidence retained | Fixture **ACCEPTED** via `SHARED_BRIEFS_REDACTED_PRIVATE_RETAINED` (not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |

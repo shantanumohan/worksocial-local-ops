@@ -127,6 +127,7 @@ import { proofOwnerBriefRootCause } from "./owner-brief-root-cause-proof.js";
 import { proofDesignReleaseReadiness } from "./design-release-readiness-proof.js";
 import { proofSecretsNeverBrowserAssets } from "./secrets-never-browser-assets-proof.js";
 import { proofKeyboardJourneyReducedMotion } from "./keyboard-journey-reduced-motion-proof.js";
+import { proofSharedBriefsRedactedPrivateRetained } from "./shared-briefs-redacted-private-retained-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -880,6 +881,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofDesignReleaseReadiness(nowPlus(nowIso, 870_000)));
   proofs.push(proofSecretsNeverBrowserAssets(nowPlus(nowIso, 880_000)));
   proofs.push(proofKeyboardJourneyReducedMotion(nowPlus(nowIso, 890_000)));
+  proofs.push(
+    proofSharedBriefsRedactedPrivateRetained(nowPlus(nowIso, 900_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -970,6 +974,10 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-035 fixture ACCEPTED via review_revise_release_receipt_or_blocked only — not live VERIFIED",
       "T-US-049 fixture ACCEPTED via daily_owner_review_operating_knowledge only — not live VERIFIED",
       "T-US-050 fixture ACCEPTED via owner_brief_root_cause_actionable only — not live VERIFIED",
+      "T-US-051 fixture ACCEPTED via design_release_readiness_packet only — not live VERIFIED",
+      "T-US-053 fixture ACCEPTED via secrets_never_in_browser_assets only — not live VERIFIED",
+      "T-US-055 fixture ACCEPTED via keyboard_journey_reduced_motion only — not live VERIFIED",
+      "T-US-059 fixture ACCEPTED via shared_briefs_redacted_private_retained only — not live VERIFIED",
     ],
   };
 }
