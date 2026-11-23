@@ -29,7 +29,7 @@ describe("soak service (M9)", () => {
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(129);
+    expect(result.proofs).toHaveLength(130);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(
       result.proofs.every((p) =>
@@ -350,6 +350,11 @@ describe("soak service (M9)", () => {
         (p) =>
           p.kind ===
           SoakProofKind.LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE,
+      ),
+    ).toBe(true);
+    expect(
+      result.proofs.some(
+        (p) => p.kind === SoakProofKind.INCOMPARABLE_TREND_INDICES_REJECTED,
       ),
     ).toBe(true);
     expect(
@@ -816,6 +821,7 @@ describe("soak service (M9)", () => {
       "T-X038",
       "T-X039",
       "T-X040",
+      "T-X041",
       "T-X043",
       "T-X044",
       "T-X045",
@@ -1013,7 +1019,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(141);
+    expect(soak.ownerReport().acceptedCases.length).toBe(142);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {

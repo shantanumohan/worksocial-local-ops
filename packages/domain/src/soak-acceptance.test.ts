@@ -713,6 +713,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X040"]);
   });
 
+  it("maps T-X041 to INCOMPARABLE_TREND_INDICES_REJECTED only", () => {
+    expect(expectedProofsForFixtureCase("T-X041")).toEqual([
+      SoakProofKind.INCOMPARABLE_TREND_INDICES_REJECTED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.INCOMPARABLE_TREND_INDICES_REJECTED),
+    ).toEqual(["T-X041"]);
+  });
+
   it("maps T-US-012 to GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED only", () => {
     expect(expectedProofsForFixtureCase("T-US-012")).toEqual([
       SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED,

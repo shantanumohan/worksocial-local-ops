@@ -40,6 +40,7 @@
  * unbound write path fail closed (T-US-006).
  * rate-limit bounded backoff preserves deadline (T-X030).
  * low-sample trend spike insufficient evidence (T-X040).
+ * incomparable trend indices rejected/labeled (T-X041).
  * Google Ads test vs production access separated (T-US-012).
  * Connect Claude Code + test API EVAL_ONLY (T-US-015).
  * Connect Gemini Evaluation EVAL_ONLY (T-US-017).
@@ -108,6 +109,7 @@ import { proofMockedConnectorNotProductionReady } from "./mocked-connector-not-p
 import { proofRateLimitBoundedBackoffPreservesDeadline } from "./rate-limit-deadline-proof.js";
 import { proofHonestOutageHostedContact } from "./honest-outage-hosted-contact-proof.js";
 import { proofLowSampleTrendSpikeInsufficientEvidence } from "./low-sample-trend-spike-proof.js";
+import { proofIncomparableTrendIndicesRejected } from "./incomparable-trend-indices-proof.js";
 import { proofGoogleAdsTestProductionAccessSeparated } from "./google-ads-test-production-access-proof.js";
 import { proofConnectClaudeCodeTestApiEvalOnly } from "./claude-code-test-api-connect-proof.js";
 import { proofClaudeRuntimeEvalAuthSeparated } from "./claude-runtime-eval-auth-proof.js";
@@ -1021,6 +1023,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofSemanticSearchNoResultEvalComparison(nowPlus(nowIso, 1290000)),
   );
+  proofs.push(
+    proofIncomparableTrendIndicesRejected(nowPlus(nowIso, 1_300_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1151,6 +1156,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-009 fixture ACCEPTED via connect_gsc_schedule_watermark only — not live VERIFIED",
       "T-US-011 fixture ACCEPTED via connect_google_ads_analyze_only only — not live VERIFIED",
       "T-US-045 fixture ACCEPTED via semantic_search_no_result_eval_comparison only — not live VERIFIED",
+      "T-X041 fixture ACCEPTED via incomparable_trend_indices_rejected only — not live VERIFIED",
     ],
   };
 }

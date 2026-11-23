@@ -336,6 +336,7 @@ export {
   ingestClaimAsHypothesis,
   createInstructionIngestion,
   registerDemandObservation,
+  compareTrendIndices,
   buildFactVerificationOutcome,
   applyFactVerification,
   listFactOutcomesForLearning,
@@ -351,6 +352,7 @@ export {
   type InstructionIngestionRecord,
   type DemandSignalKindValue,
   type DemandObservation,
+  type TrendIndexComparison,
   type KnowledgeState,
   type FactVerificationDecisionValue,
 } from "./knowledge.js";
