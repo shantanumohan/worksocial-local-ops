@@ -105,3 +105,4 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |
 | T-US-056 honest outage hosted contact | Fixture **ACCEPTED** via `HONEST_OUTAGE_HOSTED_CONTACT_PATH` (not live VERIFIED) |
 | T-US-005 site/page/editable sources baseline | Fixture **ACCEPTED** via `SITE_PAGE_EDITABLE_SOURCES_BASELINE` (baseline ID happy-path; distinct from T-F03; not live VERIFIED) |
+| T-US-045 semantic search / no-result | Fixture **ACCEPTED** via `SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON` (not live VERIFIED) |

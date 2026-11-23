@@ -72,6 +72,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X039": "Provider error vs answer failure — separate denominators",
   "T-US-058": "Synthetic excluded from business denominators",
   "T-US-038": "Double-counted attribution avoided in unique outcomes",
+  "T-US-045": "Semantic search / no-result — evaluation comparison",
   "T-US-046": "Hard search constraints enforced; no invented availability",
   "T-X048": "Unknown price or availability — no invention",
   "T-US-010": "Missing GSC rows ≠ zero demand",
@@ -436,6 +437,7 @@ export function compileAcceptanceEvidence(
     "T-US-039 fixture ACCEPTED only via FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT",
     "T-US-043 fixture ACCEPTED only via AFTER_HOURS_HANDOFF_ACKNOWLEDGED",
     "T-US-011 fixture ACCEPTED only via CONNECT_GOOGLE_ADS_ANALYZE_ONLY",
+    "T-US-045 fixture ACCEPTED only via SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON",
     "T-US-007 fixture ACCEPTED only via CONNECT_GA4_READ_READY_NEXT_SYNC",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );

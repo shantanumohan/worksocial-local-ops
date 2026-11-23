@@ -840,6 +840,13 @@ export const SoakProofKind = {
    * Live provider wiring NOT_WIRED. Distinct from T-F06 complete F06 package and T-US-012.
    */
   CONNECT_GOOGLE_ADS_ANALYZE_ONLY: "connect_google_ads_analyze_only",
+  /**
+   * Semantic search / no-result with evaluation comparison (T-US-045).
+   * Honest NO_RESULT → judgment + remediation → COMPARE_GOLDEN re-run
+   * improvement. Distinct from T-F23 complete F23 evidence package.
+   */
+  SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON:
+    "semantic_search_no_result_eval_comparison",
 } as const;
 
 export type SoakProofKindValue =
@@ -1003,6 +1010,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-001 requires TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS.
  * T-US-039 requires FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT.
  * T-US-043 requires AFTER_HOURS_HANDOFF_ACKNOWLEDGED.
+ * T-US-045 requires SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -1060,6 +1068,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X038",
   "T-X039",
   "T-US-058",
+  "T-US-045",
   "T-US-046",
   "T-X048",
   "T-US-010",
@@ -1542,6 +1551,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.METRIC_DENOMINATORS_HONEST];
     case "T-US-058":
       return [SoakProofKind.METRIC_DENOMINATORS_HONEST];
+    case "T-US-045":
+      return [SoakProofKind.SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON];
     case "T-US-046":
       return [SoakProofKind.HARD_SEARCH_CONSTRAINTS_NO_INVENTION];
     case "T-X048":
@@ -2034,6 +2045,8 @@ export function mapProofToFixtureCases(
       return ["T-US-011"];
     case SoakProofKind.CONNECT_GSC_SCHEDULE_WATERMARK:
       return ["T-US-009"];
+    case SoakProofKind.SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON:
+      return ["T-US-045"];
     default:
       return [];
   }
