@@ -894,6 +894,12 @@ export const SoakProofKind = {
    * Raw PII cannot enter EVAL_ONLY; redact or CUSTOMER_DATA_LEAK_BLOCKED.
    */
   CUSTOMER_DATA_EVAL_REDACTION_BLOCKS: "customer_data_eval_redaction_blocks",
+  /**
+   * SSRF redirect and DNS rebind — blocked every hop (T-X064).
+   * Fixture hop chains only; no live DNS/fetch.
+   */
+  SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP:
+    "ssrf_redirect_dns_rebind_blocked_every_hop",
 } as const;
 
 export type SoakProofKindValue =
@@ -1006,6 +1012,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X061 requires KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG.
  * T-X068 requires THIRTY_ALERTS_ONE_OUTAGE_GROUPED.
  * T-X072 requires CUSTOMER_DATA_EVAL_REDACTION_BLOCKS.
+ * T-X064 requires SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP (every hop checked).
  * T-US-012 requires GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED (test ≠ production).
  * T-US-015 requires CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY (runtime ≠ API readiness; EVAL_ONLY).
 * T-US-016 requires CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED.
@@ -1182,6 +1189,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X061",
   "T-X062",
   "T-X068",
+  "T-X064",
   "T-X072",
   "T-US-011",
   "T-US-012",
@@ -1734,6 +1742,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.THIRTY_ALERTS_ONE_OUTAGE_GROUPED];
     case "T-X072":
       return [SoakProofKind.CUSTOMER_DATA_EVAL_REDACTION_BLOCKS];
+    case "T-X064":
+      return [SoakProofKind.SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP];
     case "T-US-011":
       return [SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY];
     case "T-US-012":
@@ -2024,6 +2034,8 @@ export function mapProofToFixtureCases(
       return ["T-X068"];
     case SoakProofKind.CUSTOMER_DATA_EVAL_REDACTION_BLOCKS:
       return ["T-X072"];
+    case SoakProofKind.SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP:
+      return ["T-X064"];
     case SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED:
       return ["T-US-012"];
     case SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY:

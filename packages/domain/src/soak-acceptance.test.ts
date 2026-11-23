@@ -1426,4 +1426,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X072"]);
   });
 
+  it("maps T-X064 to SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP only", () => {
+    expect(expectedProofsForFixtureCase("T-X064")).toEqual([
+      SoakProofKind.SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP,
+      ),
+    ).toEqual(["T-X064"]);
+  });
+
 });
