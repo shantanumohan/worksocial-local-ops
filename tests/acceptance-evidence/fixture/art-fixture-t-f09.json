@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f09",
+  "caseId": "T-F09",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F09 (Connect Gemini for independent testing)\nproof=connect_gemini_independent_testing applyCount=1 :: complete F09 evidence package → CONNECT_GEMINI_INDEPENDENT_TESTING_EVIDENCE_RECORDED; data-use decision; broker credential; dated model/capability snapshot; evaluation condition; consented smoke under cap + provider receipt; EVAL_ONLY save; canPublish=false; canRespondToCustomers=false; evalVerifiedLive=false; live NOT_WIRED | dataUseDecision=null → DATA_USE_DECISION_REQUIRED | empty credential binding → CREDENTIAL_BINDING_REQUIRED | empty model/capability snapshot → MODEL_CAPABILITY_SNAPSHOT_REQUIRED | evaluationCondition=null → EVALUATION_CONDITION_REQUIRED | providerTestReceipt=null → PROVIDER_TEST_RECEIPT_REQUIRED | attemptOperationalCapability → OPERATIONAL_CAPABILITY_REFUSED | claimLiveVerifiedEval → FALSE_LIVE_VERIFIED_EVAL_REFUSED | requestLiveEvalWiring → LIVE_EVAL_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveEvalWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-017 (EVAL_ONLY connect summary) and T-US-018/T-X037 (operational tool forbid) — complete F09 flow evidence package | proofRecordedAt=2026-11-21T19:16:20.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "connect_gemini_independent_testing"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f09.json",
+  "createdAtIso": "2026-11-23T03:16:04.439Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f09-23e59e0a2623"
+}

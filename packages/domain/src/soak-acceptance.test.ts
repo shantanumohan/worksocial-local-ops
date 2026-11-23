@@ -1020,4 +1020,13 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.CONNECT_CLAUDE_CODE_AND_TEST_API),
     ).toEqual(["T-F08"]);
   });
+
+  it("maps T-F09 to CONNECT_GEMINI_INDEPENDENT_TESTING only", () => {
+    expect(expectedProofsForFixtureCase("T-F09")).toEqual([
+      SoakProofKind.CONNECT_GEMINI_INDEPENDENT_TESTING,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CONNECT_GEMINI_INDEPENDENT_TESTING),
+    ).toEqual(["T-F09"]);
+  });
 });

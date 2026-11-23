@@ -577,6 +577,15 @@ export const SoakProofKind = {
    * API eval auth.
    */
   CONNECT_CLAUDE_CODE_AND_TEST_API: "connect_claude_code_and_test_api",
+  /**
+   * Connect Gemini for independent testing — complete F09 evidence set
+   * (T-F09). Data-use decision, broker credential, dated model/capability
+   * snapshot, evaluation condition, consented smoke under cap + provider
+   * receipt, EVAL_ONLY save (no publish/customer reply); unsafe claims
+   * refused; live NOT_WIRED. Distinct from T-US-017 EVAL_ONLY connect
+   * summary and T-US-018/T-X037 operational tool forbid.
+   */
+  CONNECT_GEMINI_INDEPENDENT_TESTING: "connect_gemini_independent_testing",
 } as const;
 
 export type SoakProofKindValue =
@@ -710,6 +719,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F05 requires CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY (complete F05 evidence set; live NOT_WIRED).
  * T-F06 requires CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS (complete F06 evidence set; live NOT_WIRED).
  * T-F08 requires CONNECT_CLAUDE_CODE_AND_TEST_API (complete F08 evidence set; live NOT_WIRED).
+ * T-F09 requires CONNECT_GEMINI_INDEPENDENT_TESTING (complete F09 evidence set; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -724,6 +734,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F05",
   "T-F06",
   "T-F08",
+  "T-F09",
   "T-F24",
   "T-US-047",
   "T-US-002",
@@ -1376,6 +1387,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS];
     case "T-F08":
       return [SoakProofKind.CONNECT_CLAUDE_CODE_AND_TEST_API];
+    case "T-F09":
+      return [SoakProofKind.CONNECT_GEMINI_INDEPENDENT_TESTING];
     default:
       return [];
   }
@@ -1586,6 +1599,8 @@ export function mapProofToFixtureCases(
       return ["T-F06"];
     case SoakProofKind.CONNECT_CLAUDE_CODE_AND_TEST_API:
       return ["T-F08"];
+    case SoakProofKind.CONNECT_GEMINI_INDEPENDENT_TESTING:
+      return ["T-F09"];
     default:
       return [];
   }

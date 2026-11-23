@@ -79,4 +79,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-F05 Connect Search Console and organic visibility | Fixture **ACCEPTED** via `CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY` (complete F05 evidence; not live VERIFIED) |
 | T-F06 Connect Google Ads for controlled analysis | Fixture **ACCEPTED** via `CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS` (complete F06 evidence; not live VERIFIED) |
 | T-F08 Connect Claude Code and the Claude test API | Fixture **ACCEPTED** via `CONNECT_CLAUDE_CODE_AND_TEST_API` (complete F08 evidence; not live VERIFIED) |
+| T-F09 Connect Gemini for independent testing | Fixture **ACCEPTED** via `CONNECT_GEMINI_INDEPENDENT_TESTING` (complete F09 evidence; not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |
