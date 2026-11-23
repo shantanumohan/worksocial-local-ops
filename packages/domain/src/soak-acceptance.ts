@@ -446,6 +446,13 @@ export const SoakProofKind = {
    */
   PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE:
     "paid_media_recommendation_mutation_or_failure",
+  /**
+   * Claude/Gemini eval suites — adjudication + backlog (T-US-033 / F17).
+   * Versioned suite + condition manifest + authorized fixture run; failed
+   * cases adjudicated with linked backlog; no production writes; live
+   * NOT_WIRED. Distinct from T-US-015 / T-US-017 / T-US-018 / T-X037 / T-X038.
+   */
+  EVAL_SUITE_ADJUDICATION_BACKLOG: "eval_suite_adjudication_backlog",
 } as const;
 
 export type SoakProofKindValue =
@@ -563,6 +570,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-029 requires CAMPAIGN_MANIFEST_DISTRIBUTION (original campaign distribution campaign manifest; live NOT_WIRED).
  * T-US-030 requires UNCERTAIN_POST_RECONCILE_BEFORE_RETRY (uncertain post reconcile before retry; live NOT_WIRED).
  * T-US-031 requires PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE (paid-media recommendation decision + honest execute failure; live NOT_WIRED).
+ * T-US-033 requires EVAL_SUITE_ADJUDICATION_BACKLOG (Claude/Gemini eval suite adjudication + linked backlog; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -659,6 +667,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-029",
   "T-US-030",
   "T-US-031",
+  "T-US-033",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1181,6 +1190,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.UNCERTAIN_POST_RECONCILE_BEFORE_RETRY];
     case "T-US-031":
       return [SoakProofKind.PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE];
+    case "T-US-033":
+      return [SoakProofKind.EVAL_SUITE_ADJUDICATION_BACKLOG];
     default:
       return [];
   }
@@ -1359,6 +1370,8 @@ export function mapProofToFixtureCases(
       return ["T-US-030"];
     case SoakProofKind.PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE:
       return ["T-US-031"];
+    case SoakProofKind.EVAL_SUITE_ADJUDICATION_BACKLOG:
+      return ["T-US-033"];
     default:
       return [];
   }
