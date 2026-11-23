@@ -1228,5 +1228,16 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-US-001"]);
   });
 
+  it("maps T-US-039 to FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT only", () => {
+    expect(expectedProofsForFixtureCase("T-US-039")).toEqual([
+      SoakProofKind.FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT,
+      ),
+    ).toEqual(["T-US-039"]);
+  });
+
 
 });

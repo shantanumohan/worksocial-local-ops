@@ -1516,6 +1516,18 @@ export {
   type QualifiedDemandView,
 } from "./operate-daily-owner-review.js";
 export {
+  FormCrmContinuousSlotOutcome,
+  formCrmHeartbeatId,
+  createFormCrmContinuousVerifyState,
+  recordFormCrmCanaryHeartbeat,
+  markFormCrmCadenceCoverageGaps,
+  deriveFormCrmMissedCadenceSlots,
+  FORM_CRM_CONTINUOUS_VERIFY_RELATED_CASE_IDS,
+  type FormCrmContinuousSlotOutcomeValue,
+  type FormCrmHeartbeatRecord,
+  type FormCrmContinuousVerifyState,
+} from "./form-crm-continuous-verify.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

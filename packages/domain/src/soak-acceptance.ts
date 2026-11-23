@@ -778,6 +778,14 @@ export const SoakProofKind = {
    */
   TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS:
     "trusted_workspace_readiness_blockers_next_actions",
+  /**
+   * Form→CRM continuous verify — cadence/heartbeat history (T-US-039).
+   * MATCHED SUCCESS advances lastVerified; STAGE_FAILURE names failed stage;
+   * missed cadence is COVERAGE_GAP (not SUCCESS). Distinct from T-F20 complete
+   * journey evidence, T-X001 host-sleep coalesce, and T-US-040 thank-you ≠ CRM.
+   */
+  FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT:
+    "form_crm_continuous_verify_cadence_heartbeat",
 } as const;
 
 export type SoakProofKindValue =
@@ -932,6 +940,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-032 requires EXACT_FINANCIAL_BOUNDARIES_PRESERVED.
  * T-US-037 requires PORTABLE_ANALYSIS_ARTIFACT (portable brief; live NOT_WIRED).
  * T-US-001 requires TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS.
+ * T-US-039 requires FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -1065,6 +1074,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-032",
   "T-US-037",
   "T-US-001",
+  "T-US-039",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1661,6 +1671,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.PORTABLE_ANALYSIS_ARTIFACT];
     case "T-US-001":
       return [SoakProofKind.TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS];
+    case "T-US-039":
+      return [SoakProofKind.FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT];
     default:
       return [];
   }
@@ -1913,6 +1925,8 @@ export function mapProofToFixtureCases(
       return ["T-US-037"];
     case SoakProofKind.TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS:
       return ["T-US-001"];
+    case SoakProofKind.FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT:
+      return ["T-US-039"];
     default:
       return [];
   }

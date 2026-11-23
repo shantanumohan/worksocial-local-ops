@@ -8,8 +8,8 @@
     "cli_error_despite_exit_zero"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x009.json",
-  "createdAtIso": "2026-11-23T05:20:01.719Z",
+  "createdAtIso": "2026-11-23T05:24:21.870Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x009-6dea52bc53d6"
+  "uniqueSourceArtifactId": "art-fixture-t-x009-7fe5c1037674"
 }
