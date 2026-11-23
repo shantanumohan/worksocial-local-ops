@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-049",
+  "caseId": "T-US-049",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-049 (Daily owner review — reviewed operating knowledge)\nproof=daily_owner_review_operating_knowledge applyCount=1 :: complete brief+ledger+decisions+cost+mission+knowledge → DAILY_OWNER_REVIEW_KNOWLEDGE_RECORDED; reviewVerifiedLive=false; live NOT_WIRED | no material findings without manufactured urgency → calm empty OK | manufactureUrgencyWithNoFindings → MANUFACTURED_URGENCY_REFUSED | celebrateLiftOnPendingData → PENDING_DATA_LIFT_CELEBRATION_REFUSED | expandsAuthoritySilently → SILENT_AUTHORITY_EXPANSION_REFUSED | withinApprovedScope=false → MISSION_OUTSIDE_APPROVED_SCOPE | claimLiveVerifiedReview → FALSE_LIVE_VERIFIED_REVIEW_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | attemptProductionWrite → PRODUCTION_WRITE_REFUSED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-050 (root-cause brief), T-US-025 (launch), T-US-035 (review/revise/release) | proofRecordedAt=2026-11-21T19:14:10.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "daily_owner_review_operating_knowledge"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-049.json",
+  "createdAtIso": "2026-11-23T00:30:39.577Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-049-4d5e5ce355bf"
+}
