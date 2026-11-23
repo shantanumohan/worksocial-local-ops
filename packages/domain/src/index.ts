@@ -1396,6 +1396,19 @@ export {
   type CadenceHeartbeatHistory,
 } from "./verify-form-to-crm-journey-continuously.js";
 export {
+  HANDLE_AFTER_HOURS_MESSAGES_AND_TAKEOVER_RELATED_CASE_IDS,
+  evaluateHandleAfterHoursMessagesAndTakeover,
+  type HandleAfterHoursMessagesAndTakeoverInput,
+  type HandleAfterHoursMessagesAndTakeoverDecision,
+  type AfterHoursResponsePolicyEvidence,
+  type ApprovedFactSourcesEvidence,
+  type InboundConversationEvidence,
+  type AllowedActionEvaluationEvidence,
+  type PolicySendAndLeadEvidence,
+  type OwnershipAuditEvidence,
+  type AcknowledgedMorningHandoffEvidence,
+} from "./handle-after-hours-messages-and-takeover.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
