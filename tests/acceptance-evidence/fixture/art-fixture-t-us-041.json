@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-041",
+  "caseId": "T-US-041",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-041 (Diagnose/repair defect — verified resolution or handoff)\nproof=diagnose_repair_defect_resolved_or_handoff applyCount=1 :: Injected CTA defect → canary FAILURE (diagnose) | Fixture restore patches → canary SUCCESS (resolution) | Release SUCCESS → proposal/ticket VERIFIED + incident RESOLVED | Release FAILURE → proposal/ticket FAILED (no invented SUCCESS) | Failed repair → createHandoff + acknowledgeHandoff (human handoff) | cmsRepairWiringStatus=NOT_WIRED | liveProviderSuccessClaimed=false externalEffects=NONE ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "diagnose_repair_defect_resolved_or_handoff"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-041.json",
+  "createdAtIso": "2026-11-23T04:59:35.399Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-041-49dc7bf83b61"
+}

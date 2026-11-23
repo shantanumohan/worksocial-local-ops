@@ -753,6 +753,12 @@ export const SoakProofKind = {
    */
   OPERATE_DAILY_OWNER_REVIEW:
     "operate_daily_owner_review",
+  /**
+   * Diagnose/repair defect — verified resolution or acknowledged handoff (T-US-041).
+   * Distinct from T-F21 complete permitted-defect evidence set.
+   */
+  DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF:
+    "diagnose_repair_defect_resolved_or_handoff",
 } as const;
 
 export type SoakProofKindValue =
@@ -903,6 +909,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-F23 requires TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT (complete evidence set; live NOT_WIRED).
  * T-F17 requires RUN_CLAUDE_GEMINI_EVALUATION_SUITES (complete evidence set; live NOT_WIRED).
  * T-F25 requires OPERATE_DAILY_OWNER_REVIEW (complete evidence set; live NOT_WIRED).
+ * T-US-041 requires DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -1032,6 +1039,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-053",
   "T-US-055",
   "T-US-059",
+  "T-US-041",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1620,6 +1628,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.RUN_CLAUDE_GEMINI_EVALUATION_SUITES];
     case "T-F25":
       return [SoakProofKind.OPERATE_DAILY_OWNER_REVIEW];
+    case "T-US-041":
+      return [SoakProofKind.DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF];
     default:
       return [];
   }
@@ -1864,6 +1874,8 @@ export function mapProofToFixtureCases(
       return ["T-F17"];
     case SoakProofKind.OPERATE_DAILY_OWNER_REVIEW:
       return ["T-F25"];
+    case SoakProofKind.DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF:
+      return ["T-US-041"];
     default:
       return [];
   }

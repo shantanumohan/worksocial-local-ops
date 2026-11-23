@@ -1188,4 +1188,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-F25"]);
   });
 
+  it("maps T-US-041 to DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF only", () => {
+    expect(expectedProofsForFixtureCase("T-US-041")).toEqual([
+      SoakProofKind.DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF,
+      ),
+    ).toEqual(["T-US-041"]);
+  });
+
 });
