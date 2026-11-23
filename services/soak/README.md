@@ -65,4 +65,5 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-US-031 Paid-media recommendations — verified mutation or failure | Fixture **ACCEPTED** via `PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE` (not live VERIFIED) |
 | T-US-033 Claude/Gemini eval suites — adjudication + backlog | Fixture **ACCEPTED** via `EVAL_SUITE_ADJUDICATION_BACKLOG` (not live VERIFIED) |
 | T-US-034 Provider error ≠ bad answer or pass | Fixture **ACCEPTED** via `PROVIDER_ERROR_NOT_PASS` (not live VERIFIED) |
+| T-US-035 Review/revise/release — release receipt or blocked exception | Fixture **ACCEPTED** via `REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED` (not live VERIFIED) |
 | T-X030 rate-limit with deadline | Fixture **ACCEPTED** via `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (not live VERIFIED) |

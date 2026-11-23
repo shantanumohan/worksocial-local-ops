@@ -53,6 +53,7 @@
  * Paid-media recommendation mutation or failure (T-US-031).
  * Eval suite adjudication + backlog (T-US-033).
  * Provider error ≠ bad answer or pass (T-US-034).
+ * Review/revise/release receipt or blocked exception (T-US-035).
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -118,6 +119,7 @@ import { proofUncertainPostReconcileBeforeRetry } from "./uncertain-post-reconci
 import { proofPaidMediaRecommendationMutationOrFailure } from "./paid-media-recommendation-mutation-proof.js";
 import { proofEvalSuiteAdjudicationBacklog } from "./eval-suite-adjudication-proof.js";
 import { proofProviderErrorNotPass } from "./provider-error-not-pass-proof.js";
+import { proofReviewReviseRelease } from "./review-revise-release-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -865,6 +867,7 @@ export async function runSoakRecoveryHarness(input: {
     proofEvalSuiteAdjudicationBacklog(nowPlus(nowIso, 820_000)),
   );
   proofs.push(proofProviderErrorNotPass(nowPlus(nowIso, 830_000)));
+  proofs.push(proofReviewReviseRelease(nowPlus(nowIso, 840_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -950,6 +953,9 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-029 fixture ACCEPTED via campaign_manifest_distribution only — not live VERIFIED",
       "T-US-030 fixture ACCEPTED via uncertain_post_reconcile_before_retry only — not live VERIFIED",
       "T-US-031 fixture ACCEPTED via paid_media_recommendation_mutation_or_failure only — not live VERIFIED",
+      "T-US-033 fixture ACCEPTED via eval_suite_adjudication_backlog only — not live VERIFIED",
+      "T-US-034 fixture ACCEPTED via provider_error_not_pass only — not live VERIFIED",
+      "T-US-035 fixture ACCEPTED via review_revise_release_receipt_or_blocked only — not live VERIFIED",
     ],
   };
 }

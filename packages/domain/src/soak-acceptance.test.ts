@@ -882,4 +882,15 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.PROVIDER_ERROR_NOT_PASS),
     ).toEqual(["T-US-034"]);
   });
+
+  it("maps T-US-035 to REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED only", () => {
+    expect(expectedProofsForFixtureCase("T-US-035")).toEqual([
+      SoakProofKind.REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED,
+      ),
+    ).toEqual(["T-US-035"]);
+  });
 });

@@ -460,6 +460,14 @@ export const SoakProofKind = {
    * Distinct from T-X039/T-US-058 / T-US-033 / T-X038.
    */
   PROVIDER_ERROR_NOT_PASS: "provider_error_not_pass",
+  /**
+   * Review/revise/release — release receipt or blocked exception (T-US-035 / F18).
+   * Independent decision bound to revision + policy; approve → receipt or
+   * blocked exception; self-approval and stale approval refused; live NOT_WIRED.
+   * Distinct from T-US-027 / T-US-036/T-X019 / T-US-054/T-X018.
+   */
+  REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED:
+    "review_revise_release_receipt_or_blocked",
 } as const;
 
 export type SoakProofKindValue =
@@ -579,6 +587,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-031 requires PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE (paid-media recommendation decision + honest execute failure; live NOT_WIRED).
  * T-US-033 requires EVAL_SUITE_ADJUDICATION_BACKLOG (Claude/Gemini eval suite adjudication + linked backlog; live NOT_WIRED).
  * T-US-034 requires PROVIDER_ERROR_NOT_PASS (provider error ≠ bad answer or pass; live NOT_WIRED).
+ * T-US-035 requires REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED (review/revise/release receipt or blocked exception; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -677,6 +686,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-031",
   "T-US-033",
   "T-US-034",
+  "T-US-035",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1203,6 +1213,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.EVAL_SUITE_ADJUDICATION_BACKLOG];
     case "T-US-034":
       return [SoakProofKind.PROVIDER_ERROR_NOT_PASS];
+    case "T-US-035":
+      return [SoakProofKind.REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED];
     default:
       return [];
   }
@@ -1385,6 +1397,8 @@ export function mapProofToFixtureCases(
       return ["T-US-033"];
     case SoakProofKind.PROVIDER_ERROR_NOT_PASS:
       return ["T-US-034"];
+    case SoakProofKind.REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED:
+      return ["T-US-035"];
     default:
       return [];
   }
