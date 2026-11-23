@@ -140,6 +140,7 @@ import { proofMapCrmFormsBookingTruth } from "./map-crm-forms-booking-truth-proo
 import { proofConnectLocalSocialInboxChannels } from "./connect-local-social-inbox-channels-proof.js";
 import { proofGrantStandingAutonomySafely } from "./grant-standing-autonomy-safely-proof.js";
 import { proofLaunchWorkstreamRecurringSchedule } from "./launch-workstream-recurring-schedule-proof.js";
+import { proofTurnDemandIntoPageImprovement } from "./turn-demand-into-page-improvement-proof.js";
 import { runExplicitAccountRebindProof } from "@worksocial/credential-rotation";
 import { proofCrossWorkspaceResourceSubstitution } from "./cross-workspace-substitution-proof.js";
 import { proofAgentCannotWidenGrant } from "./agent-cannot-widen-grant-proof.js";
@@ -922,6 +923,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofLaunchWorkstreamRecurringSchedule(nowPlus(nowIso, 1_020_000)),
   );
+  proofs.push(
+    proofTurnDemandIntoPageImprovement(nowPlus(nowIso, 1_030_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1028,6 +1032,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-F11 fixture ACCEPTED via connect_local_social_inbox_channels only — not live VERIFIED",
       "T-F12 fixture ACCEPTED via grant_standing_autonomy_safely only — not live VERIFIED",
       "T-F13 fixture ACCEPTED via launch_workstream_recurring_schedule only — not live VERIFIED",
+      "T-F14 fixture ACCEPTED via turn_demand_into_page_improvement only — not live VERIFIED",
     ],
   };
 }

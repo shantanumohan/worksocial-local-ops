@@ -154,6 +154,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-F11": "Connect local, social and inbox channels",
   "T-F12": "Grant standing autonomy safely",
   "T-F13": "Launch a workstream and recurring schedule",
+  "T-F14": "Turn demand into a page improvement",
 };
 
 function relatedProofsForCase(
@@ -386,6 +387,7 @@ export function compileAcceptanceEvidence(
     "T-F11 fixture ACCEPTED only via CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS",
     "T-F12 fixture ACCEPTED only via GRANT_STANDING_AUTONOMY_SAFELY",
     "T-F13 fixture ACCEPTED only via LAUNCH_WORKSTREAM_RECURRING_SCHEDULE",
+    "T-F14 fixture ACCEPTED only via TURN_DEMAND_INTO_PAGE_IMPROVEMENT",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 
