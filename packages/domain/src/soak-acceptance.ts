@@ -907,6 +907,11 @@ export const SoakProofKind = {
    */
   HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE:
     "host_offline_public_discovery_unavailable",
+  /**
+   * Incompatible workflow upgrade blocked or compatible retained (T-X067).
+   */
+  INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED:
+    "incompatible_workflow_upgrade_blocked_or_retained",
 } as const;
 
 export type SoakProofKindValue =
@@ -1021,6 +1026,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X072 requires CUSTOMER_DATA_EVAL_REDACTION_BLOCKS.
  * T-X064 requires SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP (every hop checked).
  * T-X071 requires HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE.
+ * T-X067 requires INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED.
  * T-US-012 requires GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED (test ≠ production).
  * T-US-015 requires CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY (runtime ≠ API readiness; EVAL_ONLY).
 * T-US-016 requires CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED.
@@ -1198,6 +1204,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X062",
   "T-X068",
   "T-X064",
+  "T-X067",
   "T-X071",
   "T-X072",
   "T-US-011",
@@ -1755,6 +1762,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP];
     case "T-X071":
       return [SoakProofKind.HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE];
+    case "T-X067":
+      return [SoakProofKind.INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED];
     case "T-US-011":
       return [SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY];
     case "T-US-012":
@@ -2049,6 +2058,8 @@ export function mapProofToFixtureCases(
       return ["T-X064"];
     case SoakProofKind.HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE:
       return ["T-X071"];
+    case SoakProofKind.INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED:
+      return ["T-X067"];
     case SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED:
       return ["T-US-012"];
     case SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY:

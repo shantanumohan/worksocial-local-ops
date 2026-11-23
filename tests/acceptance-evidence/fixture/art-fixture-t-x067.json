@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x067",
+  "caseId": "T-X067",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X067 (Incompatible workflow upgrade — blocked or compatible retained)\nproof=incompatible_workflow_upgrade_blocked_or_retained applyCount=1 :: Compatible 1.0.0→1.1.0 within epoch-a → COMPATIBLE_UPGRADE_APPLIED | Incompatible 2.0.0/epoch-b on RUNNING → INCOMPATIBLE_UPGRADE_BLOCKED; compatible 1.0.0/epoch-a retained | Matching proposal → COMPATIBLE_DEFINITION_RETAINED (no silent rebind) | APPLYING + breakingChange → INCOMPATIBLE_UPGRADE_BLOCKED; pin retained | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "incompatible_workflow_upgrade_blocked_or_retained"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x067.json",
+  "createdAtIso": "2026-11-23T07:44:12.989Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x067-789fae2a28c0"
+}

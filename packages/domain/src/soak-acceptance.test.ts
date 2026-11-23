@@ -1448,4 +1448,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X071"]);
   });
 
+  it("maps T-X067 to INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED only", () => {
+    expect(expectedProofsForFixtureCase("T-X067")).toEqual([
+      SoakProofKind.INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED,
+      ),
+    ).toEqual(["T-X067"]);
+  });
+
 });

@@ -8,8 +8,8 @@
     "secrets_never_in_browser_assets"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-053.json",
-  "createdAtIso": "2026-11-23T07:37:24.105Z",
+  "createdAtIso": "2026-11-23T07:44:12.989Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-053-8dab75955e54"
+  "uniqueSourceArtifactId": "art-fixture-t-us-053-789fae2a28c0"
 }
