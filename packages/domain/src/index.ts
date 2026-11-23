@@ -894,6 +894,22 @@ export {
   type TrustedWorkspaceReadiness,
 } from "./trusted-workspace-readiness.js";
 export {
+  HostContactLiveness,
+  PublicChatCoverage,
+  HostedContactPathStatus,
+  ContactReceiptDecisionCode,
+  resolveFixtureHostedContactPath,
+  evaluateHonestOutageHostedContact,
+  HONEST_OUTAGE_HOSTED_CONTACT_RELATED_CASE_IDS,
+  type HostContactLivenessValue,
+  type PublicChatCoverageValue,
+  type HostedContactPathStatusValue,
+  type ContactReceiptDecisionCodeValue,
+  type FixtureHostedContactPathCheck,
+  type FixtureHostedContactPathResolution,
+  type HonestOutageContactObservation,
+} from "./honest-outage-hosted-contact.js";
+export {
   DEFAULT_INITIAL_BACKOFF_SECONDS,
   DEFAULT_BACKOFF_MULTIPLIER,
   DEFAULT_MAX_BACKOFF_SECONDS,

@@ -150,6 +150,7 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X045");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-US-052");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X030");
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-US-056");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X040");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-US-012");
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-US-053");
@@ -191,6 +192,9 @@ describe("contract: M9 soak / acceptance evidence", () => {
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(
       run.run.caseResults.find((c) => c.caseId === "T-US-060")?.status,
+    ).toBe(AcceptanceCaseStatus.ACCEPTED);
+    expect(
+      run.run.caseResults.find((c) => c.caseId === "T-US-056")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
   });
 
