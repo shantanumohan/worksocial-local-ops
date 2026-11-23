@@ -129,6 +129,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X068": "Thirty alerts one outage — grouped incident",
   "T-X072": "Customer data leaks into evaluation — redaction blocks",
   "T-X064": "SSRF redirect and DNS rebind — blocked every hop",
+  "T-X071": "Local host offline public discovery — honest unavailability",
   "T-X030": "Rate-limit with deadline — bounded backoff",
   "T-US-056": "Honest outage; durable hosted contact path",
   "T-US-011": "Connect Google Ads analyze-only — write disabled",
@@ -459,6 +460,7 @@ export function compileAcceptanceEvidence(
     "T-X068 fixture ACCEPTED only via THIRTY_ALERTS_ONE_OUTAGE_GROUPED",
     "T-X072 fixture ACCEPTED only via CUSTOMER_DATA_EVAL_REDACTION_BLOCKS",
     "T-X064 fixture ACCEPTED only via SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP",
+    "T-X071 fixture ACCEPTED only via HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

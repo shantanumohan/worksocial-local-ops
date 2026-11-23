@@ -900,6 +900,13 @@ export const SoakProofKind = {
    */
   SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP:
     "ssrf_redirect_dns_rebind_blocked_every_hop",
+  /**
+   * Local host offline → public discovery honest unavailability (T-X071).
+   * Offline host reports UNAVAILABLE/HOST_OFFLINE; refuses AVAILABLE claims;
+   * no inventing ranks or active coverage. Distinct from T-X001 sleep gaps.
+   */
+  HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE:
+    "host_offline_public_discovery_unavailable",
 } as const;
 
 export type SoakProofKindValue =
@@ -1013,6 +1020,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X068 requires THIRTY_ALERTS_ONE_OUTAGE_GROUPED.
  * T-X072 requires CUSTOMER_DATA_EVAL_REDACTION_BLOCKS.
  * T-X064 requires SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP (every hop checked).
+ * T-X071 requires HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE.
  * T-US-012 requires GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED (test ≠ production).
  * T-US-015 requires CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY (runtime ≠ API readiness; EVAL_ONLY).
 * T-US-016 requires CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED.
@@ -1190,6 +1198,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X062",
   "T-X068",
   "T-X064",
+  "T-X071",
   "T-X072",
   "T-US-011",
   "T-US-012",
@@ -1744,6 +1753,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CUSTOMER_DATA_EVAL_REDACTION_BLOCKS];
     case "T-X064":
       return [SoakProofKind.SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP];
+    case "T-X071":
+      return [SoakProofKind.HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE];
     case "T-US-011":
       return [SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY];
     case "T-US-012":
@@ -2036,6 +2047,8 @@ export function mapProofToFixtureCases(
       return ["T-X072"];
     case SoakProofKind.SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP:
       return ["T-X064"];
+    case SoakProofKind.HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE:
+      return ["T-X071"];
     case SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED:
       return ["T-US-012"];
     case SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY:
