@@ -328,6 +328,12 @@ export const SoakProofKind = {
   RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE:
     "rate_limit_bounded_backoff_preserves_deadline",
   /**
+   * Honest outage; durable hosted contact path (T-US-056).
+   * Host OFFLINE → public chat UNAVAILABLE; hosted form path stays available;
+   * pretend local receipt refused until durable receiver accepts.
+   */
+  HONEST_OUTAGE_HOSTED_CONTACT_PATH: "honest_outage_hosted_contact_path",
+  /**
    * Low-sample trend spike → insufficient evidence (T-X040).
    * Research task only; never a publish trigger from this gate alone.
    */
@@ -887,6 +893,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X023 requires EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND.
  * T-US-052 requires MOCKED_CONNECTOR_NOT_PRODUCTION_READY.
  * T-X030 requires RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE.
+ * T-US-056 requires HONEST_OUTAGE_HOSTED_CONTACT_PATH.
  * T-X040 requires LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE (research only; not publish).
  * T-US-012 requires GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED (test ≠ production).
  * T-US-015 requires CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY (runtime ≠ API readiness; EVAL_ONLY).
@@ -1045,6 +1052,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X023",
   "T-US-052",
   "T-X030",
+  "T-US-056",
   "T-X040",
   "T-US-012",
   "T-US-015",
@@ -1565,6 +1573,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.MOCKED_CONNECTOR_NOT_PRODUCTION_READY];
     case "T-X030":
       return [SoakProofKind.RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE];
+    case "T-US-056":
+      return [SoakProofKind.HONEST_OUTAGE_HOSTED_CONTACT_PATH];
     case "T-X040":
       return [SoakProofKind.LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE];
     case "T-US-012":
@@ -1819,6 +1829,8 @@ export function mapProofToFixtureCases(
       return ["T-US-052"];
     case SoakProofKind.RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE:
       return ["T-X030"];
+    case SoakProofKind.HONEST_OUTAGE_HOSTED_CONTACT_PATH:
+      return ["T-US-056"];
     case SoakProofKind.LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE:
       return ["T-X040"];
     case SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED:

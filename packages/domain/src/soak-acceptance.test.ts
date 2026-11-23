@@ -681,6 +681,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X030"]);
   });
 
+  it("maps T-US-056 to HONEST_OUTAGE_HOSTED_CONTACT_PATH only", () => {
+    expect(expectedProofsForFixtureCase("T-US-056")).toEqual([
+      SoakProofKind.HONEST_OUTAGE_HOSTED_CONTACT_PATH,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.HONEST_OUTAGE_HOSTED_CONTACT_PATH),
+    ).toEqual(["T-US-056"]);
+  });
+
   it("maps T-US-052 to MOCKED_CONNECTOR_NOT_PRODUCTION_READY only", () => {
     expect(expectedProofsForFixtureCase("T-US-052")).toEqual([
       SoakProofKind.MOCKED_CONNECTOR_NOT_PRODUCTION_READY,

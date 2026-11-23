@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-056",
+  "caseId": "T-US-056",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-056 (Honest outage; durable hosted contact path)\nproof=honest_outage_hosted_contact_path applyCount=1 :: Fixture hosted contact path check: available=true (/contact); missing→UNAVAILABLE | Host OFFLINE → public chat UNAVAILABLE (HOST_OFFLINE); hosted contact path DURABLE_AVAILABLE | Omitted hostedContactPathAvailable → UNAVAILABLE (fail-closed) | Pretend local-host receipt while offline refused (receiptAcknowledged=false) | Local claim refused independently; durable receiver accept still acknowledges | Durable hosted receiver accepted → receiptAcknowledged=true; chat remains UNAVAILABLE | Host ONLINE → public chat AVAILABLE; receipt still waits for durable accept | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "honest_outage_hosted_contact_path"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-056.json",
+  "createdAtIso": "2026-11-23T05:28:09.392Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-056-02baa3f034c4"
+}

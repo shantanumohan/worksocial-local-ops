@@ -192,6 +192,8 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X023**, **T-US-052** maps only to `EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND`.
 
+**T-US-056** maps only to `HONEST_OUTAGE_HOSTED_CONTACT_PATH` (honest outage; durable hosted contact path; not live VERIFIED).
+
 **T-X030** maps only to `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (bounded backoff preserves deadline; not live VERIFIED).
 
 **T-X040** maps only to `LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE` (research-only; never a publish trigger; not live VERIFIED).

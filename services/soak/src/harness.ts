@@ -106,6 +106,7 @@ import { proofUnboundWritePathFailClosed } from "./unbound-write-path-proof.js";
 import { proofEventualConsistencyFalseNotFound } from "./eventual-consistency-false-not-found-proof.js";
 import { proofMockedConnectorNotProductionReady } from "./mocked-connector-not-production-ready-proof.js";
 import { proofRateLimitBoundedBackoffPreservesDeadline } from "./rate-limit-deadline-proof.js";
+import { proofHonestOutageHostedContact } from "./honest-outage-hosted-contact-proof.js";
 import { proofLowSampleTrendSpikeInsufficientEvidence } from "./low-sample-trend-spike-proof.js";
 import { proofGoogleAdsTestProductionAccessSeparated } from "./google-ads-test-production-access-proof.js";
 import { proofConnectClaudeCodeTestApiEvalOnly } from "./claude-code-test-api-connect-proof.js";
@@ -993,6 +994,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofFormCrmContinuousVerifyCadenceHeartbeat(nowPlus(nowIso, 1_180_000)),
   );
+  proofs.push(proofHonestOutageHostedContact(nowPlus(nowIso, 1_190_000)));
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1064,6 +1066,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X023 fixture ACCEPTED via eventual_consistency_false_not_found only — not live VERIFIED",
       "T-US-052 fixture ACCEPTED via mocked_connector_not_production_ready only — not live VERIFIED",
       "T-X030 fixture ACCEPTED via rate_limit_bounded_backoff_preserves_deadline only — not live VERIFIED",
+      "T-US-056 fixture ACCEPTED via honest_outage_hosted_contact_path only — not live VERIFIED",
       "T-X040 fixture ACCEPTED via low_sample_trend_spike_insufficient_evidence only — not live VERIFIED",
       "T-US-012 fixture ACCEPTED via google_ads_test_production_access_separated only — not live VERIFIED",
       "T-US-015 fixture ACCEPTED via connect_claude_code_test_api_eval_only only — not live VERIFIED",
