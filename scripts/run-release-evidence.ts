@@ -377,6 +377,9 @@ async function main(): Promise<void> {
     const hasTx061Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-X061",
     );
+    const hasTx068Accepted = accepted.some(
+      (c: { caseId: string }) => c.caseId === "T-X068",
+    );
     const hasUs012Accepted = accepted.some(
       (c: { caseId: string }) => c.caseId === "T-US-012",
     );
@@ -711,6 +714,7 @@ async function main(): Promise<void> {
       "T-X063",
       "T-X065",
       "T-X066",
+      "T-X068",
       "T-X069",
       "T-X070",
       "T-X073"
@@ -870,7 +874,8 @@ async function main(): Promise<void> {
         hasTx051Accepted &&
         hasTx062Accepted &&
         hasTx061Accepted &&
-        accepted.length === 148 &&
+        hasTx068Accepted &&
+        accepted.length === 149 &&
         JSON.stringify(acceptedIds) === JSON.stringify(expectedAccepted)
           ? "PASS"
           : "FAIL",
@@ -885,7 +890,7 @@ async function main(): Promise<void> {
       outDir,
       externalEffects: "NONE",
       message:
-        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X061 keyboard focus restore after dialog fixture ACCEPTED (total 148). Live VERIFIED forbidden. Not R1-complete.",
+        "Fixture acceptance evidence compiled. Pilot gate NOT_MET for short soaks. Includes T-X068 thirty alerts one outage grouped incident fixture ACCEPTED (total 149). Live VERIFIED forbidden. Not R1-complete.",
     };
 
     if (report.status !== "PASS") {

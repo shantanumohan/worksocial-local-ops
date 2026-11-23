@@ -1406,4 +1406,13 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X061"]);
   });
 
+  it("maps T-X068 to THIRTY_ALERTS_ONE_OUTAGE_GROUPED only", () => {
+    expect(expectedProofsForFixtureCase("T-X068")).toEqual([
+      SoakProofKind.THIRTY_ALERTS_ONE_OUTAGE_GROUPED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.THIRTY_ALERTS_ONE_OUTAGE_GROUPED),
+    ).toEqual(["T-X068"]);
+  });
+
 });
