@@ -1056,4 +1056,13 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.GRANT_STANDING_AUTONOMY_SAFELY),
     ).toEqual(["T-F12"]);
   });
+
+  it("maps T-F13 to LAUNCH_WORKSTREAM_RECURRING_SCHEDULE only", () => {
+    expect(expectedProofsForFixtureCase("T-F13")).toEqual([
+      SoakProofKind.LAUNCH_WORKSTREAM_RECURRING_SCHEDULE,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.LAUNCH_WORKSTREAM_RECURRING_SCHEDULE),
+    ).toEqual(["T-F13"]);
+  });
 });

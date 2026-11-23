@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f13",
+  "caseId": "T-F13",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F13 (Launch a workstream and recurring schedule)\nproof=launch_workstream_recurring_schedule applyCount=1 :: complete F13 evidence package → LAUNCH_WORKSTREAM_RECURRING_SCHEDULE_EVIDENCE_RECORDED; objective + pilot scope; readiness gates; plan/assets/cost; dry rehearsal externalEffects NONE; frequency/timezone/cooldown; owner-reviewed launch receipt; mission outcome + next action; launchVerifiedLive=false; live NOT_WIRED | scope=null → PILOT_SCOPE_REQUIRED | testsReady=false → READINESS_GATES_REQUIRED | plan=null → PLAN_ESTIMATE_REQUIRED | dryRun=null → DRY_RUN_REQUIRED | schedule=null → SCHEDULE_SELECTION_REQUIRED | unreviewed → OWNER_REVIEW_REQUIRED | mission=null → MISSION_OUTCOME_REQUIRED | requestBurstRepublish → BURST_REPUBLISH_REFUSED | claimLiveVerifiedLaunch → FALSE_LIVE_VERIFIED_LAUNCH_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-025 (launch readiness summary), T-US-026 (missed-schedule coalesce / no burst), and T-X015 (DST schedule no duplicates) — complete F13 flow evidence package | proofRecordedAt=2026-11-21T19:17:00.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "launch_workstream_recurring_schedule"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f13.json",
+  "createdAtIso": "2026-11-23T03:48:37.510Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f13-b7f0e94ccafa"
+}

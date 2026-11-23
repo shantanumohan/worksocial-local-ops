@@ -1342,6 +1342,12 @@ export {
   type GrantStandingAutonomySafelyDecision,
 } from "./grant-standing-autonomy-safely.js";
 export {
+  LAUNCH_WORKSTREAM_RECURRING_SCHEDULE_RELATED_CASE_IDS,
+  evaluateLaunchWorkstreamRecurringSchedule,
+  type LaunchWorkstreamRecurringScheduleInput,
+  type LaunchWorkstreamRecurringScheduleDecision,
+} from "./launch-workstream-recurring-schedule.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
