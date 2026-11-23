@@ -492,6 +492,13 @@ export const SoakProofKind = {
    * Distinct from T-US-035 / T-US-049 / T-US-055.
    */
   DESIGN_RELEASE_READINESS_PACKET: "design_release_readiness_packet",
+  /**
+   * Secrets never in browser assets (T-US-053).
+   * Browser-served assets must not embed secret material; public-env secret
+   * embeds and broker-secret ship attempts refused; live NOT_WIRED.
+   * Distinct from T-X065 / T-X005 / T-F24/T-US-047 / T-X063.
+   */
+  SECRETS_NEVER_IN_BROWSER_ASSETS: "secrets_never_in_browser_assets",
 } as const;
 
 export type SoakProofKindValue =
@@ -615,6 +622,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-US-049 requires DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE (daily owner review reviewed operating knowledge; live NOT_WIRED).
  * T-US-050 requires OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE (owner brief groups root cause; actionable; live NOT_WIRED).
  * T-US-051 requires DESIGN_RELEASE_READINESS_PACKET (design/release readiness release acceptance packet; live NOT_WIRED).
+ * T-US-053 requires SECRETS_NEVER_IN_BROWSER_ASSETS (secrets never in browser assets; live NOT_WIRED).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 export const SOAK_FIXTURE_CASE_IDS = [
@@ -717,6 +725,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-US-049",
   "T-US-050",
   "T-US-051",
+  "T-US-053",
 ] as const;
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
@@ -1251,6 +1260,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.OWNER_BRIEF_ROOT_CAUSE_ACTIONABLE];
     case "T-US-051":
       return [SoakProofKind.DESIGN_RELEASE_READINESS_PACKET];
+    case "T-US-053":
+      return [SoakProofKind.SECRETS_NEVER_IN_BROWSER_ASSETS];
     default:
       return [];
   }
@@ -1441,6 +1452,8 @@ export function mapProofToFixtureCases(
       return ["T-US-050"];
     case SoakProofKind.DESIGN_RELEASE_READINESS_PACKET:
       return ["T-US-051"];
+    case SoakProofKind.SECRETS_NEVER_IN_BROWSER_ASSETS:
+      return ["T-US-053"];
     default:
       return [];
   }

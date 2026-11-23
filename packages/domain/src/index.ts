@@ -1146,6 +1146,17 @@ export {
   type DesignReleaseReadinessDecision,
 } from "./design-release-readiness.js";
 export {
+  BrowserAssetKind,
+  SecretMaterialKind,
+  SECRETS_NEVER_BROWSER_ASSETS_RELATED_CASE_IDS,
+  evaluateSecretsNeverBrowserAssets,
+  type BrowserAssetKindValue,
+  type SecretMaterialKindValue,
+  type BrowserAssetSample,
+  type SecretsNeverBrowserAssetsInput,
+  type SecretsNeverBrowserAssetsDecision,
+} from "./secrets-never-browser-assets.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

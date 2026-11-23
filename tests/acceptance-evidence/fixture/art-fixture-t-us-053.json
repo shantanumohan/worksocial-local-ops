@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-053",
+  "caseId": "T-US-053",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-053 (Secrets never in browser assets)\nproof=secrets_never_in_browser_assets applyCount=1 :: clean browser assets + server-only broker vault → SECRETS_NEVER_IN_BROWSER_ASSETS_RECORDED; scanVerifiedLive=false; live NOT_WIRED | empty assets → ASSET_SCAN_REQUIRED | API key in JS bundle → SECRET_IN_BROWSER_ASSET_REFUSED | oauth client secret in public env embed → PUBLIC_ENV_SECRET_REFUSED | attemptShipBrokerSecretToBrowser → BROKER_SECRET_TO_BROWSER_REFUSED | claimLiveVerifiedScan → FALSE_LIVE_VERIFIED_SCAN_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-X065 (worker browser auth OS deny), T-X005 (forged browser role), T-F24/T-US-047 (rotation secretsExported), T-X063 (prompt-injection exfil) | proofRecordedAt=2026-11-21T19:14:40.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "secrets_never_in_browser_assets"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-053.json",
+  "createdAtIso": "2026-11-23T00:54:30.551Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-053-88f401f8f15a"
+}
