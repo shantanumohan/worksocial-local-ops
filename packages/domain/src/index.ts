@@ -1356,6 +1356,18 @@ export {
   type MeasurableChangeObservation,
 } from "./turn-demand-into-page-improvement.js";
 export {
+  CREATE_AND_DISTRIBUTE_ORIGINAL_CAMPAIGN_RELATED_CASE_IDS,
+  evaluateCreateAndDistributeOriginalCampaign,
+  type CreateAndDistributeOriginalCampaignInput,
+  type CreateAndDistributeOriginalCampaignDecision,
+  type ApprovedFactSet,
+  type VenueMediaInventory,
+  type AuthorizedDestinationCapability,
+  type BriefOutcome,
+  type CanonicalPublishReceipt,
+  type DistributionReview,
+} from "./create-and-distribute-original-campaign.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,
