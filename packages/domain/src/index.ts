@@ -1325,6 +1325,17 @@ export {
   type MapCrmFormsBookingTruthDecision,
 } from "./map-crm-forms-booking-truth.js";
 export {
+  CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS_RELATED_CASE_IDS,
+  evaluateConnectLocalSocialInboxChannels,
+  type F11DestinationCapabilityMatrix,
+  type F11DestinationContract,
+  type F11ChannelDestination,
+  type F11SupportPolicy,
+  type F11AuthorizedTestArtifact,
+  type ConnectLocalSocialInboxChannelsInput,
+  type ConnectLocalSocialInboxChannelsDecision,
+} from "./connect-local-social-inbox-channels.js";
+export {
   RecoveryObservationClass,
   OutagePlane,
   RecoveryRunStatus,

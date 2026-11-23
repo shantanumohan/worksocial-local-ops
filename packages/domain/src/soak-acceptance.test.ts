@@ -1038,4 +1038,13 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.MAP_CRM_FORMS_BOOKING_TRUTH),
     ).toEqual(["T-F10"]);
   });
+
+  it("maps T-F11 to CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS only", () => {
+    expect(expectedProofsForFixtureCase("T-F11")).toEqual([
+      SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CONNECT_LOCAL_SOCIAL_INBOX_CHANNELS),
+    ).toEqual(["T-F11"]);
+  });
 });
