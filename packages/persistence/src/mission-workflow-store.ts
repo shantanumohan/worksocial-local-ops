@@ -191,6 +191,17 @@ export function isMissionLeaseActive(
   return classifyMissionLeaseFence(record, holder, nowIso) === "active";
 }
 
+/**
+ * Lease-fence deny message with classified cause (T-X024 O3).
+ * Keeps expired ≠ wrong_holder visible on the throw path.
+ */
+export function missionLeaseFenceFailedMessage(
+  workflowId: string,
+  cause: MissionLeaseFenceCause,
+): string {
+  return `Lease fence failed for ${workflowId} (fenceCause=${cause})`;
+}
+
 export function createMemoryMissionWorkflowStore(): MissionWorkflowStore {
   const byId = new Map<string, MissionWorkflowRecord>();
 
@@ -267,7 +278,14 @@ export function createMemoryMissionWorkflowStore(): MissionWorkflowStore {
         );
       }
       if (!isMissionLeaseActive(existing, input.holder, input.nowIso)) {
-        throw new Error(`Lease fence failed for ${input.workflowId}`);
+        const cause = classifyMissionLeaseFence(
+          existing,
+          input.holder,
+          input.nowIso,
+        );
+        throw new Error(
+          missionLeaseFenceFailedMessage(input.workflowId, cause),
+        );
       }
       const updated: MissionWorkflowRecord = {
         ...existing,
@@ -292,7 +310,14 @@ export function createMemoryMissionWorkflowStore(): MissionWorkflowStore {
         );
       }
       if (!isMissionLeaseActive(existing, input.holder, input.nowIso)) {
-        throw new Error(`Lease fence failed for ${input.workflowId}`);
+        const cause = classifyMissionLeaseFence(
+          existing,
+          input.holder,
+          input.nowIso,
+        );
+        throw new Error(
+          missionLeaseFenceFailedMessage(input.workflowId, cause),
+        );
       }
       if (
         existing.operationId &&

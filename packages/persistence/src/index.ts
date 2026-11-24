@@ -278,6 +278,7 @@ export {
   createPgMissionWorkflowStore,
   classifyMissionLeaseFence,
   isMissionLeaseActive,
+  missionLeaseFenceFailedMessage,
   OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
   type MissionLeaseFenceCause,
   type MissionWorkflowStore,

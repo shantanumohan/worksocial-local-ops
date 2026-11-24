@@ -8,6 +8,7 @@ import {
   classifyMissionLeaseFence,
   createMemoryMissionWorkflowStore,
   isMissionLeaseActive,
+  missionLeaseFenceFailedMessage,
   OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
   type MissionWorkflowRecord,
 } from "./mission-workflow-store.js";
@@ -82,6 +83,15 @@ describe("classifyMissionLeaseFence / isMissionLeaseActive (T-X024)", () => {
       ),
     ).toBe("no_holder");
   });
+
+  it("formats fenceCause on deny messages", () => {
+    expect(missionLeaseFenceFailedMessage("wf-x", "expired")).toBe(
+      "Lease fence failed for wf-x (fenceCause=expired)",
+    );
+    expect(missionLeaseFenceFailedMessage("wf-x", "wrong_holder")).toBe(
+      "Lease fence failed for wf-x (fenceCause=wrong_holder)",
+    );
+  });
 });
 
 describe("memory mission workflow store lease fence", () => {
@@ -136,7 +146,7 @@ describe("memory mission workflow store lease fence", () => {
         payloadDigest: "d",
         businessIdempotencyKey: "k",
       }),
-    ).rejects.toThrow(/Lease fence failed/);
+    ).rejects.toThrow(/Lease fence failed.*fenceCause=expired/);
 
     const leasedB = await store.claimLease({
       workflowId,
@@ -171,7 +181,7 @@ describe("memory mission workflow store lease fence", () => {
         payloadDigest: "d-stale",
         businessIdempotencyKey: "k-stale",
       }),
-    ).rejects.toThrow(/Lease fence failed/);
+    ).rejects.toThrow(/Lease fence failed.*fenceCause=wrong_holder/);
 
     const bound = await store.bindOperationWhileLeased({
       workflowId,

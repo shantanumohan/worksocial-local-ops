@@ -11,6 +11,8 @@
  * post-commit phase fence for old A.
  * Hillclimb O2: classifyMissionLeaseFence (expired ≠ wrong_holder);
  * A self-renew positive control while live.
+ * Hillclimb O3: Lease fence throws include fenceCause=…; post-bind
+ * wrong_holder mark deny; Ads soft-skip honesty.
  */
 
 import { randomUUID } from "node:crypto";
@@ -145,11 +147,12 @@ export async function proofOldFenceAfterReassignment(
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (/Lease fence failed/i.test(msg)) {
+    if (
+      /Lease fence failed/i.test(msg) &&
+      /fenceCause=expired/.test(msg)
+    ) {
       expiredPreReassignDenied = true;
-      details.push(
-        `Expired-pre-reassignment A bind denied fenceCause=expired: ${msg}`,
-      );
+      details.push(`Expired-pre-reassignment A bind denied: ${msg}`);
     } else {
       passed = false;
       details.push(`Expired-pre-reassignment unexpected error: ${msg}`);
@@ -224,7 +227,10 @@ export async function proofOldFenceAfterReassignment(
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (/Lease fence failed/i.test(msg)) {
+    if (
+      /Lease fence failed/i.test(msg) &&
+      /fenceCause=wrong_holder/.test(msg)
+    ) {
       oldBindDenied = true;
       details.push(`Old worker A bind denied: ${msg}`);
     } else {
@@ -247,7 +253,10 @@ export async function proofOldFenceAfterReassignment(
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (/Lease fence failed/i.test(msg)) {
+    if (
+      /Lease fence failed/i.test(msg) &&
+      /fenceCause=wrong_holder/.test(msg)
+    ) {
       oldMarkDenied = true;
       details.push(`Old worker A markEffectPending denied: ${msg}`);
     } else {
@@ -262,9 +271,10 @@ export async function proofOldFenceAfterReassignment(
     );
   }
 
-  // 5. New holder B can commit (bind + fenced markEffectPending).
+  // 5. New holder B binds; old A still wrong_holder while leased; then B marks.
+  let boundB;
   try {
-    const bound = await store.bindOperationWhileLeased({
+    boundB = await store.bindOperationWhileLeased({
       workflowId,
       operationId,
       holder: workerB,
@@ -272,6 +282,40 @@ export async function proofOldFenceAfterReassignment(
       payloadDigest: "digest-b",
       businessIdempotencyKey: "biz-b",
     });
+  } catch (err) {
+    passed = false;
+    details.push(
+      `Worker B bind failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  let postBindOldMarkDenied = false;
+  try {
+    await store.markEffectPending({
+      workflowId,
+      operationId,
+      holder: workerA,
+      nowIso: tAfterExpiry,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (
+      /Lease fence failed/i.test(msg) &&
+      /fenceCause=wrong_holder/.test(msg)
+    ) {
+      postBindOldMarkDenied = true;
+      details.push(`Post-bind old A mark denied: ${msg}`);
+    } else {
+      passed = false;
+      details.push(`Post-bind old A unexpected error: ${msg}`);
+    }
+  }
+  if (!postBindOldMarkDenied) {
+    passed = false;
+    details.push("Post-bind old A mark unexpectedly succeeded");
+  }
+
+  try {
     const pending = await store.markEffectPending({
       workflowId,
       operationId,
@@ -279,7 +323,7 @@ export async function proofOldFenceAfterReassignment(
       nowIso: tAfterExpiry,
     });
     if (
-      bound.leaseHolder === workerB &&
+      boundB?.leaseHolder === workerB &&
       pending.phase === "effect_pending" &&
       pending.operationId === operationId
     ) {
@@ -295,7 +339,7 @@ export async function proofOldFenceAfterReassignment(
   } catch (err) {
     passed = false;
     details.push(
-      `Worker B commit failed: ${err instanceof Error ? err.message : String(err)}`,
+      `Worker B mark failed: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
 
@@ -326,7 +370,7 @@ export async function proofOldFenceAfterReassignment(
   }
 
   details.push(
-    `relatedCases=${OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS.join(",")} liveTemporalWiring=${OLD_FENCE_TEMPORAL_WIRING} liveProviderSuccessClaimed=false externalEffects=NONE`,
+    `relatedCases=${OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS.join(",")} liveTemporalWiring=${OLD_FENCE_TEMPORAL_WIRING} softSkipAds=T-F07,T-US-013,T-US-014 liveProviderSuccessClaimed=false externalEffects=NONE`,
   );
 
   return {
