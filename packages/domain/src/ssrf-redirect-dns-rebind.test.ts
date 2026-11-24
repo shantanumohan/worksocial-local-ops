@@ -30,6 +30,12 @@ describe("SSRF redirect + DNS rebind (T-X064)", () => {
     expect(isPrivateOrLocalAddress("::ffff:192.168.1.1")).toBe(true);
     expect(isPrivateOrLocalAddress("::ffff:a00:9")).toBe(true); // 10.0.0.9
     expect(isPrivateOrLocalAddress("::ffff:93.184.216.34")).toBe(false);
+    // Expanded / alternate spellings must canonicalize before mapped check.
+    expect(isPrivateOrLocalAddress("0:0:0:0:0:ffff:10.0.0.9")).toBe(true);
+    expect(
+      isPrivateOrLocalAddress("0000:0000:0000:0000:0000:ffff:0a00:0009"),
+    ).toBe(true);
+    expect(isPrivateOrLocalAddress("0:0:0:0:0:ffff:93.184.216.34")).toBe(false);
   });
 
   it("blocks NON_HTTPS and CREDENTIALS_FORBIDDEN on every hop", () => {

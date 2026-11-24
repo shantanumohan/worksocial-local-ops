@@ -114,26 +114,66 @@ function isIpv6LinkLocalOrUla(host: string): boolean {
 }
 
 /**
- * Unwrap IPv4-mapped IPv6 (`:ffff:a.b.c.d` / `:ffff:aabb:ccdd`) to dotted IPv4.
- * Returns null when the address is not IPv4-mapped.
+ * Expand an IPv6 literal (compressed `::` and optional dotted-quad tail) into
+ * eight hextet strings. Returns null when the shape is not a valid IPv6 form.
+ */
+function expandIpv6Hextets(host: string): string[] | null {
+  if (!host.includes(":")) return null;
+
+  let working = host;
+  let dottedTail: string | null = null;
+  const dq = /^(.+):(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/.exec(host);
+  if (dq) {
+    working = dq[1]!;
+    dottedTail = dq[2]!;
+  }
+
+  const sides = working.split("::");
+  if (sides.length > 2) return null;
+  const left =
+    sides[0] === "" ? [] : sides[0]!.split(":").filter((h) => h.length > 0);
+  const right =
+    sides.length === 2
+      ? sides[1] === ""
+        ? []
+        : sides[1]!.split(":").filter((h) => h.length > 0)
+      : [];
+  const need = 8 - left.length - right.length - (dottedTail ? 2 : 0);
+  if (need < 0) return null;
+  if (sides.length === 1 && need !== 0) return null;
+
+  const hextets = [...left, ...Array(need).fill("0"), ...right];
+  if (dottedTail) {
+    const parts = dottedTail.split(".").map((p) => Number(p));
+    if (parts.length !== 4 || parts.some((p) => !Number.isInteger(p) || p < 0 || p > 255)) {
+      return null;
+    }
+    hextets.push(((parts[0]! << 8) | parts[1]!).toString(16));
+    hextets.push(((parts[2]! << 8) | parts[3]!).toString(16));
+  }
+  if (hextets.length !== 8) return null;
+  if (hextets.some((h) => !/^[0-9a-f]{1,4}$/i.test(h))) return null;
+  return hextets.map((h) => h.toLowerCase());
+}
+
+/**
+ * Unwrap IPv4-mapped IPv6 (`::ffff:a.b.c.d`, expanded `0:0:0:0:0:ffff:…`,
+ * or hex-tail forms) to dotted IPv4. Returns null when not IPv4-mapped.
  */
 export function unwrapIpv4MappedAddress(address: string): string | null {
   const host = normalizeHost(address).split("%")[0]!;
-  // Common form ::ffff:a.b.c.d (also [bracketed] via normalizeHost).
-  const dotted = /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i.exec(host);
-  if (dotted) {
-    return dotted[1]!;
+  const hextets = expandIpv6Hextets(host);
+  if (!hextets) return null;
+
+  // IPv4-mapped shape: 0:0:0:0:0:ffff:x:x (RFC 4291)
+  for (let i = 0; i < 5; i++) {
+    if (Number.parseInt(hextets[i]!, 16) !== 0) return null;
   }
-  // Hex form ::ffff:aabb:ccdd (last two hextets encode IPv4).
-  const hex = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i.exec(host);
-  if (!hex) {
-    return null;
-  }
-  const hi = Number.parseInt(hex[1]!, 16);
-  const lo = Number.parseInt(hex[2]!, 16);
-  if (!Number.isFinite(hi) || !Number.isFinite(lo)) {
-    return null;
-  }
+  if (Number.parseInt(hextets[5]!, 16) !== 0xffff) return null;
+
+  const hi = Number.parseInt(hextets[6]!, 16);
+  const lo = Number.parseInt(hextets[7]!, 16);
+  if (!Number.isFinite(hi) || !Number.isFinite(lo)) return null;
   return `${(hi >> 8) & 0xff}.${hi & 0xff}.${(lo >> 8) & 0xff}.${lo & 0xff}`;
 }
 

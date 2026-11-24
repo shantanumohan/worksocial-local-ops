@@ -268,6 +268,32 @@ export function proofSsrfRedirectDnsRebindBlockedEveryHop(
     details.push(`IPv4-mapped rebind unexpectedly ${JSON.stringify(mapped)}`);
   }
 
+  // 10. Expanded IPv4-mapped spelling (Codex P2) — canonicalize before check.
+  const mappedExpanded = evaluateSsrfRedirectDnsRebindChain({
+    allowedHosts: ALLOWED,
+    hops: [
+      {
+        hopIndex: 0,
+        url: "https://worksocial.com/mapped-expanded",
+        resolvedAddresses: ["0:0:0:0:0:ffff:10.1.2.3"],
+      },
+    ],
+  });
+  if (
+    mappedExpanded.allowed === false &&
+    mappedExpanded.blockedHopIndex === 0 &&
+    mappedExpanded.blockedCode === "DNS_REBIND_PRIVATE_ADDRESS"
+  ) {
+    details.push(
+      "Expanded IPv4-mapped rebind → 0:0:0:0:0:ffff:10.1.2.3 DNS_REBIND_PRIVATE_ADDRESS",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Expanded IPv4-mapped rebind unexpectedly ${JSON.stringify(mappedExpanded)}`,
+    );
+  }
+
   details.push(
     "liveDnsResolve=NOT_WIRED liveFetch=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE",
   );
