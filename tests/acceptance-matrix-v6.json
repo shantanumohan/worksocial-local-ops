@@ -2698,7 +2698,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x066",
-      "evidenceNote": "Fixture backup/omit-receipt/post-restore reconcile proof only — not sandbox or production-canary VERIFIED; retry-only no-dup is not sufficient"
+      "evidenceNote": "Fixture backup/omit-receipt/post-restore reconcile proof only — not sandbox or production-canary VERIFIED; not recover-rotate / not unknown-remote / not retry-only no-dup; not live VERIFIED"
     },
     {
       "id": "T-X067",

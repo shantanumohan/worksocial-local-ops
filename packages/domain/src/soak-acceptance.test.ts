@@ -159,6 +159,15 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.RECOVER_ROTATE_RECONCILE),
     ).toEqual(["T-F24", "T-US-047"]);
     expect(
+      mapProofToFixtureCases(SoakProofKind.RECOVER_ROTATE_RECONCILE),
+    ).not.toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.UNKNOWN_REMOTE_RECONCILE),
+    ).not.toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE),
+    ).not.toContain("T-X066");
+    expect(
       mapProofToFixtureCases(SoakProofKind.COMPETING_SUPERVISOR_LEASE),
     ).toEqual(["T-US-002", "T-X002"]);
     expect(

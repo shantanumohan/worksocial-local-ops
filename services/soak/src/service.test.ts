@@ -52,9 +52,43 @@ describe("soak service (M9)", () => {
           : p.applyAttemptCount === 1, // T-US-026 coalesce counts one catch-up apply
       ),
     ).toBe(true);
+    const backupProof = result.proofs.find(
+      (p) => p.kind === SoakProofKind.BACKUP_OMIT_RECEIPT,
+    );
+    expect(backupProof?.passed).toBe(true);
     expect(
-      result.proofs.some((p) => p.kind === SoakProofKind.BACKUP_OMIT_RECEIPT),
+      backupProof?.details.some((d) =>
+        /Omit-receipt backup written.*providerEffects=\[\] receipts=\[\]/.test(
+          d,
+        ),
+      ),
     ).toBe(true);
+    expect(
+      backupProof?.details.some((d) =>
+        /Post-restore.*localProvider=omitted receipts=0/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      backupProof?.details.some((d) =>
+        /Reconciled remoteRef=.*without re-apply/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      backupProof?.details.some((d) =>
+        /Post-reconcile retry providerCreated=false applyCount=1/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      backupProof?.details.some((d) => /NOT_WIRED/.test(d)),
+    ).toBe(true);
+    expect(
+      backupProof?.details.some((d) =>
+        /Distinct from NO_DUPLICATE_EFFECTS/.test(d),
+      ),
+    ).toBe(true);
+    expect(result.details.some((d) => /T-X066 fixture ACCEPTED via backup_omit_receipt only/.test(d))).toBe(
+      true,
+    );
     expect(
       result.proofs.some(
         (p) => p.kind === SoakProofKind.RECOVER_ROTATE_RECONCILE,
@@ -1090,6 +1124,65 @@ describe("soak service (M9)", () => {
     expect(
       compiled.caseResults.find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.NOT_RUN);
+  });
+
+  it.each([
+    ["RECOVER_ROTATE_RECONCILE", SoakProofKind.RECOVER_ROTATE_RECONCILE],
+    ["UNKNOWN_REMOTE_RECONCILE", SoakProofKind.UNKNOWN_REMOTE_RECONCILE],
+    [
+      "CONCURRENT_IDEMPOTENT_RELEASE",
+      SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE,
+    ],
+  ] as const)(
+    "does not ACCEPTED T-X066 from wrong-proof %s",
+    (_label, kind) => {
+      const compiled = compileAcceptanceEvidence({
+        proofs: [
+          {
+            proofId: `p-wrong-${kind}`,
+            kind,
+            passed: true,
+            details: ["wrong sibling proof"],
+            applyAttemptCount: 1,
+            operationId: "op-wrong",
+            createdAtIso: "2026-11-21T18:00:00.000Z",
+            fixtureOnly: true as const,
+          },
+        ],
+        nowIso: "2026-11-21T18:01:00.000Z",
+        runId: `soak-tx066-wrong-${kind}`,
+        caseIds: ["T-X066"],
+      });
+      expect(compiled.caseResults).toHaveLength(1);
+      expect(compiled.caseResults[0]!.status).toBe(
+        AcceptanceCaseStatus.NOT_RUN,
+      );
+      expect(compiled.artifacts).toHaveLength(0);
+    },
+  );
+
+  it("marks T-X066 FAILED when BACKUP_OMIT_RECEIPT proof fails", () => {
+    const compiled = compileAcceptanceEvidence({
+      proofs: [
+        {
+          proofId: "p-backup-fail",
+          kind: SoakProofKind.BACKUP_OMIT_RECEIPT,
+          passed: false,
+          details: ["restore incomplete"],
+          applyAttemptCount: 1,
+          operationId: "op-backup-fail",
+          createdAtIso: "2026-11-21T18:00:00.000Z",
+          fixtureOnly: true as const,
+        },
+      ],
+      nowIso: "2026-11-21T18:01:00.000Z",
+      runId: "soak-tx066-fail",
+      caseIds: ["T-X066"],
+    });
+    expect(compiled.caseResults).toHaveLength(1);
+    expect(compiled.caseResults[0]!.status).toBe(AcceptanceCaseStatus.FAILED);
+    expect(compiled.caseResults[0]!.artifactId).toBeNull();
+    expect(compiled.artifacts).toHaveLength(0);
   });
 
   it("records soak run with pilot gate NOT_MET; client-forged 72h clock cannot set MET", async () => {

@@ -34,7 +34,7 @@ Honest fixture ACCEPTED cases: **T-X001**, **T-X014**, **T-X020**, **T-US-048**,
 
 **T-X015** maps only to `DST_RECURRING_SCHEDULE_NO_DUPLICATES`.
 
-**T-X066** maps only to `BACKUP_OMIT_RECEIPT`. Retry-only `NO_DUPLICATE_EFFECTS` does not satisfy T-X066.
+**T-X066** maps only to `BACKUP_OMIT_RECEIPT` (omit→restore→remote SoR reconcile→verify/retry). Retry-only `NO_DUPLICATE_EFFECTS`, `UNKNOWN_REMOTE_RECONCILE` (T-X020/T-US-048), and `RECOVER_ROTATE_RECONCILE` (T-F24/T-US-047) do not satisfy T-X066. Live backup/restore remains NOT_WIRED; ACCEPTED ≠ VERIFIED.
 
 **T-F24 / T-US-047** map only to `RECOVER_ROTATE_RECONCILE` (complete F24 evidence set). Live provider revoke remains **NOT_WIRED**.
 

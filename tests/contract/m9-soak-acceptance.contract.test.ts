@@ -187,6 +187,18 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(tx066?.status).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(tx066?.environment).toBe(AcceptanceEnvironment.FIXTURE);
     expect(String(tx066?.status).toUpperCase()).not.toBe("VERIFIED");
+    const backupOmit = run.run.proofs.find(
+      (p) => p.kind === "backup_omit_receipt",
+    );
+    expect(backupOmit?.passed).toBe(true);
+    expect(
+      backupOmit?.details.some((d) =>
+        /Distinct from NO_DUPLICATE_EFFECTS/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      backupOmit?.details.some((d) => /NOT_WIRED/.test(d)),
+    ).toBe(true);
     const tf24 = run.run.caseResults.find((c) => c.caseId === "T-F24");
     expect(tf24?.status).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(tf24?.environment).toBe(AcceptanceEnvironment.FIXTURE);

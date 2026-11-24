@@ -674,8 +674,22 @@ async function proofBackupOmitReceipt(
     `Post-reconcile retry providerCreated=${retry.providerCreated} applyCount=${retry.applyAttemptCount}`,
   );
 
+  const opRemoteEffects = remoteEffects.filter(
+    (e) => e.operationId === operationId,
+  );
+  const remoteRefMatches =
+    opRemoteEffects.length === 1 &&
+    opRemoteEffects[0]?.remoteRef === accepted.provider.remoteRef;
+  details.push(
+    "liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE",
+  );
+  details.push(
+    "Distinct from NO_DUPLICATE_EFFECTS (retry-only), UNKNOWN_REMOTE_RECONCILE (T-X020/T-US-048), and RECOVER_ROTATE_RECONCILE (T-F24/T-US-047)",
+  );
+
   const passed =
     applyBeforeVerify === 1 &&
+    remoteRefMatches &&
     verified.matched === true &&
     verified.applyAttemptCount === 1 &&
     verified.decision.outcome === "VERIFIED" &&
@@ -1229,6 +1243,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X068 fixture ACCEPTED via thirty_alerts_one_outage_grouped only — whitespace outageKey collapse; uniqueSources; live NOT_WIRED — not live VERIFIED",
       "T-X072 fixture ACCEPTED via customer_data_eval_redaction_blocks only — not live VERIFIED",
       "T-X064 fixture ACCEPTED via ssrf_redirect_dns_rebind_blocked_every_hop only — every hop incl. NON_HTTPS/CREDENTIALS/IPv6 fe80::/10/IPv4-mapped ::ffff:; liveDns/liveFetch NOT_WIRED — not live VERIFIED",
+      "T-X066 fixture ACCEPTED via backup_omit_receipt only — omit→restore→remote SoR reconcile→verify/retry applyCount=1; distinct from no-dup/unknown-remote/recover-rotate; live NOT_WIRED — not live VERIFIED",
       "T-X071 fixture ACCEPTED via host_offline_public_discovery_unavailable only — not live VERIFIED",
       "T-X067 fixture ACCEPTED via incompatible_workflow_upgrade_blocked_or_retained only — not live VERIFIED",
       "T-X034 fixture ACCEPTED via ads_test_project_production_blocked only — not live VERIFIED",
