@@ -40,8 +40,9 @@ export function applyTakeover(state: ConversationState): TakeoverResult {
  * Gateway check before send/queue: preparedAtVersion must equal current version
  * and agent send must still be allowed.
  *
- * Ownership flip → CONVERSATION_TAKEOVER.
- * Stale prepared version (T-X053 race) → VERSION_MISMATCH.
+ * Version is checked first so a real takeover transition (version bump + ownership
+ * flip) yields VERSION_MISMATCH for replies prepared before the bump — that is the
+ * T-X053 race. Matching-version ownership denial → CONVERSATION_TAKEOVER.
  */
 export function canAgentSend(
   state: ConversationState,
@@ -49,11 +50,11 @@ export function canAgentSend(
 ):
   | { allowed: true }
   | { allowed: false; code: AgentSendDenialCode } {
-  if (!state.agentSendAllowed || state.humanOwned) {
-    return { allowed: false, code: "CONVERSATION_TAKEOVER" };
-  }
   if (preparedAtVersion !== state.version) {
     return { allowed: false, code: "VERSION_MISMATCH" };
+  }
+  if (!state.agentSendAllowed || state.humanOwned) {
+    return { allowed: false, code: "CONVERSATION_TAKEOVER" };
   }
   return { allowed: true };
 }

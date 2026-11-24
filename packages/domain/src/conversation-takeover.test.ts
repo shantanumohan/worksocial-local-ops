@@ -18,21 +18,22 @@ describe("conversation takeover", () => {
     expect(result.externalEffects).toBe("NONE");
   });
 
-  it("rejects stale prepared replies as VERSION_MISMATCH (T-X053 race)", () => {
-    const state = {
+  it("real takeover transition yields VERSION_MISMATCH for stale prepare (T-X053)", () => {
+    const before = {
       conversationId: "c1",
       version: 5,
       humanOwned: false,
       agentSendAllowed: true,
     };
-    expect(canAgentSend(state, 4)).toEqual({
+    const after = applyTakeover(before).conversation;
+    // Reply prepared at pre-takeover version — race invalidates send.
+    expect(canAgentSend(after, before.version)).toEqual({
       allowed: false,
       code: "VERSION_MISMATCH",
     });
-    expect(canAgentSend(state, 5)).toEqual({ allowed: true });
   });
 
-  it("rejects human-owned conversation as CONVERSATION_TAKEOVER", () => {
+  it("matching-version ownership denial is CONVERSATION_TAKEOVER", () => {
     const state = {
       conversationId: "c1",
       version: 5,
@@ -45,17 +46,26 @@ describe("conversation takeover", () => {
     });
   });
 
-  it("ownership denial wins over version check", () => {
+  it("version mismatch wins over ownership when preparedAtVersion is stale", () => {
     const state = {
       conversationId: "c1",
       version: 9,
       humanOwned: true,
       agentSendAllowed: false,
     };
-    // Stale version + takeover → still CONVERSATION_TAKEOVER (ownership first).
-    expect(canAgentSend(state, 1).allowed).toBe(false);
-    if (!canAgentSend(state, 1).allowed) {
-      expect(canAgentSend(state, 1).code).toBe("CONVERSATION_TAKEOVER");
-    }
+    expect(canAgentSend(state, 1)).toEqual({
+      allowed: false,
+      code: "VERSION_MISMATCH",
+    });
+  });
+
+  it("allows send when version matches and agent send is allowed", () => {
+    const state = {
+      conversationId: "c1",
+      version: 5,
+      humanOwned: false,
+      agentSendAllowed: true,
+    };
+    expect(canAgentSend(state, 5)).toEqual({ allowed: true });
   });
 });

@@ -2,9 +2,11 @@
  * Fixture proof for T-US-044 / T-X053 — takeover cancels unsent agent replies.
  *
  * Human takeover increments conversation version, cancels queued outbound,
- * invalidates drafts, and blocks send. T-X053 race: stale preparedAtVersion
- * alone yields VERSION_MISMATCH while agent send is still allowed.
- * SENT/DELIVERED rows are preserved. External effects: NONE.
+ * invalidates drafts, and blocks send. T-X053 race: replies prepared before
+ * takeover see VERSION_MISMATCH through the real applyConversationTakeover
+ * transition (version bump + ownership flip). Matching-version post-takeover
+ * queue attempts see CONVERSATION_TAKEOVER. SENT/DELIVERED rows are preserved.
+ * External effects: NONE.
  */
 
 import { randomUUID } from "node:crypto";
@@ -122,32 +124,6 @@ export function proofTakeoverCancelsUnsentReplies(
     drafts: [draftResult.draft],
   };
 
-  // Pure version race (T-X053): bump version while agent send still allowed.
-  const raceConversation = {
-    ...conversation,
-    version: conversation.version + 1,
-  };
-  const raceGate = evaluateOutboundSendGate({
-    conversation: raceConversation,
-    message: queued.message,
-    policy,
-    sentAgentMessageCount: 0,
-    bookingEvidence: [],
-    nowIso,
-  });
-  if (!raceGate.allowed && raceGate.code === "VERSION_MISMATCH") {
-    details.push(
-      "T-X053 pure version race → VERSION_MISMATCH (stale preparedAtVersion; agent send still allowed)",
-    );
-  } else {
-    passed = false;
-    details.push(
-      `Expected VERSION_MISMATCH on pure version race; got ${
-        raceGate.allowed ? "allowed" : raceGate.code
-      }`,
-    );
-  }
-
   const takeover = applyConversationTakeover({
     state,
     conversationId: "c-takeover",
@@ -226,8 +202,8 @@ export function proofTakeoverCancelsUnsentReplies(
       details.push("SENT message was incorrectly cancelled or mutated");
     }
 
-    // Post-takeover ownership denial (CONVERSATION_TAKEOVER wins over version).
-    const sendGate = evaluateOutboundSendGate({
+    // T-X053 race via real takeover: stale preparedAtVersion → VERSION_MISMATCH.
+    const raceGate = evaluateOutboundSendGate({
       conversation: takeover.conversation,
       message: {
         ...queued.message,
@@ -238,20 +214,20 @@ export function proofTakeoverCancelsUnsentReplies(
       bookingEvidence: [],
       nowIso,
     });
-    if (!sendGate.allowed && sendGate.code === "CONVERSATION_TAKEOVER") {
+    if (!raceGate.allowed && raceGate.code === "VERSION_MISMATCH") {
       details.push(
-        "Outbound send gate denies post-takeover send (CONVERSATION_TAKEOVER)",
+        "T-X053 takeover race → VERSION_MISMATCH (stale preparedAtVersion via applyConversationTakeover)",
       );
     } else {
       passed = false;
       details.push(
-        `Outbound send unexpectedly ${
-          sendGate.allowed ? "allowed" : `denied as ${sendGate.code}`
-        } after takeover`,
+        `Expected VERSION_MISMATCH after real takeover; got ${
+          raceGate.allowed ? "allowed" : raceGate.code
+        }`,
       );
     }
 
-    // Queue-after-takeover must fail closed.
+    // Queue-after-takeover at the new version → CONVERSATION_TAKEOVER (ownership).
     const postQueue = queueOutboundReply({
       messageId: "out-after-takeover",
       conversation: takeover.conversation,
@@ -265,7 +241,7 @@ export function proofTakeoverCancelsUnsentReplies(
     });
     if (!postQueue.ok && postQueue.code === "CONVERSATION_TAKEOVER") {
       details.push(
-        "Queue-after-takeover refused (CONVERSATION_TAKEOVER)",
+        "Queue-after-takeover refused (CONVERSATION_TAKEOVER at matching version)",
       );
     } else {
       passed = false;

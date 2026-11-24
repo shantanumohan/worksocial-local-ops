@@ -118,7 +118,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-US-042** / **T-X057** map only to `REPAIR_WEAKEN_TEST_REJECTED` (weaken aliases + `__tests__/` protected; live NOT_WIRED).
 
-**T-US-044** / **T-X053** map only to `TAKEOVER_CANCELS_UNSENT_REPLIES` (multi-queue cancel; SENT preserved; `VERSION_MISMATCH` on pure version race; `CONVERSATION_TAKEOVER` post-takeover; not live VERIFIED).
+**T-US-044** / **T-X053** map only to `TAKEOVER_CANCELS_UNSENT_REPLIES` (multi-queue cancel; SENT preserved; `VERSION_MISMATCH` via real takeover for stale prepare; `CONVERSATION_TAKEOVER` at matching post-takeover version; not live VERIFIED).
 
 **T-US-018** / **T-X037** map only to `EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN`.
 

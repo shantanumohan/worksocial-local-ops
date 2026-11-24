@@ -1385,7 +1385,7 @@
       "definitionShape": "list_item",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-us-044",
-      "evidenceNote": "Fixture ACCEPTED via TAKEOVER_CANCELS_UNSENT_REPLIES only — multi-queue cancel; SENT preserved; VERSION_MISMATCH on pure version race; CONVERSATION_TAKEOVER post-takeover; ACCEPTED ≠ sandbox/prod VERIFIED; externalEffects=NONE."
+      "evidenceNote": "Fixture ACCEPTED via TAKEOVER_CANCELS_UNSENT_REPLIES only — multi-queue cancel; SENT preserved; VERSION_MISMATCH via real takeover for stale prepare; CONVERSATION_TAKEOVER at matching post-takeover version; ACCEPTED ≠ sandbox/prod VERIFIED; externalEffects=NONE."
     },
     {
       "id": "T-US-045",
@@ -2490,7 +2490,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x053",
-      "evidenceNote": "Fixture ACCEPTED via TAKEOVER_CANCELS_UNSENT_REPLIES only — multi-queue cancel; SENT preserved; VERSION_MISMATCH on pure version race; CONVERSATION_TAKEOVER post-takeover; ACCEPTED ≠ sandbox/prod VERIFIED; externalEffects=NONE."
+      "evidenceNote": "Fixture ACCEPTED via TAKEOVER_CANCELS_UNSENT_REPLIES only — multi-queue cancel; SENT preserved; VERSION_MISMATCH via real takeover for stale prepare; CONVERSATION_TAKEOVER at matching post-takeover version; ACCEPTED ≠ sandbox/prod VERIFIED; externalEffects=NONE."
     },
     {
       "id": "T-X054",

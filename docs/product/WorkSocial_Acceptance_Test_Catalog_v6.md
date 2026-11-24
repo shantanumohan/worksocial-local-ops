@@ -902,7 +902,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-US-042** / **T-X057** are fixture ACCEPTED only via the repair weaken test rejected proof (`REPAIR_WEAKEN_TEST_REJECTED`) — all WeakenTestOperation values + hyphen/casing aliases fail closed; `__tests__/` paths protected; live CMS repair `NOT_WIRED`. Not sandbox/prod VERIFIED.
 
-**T-US-044** / **T-X053** are fixture ACCEPTED only via the takeover cancels unsent replies proof (`TAKEOVER_CANCELS_UNSENT_REPLIES`) — human takeover increments conversation version, cancels multi-queue unsent rows (`BLOCKED_TAKEOVER`), preserves already-SENT messages, and refuses queue/send after ownership flip (`CONVERSATION_TAKEOVER`); pure stale `preparedAtVersion` while agent send is still allowed yields `VERSION_MISMATCH` (T-X053 race); live wiring stays **NOT_WIRED**; `externalEffects=NONE`. Not sandbox/prod VERIFIED.
+**T-US-044** / **T-X053** are fixture ACCEPTED only via the takeover cancels unsent replies proof (`TAKEOVER_CANCELS_UNSENT_REPLIES`) — human takeover increments conversation version, cancels multi-queue unsent rows (`BLOCKED_TAKEOVER`), and preserves already-SENT messages; replies prepared before takeover see `VERSION_MISMATCH` through the real takeover transition (T-X053 race); matching-version queue/send after ownership flip is `CONVERSATION_TAKEOVER`; live wiring stays **NOT_WIRED**; `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 
 **T-US-018** / **T-X037** are fixture ACCEPTED only via the EVAL_ONLY operational tool forbidden proof (`EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN`). Not sandbox/prod VERIFIED.
 

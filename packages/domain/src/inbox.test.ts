@@ -176,7 +176,8 @@ describe("inbox domain", () => {
     });
     expect(sendGate.allowed).toBe(false);
     if (!sendGate.allowed) {
-      expect(sendGate.code).toBe("CONVERSATION_TAKEOVER");
+      // Real takeover bumps version → stale preparedAtVersion is VERSION_MISMATCH.
+      expect(sendGate.code).toBe("VERSION_MISMATCH");
     }
   });
 
