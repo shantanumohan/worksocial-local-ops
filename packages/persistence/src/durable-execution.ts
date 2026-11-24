@@ -8,22 +8,8 @@
  * T-X022: same operationId / businessIdempotencyKey with a different
  * payloadDigest is Conflict (ACCEPTED_PENDING and VERIFIED paths). Fixture
  * ACCEPTED ≠ sandbox/prod VERIFIED. Live provider wiring stays NOT_WIRED.
- * External effects: NONE.
+ * External effects: NONE. Soft-skip ChatGPT Ads connect trio.
  */
-
-/** Live remote provider wiring for fixture durable execution — always NOT_WIRED. */
-export const IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING = "NOT_WIRED" as const;
-
-const PAYLOAD_MISMATCH_RE =
-  /payload mismatch|different payload digest/i;
-
-/** True when an error is an idempotency key ↔ payloadDigest Conflict (T-X022). */
-export function isIdempotencyPayloadMismatchError(
-  err: unknown,
-): boolean {
-  const msg = err instanceof Error ? err.message : String(err);
-  return PAYLOAD_MISMATCH_RE.test(msg);
-}
 
 import { randomBytes } from "node:crypto";
 import type { PgPool, PgClient } from "./pg/client.js";
@@ -70,6 +56,27 @@ import type {
   JobInsertInput,
   OutboxEvent,
 } from "./execution-types.js";
+
+/** Live remote provider wiring for fixture durable execution — always NOT_WIRED. */
+export const IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING = "NOT_WIRED" as const;
+
+/** Soft-skipped ChatGPT Ads connect trio — never built for T-X022 proofs. */
+export const IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP = [
+  "T-F07",
+  "T-US-013",
+  "T-US-014",
+] as const;
+
+const PAYLOAD_MISMATCH_RE =
+  /payload mismatch|different payload digest/i;
+
+/** True when an error is an idempotency key ↔ payloadDigest Conflict (T-X022). */
+export function isIdempotencyPayloadMismatchError(
+  err: unknown,
+): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return PAYLOAD_MISMATCH_RE.test(msg);
+}
 
 export type DurableExecutionStores = {
   jobs: JobStore;

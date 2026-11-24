@@ -261,6 +261,7 @@ export {
   createDurableExecutionService,
   createPgDurableExecutionService,
   IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING,
+  IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP,
   isIdempotencyPayloadMismatchError,
   type DurableExecutionStores,
   type DurableExecutionService,

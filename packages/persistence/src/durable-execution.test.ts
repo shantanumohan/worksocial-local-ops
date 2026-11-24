@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import {
   createDurableExecutionService,
   createMemoryDurableStores,
+  IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP,
   IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING,
   isIdempotencyPayloadMismatchError,
   newJobId,
@@ -415,6 +416,105 @@ describe("durable execution (memory fixture)", () => {
     expect(
       isIdempotencyPayloadMismatchError(new Error("BUDGET_EXHAUSTED available=0")),
     ).toBe(false);
+    expect([...IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP]).toEqual([
+      "T-F07",
+      "T-US-013",
+      "T-US-014",
+    ]);
+  });
+
+  it("byte-exact case-distinct digest Conflicts; same-digest new-op replays (T-X022)", async () => {
+    const stores = createMemoryDurableStores();
+    const service = createDurableExecutionService(stores);
+    const base = {
+      job: {
+        jobId: newJobId(),
+        roleId: "A01" as const,
+        workflowId: "wf-case",
+        siteId: "site-1",
+        assetId: "page-home",
+        trigger: "manual",
+        policyVersion: "1",
+        inputArtifactIds: [] as string[],
+        capabilityGrantId: "grant-1",
+        sourceRevision: "rev-1",
+        maxAttempts: 2,
+        deadlineSeconds: 600,
+        idempotencyKey: "idem-case",
+        expectedOutcome: "verified",
+      },
+      operationId: "op-case",
+      businessIdempotencyKey: "biz-case",
+      nowIso: "2026-11-20T07:00:00.000Z",
+    };
+    const first = await service.acceptPending({
+      ...base,
+      payloadDigest: "digest-lower",
+      decision: {
+        decisionId: "dec-case-a",
+        operationId: "op-case",
+        payloadDigest: "digest-lower",
+        allowed: true,
+        code: null,
+        reason: "ok",
+        grantId: "grant-1",
+        policyId: "pol-1",
+        decidedAtIso: "2026-11-20T07:00:00.000Z",
+        writePathId: null,
+        gateDetails: [],
+      },
+    });
+    expect(first.providerCreated).toBe(true);
+
+    await expect(
+      service.acceptPending({
+        ...base,
+        payloadDigest: "DIGEST-LOWER",
+        decision: {
+          decisionId: "dec-case-upper",
+          operationId: "op-case",
+          payloadDigest: "DIGEST-LOWER",
+          allowed: true,
+          code: null,
+          reason: "ok",
+          grantId: "grant-1",
+          policyId: "pol-1",
+          decidedAtIso: "2026-11-20T07:00:01.000Z",
+          writePathId: null,
+          gateDetails: [],
+        },
+      }),
+    ).rejects.toThrow(/payload mismatch/i);
+
+    const replay = await service.acceptPending({
+      ...base,
+      operationId: "op-case-replay",
+      job: {
+        ...base.job,
+        jobId: newJobId(),
+        idempotencyKey: "idem-case-replay",
+      },
+      payloadDigest: "digest-lower",
+      decision: {
+        decisionId: "dec-case-replay",
+        operationId: "op-case-replay",
+        payloadDigest: "digest-lower",
+        allowed: true,
+        code: null,
+        reason: "ok",
+        grantId: "grant-1",
+        policyId: "pol-1",
+        decidedAtIso: "2026-11-20T07:00:02.000Z",
+        writePathId: null,
+        gateDetails: [],
+      },
+    });
+    expect(replay.providerCreated).toBe(false);
+    expect(replay.provider.applyCount).toBe(1);
+    expect(replay.provider.remoteRef).toBe(first.provider.remoteRef);
+    expect((await stores.fakeProvider.getByBusinessKey("biz-case"))?.applyCount).toBe(
+      1,
+    );
   });
 
 });

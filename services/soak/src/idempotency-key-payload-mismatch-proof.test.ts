@@ -8,7 +8,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { SoakProofKind } from "@worksocial/domain";
-import { IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING } from "@worksocial/persistence";
+import {
+  IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP,
+  IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING,
+} from "@worksocial/persistence";
 import { proofIdempotencyKeyPayloadMismatch } from "./idempotency-key-payload-mismatch-proof.js";
 
 const dirs: string[] = [];
@@ -53,11 +56,31 @@ describe("proofIdempotencyKeyPayloadMismatch (T-X022)", () => {
       ),
     ).toBe(true);
     expect(
+      proof.details.some((d) =>
+        d.includes("case-distinct payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Concurrent") && d.includes("all Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Same-digest new operationId control") &&
+          d.includes("replay, not Conflict"),
+      ),
+    ).toBe(true);
+    expect(
       proof.details.some(
         (d) =>
           d.includes(`liveProviderWiring=${IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING}`) &&
           d.includes("externalEffects=NONE") &&
-          d.includes("ACCEPTED≠VERIFIED"),
+          d.includes("ACCEPTED≠VERIFIED") &&
+          d.includes(
+            `chatgptAdsConnectSoftSkip=${IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP.join(",")}`,
+          ),
       ),
     ).toBe(true);
     expect(IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING).toBe("NOT_WIRED");

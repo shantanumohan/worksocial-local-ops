@@ -15,6 +15,7 @@ import {
 import {
   createDurableExecutionService,
   createFileDurableStores,
+  IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP,
   IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING,
   isIdempotencyPayloadMismatchError,
   newJobId,
@@ -117,6 +118,7 @@ export async function proofIdempotencyKeyPayloadMismatch(
   const digestA = `digest-a-${suffix}`;
   const digestB = `digest-b-${suffix}`;
   const digestWs = `digest-a-${suffix} `;
+  const digestCase = digestA.toUpperCase();
   const idem = `soak/idem-mismatch/${suffix}`;
 
   const svc = createDurableExecutionService(createFileDurableStores(stateDir));
@@ -182,14 +184,15 @@ export async function proofIdempotencyKeyPayloadMismatch(
       e.payloadDigest === digestB ||
       (e.businessIdempotencyKey === bizKey && e.operationId === altOp),
   );
-  if (altEffect != null || altDecision != null || orphanDigestB) {
+  const altJob = await svc.stores.jobs.getByIdempotencyKey(`${idem}-alt`);
+  if (altEffect != null || altDecision != null || orphanDigestB || altJob != null) {
     passed = false;
     details.push(
-      `Alt-op partial write after Conflict: effect=${altEffect?.payloadDigest ?? "none"} decision=${altDecision?.outcome ?? "none"} orphanDigestB=${orphanDigestB}`,
+      `Alt-op partial write after Conflict: effect=${altEffect?.payloadDigest ?? "none"} decision=${altDecision?.outcome ?? "none"} orphanDigestB=${orphanDigestB} altJob=${altJob?.jobId ?? "none"}`,
     );
   } else {
     details.push(
-      "Alt-op Conflict left no orphan effect/decision (digest B not recorded)",
+      "Alt-op Conflict left no orphan effect/decision/job (digest B not recorded)",
     );
   }
 
@@ -206,6 +209,84 @@ export async function proofIdempotencyKeyPayloadMismatch(
       }),
   );
   if (!wsConflict) passed = false;
+
+  const caseConflict =
+    digestCase !== digestA
+      ? await expectMismatchConflict(
+          "acceptPending case-distinct payloadDigest (byte-exact)",
+          details,
+          () =>
+            accept(svc, {
+              operationId,
+              bizKey,
+              digest: digestCase,
+              idem,
+              nowIso,
+            }),
+        )
+      : true;
+  if (!caseConflict) passed = false;
+
+  // Concurrent multi-alt digest-B barrage — all Conflict; no orphans; applyCount=1.
+  const barrageN = 8;
+  const barrageIds = Array.from(
+    { length: barrageN },
+    (_, i) => `${operationId}-barrage-${i}`,
+  );
+  const barrageResults = await Promise.all(
+    barrageIds.map((opId) =>
+      accept(svc, {
+        operationId: opId,
+        bizKey,
+        digest: digestB,
+        idem: `${idem}-barrage-${opId.slice(-8)}`,
+        nowIso,
+      })
+        .then(() => ({ opId, ok: false as const }))
+        .catch((err) => ({
+          opId,
+          ok: isIdempotencyPayloadMismatchError(err) as boolean,
+        })),
+    ),
+  );
+  const barrageAllConflict = barrageResults.every((r) => r.ok);
+  const barrageOrphans = (
+    await Promise.all(barrageIds.map((id) => svc.stores.effects.get(id)))
+  ).some((e) => e != null);
+  if (!barrageAllConflict || barrageOrphans) {
+    passed = false;
+    details.push(
+      `Concurrent digest-B barrage failed: conflicts=${barrageResults.filter((r) => r.ok).length}/${barrageN} orphans=${barrageOrphans}`,
+    );
+  } else {
+    details.push(
+      `Concurrent ${barrageN}-way digest-B accepts → all Conflict; no orphan intents; applyCount stays 1`,
+    );
+  }
+
+  // Negative control: same digest + new operationId is provider replay, not Conflict.
+  const sameDigestNewOp = await accept(svc, {
+    operationId: `${operationId}-same-digest`,
+    bizKey,
+    digest: digestA,
+    idem: `${idem}-same-digest`,
+    nowIso,
+  });
+  if (
+    sameDigestNewOp.providerCreated !== false ||
+    sameDigestNewOp.provider.applyCount !== 1 ||
+    sameDigestNewOp.provider.remoteRef !== first.provider.remoteRef ||
+    sameDigestNewOp.provider.payloadDigest !== digestA
+  ) {
+    passed = false;
+    details.push(
+      `Same-digest new-op unexpected created=${sameDigestNewOp.providerCreated} providerApplyCount=${sameDigestNewOp.provider.applyCount}`,
+    );
+  } else {
+    details.push(
+      "Same-digest new operationId control: created=false providerApplyCount=1 (replay, not Conflict)",
+    );
+  }
 
   const afterPending = await svc.stores.fakeProvider.getByBusinessKey(bizKey);
   const decisionPending = await svc.stores.decisions.get(operationId);
@@ -294,7 +375,7 @@ export async function proofIdempotencyKeyPayloadMismatch(
   }
 
   details.push(
-    `liveProviderSuccessClaimed=false liveProviderWiring=${IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING} externalEffects=NONE ACCEPTED≠VERIFIED`,
+    `liveProviderSuccessClaimed=false liveProviderWiring=${IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING} externalEffects=NONE ACCEPTED≠VERIFIED chatgptAdsConnectSoftSkip=${IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP.join(",")} ACCESS_BLOCKED`,
   );
   if (IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING !== "NOT_WIRED") {
     passed = false;
@@ -309,6 +390,9 @@ export async function proofIdempotencyKeyPayloadMismatch(
       sameOpConflict &&
       sameKeyConflict &&
       wsConflict &&
+      caseConflict &&
+      barrageAllConflict &&
+      !barrageOrphans &&
       verifiedPathConflict,
     details,
     applyAttemptCount: afterVerified?.applyCount ?? first.applyAttemptCount,
