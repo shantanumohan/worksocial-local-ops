@@ -560,6 +560,7 @@ export function refuseClaimedVerifiedStaging(
 /**
  * Independent verify after staging / conflict.
  * Never invents VERIFIED when conflict is retained or digests diverge.
+ * Optional claimedVerified is always refused — MATCHED_PENDING_ONLY stays ACCEPTED≠VERIFIED.
  */
 export function independentVerifyStagingChange(
   state: ExternalEditStagingState,
@@ -567,6 +568,11 @@ export function independentVerifyStagingChange(
     nowIso: string;
     /** Request live Temporal verify — must stay NOT_WIRED offline. */
     requestLiveTemporalWiring?: boolean | string | number | null;
+    /**
+     * Optional claimed-verified flag. Always stays false (T-X025).
+     * Literal true/"true" adds CLAIMED_VERIFIED_REFUSED detail; aliases do not invent a claim.
+     */
+    claimedVerified?: boolean | string | number | null;
   },
 ): {
   outcome: StagingVerifyOutcomeValue;
@@ -578,6 +584,7 @@ export function independentVerifyStagingChange(
   details: string[];
   state: ExternalEditStagingState;
   refusedLiveTemporalWiring?: boolean;
+  refusedClaimedVerified?: boolean;
 } {
   const honesty = {
     verifiedClaimed: false as const,
@@ -585,6 +592,10 @@ export function independentVerifyStagingChange(
     liveProviderSuccessClaimed: false as const,
     externalEffects: "NONE" as const,
   };
+  const claimPresent = normalizeClaimedVerified(input.claimedVerified);
+  const claimRefuseDetail = claimPresent
+    ? "CLAIMED_VERIFIED_REFUSED — independent verify never elevates to VERIFIED (ACCEPTED≠VERIFIED)"
+    : null;
 
   if (normalizeLiveTemporalWiringRequest(input.requestLiveTemporalWiring)) {
     return {
@@ -593,12 +604,14 @@ export function independentVerifyStagingChange(
       details: [
         "LIVE_TEMPORAL_WIRING_NOT_WIRED — refuse live independent verify (T-X025)",
         "verifiedClaimed=false",
+        ...(claimRefuseDetail ? [claimRefuseDetail] : []),
       ],
       state: {
         ...state,
         ...honesty,
       },
       refusedLiveTemporalWiring: true,
+      ...(claimPresent ? { refusedClaimedVerified: true as const } : {}),
       ...honesty,
     };
   }
@@ -607,8 +620,12 @@ export function independentVerifyStagingChange(
     return {
       outcome: StagingVerifyOutcome.MISMATCH,
       matched: false,
-      details: ["No staged change to verify"],
+      details: [
+        "No staged change to verify",
+        ...(claimRefuseDetail ? [claimRefuseDetail] : []),
+      ],
       state,
+      ...(claimPresent ? { refusedClaimedVerified: true as const } : {}),
       ...honesty,
     };
   }
@@ -621,6 +638,7 @@ export function independentVerifyStagingChange(
       `humanObservedRevision=${state.change.humanObservedRevision ?? state.page.revision}`,
       "verifiedClaimed=false",
       "liveTemporalWiring=NOT_WIRED",
+      ...(claimRefuseDetail ? [claimRefuseDetail] : []),
     ];
     const change: StagedAgentChange = {
       ...state.change,
@@ -641,6 +659,7 @@ export function independentVerifyStagingChange(
         liveProviderSuccessClaimed: false,
         externalEffects: "NONE",
       },
+      ...(claimPresent ? { refusedClaimedVerified: true as const } : {}),
       ...honesty,
     };
   }
@@ -663,6 +682,7 @@ export function independentVerifyStagingChange(
         "Independent verify mismatch",
         `desiredDigest=${state.change.desiredDigest}`,
         `observedDigest=${state.page.contentDigest}`,
+        ...(claimRefuseDetail ? [claimRefuseDetail] : []),
       ],
       state: {
         ...state,
@@ -671,6 +691,7 @@ export function independentVerifyStagingChange(
         liveProviderSuccessClaimed: false,
         externalEffects: "NONE",
       },
+      ...(claimPresent ? { refusedClaimedVerified: true as const } : {}),
       ...honesty,
     };
   }
@@ -684,6 +705,7 @@ export function independentVerifyStagingChange(
       "Independent read matched desired fields while STAGED_PENDING",
       "verifiedClaimed=false (ACCEPTED ≠ VERIFIED)",
       "liveTemporalWiring=NOT_WIRED",
+      ...(claimRefuseDetail ? [claimRefuseDetail] : []),
     ],
     state: {
       ...state,
@@ -692,6 +714,7 @@ export function independentVerifyStagingChange(
       liveProviderSuccessClaimed: false,
       externalEffects: "NONE",
     },
+    ...(claimPresent ? { refusedClaimedVerified: true as const } : {}),
     ...honesty,
   };
 }

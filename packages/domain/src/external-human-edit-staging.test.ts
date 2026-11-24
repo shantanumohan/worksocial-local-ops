@@ -508,4 +508,45 @@ describe("external human edit during staging (T-X025)", () => {
     expect(afterAckOverwrite.state.page.fields.title).toBe("Human edited title");
     expect(afterAckOverwrite.liveTemporalWiring).toBe("NOT_WIRED");
   });
+
+  it("non-rev revision bumps with -next; MATCHED_PENDING_ONLY refuses claimedVerified", () => {
+    const t0 = "2026-11-22T19:00:00.000Z";
+    let state = createExternalEditStagingState({
+      pageId: "page-v1",
+      fields: baseFields,
+      revision: "v1",
+      nowIso: t0,
+    });
+    const staged = stageAgentChangeAgainstBase(state, {
+      changeId: "chg-v1",
+      expectedBaseRevision: "v1",
+      desiredFields: agentDesired,
+      nowIso: t0,
+    });
+    expect(staged.ok).toBe(true);
+    if (!staged.ok) return;
+    expect(staged.state.page.revision).toBe("v1-next");
+    state = staged.state;
+
+    const matchedClaim = independentVerifyStagingChange(state, {
+      nowIso: "2026-11-22T19:01:00.000Z",
+      claimedVerified: true,
+    });
+    expect(matchedClaim.outcome).toBe(StagingVerifyOutcome.MATCHED_PENDING_ONLY);
+    expect(matchedClaim.matched).toBe(true);
+    expect(matchedClaim.verifiedClaimed).toBe(false);
+    expect(matchedClaim.refusedClaimedVerified).toBe(true);
+    expect(matchedClaim.details.join(" ")).toMatch(/CLAIMED_VERIFIED_REFUSED/);
+    expect(matchedClaim.liveTemporalWiring).toBe("NOT_WIRED");
+    expect(matchedClaim.externalEffects).toBe("NONE");
+
+    const aliasClaim = independentVerifyStagingChange(state, {
+      nowIso: "2026-11-22T19:02:00.000Z",
+      claimedVerified: "TRUE",
+    });
+    expect(aliasClaim.outcome).toBe(StagingVerifyOutcome.MATCHED_PENDING_ONLY);
+    expect(aliasClaim.verifiedClaimed).toBe(false);
+    expect(aliasClaim.refusedClaimedVerified).toBeUndefined();
+    expect(aliasClaim.details.join(" ")).not.toMatch(/CLAIMED_VERIFIED_REFUSED/);
+  });
 });

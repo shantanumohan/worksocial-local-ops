@@ -440,6 +440,54 @@ export function proofExternalHumanEditConflictRetained(
     );
   }
 
+  // N6: non-rev revision bump + MATCHED_PENDING_ONLY refuses claimedVerified.
+  let vState = createExternalEditStagingState({
+    pageId: `page-vrev-${randomUUID().slice(0, 8)}`,
+    fields: baseFields,
+    revision: "v1",
+    nowIso: nowIso,
+  });
+  const vStaged = stageAgentChangeAgainstBase(vState, {
+    changeId: `chg-vrev-${randomUUID().slice(0, 8)}`,
+    expectedBaseRevision: "v1",
+    desiredFields: agentDesired,
+    nowIso,
+  });
+  if (vStaged.ok) {
+    vState = vStaged.state;
+  }
+  const matchedClaim = independentVerifyStagingChange(vState, {
+    nowIso: tHuman,
+    claimedVerified: true,
+  });
+  const aliasMatchedClaim = independentVerifyStagingChange(vState, {
+    nowIso: tHuman,
+    claimedVerified: "TRUE",
+  });
+  if (
+    vStaged.ok &&
+    vStaged.state.page.revision === "v1-next" &&
+    matchedClaim.outcome === StagingVerifyOutcome.MATCHED_PENDING_ONLY &&
+    matchedClaim.matched === true &&
+    matchedClaim.verifiedClaimed === false &&
+    matchedClaim.refusedClaimedVerified === true &&
+    matchedClaim.details.some((d) => /CLAIMED_VERIFIED_REFUSED/.test(d)) &&
+    matchedClaim.liveTemporalWiring === "NOT_WIRED" &&
+    matchedClaim.externalEffects === "NONE" &&
+    aliasMatchedClaim.verifiedClaimed === false &&
+    aliasMatchedClaim.refusedClaimedVerified === undefined &&
+    !aliasMatchedClaim.details.some((d) => /CLAIMED_VERIFIED_REFUSED/.test(d))
+  ) {
+    details.push(
+      "N6 non-rev v1→v1-next; MATCHED_PENDING_ONLY refuses claimedVerified (literal-only; alias TRUE invents no claim)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `N6 edges unexpectedly rev=${vStaged.ok ? vStaged.state.page.revision : "fail"} matched=${JSON.stringify(matchedClaim.details)} alias=${JSON.stringify(aliasMatchedClaim.details)}`,
+    );
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE",
   );

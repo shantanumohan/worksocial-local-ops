@@ -306,6 +306,11 @@ describe("soak service (M9)", () => {
       ),
     ).toBe(true);
     expect(
+      extHumanEditProof?.details.some((d) =>
+        /v1→v1-next|MATCHED_PENDING_ONLY refuses claimedVerified/.test(d),
+      ),
+    ).toBe(true);
+    expect(
       result.proofs.some(
         (p) => p.kind === SoakProofKind.OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS,
       ),

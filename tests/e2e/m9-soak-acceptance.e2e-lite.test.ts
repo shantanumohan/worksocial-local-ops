@@ -174,6 +174,12 @@ describe("e2e-lite: M9 soak acceptance", () => {
     expect(report.acceptedCases.some((c) => c.caseId === "T-X017")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X024")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X025")).toBe(true);
+    {
+      const tx025 = report.acceptedCases.find((c) => c.caseId === "T-X025");
+      expect(tx025?.environment).toBe("fixture");
+      expect(String(tx025?.status).toUpperCase()).not.toBe("VERIFIED");
+      expect(String(tx025?.status).toUpperCase()).toBe("ACCEPTED");
+    }
     expect(report.acceptedCases.some((c) => c.caseId === "T-X011")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X003")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X050")).toBe(true);
