@@ -902,6 +902,17 @@ export {
   type SoakAcceptanceState,
 } from "./soak-acceptance.js";
 export {
+  CHATGPT_ADS_GATE_CASE_IDS,
+  CHATGPT_ADS_TRANSPORT_ENTITLEMENT_GATE,
+  RELEASE_EVIDENCE_EXTERNAL_EFFECTS_NONE,
+  countAcceptanceStatusesByCase,
+  validateMatrixSummaryFreshness,
+  validateChatGptAdsGateRetention,
+  validateReleaseEvidenceLedgerHonesty,
+  type ChatGptAdsGateCaseId,
+  type AcceptanceStatusCounts,
+} from "./acceptance-matrix-honesty.js";
+export {
   createWorkerProcessTree,
   workerDeadlineExceeded,
   alivePids,
