@@ -280,6 +280,12 @@ export function cancelBudgetReservation(
       throw new Error("Amounts must be non-negative");
     }
     const { [reservationId]: _held, ...remainingHeld } = account.heldReservations;
+    // Recompute heldMinor from remaining map — never field±delta (stale
+    // heldMinor=0 must not yield negative heldMinor after resolve).
+    const nextHeldMinor = heldReservationsTotalMinor({
+      ...account,
+      heldReservations: remainingHeld,
+    });
     return {
       ok: true,
       reservationId,
@@ -291,7 +297,7 @@ export function cancelBudgetReservation(
       replayed: false,
       account: {
         ...account,
-        heldMinor: account.heldMinor - priorHeld,
+        heldMinor: nextHeldMinor,
         settledMinor: account.settledMinor + usage.actualMinor,
         heldReservations: remainingHeld,
         settledReservations: {
@@ -342,6 +348,15 @@ export function cancelBudgetReservation(
 
   if (!usage.known) {
     // Hold residual — available budget does not increase; cost is not zero.
+    // Recompute heldMinor from map (stale field must not under-count holds).
+    const nextHeld = {
+      ...account.heldReservations,
+      [reservationId]: reservedMinor,
+    };
+    const nextHeldMinor = heldReservationsTotalMinor({
+      ...account,
+      heldReservations: nextHeld,
+    });
     return {
       ok: true,
       reservationId,
@@ -354,12 +369,9 @@ export function cancelBudgetReservation(
       account: {
         ...account,
         reservedMinor: account.reservedMinor - reservedMinor,
-        heldMinor: account.heldMinor + reservedMinor,
+        heldMinor: nextHeldMinor,
         openReservations: remainingOpen,
-        heldReservations: {
-          ...account.heldReservations,
-          [reservationId]: reservedMinor,
-        },
+        heldReservations: nextHeld,
       },
       ...honesty,
     };

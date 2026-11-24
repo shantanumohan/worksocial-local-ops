@@ -466,4 +466,61 @@ describe("budget accounting", () => {
     expect(heldReservationsTotalMinor(weird)).toBe(200);
     expect(availableBudgetMinor(weird)).toBe(800);
   });
+
+  it("resolves hold without negative heldMinor when field is stale", () => {
+    const a = reserveBudget(account(), "r1", 300);
+    expect(a.ok).toBe(true);
+    if (!a.ok) return;
+    const b = reserveBudget(a.account, "r2", 200);
+    expect(b.ok).toBe(true);
+    if (!b.ok) return;
+    const hold1 = cancelBudgetReservation(b.account, "r1", { known: false });
+    expect(hold1.ok).toBe(true);
+    if (!hold1.ok) return;
+    const hold2 = cancelBudgetReservation(hold1.account, "r2", {
+      known: false,
+    });
+    expect(hold2.ok).toBe(true);
+    if (!hold2.ok) return;
+    expect(hold2.account.heldMinor).toBe(500);
+
+    const stale = { ...hold2.account, heldMinor: 0 };
+    const resolved = cancelBudgetReservation(stale, "r1", {
+      known: true,
+      actualMinor: 90,
+    });
+    expect(resolved.ok).toBe(true);
+    if (!resolved.ok) return;
+    expect(resolved.account.heldMinor).toBe(200);
+    expect(resolved.account.heldMinor).toBeGreaterThanOrEqual(0);
+    expect(heldReservationsTotalMinor(resolved.account)).toBe(200);
+    expect(isUnknownUsageHold(resolved.account, "r2")).toBe(true);
+    expect(availableBudgetMinor(resolved.account)).toBe(710);
+  });
+
+  it("open unknown-cancel with stale heldMinor still stacks map sum", () => {
+    const reserved = reserveBudget(account(), "r-a", 150);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-a", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const stale = { ...held.account, heldMinor: 0 };
+    const next = reserveBudget(stale, "r-b", 100);
+    expect(next.ok).toBe(true);
+    if (!next.ok) return;
+    // available uses map (150 hold) so 1000-150-100 reserved path...
+    const heldB = cancelBudgetReservation(
+      { ...next.account, heldMinor: 0 },
+      "r-b",
+      { known: false },
+    );
+    expect(heldB.ok).toBe(true);
+    if (!heldB.ok) return;
+    expect(heldB.account.heldMinor).toBe(250);
+    expect(heldReservationsTotalMinor(heldB.account)).toBe(250);
+    expect(availableBudgetMinor(heldB.account)).toBe(750);
+  });
 });

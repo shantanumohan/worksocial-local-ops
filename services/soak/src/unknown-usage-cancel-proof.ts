@@ -314,6 +314,33 @@ export function proofUnknownUsageCancelHoldsResidual(
     );
   }
 
+  // 11. Resolve hold with stale heldMinor must not write negative heldMinor.
+  const multiStale = {
+    ...secondHold.account,
+    heldMinor: 0,
+  };
+  const resolveStale = cancelBudgetReservation(multiStale, "req-cancel-unknown", {
+    known: true,
+    actualMinor: 220,
+  });
+  if (
+    resolveStale.ok &&
+    resolveStale.account.heldMinor === 150 &&
+    resolveStale.account.heldMinor >= 0 &&
+    heldReservationsTotalMinor(resolveStale.account) === 150 &&
+    isUnknownUsageHold(resolveStale.account, "req-cancel-unknown-b") &&
+    resolveStale.liveBudgetProviderWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "Stale heldMinor resolve recomputes map sum → heldMinor=150 (not negative); secondary hold remains",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Stale resolve heldMinor failed: ${JSON.stringify(resolveStale)}`,
+    );
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false externalEffects=NONE liveBudgetProviderWiring=NOT_WIRED ACCEPTED≠VERIFIED",
   );
