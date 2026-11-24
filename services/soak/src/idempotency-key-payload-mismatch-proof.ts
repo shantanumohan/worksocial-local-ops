@@ -210,6 +210,34 @@ export async function proofIdempotencyKeyPayloadMismatch(
   );
   if (!wsConflict) passed = false;
 
+  const emptyConflict = await expectMismatchConflict(
+    "acceptPending empty payloadDigest",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: "",
+        idem,
+        nowIso,
+      }),
+  );
+  if (!emptyConflict) passed = false;
+
+  const nulConflict = await expectMismatchConflict(
+    "acceptPending NUL-suffix payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}\0`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!nulConflict) passed = false;
+
   const caseConflict =
     digestCase !== digestA
       ? await expectMismatchConflict(
@@ -374,6 +402,42 @@ export async function proofIdempotencyKeyPayloadMismatch(
     );
   }
 
+  // Receipt integrity: no digest-B observations recorded after Conflicts.
+  const receipts = await svc.stores.receipts.listForOperation(operationId);
+  const receiptDigestB = receipts.some((r) => r.observedDigest === digestB);
+  const receiptHasA = receipts.some((r) => r.observedDigest === digestA);
+  if (receiptDigestB || !receiptHasA) {
+    passed = false;
+    details.push(
+      `Receipt integrity failed: hasDigestA=${receiptHasA} hasDigestB=${receiptDigestB} count=${receipts.length}`,
+    );
+  } else {
+    details.push(
+      "Receipt integrity: provider_ack/verification retain digest A only; no digest-B receipts",
+    );
+  }
+
+  // Re-verify after VERIFIED-path Conflict — still applyCount=1.
+  const reverify = await svc.verifyIndependent({
+    operationId,
+    observedDigest: digestA,
+    nowIso,
+  });
+  if (
+    reverify.decision.outcome !== "VERIFIED" ||
+    reverify.applyAttemptCount !== 1 ||
+    reverify.matched !== true
+  ) {
+    passed = false;
+    details.push(
+      `Re-verify after Conflict unexpected outcome=${reverify.decision.outcome} applyCount=${reverify.applyAttemptCount} matched=${reverify.matched}`,
+    );
+  } else {
+    details.push(
+      "Re-verify after VERIFIED Conflict: outcome VERIFIED applyCount=1 matched=true",
+    );
+  }
+
   details.push(
     `liveProviderSuccessClaimed=false liveProviderWiring=${IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING} externalEffects=NONE ACCEPTED≠VERIFIED chatgptAdsConnectSoftSkip=${IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP.join(",")} ACCESS_BLOCKED`,
   );
@@ -390,6 +454,8 @@ export async function proofIdempotencyKeyPayloadMismatch(
       sameOpConflict &&
       sameKeyConflict &&
       wsConflict &&
+      emptyConflict &&
+      nulConflict &&
       caseConflict &&
       barrageAllConflict &&
       !barrageOrphans &&

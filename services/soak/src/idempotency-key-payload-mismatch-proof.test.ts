@@ -61,6 +61,25 @@ describe("proofIdempotencyKeyPayloadMismatch (T-X022)", () => {
       ),
     ).toBe(true);
     expect(
+      proof.details.some((d) => d.includes("empty payloadDigest → Conflict")),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("NUL-suffix payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Receipt integrity") && d.includes("digest A only"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Re-verify after VERIFIED Conflict") &&
+        d.includes("applyCount=1"),
+      ),
+    ).toBe(true);
+    expect(
       proof.details.some((d) =>
         d.includes("Concurrent") && d.includes("all Conflict"),
       ),

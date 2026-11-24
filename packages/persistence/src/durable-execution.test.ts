@@ -423,6 +423,93 @@ describe("durable execution (memory fixture)", () => {
     ]);
   });
 
+  it("empty and NUL-suffix digests Conflict after bind (T-X022)", async () => {
+    const stores = createMemoryDurableStores();
+    const service = createDurableExecutionService(stores);
+    const base = {
+      job: {
+        jobId: newJobId(),
+        roleId: "A01" as const,
+        workflowId: "wf-empty",
+        siteId: "site-1",
+        assetId: "page-home",
+        trigger: "manual",
+        policyVersion: "1",
+        inputArtifactIds: [] as string[],
+        capabilityGrantId: "grant-1",
+        sourceRevision: "rev-1",
+        maxAttempts: 2,
+        deadlineSeconds: 600,
+        idempotencyKey: "idem-empty",
+        expectedOutcome: "verified",
+      },
+      operationId: "op-empty",
+      businessIdempotencyKey: "biz-empty",
+      nowIso: "2026-11-20T08:00:00.000Z",
+    };
+    await service.acceptPending({
+      ...base,
+      payloadDigest: "digest-bound",
+      decision: {
+        decisionId: "dec-empty-a",
+        operationId: "op-empty",
+        payloadDigest: "digest-bound",
+        allowed: true,
+        code: null,
+        reason: "ok",
+        grantId: "grant-1",
+        policyId: "pol-1",
+        decidedAtIso: "2026-11-20T08:00:00.000Z",
+        writePathId: null,
+        gateDetails: [],
+      },
+    });
+    await expect(
+      service.acceptPending({
+        ...base,
+        payloadDigest: "",
+        decision: {
+          decisionId: "dec-empty-b",
+          operationId: "op-empty",
+          payloadDigest: "",
+          allowed: true,
+          code: null,
+          reason: "ok",
+          grantId: "grant-1",
+          policyId: "pol-1",
+          decidedAtIso: "2026-11-20T08:00:01.000Z",
+          writePathId: null,
+          gateDetails: [],
+        },
+      }),
+    ).rejects.toThrow(/payload mismatch/i);
+    await expect(
+      service.acceptPending({
+        ...base,
+        payloadDigest: "digest-bound\0",
+        decision: {
+          decisionId: "dec-empty-nul",
+          operationId: "op-empty",
+          payloadDigest: "digest-bound\0",
+          allowed: true,
+          code: null,
+          reason: "ok",
+          grantId: "grant-1",
+          policyId: "pol-1",
+          decidedAtIso: "2026-11-20T08:00:02.000Z",
+          writePathId: null,
+          gateDetails: [],
+        },
+      }),
+    ).rejects.toThrow(/payload mismatch/i);
+    expect((await stores.fakeProvider.getByBusinessKey("biz-empty"))?.applyCount).toBe(
+      1,
+    );
+    const receipts = await stores.receipts.listForOperation("op-empty");
+    expect(receipts.every((r) => r.observedDigest !== "")).toBe(true);
+    expect(receipts.some((r) => r.observedDigest === "digest-bound")).toBe(true);
+  });
+
   it("byte-exact case-distinct digest Conflicts; same-digest new-op replays (T-X022)", async () => {
     const stores = createMemoryDurableStores();
     const service = createDurableExecutionService(stores);
