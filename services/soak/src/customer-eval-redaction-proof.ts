@@ -1,12 +1,15 @@
 /**
  * Fixture proof for T-X072 — Customer data leaks into evaluation; redaction blocks.
- * External effects: NONE. Never invents live VERIFIED.
+ * Hillclimb: liveEvalWiring NOT_WIRED; refuse live VERIFIED / live fleet;
+ * intentLabel PII; eval-safe prompt builder. External effects: NONE.
+ * Never invents live VERIFIED.
  */
 
 import { randomUUID } from "node:crypto";
 import {
   SoakProofKind,
   assertEvalPromptHasNoCustomerPii,
+  buildEvalSafePromptFromPayload,
   prepareCustomerDataForEvaluation,
   type SoakProofRecord,
 } from "@worksocial/domain";
@@ -50,10 +53,12 @@ export function proofCustomerDataEvalRedactionBlocks(
     redacted.payload.customerPhone === "[REDACTED_PHONE]" &&
     !/jordan\.lee@example\.com/i.test(redacted.payload.messageBody) &&
     !/415\s*555/i.test(redacted.payload.messageBody) &&
-    redacted.externalEffects === "NONE"
+    redacted.externalEffects === "NONE" &&
+    redacted.liveEvalWiring === "NOT_WIRED" &&
+    redacted.liveProviderSuccessClaimed === false
   ) {
     details.push(
-      "redact mode → REDACTED_FOR_EVAL; name/email/phone/body identifiers stripped",
+      "redact mode → REDACTED_FOR_EVAL; name/email/phone/body identifiers stripped; liveEvalWiring=NOT_WIRED",
     );
   } else {
     passed = false;
@@ -84,6 +89,26 @@ export function proofCustomerDataEvalRedactionBlocks(
     );
   }
 
+  // 1c. intentLabel PII redacted.
+  const intentPii = prepareCustomerDataForEvaluation({
+    source: {
+      ...source,
+      intentLabel: "follow_up jordan.lee@example.com",
+    },
+    mode: "redact",
+  });
+  if (
+    intentPii.allowed &&
+    intentPii.payload != null &&
+    !/jordan\.lee@example\.com/i.test(intentPii.payload.intentLabel) &&
+    /\[REDACTED_EMAIL\]/.test(intentPii.payload.intentLabel)
+  ) {
+    details.push("intentLabel embedded email → [REDACTED_EMAIL]");
+  } else {
+    passed = false;
+    details.push(`intentLabel PII unexpectedly ${JSON.stringify(intentPii)}`);
+  }
+
   // 2. Raw passthrough with PII blocked.
   const raw = prepareCustomerDataForEvaluation({
     source,
@@ -93,7 +118,8 @@ export function proofCustomerDataEvalRedactionBlocks(
     !raw.allowed &&
     raw.code === "CUSTOMER_DATA_LEAK_BLOCKED" &&
     raw.payload === null &&
-    raw.externalEffects === "NONE"
+    raw.externalEffects === "NONE" &&
+    raw.liveEvalWiring === "NOT_WIRED"
   ) {
     details.push(
       "raw_passthrough with customer PII → CUSTOMER_DATA_LEAK_BLOCKED",
@@ -103,12 +129,102 @@ export function proofCustomerDataEvalRedactionBlocks(
     details.push(`raw passthrough unexpectedly ${JSON.stringify(raw)}`);
   }
 
+  // 2b. Live VERIFIED / live fleet claims refused.
+  const liveVerified = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    claimLiveVerified: true,
+  });
+  const liveFleet = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    requestLiveEvalFleet: true,
+  });
+  if (
+    !liveVerified.allowed &&
+    liveVerified.code === "CUSTOMER_DATA_LEAK_BLOCKED" &&
+    !liveFleet.allowed &&
+    liveFleet.liveEvalWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "claimLiveVerified / requestLiveEvalFleet → CUSTOMER_DATA_LEAK_BLOCKED (NOT_WIRED)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `live claims unexpectedly verified=${JSON.stringify(liveVerified)} fleet=${JSON.stringify(liveFleet)}`,
+    );
+  }
+
+  // 2c. Conversation ID embedding email is redacted; prompt never echoes conversationId.
+  const dirtyConv = prepareCustomerDataForEvaluation({
+    source: {
+      ...source,
+      conversationId: `thread-${source.customerEmail}`,
+    },
+    mode: "redact",
+  });
+  if (
+    dirtyConv.allowed &&
+    dirtyConv.payload != null &&
+    !/jordan\.lee@example\.com/i.test(dirtyConv.payload.conversationId) &&
+    /\[REDACTED_EMAIL\]/.test(dirtyConv.payload.conversationId)
+  ) {
+    const promptFromDirtyConv = buildEvalSafePromptFromPayload(dirtyConv.payload);
+    if (
+      !/jordan\.lee@example\.com/i.test(promptFromDirtyConv) &&
+      /\[REDACTED_CONVERSATION_ID\]/.test(promptFromDirtyConv)
+    ) {
+      details.push(
+        "conversationId with embedded email redacted; eval prompt uses [REDACTED_CONVERSATION_ID]",
+      );
+    } else {
+      passed = false;
+      details.push(`dirty-conv prompt unexpectedly ${promptFromDirtyConv}`);
+    }
+  } else {
+    passed = false;
+    details.push(`dirty conversationId unexpectedly ${JSON.stringify(dirtyConv)}`);
+  }
+
+  // 2d. Short display name must not corrupt intentLabel substrings (tour vs tour_request).
+  const shortName = prepareCustomerDataForEvaluation({
+    source: {
+      customerDisplayName: "Tour",
+      customerEmail: null,
+      customerPhone: null,
+      messageBody: "Looking for availability.",
+      conversationId: "conv-tour",
+      intentLabel: "tour_request",
+    },
+    mode: "redact",
+  });
+  if (
+    shortName.allowed &&
+    shortName.payload?.intentLabel === "tour_request"
+  ) {
+    details.push(
+      "short displayName Tour does not substring-corrupt intentLabel tour_request",
+    );
+  } else {
+    passed = false;
+    details.push(`short-name intent unexpectedly ${JSON.stringify(shortName)}`);
+  }
+
   // 3. Eval prompt built from redacted payload stays clean; raw email/name blocked.
   if (redacted.allowed && redacted.payload) {
-    const safePrompt = `Judge fixture answer for intent=${redacted.payload.intentLabel} body=${redacted.payload.messageBody}`;
+    const safePrompt = buildEvalSafePromptFromPayload(redacted.payload);
     const clean = assertEvalPromptHasNoCustomerPii(safePrompt, known);
-    if (clean.ok && clean.code === "EVAL_PROMPT_CLEAN") {
-      details.push("eval prompt from redacted payload → EVAL_PROMPT_CLEAN");
+    if (
+      clean.ok &&
+      clean.code === "EVAL_PROMPT_CLEAN" &&
+      clean.liveEvalWiring === "NOT_WIRED" &&
+      !/jordan\.lee@example\.com/i.test(safePrompt) &&
+      /\[REDACTED_CONVERSATION_ID\]/.test(safePrompt)
+    ) {
+      details.push(
+        "buildEvalSafePromptFromPayload → EVAL_PROMPT_CLEAN (liveEvalWiring=NOT_WIRED; conversationId withheld)",
+      );
     } else {
       passed = false;
       details.push(`safe prompt unexpectedly ${JSON.stringify(clean)}`);
@@ -141,7 +257,9 @@ export function proofCustomerDataEvalRedactionBlocks(
     details.push(`dirty name prompt unexpectedly ${JSON.stringify(dirtyName)}`);
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  details.push(
+    "liveProviderSuccessClaimed=false liveEvalWiring=NOT_WIRED externalEffects=NONE ACCEPTED≠VERIFIED",
+  );
 
   return {
     proofId: `proof-customer-eval-redact-${randomUUID()}`,
