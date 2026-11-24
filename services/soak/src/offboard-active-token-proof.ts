@@ -144,23 +144,6 @@ export async function proofOffboardActiveTokenResidual(
     details.push("Post-offboard lease denied CONNECTION_REVOKED");
   }
 
-  const live = await creds.liveProviderRevoke({
-    connectionId: seeded.connection.connectionId,
-  });
-  if (
-    live.code !== "LIVE_PROVIDER_REVOKE_NOT_WIRED" ||
-    live.liveProviderRevoke !== "NOT_WIRED" ||
-    live.liveProviderSuccessClaimed !== false ||
-    live.externalEffects !== "NONE"
-  ) {
-    passed = false;
-    details.push(`liveProviderRevoke unexpected ${JSON.stringify(live)}`);
-  } else {
-    details.push(
-      "liveProviderRevoke=NOT_WIRED liveProviderSuccessClaimed=false — T-X073 incomplete until external revoke",
-    );
-  }
-
   const honesty = assertOffboardActiveTokenResidualHonest(manifest);
   if (!honesty.ok) {
     passed = false;
@@ -172,21 +155,21 @@ export async function proofOffboardActiveTokenResidual(
   }
 
   // Hillclimb: re-offboard after local revoke — residuals stay BLOCKED_NOT_WIRED.
+  // Runs before liveProviderRevoke audits so fixture clocks stay monotonic.
   const reOffboard = await creds.offboard({
     connectionId: seeded.connection.connectionId,
     approvedBy: "fixture-admin-reoffboard",
-    nowIso: nowPlus(nowIso, 450),
+    nowIso: nowPlus(nowIso, 350),
   });
   if (!reOffboard.ok) {
     // Already-revoked may fail closed — still honest if not inventing live success.
     details.push(
       `Re-offboard after revoke: ${reOffboard.code} (fail-closed ok if no live VERIFIED)`,
     );
-    if (
-      /VERIFIED|COMPLETED|live\s+revoke\s+success/i.test(
-        JSON.stringify(reOffboard),
-      )
-    ) {
+    const reBlob = JSON.stringify(reOffboard)
+      .replace(/ACCEPTED\s*≠\s*VERIFIED/gi, "")
+      .replace(/NOT_VERIFIED/g, "");
+    if (/\bVERIFIED\b|COMPLETED|live\s+revoke\s+success/i.test(reBlob)) {
       passed = false;
       details.push("Re-offboard must not invent live VERIFIED/COMPLETED revoke");
     }
@@ -204,9 +187,29 @@ export async function proofOffboardActiveTokenResidual(
     }
   }
 
+  // Live revoke uses fixture clock so audits stay monotonic with offboard timestamps.
+  const live = await creds.liveProviderRevoke({
+    connectionId: seeded.connection.connectionId,
+    nowIso: nowPlus(nowIso, 400),
+  });
+  if (
+    live.code !== "LIVE_PROVIDER_REVOKE_NOT_WIRED" ||
+    live.liveProviderRevoke !== "NOT_WIRED" ||
+    live.liveProviderSuccessClaimed !== false ||
+    live.externalEffects !== "NONE"
+  ) {
+    passed = false;
+    details.push(`liveProviderRevoke unexpected ${JSON.stringify(live)}`);
+  } else {
+    details.push(
+      "liveProviderRevoke=NOT_WIRED liveProviderSuccessClaimed=false — T-X073 incomplete until external revoke",
+    );
+  }
+
   // Hillclimb: double liveProviderRevoke — both stay NOT_WIRED, never success.
   const live2 = await creds.liveProviderRevoke({
     connectionId: seeded.connection.connectionId,
+    nowIso: nowPlus(nowIso, 450),
   });
   if (
     live2.code !== "LIVE_PROVIDER_REVOKE_NOT_WIRED" ||

@@ -831,12 +831,26 @@ export function assertOffboardActiveTokenResidualHonest(
     reasons.push("catalogClaim must stay NOT_RUN (fixture ACCEPTED ≠ VERIFIED)");
   }
   const blob = JSON.stringify(manifest);
-  // Allow honest "ACCEPTED≠VERIFIED" / "NOT_VERIFIED" phrasing; reject live success inventions.
+  // Allow honest ACCEPTED≠VERIFIED / NOT_VERIFIED / never-silently phrasing;
+  // reject any remaining live-success inventions in summaries/obligations.
+  const scrubbed = blob
+    .replace(/ACCEPTED\s*≠\s*VERIFIED/gi, "")
+    .replace(/NOT_VERIFIED/g, "")
+    .replace(/never\s+silently\s+COMPLETED\/VERIFIED/gi, "")
+    .replace(/fixture ACCEPTED via soak only/gi, "");
   if (
-    /liveProviderSuccessClaimed"\s*:\s*true/.test(blob) ||
-    /"live\s+VERIFIED"/i.test(blob) ||
-    /remote\s+revoke\s+(complete|succeeded)/i.test(blob) ||
-    /silently\s+VERIFIED\s+for\s+live/i.test(blob)
+    /liveProviderSuccessClaimed"\s*:\s*true/.test(scrubbed) ||
+    /\bVERIFIED\b/i.test(scrubbed) ||
+    /\b(live\s+)?provider\s+revoke\s+(completed|complete|succeeded|success)\b/i.test(
+      scrubbed,
+    ) ||
+    /\bremote\s+revoke\s+(completed|complete|succeeded|success)\b/i.test(
+      scrubbed,
+    ) ||
+    /\blive\s+revoke\s+(completed|complete|succeeded|success)\b/i.test(
+      scrubbed,
+    ) ||
+    /\boffboarding\s+is\s+now\s+live\b/i.test(scrubbed)
   ) {
     reasons.push("Manifest must not invent live VERIFIED or remote revoke success");
   }

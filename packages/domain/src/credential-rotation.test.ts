@@ -335,6 +335,20 @@ describe("credential rotation / revoke honesty", () => {
     expect(dishonest.ok).toBe(false);
     expect(dishonest.code).toBe("OFFBOARD_RESIDUAL_DISHONEST");
 
+    const inventLive = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "Offboarding is now live VERIFIED",
+    });
+    expect(inventLive.ok).toBe(false);
+    expect(inventLive.code).toBe("OFFBOARD_RESIDUAL_DISHONEST");
+
+    const inventRevoke = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "Live provider revoke completed",
+    });
+    expect(inventRevoke.ok).toBe(false);
+    expect(inventRevoke.code).toBe("OFFBOARD_RESIDUAL_DISHONEST");
+
     const doubleLive = attemptLiveProviderRevoke({
       connectionId: "conn-1",
       referenceId: "cred-aaa",

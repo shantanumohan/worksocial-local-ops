@@ -160,6 +160,8 @@ export type CredentialRotationService = {
   >;
   liveProviderRevoke(input: {
     connectionId: string;
+    /** Fixture/harness clock — when omitted, uses wall clock. */
+    nowIso?: string;
   }): Promise<
     ReturnType<typeof attemptLiveProviderRevoke> & {
       connectionId: string;
@@ -800,7 +802,7 @@ export function createCredentialRotationService(input: {
           connectionId: req.connectionId,
           referenceId: connection?.referenceId ?? null,
           summary: result.reason,
-          nowIso: new Date().toISOString(),
+          nowIso: req.nowIso ?? new Date().toISOString(),
           details: { code: result.code },
         }),
       );
