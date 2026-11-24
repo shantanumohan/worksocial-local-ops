@@ -2,7 +2,12 @@ import { describe, expect, it, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { OperatingMode, WeakenTestOperation } from "@worksocial/domain";
+import {
+  MAX_REPAIR_ATTEMPTS,
+  OperatingMode,
+  RepairTicketStatus,
+  WeakenTestOperation,
+} from "@worksocial/domain";
 import {
   createDemoRepairGrant,
   createFileRepairStore,
@@ -134,5 +139,49 @@ describe("repair service", () => {
     expect(status.acceptanceCaseIds).toContain("T-F21");
     expect(status.liveCmsRepairWiring).toBe("NOT_WIRED");
     expect(status.learningHookNote).toMatch(/learning-worker/i);
+  });
+
+  it("T-X058: ATTEMPT_LIMIT release refuses without recording a third attempt", () => {
+    const { service, store } = harness();
+    service.seedFixtures(now);
+    service.recordIndependentReview({
+      proposalId: REPAIR_PROPOSAL_ID,
+      approved: true,
+      reason: "ok",
+      nowIso: now,
+    });
+    const state = store.read();
+    const ticket = state.tickets[0]!;
+    store.upsertTicket({
+      ...ticket,
+      attemptCount: MAX_REPAIR_ATTEMPTS,
+      status: RepairTicketStatus.ESCALATED,
+      updatedAtIso: now,
+    });
+    const { mapping } = service.seedAndProveRepairMapping(now);
+    const demo = createDemoRepairGrant(now);
+    const released = service.releaseRepair({
+      proposalId: REPAIR_PROPOSAL_ID,
+      authority: {
+        outboundStopped: false,
+        operatingMode: OperatingMode.OPERATE,
+        policies: [demo.policy],
+        grants: [demo.grant],
+      },
+      productionMapping: mapping,
+      nowIso: now,
+    });
+    expect(released.proposal?.status).toBe("blocked");
+    expect(released.gatewayDecision).toBeNull();
+    expect(
+      released.details.some((d) => d.includes("ATTEMPT_LIMIT")),
+    ).toBe(true);
+    const after = store.read();
+    const nextTicket = after.tickets.find((t) => t.ticketId === ticket.ticketId)!;
+    expect(nextTicket.attemptCount).toBe(MAX_REPAIR_ATTEMPTS);
+    expect(nextTicket.status).toBe(RepairTicketStatus.ESCALATED);
+    expect(after.attempts.filter((a) => a.ticketId === ticket.ticketId)).toHaveLength(
+      0,
+    );
   });
 });

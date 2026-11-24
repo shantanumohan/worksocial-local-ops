@@ -734,6 +734,8 @@ export {
   evaluateTestIntegrityGate,
   evaluateRepairScopeGate,
   evaluateAttemptLimitGate,
+  evaluateRepairAttemptLimitEscalation,
+  shouldRecordAttemptOnGateDenial,
   toEffectProposal,
   evaluateRepairReviewGate,
   evaluateRepairReleaseGate,
@@ -764,6 +766,7 @@ export {
   type FixtureAssetSnapshot,
   type RepairState,
   type RepairGateDecision,
+  type RepairAttemptLimitEscalationDecision,
   type RepairReleaseDecisionValue,
   type CreateRepairProposalInput,
 } from "./repair.js";

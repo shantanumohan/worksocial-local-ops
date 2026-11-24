@@ -24,6 +24,7 @@ import {
   injectFixtureDefect,
   listRepairOutcomesForLearning,
   recordRepairAttempt,
+  shouldRecordAttemptOnGateDenial,
   type CapabilityGrant,
   type FixtureAssetSnapshot,
   type IncidentRecord,
@@ -479,6 +480,39 @@ export function createRepairService(
       });
       if (!gate.allowed) {
         details.push(...gate.reasons);
+        // T-X058: ATTEMPT_LIMIT refuses a third start without recording another
+        // attempt (ticket stays at maxAttempts / ESCALATED).
+        if (!shouldRecordAttemptOnGateDenial(gate.code)) {
+          details.push(
+            `ATTEMPT_LIMIT — refused without recording attempt (count stays ${ticket.attemptCount})`,
+          );
+          const escalatedTicket =
+            ticket.status === RepairTicketStatus.ESCALATED
+              ? ticket
+              : {
+                  ...ticket,
+                  status: RepairTicketStatus.ESCALATED,
+                  updatedAtIso: nowIso,
+                };
+          if (escalatedTicket !== ticket) {
+            store.upsertTicket(escalatedTicket);
+          }
+          const blockedLimit: RepairProposal = {
+            ...proposal,
+            status: RepairProposalStatus.BLOCKED,
+            blockReasons: gate.reasons,
+            updatedAtIso: nowIso,
+          };
+          store.upsertProposal(blockedLimit);
+          return {
+            proposal: blockedLimit,
+            gatewayDecision: null,
+            outcome: null,
+            liveCmsRepairWiring: "NOT_WIRED",
+            acceptanceEqualsVerified: false,
+            details,
+          };
+        }
         const { attempt, ticket: nextTicket } = recordRepairAttempt({
           attemptId: `att-${randomUUID()}`,
           ticket,
