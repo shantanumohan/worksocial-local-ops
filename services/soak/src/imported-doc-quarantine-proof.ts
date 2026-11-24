@@ -4,7 +4,9 @@
  *
  * createInstructionIngestion keeps incoming docs non-executable;
  * UNTRUSTED_SOURCE compile entries are instructionEligible=false.
- * External effects: NONE.
+ * Hillclimb: refuse claimed instructionVersion while quarantined/pending;
+ * prompt-injection boundary denies untrusted as instructions.
+ * External effects: NONE. Live wiring NOT_WIRED.
  */
 
 import { createHash, randomUUID } from "node:crypto";
@@ -14,6 +16,7 @@ import {
   SoakProofKind,
   compileInputPackage,
   createInstructionIngestion,
+  evaluateIndirectPromptInjectionBoundary,
   type SoakProofRecord,
 } from "@worksocial/domain";
 
@@ -45,6 +48,7 @@ export function proofImportedDocQuarantinedAsData(
   if (
     pending.status === InstructionIngestionStatus.PENDING_CLASSIFICATION &&
     pending.instructionVersion === null &&
+    pending.fixtureOnly === true &&
     pending.classifierNotes.some((n) => /not an executable/i.test(n))
   ) {
     details.push(
@@ -74,7 +78,50 @@ export function proofImportedDocQuarantinedAsData(
     details.push("Quarantined import unexpectedly gained instructionVersion");
   }
 
-  // 3. Input package: UNTRUSTED_SOURCE is not instruction-eligible;
+  // 3. Claimed instructionVersion while quarantined/pending is refused.
+  const claimedWhileQuarantined = createInstructionIngestion({
+    ingestionId: "ing-claim-version",
+    sourcePath: "incoming/spoof-version.md",
+    checksum: sha256("spoof"),
+    status: InstructionIngestionStatus.QUARANTINED,
+    instructionVersion: "v-claimed-executable",
+    fixtureOnly: true,
+    createdAtIso: nowIso,
+  });
+  if (
+    claimedWhileQuarantined.instructionVersion === null &&
+    claimedWhileQuarantined.classifierNotes.some((n) =>
+      /Refused instructionVersion/i.test(n),
+    )
+  ) {
+    details.push(
+      "Claimed instructionVersion while QUARANTINED refused; remains null (data only)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Claimed-version quarantine unexpectedly ${JSON.stringify(claimedWhileQuarantined)}`,
+    );
+  }
+
+  // 4. INGESTED may carry a version (positive control — not an import spoof).
+  const ingested = createInstructionIngestion({
+    ingestionId: "ing-ingested",
+    sourcePath: "incoming/approved-playbook.md",
+    checksum: sha256("approved"),
+    status: InstructionIngestionStatus.INGESTED,
+    instructionVersion: "playbook-v1",
+    fixtureOnly: true,
+    createdAtIso: nowIso,
+  });
+  if (ingested.instructionVersion === "playbook-v1") {
+    details.push("INGESTED status may pin instructionVersion (positive control)");
+  } else {
+    passed = false;
+    details.push("INGESTED unexpectedly lost instructionVersion");
+  }
+
+  // 5. Input package: UNTRUSTED_SOURCE is not instruction-eligible;
   //    TRUSTED_INSTRUCTION is eligible (positive control).
   const bodyTrusted = "approved playbook";
   const bodyUntrusted = "imported upload pretending to be instructions";
@@ -121,13 +168,19 @@ export function proofImportedDocQuarantinedAsData(
     const untrusted = compiled.package.entries.find(
       (e) => e.artifactId === "src-imported",
     );
-    if (trusted?.instructionEligible === true) {
+    if (
+      trusted?.instructionEligible === true &&
+      trusted.trustLabel === ArtifactTrustLabel.TRUSTED_INSTRUCTION
+    ) {
       details.push("TRUSTED_INSTRUCTION entry instructionEligible=true");
     } else {
       passed = false;
       details.push("Trusted instruction unexpectedly not eligible");
     }
-    if (untrusted?.instructionEligible === false) {
+    if (
+      untrusted?.instructionEligible === false &&
+      untrusted.trustLabel === ArtifactTrustLabel.UNTRUSTED_SOURCE
+    ) {
       details.push(
         "UNTRUSTED_SOURCE imported doc instructionEligible=false (quarantined as data)",
       );
@@ -137,7 +190,30 @@ export function proofImportedDocQuarantinedAsData(
     }
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  // 6. Prompt-injection boundary: untrusted channel content is never instruction-eligible.
+  const boundary = evaluateIndirectPromptInjectionBoundary({
+    trustLabel: ArtifactTrustLabel.UNTRUSTED_SOURCE,
+    channel: "attachment",
+    // Non-absolute effect so the untrusted-source gate is exercised (T-X069).
+    attemptedEffect: "tool_widening",
+  });
+  if (
+    boundary.allowed === false &&
+    boundary.code === "UNTRUSTED_SOURCE_NOT_INSTRUCTION" &&
+    boundary.instructionEligible === false &&
+    boundary.externalEffects === "NONE"
+  ) {
+    details.push(
+      "Untrusted attachment → UNTRUSTED_SOURCE_NOT_INSTRUCTION; externalEffects=NONE",
+    );
+  } else {
+    passed = false;
+    details.push(`Boundary unexpectedly ${JSON.stringify(boundary)}`);
+  }
+
+  details.push(
+    "liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE",
+  );
 
   return {
     proofId: `proof-quarantine-${randomUUID()}`,

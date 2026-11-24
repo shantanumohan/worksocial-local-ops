@@ -908,7 +908,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X058** is fixture ACCEPTED only via the repair attempt limit escalated proof (`REPAIR_ATTEMPT_LIMIT_ESCALATED`). Not sandbox/prod VERIFIED.
 
-**T-X069** is fixture ACCEPTED only via the imported doc quarantined as data proof (`IMPORTED_DOC_QUARANTINED_AS_DATA`). Not sandbox/prod VERIFIED.
+**T-X069** is fixture ACCEPTED only via the imported doc quarantined as data proof (`IMPORTED_DOC_QUARANTINED_AS_DATA`) — pending/quarantined/rejected imports force `instructionVersion=null` (claimed versions refused); `UNTRUSTED_SOURCE` compile entries stay `instructionEligible=false`; untrusted attachment content is never instruction-eligible. Live wiring stays `NOT_WIRED`. Not sandbox/prod VERIFIED.
 
 **T-X038** is fixture ACCEPTED only via the eval no-grounding fail closed proof (`EVAL_NO_GROUNDING_FAIL_CLOSED`). Not sandbox/prod VERIFIED.
 

@@ -385,15 +385,34 @@ export function createInstructionIngestion(input: {
   if (!input.checksum.trim()) {
     throw new Error("Instruction ingestion requires checksum");
   }
+  const status =
+    input.status ?? InstructionIngestionStatus.PENDING_CLASSIFICATION;
+  // Pending / quarantined / rejected imports stay evidence-only — never pin
+  // an instructionVersion (T-X069). Only INGESTED may carry a version label.
+  const versionEligible = status === InstructionIngestionStatus.INGESTED;
+  const claimedVersion =
+    typeof input.instructionVersion === "string"
+      ? input.instructionVersion.trim()
+      : "";
+  const instructionVersion =
+    versionEligible && claimedVersion.length > 0 ? claimedVersion : null;
+  const classifierNotes = [
+    ...(input.classifierNotes ?? [
+      "Incoming document is evidence, not an executable instruction",
+    ]),
+  ];
+  if (!versionEligible && claimedVersion.length > 0) {
+    classifierNotes.push(
+      `Refused instructionVersion while status=${status} — quarantined as data (T-X069)`,
+    );
+  }
   return {
     ingestionId: input.ingestionId,
     sourcePath: input.sourcePath,
     checksum: input.checksum,
-    status: input.status ?? InstructionIngestionStatus.PENDING_CLASSIFICATION,
-    instructionVersion: input.instructionVersion ?? null,
-    classifierNotes: input.classifierNotes ?? [
-      "Incoming document is evidence, not an executable instruction",
-    ],
+    status,
+    instructionVersion,
+    classifierNotes,
     extractedClaimIds: input.extractedClaimIds ?? [],
     fixtureOnly: input.fixtureOnly ?? false,
     createdAtIso: input.createdAtIso,

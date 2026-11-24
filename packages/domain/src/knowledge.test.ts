@@ -3,6 +3,7 @@ import {
   CollectionMethod,
   DemandSignalKind,
   FactVerificationDecision,
+  InstructionIngestionStatus,
   SupportLabel,
   applyFactVerification,
   createInstructionIngestion,
@@ -208,6 +209,46 @@ describe("instruction ingestion", () => {
     expect(record.status).toBe("pending_classification");
     expect(record.classifierNotes.join(" ")).toMatch(/not an executable/i);
     expect(record.instructionVersion).toBeNull();
+  });
+
+  it("refuses instructionVersion while quarantined or rejected (T-X069)", () => {
+    const quarantined = createInstructionIngestion({
+      ingestionId: "ing-q",
+      sourcePath: "incoming/untrusted.md",
+      checksum: "sha256:q",
+      status: InstructionIngestionStatus.QUARANTINED,
+      instructionVersion: "v-fake",
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    expect(quarantined.instructionVersion).toBeNull();
+    expect(quarantined.classifierNotes.join(" ")).toMatch(
+      /Refused instructionVersion/i,
+    );
+
+    const rejected = createInstructionIngestion({
+      ingestionId: "ing-r",
+      sourcePath: "incoming/bad.md",
+      checksum: "sha256:r",
+      status: InstructionIngestionStatus.REJECTED,
+      instructionVersion: "v-fake",
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    expect(rejected.instructionVersion).toBeNull();
+  });
+
+  it("allows instructionVersion only when status is ingested", () => {
+    const ingested = createInstructionIngestion({
+      ingestionId: "ing-ok",
+      sourcePath: "incoming/approved.md",
+      checksum: "sha256:ok",
+      status: InstructionIngestionStatus.INGESTED,
+      instructionVersion: "playbook-v3",
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    expect(ingested.instructionVersion).toBe("playbook-v3");
   });
 });
 
