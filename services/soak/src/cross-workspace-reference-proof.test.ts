@@ -22,6 +22,11 @@ describe("proofCrossWorkspaceReferenceDenied", () => {
         d.includes("Dual foreign channel+asset substitution denied"),
       ),
     ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Write-gate padded foreign channel denied without leaking"),
+      ),
+    ).toBe(true);
     expect(proof.details.some((d) => d.includes("honesty NOT_WIRED/NONE"))).toBe(
       true,
     );

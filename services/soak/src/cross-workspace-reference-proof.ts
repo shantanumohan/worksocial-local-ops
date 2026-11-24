@@ -17,7 +17,10 @@ import {
   LocalRole,
   OperatingMode,
   SoakProofKind,
+  createFixturePilotMapping,
   evaluateStandingAuthority,
+  proveFixturePilotWritePath,
+  resolvePilotWriteGates,
   type AuthorityRequest,
   type CapabilityGrant,
   type SoakProofRecord,
@@ -260,6 +263,57 @@ export function proofCrossWorkspaceReferenceDenied(
   } else {
     passed = false;
     details.push("Whitespace-only object ids unexpectedly authorized");
+  }
+
+  // 9. Hillclimb — write-gate path: padded in-workspace maps; padded foreign
+  // denies without echoing the foreign channel id in gate diagnostics.
+  const { state, writePathId } = createFixturePilotMapping(nowIso);
+  const proven = proveFixturePilotWritePath(state, writePathId, nowIso);
+  const paddedMapped = resolvePilotWriteGates({
+    actionClass: ActionClass.ROUTINE_CUSTOMER_SERVICE,
+    writePathId,
+    channelId: "  owned-site  ",
+    assetId: " page-contact ",
+    operation: "submit_form_canary",
+    mapping: proven,
+  });
+  if (
+    paddedMapped.ownershipProven &&
+    paddedMapped.readEvidencePresent &&
+    !paddedMapped.prerequisiteMissing
+  ) {
+    details.push(
+      "Write-gate whitespace-padded in-workspace channel/asset maps",
+    );
+  } else {
+    passed = false;
+    details.push("Write-gate padded in-workspace unexpectedly unmapped");
+  }
+
+  const paddedForeignGate = resolvePilotWriteGates({
+    actionClass: ActionClass.ROUTINE_CUSTOMER_SERVICE,
+    writePathId,
+    channelId: `  ${wsB.channelId}  `,
+    assetId: "page-contact",
+    operation: "submit_form_canary",
+    mapping: proven,
+  });
+  const gateBlob = paddedForeignGate.details.join(" | ");
+  if (
+    paddedForeignGate.prerequisiteMissing &&
+    paddedForeignGate.matchedWritePath === null &&
+    /No pilot write path mapped/i.test(gateBlob) &&
+    !gateBlob.includes(wsB.channelId) &&
+    !gateBlob.includes(wsB.assetId)
+  ) {
+    details.push(
+      "Write-gate padded foreign channel denied without leaking foreign id",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Write-gate padded foreign unexpectedly ${JSON.stringify(paddedForeignGate)}`,
+    );
   }
 
   details.push("honesty NOT_WIRED/NONE");
