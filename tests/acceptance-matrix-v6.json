@@ -2586,7 +2586,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x059",
-      "evidenceNote": "Fixture duplicate-platform-attribution one-booking proof only — not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture ACCEPTED via DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING (multi-platform same booking → unique=1; separate chronological claims; blank/invalid refuse; liveProviderWiring=NOT_WIRED; no silent sum) — not sandbox/prod VERIFIED"
     },
     {
       "id": "T-X060",
