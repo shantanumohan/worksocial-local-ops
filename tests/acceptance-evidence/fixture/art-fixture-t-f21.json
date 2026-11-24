@@ -8,8 +8,8 @@
     "diagnose_and_repair_permitted_defect"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-f21.json",
-  "createdAtIso": "2026-11-24T23:06:03.378Z",
+  "createdAtIso": "2026-11-24T23:10:56.813Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-f21-1e5879139bc5"
+  "uniqueSourceArtifactId": "art-fixture-t-f21-85bd350c9b16"
 }

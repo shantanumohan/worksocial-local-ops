@@ -942,7 +942,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X052** is fixture ACCEPTED only via the synthetic conversion contamination excluded proof (`SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED`) — synthetic conversion contaminants are projected out of commerce denominators; `synthetic && countedInCommerce` is refused. Distinct from T-X039/T-US-058 metric-denominators honesty and T-X050 public-flag grant. Not sandbox/prod VERIFIED.
 
-**T-X054** is fixture ACCEPTED only via the reply sent CRM reconciles no-resend proof (`REPLY_SENT_CRM_RECONCILES_NO_RESEND`) — after outbound SENT, CRM write failure reconciles/retries CRM only; outbound stays `retain_sent` and same-body resend is suppressed. Distinct from thank-you-without-CRM (T-US-040/T-X049). Not sandbox/prod VERIFIED.
+**T-X054** is fixture ACCEPTED only via the reply sent CRM reconciles no-resend proof (`REPLY_SENT_CRM_RECONCILES_NO_RESEND`) — after outbound SENT/DELIVERED, CRM write failure reconciles/retries CRM only; outbound stays `retain_sent` and same-body resend is suppressed; inbound/QUEUED gated; CRM fail without intent still no resend; module mismatch still no resend; `fixtureOnly=false` / `claimLiveVerified` / `requestLiveCrmWire` → `LIVE_CRM_CLAIM_REFUSED`; `liveCrmWiring` stays NOT_WIRED; ChatGPT Ads ACCESS_BLOCKED; externalEffects NONE. Distinct from thank-you-without-CRM (T-US-040/T-X049). Not sandbox/prod VERIFIED.
 
 **T-X055** is fixture ACCEPTED only via the unknown policy question escalates without promise proof (`UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE`) — questions outside `allowedQuestionIds` refuse the concierge draft and escalate handoff with empty `verifiedAnswers` (no invented promise). Not sandbox/prod VERIFIED.
 
@@ -1082,7 +1082,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X051 | Wrong Zoho organization | Identity mismatch blocks *(fixture ACCEPTED — wrong-zoho-organization identity-mismatch proof; not sandbox/prod VERIFIED)* |
 | T-X052 | Synthetic conversion contamination | Excluded from commerce *(fixture ACCEPTED — synthetic conversion contamination excluded proof; not sandbox/prod VERIFIED)* |
 | T-X053 | Takeover races queued reply | Version invalidates send *(fixture ACCEPTED)* |
-| T-X054 | Reply sent but CRM fails | CRM reconciles; no resend *(fixture ACCEPTED — reply sent CRM reconciles no-resend proof; not sandbox/prod VERIFIED)* |
+| T-X054 | Reply sent but CRM fails | CRM reconciles; no resend *(fixture ACCEPTED — reply sent CRM reconciles no-resend proof; liveCrmWiring NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X055 | Unknown policy question | Escalate without promise *(fixture ACCEPTED — unknown policy question escalates without promise proof; not sandbox/prod VERIFIED)* |
 | T-X056 | Automated response loop | Bounded; handoff *(fixture ACCEPTED — automated response loop bounded handoff proof; not sandbox/prod VERIFIED)* |
 | T-X057 | Repair disables failing test | Rejected *(fixture ACCEPTED)* |

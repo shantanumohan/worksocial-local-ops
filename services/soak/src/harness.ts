@@ -1147,7 +1147,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X004 fixture ACCEPTED via disk_full_evidence_no_partial_completed only — not live VERIFIED",
       "T-X043 fixture ACCEPTED via optimization_breaks_cta_journey_fails only — not live VERIFIED",
       "T-X052 fixture ACCEPTED via synthetic_conversion_contamination_excluded only — not live VERIFIED",
-      "T-X054 fixture ACCEPTED via reply_sent_crm_reconciles_no_resend only — not live VERIFIED",
+      "T-X054 fixture ACCEPTED via reply_sent_crm_reconciles_no_resend only — liveCrmWiring NOT_WIRED; not live VERIFIED",
       "T-X055 fixture ACCEPTED via unknown_policy_question_escalates_without_promise only — not live VERIFIED",
       "T-X056 fixture ACCEPTED via automated_response_loop_bounded_handoff only — not live VERIFIED",
       "T-X059/T-US-038 fixture ACCEPTED via duplicate_platform_attribution_one_booking only — not live VERIFIED",

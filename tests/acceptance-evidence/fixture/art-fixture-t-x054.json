@@ -3,13 +3,13 @@
   "caseId": "T-X054",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X054 (Reply sent but CRM fails — CRM reconciles; no resend)\nproof=reply_sent_crm_reconciles_no_resend applyCount=1 :: QUEUED reply → REPLY_NOT_SENT (gate requires SENT first) | SENT + CRM fail → CRM_RECONCILE_NO_RESEND; MISSING_REMOTE; resendAllowed=false | detectDuplicateOutbound suppresses same-body resend after SENT | CRM reconcile MATCHED on retry; outbound remains SENT; still no resend | Positive control: CRM_OK still forbids outbound resend | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X054 (Reply sent but CRM fails — CRM reconciles; no resend)\nproof=reply_sent_crm_reconciles_no_resend applyCount=1 :: QUEUED reply → REPLY_NOT_SENT (gate requires SENT first; liveCrmWiring=NOT_WIRED) | INBOUND message → REPLY_NOT_SENT (outbound only) | SENT + CRM fail → CRM_RECONCILE_NO_RESEND; MISSING_REMOTE; resendAllowed=false; liveCrmWiring=NOT_WIRED | DELIVERED + CRM fail → retain_sent; resendAllowed=false | CRM fail without intent → CRM_RECONCILE_NO_RESEND; reconcile=null; still no resend | detectDuplicateOutbound suppresses same-body resend after SENT | CRM reconcile MATCHED on retry; outbound remains SENT; still no resend | module mismatch on reconcile → still retain_sent; resendAllowed=false | Positive control: CRM_OK still forbids outbound resend (liveCrmWiring=NOT_WIRED) | claimLiveVerified / requestLiveCrmWire → LIVE_CRM_CLAIM_REFUSED (NOT_WIRED) | fixtureOnly=false → LIVE_CRM_CLAIM_REFUSED (fixture boundary before honesty fields) | liveProviderSuccessClaimed=false liveCrmWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "reply_sent_crm_reconciles_no_resend"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x054.json",
-  "createdAtIso": "2026-11-24T23:06:03.378Z",
+  "createdAtIso": "2026-11-24T23:10:56.813Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x054-1e5879139bc5"
+  "uniqueSourceArtifactId": "art-fixture-t-x054-85bd350c9b16"
 }
