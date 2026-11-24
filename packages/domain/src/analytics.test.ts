@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   AnalyticsEnvironment,
   Ga4PropertyKind,
+  assertGa4WrongPropertyKindHonest,
   attemptGuardedChatGptAdsProductionBind,
   classifyGscDemand,
   evaluateChatGptAdsAccess,
@@ -20,6 +21,31 @@ describe("analytics — GA4 property kind", () => {
     });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe("WRONG_PROPERTY_KIND");
+    expect(result.liveProviderSuccessClaimed).toBe(false);
+    expect(result.liveGa4Transport).toBe("NOT_WIRED");
+    expect(result.externalEffects).toBe("NONE");
+  });
+
+  it("rejects measurement-id-only and unknown kinds (T-X031 hillclimb)", () => {
+    const mid = validateGa4PropertyBinding({
+      propertyId: "G-ONLY",
+      kind: Ga4PropertyKind.MEASUREMENT_ID_ONLY,
+      measurementId: "G-ONLY",
+      displayName: "Mid only",
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(mid.ok).toBe(false);
+    if (!mid.ok) expect(mid.code).toBe("WRONG_PROPERTY_KIND");
+
+    const unknown = validateGa4PropertyBinding({
+      propertyId: "999",
+      kind: Ga4PropertyKind.UNKNOWN,
+      measurementId: null,
+      displayName: "Unknown",
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(unknown.ok).toBe(false);
+    if (!unknown.ok) expect(unknown.code).toBe("WRONG_PROPERTY_KIND");
   });
 
   it("accepts fixture GA4 property without claiming live", () => {
@@ -31,9 +57,11 @@ describe("analytics — GA4 property kind", () => {
       environment: AnalyticsEnvironment.FIXTURE,
     });
     expect(result.ok).toBe(true);
+    expect(result.liveProviderSuccessClaimed).toBe(false);
+    expect(assertGa4WrongPropertyKindHonest(result).ok).toBe(true);
   });
 
-  it("refuses live GA4 bind while transport is NOT_WIRED", () => {
+  it("refuses live GA4 bind and live VERIFIED claims while transport NOT_WIRED", () => {
     const result = validateGa4PropertyBinding({
       propertyId: "100000001",
       kind: Ga4PropertyKind.GA4_PROPERTY,
@@ -42,6 +70,33 @@ describe("analytics — GA4 property kind", () => {
       environment: AnalyticsEnvironment.LIVE,
     });
     expect(result.ok).toBe(false);
+    expect(result.liveGa4Transport).toBe("NOT_WIRED");
+
+    const claimed = validateGa4PropertyBinding(
+      {
+        propertyId: "100000001",
+        kind: Ga4PropertyKind.GA4_PROPERTY,
+        measurementId: "G-FIXTURE",
+        displayName: "Fixture claim live",
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      { claimLiveVerified: true },
+    );
+    expect(claimed.ok).toBe(false);
+    if (!claimed.ok) expect(claimed.code).toBe("LIVE_CLAIM_REFUSED");
+
+    const transport = validateGa4PropertyBinding(
+      {
+        propertyId: "100000001",
+        kind: Ga4PropertyKind.GA4_PROPERTY,
+        measurementId: "G-FIXTURE",
+        displayName: "Request live transport",
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      { requestLiveGa4Transport: true },
+    );
+    expect(transport.ok).toBe(false);
+    if (!transport.ok) expect(transport.code).toBe("LIVE_CLAIM_REFUSED");
   });
 });
 

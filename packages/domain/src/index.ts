@@ -482,6 +482,7 @@ export {
   Ga4PropertyKind,
   Ga4ValidationKind,
   validateGa4PropertyBinding,
+  assertGa4WrongPropertyKindHonest,
   interpretGa4DebugValidation,
   classifyGscDemand,
   evaluateChatGptAdsAccess,

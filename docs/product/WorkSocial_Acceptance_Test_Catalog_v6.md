@@ -920,7 +920,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-US-008** / **T-X032** are fixture ACCEPTED only via the GA4 debug not delivered conversion proof (`GA4_DEBUG_NOT_DELIVERED_CONVERSION`) — debug success never claims delivered conversion or measured receipt; LIVE debug / claimDeliveredConversion refused; live `NOT_WIRED`. Not sandbox/prod VERIFIED.
 
-**T-X031** is fixture ACCEPTED only via the GA4 wrong property kind refused proof (`GA4_WRONG_PROPERTY_KIND_REFUSED`). Not sandbox/prod VERIFIED.
+**T-X031** is fixture ACCEPTED only via the GA4 wrong property kind refused proof (`GA4_WRONG_PROPERTY_KIND_REFUSED`) — UA / measurement-id-only / unknown kinds refuse; live GA4 transport stays **NOT_WIRED**; live VERIFIED claims refused; ACCEPTED≠VERIFIED. Not sandbox/prod VERIFIED.
 
 **T-US-040** / **T-X049** are fixture ACCEPTED only via the thank-you without CRM fails delivery proof (`THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY`) — DOM thank-you SUCCESS is independent of CRM and never implies delivery; empty/`MISSING_REMOTE` receipts fail at delivery (`CRM_MISSING_FAILS_DELIVERY`); other non-success reconcile → `CRM_RECONCILE_NOT_DELIVERY`; `isBrowserStageNotCrmDelivery` restricted to `BROWSER`/`FORM_ACCEPT`; `evaluateThankYouWithoutCrmDelivery` keeps `liveZohoWiring=NOT_WIRED`, `liveProviderSuccessClaimed=false`, `externalEffects=NONE`. Distinct from reply-sent CRM reconcile (T-X054). Not sandbox/prod VERIFIED.
 
@@ -1059,7 +1059,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 
 | T-X029 | Token rotates to different account | Explicit rebind |
 | T-X030 | Rate-limit with deadline | Bounded backoff *(fixture ACCEPTED — rate-limit bounded backoff preserves deadline proof; not sandbox/prod VERIFIED)* |
-| T-X031 | Wrong GA4 property kind | Validation fails *(fixture ACCEPTED)* |
+| T-X031 | Wrong GA4 property kind | Validation fails *(fixture ACCEPTED — UA/mid-only/unknown refuse; live transport NOT_WIRED; ACCEPTED≠VERIFIED; not sandbox/prod VERIFIED)* |
 | T-X032 | GA4 debug validation success only | No delivered-conversion claim *(fixture ACCEPTED — debug≠delivered; LIVE/claim refused; NOT_WIRED)* |
 | T-X033 | Omitted GSC rows | Unknown ≠ zero *(fixture ACCEPTED)* |
 | T-X034 | Test-only Ads project vs production | Blocked *(fixture ACCEPTED — test Ads project vs production blocked proof; not sandbox/prod VERIFIED)* |

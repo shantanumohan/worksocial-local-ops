@@ -1,6 +1,7 @@
 /**
  * Fixture proof for T-X031 — wrong GA4 property kind refused.
- * Universal Analytics / non-GA4 kinds cannot bind. External effects: NONE.
+ * Hillclimb: measurement-id-only / unknown refuse; live VERIFIED claim
+ * refused; liveGa4Transport NOT_WIRED; ACCEPTED≠VERIFIED. External effects: NONE.
  */
 
 import { randomUUID } from "node:crypto";
@@ -8,6 +9,7 @@ import {
   AnalyticsEnvironment,
   Ga4PropertyKind,
   SoakProofKind,
+  assertGa4WrongPropertyKindHonest,
   validateGa4PropertyBinding,
   type SoakProofRecord,
 } from "@worksocial/domain";
@@ -28,11 +30,46 @@ export function proofGa4WrongPropertyKindRefused(
     displayName: "Legacy UA",
     environment: AnalyticsEnvironment.FIXTURE,
   });
-  if (!ua.ok && ua.code === "WRONG_PROPERTY_KIND") {
+  if (
+    !ua.ok &&
+    ua.code === "WRONG_PROPERTY_KIND" &&
+    ua.liveProviderSuccessClaimed === false &&
+    ua.liveGa4Transport === "NOT_WIRED"
+  ) {
     details.push("UA property kind → WRONG_PROPERTY_KIND refuse");
   } else {
     passed = false;
     details.push(`UA bind unexpectedly ${JSON.stringify(ua)}`);
+  }
+
+  const midOnly = validateGa4PropertyBinding({
+    propertyId: "G-ONLY",
+    kind: Ga4PropertyKind.MEASUREMENT_ID_ONLY,
+    measurementId: "G-ONLY",
+    displayName: "Measurement id only",
+    environment: AnalyticsEnvironment.FIXTURE,
+  });
+  const unknown = validateGa4PropertyBinding({
+    propertyId: "999",
+    kind: Ga4PropertyKind.UNKNOWN,
+    measurementId: null,
+    displayName: "Unknown kind",
+    environment: AnalyticsEnvironment.FIXTURE,
+  });
+  if (
+    !midOnly.ok &&
+    midOnly.code === "WRONG_PROPERTY_KIND" &&
+    !unknown.ok &&
+    unknown.code === "WRONG_PROPERTY_KIND"
+  ) {
+    details.push(
+      "measurement_id_only + unknown kinds → WRONG_PROPERTY_KIND refuse",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `mid/unknown unexpectedly mid=${JSON.stringify(midOnly)} unknown=${JSON.stringify(unknown)}`,
+    );
   }
 
   const fixtureGa4 = validateGa4PropertyBinding({
@@ -42,11 +79,29 @@ export function proofGa4WrongPropertyKindRefused(
     displayName: "WorkSocial fixture",
     environment: AnalyticsEnvironment.FIXTURE,
   });
-  if (fixtureGa4.ok === true) {
+  if (
+    fixtureGa4.ok === true &&
+    fixtureGa4.liveProviderSuccessClaimed === false &&
+    fixtureGa4.externalEffects === "NONE"
+  ) {
     details.push("Fixture GA4 property accepted (not live metrics)");
   } else {
     passed = false;
     details.push(`Fixture GA4 unexpectedly ${JSON.stringify(fixtureGa4)}`);
+  }
+
+  const sandboxGa4 = validateGa4PropertyBinding({
+    propertyId: "100000002",
+    kind: Ga4PropertyKind.GA4_PROPERTY,
+    measurementId: "G-SANDBOX",
+    displayName: "Sandbox distinct",
+    environment: AnalyticsEnvironment.SANDBOX,
+  });
+  if (sandboxGa4.ok === true && sandboxGa4.binding.environment === "SANDBOX") {
+    details.push("Sandbox GA4 accepted as distinct label (≠ fixture ≠ live)");
+  } else {
+    passed = false;
+    details.push(`Sandbox GA4 unexpectedly ${JSON.stringify(sandboxGa4)}`);
   }
 
   const live = validateGa4PropertyBinding({
@@ -56,11 +111,51 @@ export function proofGa4WrongPropertyKindRefused(
     displayName: "Live attempt",
     environment: AnalyticsEnvironment.LIVE,
   });
-  if (!live.ok && live.code === "WRONG_PROPERTY_KIND") {
+  if (
+    !live.ok &&
+    live.code === "WRONG_PROPERTY_KIND" &&
+    live.liveGa4Transport === "NOT_WIRED"
+  ) {
     details.push("Live GA4 bind refused while transport NOT_WIRED");
   } else {
     passed = false;
     details.push(`Live bind unexpectedly ${JSON.stringify(live)}`);
+  }
+
+  const liveClaim = validateGa4PropertyBinding(
+    {
+      propertyId: "100000001",
+      kind: Ga4PropertyKind.GA4_PROPERTY,
+      measurementId: "G-FIXTURE",
+      displayName: "Claim live verified",
+      environment: AnalyticsEnvironment.FIXTURE,
+    },
+    { claimLiveVerified: true },
+  );
+  const liveTransport = validateGa4PropertyBinding(
+    {
+      propertyId: "100000001",
+      kind: Ga4PropertyKind.GA4_PROPERTY,
+      measurementId: "G-FIXTURE",
+      displayName: "Request live transport",
+      environment: AnalyticsEnvironment.FIXTURE,
+    },
+    { requestLiveGa4Transport: true },
+  );
+  if (
+    !liveClaim.ok &&
+    liveClaim.code === "LIVE_CLAIM_REFUSED" &&
+    !liveTransport.ok &&
+    liveTransport.code === "LIVE_CLAIM_REFUSED"
+  ) {
+    details.push(
+      "claimLiveVerified / requestLiveGa4Transport → LIVE_CLAIM_REFUSED (NOT_WIRED)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `live claims unexpectedly claim=${JSON.stringify(liveClaim)} transport=${JSON.stringify(liveTransport)}`,
+    );
   }
 
   const missing = validateGa4PropertyBinding({
@@ -77,7 +172,22 @@ export function proofGa4WrongPropertyKindRefused(
     details.push(`Missing id unexpectedly ${JSON.stringify(missing)}`);
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  const honesty = assertGa4WrongPropertyKindHonest(ua);
+  const honestyOk = assertGa4WrongPropertyKindHonest(fixtureGa4);
+  if (honesty.ok && honestyOk.ok) {
+    details.push(
+      `assertGa4WrongPropertyKindHonest → ${honesty.code}; ACCEPTED≠VERIFIED`,
+    );
+  } else {
+    passed = false;
+    details.push(
+      `honesty failed ua=${honesty.reasons.join("; ")} ok=${honestyOk.reasons.join("; ")}`,
+    );
+  }
+
+  details.push(
+    "liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED",
+  );
 
   return {
     proofId: `proof-ga4-kind-${randomUUID()}`,

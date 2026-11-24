@@ -54,25 +54,46 @@ export type Ga4PropertyValidation =
       ok: true;
       binding: Ga4PropertyBinding;
       reasons: string[];
+      liveProviderSuccessClaimed: false;
+      liveGa4Transport: "NOT_WIRED";
+      externalEffects: "NONE";
     }
   | {
       ok: false;
-      code: "WRONG_PROPERTY_KIND" | "MISSING_PROPERTY";
+      code:
+        | "WRONG_PROPERTY_KIND"
+        | "MISSING_PROPERTY"
+        | "LIVE_CLAIM_REFUSED";
       reasons: string[];
+      liveProviderSuccessClaimed: false;
+      liveGa4Transport: "NOT_WIRED";
+      externalEffects: "NONE";
     };
 
+const GA4_BIND_HONESTY = {
+  liveProviderSuccessClaimed: false as const,
+  liveGa4Transport: "NOT_WIRED" as const,
+  externalEffects: "NONE" as const,
+};
+
 /**
- * Reject Universal Analytics / measurement-id-only bindings as GA4 properties
- * (T-X031). Fixture and sandbox remain distinguishable from live.
+ * Reject Universal Analytics / measurement-id-only / unknown kinds as GA4
+ * properties (T-X031). Fixture and sandbox remain distinguishable from live.
+ * Live transport stays NOT_WIRED; ACCEPTED≠VERIFIED; never invent live metrics.
  */
 export function validateGa4PropertyBinding(
   binding: Ga4PropertyBinding,
+  opts?: {
+    claimLiveVerified?: boolean;
+    requestLiveGa4Transport?: boolean;
+  },
 ): Ga4PropertyValidation {
   if (!binding.propertyId.trim()) {
     return {
       ok: false,
       code: "MISSING_PROPERTY",
       reasons: ["GA4 property id is required"],
+      ...GA4_BIND_HONESTY,
     };
   }
   if (binding.kind !== Ga4PropertyKind.GA4_PROPERTY) {
@@ -80,25 +101,89 @@ export function validateGa4PropertyBinding(
       ok: false,
       code: "WRONG_PROPERTY_KIND",
       reasons: [
-        `Property kind ${binding.kind} is not a GA4 property — refuse bind (T-X031)`,
+        `Property kind ${binding.kind} is not a GA4 property — refuse bind (T-X031); ACCEPTED≠VERIFIED`,
       ],
+      ...GA4_BIND_HONESTY,
     };
   }
-  if (binding.environment === AnalyticsEnvironment.LIVE) {
+  if (
+    binding.environment === AnalyticsEnvironment.LIVE ||
+    binding.environment === AnalyticsEnvironment.NOT_WIRED
+  ) {
     return {
       ok: false,
       code: "WRONG_PROPERTY_KIND",
       reasons: [
-        "Live GA4 bind refused — live query transport remains NOT_WIRED in M8",
+        "Live GA4 bind refused — live query transport remains NOT_WIRED (T-X031); ACCEPTED≠VERIFIED",
       ],
+      ...GA4_BIND_HONESTY,
+    };
+  }
+  if (opts?.claimLiveVerified === true || opts?.requestLiveGa4Transport === true) {
+    return {
+      ok: false,
+      code: "LIVE_CLAIM_REFUSED",
+      reasons: [
+        "Live VERIFIED / live GA4 transport claim refused — fixture ACCEPTED≠VERIFIED; liveGa4Transport=NOT_WIRED",
+      ],
+      ...GA4_BIND_HONESTY,
     };
   }
   return {
     ok: true,
     binding,
     reasons: [
-      `GA4 property ${binding.propertyId} accepted as ${binding.environment} (not live metrics)`,
+      `GA4 property ${binding.propertyId} accepted as ${binding.environment} (not live metrics; ACCEPTED≠VERIFIED)`,
     ],
+    ...GA4_BIND_HONESTY,
+  };
+}
+
+/**
+ * Fail-closed honesty check for T-X031 bind decisions.
+ */
+export function assertGa4WrongPropertyKindHonest(
+  decision: Ga4PropertyValidation,
+): {
+  ok: boolean;
+  code: "GA4_KIND_HONEST" | "GA4_KIND_DISHONEST";
+  reasons: string[];
+  liveGa4Transport: "NOT_WIRED";
+  externalEffects: "NONE";
+} {
+  const reasons: string[] = [];
+  if (decision.liveProviderSuccessClaimed !== false) {
+    reasons.push("liveProviderSuccessClaimed must be false");
+  }
+  if (decision.liveGa4Transport !== "NOT_WIRED") {
+    reasons.push("liveGa4Transport must be NOT_WIRED");
+  }
+  if (decision.externalEffects !== "NONE") {
+    reasons.push("externalEffects must be NONE");
+  }
+  if (decision.ok && decision.binding.environment === AnalyticsEnvironment.LIVE) {
+    reasons.push("Must not accept LIVE environment bind");
+  }
+  if (decision.ok && decision.binding.kind !== Ga4PropertyKind.GA4_PROPERTY) {
+    reasons.push("Must not accept non-GA4 property kind");
+  }
+  if (reasons.length > 0) {
+    return {
+      ok: false,
+      code: "GA4_KIND_DISHONEST",
+      reasons,
+      liveGa4Transport: "NOT_WIRED",
+      externalEffects: "NONE",
+    };
+  }
+  return {
+    ok: true,
+    code: "GA4_KIND_HONEST",
+    reasons: [
+      "liveProviderSuccessClaimed=false liveGa4Transport=NOT_WIRED externalEffects=NONE ACCEPTED≠VERIFIED",
+    ],
+    liveGa4Transport: "NOT_WIRED",
+    externalEffects: "NONE",
   };
 }
 

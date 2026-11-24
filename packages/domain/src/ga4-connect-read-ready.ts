@@ -128,6 +128,7 @@ export type Ga4ConnectReadReadyResult =
       code:
         | "WRONG_PROPERTY_KIND"
         | "MISSING_PROPERTY"
+        | "LIVE_CLAIM_REFUSED"
         | "WRITE_SAVE_REFUSED"
         | "LIVE_TRANSPORT_NOT_WIRED"
         | "ENVIRONMENT_NOT_READY"
