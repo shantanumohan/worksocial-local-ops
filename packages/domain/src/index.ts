@@ -879,6 +879,7 @@ export {
   SOAK_CHATGPT_ADS_SOFT_SKIP_CASE_IDS,
   SOAK_NOT_WIRED_LIVE_WIRING,
   SOAK_FIXTURE_STATUS_HONEST_NOTE,
+  SOAK_FIXTURE_HARNESS_NOW_ISO,
   emptySoakAcceptanceState,
   soakNotWiredLiveWiring,
   isAllowedAcceptanceStatus,

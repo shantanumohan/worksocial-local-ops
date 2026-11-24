@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  defaultResponsePolicy,
-  isWithinCoverageWindow,
-} from "./inbox.js";
-import {
   AcceptanceCaseStatus,
   AcceptanceEnvironment,
   FORBIDDEN_SILENT_LIVE_STATUS,
