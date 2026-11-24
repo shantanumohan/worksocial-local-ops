@@ -98,4 +98,35 @@ describe("replay historical workflow (T-X013)", () => {
     expect(result.outcome).toBe("FAILED");
     expect(summary().forbiddenLiveIo).toBeGreaterThan(0);
   });
+
+  it("fails closed when terminal is missing after complete events", () => {
+    const history = sampleHistory();
+    const truncated = {
+      events: history.events,
+      terminal: undefined,
+    } as unknown as ReplayWorkflowHistory;
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(truncated, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_terminal_missing_or_incomplete"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed when terminal conflicts with replayed outcome", () => {
+    const history = sampleHistory();
+    history.terminal = {
+      outcome: "VERIFIED",
+      applyAttemptCount: 99,
+      operationId: "op-other",
+    };
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) => l.includes("history_terminal_mismatch")),
+    ).toBe(true);
+  });
 });

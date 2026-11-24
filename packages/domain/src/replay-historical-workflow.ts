@@ -145,6 +145,30 @@ export function replayMissionWorkflowHistory(
     );
     return { ...result, outcome: "FAILED" };
   }
+
+  // Bind terminal record to the replayed outcome — missing or conflicting
+  // terminal must fail closed (truncated / inconsistent history).
+  const terminal = history.terminal;
+  if (
+    !terminal ||
+    terminal.outcome !== "VERIFIED" ||
+    typeof terminal.applyAttemptCount !== "number" ||
+    typeof terminal.operationId !== "string" ||
+    terminal.operationId.length === 0
+  ) {
+    hooks.onForbiddenLiveIo("history_terminal_missing_or_incomplete");
+    return { ...result, outcome: "FAILED" };
+  }
+  if (
+    result.outcome === "VERIFIED" &&
+    (terminal.applyAttemptCount !== result.applyAttemptCount ||
+      terminal.operationId !== result.operationId)
+  ) {
+    hooks.onForbiddenLiveIo(
+      `history_terminal_mismatch op=${terminal.operationId}≠${result.operationId} apply=${terminal.applyAttemptCount}≠${result.applyAttemptCount}`,
+    );
+    return { ...result, outcome: "FAILED" };
+  }
   return result;
 }
 
