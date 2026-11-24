@@ -2458,7 +2458,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x051",
-      "evidenceNote": "Fixture wrong-zoho-organization identity-mismatch proof only — not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture ACCEPTED via WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH (trim match; case-differ IDENTITY_MISMATCH; blank refuse; fixture+WIRED / non-fixture matched LIVE_TRANSPORT_NOT_WIRED; liveProviderWiring=NOT_WIRED; externalEffects=NONE) — not sandbox/prod VERIFIED"
     },
     {
       "id": "T-X052",

@@ -3,13 +3,13 @@
   "caseId": "T-X051",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X051 (Wrong Zoho organization — identity mismatch blocks)\nproof=wrong_zoho_organization_identity_mismatch applyCount=1 :: Wrong Zoho organization → IDENTITY_MISMATCH; CRM write blocked | Matching fixture org → MATCHED_FIXTURE (fixture only; not live VERIFIED) | Blank observed org → MISSING_OBSERVED_ORG | Matching production org with NOT_WIRED → LIVE_TRANSPORT_NOT_WIRED (no invented live write) | Sandbox wrong org bind → IDENTITY_MISMATCH | proofClock=2026-11-21T19:22:20.000Z | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X051 (Wrong Zoho organization — identity mismatch blocks)\nproof=wrong_zoho_organization_identity_mismatch applyCount=1 :: Wrong Zoho organization → IDENTITY_MISMATCH; CRM write blocked; liveProviderWiring=NOT_WIRED | Matching fixture org → MATCHED_FIXTURE (fixture only; not live VERIFIED); liveProviderWiring=NOT_WIRED | Blank observed org → MISSING_OBSERVED_ORG | Matching production org with NOT_WIRED → LIVE_TRANSPORT_NOT_WIRED (no invented live write) | Sandbox wrong org bind → IDENTITY_MISMATCH | Whitespace-trimmed org ids match → MATCHED_FIXTURE | Case-differing org ids → IDENTITY_MISMATCH (no silent fold) | Fixture match with liveZohoWiring=WIRED → LIVE_TRANSPORT_NOT_WIRED; no invented live write | proofClock=2026-11-21T19:22:20.000Z | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "wrong_zoho_organization_identity_mismatch"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x051.json",
-  "createdAtIso": "2026-11-24T23:20:33.772Z",
+  "createdAtIso": "2026-11-24T23:29:25.360Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x051-a6bf3ac8552f"
+  "uniqueSourceArtifactId": "art-fixture-t-x051-f665c305764a"
 }
