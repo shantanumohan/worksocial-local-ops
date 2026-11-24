@@ -861,6 +861,15 @@ export {
   type DeliveryFailureIncidentBundle,
 } from "./lead-capture.js";
 export {
+  evaluateCrmDeliveryFailureHonesty,
+  evaluateThankYouWithoutCrmDelivery,
+  isBrowserStageNotCrmDelivery,
+  PRE_SUBMIT_BROWSER_STAGES,
+  THANK_YOU_WITHOUT_CRM_RELATED_CASE_IDS,
+  type ThankYouWithoutCrmCode,
+  type ThankYouWithoutCrmDecision,
+} from "./thank-you-without-crm.js";
+export {
   RecurringScheduleFrequency, DEFAULT_BUSINESS_TIMEZONE, LocalCivilResolveCode, OccurrenceClaimCode,
   createDailySchedule, occurrenceKeyFor, isSupportedTimeZone, resolveLocalCivilTime, resolveLocalDateTime,
   localDateInZone, planDailyOccurrences, emptyOccurrenceClaimLedger, occurrenceClaimLedgerFromKeys,

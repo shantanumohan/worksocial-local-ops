@@ -8,8 +8,8 @@
     "calibrate_design_release_readiness"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-f26.json",
-  "createdAtIso": "2026-11-24T23:41:59.845Z",
+  "createdAtIso": "2026-11-24T23:46:57.302Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-f26-537fd6e17178"
+  "uniqueSourceArtifactId": "art-fixture-t-f26-9bc484fa43d5"
 }
