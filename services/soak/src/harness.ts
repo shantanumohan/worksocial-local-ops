@@ -1151,7 +1151,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X055 fixture ACCEPTED via unknown_policy_question_escalates_without_promise only — not live VERIFIED",
       "T-X056 fixture ACCEPTED via automated_response_loop_bounded_handoff only — not live VERIFIED",
       "T-X059/T-US-038 fixture ACCEPTED via duplicate_platform_attribution_one_booking only — not live VERIFIED",
-      "T-X060 fixture ACCEPTED via currency_timezone_mismatch_no_silent_sum only — not live VERIFIED",
+      "T-X060 fixture ACCEPTED via currency_timezone_mismatch_no_silent_sum only — whitespace match; INVALID_DIMENSION; live NOT_WIRED — not live VERIFIED",
       "T-X070 fixture ACCEPTED via validated_payload_not_collected_separate_states only — not live VERIFIED",
       "T-X028 fixture ACCEPTED via actual_cost_exceeds_estimate_overrun_visible only — not live VERIFIED",
       "T-X044 fixture ACCEPTED via unlicensed_venue_media_publish_blocked only — not live VERIFIED",

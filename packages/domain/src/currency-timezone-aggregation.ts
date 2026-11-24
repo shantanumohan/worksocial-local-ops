@@ -4,6 +4,8 @@
  * Analytics / revenue series from heterogeneous currency or reporting
  * timezone contexts must not be silently summed. Matching dimensions may
  * aggregate; mismatches refuse with an explicit code (never invent a total).
+ * Whitespace around currency/timezone is normalized so padding cannot invent
+ * a mismatch or a match against blanks. Live provider wiring: NOT_WIRED.
  * External effects: NONE. Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 
@@ -19,7 +21,8 @@ export type CurrencyTimezoneAggregateCode =
   | "AGGREGATED"
   | "CURRENCY_MISMATCH"
   | "TIMEZONE_MISMATCH"
-  | "EMPTY_SERIES";
+  | "EMPTY_SERIES"
+  | "INVALID_DIMENSION";
 
 export type CurrencyTimezoneAggregateResult =
   | {
@@ -29,6 +32,9 @@ export type CurrencyTimezoneAggregateResult =
       currency: string;
       reportingTimezone: string;
       reasons: string[];
+      liveProviderWiring: "NOT_WIRED";
+      externalEffects: "NONE";
+      fixtureOnly: true;
     }
   | {
       ok: false;
@@ -37,19 +43,31 @@ export type CurrencyTimezoneAggregateResult =
       currencies: string[];
       reportingTimezones: string[];
       reasons: string[];
+      liveProviderWiring: "NOT_WIRED";
+      externalEffects: "NONE";
+      fixtureOnly: true;
     };
 
-function normalizeCurrency(currency: string): string {
+/** Normalize currency codes so case/padding cannot invent a parallel series. */
+export function normalizeCurrency(currency: string): string {
   return currency.trim().toUpperCase();
 }
 
-function normalizeTimezone(tz: string): string {
+/** Normalize reporting timezone; trim only — IANA ids are case-sensitive. */
+export function normalizeTimezone(tz: string): string {
   return tz.trim();
 }
 
+const honesty = {
+  liveProviderWiring: "NOT_WIRED" as const,
+  externalEffects: "NONE" as const,
+  fixtureOnly: true as const,
+};
+
 /**
  * Sum observations only when every row shares the same currency and
- * reporting timezone. Otherwise refuse — no silent cross-dimension total.
+ * reporting timezone. Otherwise refuse — no silent cross-dimension total,
+ * no FX conversion, no inventing a zero from empty/invalid series.
  */
 export function aggregateCurrencyTimezoneSeries(
   observations: readonly CurrencyTimezoneObservation[],
@@ -62,6 +80,7 @@ export function aggregateCurrencyTimezoneSeries(
       currencies: [],
       reportingTimezones: [],
       reasons: ["Empty series — refuse silent zero total"],
+      ...honesty,
     };
   }
 
@@ -71,6 +90,20 @@ export function aggregateCurrencyTimezoneSeries(
   const reportingTimezones = [
     ...new Set(observations.map((o) => normalizeTimezone(o.reportingTimezone))),
   ];
+
+  if (currencies.includes("") || reportingTimezones.includes("")) {
+    return {
+      ok: false,
+      code: "INVALID_DIMENSION",
+      totalMinor: null,
+      currencies,
+      reportingTimezones,
+      reasons: [
+        "Blank currency or reportingTimezone after normalize — refuse silent sum (T-X060)",
+      ],
+      ...honesty,
+    };
+  }
 
   if (currencies.length > 1) {
     return {
@@ -82,6 +115,7 @@ export function aggregateCurrencyTimezoneSeries(
       reasons: [
         `Currency mismatch across series (${currencies.join(", ")}) — refuse silent sum (T-X060)`,
       ],
+      ...honesty,
     };
   }
 
@@ -95,6 +129,7 @@ export function aggregateCurrencyTimezoneSeries(
       reasons: [
         `Reporting timezone mismatch across series (${reportingTimezones.join(", ")}) — refuse silent sum (T-X060)`,
       ],
+      ...honesty,
     };
   }
 
@@ -111,6 +146,7 @@ export function aggregateCurrencyTimezoneSeries(
     reasons: [
       `Aggregated ${observations.length} observations in ${currency} / ${reportingTimezone} (matched dimensions)`,
     ],
+    ...honesty,
   };
 }
 

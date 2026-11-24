@@ -3,13 +3,13 @@
   "caseId": "T-X060",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X060 (Currency/timezone mismatch — no silent sum)\nproof=currency_timezone_mismatch_no_silent_sum applyCount=1 :: Matched USD / America/New_York → AGGREGATED totalMinor=550 | USD+EUR → CURRENCY_MISMATCH; totalMinor=null (no silent sum) | America/New_York+Europe/London → TIMEZONE_MISMATCH; totalMinor=null | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X060 (Currency/timezone mismatch — no silent sum)\nproof=currency_timezone_mismatch_no_silent_sum applyCount=1 :: Matched USD / America/New_York (whitespace-normalized) → AGGREGATED totalMinor=550; liveProviderWiring=NOT_WIRED | USD+EUR → CURRENCY_MISMATCH; totalMinor=null (no silent sum) | America/New_York+Europe/London → TIMEZONE_MISMATCH; totalMinor=null | USD/NY + GBP/London → CURRENCY_MISMATCH (currency-first); totalMinor=null; both dimension sets recorded | Blank currency → INVALID_DIMENSION; totalMinor=null | Empty series → EMPTY_SERIES; totalMinor=null | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "currency_timezone_mismatch_no_silent_sum"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x060.json",
-  "createdAtIso": "2026-11-24T22:46:08.421Z",
+  "createdAtIso": "2026-11-24T22:50:29.969Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x060-22f7073ee39e"
+  "uniqueSourceArtifactId": "art-fixture-t-x060-5165b77ad947"
 }

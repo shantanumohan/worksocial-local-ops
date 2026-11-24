@@ -2602,7 +2602,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x060",
-      "evidenceNote": "Fixture ACCEPTED via CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM (matched series aggregate; currency/timezone mismatch → totalMinor=null; no silent sum). ACCEPTED ≠ sandbox/prod VERIFIED. externalEffects=NONE. ChatGPT Ads remains ACCESS_BLOCKED."
+      "evidenceNote": "Fixture ACCEPTED via CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM (whitespace-normalized match; blank → INVALID_DIMENSION; mismatch → totalMinor=null; NOT_WIRED). ACCEPTED ≠ sandbox/prod VERIFIED. externalEffects=NONE. ChatGPT Ads remains ACCESS_BLOCKED."
     },
     {
       "id": "T-X061",

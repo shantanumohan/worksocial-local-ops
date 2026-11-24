@@ -3,13 +3,13 @@
   "caseId": "T-US-045",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-US-045 (Semantic search / no-result — evaluation comparison)\nproof=semantic_search_no_result_eval_comparison applyCount=1 :: Hard-constraint miss → NO_RESULT with parsed intent (people=20, video) and no invented handoff | Judgment jud-e0f4d721 → NO_MATCH for query q-us045-before | Remediation rem-68f8b779 open, linked to judgment jud-e0f4d721 | EVAL_ONLY COMPARE_GOLDEN tool allowed for evaluation comparison | Post-remediation golden re-run → GROUNDED room-20 with filterTrace, citations, booking handoff | Evaluation comparison: before=NO_RESULT (v1) → after=GROUNDED (v2) — golden improved, not silent false match | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-US-045 (Semantic search / no-result — evaluation comparison)\nproof=semantic_search_no_result_eval_comparison applyCount=1 :: Hard-constraint miss → NO_RESULT with parsed intent (people=20, video) and no invented handoff | Judgment jud-52c25b85 → NO_MATCH for query q-us045-before | Remediation rem-0a8ef000 open, linked to judgment jud-52c25b85 | EVAL_ONLY COMPARE_GOLDEN tool allowed for evaluation comparison | Post-remediation golden re-run → GROUNDED room-20 with filterTrace, citations, booking handoff | Evaluation comparison: before=NO_RESULT (v1) → after=GROUNDED (v2) — golden improved, not silent false match | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "semantic_search_no_result_eval_comparison"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-045.json",
-  "createdAtIso": "2026-11-24T22:46:08.421Z",
+  "createdAtIso": "2026-11-24T22:50:29.969Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-045-22f7073ee39e"
+  "uniqueSourceArtifactId": "art-fixture-t-us-045-5165b77ad947"
 }
