@@ -7,7 +7,6 @@ import {
   renewHostLease,
   normalizeHostLeaseToken,
   releaseHostLease,
-  renewHostLease,
   type HostLeaseClock,
   type HostLeaseRecord,
 } from "./host-lease.js";
@@ -385,5 +384,66 @@ describe("host-lease", () => {
     );
     expect(post.ok).toBe(false);
     if (!post.ok) expect(post.reason).toBe("LEASE_HELD");
+  });
+
+  it("edge: same-gen acquire at/after expiry re-establishes; foreign mid-gap held (T-X002)", () => {
+    const seed = acquireHostLease(
+      null,
+      { hostId: "host-re", holderPid: 1, generationId: "gen-re", ttlMs: 8_000 },
+      clockAt(80_000),
+    );
+    expect(seed.ok).toBe(true);
+    if (!seed.ok) return;
+    const expiryMs = Date.parse(seed.lease.expiresAt);
+
+    const atExp = acquireHostLease(
+      seed.lease,
+      {
+        hostId: "  host-re  ",
+        holderPid: 1,
+        generationId: " gen-re ",
+        ttlMs: 8_000,
+      },
+      clockAt(expiryMs),
+    );
+    expect(atExp.ok).toBe(true);
+    if (atExp.ok) {
+      expect(atExp.reclaimed).toBe(false);
+      expect(atExp.lease.leaseId).toBe(seed.lease.leaseId);
+      expect(atExp.lease.hostId).toBe("host-re");
+      expect(atExp.lease.generationId).toBe("gen-re");
+    }
+
+    const past = acquireHostLease(
+      seed.lease,
+      { hostId: "host-re", holderPid: 2, generationId: "gen-re", ttlMs: 8_000 },
+      clockAt(expiryMs + 2_000),
+    );
+    expect(past.ok).toBe(true);
+    if (past.ok) {
+      expect(past.reclaimed).toBe(false);
+      expect(past.lease.leaseId).toBe(seed.lease.leaseId);
+    }
+
+    if (!past.ok) return;
+    const foreign = acquireHostLease(
+      past.lease,
+      {
+        hostId: "host-re",
+        holderPid: 99,
+        generationId: "gen-other",
+        ttlMs: 8_000,
+      },
+      clockAt(expiryMs + 3_000),
+    );
+    expect(foreign.ok).toBe(false);
+    if (!foreign.ok) {
+      expect(foreign.reason).toBe("LEASE_HELD");
+      expect(foreign.message).toBe(HOST_LEASE_HELD_MESSAGE);
+    }
+    expect(classifyWakeCatchupLeaseGap(past.lease, expiryMs + 3_000)).toEqual({
+      kind: "mid_gap_held",
+      expired: false,
+    });
   });
 });

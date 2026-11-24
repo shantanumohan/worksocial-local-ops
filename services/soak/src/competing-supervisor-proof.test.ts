@@ -68,6 +68,27 @@ describe("proofCompetingSupervisorLease", () => {
         d.includes("Post-expiry same-gen renew refused LEASE_HELD"),
       ),
     ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes(
+          "Same-gen acquire at exact-expiry re-establish ok reclaimed=false",
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes(
+          "Same-gen acquire past-expiry re-establish ok reclaimed=false",
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes(
+          "Post-reestablish foreign mid-gap competitor LEASE_HELD generic",
+        ),
+      ),
+    ).toBe(true);
     expect(proof.details.some((d) => d.includes("honesty NOT_WIRED/NONE"))).toBe(
       true,
     );
