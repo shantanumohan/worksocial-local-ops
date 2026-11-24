@@ -70,6 +70,16 @@ describe("proofIdempotencyKeyPayloadMismatch (T-X022)", () => {
     ).toBe(true);
     expect(
       proof.details.some((d) =>
+        d.includes("tab-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("CRLF-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
         d.includes("Receipt integrity") && d.includes("digest A only"),
       ),
     ).toBe(true);
@@ -89,6 +99,27 @@ describe("proofIdempotencyKeyPayloadMismatch (T-X022)", () => {
         (d) =>
           d.includes("Same-digest new operationId control") &&
           d.includes("replay, not Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Concurrent") &&
+          d.includes("same-digest accepts") &&
+          d.includes("not Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Business-key mismatch ≠ payload-mismatch Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Wrong-digest verifyIndependent") &&
+          d.includes("FAILED applyCount=1") &&
+          d.includes("≠ payload-mismatch Conflict"),
       ),
     ).toBe(true);
     expect(

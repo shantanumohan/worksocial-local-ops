@@ -28,7 +28,7 @@ Honest fixture ACCEPTED cases: **T-X001**, **T-X014**, **T-X020**, **T-US-048**,
 
 **T-X016** maps only to `STOP_BEFORE_DISPATCH_NO_MUTATION`.
 
-**T-X022** maps only to `IDEMPOTENCY_KEY_PAYLOAD_MISMATCH` (ACCEPTED_PENDING + VERIFIED path Conflict; byte-exact incl. empty/NUL; same-digest new-op replay; concurrent mismatch no orphans; receipt integrity; re-verify after Conflict; live provider NOT_WIRED; Ads soft-skip; ACCEPTED ≠ VERIFIED).
+**T-X022** maps only to `IDEMPOTENCY_KEY_PAYLOAD_MISMATCH` (ACCEPTED_PENDING + VERIFIED path Conflict; byte-exact incl. empty/NUL/tab/CRLF; same-digest new-op replay incl. concurrent; concurrent mismatch no orphans; business-key ≠ payload-mismatch; wrong-digest verify → FAILED applyCount=1; receipt integrity; re-verify after Conflict; live provider NOT_WIRED; Ads soft-skip; ACCEPTED ≠ VERIFIED).
 
 **T-X063** maps only to `INDIRECT_PROMPT_INJECTION_EXFIL_DENIED`.
 

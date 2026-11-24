@@ -416,6 +416,16 @@ describe("durable execution (memory fixture)", () => {
     expect(
       isIdempotencyPayloadMismatchError(new Error("BUDGET_EXHAUSTED available=0")),
     ).toBe(false);
+    expect(
+      isIdempotencyPayloadMismatchError(
+        new Error("Business idempotency key mismatch for op-x"),
+      ),
+    ).toBe(false);
+    expect(
+      isIdempotencyPayloadMismatchError(
+        new Error("Independent read mismatch for op-x"),
+      ),
+    ).toBe(false);
     expect([...IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP]).toEqual([
       "T-F07",
       "T-US-013",

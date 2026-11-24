@@ -255,6 +255,34 @@ export async function proofIdempotencyKeyPayloadMismatch(
       : true;
   if (!caseConflict) passed = false;
 
+  const tabConflict = await expectMismatchConflict(
+    "acceptPending tab-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}\t`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!tabConflict) passed = false;
+
+  const crlfConflict = await expectMismatchConflict(
+    "acceptPending CRLF-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}\r\n`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!crlfConflict) passed = false;
+
   // Concurrent multi-alt digest-B barrage — all Conflict; no orphans; applyCount=1.
   const barrageN = 8;
   const barrageIds = Array.from(
@@ -315,6 +343,74 @@ export async function proofIdempotencyKeyPayloadMismatch(
       "Same-digest new operationId control: created=false providerApplyCount=1 (replay, not Conflict)",
     );
   }
+
+  // Positive control: concurrent same-digest new-ops all succeed; applyCount stays 1.
+  const sameDigestN = 4;
+  const sameDigestIds = Array.from(
+    { length: sameDigestN },
+    (_, i) => `${operationId}-same-digest-c-${i}`,
+  );
+  const sameDigestConcurrent = await Promise.all(
+    sameDigestIds.map((opId) =>
+      accept(svc, {
+        operationId: opId,
+        bizKey,
+        digest: digestA,
+        idem: `${idem}-same-c-${opId.slice(-8)}`,
+        nowIso,
+      })
+        .then((r) => ({
+          ok:
+            r.providerCreated === false &&
+            r.provider.applyCount === 1 &&
+            r.provider.remoteRef === first.provider.remoteRef &&
+            r.provider.payloadDigest === digestA,
+        }))
+        .catch(() => ({ ok: false })),
+    ),
+  );
+  const sameDigestAllOk = sameDigestConcurrent.every((r) => r.ok);
+  if (!sameDigestAllOk) {
+    passed = false;
+    details.push(
+      `Concurrent same-digest positive control failed: ok=${sameDigestConcurrent.filter((r) => r.ok).length}/${sameDigestN}`,
+    );
+  } else {
+    details.push(
+      `Concurrent ${sameDigestN}-way same-digest accepts → all replay created=false applyCount=1 (not Conflict)`,
+    );
+  }
+
+  // Business-key mismatch is NOT classified as T-X022 payload-mismatch Conflict.
+  let bizKeyMismatchOk = false;
+  try {
+    await accept(svc, {
+      operationId,
+      bizKey: `${bizKey}-other`,
+      digest: digestA,
+      idem,
+      nowIso,
+    });
+    details.push(
+      "Business-key mismatch: expected throw was not raised (honesty fail)",
+    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (
+      /business idempotency key mismatch/i.test(msg) &&
+      !isIdempotencyPayloadMismatchError(err)
+    ) {
+      bizKeyMismatchOk = true;
+      details.push(
+        "Business-key mismatch ≠ payload-mismatch Conflict (helper negative)",
+      );
+    } else {
+      details.push(
+        `Business-key mismatch unexpected classify: payloadMismatch=${isIdempotencyPayloadMismatchError(err)} msg=${msg}`,
+      );
+    }
+  }
+  if (!bizKeyMismatchOk) passed = false;
 
   const afterPending = await svc.stores.fakeProvider.getByBusinessKey(bizKey);
   const decisionPending = await svc.stores.decisions.get(operationId);
@@ -438,6 +534,53 @@ export async function proofIdempotencyKeyPayloadMismatch(
     );
   }
 
+  // Wrong-digest verifyIndependent on a separate ACCEPTED_PENDING op → FAILED;
+  // applyCount stays 1; Independent read mismatch ≠ payload-mismatch Conflict.
+  const wrongVerifyOp = `${operationId}-wrong-verify`;
+  const wrongVerifyBiz = `${bizKey}-wrong-verify`;
+  const wrongVerifyAccept = await accept(svc, {
+    operationId: wrongVerifyOp,
+    bizKey: wrongVerifyBiz,
+    digest: digestA,
+    idem: `${idem}-wrong-verify`,
+    nowIso,
+  });
+  let wrongVerifyOk = false;
+  try {
+    await svc.verifyIndependent({
+      operationId: wrongVerifyOp,
+      observedDigest: digestB,
+      nowIso,
+    });
+    details.push(
+      "Wrong-digest verifyIndependent: expected Independent read mismatch was not thrown",
+    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const afterWrong = await svc.stores.fakeProvider.getByBusinessKey(
+      wrongVerifyBiz,
+    );
+    const decisionWrong = await svc.stores.decisions.get(wrongVerifyOp);
+    if (
+      /independent read mismatch/i.test(msg) &&
+      !isIdempotencyPayloadMismatchError(err) &&
+      afterWrong?.applyCount === 1 &&
+      afterWrong.payloadDigest === digestA &&
+      afterWrong.remoteRef === wrongVerifyAccept.provider.remoteRef &&
+      decisionWrong?.outcome === "FAILED"
+    ) {
+      wrongVerifyOk = true;
+      details.push(
+        "Wrong-digest verifyIndependent → FAILED applyCount=1; Independent read mismatch ≠ payload-mismatch Conflict",
+      );
+    } else {
+      details.push(
+        `Wrong-digest verify unexpected: applyCount=${afterWrong?.applyCount} outcome=${decisionWrong?.outcome} payloadMismatch=${isIdempotencyPayloadMismatchError(err)} msg=${msg}`,
+      );
+    }
+  }
+  if (!wrongVerifyOk) passed = false;
+
   details.push(
     `liveProviderSuccessClaimed=false liveProviderWiring=${IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING} externalEffects=NONE ACCEPTED≠VERIFIED chatgptAdsConnectSoftSkip=${IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP.join(",")} ACCESS_BLOCKED`,
   );
@@ -457,9 +600,14 @@ export async function proofIdempotencyKeyPayloadMismatch(
       emptyConflict &&
       nulConflict &&
       caseConflict &&
+      tabConflict &&
+      crlfConflict &&
       barrageAllConflict &&
       !barrageOrphans &&
-      verifiedPathConflict,
+      sameDigestAllOk &&
+      bizKeyMismatchOk &&
+      verifiedPathConflict &&
+      wrongVerifyOk,
     details,
     applyAttemptCount: afterVerified?.applyCount ?? first.applyAttemptCount,
     operationId,
