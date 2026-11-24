@@ -6,6 +6,9 @@
  * collection reports COLLECTION_FAILED (validated=true, collected=false).
  * Invalid payloads report VALIDATION_FAILED without attempting or claiming
  * collection. Happy path returns COLLECTED. External effects: NONE.
+ * Live provider wiring stays NOT_WIRED; ChatGPT Ads ACCESS_BLOCKED.
+ * Hillclimb: honesty fields on every decision; empty recordId refused;
+ * envelope/schema edges stay VALIDATION_FAILED without collection.
  */
 
 import { createHmac, timingSafeEqual } from "node:crypto";
@@ -34,10 +37,20 @@ export type PayloadIntakeDecision = {
   collectionAttempted: boolean;
   reasons: string[];
   recordId: string | null;
+  /** Live webhook/CMS wiring is never claimed from this fixture path. */
+  liveProviderWiring: "NOT_WIRED";
+  chatgptAdsAccess: "ACCESS_BLOCKED";
+  externalEffects: "NONE";
 };
 
 const DEFAULT_REQUIRED_FIELDS = ["eventId", "kind"] as const;
 const HEX64 = /^[0-9a-fA-F]{64}$/;
+
+const HONESTY = {
+  liveProviderWiring: "NOT_WIRED" as const,
+  chatgptAdsAccess: "ACCESS_BLOCKED" as const,
+  externalEffects: "NONE" as const,
+};
 
 /** Fixture-only HMAC — never a live provider secret. */
 export function fixtureWebhookSignature(
@@ -59,6 +72,30 @@ function signaturesMatch(expectedHex: string, providedHex: string): boolean {
   } catch {
     return false;
   }
+}
+
+function validationFailed(reasons: string[]): PayloadIntakeDecision {
+  return {
+    code: "VALIDATION_FAILED",
+    validated: false,
+    collected: false,
+    collectionAttempted: false,
+    reasons,
+    recordId: null,
+    ...HONESTY,
+  };
+}
+
+function collectionFailed(reasons: string[]): PayloadIntakeDecision {
+  return {
+    code: "COLLECTION_FAILED",
+    validated: true,
+    collected: false,
+    collectionAttempted: true,
+    reasons,
+    recordId: null,
+    ...HONESTY,
+  };
 }
 
 /**
@@ -84,45 +121,27 @@ export function evaluateValidatedPayloadCollection(input: {
 }): PayloadIntakeDecision {
   const expected = fixtureWebhookSignature(input.payload.body, input.secret);
   if (!signaturesMatch(expected, input.payload.signatureHex)) {
-    return {
-      code: "VALIDATION_FAILED",
-      validated: false,
-      collected: false,
-      collectionAttempted: false,
-      reasons: [
-        "Webhook signature mismatch — VALIDATION_FAILED (collection not attempted)",
-      ],
-      recordId: null,
-    };
+    return validationFailed([
+      "Webhook signature mismatch — VALIDATION_FAILED (collection not attempted)",
+      "liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+    ]);
   }
 
   let parsed: Record<string, unknown>;
   try {
     const value = JSON.parse(input.payload.body) as unknown;
     if (value === null || typeof value !== "object" || Array.isArray(value)) {
-      return {
-        code: "VALIDATION_FAILED",
-        validated: false,
-        collected: false,
-        collectionAttempted: false,
-        reasons: [
-          "Payload body must be a JSON object — VALIDATION_FAILED (collection not attempted)",
-        ],
-        recordId: null,
-      };
+      return validationFailed([
+        "Payload body must be a JSON object — VALIDATION_FAILED (collection not attempted)",
+        "liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+      ]);
     }
     parsed = value as Record<string, unknown>;
   } catch {
-    return {
-      code: "VALIDATION_FAILED",
-      validated: false,
-      collected: false,
-      collectionAttempted: false,
-      reasons: [
-        "Payload body is not valid JSON — VALIDATION_FAILED (collection not attempted)",
-      ],
-      recordId: null,
-    };
+    return validationFailed([
+      "Payload body is not valid JSON — VALIDATION_FAILED (collection not attempted)",
+      "liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+    ]);
   }
 
   const required = input.requiredFields ?? DEFAULT_REQUIRED_FIELDS;
@@ -131,41 +150,23 @@ export function evaluateValidatedPayloadCollection(input: {
     return v === undefined || v === null || v === "";
   });
   if (missing.length > 0) {
-    return {
-      code: "VALIDATION_FAILED",
-      validated: false,
-      collected: false,
-      collectionAttempted: false,
-      reasons: [
-        `Missing required fields [${missing.join(", ")}] — VALIDATION_FAILED (collection not attempted)`,
-      ],
-      recordId: null,
-    };
+    return validationFailed([
+      `Missing required fields [${missing.join(", ")}] — VALIDATION_FAILED (collection not attempted)`,
+      "liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+    ]);
   }
 
   if (typeof parsed.eventId !== "string") {
-    return {
-      code: "VALIDATION_FAILED",
-      validated: false,
-      collected: false,
-      collectionAttempted: false,
-      reasons: [
-        "Body eventId must be a string — VALIDATION_FAILED (collection not attempted)",
-      ],
-      recordId: null,
-    };
+    return validationFailed([
+      "Body eventId must be a string — VALIDATION_FAILED (collection not attempted)",
+      "liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+    ]);
   }
   if (parsed.eventId !== input.payload.eventId) {
-    return {
-      code: "VALIDATION_FAILED",
-      validated: false,
-      collected: false,
-      collectionAttempted: false,
-      reasons: [
-        "Envelope eventId does not match body eventId — VALIDATION_FAILED (collection not attempted)",
-      ],
-      recordId: null,
-    };
+    return validationFailed([
+      "Envelope eventId does not match body eventId — VALIDATION_FAILED (collection not attempted)",
+      "liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+    ]);
   }
 
   let attempt: PayloadCollectionAttempt;
@@ -174,29 +175,24 @@ export function evaluateValidatedPayloadCollection(input: {
   } catch (err) {
     const reason =
       err instanceof Error ? err.message : `collector threw: ${String(err)}`;
-    return {
-      code: "COLLECTION_FAILED",
-      validated: true,
-      collected: false,
-      collectionAttempted: true,
-      reasons: [
-        `Signature+schema valid but durable collection threw (${reason}) — COLLECTION_FAILED (not VALIDATION_FAILED)`,
-      ],
-      recordId: null,
-    };
+    return collectionFailed([
+      `Signature+schema valid but durable collection threw (${reason}) — COLLECTION_FAILED (not VALIDATION_FAILED)`,
+      "liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+    ]);
   }
 
   if (!attempt.ok) {
-    return {
-      code: "COLLECTION_FAILED",
-      validated: true,
-      collected: false,
-      collectionAttempted: true,
-      reasons: [
-        `Signature+schema valid but durable collection failed (${attempt.reason}) — COLLECTION_FAILED (not VALIDATION_FAILED)`,
-      ],
-      recordId: null,
-    };
+    return collectionFailed([
+      `Signature+schema valid but durable collection failed (${attempt.reason}) — COLLECTION_FAILED (not VALIDATION_FAILED)`,
+      "liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+    ]);
+  }
+
+  if (!attempt.recordId || !String(attempt.recordId).trim()) {
+    return collectionFailed([
+      "Signature+schema valid but collector returned empty recordId — COLLECTION_FAILED (not VALIDATION_FAILED)",
+      "liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+    ]);
   }
 
   return {
@@ -206,8 +202,10 @@ export function evaluateValidatedPayloadCollection(input: {
     collectionAttempted: true,
     reasons: [
       `Validated payload collected as ${attempt.recordId} — COLLECTED`,
+      "liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
     ],
     recordId: attempt.recordId,
+    ...HONESTY,
   };
 }
 

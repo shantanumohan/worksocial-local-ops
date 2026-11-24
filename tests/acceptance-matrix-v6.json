@@ -2762,7 +2762,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x070",
-      "evidenceNote": "Fixture validated-payload-not-collected separate failure states proof only — VALIDATION_FAILED ≠ COLLECTION_FAILED; not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture validated-payload-not-collected separate failure states proof only — VALIDATION_FAILED ≠ COLLECTION_FAILED; empty recordId → COLLECTION_FAILED; liveProviderWiring=NOT_WIRED; not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X071",
