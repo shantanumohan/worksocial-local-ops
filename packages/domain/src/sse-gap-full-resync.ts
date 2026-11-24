@@ -4,7 +4,9 @@
  * After the UI goes offline, reconnecting with a non-contiguous SSE cursor
  * (sequence gap) must refuse incremental catch-up and require a full-state
  * snapshot resync that covers at least the observed gap seq and replaces UI
- * state. Missed events are never invented. External effects: NONE.
+ * state. Missed events are never invented. Online gaps and outstanding
+ * minResyncThroughSeq likewise block incremental apply. External effects:
+ * NONE. Live provider wiring: NOT_WIRED.
  */
 
 export type SseUiCursor = {
@@ -44,7 +46,8 @@ export type SseReconnectDecisionCode =
   | "FULL_STATE_RESYNC"
   | "SNAPSHOT_INSUFFICIENT_COVERAGE"
   | "IGNORE_STALE"
-  | "STILL_OFFLINE";
+  | "STILL_OFFLINE"
+  | "INVALID_SEQ";
 
 export type SseReconnectDecision = {
   code: SseReconnectDecisionCode;
@@ -53,7 +56,23 @@ export type SseReconnectDecision = {
   cursor: SseUiCursor;
   reasons: string[];
   externalEffects: "NONE";
+  /** Live SSE / provider transport stays fixture-only. */
+  liveProviderWiring: "NOT_WIRED";
 };
+
+function decision(
+  partial: Omit<SseReconnectDecision, "externalEffects" | "liveProviderWiring">,
+): SseReconnectDecision {
+  return {
+    ...partial,
+    externalEffects: "NONE",
+    liveProviderWiring: "NOT_WIRED",
+  };
+}
+
+function isValidSeq(seq: number): boolean {
+  return Number.isInteger(seq) && Number.isFinite(seq) && seq > 0;
+}
 
 export function createSseUiCursor(input?: {
   lastAppliedSeq?: number;
@@ -75,10 +94,11 @@ export function markSseUiOffline(cursor: SseUiCursor): SseUiCursor {
 
 /**
  * Apply one SSE event after reconnect (or while online).
- * Contiguous next seq → incremental apply.
- * Gap (seq > lastApplied+1) after offline → full-state resync required;
- * records minResyncThroughSeq so later snapshots must cover the gap.
- * Stale/duplicate (seq <= lastApplied) → ignore.
+ * Contiguous next seq → incremental apply (only when no outstanding gap).
+ * Gap (seq > lastApplied+1), or outstanding minResyncThroughSeq → full-state
+ * resync required; records/raises minResyncThroughSeq. Missed mid events are
+ * never invented. Stale/duplicate (seq <= lastApplied) → ignore.
+ * Invalid (non-positive / non-integer / non-finite) seq → refuse.
  */
 export function evaluateSseEventAfterOffline(input: {
   cursor: SseUiCursor;
@@ -88,8 +108,20 @@ export function evaluateSseEventAfterOffline(input: {
 }): SseReconnectDecision {
   const { cursor, event, reconnecting } = input;
 
+  if (!isValidSeq(event.seq)) {
+    return decision({
+      code: "INVALID_SEQ",
+      allowedIncremental: false,
+      fullStateResyncRequired: cursor.minResyncThroughSeq != null,
+      cursor,
+      reasons: [
+        `Invalid SSE seq=${String(event.seq)} — refuse non-positive / non-integer / non-finite sequence (T-X062)`,
+      ],
+    });
+  }
+
   if (cursor.offline && !reconnecting) {
-    return {
+    return decision({
       code: "STILL_OFFLINE",
       allowedIncremental: false,
       fullStateResyncRequired: cursor.minResyncThroughSeq != null,
@@ -97,8 +129,7 @@ export function evaluateSseEventAfterOffline(input: {
       reasons: [
         "UI still offline — SSE events are not applied until reconnect + gap check",
       ],
-      externalEffects: "NONE",
-    };
+    });
   }
 
   const onlineCursor: SseUiCursor = reconnecting
@@ -106,7 +137,7 @@ export function evaluateSseEventAfterOffline(input: {
     : cursor;
 
   if (event.seq <= onlineCursor.lastAppliedSeq) {
-    return {
+    return decision({
       code: "IGNORE_STALE",
       allowedIncremental: false,
       fullStateResyncRequired: onlineCursor.minResyncThroughSeq != null,
@@ -114,13 +145,12 @@ export function evaluateSseEventAfterOffline(input: {
       reasons: [
         `Event seq=${event.seq} ≤ lastAppliedSeq=${onlineCursor.lastAppliedSeq} — ignore stale/duplicate`,
       ],
-      externalEffects: "NONE",
-    };
+    });
   }
 
   const expected = onlineCursor.lastAppliedSeq + 1;
   if (event.seq === expected && onlineCursor.minResyncThroughSeq == null) {
-    return {
+    return decision({
       code: "INCREMENTAL_APPLY",
       allowedIncremental: true,
       fullStateResyncRequired: false,
@@ -132,16 +162,16 @@ export function evaluateSseEventAfterOffline(input: {
       reasons: [
         `Contiguous seq=${event.seq} after lastApplied=${onlineCursor.lastAppliedSeq} — incremental apply`,
       ],
-      externalEffects: "NONE",
-    };
+    });
   }
 
-  // Gap (or outstanding gap still blocking incremental): refuse catch-up.
+  // Gap, or outstanding gap still blocking incremental: refuse catch-up /
+  // inventing missed intermediate events.
   const minRequired = Math.max(
     onlineCursor.minResyncThroughSeq ?? 0,
     event.seq,
   );
-  return {
+  return decision({
     code: "SSE_GAP_FULL_RESYNC_REQUIRED",
     allowedIncremental: false,
     fullStateResyncRequired: true,
@@ -150,36 +180,52 @@ export function evaluateSseEventAfterOffline(input: {
       minResyncThroughSeq: minRequired,
     },
     reasons: [
-      `SSE gap: expected seq=${expected} got seq=${event.seq} after offline — incremental catch-up refused; full-state resync required through seq=${minRequired}`,
+      onlineCursor.minResyncThroughSeq != null && event.seq === expected
+        ? `Outstanding SSE gap (minResyncThroughSeq=${onlineCursor.minResyncThroughSeq}) blocks contiguous seq=${event.seq} — refuse inventing missed events; full-state resync still required`
+        : `SSE gap: expected seq=${expected} got seq=${event.seq} — incremental catch-up refused; full-state resync required through seq=${minRequired}; missed events not invented`,
     ],
-    externalEffects: "NONE",
-  };
+  });
 }
 
 /**
  * Apply a server full-state snapshot after an SSE gap.
  * Snapshot must cover minResyncThroughSeq (when set) and replace UI stateDigest.
- * Does not invent missed intermediate events.
+ * Does not invent missed intermediate events. Live wiring stays NOT_WIRED.
  */
 export function applySseFullStateResync(input: {
   cursor: SseUiCursor;
   snapshot: SseFullStateSnapshot;
 }): SseReconnectDecision {
   if (!input.snapshot.stateDigest.trim()) {
-    return {
+    return decision({
       code: "SNAPSHOT_INSUFFICIENT_COVERAGE",
       allowedIncremental: false,
       fullStateResyncRequired: true,
       cursor: input.cursor,
       reasons: [
-        "Snapshot missing stateDigest — refuse empty full-state replacement",
+        "Snapshot missing/blank stateDigest — refuse empty full-state replacement",
       ],
-      externalEffects: "NONE",
-    };
+    });
+  }
+
+  if (
+    !Number.isInteger(input.snapshot.coversThroughSeq) ||
+    !Number.isFinite(input.snapshot.coversThroughSeq) ||
+    input.snapshot.coversThroughSeq < 0
+  ) {
+    return decision({
+      code: "SNAPSHOT_INSUFFICIENT_COVERAGE",
+      allowedIncremental: false,
+      fullStateResyncRequired: true,
+      cursor: input.cursor,
+      reasons: [
+        `Snapshot coversThroughSeq=${String(input.snapshot.coversThroughSeq)} invalid — refuse`,
+      ],
+    });
   }
 
   if (input.snapshot.coversThroughSeq < input.cursor.lastAppliedSeq) {
-    return {
+    return decision({
       code: "IGNORE_STALE",
       allowedIncremental: false,
       fullStateResyncRequired: true,
@@ -187,8 +233,7 @@ export function applySseFullStateResync(input: {
       reasons: [
         `Snapshot coversThroughSeq=${input.snapshot.coversThroughSeq} < lastAppliedSeq=${input.cursor.lastAppliedSeq} — refuse regressive snapshot`,
       ],
-      externalEffects: "NONE",
-    };
+    });
   }
 
   const minRequired = input.cursor.minResyncThroughSeq;
@@ -196,7 +241,7 @@ export function applySseFullStateResync(input: {
     minRequired != null &&
     input.snapshot.coversThroughSeq < minRequired
   ) {
-    return {
+    return decision({
       code: "SNAPSHOT_INSUFFICIENT_COVERAGE",
       allowedIncremental: false,
       fullStateResyncRequired: true,
@@ -204,8 +249,7 @@ export function applySseFullStateResync(input: {
       reasons: [
         `Snapshot coversThroughSeq=${input.snapshot.coversThroughSeq} < minResyncThroughSeq=${minRequired} — stale/partial snapshot cannot clear SSE gap`,
       ],
-      externalEffects: "NONE",
-    };
+    });
   }
 
   const priorDigest = input.cursor.stateDigest;
@@ -214,19 +258,18 @@ export function applySseFullStateResync(input: {
     offline: false,
     lastSnapshotRevision: input.snapshot.revision,
     minResyncThroughSeq: null,
-    stateDigest: input.snapshot.stateDigest,
+    stateDigest: input.snapshot.stateDigest.trim(),
   };
 
-  return {
+  return decision({
     code: "FULL_STATE_RESYNC",
     allowedIncremental: false,
     fullStateResyncRequired: false,
     cursor: next,
     reasons: [
-      `Full-state resync applied revision=${input.snapshot.revision} coversThroughSeq=${input.snapshot.coversThroughSeq} entities=${input.snapshot.entityCount}; stateDigest ${priorDigest} → ${input.snapshot.stateDigest}; missed SSE events not invented`,
+      `Full-state resync applied revision=${input.snapshot.revision} coversThroughSeq=${input.snapshot.coversThroughSeq} entities=${input.snapshot.entityCount}; stateDigest ${priorDigest} → ${next.stateDigest}; missed SSE events not invented; liveProviderWiring=NOT_WIRED`,
     ],
-    externalEffects: "NONE",
-  };
+  });
 }
 
 export const SSE_GAP_FULL_RESYNC_RELATED_CASE_IDS = ["T-X062"] as const;
