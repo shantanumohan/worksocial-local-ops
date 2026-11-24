@@ -190,4 +190,62 @@ describe("unsupported blog destination (T-X046)", () => {
     expect(decision.publish.code).toBe("OTHER_BLOG_NO_ADAPTER_UNSUPPORTED");
     expect(decision.inventPublishedVerified).toBe(false);
   });
+
+  it("refuses whitespace-padded destinationId — never invents PUBLISHED_VERIFIED (G15)", () => {
+    const decision = classifyUnsupportedBlogDestination({
+      destination: dest({
+        destinationId: "  dest-other-blog  ",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("OTHER_BLOG_NO_ADAPTER_UNSUPPORTED");
+    expect(decision.outcome).toBe(PublicationOutcome.UNSUPPORTED_ACTION);
+    expectHonesty(decision, AdapterLiveStatus.FIXTURE);
+  });
+
+  it("refuses fixture OTHER_BLOG when format is not allowed (G15)", () => {
+    const decision = classifyUnsupportedBlogDestination({
+      destination: dest({
+        destinationId: "dest-other-blog-fixture",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: true,
+        allowedFormats: [ContentFormat.PROFILE_FACT],
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("OTHER_BLOG_NO_ADAPTER_UNSUPPORTED");
+    expect(decision.outcome).toBe(PublicationOutcome.UNSUPPORTED_ACTION);
+    expectHonesty(decision, AdapterLiveStatus.FIXTURE);
+  });
+
+  it("resolves fall-back schedule but preferLive still refused (G15)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-other-blog-fixture",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-11-02",
+      hour: 1,
+      minute: 30,
+      preferLive: true,
+    });
+    expect(decision.scheduleOk).toBe(true);
+    expect(decision.scheduleCode).toBe("SCHEDULE_RESOLVED");
+    expect(decision.ambiguous).toBe(true);
+    expect(decision.allowed).toBe(false);
+    expect(decision.publish.code).toBe("LIVE_WIRE_CLAIM_REFUSED");
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
 });

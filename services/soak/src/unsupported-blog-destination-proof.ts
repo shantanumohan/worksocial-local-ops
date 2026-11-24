@@ -9,7 +9,8 @@
  * fields on every path. External effects: NONE.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  * Hillclimb: classifyUnsupportedBlogDestination + preferLive refuse + Hub edge;
- * DST civil schedule gaps still refuse fake OTHER_BLOG publication (G11).
+ * DST civil schedule gaps still refuse fake OTHER_BLOG publication (G11);
+ * blank/padded destinationId + format mismatch + preferLive-on-schedule (G15).
  */
 
 import { randomUUID } from "node:crypto";
@@ -541,8 +542,92 @@ export async function proofUnsupportedBlogDestinationNoFakePublication(
       details.push(`DST fall schedule unexpected: ${JSON.stringify(fallBack)}`);
     }
 
+    // G15: whitespace-padded destinationId refuses even with fixture adapter.
+    const paddedId = classifyUnsupportedBlogDestination({
+      destination: {
+        ...otherBlog,
+        destinationId: "  dest-other-blog-unsupported  ",
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      },
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    if (
+      !paddedId.allowed &&
+      paddedId.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED" &&
+      paddedId.inventPublishedVerified === false &&
+      paddedId.externalEffects === "NONE"
+    ) {
+      details.push(
+        "Whitespace-padded destinationId → OTHER_BLOG_NO_ADAPTER_UNSUPPORTED; never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`Padded destinationId unexpected: ${JSON.stringify(paddedId)}`);
+    }
+
+    // G15: fixture OTHER_BLOG with disallowed format still refuses.
+    const formatMismatch = classifyUnsupportedBlogDestination({
+      destination: {
+        ...otherBlog,
+        destinationId: "dest-other-blog-format-mismatch",
+        fixtureAvailable: true,
+        allowedFormats: [ContentFormat.PROFILE_FACT],
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      },
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    if (
+      !formatMismatch.allowed &&
+      formatMismatch.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED" &&
+      formatMismatch.outcome === PublicationOutcome.UNSUPPORTED_ACTION &&
+      formatMismatch.inventPublishedVerified === false
+    ) {
+      details.push(
+        "Fixture OTHER_BLOG format mismatch → OTHER_BLOG_NO_ADAPTER_UNSUPPORTED; never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`Format mismatch unexpected: ${JSON.stringify(formatMismatch)}`);
+    }
+
+    // G15: fall-back schedule resolves but preferLive still refused.
+    const preferLiveSchedule = classifyUnsupportedBlogScheduledPublish({
+      destination: {
+        ...otherBlog,
+        destinationId: "dest-other-blog-fixture-schedule",
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      },
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-11-02",
+      hour: 1,
+      minute: 30,
+      preferLive: true,
+    });
+    if (
+      preferLiveSchedule.scheduleOk &&
+      preferLiveSchedule.scheduleCode === "SCHEDULE_RESOLVED" &&
+      preferLiveSchedule.ambiguous === true &&
+      !preferLiveSchedule.allowed &&
+      preferLiveSchedule.publish.code === "LIVE_WIRE_CLAIM_REFUSED" &&
+      preferLiveSchedule.inventPublishedVerified === false &&
+      preferLiveSchedule.externalEffects === "NONE" &&
+      preferLiveSchedule.chatgptAdsAccess === "ACCESS_BLOCKED"
+    ) {
+      details.push(
+        "DST fall-back + preferLive → LIVE_WIRE_CLAIM_REFUSED; schedule resolve does not unlock live invent",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `preferLive schedule unexpected: ${JSON.stringify(preferLiveSchedule)}`,
+      );
+    }
+
     details.push(
-      "liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED deepen=G11 hillclimb=classify+preferLive+Hub+DST-schedule",
+      "liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED deepen=G15 hillclimb=classify+preferLive+Hub+DST-schedule+paddedId+formatMismatch",
     );
     return finish(passed, details, nowIso, operationId);
   } finally {

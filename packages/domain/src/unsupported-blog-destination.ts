@@ -9,7 +9,9 @@
  * T-X045. External effects: NONE. ChatGPT Ads ACCESS_BLOCKED.
  * Hillclimb: honesty fields on every classification; Hub full-blog stays
  * unsupported; owned CMS / fixture OTHER_BLOG remain positive controls;
- * DST civil schedule gaps still refuse fake publication (G11).
+ * DST civil schedule gaps still refuse fake publication (G11);
+ * blank/whitespace destinationId + preferLive-on-schedule + format mismatch
+ * still refuse invent (G15).
  */
 
 import {
@@ -71,6 +73,21 @@ export function classifyUnsupportedBlogDestination(input: {
     `liveProviderWiring=${dest.liveWiring} chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE`,
     "inventPublishedVerified=false",
   ];
+
+  // G15: blank / whitespace-padded destinationId cannot unlock fake publication.
+  const trimmedId = dest.destinationId.trim();
+  if (trimmedId.length === 0 || trimmedId !== dest.destinationId) {
+    return {
+      code: "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED",
+      allowed: false,
+      outcome: PublicationOutcome.UNSUPPORTED_ACTION,
+      reasons: [
+        "Destination id blank or whitespace-padded — refuse invent PUBLISHED_VERIFIED",
+        ...honestyReasons,
+      ],
+      ...honesty,
+    };
+  }
 
   // Only an explicit preferLive request is a live publish claim.
   // AdapterLiveStatus.FIXTURE is a supported fixture-path status, not live.
