@@ -1372,17 +1372,29 @@ export type SoakNotWiredLiveWiring = {
   temporal: "NOT_WIRED";
 };
 
-export const SOAK_NOT_WIRED_LIVE_WIRING: SoakNotWiredLiveWiring = {
-  cms: "NOT_WIRED",
-  gsc: "NOT_WIRED",
-  ga4: "NOT_WIRED",
-  zoho: "NOT_WIRED",
-  temporal: "NOT_WIRED",
-};
+/** Frozen runtime template — mutation via Object.assign / property set fails closed. */
+export const SOAK_NOT_WIRED_LIVE_WIRING: Readonly<SoakNotWiredLiveWiring> =
+  Object.freeze({
+    cms: "NOT_WIRED",
+    gsc: "NOT_WIRED",
+    ga4: "NOT_WIRED",
+    zoho: "NOT_WIRED",
+    temporal: "NOT_WIRED",
+  } as const satisfies SoakNotWiredLiveWiring);
 
-/** Fresh copy so callers cannot mutate the shared constant. */
+/**
+ * Fresh mutable copy for state records.
+ * Builds literals independently of the exported template so a poisoned
+ * Object.assign on the export cannot leak into new soak runs.
+ */
 export function soakNotWiredLiveWiring(): SoakNotWiredLiveWiring {
-  return { ...SOAK_NOT_WIRED_LIVE_WIRING };
+  return {
+    cms: "NOT_WIRED",
+    gsc: "NOT_WIRED",
+    ga4: "NOT_WIRED",
+    zoho: "NOT_WIRED",
+    temporal: "NOT_WIRED",
+  };
 }
 
 /**

@@ -1509,7 +1509,12 @@ describe("soak-acceptance domain", () => {
     expect(b).toEqual(SOAK_NOT_WIRED_LIVE_WIRING);
     expect(a).not.toBe(SOAK_NOT_WIRED_LIVE_WIRING);
     expect(a).not.toBe(b);
+    expect(Object.isFrozen(SOAK_NOT_WIRED_LIVE_WIRING)).toBe(true);
+    expect(() => {
+      Object.assign(SOAK_NOT_WIRED_LIVE_WIRING as object, { cms: "WIRED" });
+    }).toThrow();
     (a as { cms: string }).cms = "WIRED";
+    // Helper constructs literals independently — poisoned export cannot leak.
     expect(soakNotWiredLiveWiring().cms).toBe("NOT_WIRED");
     expect(SOAK_NOT_WIRED_LIVE_WIRING.cms).toBe("NOT_WIRED");
     expect(emptySoakAcceptanceState("2026-11-24T21:00:00.000Z").liveWiring).toEqual(
