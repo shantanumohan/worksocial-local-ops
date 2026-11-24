@@ -50,8 +50,10 @@ describe("contract: acceptance-matrix + release:evidence honesty", () => {
     expect(ads).toEqual({ ok: true });
     for (const id of CHATGPT_ADS_GATE_CASE_IDS) {
       const row = matrix.cases.find((c) => c.id === id);
-      expect(row?.status).toBe("NOT_RUN");
+      expect(row?.status).toBe("ACCEPTED");
       expect(row?.gates).toContain(CHATGPT_ADS_TRANSPORT_ENTITLEMENT_GATE);
+      expect(row?.resultEnvironment).toBe("fixture");
+      expect(row?.evidenceArtifactId).toBeTruthy();
     }
   });
 

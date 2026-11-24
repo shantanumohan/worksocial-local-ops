@@ -1101,6 +1101,15 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-F06"]);
   });
 
+  it("maps T-F07 to CONNECT_CHATGPT_ADS only", () => {
+    expect(expectedProofsForFixtureCase("T-F07")).toEqual([
+      SoakProofKind.CONNECT_CHATGPT_ADS,
+    ]);
+    expect(mapProofToFixtureCases(SoakProofKind.CONNECT_CHATGPT_ADS)).toEqual([
+      "T-F07",
+    ]);
+  });
+
   it("maps T-F08 to CONNECT_CLAUDE_CODE_AND_TEST_API only", () => {
     expect(expectedProofsForFixtureCase("T-F08")).toEqual([
       SoakProofKind.CONNECT_CLAUDE_CODE_AND_TEST_API,
@@ -1371,6 +1380,26 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY),
     ).toEqual(["T-US-011"]);
+  });
+
+  it("maps T-US-013 to CONNECT_CHATGPT_ADS_READ_READY only", () => {
+    expect(expectedProofsForFixtureCase("T-US-013")).toEqual([
+      SoakProofKind.CONNECT_CHATGPT_ADS_READ_READY,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CONNECT_CHATGPT_ADS_READ_READY),
+    ).toEqual(["T-US-013"]);
+  });
+
+  it("maps T-US-014 to CHATGPT_ADS_IDENTITY_MISMATCH_REFUSES_BIND only", () => {
+    expect(expectedProofsForFixtureCase("T-US-014")).toEqual([
+      SoakProofKind.CHATGPT_ADS_IDENTITY_MISMATCH_REFUSES_BIND,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.CHATGPT_ADS_IDENTITY_MISMATCH_REFUSES_BIND,
+      ),
+    ).toEqual(["T-US-014"]);
   });
 
   it("maps T-US-045 to SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON only", () => {

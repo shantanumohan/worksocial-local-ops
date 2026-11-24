@@ -29,7 +29,7 @@ describe("soak service (M9)", () => {
       nowIso: "2026-11-21T18:00:00.000Z",
     });
     expect(result.allPassed).toBe(true);
-    expect(result.proofs).toHaveLength(144);
+    expect(result.proofs).toHaveLength(147);
     expect(result.proofs.every((p) => p.passed)).toBe(true);
     expect(
       result.proofs.every((p) =>
@@ -47,7 +47,9 @@ describe("soak service (M9)", () => {
         p.kind === SoakProofKind.CONNECT_GA4_READ_READY_NEXT_SYNC ||
         p.kind === SoakProofKind.CONNECT_GSC_SCHEDULE_WATERMARK
           ||
-        p.kind === SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY
+        p.kind === SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY ||
+        p.kind === SoakProofKind.CONNECT_CHATGPT_ADS_READ_READY ||
+        p.kind === SoakProofKind.CHATGPT_ADS_IDENTITY_MISMATCH_REFUSES_BIND
         ? p.applyAttemptCount === 0
           : p.applyAttemptCount === 1, // T-US-026 coalesce counts one catch-up apply
       ),
@@ -596,6 +598,9 @@ describe("soak service (M9)", () => {
       ),
     ).toBe(true);
     expect(
+      result.proofs.some((p) => p.kind === SoakProofKind.CONNECT_CHATGPT_ADS),
+    ).toBe(true);
+    expect(
       result.proofs.some(
         (p) => p.kind === SoakProofKind.CONNECT_CLAUDE_CODE_AND_TEST_API,
       ),
@@ -759,6 +764,17 @@ describe("soak service (M9)", () => {
     ).toBe(true);
     expect(
       result.proofs.some(
+        (p) => p.kind === SoakProofKind.CONNECT_CHATGPT_ADS_READ_READY,
+      ),
+    ).toBe(true);
+    expect(
+      result.proofs.some(
+        (p) =>
+          p.kind === SoakProofKind.CHATGPT_ADS_IDENTITY_MISMATCH_REFUSES_BIND,
+      ),
+    ).toBe(true);
+    expect(
+      result.proofs.some(
         (p) =>
           p.kind === SoakProofKind.SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON,
       ),
@@ -787,6 +803,7 @@ describe("soak service (M9)", () => {
       "T-F04",
       "T-F05",
       "T-F06",
+      "T-F07",
       "T-F08",
       "T-F09",
       "T-F10",
@@ -818,6 +835,8 @@ describe("soak service (M9)", () => {
       "T-US-010",
       "T-US-011",
       "T-US-012",
+      "T-US-013",
+      "T-US-014",
       "T-US-015",
       "T-US-016",
       "T-US-017",
@@ -1116,7 +1135,7 @@ describe("soak service (M9)", () => {
       soak.listCases().find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(soak.listArtifacts().length).toBeGreaterThan(0);
-    expect(soak.ownerReport().acceptedCases.length).toBe(156);
+    expect(soak.ownerReport().acceptedCases.length).toBe(159);
   });
 
   it("preserves unique artifact ids across two soak runs", async () => {

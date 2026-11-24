@@ -183,7 +183,7 @@ export function proofAdsTestProjectProductionBlocked(
     `instrumentedProductionBindCalls=${productionBindCallCount} liveProviderSuccessClaimed=false externalEffects=NONE`,
   );
   details.push(
-    "Distinct from T-US-012 (Google Ads TEST vs PRODUCTION) and soft-skip T-F07/T-US-013/T-US-014",
+    "Distinct from T-US-012 (Google Ads TEST vs PRODUCTION) and T-F07/T-US-013/T-US-014 ChatGPT Ads connect fixtures",
   );
 
   return {

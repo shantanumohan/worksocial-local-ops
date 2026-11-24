@@ -80,6 +80,7 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-F04 Connect Google Analytics 4 | Fixture **ACCEPTED** via `CONNECT_GOOGLE_ANALYTICS_4` (complete F04 evidence; not live VERIFIED) |
 | T-F05 Connect Search Console and organic visibility | Fixture **ACCEPTED** via `CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY` (complete F05 evidence; not live VERIFIED) |
 | T-F06 Connect Google Ads for controlled analysis | Fixture **ACCEPTED** via `CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS` (complete F06 evidence; not live VERIFIED) |
+| T-F07 Connect ChatGPT Ads | Fixture **ACCEPTED** via `CONNECT_CHATGPT_ADS` (complete F07 evidence; transport/entitlement gate retained; not live VERIFIED) |
 | T-F08 Connect Claude Code and the Claude test API | Fixture **ACCEPTED** via `CONNECT_CLAUDE_CODE_AND_TEST_API` (complete F08 evidence; not live VERIFIED) |
 | T-F09 Connect Gemini for independent testing | Fixture **ACCEPTED** via `CONNECT_GEMINI_INDEPENDENT_TESTING` (complete F09 evidence; not live VERIFIED) |
 | T-F10 Map CRM, forms and booking truth | Fixture **ACCEPTED** via `MAP_CRM_FORMS_BOOKING_TRUTH` (complete F10 evidence; not live VERIFIED) |
@@ -98,6 +99,8 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-US-001 trusted workspace readiness | Fixture **ACCEPTED** via `TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS` (not live VERIFIED) |
 | T-US-041 diagnose/repair defect | Fixture **ACCEPTED** via `DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF` (not live VERIFIED) |
 | T-US-011 Google Ads analyze-only | Fixture **ACCEPTED** via `CONNECT_GOOGLE_ADS_ANALYZE_ONLY` (not live VERIFIED) |
+| T-US-013 ChatGPT Ads read-ready | Fixture **ACCEPTED** via `CONNECT_CHATGPT_ADS_READ_READY` (write denial; transport/entitlement gate; not live VERIFIED) |
+| T-US-014 ChatGPT Ads identity mismatch | Fixture **ACCEPTED** via `CHATGPT_ADS_IDENTITY_MISMATCH_REFUSES_BIND` (not live VERIFIED) |
 | T-US-007 Connect GA4 ready-read/next sync | Fixture **ACCEPTED** via `CONNECT_GA4_READ_READY_NEXT_SYNC` (not live VERIFIED; distinct from T-F04) |
 | T-F17 Run Claude and Gemini evaluation suites | Fixture **ACCEPTED** via `RUN_CLAUDE_GEMINI_EVALUATION_SUITES` (complete evidence; not live VERIFIED) |
 | T-F23 Test semantic search and improve no-result cases | Fixture **ACCEPTED** via `TEST_SEMANTIC_SEARCH_IMPROVE_NO_RESULT` (complete evidence; not live VERIFIED) |

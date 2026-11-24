@@ -3,9 +3,9 @@
  *
  * F19: reproducible analysis definitions, hypotheses, redacted decision briefs.
  * F16: Google / ChatGPT paid-media recommendations with financial diffs.
- * ChatGPT Ads stays access-blocked without verified local transport + entitlement.
+ * ChatGPT Ads stays access-blocked without verified local transport + entitlement;
+ * with gates verified, fixture Analyze-only may be READ_READY (never live VERIFIED).
  * Live Ads mutations remain NOT_WIRED. External effects: NONE.
- * Catalog cases stay NOT_RUN — never silently VERIFIED.
  */
 
 import {
@@ -1075,7 +1075,7 @@ export function paidMediaChannelStatus(input?: {
   };
   chatgptAds: {
     wiring: PaidMediaWiringValue;
-    readReady: false;
+    readReady: boolean;
     writeReady: false;
     access: ChatGptAdsAccessDecision;
     note: string;
@@ -1094,6 +1094,8 @@ export function paidMediaChannelStatus(input?: {
       requestedEnvironment: AnalyticsEnvironment.FIXTURE,
     });
 
+  const chatgptGranted = access.allowed === true;
+
   return {
     googleAds: {
       wiring: PaidMediaWiring.FIXTURE,
@@ -1102,11 +1104,15 @@ export function paidMediaChannelStatus(input?: {
       note: "Google Ads fixture analysis only — spend mutations NOT_WIRED; Analyze-only capability",
     },
     chatgptAds: {
-      wiring: PaidMediaWiring.ACCESS_BLOCKED,
-      readReady: false,
+      wiring: chatgptGranted
+        ? PaidMediaWiring.FIXTURE
+        : PaidMediaWiring.ACCESS_BLOCKED,
+      readReady: chatgptGranted,
       writeReady: false,
       access,
-      note: "ChatGPT Ads access-blocked without verified local transport and entitlement",
+      note: chatgptGranted
+        ? "ChatGPT Ads fixture Analyze-only READ_READY — transport/entitlement/auth verified; spend mutations NOT_WIRED; ACCEPTED ≠ VERIFIED"
+        : "ChatGPT Ads access-blocked without verified local transport and entitlement",
     },
     liveMutationWiring: "NOT_WIRED",
     externalEffects: "NONE",

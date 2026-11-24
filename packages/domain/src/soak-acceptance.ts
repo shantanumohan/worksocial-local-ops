@@ -599,6 +599,15 @@ export const SoakProofKind = {
   CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS:
     "connect_google_ads_controlled_analysis",
   /**
+   * Connect ChatGPT Ads — complete F07 evidence set (T-F07). Ads not organic;
+   * broker-masked Ads API key; account identity; conversions+campaigns;
+   * bounded window; watermark+pending labels; measurement checklist;
+   * READ_READY Analyze-only; transport/entitlement gate; unsafe claims
+   * refused; live NOT_WIRED. Distinct from T-US-013 read-ready summary and
+   * T-US-014 identity mismatch.
+   */
+  CONNECT_CHATGPT_ADS: "connect_chatgpt_ads",
+  /**
    * Connect Claude Code and the Claude test API — complete F08 evidence set
    * (T-F08). Install+auth diagnostic, broker test-API bind, dated model
    * catalog, budget policy+selected model, consented smoke+usage ledger,
@@ -851,6 +860,20 @@ export const SoakProofKind = {
    */
   CONNECT_GOOGLE_ADS_ANALYZE_ONLY: "connect_google_ads_analyze_only",
   /**
+   * Connect ChatGPT Ads analyze-only — read-ready + write denial (T-US-013).
+   * Transport/entitlement gate required; persist/reload fixture store; live
+   * NOT_WIRED. Distinct from T-F07 complete F07 package and T-US-014 identity
+   * mismatch.
+   */
+  CONNECT_CHATGPT_ADS_READ_READY: "connect_chatgpt_ads_read_ready",
+  /**
+   * ChatGPT Ads key/account identity mismatch refuses bind (T-US-014).
+   * Intended ≠ returned account → ADS_ACCOUNT_IDENTITY_MISMATCH; live NOT_WIRED.
+   * Distinct from T-F07 complete connect evidence and T-US-013 read-ready save.
+   */
+  CHATGPT_ADS_IDENTITY_MISMATCH_REFUSES_BIND:
+    "chatgpt_ads_identity_mismatch_refuses_bind",
+  /**
    * Semantic search / no-result with evaluation comparison (T-US-045).
    * Honest NO_RESULT → judgment + remediation → COMPARE_GOLDEN re-run
    * improvement. Distinct from T-F23 complete F23 evidence package.
@@ -927,8 +950,8 @@ export const SoakProofKind = {
    * Recent Ads conversion blank → PENDING, not a false zero (T-X036).
    * Blank/omitted/unsettled conversions stay PENDING (displayValue null);
    * never coerce to a false zero; budget adjust blocked while unsettled.
-   * Distinct from T-US-011 / T-US-031 / T-X034 / T-X035. Soft-skip ChatGPT
-   * Ads connect cases (T-F07 / T-US-013 / T-US-014) stay ACCESS_BLOCKED.
+   * Distinct from T-US-011 / T-US-031 / T-X034 / T-X035. Distinct from
+   * T-F07 / T-US-013 / T-US-014 ChatGPT Ads connect fixtures.
    */
   RECENT_ADS_CONVERSION_BLANK_PENDING:
     "recent_ads_conversion_blank_pending",
@@ -1114,6 +1137,9 @@ export const SOAK_FIXTURE_HARNESS_NOW_ISO = "2026-11-21T18:00:00.000Z";
  * T-US-032 requires EXACT_FINANCIAL_BOUNDARIES_PRESERVED.
  * T-US-007 requires CONNECT_GA4_READ_READY_NEXT_SYNC (ready-read/next-sync summary; distinct from T-F04).
  * T-US-009 requires CONNECT_GSC_SCHEDULE_WATERMARK (schedule/watermark summary; live NOT_WIRED).
+ * T-F07 requires CONNECT_CHATGPT_ADS (complete F07 evidence set; live NOT_WIRED).
+ * T-US-013 requires CONNECT_CHATGPT_ADS_READ_READY (read-ready/write denial; distinct from T-F07).
+ * T-US-014 requires CHATGPT_ADS_IDENTITY_MISMATCH_REFUSES_BIND.
  * T-US-037 requires PORTABLE_ANALYSIS_ARTIFACT (portable brief; live NOT_WIRED).
  * T-US-001 requires TRUSTED_WORKSPACE_READINESS_BLOCKERS_NEXT_ACTIONS.
  * T-US-039 requires FORM_CRM_CONTINUOUS_VERIFY_CADENCE_HEARTBEAT.
@@ -1132,6 +1158,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-F04",
   "T-F05",
   "T-F06",
+  "T-F07",
   "T-F08",
   "T-F09",
   "T-F10",
@@ -1243,6 +1270,8 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X036",
   "T-US-011",
   "T-US-012",
+  "T-US-013",
+  "T-US-014",
   "T-US-015",
   "T-US-016",
   "T-US-017",
@@ -1282,11 +1311,9 @@ export const SOAK_FIXTURE_CASE_IDS = [
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
 
-/** Related catalog IDs (fixture ACCEPTED set + adjacent recovery/ads cases). */
+/** Related catalog IDs (fixture ACCEPTED set + adjacent recovery cases). */
 export const SOAK_RELATED_CASE_IDS: readonly string[] = [
   ...SOAK_FIXTURE_CASE_IDS,
-  "T-F07",
-  "T-US-013",
   "T-X073",
 ] as const;
 
@@ -1808,6 +1835,10 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY];
     case "T-US-012":
       return [SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED];
+    case "T-US-013":
+      return [SoakProofKind.CONNECT_CHATGPT_ADS_READ_READY];
+    case "T-US-014":
+      return [SoakProofKind.CHATGPT_ADS_IDENTITY_MISMATCH_REFUSES_BIND];
     case "T-US-015":
       return [SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY];
     case "T-US-016":
@@ -1870,6 +1901,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY];
     case "T-F06":
       return [SoakProofKind.CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS];
+    case "T-F07":
+      return [SoakProofKind.CONNECT_CHATGPT_ADS];
     case "T-F08":
       return [SoakProofKind.CONNECT_CLAUDE_CODE_AND_TEST_API];
     case "T-F09":
@@ -2170,6 +2203,8 @@ export function mapProofToFixtureCases(
       return ["T-F05"];
     case SoakProofKind.CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS:
       return ["T-F06"];
+    case SoakProofKind.CONNECT_CHATGPT_ADS:
+      return ["T-F07"];
     case SoakProofKind.CONNECT_CLAUDE_CODE_AND_TEST_API:
       return ["T-F08"];
     case SoakProofKind.CONNECT_GEMINI_INDEPENDENT_TESTING:
@@ -2226,6 +2261,10 @@ export function mapProofToFixtureCases(
       return ["T-US-007"];
     case SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY:
       return ["T-US-011"];
+    case SoakProofKind.CONNECT_CHATGPT_ADS_READ_READY:
+      return ["T-US-013"];
+    case SoakProofKind.CHATGPT_ADS_IDENTITY_MISMATCH_REFUSES_BIND:
+      return ["T-US-014"];
     case SoakProofKind.CONNECT_GSC_SCHEDULE_WATERMARK:
       return ["T-US-009"];
     case SoakProofKind.SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON:

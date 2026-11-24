@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-014",
+  "caseId": "T-US-014",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-014 (ChatGPT Ads key/account identity mismatch refuses bind)\nproof=chatgpt_ads_identity_mismatch_refuses_bind applyCount=0 :: intended ≠ returned → ADS_ACCOUNT_IDENTITY_MISMATCH; bindRefused=true | identity match → ADS_ACCOUNT_IDENTITY_MATCH_FIXTURE_BIND (fixture bind receipt only; not VERIFIED) | MODEL_API_KEY → MODEL_API_KEY_REFUSED; bind refused | missing transport → ADS_TRANSPORT_UNVERIFIED (chatgpt_ads_transport_entitlement retained) | LIVE → LIVE_TRANSPORT_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-F07 CONNECT_CHATGPT_ADS and T-US-013 CONNECT_CHATGPT_ADS_READ_READY — identity mismatch refuse gate only | proofRecordedAt=2026-11-21T19:21:27.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "chatgpt_ads_identity_mismatch_refuses_bind"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-014.json",
+  "createdAtIso": "2026-11-24T21:57:22.298Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-014-e53c31ab5f1e"
+}

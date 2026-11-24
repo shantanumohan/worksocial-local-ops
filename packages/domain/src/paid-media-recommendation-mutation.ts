@@ -382,7 +382,7 @@ export function evaluatePaidMediaRecommendationMutation(
           preservedInputCount: preserved,
         },
         reasons: [
-          "ChatGPT Ads ACCESS_BLOCKED without verified local transport and entitlement (T-US-031); offline soak soft-skips live ChatGPT Ads",
+          "ChatGPT Ads ACCESS_BLOCKED without verified local transport and entitlement (T-US-031); distinct from T-F07/T-US-013/T-US-014 ChatGPT Ads connect fixtures",
         ],
       };
     }

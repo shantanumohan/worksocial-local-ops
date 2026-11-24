@@ -8,8 +8,8 @@
     "connect_claude_code_and_test_api"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-f08.json",
-  "createdAtIso": "2026-11-24T21:27:22.560Z",
+  "createdAtIso": "2026-11-24T21:57:22.298Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-f08-4439db7ed06a"
+  "uniqueSourceArtifactId": "art-fixture-t-f08-e53c31ab5f1e"
 }

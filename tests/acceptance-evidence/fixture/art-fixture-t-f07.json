@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-f07",
+  "caseId": "T-F07",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-F07 (Connect ChatGPT Ads)\nproof=connect_chatgpt_ads applyCount=1 :: complete F07 evidence package → CONNECT_CHATGPT_ADS_EVIDENCE_RECORDED; Ads not organic; broker-masked Ads API key; account identity; conversions+campaigns; bounded window; watermark+pending labels; measurement checklist; READ_READY Analyze-only; adsVerifiedLive=false; live NOT_WIRED | missing transport → ADS_TRANSPORT_UNVERIFIED (ACCESS_BLOCKED) | organic integration → ORGANIC_INTEGRATION_REFUSED | MODEL_API_KEY → MODEL_API_KEY_REFUSED | identity mismatch → ADS_ACCOUNT_IDENTITY_MISMATCH (T-US-014) | attemptWriteSave → WRITE_SAVE_REFUSED | claimLiveVerifiedAds → FALSE_LIVE_VERIFIED_ADS_REFUSED | requestLiveProviderWiring → LIVE_PROVIDER_WIRING_NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-US-013 (analyze-only save/reload summary) and T-US-014 (identity mismatch) — complete F07 flow evidence package | proofRecordedAt=2026-11-21T19:16:05.000Z\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "connect_chatgpt_ads"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-f07.json",
+  "createdAtIso": "2026-11-24T21:57:22.298Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-f07-e53c31ab5f1e"
+}

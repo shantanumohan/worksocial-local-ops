@@ -100,6 +100,22 @@ describe("analytics — ChatGPT Ads gate", () => {
     expect(decision.environment).toBe(AnalyticsEnvironment.NOT_WIRED);
   });
 
+  it("grants fixture Ads access when transport/entitlement/auth verified", () => {
+    const decision = evaluateChatGptAdsAccess({
+      localTransportVerified: true,
+      entitlementVerified: true,
+      authVerified: true,
+      projectEnvironment: AnalyticsEnvironment.FIXTURE,
+      requestedEnvironment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(decision.allowed).toBe(true);
+    expect(decision.code).toBe("ADS_ACCESS_GRANTED_FIXTURE");
+    expect(decision.environment).toBe(AnalyticsEnvironment.FIXTURE);
+    expect(decision.reasons.some((r) => /fixture access granted/i.test(r))).toBe(
+      true,
+    );
+  });
+
   it("blocks test-only Ads project binding production (T-X034)", () => {
     const decision = evaluateChatGptAdsAccess({
       localTransportVerified: true,

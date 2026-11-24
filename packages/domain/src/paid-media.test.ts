@@ -277,9 +277,26 @@ describe("paid-media — delivery diagnosis + proposals / F16", () => {
     const status = paidMediaChannelStatus();
     expect(status.googleAds.writeReady).toBe(false);
     expect(status.chatgptAds.wiring).toBe(PaidMediaWiring.ACCESS_BLOCKED);
+    expect(status.chatgptAds.readReady).toBe(false);
     expect(status.chatgptAds.access.allowed).toBe(false);
     expect(status.liveMutationWiring).toBe("NOT_WIRED");
     expect(status.externalEffects).toBe("NONE");
+  });
+
+  it("marks ChatGPT Ads FIXTURE read-ready when access granted", () => {
+    const access = evaluateChatGptAdsAccess({
+      localTransportVerified: true,
+      entitlementVerified: true,
+      authVerified: true,
+      projectEnvironment: AnalyticsEnvironment.FIXTURE,
+      requestedEnvironment: AnalyticsEnvironment.FIXTURE,
+    });
+    const status = paidMediaChannelStatus({ chatgptAdsAccess: access });
+    expect(status.chatgptAds.wiring).toBe(PaidMediaWiring.FIXTURE);
+    expect(status.chatgptAds.readReady).toBe(true);
+    expect(status.chatgptAds.writeReady).toBe(false);
+    expect(status.chatgptAds.access.allowed).toBe(true);
+    expect(status.liveMutationWiring).toBe("NOT_WIRED");
   });
 
   it("invalidates proposal when shared ad budget changes externally (T-X035)", () => {

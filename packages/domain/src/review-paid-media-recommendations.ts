@@ -505,7 +505,7 @@ export function evaluateReviewPaidMediaRecommendations(
       chatgptAdsWiring: _chatgptAdsWiring,
       evidence,
       reasons: [
-        "ChatGPT Ads ACCESS_BLOCKED without verified local transport and entitlement (T-F16); soft-skip connect cases T-F07/T-US-013/T-US-014",
+        "ChatGPT Ads ACCESS_BLOCKED without verified local transport and entitlement (T-F16); distinct from T-F07/T-US-013/T-US-014 ChatGPT Ads connect fixtures",
       ],
     };
   }

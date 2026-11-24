@@ -239,7 +239,8 @@ export type ChatGptAdsAccessDecision = {
 
 /**
  * ChatGPT Ads stays access-blocked without verified local transport +
- * entitlement. Live remains NOT_WIRED in M8.
+ * entitlement + auth. With gates verified, FIXTURE analysis may be granted
+ * (`ADS_ACCESS_GRANTED_FIXTURE`) — never live VERIFIED. Live remains NOT_WIRED.
  */
 export function evaluateChatGptAdsAccess(
   input: ChatGptAdsAccessInput,
@@ -293,15 +294,15 @@ export function evaluateChatGptAdsAccess(
       environment: AnalyticsEnvironment.NOT_WIRED,
     };
   }
-  // Even with gates, M8 only permits labeled FIXTURE analysis — never live.
+  // Gates verified + FIXTURE → fixture analysis access only (never live VERIFIED).
   if (input.requestedEnvironment === AnalyticsEnvironment.FIXTURE) {
     return {
-      allowed: false,
-      code: "ADS_ACCESS_BLOCKED",
+      allowed: true,
+      code: "ADS_ACCESS_GRANTED_FIXTURE",
       reasons: [
-        "Transport/entitlement would be required for any Ads path; ChatGPT Ads remains access-blocked in M8 without a verified local Ads transport implementation",
+        "ChatGPT Ads fixture access granted — local transport, entitlement, and auth verified; Analyze-only; live mutate NOT_WIRED; ACCEPTED ≠ VERIFIED",
       ],
-      environment: AnalyticsEnvironment.NOT_WIRED,
+      environment: AnalyticsEnvironment.FIXTURE,
     };
   }
   return {

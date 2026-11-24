@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-us-013",
+  "caseId": "T-US-013",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-US-013 (Connect ChatGPT Ads — read-ready; write denial; transport/entitlement gate)\nproof=connect_chatgpt_ads_read_ready applyCount=0 :: ANALYZE_ONLY READ_READY account=ads-mgr-fixture-acct-07; broker=brok…1234; currency=USD | Inventory conversions=2 campaigns=2 pendingLabels=1 | Read receipt=2026-11-21T19:21:25.000Z; sourceWatermark=fixture-chatgpt-ads-wm-858c3fd8 | Spending authority disabled; writeReadiness=NOT_AUTHORIZED; transport/entitlement gate retained | Persisted fixture binding reloaded connectionId=chatgpt-ads-conn-c8ce451b | WRITE capability → WRITE_CAPABILITY_REFUSED (analyze-only only) | missing transport → ADS_TRANSPORT_UNVERIFIED (transport/entitlement gate) | LIVE → LIVE_TRANSPORT_NOT_WIRED; live ChatGPT Ads mutate stays NOT_WIRED | No gateway mutate — fixture store persist/reload only; applyAttemptCount=0 | Distinct from T-F07 CONNECT_CHATGPT_ADS (complete F07 package) — T-US-013 is read-ready save/reload summary | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "connect_chatgpt_ads_read_ready"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-us-013.json",
+  "createdAtIso": "2026-11-24T21:57:22.298Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-us-013-e53c31ab5f1e"
+}

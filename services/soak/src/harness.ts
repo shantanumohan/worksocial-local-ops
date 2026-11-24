@@ -162,6 +162,7 @@ import { proofMapSitesPagesEditableSources } from "./map-sites-pages-editable-so
 import { proofConnectGoogleAnalytics4 } from "./connect-google-analytics-4-proof.js";
 import { proofConnectSearchConsoleOrganicVisibility } from "./connect-search-console-organic-visibility-proof.js";
 import { proofConnectGoogleAdsControlledAnalysis } from "./connect-google-ads-controlled-analysis-proof.js";
+import { proofConnectChatGptAds } from "./connect-chatgpt-ads-proof.js";
 import { proofConnectClaudeCodeAndTestApi } from "./connect-claude-code-and-test-api-proof.js";
 import { proofConnectGeminiIndependentTesting } from "./connect-gemini-independent-testing-proof.js";
 import { proofMapCrmFormsBookingTruth } from "./map-crm-forms-booking-truth-proof.js";
@@ -225,6 +226,8 @@ import { proofExactFinancialBoundariesPreserved } from "./exact-financial-bounda
 import { proofConnectGa4ReadReadyNextSync } from "./connect-ga4-read-ready-proof.js";
 import { proofConnectGscScheduleWatermark } from "./connect-gsc-schedule-watermark-proof.js";
 import { proofConnectGoogleAdsAnalyzeOnlyWriteDisabled } from "./connect-google-ads-analyze-only-proof.js";
+import { proofConnectChatGptAdsReadReady } from "./connect-chatgpt-ads-read-ready-proof.js";
+import { proofChatGptAdsIdentityMismatchRefusesBind } from "./chatgpt-ads-identity-mismatch-proof.js";
 import { proofSemanticSearchNoResultEvalComparison } from "./semantic-search-no-result-eval-proof.js";
 import { proofPortableAnalysisArtifact } from "./portable-analysis-artifact-proof.js";
 import { proofTrustedWorkspaceReadinessBlockersNextActions } from "./trusted-workspace-readiness-proof.js";
@@ -964,6 +967,7 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofConnectGoogleAdsControlledAnalysis(nowPlus(nowIso, 960_000)),
   );
+  proofs.push(proofConnectChatGptAds(nowPlus(nowIso, 965_000)));
   proofs.push(proofConnectClaudeCodeAndTestApi(nowPlus(nowIso, 970_000)));
   proofs.push(
     proofConnectGeminiIndependentTesting(nowPlus(nowIso, 980_000)),
@@ -1041,6 +1045,10 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(proofConnectGa4ReadReadyNextSync(nowPlus(nowIso, 1260000)));
   proofs.push(proofConnectGscScheduleWatermark(nowPlus(nowIso, 1270000)));
   proofs.push(proofConnectGoogleAdsAnalyzeOnlyWriteDisabled(nowPlus(nowIso, 1280000)));
+  proofs.push(proofConnectChatGptAdsReadReady(nowPlus(nowIso, 1285000)));
+  proofs.push(
+    proofChatGptAdsIdentityMismatchRefusesBind(nowPlus(nowIso, 1287000)),
+  );
   proofs.push(
     proofSemanticSearchNoResultEvalComparison(nowPlus(nowIso, 1290000)),
   );

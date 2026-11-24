@@ -2380,7 +2380,7 @@ export function paidPage(apiOrigin: string): string {
   <section>
     <h2>Paid-media recommendations (AA-19 / F16)</h2>
     <p class="muted">Fixture Google Ads Analyze-only proposals with financial diffs. Approve/decline records a decision — <strong>no live spend mutations</strong>.</p>
-    <p class="warn">ChatGPT Ads is <strong>ACCESS_BLOCKED</strong> without verified local transport + entitlement. Live Ads execute path is <strong>NOT_WIRED</strong>. External effects: NONE. Catalog T-F16 / T-F07 remain NOT_RUN.</p>
+    <p class="warn">ChatGPT Ads is <strong>ACCESS_BLOCKED</strong> without verified local transport + entitlement; with gates verified, fixture Analyze-only may be READ_READY. Live Ads execute path is <strong>NOT_WIRED</strong>. External effects: NONE. Catalog T-F07 / T-US-013 / T-US-014 are fixture ACCEPTED (not live VERIFIED).</p>
     <button id="btn-seed" type="button">Seed fixture proposals</button>
     <button id="btn-approve" type="button">Approve Google fixture proposal</button>
     <button id="btn-execute" type="button">Attempt execute (expect NOT_WIRED)</button>

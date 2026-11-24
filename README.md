@@ -128,7 +128,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 - Console `/paid` + enhanced `/analysis` (hypotheses / redacted briefs).
 - APIs `/paid/*` and `/analysis/{definitions,hypotheses,briefs,save-*}`.
 - Google Ads fixture Analyze-only proposals with financial diffs; approve/decline records decisions without spend mutations.
-- ChatGPT Ads remains **ACCESS_BLOCKED** without verified local transport + entitlement; live execute **NOT_WIRED**. External effects **NONE**. Catalog cases stay **NOT_RUN**.
+- ChatGPT Ads remains **ACCESS_BLOCKED** without verified local transport + entitlement; with gates verified, fixture Analyze-only may be READ_READY. Live execute **NOT_WIRED**. External effects **NONE**. T-F07 / T-US-013 / T-US-014 are fixture **ACCEPTED** (not live VERIFIED).
 
 ### WP10 recovery evidence (F24)
 
@@ -187,7 +187,7 @@ Local WorkSocial operations monorepo (repository: `worksocial-local-ops`).
 | Live CMS bounded repair | **NOT_WIRED** — fixture canary apply/verify only (R1-10) |
 | Live GSC / GA4 query transport | **NOT_WIRED** — fixture / UNAVAILABLE collectors only (M8) |
 | Live Claude/Gemini eval fleet | **NOT_WIRED** — EVAL_ONLY fixture adjudication (M8/AA-20); `pnpm test:eval` proves isolation offline |
-| ChatGPT Ads | **access-blocked / NOT_WIRED** without verified local transport + entitlement (M8) |
+| ChatGPT Ads | **access-blocked** without verified local transport + entitlement; fixture Analyze-only ACCEPTED (T-F07/T-US-013/T-US-014); live mutate **NOT_WIRED** |
 | 72h R1 pilot soak on owner host | **NOT_MET** in CI — requires documented ≥72h owner soak (M9) |
 
 Status labels stay honest: fixture / stub / `NOT_RUN` / fixture-`ACCEPTED` ≠ sandbox-verified or production-canary-verified.

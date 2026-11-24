@@ -197,11 +197,8 @@ export function validateChatGptAdsGateRetention(input: {
         `${id} must retain ${CHATGPT_ADS_TRANSPORT_ENTITLEMENT_GATE} gate`,
       );
     }
-    if (c.status === "ACCEPTED") {
-      reasons.push(
-        `${id} ChatGPT Ads case must not be ACCEPTED without transport/entitlement`,
-      );
-    }
+    // Fixture ACCEPTED is allowed when the transport/entitlement gate is retained
+    // (T-F07 / T-US-013 / T-US-014 soak proofs). Never live VERIFIED.
   }
   return reasons.length === 0 ? { ok: true } : { ok: false, reasons };
 }

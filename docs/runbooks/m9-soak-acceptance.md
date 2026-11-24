@@ -220,7 +220,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-US-030** maps only to `UNCERTAIN_POST_RECONCILE_BEFORE_RETRY` (uncertain post reconcile before retry; blind retry refused; present→no retry / absent→linked retry; live NOT_WIRED; distinct from T-US-048/T-X020/T-X017/T-US-029/T-X045; not live VERIFIED)
 **T-US-031** maps only to `PAID_MEDIA_RECOMMENDATION_MUTATION_OR_FAILURE` (paid-media recommendation decision + honest execute failure; ChatGPT Ads ACCESS_BLOCKED; live NOT_WIRED; distinct from T-US-011/T-US-012/T-US-032/T-X034–T-X036; not live VERIFIED).
-**T-X036** maps only to `RECENT_ADS_CONVERSION_BLANK_PENDING` (blank/omitted/unsettled recent Ads conversions stay PENDING with displayValue null — never a false zero; budget adjust blocked while unsettled; live NOT_WIRED; distinct from T-US-011/T-US-031/T-X034/T-X035; ChatGPT Ads connect soft-skip ACCESS_BLOCKED; not live VERIFIED).
+**T-X036** maps only to `RECENT_ADS_CONVERSION_BLANK_PENDING` (blank/omitted/unsettled recent Ads conversions stay PENDING with displayValue null — never a false zero; budget adjust blocked while unsettled; live NOT_WIRED; distinct from T-US-011/T-US-031/T-X034/T-X035 and from T-F07/T-US-013/T-US-014 ChatGPT Ads connect fixtures; not live VERIFIED).
 **T-US-033** maps only to `EVAL_SUITE_ADJUDICATION_BACKLOG` (Claude/Gemini eval suite adjudication + linked backlog; no production writes; live NOT_WIRED; distinct from T-US-015/T-US-017/T-US-018/T-X037/T-X038; not live VERIFIED).
 **T-US-034** maps only to `PROVIDER_ERROR_NOT_PASS` (provider error ≠ bad answer or pass; distinct statuses; pass-rate denominator excludes infrastructure errors; live NOT_WIRED; distinct from T-X039/T-US-058 / T-US-033 / T-X038; not live VERIFIED).
 **T-US-049** maps only to `DAILY_OWNER_REVIEW_OPERATING_KNOWLEDGE` (daily owner review; reviewed operating knowledge; live NOT_WIRED; distinct from T-US-050 / T-US-025 / T-US-035; not live VERIFIED).
@@ -245,7 +245,16 @@ Suggested owner Windows flow (state off OneDrive):
 **T-F05** maps only to `CONNECT_SEARCH_CONSOLE_ORGANIC_VISIBILITY` (complete F05 evidence package: identity+scopes+API readiness, domain/URL-prefix property bind, comparable-query config, observation batch+coverage+sitemap, intent→page map, daily schedule+watermark; unsafe claims refused; live NOT_WIRED; distinct from T-US-009 schedule/watermark summary; not live VERIFIED).
 
 **T-F06** maps only to `CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS` (complete F06 evidence package: project+access tier, identity+scopes, deny-write consent, client/manager bind+TEST badge, campaigns+conversions, event mapping+discrepancies, read receipt+watermark, READ_READY Analyze-only; unsafe claims refused; live NOT_WIRED; distinct from T-US-011 analyze-only save/reload and T-US-012 test vs production; not live VERIFIED).
-**T-US-011**, **T-US-045** maps only to `CONNECT_GOOGLE_ADS_ANALYZE_ONLY` (analyze-only save/reload; write/spend disabled; distinct from T-F06 complete package; not live VERIFIED).
+
+**T-F07** maps only to `CONNECT_CHATGPT_ADS` (complete F07 evidence package: Ads not organic; broker-masked Ads API key; account identity; conversions+campaigns; bounded window; watermark+pending labels; measurement checklist; READ_READY Analyze-only; transport/entitlement gate; unsafe claims refused; live NOT_WIRED; distinct from T-US-013 read-ready save/reload and T-US-014 identity mismatch; not live VERIFIED).
+
+**T-US-011** maps only to `CONNECT_GOOGLE_ADS_ANALYZE_ONLY` (analyze-only save/reload; write/spend disabled; distinct from T-F06 complete package; not live VERIFIED).
+
+**T-US-013** maps only to `CONNECT_CHATGPT_ADS_READ_READY` (read-ready + write denial; transport/entitlement gate; persist/reload; distinct from T-F07 complete package; not live VERIFIED).
+
+**T-US-014** maps only to `CHATGPT_ADS_IDENTITY_MISMATCH_REFUSES_BIND` (intended ≠ returned refuses bind; distinct from T-F07/T-US-013; not live VERIFIED).
+
+**T-US-045** maps only to `SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON` (honest NO_RESULT → judgment + remediation → COMPARE_GOLDEN; distinct from T-F23; not live VERIFIED).
 
 
 **T-F08** maps only to `CONNECT_CLAUDE_CODE_AND_TEST_API` (complete F08 evidence package: install+auth diagnostic, broker test-API bind, dated model catalog, budget policy+selected model, consented smoke+usage ledger, EVAL_ONLY test adapter enabled; unsafe claims refused; live NOT_WIRED; distinct from T-US-015 EVAL_ONLY connect summary and T-US-016 runtime vs API eval auth; not live VERIFIED).

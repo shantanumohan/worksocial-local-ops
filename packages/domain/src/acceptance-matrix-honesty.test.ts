@@ -95,7 +95,7 @@ describe("acceptance-matrix-honesty", () => {
     );
   });
 
-  it("retains ChatGPT Ads transport/entitlement gates and refuses ACCEPTED", () => {
+  it("retains ChatGPT Ads transport/entitlement gates; ACCEPTED ok when gate present", () => {
     const missing = validateChatGptAdsGateRetention({
       cases: [
         {
@@ -107,14 +107,23 @@ describe("acceptance-matrix-honesty", () => {
     });
     expect(missing.ok).toBe(false);
 
-    const accepted = validateChatGptAdsGateRetention({
+    const acceptedWithoutGate = validateChatGptAdsGateRetention({
+      cases: CHATGPT_ADS_GATE_CASE_IDS.map((id) => ({
+        id,
+        status: "ACCEPTED",
+        gates: [],
+      })),
+    });
+    expect(acceptedWithoutGate.ok).toBe(false);
+
+    const acceptedWithGate = validateChatGptAdsGateRetention({
       cases: CHATGPT_ADS_GATE_CASE_IDS.map((id) => ({
         id,
         status: "ACCEPTED",
         gates: [CHATGPT_ADS_TRANSPORT_ENTITLEMENT_GATE],
       })),
     });
-    expect(accepted.ok).toBe(false);
+    expect(acceptedWithGate).toEqual({ ok: true });
 
     const ok = validateChatGptAdsGateRetention({
       cases: CHATGPT_ADS_GATE_CASE_IDS.map((id) => ({
