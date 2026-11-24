@@ -381,6 +381,48 @@ export async function proofIdempotencyKeyPayloadMismatch(
   );
   if (!doubleSpaceConflict) passed = false;
 
+  const vtConflict = await expectMismatchConflict(
+    "acceptPending VT-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}\v`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!vtConflict) passed = false;
+
+  const ffConflict = await expectMismatchConflict(
+    "acceptPending FF-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}\f`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!ffConflict) passed = false;
+
+  const lsConflict = await expectMismatchConflict(
+    "acceptPending LS-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}\u2028`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!lsConflict) passed = false;
+
   // Concurrent multi-alt digest-B barrage — all Conflict; no orphans; applyCount=1.
   const barrageN = 8;
   const barrageIds = Array.from(
@@ -698,6 +740,51 @@ export async function proofIdempotencyKeyPayloadMismatch(
     );
   }
 
+  // Post-VERIFIED concurrent same-digest positive control.
+  const verifiedSameN = 4;
+  const verifiedSameIds = Array.from(
+    { length: verifiedSameN },
+    (_, i) => `${operationId}-vsame-${i}`,
+  );
+  const verifiedSameResults = await Promise.all(
+    verifiedSameIds.map((opId) =>
+      accept(svc, {
+        operationId: opId,
+        bizKey,
+        digest: digestA,
+        idem: `${idem}-vsame-${opId.slice(-8)}`,
+        nowIso,
+      })
+        .then((r) => ({
+          ok:
+            r.providerCreated === false &&
+            r.provider.applyCount === 1 &&
+            r.provider.payloadDigest === digestA &&
+            r.provider.remoteRef === first.provider.remoteRef,
+        }))
+        .catch(() => ({ ok: false })),
+    ),
+  );
+  const verifiedSameAllOk = verifiedSameResults.every((r) => r.ok);
+  const afterVerifiedSame = await svc.stores.fakeProvider.getByBusinessKey(
+    bizKey,
+  );
+  const decisionAfterVerifiedSame = await svc.stores.decisions.get(operationId);
+  if (
+    !verifiedSameAllOk ||
+    afterVerifiedSame?.applyCount !== 1 ||
+    decisionAfterVerifiedSame?.outcome !== "VERIFIED"
+  ) {
+    passed = false;
+    details.push(
+      `Post-VERIFIED concurrent same-digest failed: ok=${verifiedSameResults.filter((r) => r.ok).length}/${verifiedSameN} applyCount=${afterVerifiedSame?.applyCount} outcome=${decisionAfterVerifiedSame?.outcome}`,
+    );
+  } else {
+    details.push(
+      `Post-VERIFIED concurrent ${verifiedSameN}-way same-digest accepts → all replay applyCount=1; outcome stays VERIFIED`,
+    );
+  }
+
   // Receipt integrity: no digest-B observations recorded after Conflicts.
   const receipts = await svc.stores.receipts.listForOperation(operationId);
   const receiptDigestB = receipts.some((r) => r.observedDigest === digestB);
@@ -814,6 +901,29 @@ export async function proofIdempotencyKeyPayloadMismatch(
     );
   }
 
+  // Explicit effects.countApplyAttempts agrees with provider applyCount=1.
+  const applyAttemptsMain = await svc.stores.effects.countApplyAttempts(
+    operationId,
+  );
+  const applyAttemptsFailed = await svc.stores.effects.countApplyAttempts(
+    wrongVerifyOp,
+  );
+  let applyAttemptsOk =
+    applyAttemptsMain === 1 &&
+    applyAttemptsFailed === 1 &&
+    afterVerified?.applyCount === 1 &&
+    afterPostFailed?.applyCount === 1;
+  if (!applyAttemptsOk) {
+    passed = false;
+    details.push(
+      `countApplyAttempts honesty failed: main=${applyAttemptsMain} failedOp=${applyAttemptsFailed} providerMain=${afterVerified?.applyCount} providerFailed=${afterPostFailed?.applyCount}`,
+    );
+  } else {
+    details.push(
+      "effects.countApplyAttempts=1 for main + FAILED ops; provider applyCount=1 (no second remote effect)",
+    );
+  }
+
   details.push(
     `liveProviderSuccessClaimed=false liveProviderWiring=${IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING} externalEffects=NONE ACCEPTED≠VERIFIED chatgptAdsConnectSoftSkip=${IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP.join(",")} ACCESS_BLOCKED`,
   );
@@ -842,6 +952,9 @@ export async function proofIdempotencyKeyPayloadMismatch(
       suffixConflict &&
       bomConflict &&
       doubleSpaceConflict &&
+      vtConflict &&
+      ffConflict &&
+      lsConflict &&
       barrageAllConflict &&
       !barrageOrphans &&
       sameDigestAllOk &&
@@ -851,8 +964,10 @@ export async function proofIdempotencyKeyPayloadMismatch(
       verifiedPathConflict &&
       verifiedBarrageAllConflict &&
       !verifiedBarrageOrphans &&
+      verifiedSameAllOk &&
       wrongVerifyOk &&
-      postFailedOk,
+      postFailedOk &&
+      applyAttemptsOk,
     details,
     applyAttemptCount: afterVerified?.applyCount ?? first.applyAttemptCount,
     operationId,

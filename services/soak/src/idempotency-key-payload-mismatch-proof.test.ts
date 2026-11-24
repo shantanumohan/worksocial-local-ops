@@ -114,6 +114,21 @@ describe("proofIdempotencyKeyPayloadMismatch (T-X022)", () => {
       ),
     ).toBe(true);
     expect(
+      proof.details.some((d) =>
+        d.includes("VT-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("FF-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("LS-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
       proof.details.some(
         (d) =>
           d.includes("Interleaved concurrent mix") &&
@@ -131,8 +146,23 @@ describe("proofIdempotencyKeyPayloadMismatch (T-X022)", () => {
     expect(
       proof.details.some(
         (d) =>
+          d.includes("Post-VERIFIED concurrent") &&
+          d.includes("same-digest accepts") &&
+          d.includes("VERIFIED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
           d.includes("Post-FAILED digest-B acceptPending → Conflict") &&
           d.includes("FAILED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("effects.countApplyAttempts=1") &&
+          d.includes("no second remote effect"),
       ),
     ).toBe(true);
     expect(

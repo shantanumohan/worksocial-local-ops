@@ -662,6 +662,9 @@ describe("durable execution (memory fixture)", () => {
       ["leading", " digest-bound"],
       ["bom", "\ufeffdigest-bound"],
       ["dblspace", "digest-bound  "],
+      ["vt", "digest-bound\v"],
+      ["ff", "digest-bound\f"],
+      ["ls", "digest-bound\u2028"],
     ] as const) {
       await expect(
         service.acceptPending({
