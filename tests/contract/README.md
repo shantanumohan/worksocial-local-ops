@@ -11,5 +11,6 @@ Focused offline contracts (no live providers):
 - `paid-media-proposals.contract.test.ts` — AA-19 analysis hypotheses + Google Ads fixture proposals; ChatGPT Ads ACCESS_BLOCKED; live execute NOT_WIRED; external effects NONE
 - `recovery-evidence.contract.test.ts` — WP10 stale vs active vs URO; live recovery NOT_RUN; local credential paths fixture; live provider revoke NOT_WIRED
 - `credential-rotation.contract.test.ts` — WP10 revoke → cancel queued → audit retained; live provider revoke NOT_WIRED; external effects NONE; catalog NOT_RUN
+- `keyboard-focus-restore.contract.test.ts` — T-X061 open/trap/restore + FOCUS_LOST; soak map; fixture ACCEPTED ≠ VERIFIED; external effects NONE
 
 Run: `pnpm test:contract`
