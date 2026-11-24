@@ -181,7 +181,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X028** maps only to `ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE`.
 
-| T-X044 | Fixture ACCEPTED via unlicensed venue media publish blocked only |
+| T-X044 | Fixture ACCEPTED via unlicensed venue media publish blocked only (liveMediaWiring NOT_WIRED; LIVE_MEDIA_CLAIM_REFUSED; externalEffects NONE) |
 
 **T-X045** maps only to `PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE` (per-destination PARTIAL honesty; not live VERIFIED).
 

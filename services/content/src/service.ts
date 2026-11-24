@@ -757,7 +757,32 @@ export function createContentService(
 
       details.push("Live CMS publish adapter is NOT_WIRED — fixture release only");
 
+      // T-X044 — unlicensed / uncleared venue media blocks publish before
+      // gateway AND before the preferLive NOT_WIRED early return (no receipt).
+      const venueMediaGate = gateVenueMediaBundleForPublish(input.venueMedia);
+      if (!venueMediaGate.allowed) {
+        details.push(
+          `Venue media publish blocked: ${venueMediaGate.code} — ${venueMediaGate.reason}`,
+        );
+        details.push("externalEffects=NONE");
+        details.push("liveMediaWiring=NOT_WIRED ACCEPTED≠VERIFIED");
+        return {
+          article,
+          gatewayDecision: null,
+          receipt: null,
+          outcome: null,
+          liveCmsPublishWiring: "NOT_WIRED",
+          acceptanceEqualsVerified: false,
+          details,
+        };
+      }
+      if (!("skipped" in venueMediaGate && venueMediaGate.skipped)) {
+        details.push(venueMediaGate.reason);
+      }
+
       if (input.preferLive === true) {
+        // Empty-media preferLive stays honest NOT_WIRED adapter refuse.
+        // Attached venueMedia already passed the T-X044 gate above.
         const live = invokeDestinationAdapter({
           kind: DestinationKind.CMS,
           preferLive: true,
@@ -800,27 +825,6 @@ export function createContentService(
           acceptanceEqualsVerified: false,
           details,
         };
-      }
-
-      // T-X044 — unlicensed / uncleared venue media blocks publish before gateway.
-      const venueMediaGate = gateVenueMediaBundleForPublish(input.venueMedia);
-      if (!venueMediaGate.allowed) {
-        details.push(
-          `Venue media publish blocked: ${venueMediaGate.code} — ${venueMediaGate.reason}`,
-        );
-        details.push("externalEffects=NONE");
-        return {
-          article,
-          gatewayDecision: null,
-          receipt: null,
-          outcome: null,
-          liveCmsPublishWiring: "NOT_WIRED",
-          acceptanceEqualsVerified: false,
-          details,
-        };
-      }
-      if (!("skipped" in venueMediaGate && venueMediaGate.skipped)) {
-        details.push(venueMediaGate.reason);
       }
 
       const qaVerdict =

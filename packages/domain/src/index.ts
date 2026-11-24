@@ -219,11 +219,14 @@ export {
 } from "./prompt-injection-boundary.js";
 export {
   VenueMediaLicenseStatus,
+  VENUE_MEDIA_LIVE_WIRING,
   evaluateVenueMediaPublishGate,
   gateVenueMediaBundleForPublish,
+  type VenueMediaLiveWiring,
   type VenueMediaLicenseStatusValue,
   type VenueMediaPublishGateInput,
   type VenueMediaPublishGateDecision,
+  type VenueMediaBundleGateDecision,
 } from "./venue-media-license.js";
 export {
   BusinessTruthArtifactKind,
