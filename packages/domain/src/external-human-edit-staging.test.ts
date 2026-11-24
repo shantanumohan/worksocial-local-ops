@@ -7,6 +7,7 @@ import {
   createExternalEditStagingState,
   externalHumanEditLiveWiringStatus,
   independentVerifyStagingChange,
+  normalizeClaimedVerified,
   normalizeLiveTemporalWiringRequest,
   refuseClaimedVerifiedStaging,
   refuseSilentConflictClear,
@@ -410,5 +411,71 @@ describe("external human edit during staging (T-X025)", () => {
     expect(liveVerify.refusedLiveTemporalWiring).toBe(true);
     expect(liveVerify.details.join(" ")).toMatch(/LIVE_TEMPORAL_WIRING_NOT_WIRED/);
     expect(liveVerify.liveTemporalWiring).toBe("NOT_WIRED");
+  });
+
+  it("identical human re-edit bumps revision; no-open-change edit invents no conflict; claimedVerified literal-only", () => {
+    const t0 = "2026-11-22T18:00:00.000Z";
+    let bare = createExternalEditStagingState({
+      pageId: "page-bare",
+      fields: baseFields,
+      revision: "rev-1",
+      nowIso: t0,
+    });
+    bare = applyExternalHumanEdit(bare, {
+      fields: humanEdit,
+      nowIso: "2026-11-22T18:00:30.000Z",
+    });
+    expect(bare.change).toBeNull();
+    expect(bare.page.fields.title).toBe("Human edited title");
+    expect(bare.externalEffects).toBe("NONE");
+    expect(bare.liveTemporalWiring).toBe("NOT_WIRED");
+
+    let state = createExternalEditStagingState({
+      pageId: "page-pilot",
+      fields: baseFields,
+      revision: "rev-1",
+      nowIso: t0,
+    });
+    const staged = stageAgentChangeAgainstBase(state, {
+      changeId: "chg-1",
+      expectedBaseRevision: "rev-1",
+      desiredFields: agentDesired,
+      nowIso: t0,
+    });
+    expect(staged.ok).toBe(true);
+    if (!staged.ok) return;
+    state = staged.state;
+    state = applyExternalHumanEdit(state, {
+      fields: humanEdit,
+      nowIso: "2026-11-22T18:01:00.000Z",
+    });
+    const revAfterFirst = state.change?.humanObservedRevision;
+    const desired = state.change?.desiredDigest;
+    state = applyExternalHumanEdit(state, {
+      fields: humanEdit,
+      nowIso: "2026-11-22T18:02:00.000Z",
+    });
+    expect(state.change?.status).toBe(StagingConflictStatus.CONFLICT_RETAINED);
+    expect(state.change?.humanObservedDigest).toBe(digestFields(humanEdit));
+    expect(state.change?.humanObservedRevision).not.toBe(revAfterFirst);
+    expect(state.change?.desiredDigest).toBe(desired);
+    expect(state.liveProviderSuccessClaimed).toBe(false);
+
+    expect(normalizeClaimedVerified(true)).toBe(true);
+    expect(normalizeClaimedVerified("true")).toBe(true);
+    expect(normalizeClaimedVerified(1)).toBe(false);
+    expect(normalizeClaimedVerified("TRUE")).toBe(false);
+    expect(normalizeClaimedVerified(" true ")).toBe(false);
+    const aliasClaim = refuseClaimedVerifiedStaging(state, {
+      claimedVerified: "TRUE",
+      nowIso: "2026-11-22T18:03:00.000Z",
+    });
+    expect(aliasClaim.code).toBe("CLAIMED_VERIFIED_REFUSED");
+    expect(aliasClaim.reason).toMatch(/verifiedClaimed stays false/);
+    const literalClaim = refuseClaimedVerifiedStaging(state, {
+      claimedVerified: "true",
+      nowIso: "2026-11-22T18:03:00.000Z",
+    });
+    expect(literalClaim.reason).toMatch(/CONFLICT_RETAINED cannot elevate/);
   });
 });

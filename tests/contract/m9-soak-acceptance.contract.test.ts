@@ -259,4 +259,26 @@ describe("contract: M9 soak / acceptance evidence", () => {
     });
     expect(bad.ok).toBe(false);
   });
+
+  it("T-X025 fixture art keeps edge honesty (silent clear / NOT_WIRED / ACCEPTED≠VERIFIED)", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { join: pathJoin } = await import("node:path");
+    const artPath = pathJoin(
+      process.cwd(),
+      "tests/acceptance-evidence/fixture/art-fixture-t-x025.json",
+    );
+    const art = JSON.parse(readFileSync(artPath, "utf8")) as {
+      caseId: string;
+      summary: string;
+      liveProviderSuccessClaimed: boolean;
+      externalEffects: string;
+    };
+    expect(art.caseId).toBe("T-X025");
+    expect(art.liveProviderSuccessClaimed).toBe(false);
+    expect(art.externalEffects).toBe("NONE");
+    expect(art.summary).toMatch(/SILENT_CLEAR_FORBIDDEN/);
+    expect(art.summary).toMatch(/NOT_WIRED/);
+    expect(art.summary).toMatch(/CLAIMED_VERIFIED/);
+    expect(art.summary).toMatch(/ACCEPTED≠VERIFIED/);
+  });
 });

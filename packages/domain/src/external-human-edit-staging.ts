@@ -83,6 +83,14 @@ export function normalizeLiveTemporalWiringRequest(value: unknown): boolean {
   return value === true || value === "true";
 }
 
+/**
+ * Fail-closed claimed-verified flag (T-X025). Only boolean `true` or the exact
+ * literal string `"true"` counts — no trim/case folding.
+ */
+export function normalizeClaimedVerified(value: unknown): boolean {
+  return value === true || value === "true";
+}
+
 function nextRevision(prev: string): string {
   const n = Number.parseInt(prev.replace(/^rev-/, ""), 10);
   if (Number.isFinite(n)) {
@@ -501,7 +509,10 @@ export function attemptBlindAgentOverwrite(
  */
 export function refuseClaimedVerifiedStaging(
   state: ExternalEditStagingState,
-  input: { claimedVerified: boolean; nowIso: string },
+  input: {
+    claimedVerified: boolean | string | number | null | undefined;
+    nowIso: string;
+  },
 ): {
   ok: false;
   code: "CLAIMED_VERIFIED_REFUSED";
@@ -512,7 +523,8 @@ export function refuseClaimedVerifiedStaging(
   externalEffects: "NONE";
   state: ExternalEditStagingState;
 } {
-  const reason = input.claimedVerified
+  const claimed = normalizeClaimedVerified(input.claimedVerified);
+  const reason = claimed
     ? state.change?.status === StagingConflictStatus.CONFLICT_RETAINED
       ? "CLAIMED_VERIFIED_REFUSED — CONFLICT_RETAINED cannot elevate to VERIFIED (ACCEPTED≠VERIFIED)"
       : "CLAIMED_VERIFIED_REFUSED — STAGED_PENDING / MATCHED_PENDING_ONLY is fixture ACCEPTED only, not VERIFIED"

@@ -17,6 +17,7 @@ import {
   digestFields,
   externalHumanEditLiveWiringStatus,
   independentVerifyStagingChange,
+  normalizeClaimedVerified,
   normalizeLiveTemporalWiringRequest,
   refuseClaimedVerifiedStaging,
   refuseSilentConflictClear,
@@ -360,6 +361,45 @@ export function proofExternalHumanEditConflictRetained(
     passed = false;
     details.push(
       `N3 controls unexpectedly empty=${JSON.stringify(emptyOverwrite)} multi=${JSON.stringify(multi)} silent=${JSON.stringify(silent)} liveVerify=${JSON.stringify(liveVerify)}`,
+    );
+  }
+
+  // Identical human re-edit bumps revision; no-open-change invents no conflict;
+  // claimedVerified literal-only.
+  const revBeforeIdentical = state.change?.humanObservedRevision;
+  state = applyExternalHumanEdit(state, {
+    fields: secondHuman,
+    nowIso: new Date(Date.parse(nowIso) + 180_000).toISOString(),
+  });
+  let bare = createExternalEditStagingState({
+    pageId: `${pageId}-bare`,
+    fields: baseFields,
+    revision: "rev-1",
+    nowIso,
+  });
+  bare = applyExternalHumanEdit(bare, { fields: humanEdit, nowIso: tHuman });
+  const aliasClaim = refuseClaimedVerifiedStaging(state, {
+    claimedVerified: "TRUE",
+    nowIso: tHuman,
+  });
+  if (
+    state.change?.status === StagingConflictStatus.CONFLICT_RETAINED &&
+    state.change.humanObservedRevision !== revBeforeIdentical &&
+    state.change.desiredDigest === digestFields(agentDesired) &&
+    bare.change === null &&
+    bare.externalEffects === "NONE" &&
+    normalizeClaimedVerified("true") === true &&
+    normalizeClaimedVerified("TRUE") === false &&
+    aliasClaim.code === "CLAIMED_VERIFIED_REFUSED" &&
+    /verifiedClaimed stays false/.test(aliasClaim.reason)
+  ) {
+    details.push(
+      "Identical human re-edit bumps rev; no-open-change invents no conflict; claimedVerified literal-only",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `N4 edges unexpectedly bare.change=${bare.change} alias=${aliasClaim.reason} rev=${state.change?.humanObservedRevision}`,
     );
   }
 

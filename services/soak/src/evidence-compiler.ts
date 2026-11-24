@@ -380,7 +380,7 @@ export function compileAcceptanceEvidence(
     "T-X028 fixture ACCEPTED only via ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE",
     "T-X063 fixture ACCEPTED only via INDIRECT_PROMPT_INJECTION_EXFIL_DENIED",
     "T-X013 fixture ACCEPTED only via REPLAY_HISTORICAL_NO_REPEAT_IO (history replay; no repeated I/O)",
-    "T-X025 fixture ACCEPTED only via EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED (live Temporal NOT_WIRED; claimed VERIFIED refused)",
+    "T-X025 fixture ACCEPTED only via EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED (live Temporal NOT_WIRED; silent clear forbidden; claimed VERIFIED refused)",
     "T-X026 fixture ACCEPTED only via CONCURRENT_FINAL_BUDGET_RESERVATION_CAP",
     "T-X052 fixture ACCEPTED only via SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED (excluded-revenue; defense-in-depth; NOT_WIRED)",
     "T-X054 fixture ACCEPTED only via REPLY_SENT_CRM_RECONCILES_NO_RESEND (liveCrmWiring NOT_WIRED)",

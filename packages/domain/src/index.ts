@@ -333,6 +333,7 @@ export {
   refuseSilentConflictClear,
   externalHumanEditLiveWiringStatus,
   normalizeLiveTemporalWiringRequest,
+  normalizeClaimedVerified,
   type StagingConflictStatusValue,
   type StagingVerifyOutcomeValue,
   type StagingPageLedger,
