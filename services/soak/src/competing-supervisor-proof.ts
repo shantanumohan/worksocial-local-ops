@@ -7,8 +7,9 @@
  *
  * Hillclimb: third competitor refused; isHolderAlive=true still LEASE_HELD;
  * whitespace-normalized tokens; LEASE_HELD message generic (no host/gen/pid leak);
- * wake/catchup clock gaps (mid-gap held; past-expiry single reclaim); honesty
- * NOT_WIRED / externalEffects NONE. Never invents live VERIFIED.
+ * wake/catchup clock gaps (mid-gap held; past-expiry single reclaim);
+ * exact-expiry wake gapMs=0; same-gen mid-gap renew; post-expiry renew refuse;
+ * honesty NOT_WIRED / externalEffects NONE. Never invents live VERIFIED.
  */
 
 import { randomUUID } from "node:crypto";
@@ -409,7 +410,109 @@ export function proofCompetingSupervisorLease(
     }
   }
 
-  // 13. Ownership kill auth fail-closed for mismatched PID / missing markers.
+  // 13. Edge deepen — exact-expiry wake (gapMs=0); same-gen mid-gap renew;
+  //     post-expiry same-gen renew refuses (no silent resurrection).
+  const edgeBase = baseMs + 200_000;
+  const edgeSeed = acquireHostLease(
+    null,
+    {
+      hostId: "host-edge-soak",
+      holderPid: 9001,
+      generationId: "gen-edge-a",
+      ttlMs: 5_000,
+    },
+    clockAt(edgeBase),
+  );
+  if (!edgeSeed.ok) {
+    passed = false;
+    details.push("Edge wake seed acquire failed");
+  } else {
+    const expiryMs = Date.parse(edgeSeed.lease.expiresAt);
+    const atExpiryClass = classifyWakeCatchupLeaseGap(edgeSeed.lease, expiryMs);
+    const atExpiryReclaim = acquireHostLease(
+      edgeSeed.lease,
+      {
+        hostId: "host-edge-soak",
+        holderPid: 9002,
+        generationId: "gen-edge-b",
+        ttlMs: 60_000,
+      },
+      clockAt(expiryMs),
+    );
+    if (
+      atExpiryClass.kind === "wake_past_expiry" &&
+      atExpiryClass.gapMs === 0 &&
+      atExpiryReclaim.ok &&
+      atExpiryReclaim.reclaimed
+    ) {
+      details.push("Exact-expiry wake classify gapMs=0 reclaim ok");
+    } else {
+      passed = false;
+      details.push("Exact-expiry wake gapMs=0 reclaim failed");
+    }
+
+    const renewSeed = acquireHostLease(
+      null,
+      {
+        hostId: "host-edge-renew",
+        holderPid: 9010,
+        generationId: "gen-edge-r",
+        ttlMs: 10_000,
+      },
+      clockAt(edgeBase + 20_000),
+    );
+    if (!renewSeed.ok) {
+      passed = false;
+      details.push("Edge renew seed acquire failed");
+    } else {
+      const midRenewMs = edgeBase + 20_000 + 3_000;
+      const midRenewClass = classifyWakeCatchupLeaseGap(
+        renewSeed.lease,
+        midRenewMs,
+      );
+      const midRenew = renewHostLease(
+        renewSeed.lease,
+        {
+          hostId: "host-edge-renew",
+          holderPid: 9010,
+          generationId: "gen-edge-r",
+          ttlMs: 10_000,
+        },
+        clockAt(midRenewMs),
+      );
+      if (
+        midRenewClass.kind === "mid_gap_held" &&
+        midRenew.ok &&
+        midRenew.reclaimed === false &&
+        midRenew.lease.leaseId === renewSeed.lease.leaseId
+      ) {
+        details.push("Same-gen mid-gap renew ok reclaimed=false");
+      } else {
+        passed = false;
+        details.push("Same-gen mid-gap renew failed");
+      }
+
+      const postExpiryMs = Date.parse(renewSeed.lease.expiresAt) + 1;
+      const postRenew = renewHostLease(
+        renewSeed.lease,
+        {
+          hostId: "host-edge-renew",
+          holderPid: 9010,
+          generationId: "gen-edge-r",
+          ttlMs: 10_000,
+        },
+        clockAt(postExpiryMs),
+      );
+      if (!postRenew.ok && postRenew.reason === "LEASE_HELD") {
+        details.push("Post-expiry same-gen renew refused LEASE_HELD");
+      } else {
+        passed = false;
+        details.push("Post-expiry same-gen renew unexpectedly succeeded");
+      }
+    }
+  }
+
+  // 14. Ownership kill auth fail-closed for mismatched PID / missing markers.
   const ownershipOk = verifyProcessOwnership(
     { pid: 1001, serviceId: "api", generationId: genA },
     {
