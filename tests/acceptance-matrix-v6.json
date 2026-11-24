@@ -2378,7 +2378,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x046",
-      "evidenceNote": "Fixture unsupported-blog-destination-no-fake-publication proof only — OTHER_BLOG/Hub UNSUPPORTED_ACTION; classifyUnsupportedBlogDestination honesty fields; preferLive refuse; never invent PUBLISHED_VERIFIED; not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture unsupported-blog-destination-no-fake-publication proof only — OTHER_BLOG without adapter/Hub UNSUPPORTED_ACTION; FIXTURE wiring ≠ live claim; preferLive-only refuse; fixture OTHER_BLOG allowed; never invent PUBLISHED_VERIFIED; not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X047",

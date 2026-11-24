@@ -43,9 +43,12 @@ import {
   createMemoryDurableStores,
 } from "@worksocial/persistence";
 
-function honestyOk(decision: UnsupportedBlogDestinationDecision): boolean {
+function honestyOk(
+  decision: UnsupportedBlogDestinationDecision,
+  expectedWiring: "NOT_WIRED" | "FIXTURE" = "NOT_WIRED",
+): boolean {
   return (
-    decision.liveProviderWiring === "NOT_WIRED" &&
+    decision.liveProviderWiring === expectedWiring &&
     decision.chatgptAdsAccess === "ACCESS_BLOCKED" &&
     decision.externalEffects === "NONE" &&
     decision.inventPublishedVerified === false
@@ -289,12 +292,39 @@ export async function proofUnsupportedBlogDestinationNoFakePublication(
       honestyOk(otherClassified)
     ) {
       details.push(
-        "classifyUnsupportedBlogDestination OTHER_BLOG → UNSUPPORTED_ACTION with honesty fields",
+        "classifyUnsupportedBlogDestination OTHER_BLOG (no adapter) → UNSUPPORTED_ACTION with honesty fields",
       );
     } else {
       passed = false;
       details.push(
         `OTHER_BLOG classifier unexpected: ${JSON.stringify(otherClassified)}`,
+      );
+    }
+
+    // Fixture-backed OTHER_BLOG is allowed in fixture mode (not a live claim).
+    const fixtureOtherBlog: DestinationRegistryEntry = {
+      ...otherBlog,
+      destinationId: "dest-other-blog-fixture",
+      fixtureAvailable: true,
+      liveWiring: AdapterLiveStatus.FIXTURE,
+      notes: "Additional owned blog with tested fixture adapter only.",
+    };
+    const fixtureOtherClassified = classifyUnsupportedBlogDestination({
+      destination: fixtureOtherBlog,
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    if (
+      fixtureOtherClassified.allowed &&
+      fixtureOtherClassified.code === "OTHER_BLOG_FIXTURE_ALLOWED" &&
+      honestyOk(fixtureOtherClassified, AdapterLiveStatus.FIXTURE)
+    ) {
+      details.push(
+        "classifyUnsupportedBlogDestination OTHER_BLOG fixture adapter → OTHER_BLOG_FIXTURE_ALLOWED (FIXTURE≠live claim)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `Fixture OTHER_BLOG classifier unexpected: ${JSON.stringify(fixtureOtherClassified)}`,
       );
     }
 

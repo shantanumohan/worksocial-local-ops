@@ -299,7 +299,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X042** maps only to `SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS`.
 
-**T-X046** maps only to `UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION` (unsupported blog destination; no fake publication; never invent PUBLISHED_VERIFIED; `classifyUnsupportedBlogDestination` honesty fields on every path incl. preferLive refuse + Hub FULL_ARTICLE; distinct from T-US-022/T-X045; not live VERIFIED).
+**T-X046** maps only to `UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION` (unsupported blog destination; no fake publication; never invent PUBLISHED_VERIFIED; `classifyUnsupportedBlogDestination` honesty fields — FIXTURE≠live claim, preferLive-only live refuse, fixture OTHER_BLOG allowed; Hub FULL_ARTICLE unsupported; distinct from T-US-022/T-X045; not live VERIFIED).
 
 
 **T-X047** maps only to `LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS` (layout capacity wins over marketing max; ambiguous layout clarifies). `HARD_SEARCH_CONSTRAINTS_NO_INVENTION` (T-US-046/T-X048) and `SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON` (T-US-045) do not satisfy T-X047. Live search NOT_WIRED; ACCEPTED ≠ VERIFIED.

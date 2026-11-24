@@ -34,8 +34,9 @@ function dest(partial: {
 
 function expectHonesty(
   d: ReturnType<typeof classifyUnsupportedBlogDestination>,
+  liveWiring: (typeof AdapterLiveStatus)[keyof typeof AdapterLiveStatus] = AdapterLiveStatus.NOT_WIRED,
 ) {
-  expect(d.liveProviderWiring).toBe("NOT_WIRED");
+  expect(d.liveProviderWiring).toBe(liveWiring);
   expect(d.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
   expect(d.externalEffects).toBe("NONE");
   expect(d.inventPublishedVerified).toBe(false);
@@ -55,6 +56,37 @@ describe("unsupported blog destination (T-X046)", () => {
     expect(decision.code).toBe("OWNED_CMS_ALLOWED");
     expect(decision.outcome).toBeNull();
     expectHonesty(decision);
+  });
+
+  it("allows fixture-wired CMS without treating FIXTURE as a live claim", () => {
+    const decision = classifyUnsupportedBlogDestination({
+      destination: dest({
+        destinationId: "dest-cms",
+        kind: DestinationKind.CMS,
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    expect(decision.allowed).toBe(true);
+    expect(decision.code).toBe("OWNED_CMS_ALLOWED");
+    expectHonesty(decision, AdapterLiveStatus.FIXTURE);
+  });
+
+  it("allows OTHER_BLOG when fixture adapter + format are available", () => {
+    const decision = classifyUnsupportedBlogDestination({
+      destination: dest({
+        destinationId: "dest-other-blog-fixture",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    expect(decision.allowed).toBe(true);
+    expect(decision.code).toBe("OTHER_BLOG_FIXTURE_ALLOWED");
+    expect(decision.outcome).toBeNull();
+    expectHonesty(decision, AdapterLiveStatus.FIXTURE);
   });
 
   it("refuses OTHER_BLOG without adapter — never invents PUBLISHED_VERIFIED", () => {
@@ -88,12 +120,13 @@ describe("unsupported blog destination (T-X046)", () => {
     expectHonesty(decision);
   });
 
-  it("refuses preferLive claims while adapters are NOT_WIRED", () => {
+  it("refuses preferLive claims only (FIXTURE wiring alone is not a live claim)", () => {
     const decision = classifyUnsupportedBlogDestination({
       destination: dest({
         destinationId: "dest-cms",
         kind: DestinationKind.CMS,
         fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
       }),
       format: ContentFormat.FULL_ARTICLE,
       preferLive: true,
@@ -101,7 +134,7 @@ describe("unsupported blog destination (T-X046)", () => {
     expect(decision.allowed).toBe(false);
     expect(decision.code).toBe("LIVE_WIRE_CLAIM_REFUSED");
     expect(decision.outcome).toBe(PublicationOutcome.UNSUPPORTED_ACTION);
-    expectHonesty(decision);
+    expectHonesty(decision, AdapterLiveStatus.FIXTURE);
   });
 
   it("marks CMS/OTHER_BLOG/Hub as blog-shaped kinds", () => {
