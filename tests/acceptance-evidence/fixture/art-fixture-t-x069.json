@@ -3,13 +3,13 @@
   "caseId": "T-X069",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X069 (Imported document quarantined as data)\nproof=imported_doc_quarantined_as_data applyCount=1 :: Incoming import pending_classification; evidence not executable instruction | Quarantined import has null instructionVersion | TRUSTED_INSTRUCTION entry instructionEligible=true | UNTRUSTED_SOURCE imported doc instructionEligible=false (quarantined as data) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X069 (Imported document quarantined as data)\nproof=imported_doc_quarantined_as_data applyCount=1 :: Incoming import pending_classification; evidence not executable instruction | Quarantined import has null instructionVersion | Claimed instructionVersion while QUARANTINED refused; remains null (data only) | INGESTED status may pin instructionVersion (positive control) | TRUSTED_INSTRUCTION entry instructionEligible=true | UNTRUSTED_SOURCE imported doc instructionEligible=false (quarantined as data) | Untrusted attachment → UNTRUSTED_SOURCE_NOT_INSTRUCTION; externalEffects=NONE | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "imported_doc_quarantined_as_data"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x069.json",
-  "createdAtIso": "2026-11-24T22:07:54.174Z",
+  "createdAtIso": "2026-11-24T22:13:53.667Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x069-e98c3a7c132e"
+  "uniqueSourceArtifactId": "art-fixture-t-x069-864eb2f3893c"
 }

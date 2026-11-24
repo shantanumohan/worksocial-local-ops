@@ -124,7 +124,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X058** maps only to `REPAIR_ATTEMPT_LIMIT_ESCALATED`.
 
-**T-X069** maps only to `IMPORTED_DOC_QUARANTINED_AS_DATA`.
+**T-X069** maps only to `IMPORTED_DOC_QUARANTINED_AS_DATA` (quarantine forces null instructionVersion; UNTRUSTED_SOURCE not instruction-eligible; live NOT_WIRED; not live VERIFIED).
 
 **T-X038** maps only to `EVAL_NO_GROUNDING_FAIL_CLOSED`.
 
