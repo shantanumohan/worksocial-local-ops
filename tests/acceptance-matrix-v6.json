@@ -1994,7 +1994,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x022",
-      "evidenceNote": "Fixture ACCEPTED via IDEMPOTENCY_KEY_PAYLOAD_MISMATCH only — same businessIdempotencyKey/operationId with different payloadDigest is Conflict; applyCount stays 1; no second remote effect. ACCEPTED ≠ sandbox/prod VERIFIED. externalEffects=NONE."
+      "evidenceNote": "Fixture ACCEPTED via IDEMPOTENCY_KEY_PAYLOAD_MISMATCH only — same businessIdempotencyKey/operationId with different payloadDigest is Conflict on ACCEPTED_PENDING and VERIFIED paths; applyCount stays 1; decision/effect/provider retain original digest; live provider NOT_WIRED; no second remote effect. ACCEPTED ≠ sandbox/prod VERIFIED. externalEffects=NONE."
     },
     {
       "id": "T-X023",

@@ -4,7 +4,26 @@
  *   accept(stable key) → job + effect intent + outbox + budget reserve
  *   → fake-provider apply (once) → ACCEPTED_PENDING (ack ≠ verified)
  *   → independent read receipt → VERIFIED without a second apply
+ *
+ * T-X022: same operationId / businessIdempotencyKey with a different
+ * payloadDigest is Conflict (ACCEPTED_PENDING and VERIFIED paths). Fixture
+ * ACCEPTED ≠ sandbox/prod VERIFIED. Live provider wiring stays NOT_WIRED.
+ * External effects: NONE.
  */
+
+/** Live remote provider wiring for fixture durable execution — always NOT_WIRED. */
+export const IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING = "NOT_WIRED" as const;
+
+const PAYLOAD_MISMATCH_RE =
+  /payload mismatch|different payload digest/i;
+
+/** True when an error is an idempotency key ↔ payloadDigest Conflict (T-X022). */
+export function isIdempotencyPayloadMismatchError(
+  err: unknown,
+): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return PAYLOAD_MISMATCH_RE.test(msg);
+}
 
 import { randomBytes } from "node:crypto";
 import type { PgPool, PgClient } from "./pg/client.js";

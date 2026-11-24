@@ -1,8 +1,10 @@
 /**
  * Fixture proof for T-X022 — idempotency key payload mismatch → Conflict.
  * Same businessIdempotencyKey / operationId with a different payloadDigest is
- * refused through durable acceptPending; apply_count stays 1; no second remote
- * effect. External effects: NONE.
+ * refused through durable acceptPending (ACCEPTED_PENDING and VERIFIED paths);
+ * apply_count stays 1; no second remote effect. Decision/effect/provider stores
+ * retain the original digest. Live provider wiring: NOT_WIRED. External
+ * effects: NONE. Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 
 import { randomUUID } from "node:crypto";
@@ -13,6 +15,8 @@ import {
 import {
   createDurableExecutionService,
   createFileDurableStores,
+  IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING,
+  isIdempotencyPayloadMismatchError,
   newJobId,
   type AcceptPendingInput,
   type DurableExecutionService,
@@ -77,6 +81,26 @@ async function accept(
   });
 }
 
+async function expectMismatchConflict(
+  label: string,
+  details: string[],
+  fn: () => Promise<unknown>,
+): Promise<boolean> {
+  try {
+    await fn();
+    details.push(`${label}: expected Conflict was not thrown`);
+    return false;
+  } catch (err) {
+    if (isIdempotencyPayloadMismatchError(err)) {
+      details.push(`${label} → Conflict`);
+      return true;
+    }
+    const msg = err instanceof Error ? err.message : String(err);
+    details.push(`${label}: unexpected throw: ${msg}`);
+    return false;
+  }
+}
+
 /**
  * Complete expected proof set for T-X022 fixture ACCEPTED.
  * Exercises durable acceptPending (not direct fakeProvider-only).
@@ -92,6 +116,7 @@ export async function proofIdempotencyKeyPayloadMismatch(
   const bizKey = `biz-soak-idem-mismatch-${suffix}`;
   const digestA = `digest-a-${suffix}`;
   const digestB = `digest-b-${suffix}`;
+  const digestWs = `digest-a-${suffix} `;
   const idem = `soak/idem-mismatch/${suffix}`;
 
   const svc = createDurableExecutionService(createFileDurableStores(stateDir));
@@ -113,74 +138,74 @@ export async function proofIdempotencyKeyPayloadMismatch(
       `acceptPending bound key with digest A applyCount=1 remoteRef=${first.provider.remoteRef}`,
     );
   }
-
-  let sameOpConflict = false;
-  try {
-    await accept(svc, {
-      operationId,
-      bizKey,
-      digest: digestB,
-      idem,
-      nowIso,
-    });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (/payload mismatch|different payload digest/i.test(msg)) {
-      sameOpConflict = true;
-      details.push(
-        "acceptPending same operationId + different payloadDigest → Conflict",
-      );
-    } else {
-      passed = false;
-      details.push(`Same-op unexpected throw: ${msg}`);
-    }
-  }
-  if (!sameOpConflict) {
+  if (first.decision.outcome !== "ACCEPTED_PENDING") {
     passed = false;
-    details.push("Expected same-operation digest Conflict was not thrown");
+    details.push(
+      `First accept unexpected outcome=${first.decision.outcome} (expected ACCEPTED_PENDING ≠ VERIFIED)`,
+    );
   }
 
-  const altOp = `${operationId}-alt`;
-  let sameKeyConflict = false;
-  try {
-    await accept(svc, {
-      operationId: altOp,
-      bizKey,
-      digest: digestB,
-      idem: `${idem}-alt`,
-      nowIso,
-    });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (/different payload digest|payload mismatch/i.test(msg)) {
-      sameKeyConflict = true;
-      details.push(
-        "acceptPending same businessIdempotencyKey + different payloadDigest → Conflict",
-      );
-    } else {
-      passed = false;
-      details.push(`Same-key unexpected throw: ${msg}`);
-    }
-  }
-  if (!sameKeyConflict) {
-    passed = false;
-    details.push("Expected same-business-key digest Conflict was not thrown");
-  }
+  const sameOpConflict = await expectMismatchConflict(
+    "acceptPending same operationId + different payloadDigest",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: digestB,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!sameOpConflict) passed = false;
 
-  const after = await svc.stores.fakeProvider.getByBusinessKey(bizKey);
+  const sameKeyConflict = await expectMismatchConflict(
+    "acceptPending same businessIdempotencyKey + different payloadDigest",
+    details,
+    () =>
+      accept(svc, {
+        operationId: `${operationId}-alt`,
+        bizKey,
+        digest: digestB,
+        idem: `${idem}-alt`,
+        nowIso,
+      }),
+  );
+  if (!sameKeyConflict) passed = false;
+
+  const wsConflict = await expectMismatchConflict(
+    "acceptPending whitespace-distinct payloadDigest",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: digestWs,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!wsConflict) passed = false;
+
+  const afterPending = await svc.stores.fakeProvider.getByBusinessKey(bizKey);
+  const decisionPending = await svc.stores.decisions.get(operationId);
+  const effectPending = await svc.stores.effects.get(operationId);
   if (
-    !after ||
-    after.applyCount !== 1 ||
-    after.payloadDigest !== digestA ||
-    after.remoteRef !== first.provider.remoteRef
+    !afterPending ||
+    afterPending.applyCount !== 1 ||
+    afterPending.payloadDigest !== digestA ||
+    afterPending.remoteRef !== first.provider.remoteRef ||
+    decisionPending?.payloadDigest !== digestA ||
+    decisionPending?.outcome !== "ACCEPTED_PENDING" ||
+    effectPending?.payloadDigest !== digestA
   ) {
     passed = false;
     details.push(
-      `Post-conflict state polluted: applyCount=${after?.applyCount} digest=${after?.payloadDigest}`,
+      `Post-conflict ACCEPTED_PENDING stores polluted: applyCount=${afterPending?.applyCount} providerDigest=${afterPending?.payloadDigest} decisionDigest=${decisionPending?.payloadDigest} outcome=${decisionPending?.outcome} effectDigest=${effectPending?.payloadDigest}`,
     );
   } else {
     details.push(
-      "Post-conflict: applyCount=1; original digest/remoteRef retained; no second effect",
+      "Post-conflict ACCEPTED_PENDING: applyCount=1; decision/effect/provider retain digest A; outcome ACCEPTED_PENDING≠VERIFIED; no second effect",
     );
   }
 
@@ -200,14 +225,73 @@ export async function proofIdempotencyKeyPayloadMismatch(
     details.push("Same-digest acceptPending replay: created=false applyCount=1");
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  const verified = await svc.verifyIndependent({
+    operationId,
+    observedDigest: digestA,
+    nowIso,
+  });
+  if (verified.decision.outcome !== "VERIFIED" || verified.applyAttemptCount !== 1) {
+    passed = false;
+    details.push(
+      `verifyIndependent unexpected outcome=${verified.decision.outcome} applyCount=${verified.applyAttemptCount}`,
+    );
+  } else {
+    details.push("verifyIndependent → VERIFIED applyCount=1 (ack≠verified until independent read)");
+  }
+
+  const verifiedPathConflict = await expectMismatchConflict(
+    "acceptPending after VERIFIED + different payloadDigest",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: digestB,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!verifiedPathConflict) passed = false;
+
+  const afterVerified = await svc.stores.fakeProvider.getByBusinessKey(bizKey);
+  const decisionVerified = await svc.stores.decisions.get(operationId);
+  if (
+    !afterVerified ||
+    afterVerified.applyCount !== 1 ||
+    afterVerified.payloadDigest !== digestA ||
+    afterVerified.remoteRef !== first.provider.remoteRef ||
+    decisionVerified?.payloadDigest !== digestA ||
+    decisionVerified?.outcome !== "VERIFIED"
+  ) {
+    passed = false;
+    details.push(
+      `Post-VERIFIED-conflict stores polluted: applyCount=${afterVerified?.applyCount} digest=${afterVerified?.payloadDigest} outcome=${decisionVerified?.outcome}`,
+    );
+  } else {
+    details.push(
+      "Post-VERIFIED-conflict: applyCount=1; original digest/remoteRef retained; outcome stays VERIFIED (fixture ACCEPTED≠live VERIFIED)",
+    );
+  }
+
+  details.push(
+    `liveProviderSuccessClaimed=false liveProviderWiring=${IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING} externalEffects=NONE ACCEPTED≠VERIFIED`,
+  );
+  if (IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING !== "NOT_WIRED") {
+    passed = false;
+    details.push("liveProviderWiring must be NOT_WIRED");
+  }
 
   return {
     proofId: `proof-idem-mismatch-${operationId}`,
     kind: SoakProofKind.IDEMPOTENCY_KEY_PAYLOAD_MISMATCH,
-    passed: passed && sameOpConflict && sameKeyConflict,
+    passed:
+      passed &&
+      sameOpConflict &&
+      sameKeyConflict &&
+      wsConflict &&
+      verifiedPathConflict,
     details,
-    applyAttemptCount: after?.applyCount ?? first.applyAttemptCount,
+    applyAttemptCount: afterVerified?.applyCount ?? first.applyAttemptCount,
     operationId,
     createdAtIso: nowIso,
     fixtureOnly: true,

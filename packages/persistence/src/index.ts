@@ -260,6 +260,8 @@ export {
   createPgDurableStores,
   createDurableExecutionService,
   createPgDurableExecutionService,
+  IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING,
+  isIdempotencyPayloadMismatchError,
   type DurableExecutionStores,
   type DurableExecutionService,
   type AcceptPendingInput,

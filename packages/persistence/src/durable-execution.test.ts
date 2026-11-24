@@ -7,6 +7,8 @@ import { describe, expect, it } from "vitest";
 import {
   createDurableExecutionService,
   createMemoryDurableStores,
+  IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING,
+  isIdempotencyPayloadMismatchError,
   newJobId,
 } from "./index.js";
 
@@ -308,6 +310,105 @@ describe("durable execution (memory fixture)", () => {
     const provider = await stores.fakeProvider.getByBusinessKey("biz-mismatch");
     expect(provider?.applyCount).toBe(1);
     expect(provider?.payloadDigest).toBe("digest-a");
+  });
+
+  it("acceptPending conflicts after VERIFIED when payload digest differs (T-X022)", async () => {
+    const stores = createMemoryDurableStores();
+    const service = createDurableExecutionService(stores);
+    const base = {
+      job: {
+        jobId: newJobId(),
+        roleId: "A01" as const,
+        workflowId: "wf-mismatch-v",
+        siteId: "site-1",
+        assetId: "page-home",
+        trigger: "manual",
+        policyVersion: "1",
+        inputArtifactIds: [] as string[],
+        capabilityGrantId: "grant-1",
+        sourceRevision: "rev-1",
+        maxAttempts: 2,
+        deadlineSeconds: 600,
+        idempotencyKey: "idem-mismatch-v",
+        expectedOutcome: "verified",
+      },
+      operationId: "op-mismatch-v",
+      businessIdempotencyKey: "biz-mismatch-v",
+      nowIso: "2026-11-20T06:00:00.000Z",
+    };
+    await service.acceptPending({
+      ...base,
+      payloadDigest: "digest-a",
+      decision: {
+        decisionId: "dec-mismatch-v-a",
+        operationId: "op-mismatch-v",
+        payloadDigest: "digest-a",
+        allowed: true,
+        code: null,
+        reason: "ok",
+        grantId: "grant-1",
+        policyId: "pol-1",
+        decidedAtIso: "2026-11-20T06:00:00.000Z",
+        writePathId: null,
+        gateDetails: [],
+      },
+    });
+    const verified = await service.verifyIndependent({
+      operationId: "op-mismatch-v",
+      observedDigest: "digest-a",
+      nowIso: "2026-11-20T06:00:30.000Z",
+    });
+    expect(verified.decision.outcome).toBe("VERIFIED");
+    expect(verified.applyAttemptCount).toBe(1);
+
+    try {
+      await service.acceptPending({
+        ...base,
+        payloadDigest: "digest-b",
+        decision: {
+          decisionId: "dec-mismatch-v-b",
+          operationId: "op-mismatch-v",
+          payloadDigest: "digest-b",
+          allowed: true,
+          code: null,
+          reason: "ok",
+          grantId: "grant-1",
+          policyId: "pol-1",
+          decidedAtIso: "2026-11-20T06:01:00.000Z",
+          writePathId: null,
+          gateDetails: [],
+        },
+      });
+      expect.fail("expected payload mismatch Conflict");
+    } catch (err) {
+      expect(isIdempotencyPayloadMismatchError(err)).toBe(true);
+    }
+
+    const provider = await stores.fakeProvider.getByBusinessKey("biz-mismatch-v");
+    expect(provider?.applyCount).toBe(1);
+    expect(provider?.payloadDigest).toBe("digest-a");
+    expect((await stores.decisions.get("op-mismatch-v"))?.outcome).toBe(
+      "VERIFIED",
+    );
+    expect(IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING).toBe("NOT_WIRED");
+  });
+
+  it("classifies payload-mismatch Conflict errors (T-X022)", () => {
+    expect(
+      isIdempotencyPayloadMismatchError(
+        new Error(
+          "Idempotency key payload mismatch for op-x: bound digest differs from request",
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      isIdempotencyPayloadMismatchError(
+        new Error("Fake provider key biz-x bound to a different payload digest"),
+      ),
+    ).toBe(true);
+    expect(
+      isIdempotencyPayloadMismatchError(new Error("BUDGET_EXHAUSTED available=0")),
+    ).toBe(false);
   });
 
 });
