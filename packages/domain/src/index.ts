@@ -969,6 +969,7 @@ export {
   evaluateSsrfRedirectDnsRebindChain,
   isPrivateOrLocalAddress,
   isPrivateOrLocalHostname,
+  unwrapIpv4MappedAddress,
   SSRF_REDIRECT_DNS_REBIND_RELATED_CASE_IDS,
   type SsrfChainCode,
   type SsrfChainDecision,

@@ -398,13 +398,19 @@ describe("soak service (M9)", () => {
           p.kind === SoakProofKind.CUSTOMER_DATA_EVAL_REDACTION_BLOCKS,
       ),
     ).toBe(true);
+    const ssrfProof = result.proofs.find(
+      (p) =>
+        p.kind === SoakProofKind.SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP,
+    );
+    expect(ssrfProof?.passed).toBe(true);
+    expect(ssrfProof?.details.some((d) => /NON_HTTPS/.test(d))).toBe(true);
+    expect(ssrfProof?.details.some((d) => /CREDENTIALS_FORBIDDEN/.test(d))).toBe(
+      true,
+    );
     expect(
-      result.proofs.some(
-        (p) =>
-          p.kind ===
-          SoakProofKind.SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP,
-      ),
+      ssrfProof?.details.some((d) => /IPv4-mapped rebind/.test(d)),
     ).toBe(true);
+    expect(ssrfProof?.details.some((d) => /fe80::\/10/.test(d))).toBe(true);
     expect(
       result.proofs.some(
         (p) =>

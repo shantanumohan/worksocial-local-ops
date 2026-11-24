@@ -3,13 +3,13 @@
   "caseId": "T-X064",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X064 (SSRF redirect and DNS rebind — blocked every hop)\nproof=ssrf_redirect_dns_rebind_blocked_every_hop applyCount=1 :: Positive control: 2-hop allowlisted https + public IPs → ALL_HOPS_ALLOWED | Redirect hop 1 → 127.0.0.1 PRIVATE_OR_LOCAL_HOSTNAME (hop 0 still allowed) | DNS rebind hop 1: cdn.worksocial.com → 169.254.169.254 DNS_REBIND_PRIVATE_ADDRESS | Redirect hop 1 → evil.example HOST_NOT_ALLOWLISTED | Initial hop DNS rebind → 10.1.2.3 DNS_REBIND_PRIVATE_ADDRESS | IPv6 link-local fe80::/10 rebind → fe90::1 DNS_REBIND_PRIVATE_ADDRESS | liveDnsResolve=NOT_WIRED liveFetch=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X064 (SSRF redirect and DNS rebind — blocked every hop)\nproof=ssrf_redirect_dns_rebind_blocked_every_hop applyCount=1 :: Positive control: 2-hop allowlisted https + public IPs → ALL_HOPS_ALLOWED | Redirect hop 1 → 127.0.0.1 PRIVATE_OR_LOCAL_HOSTNAME (hop 0 still allowed) | DNS rebind hop 1: cdn.worksocial.com → 169.254.169.254 DNS_REBIND_PRIVATE_ADDRESS | Redirect hop 1 → evil.example HOST_NOT_ALLOWLISTED | Initial hop DNS rebind → 10.1.2.3 DNS_REBIND_PRIVATE_ADDRESS | IPv6 link-local fe80::/10 rebind → fe90::1 DNS_REBIND_PRIVATE_ADDRESS | Redirect hop 1 → http NON_HTTPS (hop 0 still allowed) | Initial hop credentials in URL → CREDENTIALS_FORBIDDEN | IPv4-mapped rebind → ::ffff:10.1.2.3 DNS_REBIND_PRIVATE_ADDRESS | Expanded IPv4-mapped rebind → 0:0:0:0:0:ffff:10.1.2.3 DNS_REBIND_PRIVATE_ADDRESS | liveDnsResolve=NOT_WIRED liveFetch=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "ssrf_redirect_dns_rebind_blocked_every_hop"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x064.json",
-  "createdAtIso": "2026-11-24T21:27:22.560Z",
+  "createdAtIso": "2026-11-24T21:56:49.986Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x064-4439db7ed06a"
+  "uniqueSourceArtifactId": "art-fixture-t-x064-78c7600ecd80"
 }
