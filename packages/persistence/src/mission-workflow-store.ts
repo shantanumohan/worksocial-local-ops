@@ -218,6 +218,28 @@ export function missionLeaseFenceFailedMessage(
   return `Lease fence failed for ${workflowId} (fenceCause=${cause})`;
 }
 
+const FENCE_CAUSE_VALUES: readonly MissionLeaseFenceCause[] = [
+  "active",
+  "expired",
+  "wrong_holder",
+  "no_holder",
+] as const;
+
+/**
+ * Parse `fenceCause=` from a lease-fence deny message (T-X024 O6).
+ * Round-trips with `missionLeaseFenceFailedMessage`; null when absent/unknown.
+ */
+export function parseMissionLeaseFenceCause(
+  message: string,
+): MissionLeaseFenceCause | null {
+  const match = /fenceCause=([a-z_]+)/.exec(message);
+  if (!match) return null;
+  const cause = match[1] as MissionLeaseFenceCause;
+  return (FENCE_CAUSE_VALUES as readonly string[]).includes(cause)
+    ? cause
+    : null;
+}
+
 /**
  * Fixture soak may only claim FIXTURE temporal wiring (T-X024 O5).
  * TEMPORAL / LOCAL_DURABLE / bare NOT_WIRED-as-store-row → LIVE_TEMPORAL_CLAIM_REFUSED.
@@ -257,7 +279,40 @@ export function evaluateFixtureTemporalWiring(
   };
 }
 
-/** Stable honesty detail line for soak evidence (O4/O5). */
+/**
+ * Fixture acceptance label gate (T-X024 O6).
+ * ACCEPTED is the only allowed fixture label — VERIFIED (and any other
+ * upgrade) → VERIFIED_CLAIM_REFUSED. ACCEPTED ≠ VERIFIED.
+ */
+export type OldFenceAcceptanceLabelDecision = {
+  allowed: boolean;
+  code: "ACCEPTED_OK" | "VERIFIED_CLAIM_REFUSED";
+  label: string;
+  acceptedNotVerified: typeof OLD_FENCE_HONESTY.acceptedNotVerified;
+  externalEffects: typeof OLD_FENCE_HONESTY.externalEffects;
+  liveTemporalWiring: typeof OLD_FENCE_HONESTY.liveTemporalWiring;
+};
+
+export function evaluateOldFenceAcceptanceLabel(
+  label: string,
+): OldFenceAcceptanceLabelDecision {
+  const honesty = {
+    acceptedNotVerified: OLD_FENCE_HONESTY.acceptedNotVerified,
+    externalEffects: OLD_FENCE_HONESTY.externalEffects,
+    liveTemporalWiring: OLD_FENCE_HONESTY.liveTemporalWiring,
+  } as const;
+  if (label === "ACCEPTED") {
+    return { allowed: true, code: "ACCEPTED_OK", label, ...honesty };
+  }
+  return {
+    allowed: false,
+    code: "VERIFIED_CLAIM_REFUSED",
+    label,
+    ...honesty,
+  };
+}
+
+/** Stable honesty detail line for soak evidence (O4/O5/O6). */
 export function formatOldFenceHonestyDetail(
   relatedCaseIds: readonly string[] = OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
 ): string {

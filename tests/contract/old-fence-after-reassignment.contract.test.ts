@@ -14,6 +14,9 @@ import {
 } from "@worksocial/domain";
 import {
   evaluateFixtureTemporalWiring,
+  evaluateOldFenceAcceptanceLabel,
+  missionLeaseFenceFailedMessage,
+  parseMissionLeaseFenceCause,
   OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
   OLD_FENCE_HONESTY,
 } from "@worksocial/persistence";
@@ -59,11 +62,24 @@ describe("contract: T-X024 old fence after reassignment", () => {
       "LIVE_TEMPORAL_CLAIM_REFUSED",
     );
     expect(evaluateFixtureTemporalWiring("FIXTURE").code).toBe("FIXTURE_OK");
+    expect(evaluateOldFenceAcceptanceLabel("ACCEPTED").code).toBe("ACCEPTED_OK");
+    expect(evaluateOldFenceAcceptanceLabel("VERIFIED").code).toBe(
+      "VERIFIED_CLAIM_REFUSED",
+    );
+    expect(
+      parseMissionLeaseFenceCause(
+        missionLeaseFenceFailedMessage("wf-c", "wrong_holder"),
+      ),
+    ).toBe("wrong_holder");
 
     expect(art.summary).toMatch(/LIVE_TEMPORAL_CLAIM_REFUSED/);
     expect(art.summary).toMatch(/FIXTURE_OK/);
+    expect(art.summary).toMatch(/VERIFIED_CLAIM_REFUSED/);
+    expect(art.summary).toMatch(/ACCEPTED_OK/);
+    expect(art.summary).toMatch(/1ms-before-expiry boundary/);
     expect(art.summary).toMatch(/fenceCause=expired/);
     expect(art.summary).toMatch(/fenceCause=wrong_holder/);
+    expect(art.summary).toMatch(/Post-commit old A mark denied/);
     expect(art.summary).toMatch(/softSkipAds=T-F07,T-US-013,T-US-014/);
     expect(art.summary).toMatch(/liveTemporalWiring=NOT_WIRED/);
     expect(art.summary).toMatch(/acceptedNotVerified=true/);

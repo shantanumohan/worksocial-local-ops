@@ -17,6 +17,8 @@
  * precedes expired; ACCEPTED≠VERIFIED edge honesty.
  * Hillclimb O5: LIVE_TEMPORAL_CLAIM_REFUSED for non-FIXTURE wiring;
  * FIXTURE_OK; domain soakNotWiredLiveWiring().temporal alignment.
+ * Hillclimb O6: parseMissionLeaseFenceCause round-trip; 1ms-before-expiry
+ * still active; VERIFIED_CLAIM_REFUSED; post-commit mark phase fence.
  */
 
 import { randomUUID } from "node:crypto";
@@ -29,10 +31,12 @@ import {
   classifyMissionLeaseFence,
   createMemoryMissionWorkflowStore,
   evaluateFixtureTemporalWiring,
+  evaluateOldFenceAcceptanceLabel,
   formatOldFenceHonestyDetail,
   isMissionLeaseActive,
   OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
   OLD_FENCE_HONESTY,
+  parseMissionLeaseFenceCause,
 } from "@worksocial/persistence";
 
 /** Live Temporal / mission runtime — always NOT_WIRED offline. */
@@ -62,6 +66,8 @@ export async function proofOldFenceAfterReassignment(
   const localDurableRefuse = evaluateFixtureTemporalWiring("LOCAL_DURABLE");
   const fixtureOk = evaluateFixtureTemporalWiring("FIXTURE");
   const domainTemporal = soakNotWiredLiveWiring().temporal;
+  const acceptedOk = evaluateOldFenceAcceptanceLabel("ACCEPTED");
+  const verifiedRefuse = evaluateOldFenceAcceptanceLabel("VERIFIED");
   if (
     liveTemporalRefuse.code === "LIVE_TEMPORAL_CLAIM_REFUSED" &&
     liveTemporalRefuse.allowed === false &&
@@ -76,6 +82,20 @@ export async function proofOldFenceAfterReassignment(
   } else {
     passed = false;
     details.push("Fixture temporal wiring honesty gate unexpected");
+  }
+  if (
+    acceptedOk.code === "ACCEPTED_OK" &&
+    acceptedOk.allowed === true &&
+    verifiedRefuse.code === "VERIFIED_CLAIM_REFUSED" &&
+    verifiedRefuse.allowed === false &&
+    OLD_FENCE_HONESTY.acceptedNotVerified === true
+  ) {
+    details.push(
+      "VERIFIED_CLAIM_REFUSED for upgrade-to-verified label; ACCEPTED_OK only (acceptedNotVerified=true)",
+    );
+  } else {
+    passed = false;
+    details.push("Fixture acceptance label honesty gate unexpected");
   }
 
   const enqueued = await store.enqueue({
@@ -148,7 +168,24 @@ export async function proofOldFenceAfterReassignment(
     );
   }
 
-  // 2b. Exact expiry: classify=expired; A cannot bind pre-reassignment.
+  // 2b. 1ms-before-expiry still active (complementary to exact-expiry expired).
+  const tOneMsBefore = new Date(Date.parse(tLeaseExpiry) - 1).toISOString();
+  const snapBeforeExpiry = await store.get(workflowId);
+  if (
+    snapBeforeExpiry &&
+    classifyMissionLeaseFence(snapBeforeExpiry, workerA, tOneMsBefore) ===
+      "active" &&
+    isMissionLeaseActive(snapBeforeExpiry, workerA, tOneMsBefore) === true
+  ) {
+    details.push(
+      `1ms-before-expiry boundary: fenceCause=active isMissionLeaseActive=true`,
+    );
+  } else {
+    passed = false;
+    details.push("1ms-before-expiry boundary unexpected");
+  }
+
+  // 2c. Exact expiry: classify=expired; A cannot bind pre-reassignment.
   const snapAtExpiry = await store.get(workflowId);
   const causeAtExpiry = snapAtExpiry
     ? classifyMissionLeaseFence(snapAtExpiry, workerA, tAtExpiry)
@@ -182,7 +219,7 @@ export async function proofOldFenceAfterReassignment(
     const msg = err instanceof Error ? err.message : String(err);
     if (
       /Lease fence failed/i.test(msg) &&
-      /fenceCause=expired/.test(msg)
+      parseMissionLeaseFenceCause(msg) === "expired"
     ) {
       expiredPreReassignDenied = true;
       details.push(`Expired-pre-reassignment A bind denied: ${msg}`);
@@ -196,7 +233,7 @@ export async function proofOldFenceAfterReassignment(
     details.push("Expired-pre-reassignment A bind unexpectedly succeeded");
   }
 
-  // 2c. Expired-pre-reassignment markEffectPending also fenceCause=expired.
+  // 2d. Expired-pre-reassignment markEffectPending also fenceCause=expired.
   let expiredPreMarkDenied = false;
   try {
     await store.markEffectPending({
@@ -209,7 +246,7 @@ export async function proofOldFenceAfterReassignment(
     const msg = err instanceof Error ? err.message : String(err);
     if (
       /Lease fence failed/i.test(msg) &&
-      /fenceCause=expired/.test(msg)
+      parseMissionLeaseFenceCause(msg) === "expired"
     ) {
       expiredPreMarkDenied = true;
       details.push(`Expired-pre-reassignment A mark denied: ${msg}`);
@@ -223,7 +260,7 @@ export async function proofOldFenceAfterReassignment(
     details.push("Expired-pre-reassignment A mark unexpectedly succeeded");
   }
 
-  // 2d. Edge: mismatched holder at expiry is wrong_holder (not expired).
+  // 2e. Edge: mismatched holder at expiry is wrong_holder (not expired).
   if (
     snapAtExpiry &&
     classifyMissionLeaseFence(snapAtExpiry, workerB, tAtExpiry) ===
@@ -303,7 +340,7 @@ export async function proofOldFenceAfterReassignment(
     const msg = err instanceof Error ? err.message : String(err);
     if (
       /Lease fence failed/i.test(msg) &&
-      /fenceCause=wrong_holder/.test(msg)
+      parseMissionLeaseFenceCause(msg) === "wrong_holder"
     ) {
       oldBindDenied = true;
       details.push(`Old worker A bind denied: ${msg}`);
@@ -329,7 +366,7 @@ export async function proofOldFenceAfterReassignment(
     const msg = err instanceof Error ? err.message : String(err);
     if (
       /Lease fence failed/i.test(msg) &&
-      /fenceCause=wrong_holder/.test(msg)
+      parseMissionLeaseFenceCause(msg) === "wrong_holder"
     ) {
       oldMarkDenied = true;
       details.push(`Old worker A markEffectPending denied: ${msg}`);
@@ -375,7 +412,7 @@ export async function proofOldFenceAfterReassignment(
     const msg = err instanceof Error ? err.message : String(err);
     if (
       /Lease fence failed/i.test(msg) &&
-      /fenceCause=wrong_holder/.test(msg)
+      parseMissionLeaseFenceCause(msg) === "wrong_holder"
     ) {
       postBindOldMarkDenied = true;
       details.push(`Post-bind old A mark denied: ${msg}`);
@@ -441,6 +478,30 @@ export async function proofOldFenceAfterReassignment(
   if (!postCommitDenied) {
     passed = false;
     details.push("Post-commit old A bind unexpectedly succeeded");
+  }
+
+  // 5c. After B commit, old A mark also phase-fenced (not leased).
+  let postCommitMarkDenied = false;
+  try {
+    await store.markEffectPending({
+      workflowId,
+      operationId: `${operationId}-post`,
+      holder: workerA,
+      nowIso: tAfterExpiry,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/must be leased|Lease fence failed/i.test(msg)) {
+      postCommitMarkDenied = true;
+      details.push(`Post-commit old A mark denied: ${msg}`);
+    } else {
+      passed = false;
+      details.push(`Post-commit old A mark unexpected error: ${msg}`);
+    }
+  }
+  if (!postCommitMarkDenied) {
+    passed = false;
+    details.push("Post-commit old A mark unexpectedly succeeded");
   }
 
   details.push(

@@ -25,7 +25,12 @@ describe("proofOldFenceAfterReassignment (T-X024)", () => {
     expect(joined).toMatch(/LIVE_TEMPORAL_CLAIM_REFUSED for TEMPORAL\+LOCAL_DURABLE/);
     expect(joined).toMatch(/FIXTURE_OK/);
     expect(joined).toMatch(/domainTemporal=NOT_WIRED/);
+    expect(joined).toMatch(/VERIFIED_CLAIM_REFUSED for upgrade-to-verified label/);
+    expect(joined).toMatch(/ACCEPTED_OK only/);
     expect(joined).toMatch(/Worker A self-renew while live ok/);
+    expect(joined).toMatch(
+      /1ms-before-expiry boundary: fenceCause=active isMissionLeaseActive=true/,
+    );
     expect(joined).toMatch(/fenceCause=expired/);
     expect(joined).toMatch(/Expired-pre-reassignment A bind denied.*fenceCause=expired/);
     expect(joined).toMatch(/Expired-pre-reassignment A mark denied.*fenceCause=expired/);
@@ -42,6 +47,7 @@ describe("proofOldFenceAfterReassignment (T-X024)", () => {
     expect(joined).toMatch(/Post-bind old A mark denied.*fenceCause=wrong_holder/);
     expect(joined).toMatch(/Worker B commit ok/);
     expect(joined).toMatch(/Post-commit old A bind denied/);
+    expect(joined).toMatch(/Post-commit old A mark denied/);
     expect(joined).toContain("relatedCases=T-X024");
     expect(joined).toContain(
       `liveTemporalWiring=${OLD_FENCE_TEMPORAL_WIRING}`,

@@ -8,9 +8,11 @@ import {
   classifyMissionLeaseFence,
   createMemoryMissionWorkflowStore,
   evaluateFixtureTemporalWiring,
+  evaluateOldFenceAcceptanceLabel,
   formatOldFenceHonestyDetail,
   isMissionLeaseActive,
   missionLeaseFenceFailedMessage,
+  parseMissionLeaseFenceCause,
   OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
   OLD_FENCE_HONESTY,
   type MissionWorkflowRecord,
@@ -87,13 +89,42 @@ describe("classifyMissionLeaseFence / isMissionLeaseActive (T-X024)", () => {
     ).toBe("no_holder");
   });
 
-  it("formats fenceCause on deny messages", () => {
+  it("formats fenceCause on deny messages and parses round-trip", () => {
     expect(missionLeaseFenceFailedMessage("wf-x", "expired")).toBe(
       "Lease fence failed for wf-x (fenceCause=expired)",
     );
     expect(missionLeaseFenceFailedMessage("wf-x", "wrong_holder")).toBe(
       "Lease fence failed for wf-x (fenceCause=wrong_holder)",
     );
+    expect(
+      parseMissionLeaseFenceCause(
+        missionLeaseFenceFailedMessage("wf-x", "expired"),
+      ),
+    ).toBe("expired");
+    expect(
+      parseMissionLeaseFenceCause(
+        missionLeaseFenceFailedMessage("wf-y", "wrong_holder"),
+      ),
+    ).toBe("wrong_holder");
+    expect(
+      parseMissionLeaseFenceCause(
+        missionLeaseFenceFailedMessage("wf-z", "no_holder"),
+      ),
+    ).toBe("no_holder");
+    expect(parseMissionLeaseFenceCause("Lease fence failed for wf-x")).toBeNull();
+    expect(
+      parseMissionLeaseFenceCause("Lease fence failed (fenceCause=bogus)"),
+    ).toBeNull();
+  });
+
+  it("is active 1ms before exact expiry", () => {
+    const rec = baseRecord();
+    expect(
+      classifyMissionLeaseFence(rec, "worker-a", "2026-11-21T18:00:00.999Z"),
+    ).toBe("active");
+    expect(
+      isMissionLeaseActive(rec, "worker-a", "2026-11-21T18:00:00.999Z"),
+    ).toBe(true);
   });
 
   it("keeps null expiry active and prefers wrong_holder over expired", () => {
@@ -131,6 +162,18 @@ describe("classifyMissionLeaseFence / isMissionLeaseActive (T-X024)", () => {
       "LIVE_TEMPORAL_CLAIM_REFUSED",
     );
     expect(formatOldFenceHonestyDetail()).toContain("acceptedNotVerified=true");
+  });
+
+  it("refuses VERIFIED acceptance label; ACCEPTED_OK only", () => {
+    expect(evaluateOldFenceAcceptanceLabel("ACCEPTED").code).toBe("ACCEPTED_OK");
+    expect(evaluateOldFenceAcceptanceLabel("ACCEPTED").allowed).toBe(true);
+    expect(evaluateOldFenceAcceptanceLabel("VERIFIED").code).toBe(
+      "VERIFIED_CLAIM_REFUSED",
+    );
+    expect(evaluateOldFenceAcceptanceLabel("VERIFIED").allowed).toBe(false);
+    expect(evaluateOldFenceAcceptanceLabel("sandbox-verified").code).toBe(
+      "VERIFIED_CLAIM_REFUSED",
+    );
   });
 });
 
