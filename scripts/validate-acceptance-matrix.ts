@@ -6,10 +6,16 @@
  * - statuses are NOT_RUN | ACCEPTED | BLOCKED (never silently VERIFIED for live)
  * - ACCEPTED requires evidenceArtifactId + resultEnvironment fixture|sandbox + on-disk artifact
  * - ChatGPT Ads transport/entitlement gate retained on T-F07 / T-US-013 / T-US-014
+ * - totals + summary.byStatus stay fresh vs cases[] (no stale summary drift)
  */
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  CHATGPT_ADS_GATE_CASE_IDS,
+  validateChatGptAdsGateRetention,
+  validateMatrixSummaryFreshness,
+} from "../packages/domain/src/acceptance-matrix-honesty.ts";
 
 type MatrixCase = {
   id: string;
@@ -209,54 +215,20 @@ if (matrix.totals.accepted !== undefined && matrix.totals.accepted !== acceptedC
   errors.push(`totals.accepted expected ${acceptedCount}, got ${matrix.totals.accepted}`);
 }
 
-// summary.byStatus must match the full cases[] status map — ACCEPTED ≠ VERIFIED
-if (matrix.summary?.byStatus) {
-  const summaryKeys = new Set(Object.keys(matrix.summary.byStatus));
-  const caseKeys = new Set(Object.keys(caseStatusCounts));
-  for (const status of new Set([...summaryKeys, ...caseKeys])) {
-    if (status === "VERIFIED") {
-      const verifiedCount = matrix.summary.byStatus.VERIFIED ?? 0;
-      if (verifiedCount !== 0 || (caseStatusCounts.VERIFIED ?? 0) !== 0) {
-        errors.push(
-          `summary.byStatus.VERIFIED must be 0 — ACCEPTED ≠ VERIFIED; never silently VERIFIED for live`,
-        );
-      }
-      continue;
-    }
-    const expected = caseStatusCounts[status] ?? 0;
-    const actual = matrix.summary.byStatus[status] ?? 0;
-    if (expected !== actual) {
-      errors.push(
-        `summary.byStatus.${status} expected ${expected}, got ${actual} (drift vs cases[])`,
-      );
-    }
-  }
-  // Zero-count allowed statuses may be omitted from summary; non-zero must match.
-  // Unexpected summary keys outside ALLOWED_STATUSES ∪ {VERIFIED} are honesty drift.
-  for (const status of summaryKeys) {
-    if (!ALLOWED_STATUSES.has(status) && status !== "VERIFIED") {
-      errors.push(
-        `summary.byStatus has unexpected status key ${status} (allowed: ${[...ALLOWED_STATUSES].join("|")})`,
-      );
-    }
-  }
-}
-if (matrix.summary?.total !== undefined && matrix.summary.total !== matrix.cases.length) {
-  errors.push(
-    `summary.total expected ${matrix.cases.length}, got ${matrix.summary.total}`,
-  );
+const freshness = validateMatrixSummaryFreshness({
+  cases: matrix.cases,
+  totals: matrix.totals,
+  summary: matrix.summary,
+});
+if (!freshness.ok) {
+  errors.push(...freshness.reasons);
 }
 
-const adsGateIds = ["T-F07", "T-US-013", "T-US-014"];
-for (const id of adsGateIds) {
-  const c = matrix.cases.find((x) => x.id === id);
-  if (!c?.gates?.includes("chatgpt_ads_transport_entitlement")) {
-    errors.push(`${id} must retain chatgpt_ads_transport_entitlement gate`);
-  }
-  if (c && c.status === "ACCEPTED") {
-    errors.push(`${id} ChatGPT Ads case must not be ACCEPTED without transport/entitlement`);
-  }
+const adsGate = validateChatGptAdsGateRetention({ cases: matrix.cases });
+if (!adsGate.ok) {
+  errors.push(...adsGate.reasons);
 }
+const adsGateIds = [...CHATGPT_ADS_GATE_CASE_IDS];
 
 if (!catalog.includes("fixture") || !catalog.includes("sandbox") || !catalog.includes("authorized production")) {
   errors.push("catalog must preserve fixture/sandbox/authorized-production distinction");
