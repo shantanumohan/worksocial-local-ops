@@ -329,6 +329,8 @@ export {
   applyExternalHumanEdit,
   attemptBlindAgentOverwrite,
   independentVerifyStagingChange,
+  refuseClaimedVerifiedStaging,
+  externalHumanEditLiveWiringStatus,
   type StagingConflictStatusValue,
   type StagingVerifyOutcomeValue,
   type StagingPageLedger,

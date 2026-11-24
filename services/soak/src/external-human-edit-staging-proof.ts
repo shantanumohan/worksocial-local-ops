@@ -15,7 +15,9 @@ import {
   attemptBlindAgentOverwrite,
   createExternalEditStagingState,
   digestFields,
+  externalHumanEditLiveWiringStatus,
   independentVerifyStagingChange,
+  refuseClaimedVerifiedStaging,
   stageAgentChangeAgainstBase,
   type SoakProofRecord,
 } from "@worksocial/domain";
@@ -152,6 +154,80 @@ export function proofExternalHumanEditConflictRetained(
   } else {
     passed = false;
     details.push(`Stale-base stage unexpectedly ${JSON.stringify(stale)}`);
+  }
+
+  // Live Temporal request refused; claimed VERIFIED refused; wiring helper NOT_WIRED.
+  const liveRefuse = attemptBlindAgentOverwrite(state, {
+    nowIso: tHuman,
+    requestLiveTemporalWiring: true,
+  });
+  if (
+    !liveRefuse.ok &&
+    liveRefuse.code === "LIVE_TEMPORAL_WIRING_NOT_WIRED" &&
+    liveRefuse.liveTemporalWiring === "NOT_WIRED" &&
+    liveRefuse.externalEffects === "NONE"
+  ) {
+    details.push(
+      "Live Temporal request → LIVE_TEMPORAL_WIRING_NOT_WIRED (NOT_WIRED)",
+    );
+  } else {
+    passed = false;
+    details.push(`Live Temporal refuse unexpectedly ${JSON.stringify(liveRefuse)}`);
+  }
+
+  const claimed = refuseClaimedVerifiedStaging(state, {
+    claimedVerified: true,
+    nowIso: tHuman,
+  });
+  if (
+    !claimed.ok &&
+    claimed.code === "CLAIMED_VERIFIED_REFUSED" &&
+    claimed.verifiedClaimed === false &&
+    claimed.liveTemporalWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "Claimed VERIFIED → CLAIMED_VERIFIED_REFUSED (ACCEPTED≠VERIFIED)",
+    );
+  } else {
+    passed = false;
+    details.push(`Claimed VERIFIED refuse unexpectedly ${JSON.stringify(claimed)}`);
+  }
+
+  // Second human edit while CONFLICT_RETAINED updates observations; restage refused.
+  const secondHuman = {
+    title: "Second human edit",
+    metaDescription: "Human meta 2",
+    h1: "Human H1 2",
+    bodyExcerpt: "Second human body",
+  };
+  const tSecond = new Date(Date.parse(nowIso) + 120_000).toISOString();
+  state = applyExternalHumanEdit(state, {
+    fields: secondHuman,
+    nowIso: tSecond,
+  });
+  const restage = stageAgentChangeAgainstBase(state, {
+    changeId: `${changeId}-restage`,
+    expectedBaseRevision: state.page.revision,
+    desiredFields: agentDesired,
+    nowIso: tSecond,
+  });
+  if (
+    state.change?.status === StagingConflictStatus.CONFLICT_RETAINED &&
+    state.change.humanObservedDigest === digestFields(secondHuman) &&
+    !restage.ok &&
+    restage.code === "CHANGE_ALREADY_OPEN" &&
+    externalHumanEditLiveWiringStatus() === "NOT_WIRED" &&
+    state.liveTemporalWiring === "NOT_WIRED" &&
+    state.liveProviderSuccessClaimed === false
+  ) {
+    details.push(
+      "Second human edit updates observations; CHANGE_ALREADY_OPEN; liveTemporalWiring=NOT_WIRED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Second-edit/restage unexpectedly status=${state.change?.status} restage=${JSON.stringify(restage)}`,
+    );
   }
 
   details.push(

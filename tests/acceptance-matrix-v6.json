@@ -2042,7 +2042,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x025",
-      "evidenceNote": "Fixture external-human-edit-during-staging conflict-retained proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture external-human-edit-during-staging conflict-retained proof only — live Temporal NOT_WIRED; claimed VERIFIED refused; ACCEPTED ≠ sandbox/prod VERIFIED; externalEffects=NONE"
     },
     {
       "id": "T-X026",

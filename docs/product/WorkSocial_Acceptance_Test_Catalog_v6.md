@@ -804,7 +804,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X021** is fixture ACCEPTED only via `CONCURRENT_IDEMPOTENT_RELEASE` (barrier+mutex one dispatch; not retry-only NO_DUPLICATE_EFFECTS). Not sandbox/prod VERIFIED.
 
-**T-X025** is fixture ACCEPTED only via the external human edit during staging conflict-retained proof (`EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED`) — base-revision pin, human edit retains CONFLICT, blind overwrite forbidden; ACCEPTED ≠ VERIFIED. Not sandbox/prod VERIFIED.
+**T-X025** is fixture ACCEPTED only via the external human edit during staging conflict-retained proof (`EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED`) — base-revision pin, human edit retains CONFLICT, blind overwrite forbidden, live Temporal NOT_WIRED, claimed VERIFIED refused; ACCEPTED ≠ VERIFIED. Not sandbox/prod VERIFIED.
 
 **T-X001** is fixture ACCEPTED only via the host-sleep monitoring coverage-gap coalesce proof (`HOST_SLEEP_MONITORING_COVERAGE_GAP`) — cadence-derived misses, catch-up probe required, no burst. Not sandbox/prod VERIFIED.
 
@@ -1051,7 +1051,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X022 | Idempotency key payload mismatch | Conflict *(fixture ACCEPTED — idempotency key payload mismatch proof; not sandbox/prod VERIFIED)* |
 | T-X023 | Eventual consistency false not-found | No unsafe retry *(fixture ACCEPTED — eventual-consistency false not-found proof; not sandbox/prod VERIFIED)* |
 | T-X024 | Old fence after reassignment | Old worker cannot commit *(fixture ACCEPTED — old fence after reassignment proof; not sandbox/prod VERIFIED)* |
-| T-X025 | External human edit during staging | Conflict retained *(fixture ACCEPTED — external human edit conflict retained proof; not sandbox/prod VERIFIED)* |
+| T-X025 | External human edit during staging | Conflict retained *(fixture ACCEPTED — external human edit conflict retained; live Temporal NOT_WIRED; claimed VERIFIED refused; not sandbox/prod VERIFIED)* |
 | T-X026 | Concurrent final budget reservation | Cap enforced *(fixture ACCEPTED — concurrent final budget reservation cap proof; not sandbox/prod VERIFIED)* |
 | T-X027 | Unknown usage on cancelled request | Hold; not zero cost |
 | T-X028 | Actual cost exceeds estimate | Overrun visible *(fixture ACCEPTED — actual cost exceeds estimate overrun visible proof; not sandbox/prod VERIFIED)* |
