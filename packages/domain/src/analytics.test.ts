@@ -3,10 +3,12 @@ import {
   AnalyticsEnvironment,
   Ga4PropertyKind,
   assertGa4WrongPropertyKindHonest,
+  assertGa4WrongPropertyKindReclaimIdempotent,
   attemptGuardedChatGptAdsProductionBind,
   classifyGscDemand,
   evaluateChatGptAdsAccess,
   interpretGa4DebugValidation,
+  reclaimGa4WrongPropertyKindDecision,
   validateGa4PropertyBinding,
 } from "./analytics.js";
 
@@ -72,6 +74,26 @@ describe("analytics — GA4 property kind", () => {
     expect(result.ok).toBe(false);
     expect(result.liveGa4Transport).toBe("NOT_WIRED");
 
+    const unavailable = validateGa4PropertyBinding({
+      propertyId: "100000001",
+      kind: Ga4PropertyKind.GA4_PROPERTY,
+      measurementId: "G-UNAV",
+      displayName: "Unavailable",
+      environment: AnalyticsEnvironment.UNAVAILABLE,
+    });
+    expect(unavailable.ok).toBe(false);
+    if (!unavailable.ok) expect(unavailable.code).toBe("WRONG_PROPERTY_KIND");
+
+    const uaShaped = validateGa4PropertyBinding({
+      propertyId: "UA-999999",
+      kind: Ga4PropertyKind.GA4_PROPERTY,
+      measurementId: null,
+      displayName: "UA mislabeled as GA4",
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(uaShaped.ok).toBe(false);
+    if (!uaShaped.ok) expect(uaShaped.code).toBe("WRONG_PROPERTY_KIND");
+
     const claimed = validateGa4PropertyBinding(
       {
         propertyId: "100000001",
@@ -97,6 +119,49 @@ describe("analytics — GA4 property kind", () => {
     );
     expect(transport.ok).toBe(false);
     if (!transport.ok) expect(transport.code).toBe("LIVE_CLAIM_REFUSED");
+  });
+
+  it("idempotent reclaim of wrong-kind refuse (T-X031 I8)", () => {
+    const binding = {
+      propertyId: "UA-123",
+      kind: Ga4PropertyKind.UA_PROPERTY,
+      measurementId: null,
+      displayName: "Legacy",
+      environment: AnalyticsEnvironment.FIXTURE,
+    };
+    const r1 = reclaimGa4WrongPropertyKindDecision(binding);
+    const r2 = reclaimGa4WrongPropertyKindDecision(binding);
+    const idem = assertGa4WrongPropertyKindReclaimIdempotent({
+      first: r1,
+      second: r2,
+    });
+    expect(idem.ok).toBe(true);
+    expect(idem.code).toBe("GA4_KIND_RECLAIM_IDEMPOTENT");
+    expect(r1.decision.ok).toBe(false);
+    expect(r1.priorBindInvented).toBe(false);
+
+    const afterClaim = reclaimGa4WrongPropertyKindDecision(
+      {
+        propertyId: "100000001",
+        kind: Ga4PropertyKind.GA4_PROPERTY,
+        measurementId: "G-FIXTURE",
+        displayName: "After claim",
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      { claimLiveVerified: true },
+    );
+    expect(afterClaim.decision.ok).toBe(false);
+    const reclaimClean = reclaimGa4WrongPropertyKindDecision({
+      propertyId: "UA-123",
+      kind: Ga4PropertyKind.UA_PROPERTY,
+      measurementId: null,
+      displayName: "Legacy reclaim",
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(reclaimClean.decision.ok).toBe(false);
+    if (!reclaimClean.decision.ok) {
+      expect(reclaimClean.decision.code).toBe("WRONG_PROPERTY_KIND");
+    }
   });
 });
 

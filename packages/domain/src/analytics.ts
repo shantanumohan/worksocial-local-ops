@@ -106,15 +106,27 @@ export function validateGa4PropertyBinding(
       ...GA4_BIND_HONESTY,
     };
   }
+  // UA id shape labeled as ga4_property is still wrong kind (T-X031 deepen I8).
+  if (/^UA-\d+/i.test(binding.propertyId.trim())) {
+    return {
+      ok: false,
+      code: "WRONG_PROPERTY_KIND",
+      reasons: [
+        "UA-shaped property id labeled as ga4_property refused (T-X031); ACCEPTED≠VERIFIED",
+      ],
+      ...GA4_BIND_HONESTY,
+    };
+  }
   if (
     binding.environment === AnalyticsEnvironment.LIVE ||
-    binding.environment === AnalyticsEnvironment.NOT_WIRED
+    binding.environment === AnalyticsEnvironment.NOT_WIRED ||
+    binding.environment === AnalyticsEnvironment.UNAVAILABLE
   ) {
     return {
       ok: false,
       code: "WRONG_PROPERTY_KIND",
       reasons: [
-        "Live GA4 bind refused — live query transport remains NOT_WIRED (T-X031); ACCEPTED≠VERIFIED",
+        "Live/unavailable GA4 bind refused — live query transport remains NOT_WIRED (T-X031); ACCEPTED≠VERIFIED",
       ],
       ...GA4_BIND_HONESTY,
     };
@@ -136,6 +148,104 @@ export function validateGa4PropertyBinding(
       `GA4 property ${binding.propertyId} accepted as ${binding.environment} (not live metrics; ACCEPTED≠VERIFIED)`,
     ],
     ...GA4_BIND_HONESTY,
+  };
+}
+
+export type Ga4KindReclaimResult = {
+  decision: Ga4PropertyValidation;
+  /** Pure reclaim — never invents a prior successful live bind. */
+  priorBindInvented: false;
+  liveProviderSuccessClaimed: false;
+  liveGa4Transport: "NOT_WIRED";
+  externalEffects: "NONE";
+};
+
+/**
+ * Idempotent reclaim of a GA4 kind bind decision (T-X031 deepen I8).
+ * Re-running on the same binding must not invent a live bind after refuse.
+ */
+export function reclaimGa4WrongPropertyKindDecision(
+  binding: Ga4PropertyBinding,
+  opts?: {
+    claimLiveVerified?: boolean;
+    requestLiveGa4Transport?: boolean;
+  },
+): Ga4KindReclaimResult {
+  return {
+    decision: validateGa4PropertyBinding(binding, opts),
+    priorBindInvented: false,
+    ...GA4_BIND_HONESTY,
+  };
+}
+
+/**
+ * Fail-closed: two reclaim passes over the same wrong-kind bind must agree.
+ */
+export function assertGa4WrongPropertyKindReclaimIdempotent(input: {
+  first: Ga4KindReclaimResult;
+  second: Ga4KindReclaimResult;
+}): {
+  ok: boolean;
+  code: "GA4_KIND_RECLAIM_IDEMPOTENT" | "GA4_KIND_RECLAIM_DRIFT";
+  reasons: string[];
+  liveGa4Transport: "NOT_WIRED";
+  externalEffects: "NONE";
+} {
+  const reasons: string[] = [];
+  const { first, second } = input;
+  if (first.priorBindInvented !== false || second.priorBindInvented !== false) {
+    reasons.push("priorBindInvented must be false on both reclaim passes");
+  }
+  if (
+    first.liveProviderSuccessClaimed !== false ||
+    second.liveProviderSuccessClaimed !== false
+  ) {
+    reasons.push("liveProviderSuccessClaimed must be false on reclaim");
+  }
+  if (
+    first.liveGa4Transport !== "NOT_WIRED" ||
+    second.liveGa4Transport !== "NOT_WIRED"
+  ) {
+    reasons.push("liveGa4Transport must be NOT_WIRED on reclaim");
+  }
+  if (first.externalEffects !== "NONE" || second.externalEffects !== "NONE") {
+    reasons.push("externalEffects must be NONE on reclaim");
+  }
+  if (first.decision.ok !== second.decision.ok) {
+    reasons.push("reclaim decision.ok drifted");
+  }
+  if (!first.decision.ok && !second.decision.ok) {
+    if (first.decision.code !== second.decision.code) {
+      reasons.push("reclaim decision.code drifted");
+    }
+  }
+  if (first.decision.ok === true || second.decision.ok === true) {
+    // Reclaim of a known wrong-kind fixture must stay refused when both inputs
+    // were wrong-kind; callers pass refused bindings into this helper.
+    if (
+      first.decision.ok === true &&
+      first.decision.binding.kind !== Ga4PropertyKind.GA4_PROPERTY
+    ) {
+      reasons.push("idempotent reclaim must not accept non-GA4 kind");
+    }
+  }
+  if (reasons.length > 0) {
+    return {
+      ok: false,
+      code: "GA4_KIND_RECLAIM_DRIFT",
+      reasons,
+      liveGa4Transport: "NOT_WIRED",
+      externalEffects: "NONE",
+    };
+  }
+  return {
+    ok: true,
+    code: "GA4_KIND_RECLAIM_IDEMPOTENT",
+    reasons: [
+      "idempotent reclaim: same refuse/accept; no invent live bind; ACCEPTED≠VERIFIED",
+    ],
+    liveGa4Transport: "NOT_WIRED",
+    externalEffects: "NONE",
   };
 }
 
@@ -164,8 +274,20 @@ export function assertGa4WrongPropertyKindHonest(
   if (decision.ok && decision.binding.environment === AnalyticsEnvironment.LIVE) {
     reasons.push("Must not accept LIVE environment bind");
   }
+  if (
+    decision.ok &&
+    decision.binding.environment === AnalyticsEnvironment.UNAVAILABLE
+  ) {
+    reasons.push("Must not accept UNAVAILABLE environment bind");
+  }
   if (decision.ok && decision.binding.kind !== Ga4PropertyKind.GA4_PROPERTY) {
     reasons.push("Must not accept non-GA4 property kind");
+  }
+  if (
+    decision.ok &&
+    /^UA-\d+/i.test(decision.binding.propertyId.trim())
+  ) {
+    reasons.push("Must not accept UA-shaped property id as GA4");
   }
   if (reasons.length > 0) {
     return {

@@ -1,7 +1,9 @@
 /**
  * Fixture proof for T-X031 — wrong GA4 property kind refused.
- * Hillclimb: measurement-id-only / unknown refuse; live VERIFIED claim
- * refused; liveGa4Transport NOT_WIRED; ACCEPTED≠VERIFIED. External effects: NONE.
+ * Hillclimb deepen I8: idempotent reclaim; UA-shaped id mislabeled as GA4;
+ * UNAVAILABLE env refuse; measurement-id-only / unknown refuse; live VERIFIED
+ * claim refused; liveGa4Transport NOT_WIRED; ACCEPTED≠VERIFIED.
+ * External effects: NONE.
  */
 
 import { randomUUID } from "node:crypto";
@@ -10,6 +12,8 @@ import {
   Ga4PropertyKind,
   SoakProofKind,
   assertGa4WrongPropertyKindHonest,
+  assertGa4WrongPropertyKindReclaimIdempotent,
+  reclaimGa4WrongPropertyKindDecision,
   validateGa4PropertyBinding,
   type SoakProofRecord,
 } from "@worksocial/domain";
@@ -182,6 +186,82 @@ export function proofGa4WrongPropertyKindRefused(
     passed = false;
     details.push(
       `honesty failed ua=${honesty.reasons.join("; ")} ok=${honestyOk.reasons.join("; ")}`,
+    );
+  }
+
+  // I8: UA-shaped id labeled ga4_property + UNAVAILABLE env refuse.
+  const uaShaped = validateGa4PropertyBinding({
+    propertyId: "UA-555555",
+    kind: Ga4PropertyKind.GA4_PROPERTY,
+    measurementId: null,
+    displayName: "UA mislabeled",
+    environment: AnalyticsEnvironment.FIXTURE,
+  });
+  const unavailable = validateGa4PropertyBinding({
+    propertyId: "100000003",
+    kind: Ga4PropertyKind.GA4_PROPERTY,
+    measurementId: "G-UNAV",
+    displayName: "Unavailable",
+    environment: AnalyticsEnvironment.UNAVAILABLE,
+  });
+  if (
+    !uaShaped.ok &&
+    uaShaped.code === "WRONG_PROPERTY_KIND" &&
+    !unavailable.ok &&
+    unavailable.code === "WRONG_PROPERTY_KIND"
+  ) {
+    details.push(
+      "UA-shaped id + UNAVAILABLE env → WRONG_PROPERTY_KIND refuse",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `uaShaped/unavailable unexpectedly ua=${JSON.stringify(uaShaped)} unav=${JSON.stringify(unavailable)}`,
+    );
+  }
+
+  // I8: idempotent reclaim — double UA refuse agrees; post-live-claim reclaim still refuses UA.
+  const uaBinding = {
+    propertyId: "UA-123",
+    kind: Ga4PropertyKind.UA_PROPERTY,
+    measurementId: null,
+    displayName: "Legacy UA",
+    environment: AnalyticsEnvironment.FIXTURE,
+  } as const;
+  const reclaim1 = reclaimGa4WrongPropertyKindDecision(uaBinding);
+  const reclaim2 = reclaimGa4WrongPropertyKindDecision(uaBinding);
+  const reclaimIdem = assertGa4WrongPropertyKindReclaimIdempotent({
+    first: reclaim1,
+    second: reclaim2,
+  });
+  const afterLiveClaim = reclaimGa4WrongPropertyKindDecision(
+    {
+      propertyId: "100000001",
+      kind: Ga4PropertyKind.GA4_PROPERTY,
+      measurementId: "G-FIXTURE",
+      displayName: "Claim live",
+      environment: AnalyticsEnvironment.FIXTURE,
+    },
+    { claimLiveVerified: true },
+  );
+  const reclaimAfterClaim = reclaimGa4WrongPropertyKindDecision(uaBinding);
+  if (
+    reclaimIdem.ok &&
+    reclaimIdem.code === "GA4_KIND_RECLAIM_IDEMPOTENT" &&
+    reclaim1.decision.ok === false &&
+    reclaim1.priorBindInvented === false &&
+    afterLiveClaim.decision.ok === false &&
+    afterLiveClaim.decision.code === "LIVE_CLAIM_REFUSED" &&
+    reclaimAfterClaim.decision.ok === false &&
+    reclaimAfterClaim.decision.code === "WRONG_PROPERTY_KIND"
+  ) {
+    details.push(
+      "idempotent reclaim: double UA refuse agrees; post-live-claim reclaim still WRONG_PROPERTY_KIND (no invent bind)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `idempotent reclaim unexpectedly idem=${JSON.stringify(reclaimIdem)} r1=${JSON.stringify(reclaim1)} afterClaim=${JSON.stringify(afterLiveClaim)} after=${JSON.stringify(reclaimAfterClaim)}`,
     );
   }
 
