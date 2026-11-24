@@ -9,6 +9,8 @@
  * whitespace-normalized tokens; LEASE_HELD message generic (no host/gen/pid leak);
  * wake/catchup clock gaps (mid-gap held; past-expiry single reclaim);
  * exact-expiry wake gapMs=0; same-gen mid-gap renew; post-expiry renew refuse;
+ * same-gen acquire at/after expiry re-establishes (reclaimed=false) vs renew refuse;
+ * whitespace-padded same-gen acquire; post-reestablish foreign mid-gap LEASE_HELD;
  * honesty NOT_WIRED / externalEffects NONE. Never invents live VERIFIED.
  */
 
@@ -551,6 +553,105 @@ export function proofCompetingSupervisorLease(
   if (cap.heartbeatFallback !== false) {
     passed = false;
     details.push("heartbeatFallback must remain false (kill auth honesty)");
+  }
+
+  // 15. Edge deepen — same-gen acquire at/after expiry re-establishes
+  //     (reclaimed=false, leaseId preserved) while renew refuses; whitespace
+  //     tokens normalize; foreign competitor mid-gap after re-establish held.
+  const reBase = baseMs + 300_000;
+  const reSeed = acquireHostLease(
+    null,
+    {
+      hostId: "host-reest",
+      holderPid: 9101,
+      generationId: "gen-reest",
+      ttlMs: 8_000,
+    },
+    clockAt(reBase),
+  );
+  if (!reSeed.ok) {
+    passed = false;
+    details.push("Re-establish seed acquire failed");
+  } else {
+    const reExpiry = Date.parse(reSeed.lease.expiresAt);
+    const atExpAcq = acquireHostLease(
+      reSeed.lease,
+      {
+        hostId: "  host-reest  ",
+        holderPid: 9101,
+        generationId: " gen-reest ",
+        ttlMs: 8_000,
+      },
+      clockAt(reExpiry),
+    );
+    if (
+      atExpAcq.ok &&
+      atExpAcq.reclaimed === false &&
+      atExpAcq.lease.leaseId === reSeed.lease.leaseId &&
+      atExpAcq.lease.hostId === "host-reest" &&
+      atExpAcq.lease.generationId === "gen-reest"
+    ) {
+      details.push(
+        "Same-gen acquire at exact-expiry re-establish ok reclaimed=false",
+      );
+    } else {
+      passed = false;
+      details.push("Same-gen acquire at exact-expiry re-establish failed");
+    }
+
+    const pastExpMs = reExpiry + 2_500;
+    const pastAcq = acquireHostLease(
+      reSeed.lease,
+      {
+        hostId: "host-reest",
+        holderPid: 9102,
+        generationId: "gen-reest",
+        ttlMs: 8_000,
+      },
+      clockAt(pastExpMs),
+    );
+    if (
+      pastAcq.ok &&
+      pastAcq.reclaimed === false &&
+      pastAcq.lease.leaseId === reSeed.lease.leaseId
+    ) {
+      details.push(
+        "Same-gen acquire past-expiry re-establish ok reclaimed=false",
+      );
+    } else {
+      passed = false;
+      details.push("Same-gen acquire past-expiry re-establish failed");
+    }
+
+    if (pastAcq.ok) {
+      const foreignMid = acquireHostLease(
+        pastAcq.lease,
+        {
+          hostId: "host-reest",
+          holderPid: 9199,
+          generationId: "gen-foreign",
+          ttlMs: 8_000,
+        },
+        clockAt(pastExpMs + 1_000),
+      );
+      const midClass = classifyWakeCatchupLeaseGap(
+        pastAcq.lease,
+        pastExpMs + 1_000,
+      );
+      if (
+        midClass.kind === "mid_gap_held" &&
+        !foreignMid.ok &&
+        foreignMid.reason === "LEASE_HELD" &&
+        foreignMid.message === HOST_LEASE_HELD_MESSAGE
+      ) {
+        details.push(
+          "Post-reestablish foreign mid-gap competitor LEASE_HELD generic",
+        );
+      } else {
+        passed = false;
+        details.push("Post-reestablish foreign mid-gap LEASE_HELD failed");
+      }
+    }
   }
 
   details.push("honesty NOT_WIRED/NONE");

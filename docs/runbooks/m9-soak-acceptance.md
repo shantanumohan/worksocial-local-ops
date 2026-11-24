@@ -38,7 +38,7 @@ Honest fixture ACCEPTED cases: **T-X001**, **T-X014**, **T-X020**, **T-US-048**,
 
 **T-F24 / T-US-047** map only to `RECOVER_ROTATE_RECONCILE` (complete F24 evidence set). Live provider revoke remains **NOT_WIRED**.
 
-**T-US-002 / T-X002** map only to `COMPETING_SUPERVISOR_LEASE` (third competitor / cross-host refuse; live probe deny; exact-expiry reclaim; same-gen identity preserve; wake/catchup mid-gap held + past-expiry single reclaim; exact-expiry wake gapMs=0; mid-gap renew / post-expiry renew refuse; generic LEASE_HELD; not live VERIFIED).
+**T-US-002 / T-X002** map only to `COMPETING_SUPERVISOR_LEASE` (third competitor / cross-host refuse; live probe deny; exact-expiry reclaim; same-gen identity preserve; wake/catchup mid-gap held + past-expiry single reclaim; exact-expiry wake gapMs=0; mid-gap renew / post-expiry renew refuse; same-gen acquire at/after expiry re-establish; post-reestablish foreign mid-gap held; generic LEASE_HELD; not live VERIFIED).
 
 **T-X018 / T-US-054** map only to `SELF_APPROVAL_REJECTED`.
 
