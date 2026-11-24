@@ -78,6 +78,23 @@ describe("acceptance-matrix-honesty", () => {
     });
   });
 
+  it("rejects swapped BLOCKED/FAILED summary buckets", () => {
+    const cases = [{ status: "BLOCKED" }, { status: "ACCEPTED" }];
+    const swapped = validateMatrixSummaryFreshness({
+      cases,
+      totals: { all: 2, notRun: 0, accepted: 1 },
+      summary: { total: 2, byStatus: { ACCEPTED: 1, FAILED: 1 } },
+    });
+    expect(swapped.ok).toBe(false);
+    if (swapped.ok) return;
+    expect(swapped.reasons.some((r) => /summary\.byStatus\.BLOCKED/.test(r))).toBe(
+      true,
+    );
+    expect(swapped.reasons.some((r) => /summary\.byStatus\.FAILED/.test(r))).toBe(
+      true,
+    );
+  });
+
   it("retains ChatGPT Ads transport/entitlement gates and refuses ACCEPTED", () => {
     const missing = validateChatGptAdsGateRetention({
       cases: [
@@ -128,6 +145,27 @@ describe("acceptance-matrix-honesty", () => {
     expect(bad.ok).toBe(false);
     if (bad.ok) return;
     expect(bad.reasons.length).toBeGreaterThanOrEqual(5);
+
+    const omittedAds = validateReleaseEvidenceLedgerHonesty({
+      environment: "fixture",
+      externalEffects: "NONE",
+      r1CompleteClaimed: false,
+      chatgptAds: null,
+      liveWiring: { cms: "NOT_WIRED" },
+      cases: [{ status: "ACCEPTED" }],
+      artifacts: [
+        {
+          liveProviderSuccessClaimed: false,
+          externalEffects: "NONE",
+          redacted: true,
+        },
+      ],
+    });
+    expect(omittedAds.ok).toBe(false);
+    if (omittedAds.ok) return;
+    expect(omittedAds.reasons.some((r) => /chatgptAds must be present/.test(r))).toBe(
+      true,
+    );
 
     const ok = validateReleaseEvidenceLedgerHonesty({
       environment: "fixture",

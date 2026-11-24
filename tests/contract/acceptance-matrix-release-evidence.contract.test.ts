@@ -37,7 +37,13 @@ describe("contract: acceptance-matrix + release:evidence honesty", () => {
     expect(freshness.ok).toBe(true);
     if (!freshness.ok) return;
     expect(freshness.counts.all).toBe(159);
-    expect(freshness.counts.notRun + freshness.counts.accepted).toBe(159);
+    expect(
+      freshness.counts.notRun +
+        freshness.counts.accepted +
+        freshness.counts.blocked +
+        freshness.counts.failed +
+        freshness.counts.other,
+    ).toBe(freshness.counts.all);
     expect(freshness.counts.verifiedForbidden).toBe(0);
 
     const ads = validateChatGptAdsGateRetention({ cases: matrix.cases });

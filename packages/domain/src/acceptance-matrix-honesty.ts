@@ -124,22 +124,44 @@ export function validateMatrixSummaryFreshness(input: {
 
   const byStatus = input.summary?.byStatus;
   if (byStatus) {
-    const summaryNotRun = byStatus.NOT_RUN ?? 0;
-    const summaryAccepted = byStatus.ACCEPTED ?? 0;
-    if (summaryNotRun !== counts.notRun) {
-      reasons.push(
-        `summary.byStatus.NOT_RUN expected ${counts.notRun} from cases, got ${summaryNotRun} (stale summary)`,
-      );
+    const expectedBuckets: Array<{
+      key: string;
+      expected: number;
+    }> = [
+      { key: "NOT_RUN", expected: counts.notRun },
+      { key: "ACCEPTED", expected: counts.accepted },
+      { key: "BLOCKED", expected: counts.blocked },
+      { key: "FAILED", expected: counts.failed },
+    ];
+    for (const { key, expected } of expectedBuckets) {
+      const reported = byStatus[key] ?? 0;
+      if (reported !== expected) {
+        reasons.push(
+          `summary.byStatus.${key} expected ${expected} from cases, got ${reported} (stale summary)`,
+        );
+      }
     }
-    if (summaryAccepted !== counts.accepted) {
+    if ((byStatus.VERIFIED ?? 0) !== 0) {
       reasons.push(
-        `summary.byStatus.ACCEPTED expected ${counts.accepted} from cases, got ${summaryAccepted} (stale summary)`,
+        `summary.byStatus.VERIFIED must be 0 — ACCEPTED ≠ VERIFIED; never silently VERIFIED for live`,
       );
     }
     for (const [status, n] of Object.entries(byStatus)) {
       if (!Number.isInteger(n) || n < 0) {
         reasons.push(
           `summary.byStatus.${status} must be a non-negative integer, got ${JSON.stringify(n)}`,
+        );
+      }
+      if (
+        status !== "NOT_RUN" &&
+        status !== "ACCEPTED" &&
+        status !== "BLOCKED" &&
+        status !== "FAILED" &&
+        status !== "VERIFIED" &&
+        n !== 0
+      ) {
+        reasons.push(
+          `summary.byStatus.${status} is unsupported (must be 0 or omitted), got ${n}`,
         );
       }
     }
@@ -217,16 +239,21 @@ export function validateReleaseEvidenceLedgerHonesty(input: {
   if (input.r1CompleteClaimed === true) {
     reasons.push("release:evidence must not claim R1-complete");
   }
-  if (input.chatgptAds?.allowed === true) {
-    reasons.push("release:evidence ChatGPT Ads must remain ACCESS_BLOCKED (allowed=false)");
-  }
-  if (
-    input.chatgptAds?.wiring != null &&
-    String(input.chatgptAds.wiring).toUpperCase() !== "NOT_WIRED"
-  ) {
+  if (!input.chatgptAds) {
     reasons.push(
-      `release:evidence chatgptAds.wiring must be NOT_WIRED, got ${JSON.stringify(input.chatgptAds.wiring)}`,
+      "release:evidence chatgptAds must be present with allowed=false and wiring=NOT_WIRED",
     );
+  } else {
+    if (input.chatgptAds.allowed !== false) {
+      reasons.push(
+        `release:evidence ChatGPT Ads must remain ACCESS_BLOCKED (allowed=false), got ${JSON.stringify(input.chatgptAds.allowed)}`,
+      );
+    }
+    if (String(input.chatgptAds.wiring ?? "").toUpperCase() !== "NOT_WIRED") {
+      reasons.push(
+        `release:evidence chatgptAds.wiring must be NOT_WIRED, got ${JSON.stringify(input.chatgptAds.wiring)}`,
+      );
+    }
   }
   if (input.liveWiring) {
     for (const [k, v] of Object.entries(input.liveWiring)) {
