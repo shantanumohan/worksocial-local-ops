@@ -52,6 +52,11 @@ export const PaidProposalStatus = {
   BLOCKED: "blocked",
   /** Fixture review recorded — never a live verified mutation. */
   DECISION_RECORDED: "decision_recorded",
+  /**
+   * Provider shared-budget / revision drifted after proposal bind (T-X035).
+   * Requires a new decision — never mutate on a stale proposal.
+   */
+  INVALIDATED: "invalidated",
 } as const;
 
 export type PaidProposalStatusValue =
@@ -135,6 +140,21 @@ export type FinancialDiff = {
   notes: string[];
 };
 
+/**
+ * Fixture provider budget snapshot bound at proposal/approval time (F16).
+ * Re-read before mutation; shared-budget drift invalidates the proposal (T-X035).
+ */
+export type PaidProviderBudgetSnapshot = {
+  accountId: string;
+  campaignId: string;
+  sharedBudgetId: string;
+  /** Revision / etag from fixture provider read. */
+  entityRevision: string;
+  dailyBudgetMinor: number | null;
+  sharedBudgetDailyMinor: number;
+  readAtIso: string;
+};
+
 export type DeliveryDiagnosis = {
   kind: DeliveryDiagnosisKindValue;
   impressions: number | null;
@@ -159,6 +179,8 @@ export type PaidMediaProposal = {
   status: PaidProposalStatusValue;
   environment: AnalyticsEnvironmentValue;
   wiring: PaidMediaWiringValue;
+  /** Bound at create/approve — compared on re-read before mutation (T-X035). */
+  boundProviderSnapshot: PaidProviderBudgetSnapshot | null;
   createdAtIso: string;
   updatedAtIso: string;
 };
@@ -417,6 +439,8 @@ export type CreatePaidProposalInput = {
   diagnosis: DeliveryDiagnosis;
   financialDiff: FinancialDiff;
   chatgptAdsAccess?: ChatGptAdsAccessDecision;
+  /** Optional bind of fixture provider state at proposal time (T-X035). */
+  boundProviderSnapshot?: PaidProviderBudgetSnapshot | null;
   createdAtIso: string;
 };
 
@@ -427,6 +451,8 @@ export type CreatePaidProposalResult =
       code:
         | "CHATGPT_ADS_BLOCKED"
         | "SHARED_BUDGET_UNKNOWN"
+        | "SHARED_BUDGET_SNAPSHOT_REQUIRED"
+        | "SNAPSHOT_BUDGET_MISMATCH"
         | "PARTIAL_SPEND"
         | "INCOMPLETE_PROPOSAL";
       reasons: string[];
@@ -483,6 +509,37 @@ export function createPaidMediaProposal(
     };
   }
 
+  if (
+    input.financialDiff.sharedBudgetAffected &&
+    input.financialDiff.sharedBudgetImpactKnown &&
+    !input.boundProviderSnapshot
+  ) {
+    return {
+      ok: false,
+      code: "SHARED_BUDGET_SNAPSHOT_REQUIRED",
+      reasons: [
+        "Shared-budget proposals require a bound provider budget snapshot for T-X035 re-read (F16)",
+      ],
+      proposal: null,
+    };
+  }
+
+  if (
+    input.boundProviderSnapshot &&
+    input.financialDiff.dailyBudgetBeforeMinor !== null &&
+    input.boundProviderSnapshot.dailyBudgetMinor !==
+      input.financialDiff.dailyBudgetBeforeMinor
+  ) {
+    return {
+      ok: false,
+      code: "SNAPSHOT_BUDGET_MISMATCH",
+      reasons: [
+        `Bound provider dailyBudgetMinor (${input.boundProviderSnapshot.dailyBudgetMinor}) must equal financialDiff.dailyBudgetBeforeMinor (${input.financialDiff.dailyBudgetBeforeMinor}) — refuse stale baseline (T-X035)`,
+      ],
+      proposal: null,
+    };
+  }
+
   let wiring: PaidMediaWiringValue = PaidMediaWiring.FIXTURE;
   let status: PaidProposalStatusValue = PaidProposalStatus.DRAFT;
   const reasons: string[] = [];
@@ -520,6 +577,7 @@ export function createPaidMediaProposal(
           status,
           environment: AnalyticsEnvironment.NOT_WIRED,
           wiring,
+          boundProviderSnapshot: input.boundProviderSnapshot ?? null,
           createdAtIso: input.createdAtIso,
           updatedAtIso: input.createdAtIso,
         },
@@ -544,6 +602,7 @@ export function createPaidMediaProposal(
       status: PaidProposalStatus.READY_FOR_REVIEW,
       environment: AnalyticsEnvironment.FIXTURE,
       wiring,
+      boundProviderSnapshot: input.boundProviderSnapshot ?? null,
       createdAtIso: input.createdAtIso,
       updatedAtIso: input.createdAtIso,
     },
@@ -580,6 +639,15 @@ export function recordPaidMediaDecision(
       code: "PROPOSAL_BLOCKED",
       reasons: [
         "Blocked proposals (e.g. ChatGPT Ads access-blocked) cannot be approved for mutation",
+      ],
+    };
+  }
+  if (input.proposal.status === PaidProposalStatus.INVALIDATED) {
+    return {
+      ok: false,
+      code: "PROPOSAL_INVALIDATED",
+      reasons: [
+        "Invalidated proposals cannot be approved — shared budget or provider revision drifted; request a new decision (T-X035)",
       ],
     };
   }
@@ -636,11 +704,16 @@ export type ExecutePaidProposalInput = {
 
 export type ExecutePaidProposalResult = {
   ok: false;
-  code: "LIVE_MUTATION_NOT_WIRED" | "CHATGPT_ADS_BLOCKED" | "NOT_APPROVED";
+  code:
+    | "LIVE_MUTATION_NOT_WIRED"
+    | "CHATGPT_ADS_BLOCKED"
+    | "NOT_APPROVED"
+    | "PROPOSAL_INVALIDATED";
   reasons: string[];
   externalEffects: "NONE";
   liveMutationWiring: "NOT_WIRED";
   acceptanceEqualsVerified: false;
+  mutationAttempted: false;
 };
 
 /**
@@ -660,6 +733,20 @@ export function attemptPaidMediaExecution(
       externalEffects: "NONE",
       liveMutationWiring: "NOT_WIRED",
       acceptanceEqualsVerified: false,
+      mutationAttempted: false,
+    };
+  }
+  if (input.proposal.status === PaidProposalStatus.INVALIDATED) {
+    return {
+      ok: false,
+      code: "PROPOSAL_INVALIDATED",
+      reasons: [
+        "Invalidated proposal refused — shared ad budget changed externally; new decision required (T-X035)",
+      ],
+      externalEffects: "NONE",
+      liveMutationWiring: "NOT_WIRED",
+      acceptanceEqualsVerified: false,
+      mutationAttempted: false,
     };
   }
   if (input.proposal.status !== PaidProposalStatus.APPROVED) {
@@ -670,6 +757,7 @@ export function attemptPaidMediaExecution(
       externalEffects: "NONE",
       liveMutationWiring: "NOT_WIRED",
       acceptanceEqualsVerified: false,
+      mutationAttempted: false,
     };
   }
   return {
@@ -683,6 +771,167 @@ export function attemptPaidMediaExecution(
     externalEffects: "NONE",
     liveMutationWiring: "NOT_WIRED",
     acceptanceEqualsVerified: false,
+    mutationAttempted: false,
+  };
+}
+
+export type ReReadPaidProviderBudgetInput = {
+  proposal: PaidMediaProposal;
+  /** Fixture re-read of current provider shared-budget state. */
+  current: PaidProviderBudgetSnapshot;
+  readAtIso: string;
+};
+
+export type ReReadPaidProviderBudgetResult =
+  | {
+      ok: true;
+      code: "PROVIDER_STATE_MATCHES";
+      proposal: PaidMediaProposal;
+      externalEffects: "NONE";
+      mutationAttempted: false;
+    }
+  | {
+      ok: false;
+      code:
+        | "SHARED_BUDGET_CHANGED_EXTERNALLY"
+        | "PROVIDER_REVISION_CHANGED"
+        | "CAMPAIGN_BUDGET_CHANGED_EXTERNALLY"
+        | "MISSING_BOUND_SNAPSHOT"
+        | "ACCOUNT_MISMATCH"
+        | "STALE_PROVIDER_SNAPSHOT";
+      proposal: PaidMediaProposal;
+      reasons: string[];
+      externalEffects: "NONE";
+      mutationAttempted: false;
+    };
+
+/**
+ * F16 re-read before mutation: if shared ad budget changed externally,
+ * invalidate the proposal and refuse mutation (T-X035). External effects: NONE.
+ */
+export function reReadPaidProviderBudgetBeforeMutation(
+  input: ReReadPaidProviderBudgetInput,
+): ReReadPaidProviderBudgetResult {
+  const bound = input.proposal.boundProviderSnapshot;
+  const stampIso = input.current.readAtIso || input.readAtIso;
+  if (!bound) {
+    return {
+      ok: false,
+      code: "MISSING_BOUND_SNAPSHOT",
+      proposal: input.proposal,
+      reasons: [
+        "No bound provider budget snapshot — cannot re-read before mutation",
+      ],
+      externalEffects: "NONE",
+      mutationAttempted: false,
+    };
+  }
+
+  if (
+    bound.accountId !== input.proposal.accountId ||
+    bound.campaignId !== input.proposal.campaignId ||
+    input.current.accountId !== input.proposal.accountId ||
+    input.current.campaignId !== input.proposal.campaignId
+  ) {
+    const invalidated: PaidMediaProposal = {
+      ...input.proposal,
+      status: PaidProposalStatus.INVALIDATED,
+      updatedAtIso: stampIso,
+    };
+    return {
+      ok: false,
+      code: "ACCOUNT_MISMATCH",
+      proposal: invalidated,
+      reasons: [
+        "Bound/current snapshot account/campaign does not match the proposal — invalidated",
+      ],
+      externalEffects: "NONE",
+      mutationAttempted: false,
+    };
+  }
+
+  if (
+    bound.accountId !== input.current.accountId ||
+    bound.campaignId !== input.current.campaignId ||
+    bound.sharedBudgetId !== input.current.sharedBudgetId
+  ) {
+    const invalidated: PaidMediaProposal = {
+      ...input.proposal,
+      status: PaidProposalStatus.INVALIDATED,
+      updatedAtIso: stampIso,
+    };
+    return {
+      ok: false,
+      code: "ACCOUNT_MISMATCH",
+      proposal: invalidated,
+      reasons: [
+        "Provider account/campaign/shared-budget identity drifted — proposal invalidated",
+      ],
+      externalEffects: "NONE",
+      mutationAttempted: false,
+    };
+  }
+
+  const currentReadMs = Date.parse(input.current.readAtIso);
+  const proposalUpdatedMs = Date.parse(input.proposal.updatedAtIso);
+  if (
+    !Number.isFinite(currentReadMs) ||
+    !Number.isFinite(proposalUpdatedMs) ||
+    currentReadMs < proposalUpdatedMs
+  ) {
+    return {
+      ok: false,
+      code: "STALE_PROVIDER_SNAPSHOT",
+      proposal: input.proposal,
+      reasons: [
+        !Number.isFinite(currentReadMs) || !Number.isFinite(proposalUpdatedMs)
+          ? "Provider re-read or proposal.updatedAtIso is not a parseable instant — refuse"
+          : "Provider re-read snapshot is older than proposal.updatedAtIso — refuse stale cache",
+      ],
+      externalEffects: "NONE",
+      mutationAttempted: false,
+    };
+  }
+
+  const sharedBudgetDrifted =
+    bound.sharedBudgetDailyMinor !== input.current.sharedBudgetDailyMinor;
+  const campaignBudgetDrifted =
+    bound.dailyBudgetMinor !== input.current.dailyBudgetMinor;
+  const revisionDrifted = bound.entityRevision !== input.current.entityRevision;
+
+  if (sharedBudgetDrifted || campaignBudgetDrifted || revisionDrifted) {
+    const invalidated: PaidMediaProposal = {
+      ...input.proposal,
+      status: PaidProposalStatus.INVALIDATED,
+      updatedAtIso: stampIso,
+    };
+    const code = sharedBudgetDrifted
+      ? ("SHARED_BUDGET_CHANGED_EXTERNALLY" as const)
+      : campaignBudgetDrifted
+        ? ("CAMPAIGN_BUDGET_CHANGED_EXTERNALLY" as const)
+        : ("PROVIDER_REVISION_CHANGED" as const);
+    return {
+      ok: false,
+      code,
+      proposal: invalidated,
+      reasons: [
+        sharedBudgetDrifted
+          ? `Shared ad budget changed externally (${bound.sharedBudgetDailyMinor} → ${input.current.sharedBudgetDailyMinor} minor/day) — proposal invalidated; new decision required (T-X035)`
+          : campaignBudgetDrifted
+            ? `Campaign daily budget changed externally (${bound.dailyBudgetMinor} → ${input.current.dailyBudgetMinor}) — proposal invalidated`
+            : `Provider entity revision changed (${bound.entityRevision} → ${input.current.entityRevision}) — proposal invalidated; new decision required`,
+      ],
+      externalEffects: "NONE",
+      mutationAttempted: false,
+    };
+  }
+
+  return {
+    ok: true,
+    code: "PROVIDER_STATE_MATCHES",
+    proposal: input.proposal,
+    externalEffects: "NONE",
+    mutationAttempted: false,
   };
 }
 

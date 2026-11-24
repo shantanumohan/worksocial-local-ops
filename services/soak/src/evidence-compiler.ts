@@ -132,6 +132,7 @@ const CASE_TITLES: Record<SoakFixtureCaseId, string> = {
   "T-X071": "Local host offline public discovery — honest unavailability",
   "T-X067": "Incompatible workflow upgrade — blocked or compatible retained",
   "T-X034": "Test-only Ads project vs production — blocked",
+  "T-X035": "Shared ad budget changed externally — proposal invalidated",
   "T-X030": "Rate-limit with deadline — bounded backoff",
   "T-US-056": "Honest outage; durable hosted contact path",
   "T-US-011": "Connect Google Ads analyze-only — write disabled",
@@ -465,6 +466,7 @@ export function compileAcceptanceEvidence(
     "T-X071 fixture ACCEPTED only via HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE",
     "T-X067 fixture ACCEPTED only via INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED",
     "T-X034 fixture ACCEPTED only via ADS_TEST_PROJECT_PRODUCTION_BLOCKED",
+    "T-X035 fixture ACCEPTED only via SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES",
     "Never silently VERIFIED for live; externalEffects=NONE",
   );
 

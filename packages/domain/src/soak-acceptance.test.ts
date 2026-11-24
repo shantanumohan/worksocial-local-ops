@@ -1473,6 +1473,17 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X034"]);
   });
 
+  it("maps T-X035 to SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES only", () => {
+    expect(expectedProofsForFixtureCase("T-X035")).toEqual([
+      SoakProofKind.SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES,
+      ),
+    ).toEqual(["T-X035"]);
+  });
+
   it("pins SOAK_FIXTURE_HARNESS_NOW_ISO inside after-hours coverage", () => {
     const policy = defaultResponsePolicy(SOAK_FIXTURE_HARNESS_NOW_ISO);
     expect(

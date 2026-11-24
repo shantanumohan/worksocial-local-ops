@@ -14,6 +14,7 @@ import {
   diagnoseDelivery,
   paidMediaChannelStatus,
   recordPaidMediaDecision,
+  reReadPaidProviderBudgetBeforeMutation,
 } from "./paid-media.js";
 
 describe("paid-media — analysis / F19", () => {
@@ -277,5 +278,176 @@ describe("paid-media — delivery diagnosis + proposals / F16", () => {
     expect(status.chatgptAds.access.allowed).toBe(false);
     expect(status.liveMutationWiring).toBe("NOT_WIRED");
     expect(status.externalEffects).toBe("NONE");
+  });
+
+  it("invalidates proposal when shared ad budget changes externally (T-X035)", () => {
+    const diagnosis = diagnoseDelivery({
+      impressions: 2000,
+      clicks: 80,
+      eventsPresent: true,
+      attributionSettled: true,
+      sameDaySpendComplete: true,
+    });
+    const bound = {
+      accountId: "acct-fixture",
+      campaignId: "camp-shared",
+      sharedBudgetId: "sb-shared-1",
+      entityRevision: "rev-1",
+      dailyBudgetMinor: 5000,
+      sharedBudgetDailyMinor: 20_000,
+      readAtIso: "2026-11-21T12:00:00.000Z",
+    };
+
+    const missingSnap = createPaidMediaProposal({
+      proposalId: "p-shared-nosnap",
+      platform: PaidMediaPlatform.GOOGLE_ADS,
+      accountId: "acct-fixture",
+      campaignId: "camp-shared",
+      changeKind: PaidChangeKind.BUDGET_ADJUST,
+      hypothesis: "Raise campaign share of shared budget",
+      exactChange: "campaign daily +$20 within shared cap",
+      risk: "Crowds sibling campaigns",
+      alternative: "Hold",
+      diagnosis,
+      financialDiff: {
+        currency: "USD",
+        dailyBudgetBeforeMinor: 5000,
+        dailyBudgetAfterMinor: 7000,
+        lifetimeImpactMinor: null,
+        sharedBudgetAffected: true,
+        sharedBudgetImpactKnown: true,
+        notes: ["shared budget known at bind"],
+      },
+      createdAtIso: "2026-11-21T12:00:00.000Z",
+    });
+    expect(missingSnap.ok).toBe(false);
+    if (!missingSnap.ok) {
+      expect(missingSnap.code).toBe("SHARED_BUDGET_SNAPSHOT_REQUIRED");
+    }
+
+    const created = createPaidMediaProposal({
+      proposalId: "p-shared-ext",
+      platform: PaidMediaPlatform.GOOGLE_ADS,
+      accountId: "acct-fixture",
+      campaignId: "camp-shared",
+      changeKind: PaidChangeKind.BUDGET_ADJUST,
+      hypothesis: "Raise campaign share of shared budget",
+      exactChange: "campaign daily +$20 within shared cap",
+      risk: "Crowds sibling campaigns",
+      alternative: "Hold",
+      diagnosis,
+      financialDiff: {
+        currency: "USD",
+        dailyBudgetBeforeMinor: 5000,
+        dailyBudgetAfterMinor: 7000,
+        lifetimeImpactMinor: null,
+        sharedBudgetAffected: true,
+        sharedBudgetImpactKnown: true,
+        notes: ["shared budget known at bind"],
+      },
+      boundProviderSnapshot: bound,
+      createdAtIso: "2026-11-21T12:00:00.000Z",
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const match = reReadPaidProviderBudgetBeforeMutation({
+      proposal: created.proposal,
+      current: { ...bound, readAtIso: "2026-11-21T12:10:00.000Z" },
+      readAtIso: "2026-11-21T12:10:00.000Z",
+    });
+    expect(match.ok).toBe(true);
+    if (match.ok) expect(match.code).toBe("PROVIDER_STATE_MATCHES");
+
+    const stale = reReadPaidProviderBudgetBeforeMutation({
+      proposal: created.proposal,
+      current: { ...bound, readAtIso: "2026-11-21T11:00:00.000Z" },
+      readAtIso: "2026-11-21T12:10:00.000Z",
+    });
+    expect(stale.ok).toBe(false);
+    if (!stale.ok) expect(stale.code).toBe("STALE_PROVIDER_SNAPSHOT");
+
+    // Offset ISO that is later as an instant than proposal.updatedAtIso (Z).
+    const offsetFresh = reReadPaidProviderBudgetBeforeMutation({
+      proposal: created.proposal,
+      current: { ...bound, readAtIso: "2026-11-21T08:00:00-05:00" },
+      readAtIso: "2026-11-21T13:00:00.000Z",
+    });
+    expect(offsetFresh.ok).toBe(true);
+    if (offsetFresh.ok) expect(offsetFresh.code).toBe("PROVIDER_STATE_MATCHES");
+
+    // Offset ISO that lexically looks later but is earlier as an instant.
+    const offsetStale = reReadPaidProviderBudgetBeforeMutation({
+      proposal: created.proposal,
+      current: { ...bound, readAtIso: "2026-11-21T13:00:00+02:00" },
+      readAtIso: "2026-11-21T13:00:00.000Z",
+    });
+    expect(offsetStale.ok).toBe(false);
+    if (!offsetStale.ok) expect(offsetStale.code).toBe("STALE_PROVIDER_SNAPSHOT");
+
+    const mismatchedSnap = createPaidMediaProposal({
+      proposalId: "p-shared-mismatch",
+      platform: PaidMediaPlatform.GOOGLE_ADS,
+      accountId: "acct-fixture",
+      campaignId: "camp-shared",
+      changeKind: PaidChangeKind.BUDGET_ADJUST,
+      hypothesis: "Raise campaign share of shared budget",
+      exactChange: "campaign daily +$20 within shared cap",
+      risk: "Crowds sibling campaigns",
+      alternative: "Hold",
+      diagnosis,
+      financialDiff: {
+        currency: "USD",
+        dailyBudgetBeforeMinor: 5000,
+        dailyBudgetAfterMinor: 7000,
+        lifetimeImpactMinor: null,
+        sharedBudgetAffected: true,
+        sharedBudgetImpactKnown: true,
+        notes: ["shared budget known at bind"],
+      },
+      boundProviderSnapshot: { ...bound, dailyBudgetMinor: 8000 },
+      createdAtIso: "2026-11-21T12:00:00.000Z",
+    });
+    expect(mismatchedSnap.ok).toBe(false);
+    if (!mismatchedSnap.ok) {
+      expect(mismatchedSnap.code).toBe("SNAPSHOT_BUDGET_MISMATCH");
+    }
+
+    const drifted = reReadPaidProviderBudgetBeforeMutation({
+      proposal: created.proposal,
+      current: {
+        ...bound,
+        sharedBudgetDailyMinor: 15_000,
+        entityRevision: "rev-2",
+        readAtIso: "2026-11-21T12:15:00.000Z",
+      },
+      readAtIso: "2026-11-21T12:15:00.000Z",
+    });
+    expect(drifted.ok).toBe(false);
+    if (drifted.ok) return;
+    expect(drifted.code).toBe("SHARED_BUDGET_CHANGED_EXTERNALLY");
+    expect(drifted.proposal.status).toBe(PaidProposalStatus.INVALIDATED);
+    expect(drifted.externalEffects).toBe("NONE");
+    expect(drifted.mutationAttempted).toBe(false);
+
+    const reDecision = recordPaidMediaDecision({
+      decisionId: "d-stale",
+      proposal: drifted.proposal,
+      decision: "approve",
+      actorRole: "administrator",
+      reason: "stale after external shared budget change",
+      recordedAtIso: "2026-11-21T12:16:00.000Z",
+    });
+    expect(reDecision.ok).toBe(false);
+    if (!reDecision.ok) expect(reDecision.code).toBe("PROPOSAL_INVALIDATED");
+
+    const exec = attemptPaidMediaExecution({
+      proposal: drifted.proposal,
+      preferLive: true,
+    });
+    expect(exec.ok).toBe(false);
+    expect(exec.code).toBe("PROPOSAL_INVALIDATED");
+    expect(exec.externalEffects).toBe("NONE");
+    expect(exec.mutationAttempted).toBe(false);
   });
 });

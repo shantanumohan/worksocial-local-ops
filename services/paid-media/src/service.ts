@@ -23,6 +23,7 @@ import {
   type PaidMediaDecision,
   type PaidMediaPlatformValue,
   type PaidMediaProposal,
+  type PaidProviderBudgetSnapshot,
 } from "@worksocial/domain";
 import type { PaidMediaStore } from "@worksocial/persistence";
 import {
@@ -96,6 +97,8 @@ export type PaidMediaService = {
     attributionSettled: boolean;
     sameDaySpendComplete: boolean;
     financialDiff: FinancialDiff;
+    /** Required when sharedBudgetAffected && sharedBudgetImpactKnown (T-X035). */
+    boundProviderSnapshot?: PaidProviderBudgetSnapshot | null;
     nowIso?: string;
   }):
     | { ok: true; proposal: PaidMediaProposal; diagnosis: DeliveryDiagnosis }
@@ -232,6 +235,7 @@ export function createPaidMediaService(store: PaidMediaStore): PaidMediaService 
         alternative: input.alternative,
         diagnosis,
         financialDiff: input.financialDiff,
+        boundProviderSnapshot: input.boundProviderSnapshot ?? null,
         createdAtIso: input.nowIso ?? new Date().toISOString(),
       });
       if (created.proposal) {
@@ -292,6 +296,7 @@ export function createPaidMediaService(store: PaidMediaStore): PaidMediaService 
           externalEffects: "NONE" as const,
           liveMutationWiring: "NOT_WIRED" as const,
           acceptanceEqualsVerified: false as const,
+          mutationAttempted: false as const,
           proposal: null,
         };
       }

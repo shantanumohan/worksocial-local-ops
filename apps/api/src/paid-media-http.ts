@@ -343,6 +343,33 @@ export async function handlePaidMediaRequest(input: {
       v.financialDiff && typeof v.financialDiff === "object"
         ? (v.financialDiff as Record<string, unknown>)
         : {};
+    const snapRaw =
+      v.boundProviderSnapshot && typeof v.boundProviderSnapshot === "object"
+        ? (v.boundProviderSnapshot as Record<string, unknown>)
+        : null;
+    const boundProviderSnapshot =
+      snapRaw &&
+      typeof snapRaw.accountId === "string" &&
+      typeof snapRaw.campaignId === "string" &&
+      typeof snapRaw.sharedBudgetId === "string" &&
+      typeof snapRaw.entityRevision === "string" &&
+      typeof snapRaw.sharedBudgetDailyMinor === "number" &&
+      typeof snapRaw.readAtIso === "string"
+        ? {
+            accountId: snapRaw.accountId,
+            campaignId: snapRaw.campaignId,
+            sharedBudgetId: snapRaw.sharedBudgetId,
+            entityRevision: snapRaw.entityRevision,
+            dailyBudgetMinor:
+              typeof snapRaw.dailyBudgetMinor === "number"
+                ? snapRaw.dailyBudgetMinor
+                : snapRaw.dailyBudgetMinor === null
+                  ? null
+                  : null,
+            sharedBudgetDailyMinor: snapRaw.sharedBudgetDailyMinor,
+            readAtIso: snapRaw.readAtIso,
+          }
+        : null;
     const result = paidMedia.requestRecommendation({
       platform: v.platform,
       accountId: typeof v.accountId === "string" ? v.accountId : "acct",
@@ -387,6 +414,7 @@ export async function handlePaidMediaRequest(input: {
           ? fd.notes.filter((x): x is string => typeof x === "string")
           : [],
       },
+      boundProviderSnapshot,
     });
     json(res, result.ok ? 200 : 403, result, cors);
     return true;

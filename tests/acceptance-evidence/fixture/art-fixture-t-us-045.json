@@ -3,13 +3,13 @@
   "caseId": "T-US-045",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-US-045 (Semantic search / no-result — evaluation comparison)\nproof=semantic_search_no_result_eval_comparison applyCount=1 :: Hard-constraint miss → NO_RESULT with parsed intent (people=20, video) and no invented handoff | Judgment jud-6c414c55 → NO_MATCH for query q-us045-before | Remediation rem-4a5b630d open, linked to judgment jud-6c414c55 | EVAL_ONLY COMPARE_GOLDEN tool allowed for evaluation comparison | Post-remediation golden re-run → GROUNDED room-20 with filterTrace, citations, booking handoff | Evaluation comparison: before=NO_RESULT (v1) → after=GROUNDED (v2) — golden improved, not silent false match | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-US-045 (Semantic search / no-result — evaluation comparison)\nproof=semantic_search_no_result_eval_comparison applyCount=1 :: Hard-constraint miss → NO_RESULT with parsed intent (people=20, video) and no invented handoff | Judgment jud-cbf4b49b → NO_MATCH for query q-us045-before | Remediation rem-2ffbab33 open, linked to judgment jud-cbf4b49b | EVAL_ONLY COMPARE_GOLDEN tool allowed for evaluation comparison | Post-remediation golden re-run → GROUNDED room-20 with filterTrace, citations, booking handoff | Evaluation comparison: before=NO_RESULT (v1) → after=GROUNDED (v2) — golden improved, not silent false match | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "semantic_search_no_result_eval_comparison"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-045.json",
-  "createdAtIso": "2026-11-24T21:08:38.631Z",
+  "createdAtIso": "2026-11-24T21:21:21.764Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-045-a6ad9401ea35"
+  "uniqueSourceArtifactId": "art-fixture-t-us-045-8f52dba2d5df"
 }
