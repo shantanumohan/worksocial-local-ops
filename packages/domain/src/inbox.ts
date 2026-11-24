@@ -969,7 +969,12 @@ export function evaluateOutboundSendGate(input: {
     return {
       allowed: false,
       code: gate.code,
-      reasons: ["Conversation takeover or version mismatch blocks send"],
+      reasons:
+        gate.code === "VERSION_MISMATCH"
+          ? [
+              "Prepared conversation version is stale — T-X053 race invalidates send (VERSION_MISMATCH)",
+            ]
+          : ["Conversation takeover or version mismatch blocks send"],
     };
   }
   if (
@@ -1023,6 +1028,9 @@ export function applyConversationTakeover(input: {
       cancelledMessageIds: string[];
       invalidatedDraftIds: string[];
       state: InboxState;
+      /** Honesty: fixture/domain path never claims live provider success. */
+      liveProviderWiring: "NOT_WIRED";
+      externalEffects: "NONE";
     }
   | { ok: false; code: string; reasons: string[] } {
   const idx = input.state.conversations.findIndex(
@@ -1099,6 +1107,8 @@ export function applyConversationTakeover(input: {
     conversation,
     cancelledMessageIds,
     invalidatedDraftIds,
+    liveProviderWiring: takeover.liveProviderWiring,
+    externalEffects: takeover.externalEffects,
     state: {
       ...input.state,
       conversations,
