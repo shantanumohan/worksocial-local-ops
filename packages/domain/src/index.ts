@@ -14,8 +14,6 @@ export {
   createHistoryOnlyReplayHooks,
   replayEmptyHistoryFailsClosed,
   replayMissionWorkflowHistory,
-  replayPartialHistoryFailsClosed,
-  replayTwoEventHistoryFailsClosed,
   runMissionWorkflowControlFlow,
   type ReplayActivityName,
   type ReplayActivityResult,
@@ -24,15 +22,6 @@ export {
   type ReplayNoRepeatIoSummary,
   type ReplayWorkflowHistory,
 } from "./replay-historical-workflow.js";
-export {
-  STOP_AFTER_DISPATCH_RELATED_CASE_IDS,
-  classifyStopAfterDispatchDisposition,
-  evaluateStopAfterDispatchAttackSuite,
-  fenceStopAfterDispatchLedgerAttempt,
-  type StopAfterDispatchDisposition,
-  type StopAfterDispatchLedgerAttempt,
-  type StopAfterDispatchLedgerFenceResult,
-} from "./stop-after-dispatch.js";
 export {
   applyTakeover,
   canAgentSend,
