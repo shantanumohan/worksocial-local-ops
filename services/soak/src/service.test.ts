@@ -311,6 +311,13 @@ describe("soak service (M9)", () => {
       ),
     ).toBe(true);
     expect(
+      extHumanEditProof?.details.some((d) =>
+        /convergent human edit still CONFLICT_RETAINED|post-MATCHED overwrite OVERWRITE_FORBIDDEN/.test(
+          d,
+        ),
+      ),
+    ).toBe(true);
+    expect(
       result.proofs.some(
         (p) => p.kind === SoakProofKind.OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS,
       ),

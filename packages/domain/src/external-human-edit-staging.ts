@@ -379,13 +379,17 @@ export function applyExternalHumanEdit(
     (state.change.status === StagingConflictStatus.STAGED_PENDING ||
       state.change.status === StagingConflictStatus.CONFLICT_RETAINED)
   ) {
+    // Convergent human fields (digest == desired) still retain conflict —
+    // never invent MATCHED_PENDING_ONLY / VERIFIED from a human edit path.
+    const convergent = humanDigest === state.change.desiredDigest;
     const change: StagedAgentChange = {
       ...state.change,
       status: StagingConflictStatus.CONFLICT_RETAINED,
       humanObservedDigest: humanDigest,
       humanObservedRevision: revision,
-      recoveryNote:
-        "External human edit during staging — conflict retained; do not overwrite",
+      recoveryNote: convergent
+        ? "External human edit during staging — convergent digest still CONFLICT_RETAINED; not VERIFIED"
+        : "External human edit during staging — conflict retained; do not overwrite",
       updatedAtIso: input.nowIso,
     };
     return {

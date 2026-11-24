@@ -285,5 +285,8 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).toMatch(/ACCEPTED≠VERIFIED/);
     expect(art.summary).toMatch(/Owner-ack literal-only/);
     expect(art.summary).toMatch(/v1→v1-next|MATCHED_PENDING_ONLY refuses claimedVerified/);
+    expect(art.summary).toMatch(
+      /convergent human edit still CONFLICT_RETAINED|post-MATCHED overwrite OVERWRITE_FORBIDDEN/,
+    );
   });
 });

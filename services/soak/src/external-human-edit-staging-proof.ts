@@ -488,6 +488,71 @@ export function proofExternalHumanEditConflictRetained(
     );
   }
 
+  // N7: convergent human edit still CONFLICT; post-match overwrite forbidden; NO_CONFLICT on STAGED_PENDING.
+  let convState = createExternalEditStagingState({
+    pageId: `page-conv-${randomUUID().slice(0, 8)}`,
+    fields: baseFields,
+    revision: "rev-1",
+    nowIso,
+  });
+  const convStaged = stageAgentChangeAgainstBase(convState, {
+    changeId: `chg-conv-${randomUUID().slice(0, 8)}`,
+    expectedBaseRevision: "rev-1",
+    desiredFields: agentDesired,
+    nowIso,
+  });
+  if (convStaged.ok) {
+    convState = convStaged.state;
+  }
+  const postMatchOverwrite = convStaged.ok
+    ? attemptBlindAgentOverwrite(matchedClaim.state, { nowIso: tHuman })
+    : null;
+  const noConflictOnStaged = convStaged.ok
+    ? refuseSilentConflictClear(convStaged.state, {
+        ownerAcknowledged: true,
+        nowIso: tHuman,
+      })
+    : null;
+  if (convStaged.ok) {
+    convState = applyExternalHumanEdit(convState, {
+      fields: agentDesired,
+      nowIso: tHuman,
+    });
+  }
+  const convVerify = independentVerifyStagingChange(convState, {
+    nowIso: tHuman,
+    claimedVerified: true,
+  });
+  if (
+    convStaged.ok &&
+    convState.change?.status === StagingConflictStatus.CONFLICT_RETAINED &&
+    convState.change.humanObservedDigest === digestFields(agentDesired) &&
+    convState.change.desiredDigest === digestFields(agentDesired) &&
+    /convergent digest still CONFLICT_RETAINED/.test(
+      convState.change.recoveryNote ?? "",
+    ) &&
+    convVerify.outcome === StagingVerifyOutcome.CONFLICT_RETAINED &&
+    convVerify.matched === false &&
+    convVerify.verifiedClaimed === false &&
+    convVerify.refusedClaimedVerified === true &&
+    convVerify.details.some((d) => /CLAIMED_VERIFIED_REFUSED/.test(d)) &&
+    postMatchOverwrite &&
+    !postMatchOverwrite.ok &&
+    postMatchOverwrite.code === "OVERWRITE_FORBIDDEN" &&
+    noConflictOnStaged &&
+    !noConflictOnStaged.ok &&
+    noConflictOnStaged.code === "NO_CONFLICT"
+  ) {
+    details.push(
+      "N7 convergent human edit still CONFLICT_RETAINED; verify refuses claimedVerified; post-MATCHED overwrite OVERWRITE_FORBIDDEN; STAGED_PENDING clear → NO_CONFLICT",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `N7 edges unexpectedly conv=${convState.change?.status} note=${convState.change?.recoveryNote} verify=${convVerify.outcome} post=${postMatchOverwrite && !postMatchOverwrite.ok ? postMatchOverwrite.code : "?"} noc=${noConflictOnStaged && !noConflictOnStaged.ok ? noConflictOnStaged.code : "?"}`,
+    );
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE",
   );

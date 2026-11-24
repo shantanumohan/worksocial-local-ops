@@ -2042,7 +2042,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x025",
-      "evidenceNote": "Fixture external-human-edit-during-staging conflict-retained proof only — live Temporal NOT_WIRED; silent clear forbidden (owner-ack literal-only); claimed VERIFIED refused on stage and MATCHED_PENDING_ONLY verify; non-rev revision bump; ACCEPTED ≠ sandbox/prod VERIFIED; externalEffects=NONE"
+      "evidenceNote": "Fixture external-human-edit-during-staging conflict-retained proof only — live Temporal NOT_WIRED; silent clear forbidden (owner-ack literal-only); claimed VERIFIED refused on stage and MATCHED_PENDING_ONLY verify; non-rev revision bump; convergent human edit still CONFLICT_RETAINED; ACCEPTED ≠ sandbox/prod VERIFIED; externalEffects=NONE"
     },
     {
       "id": "T-X026",

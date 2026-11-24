@@ -548,5 +548,62 @@ describe("external human edit during staging (T-X025)", () => {
     expect(aliasClaim.verifiedClaimed).toBe(false);
     expect(aliasClaim.refusedClaimedVerified).toBeUndefined();
     expect(aliasClaim.details.join(" ")).not.toMatch(/CLAIMED_VERIFIED_REFUSED/);
+
+    const postMatchOverwrite = attemptBlindAgentOverwrite(matchedClaim.state, {
+      nowIso: "2026-11-22T19:03:00.000Z",
+    });
+    expect(postMatchOverwrite.ok).toBe(false);
+    if (postMatchOverwrite.ok) return;
+    expect(postMatchOverwrite.code).toBe("OVERWRITE_FORBIDDEN");
+    expect(postMatchOverwrite.liveTemporalWiring).toBe("NOT_WIRED");
+    expect(postMatchOverwrite.liveProviderSuccessClaimed).toBe(false);
+
+    const noConflictClear = refuseSilentConflictClear(state, {
+      ownerAcknowledged: true,
+      nowIso: "2026-11-22T19:04:00.000Z",
+    });
+    expect(noConflictClear.ok).toBe(false);
+    expect(noConflictClear.code).toBe("NO_CONFLICT");
+  });
+
+  it("convergent human edit retains CONFLICT; verify refuses claimedVerified", () => {
+    const t0 = "2026-11-22T20:00:00.000Z";
+    let state = createExternalEditStagingState({
+      pageId: "page-conv",
+      fields: baseFields,
+      revision: "rev-1",
+      nowIso: t0,
+    });
+    const staged = stageAgentChangeAgainstBase(state, {
+      changeId: "chg-conv",
+      expectedBaseRevision: "rev-1",
+      desiredFields: agentDesired,
+      nowIso: t0,
+    });
+    expect(staged.ok).toBe(true);
+    if (!staged.ok) return;
+    state = staged.state;
+    state = applyExternalHumanEdit(state, {
+      fields: agentDesired,
+      nowIso: "2026-11-22T20:01:00.000Z",
+    });
+    expect(state.change?.status).toBe(StagingConflictStatus.CONFLICT_RETAINED);
+    expect(state.change?.humanObservedDigest).toBe(digestFields(agentDesired));
+    expect(state.change?.desiredDigest).toBe(digestFields(agentDesired));
+    expect(state.change?.recoveryNote).toMatch(/convergent digest still CONFLICT_RETAINED/);
+    expect(state.liveProviderSuccessClaimed).toBe(false);
+    expect(state.externalEffects).toBe("NONE");
+
+    const verify = independentVerifyStagingChange(state, {
+      nowIso: "2026-11-22T20:02:00.000Z",
+      claimedVerified: true,
+    });
+    expect(verify.outcome).toBe(StagingVerifyOutcome.CONFLICT_RETAINED);
+    expect(verify.matched).toBe(false);
+    expect(verify.verifiedClaimed).toBe(false);
+    expect(verify.refusedClaimedVerified).toBe(true);
+    expect(verify.details.join(" ")).toMatch(/CLAIMED_VERIFIED_REFUSED/);
+    expect(verify.details.join(" ")).not.toMatch(/MATCHED_PENDING_ONLY/);
+    expect(verify.liveTemporalWiring).toBe("NOT_WIRED");
   });
 });
