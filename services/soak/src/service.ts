@@ -8,6 +8,7 @@ import {
   AcceptanceEnvironment,
   PILOT_SOAK_REQUIRED_MS,
   PilotObservationKind,
+  SOAK_FIXTURE_HARNESS_NOW_ISO,
   SOAK_RELATED_CASE_IDS,
   evaluatePilotGate,
   type PilotGateObservation,
@@ -117,7 +118,9 @@ export function createSoakService(store: SoakStore): SoakService {
 
       const harness = await runSoakRecoveryHarness({
         stateDir: store.stateDir,
-        nowIso: input.harnessNowIso ?? serverStartedAtIso,
+        // Fixture proofs that consult after-hours coverage must not depend on
+        // wall-clock weekday business hours; pilot gate still uses server clock.
+        nowIso: input.harnessNowIso ?? SOAK_FIXTURE_HARNESS_NOW_ISO,
       });
 
       const serverEndedAtIso = clock().toISOString();

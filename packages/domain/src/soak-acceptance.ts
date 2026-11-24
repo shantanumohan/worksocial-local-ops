@@ -957,6 +957,14 @@ export const PILOT_SOAK_REQUIRED_MS = 72 * 60 * 60 * 1000;
 export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
 
 /**
+ * Deterministic fixture clock for soak harness proofs that depend on
+ * after-hours coverage (America/New_York via defaultResponsePolicy).
+ * 2026-11-21 is Saturday → full-day coverage; avoids wall-clock CI flakes
+ * during weekday business hours. Pilot gate still uses server wall clock.
+ */
+export const SOAK_FIXTURE_HARNESS_NOW_ISO = "2026-11-21T18:00:00.000Z";
+
+/**
  * Catalog cases the fixture soak/evidence harness can honestly ACCEPTED offline.
  * T-X066 requires BACKUP_OMIT_RECEIPT (not retry-only NO_DUPLICATE_EFFECTS).
  * T-F24 / T-US-047 require RECOVER_ROTATE_RECONCILE (complete F24 evidence set).

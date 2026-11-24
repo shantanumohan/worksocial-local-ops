@@ -6,6 +6,7 @@ import {
   PILOT_SOAK_REQUIRED_MS,
   PilotGateStatus,
   PilotObservationKind,
+  SOAK_FIXTURE_HARNESS_NOW_ISO,
   SoakProofKind,
   buildRedactedArtifact,
   evaluatePilotGate,
@@ -16,6 +17,10 @@ import {
   uniqueFixtureEvidenceArtifactId,
   validateAcceptanceCaseStatus,
 } from "./soak-acceptance.js";
+import {
+  defaultResponsePolicy,
+  isWithinCoverageWindow,
+} from "./inbox.js";
 
 function allProofs(ended: string) {
   return [
@@ -1466,6 +1471,13 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED),
     ).toEqual(["T-X034"]);
+  });
+
+  it("pins SOAK_FIXTURE_HARNESS_NOW_ISO inside after-hours coverage", () => {
+    const policy = defaultResponsePolicy(SOAK_FIXTURE_HARNESS_NOW_ISO);
+    expect(
+      isWithinCoverageWindow(policy, SOAK_FIXTURE_HARNESS_NOW_ISO),
+    ).toBe(true);
   });
 
 });

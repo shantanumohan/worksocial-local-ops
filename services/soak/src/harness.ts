@@ -78,6 +78,7 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import {
+  SOAK_FIXTURE_HARNESS_NOW_ISO,
   SoakProofKind,
   type SoakProofKindValue,
   type SoakProofRecord,
@@ -739,7 +740,8 @@ export async function runSoakRecoveryHarness(input: {
   stateDir: string;
   nowIso?: string;
 }): Promise<SoakHarnessResult> {
-  const nowIso = input.nowIso ?? new Date().toISOString();
+  // Default to deterministic after-hours fixture clock (not wall clock).
+  const nowIso = input.nowIso ?? SOAK_FIXTURE_HARNESS_NOW_ISO;
   const durableDir = join(input.stateDir, "durable-soak");
   const proofs: SoakProofRecord[] = [];
 
