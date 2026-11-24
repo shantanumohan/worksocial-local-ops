@@ -62,6 +62,26 @@ describe("proofReplayHistoricalNoRepeatIo", () => {
       ),
     ).toBe(true);
     expect(
+      proof.details.some((d) =>
+        d.includes("Blank enqueue workflowId → FAILED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Whitespace-padded terminal opId trims → VERIFIED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Non-finite terminal applyAttemptCount → FAILED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Verify matched=false → FAILED"),
+      ),
+    ).toBe(true);
+    expect(
       proof.details.some((d) => d.includes("honesty NOT_WIRED/NONE")),
     ).toBe(true);
     expect(

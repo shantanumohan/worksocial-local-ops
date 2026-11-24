@@ -232,4 +232,62 @@ describe("replay historical workflow (T-X013)", () => {
     );
     expect(summary.externalEffects).toBe("NONE");
   });
+
+  it("fails closed on blank enqueue workflowId (edge)", () => {
+    const history = sampleHistory();
+    const enq = history.events[0];
+    if (enq && enq.activity === "enqueue") {
+      enq.workflowId = "   ";
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_enqueue_workflowId_blank"),
+      ),
+    ).toBe(true);
+  });
+
+  it("accepts whitespace-padded terminal operationId that trims to match (edge)", () => {
+    const history = sampleHistory();
+    history.terminal = {
+      outcome: "VERIFIED",
+      applyAttemptCount: 1,
+      operationId: "  op-1  ",
+    };
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("VERIFIED");
+    expect(summary().forbiddenLiveIo).toBe(0);
+  });
+
+  it("fails closed on non-finite terminal applyAttemptCount (edge)", () => {
+    const history = sampleHistory();
+    history.terminal = {
+      outcome: "VERIFIED",
+      applyAttemptCount: Number.POSITIVE_INFINITY,
+      operationId: "op-1",
+    };
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_terminal_missing_or_incomplete"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed when verify matched=false (edge)", () => {
+    const history = sampleHistory();
+    const verify = history.events[2];
+    if (verify && verify.activity === "verify") {
+      verify.matched = false;
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(summary().scheduledFromHistory).toBe(3);
+  });
 });

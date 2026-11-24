@@ -337,6 +337,92 @@ export async function proofReplayHistoricalNoRepeatIo(
     details.push("Negative terminal apply unexpectedly passed");
   }
 
+  // Edge deepen — blank enqueue workflowId; padded terminal trim; Infinity apply;
+  // verify matched=false.
+  const blankWfHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) =>
+      e.activity === "enqueue" ? { ...e, workflowId: "   " } : e,
+    ),
+    terminal: { ...history.terminal },
+  };
+  const blankWfHooks = createHistoryOnlyReplayHooks();
+  const blankWfReplay = replayMissionWorkflowHistory(
+    blankWfHistory,
+    blankWfHooks.hooks,
+  );
+  const blankWfSummary = blankWfHooks.summary();
+  if (
+    blankWfReplay.outcome === "FAILED" &&
+    blankWfSummary.liveIoLabels.some((l) =>
+      l.includes("history_enqueue_workflowId_blank"),
+    )
+  ) {
+    details.push("Blank enqueue workflowId → FAILED (edge)");
+  } else {
+    details.push("Blank enqueue workflowId unexpectedly passed");
+  }
+
+  const paddedTerminalHooks = createHistoryOnlyReplayHooks();
+  const paddedTerminal = replayMissionWorkflowHistory(
+    {
+      events: history.events,
+      terminal: {
+        outcome: "VERIFIED",
+        applyAttemptCount: history.terminal.applyAttemptCount,
+        operationId: `  ${operationId}  `,
+      },
+    },
+    paddedTerminalHooks.hooks,
+  );
+  if (
+    paddedTerminal.outcome === "VERIFIED" &&
+    paddedTerminalHooks.summary().forbiddenLiveIo === 0
+  ) {
+    details.push("Whitespace-padded terminal opId trims → VERIFIED (edge)");
+  } else {
+    details.push("Padded terminal opId unexpectedly failed");
+  }
+
+  const infTerminalHooks = createHistoryOnlyReplayHooks();
+  const infTerminal = replayMissionWorkflowHistory(
+    {
+      events: history.events,
+      terminal: {
+        outcome: "VERIFIED",
+        applyAttemptCount: Number.POSITIVE_INFINITY,
+        operationId,
+      },
+    },
+    infTerminalHooks.hooks,
+  );
+  if (
+    infTerminal.outcome === "FAILED" &&
+    infTerminalHooks.summary().liveIoLabels.some((l) =>
+      l.includes("history_terminal_missing_or_incomplete"),
+    )
+  ) {
+    details.push("Non-finite terminal applyAttemptCount → FAILED (edge)");
+  } else {
+    details.push("Non-finite terminal apply unexpectedly passed");
+  }
+
+  const unmatchedHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) =>
+      e.activity === "verify" ? { ...e, matched: false } : e,
+    ),
+    terminal: { ...history.terminal },
+  };
+  const unmatchedHooks = createHistoryOnlyReplayHooks();
+  const unmatchedReplay = replayMissionWorkflowHistory(
+    unmatchedHistory,
+    unmatchedHooks.hooks,
+  );
+  if (unmatchedReplay.outcome === "FAILED") {
+    details.push("Verify matched=false → FAILED (edge)");
+  } else {
+    details.push("Verify matched=false unexpectedly passed");
+  }
+
   const rehydrateSvc = openService(stateDir);
   const decisionAfter = await rehydrateSvc.getDecision(operationId);
   const providersAfterReplay = await rehydrateSvc.stores.fakeProvider.list();
@@ -387,6 +473,10 @@ export async function proofReplayHistoricalNoRepeatIo(
     driftReplay.outcome === "FAILED" &&
     applyDriftReplay.outcome === "FAILED" &&
     negTerminal.outcome === "FAILED" &&
+    blankWfReplay.outcome === "FAILED" &&
+    paddedTerminal.outcome === "VERIFIED" &&
+    infTerminal.outcome === "FAILED" &&
+    unmatchedReplay.outcome === "FAILED" &&
     applyBeforeReplay === 1 &&
     applyAfterReplay === 1 &&
     thisOpBefore === 1 &&
