@@ -21,7 +21,12 @@ async function main(): Promise<void> {
   const dir = mkdtempSync(join(tmpdir(), "ws-recovery-rehearse-"));
   try {
     const soak = createSoakService(createFileSoakStore(dir));
-    const result = await soak.runFixtureSoak({});
+    // Pin harness clock (same Saturday ISO as release:evidence / contract).
+    // Wall-clock weekday afternoons fall outside America/New_York after-hours
+    // coverage windows and flake inbox proofs (T-US-004 / T-X053–056 / T-X055).
+    const result = await soak.runFixtureSoak({
+      harnessNowIso: "2026-11-21T19:00:00.000Z",
+    });
     const report = {
       suite: "recovery:rehearse",
       status: result.ok ? "PASS" : "FAIL",

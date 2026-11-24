@@ -3,13 +3,13 @@
   "caseId": "T-X024",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X024 (Old fence after reassignment — old worker cannot commit)\nproof=old_fence_after_reassignment applyCount=1 :: Worker A acquired lease holder=worker-a-ac7f9e54 expires=2026-11-21T19:04:51.000Z | Worker B refused while A lease live (no premature reassignment) | Worker B reassigned lease holder=worker-b-d82e79fe after A expiry | Old worker A bind denied: Lease fence failed for wf-fence-1091335a | Old worker A markEffectPending denied: Lease fence failed for wf-fence-1091335a | Worker B commit ok phase=effect_pending operationId=op-fence-9a562b76 | liveTemporalWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X024 (Old fence after reassignment — old worker cannot commit)\nproof=old_fence_after_reassignment applyCount=1 :: Worker A acquired lease holder=worker-a-3f72e323 expires=2026-11-21T19:04:51.000Z | Worker B refused while A lease live (no premature reassignment) | Worker B reassigned lease holder=worker-b-44500fd2 after A expiry | Old worker A bind denied: Lease fence failed for wf-fence-24f8d02f | Old worker A markEffectPending denied: Lease fence failed for wf-fence-24f8d02f | Worker B commit ok phase=effect_pending operationId=op-fence-e4f7ebf5 | liveTemporalWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "old_fence_after_reassignment"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x024.json",
-  "createdAtIso": "2026-11-24T21:08:38.631Z",
+  "createdAtIso": "2026-11-24T21:21:21.764Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x024-a6ad9401ea35"
+  "uniqueSourceArtifactId": "art-fixture-t-x024-8f52dba2d5df"
 }

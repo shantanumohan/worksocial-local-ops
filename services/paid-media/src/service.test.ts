@@ -93,4 +93,74 @@ describe("paid-media service", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe("CHATGPT_ADS_BLOCKED");
   });
+
+  it("threads boundProviderSnapshot for shared-budget recommendations (T-X035)", () => {
+    const service = createPaidMediaService(createFilePaidMediaStore(dir));
+    const missing = service.requestRecommendation({
+      platform: PaidMediaPlatform.GOOGLE_ADS,
+      accountId: "acct-fixture",
+      campaignId: "camp-shared",
+      changeKind: PaidChangeKind.BUDGET_ADJUST,
+      hypothesis: "Raise share",
+      exactChange: "+20",
+      risk: "Sibling crowding",
+      alternative: "Hold",
+      impressions: 2000,
+      clicks: 80,
+      eventsPresent: true,
+      attributionSettled: true,
+      sameDaySpendComplete: true,
+      financialDiff: {
+        currency: "USD",
+        dailyBudgetBeforeMinor: 5000,
+        dailyBudgetAfterMinor: 7000,
+        lifetimeImpactMinor: null,
+        sharedBudgetAffected: true,
+        sharedBudgetImpactKnown: true,
+        notes: [],
+      },
+      nowIso: "2026-11-21T12:00:00.000Z",
+    });
+    expect(missing.ok).toBe(false);
+    if (!missing.ok) expect(missing.code).toBe("SHARED_BUDGET_SNAPSHOT_REQUIRED");
+
+    const ok = service.requestRecommendation({
+      platform: PaidMediaPlatform.GOOGLE_ADS,
+      accountId: "acct-fixture",
+      campaignId: "camp-shared",
+      changeKind: PaidChangeKind.BUDGET_ADJUST,
+      hypothesis: "Raise share",
+      exactChange: "+20",
+      risk: "Sibling crowding",
+      alternative: "Hold",
+      impressions: 2000,
+      clicks: 80,
+      eventsPresent: true,
+      attributionSettled: true,
+      sameDaySpendComplete: true,
+      financialDiff: {
+        currency: "USD",
+        dailyBudgetBeforeMinor: 5000,
+        dailyBudgetAfterMinor: 7000,
+        lifetimeImpactMinor: null,
+        sharedBudgetAffected: true,
+        sharedBudgetImpactKnown: true,
+        notes: [],
+      },
+      boundProviderSnapshot: {
+        accountId: "acct-fixture",
+        campaignId: "camp-shared",
+        sharedBudgetId: "sb-1",
+        entityRevision: "rev-1",
+        dailyBudgetMinor: 5000,
+        sharedBudgetDailyMinor: 20_000,
+        readAtIso: "2026-11-21T12:00:00.000Z",
+      },
+      nowIso: "2026-11-21T12:00:00.000Z",
+    });
+    expect(ok.ok).toBe(true);
+    if (!ok.ok) return;
+    expect(ok.proposal.status).toBe(PaidProposalStatus.READY_FOR_REVIEW);
+    expect(ok.proposal.boundProviderSnapshot?.sharedBudgetId).toBe("sb-1");
+  });
 });

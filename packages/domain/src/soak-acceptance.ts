@@ -918,6 +918,11 @@ export const SoakProofKind = {
    * Distinct from T-US-012 (Google Ads TEST vs PRODUCTION credential/customer).
    */
   ADS_TEST_PROJECT_PRODUCTION_BLOCKED: "ads_test_project_production_blocked",
+  /**
+   * Shared ad budget changed externally → proposal invalidated (T-X035).
+   */
+  SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES:
+    "shared_ad_budget_external_change_invalidates",
 } as const;
 
 export type SoakProofKindValue =
@@ -1042,6 +1047,7 @@ export const SOAK_FIXTURE_HARNESS_NOW_ISO = "2026-11-21T18:00:00.000Z";
  * T-X071 requires HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE.
  * T-X067 requires INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED.
  * T-X034 requires ADS_TEST_PROJECT_PRODUCTION_BLOCKED (test Ads project ≠ production).
+ * T-X035 requires SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES.
  * T-US-012 requires GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED (test ≠ production).
  * T-US-015 requires CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY (runtime ≠ API readiness; EVAL_ONLY).
 * T-US-016 requires CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED.
@@ -1223,6 +1229,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X071",
   "T-X072",
   "T-X034",
+  "T-X035",
   "T-US-011",
   "T-US-012",
   "T-US-015",
@@ -1782,6 +1789,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED];
     case "T-X034":
       return [SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED];
+    case "T-X035":
+      return [SoakProofKind.SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES];
     case "T-US-011":
       return [SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY];
     case "T-US-012":
@@ -2080,6 +2089,8 @@ export function mapProofToFixtureCases(
       return ["T-X067"];
     case SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED:
       return ["T-X034"];
+    case SoakProofKind.SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES:
+      return ["T-X035"];
     case SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED:
       return ["T-US-012"];
     case SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY:
