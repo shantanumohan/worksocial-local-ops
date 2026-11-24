@@ -91,6 +91,14 @@ export function normalizeClaimedVerified(value: unknown): boolean {
   return value === true || value === "true";
 }
 
+/**
+ * Fail-closed owner-acknowledgment flag (T-X025). Only boolean `true` or the
+ * exact literal string `"true"` counts — no trim/case folding.
+ */
+export function normalizeOwnerAcknowledged(value: unknown): boolean {
+  return value === true || value === "true";
+}
+
 function nextRevision(prev: string): string {
   const n = Number.parseInt(prev.replace(/^rev-/, ""), 10);
   if (Number.isFinite(n)) {
@@ -133,7 +141,10 @@ export function createExternalEditStagingState(input: {
  */
 export function refuseSilentConflictClear(
   state: ExternalEditStagingState,
-  input: { ownerAcknowledged?: boolean; nowIso: string },
+  input: {
+    ownerAcknowledged?: boolean | string | number | null;
+    nowIso: string;
+  },
 ):
   | {
       ok: true;
@@ -176,7 +187,7 @@ export function refuseSilentConflictClear(
     };
   }
 
-  if (!input.ownerAcknowledged) {
+  if (!normalizeOwnerAcknowledged(input.ownerAcknowledged)) {
     return {
       ok: false,
       code: "SILENT_CLEAR_FORBIDDEN",

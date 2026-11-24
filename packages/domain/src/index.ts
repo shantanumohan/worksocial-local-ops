@@ -334,6 +334,7 @@ export {
   externalHumanEditLiveWiringStatus,
   normalizeLiveTemporalWiringRequest,
   normalizeClaimedVerified,
+  normalizeOwnerAcknowledged,
   type StagingConflictStatusValue,
   type StagingVerifyOutcomeValue,
   type StagingPageLedger,

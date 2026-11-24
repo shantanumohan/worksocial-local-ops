@@ -19,6 +19,7 @@ import {
   independentVerifyStagingChange,
   normalizeClaimedVerified,
   normalizeLiveTemporalWiringRequest,
+  normalizeOwnerAcknowledged,
   refuseClaimedVerifiedStaging,
   refuseSilentConflictClear,
   stageAgentChangeAgainstBase,
@@ -400,6 +401,42 @@ export function proofExternalHumanEditConflictRetained(
     passed = false;
     details.push(
       `N4 edges unexpectedly bare.change=${bare.change} alias=${aliasClaim.reason} rev=${state.change?.humanObservedRevision}`,
+    );
+  }
+
+  // Owner-ack literal-only; after ack overwrite still forbidden.
+  const aliasAck = refuseSilentConflictClear(state, {
+    ownerAcknowledged: "TRUE",
+    nowIso: tHuman,
+  });
+  const literalAck = refuseSilentConflictClear(state, {
+    ownerAcknowledged: "true",
+    nowIso: tHuman,
+  });
+  const afterAck =
+    literalAck.ok === true
+      ? attemptBlindAgentOverwrite(literalAck.state, { nowIso: tHuman })
+      : null;
+  if (
+    !aliasAck.ok &&
+    aliasAck.code === "SILENT_CLEAR_FORBIDDEN" &&
+    normalizeOwnerAcknowledged("TRUE") === false &&
+    normalizeOwnerAcknowledged("true") === true &&
+    literalAck.ok === true &&
+    literalAck.code === "OWNER_ACK_RECORDED_CONFLICT_KEPT" &&
+    afterAck &&
+    !afterAck.ok &&
+    afterAck.code === "OVERWRITE_FORBIDDEN" &&
+    afterAck.state.change?.status === StagingConflictStatus.CONFLICT_RETAINED &&
+    afterAck.liveTemporalWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "Owner-ack literal-only; alias TRUE → SILENT_CLEAR_FORBIDDEN; after ack overwrite still OVERWRITE_FORBIDDEN",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `N5 owner-ack unexpectedly alias=${JSON.stringify(aliasAck)} literal=${JSON.stringify(literalAck)} after=${JSON.stringify(afterAck)}`,
     );
   }
 

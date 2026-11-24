@@ -9,6 +9,7 @@ import {
   independentVerifyStagingChange,
   normalizeClaimedVerified,
   normalizeLiveTemporalWiringRequest,
+  normalizeOwnerAcknowledged,
   refuseClaimedVerifiedStaging,
   refuseSilentConflictClear,
   stageAgentChangeAgainstBase,
@@ -477,5 +478,34 @@ describe("external human edit during staging (T-X025)", () => {
       nowIso: "2026-11-22T18:03:00.000Z",
     });
     expect(literalClaim.reason).toMatch(/CONFLICT_RETAINED cannot elevate/);
+
+    expect(normalizeOwnerAcknowledged(true)).toBe(true);
+    expect(normalizeOwnerAcknowledged("true")).toBe(true);
+    expect(normalizeOwnerAcknowledged("TRUE")).toBe(false);
+    expect(normalizeOwnerAcknowledged(1)).toBe(false);
+    const aliasAck = refuseSilentConflictClear(state, {
+      ownerAcknowledged: "TRUE",
+      nowIso: "2026-11-22T18:04:00.000Z",
+    });
+    expect(aliasAck.ok).toBe(false);
+    expect(aliasAck.code).toBe("SILENT_CLEAR_FORBIDDEN");
+
+    const literalAck = refuseSilentConflictClear(state, {
+      ownerAcknowledged: "true",
+      nowIso: "2026-11-22T18:04:00.000Z",
+    });
+    expect(literalAck.ok).toBe(true);
+    expect(literalAck.code).toBe("OWNER_ACK_RECORDED_CONFLICT_KEPT");
+    expect(literalAck.state.change?.status).toBe(
+      StagingConflictStatus.CONFLICT_RETAINED,
+    );
+    const afterAckOverwrite = attemptBlindAgentOverwrite(literalAck.state, {
+      nowIso: "2026-11-22T18:04:30.000Z",
+    });
+    expect(afterAckOverwrite.ok).toBe(false);
+    if (afterAckOverwrite.ok) return;
+    expect(afterAckOverwrite.code).toBe("OVERWRITE_FORBIDDEN");
+    expect(afterAckOverwrite.state.page.fields.title).toBe("Human edited title");
+    expect(afterAckOverwrite.liveTemporalWiring).toBe("NOT_WIRED");
   });
 });

@@ -804,7 +804,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X021** is fixture ACCEPTED only via `CONCURRENT_IDEMPOTENT_RELEASE` (barrier+mutex one dispatch; not retry-only NO_DUPLICATE_EFFECTS). Not sandbox/prod VERIFIED.
 
-**T-X025** is fixture ACCEPTED only via the external human edit during staging conflict-retained proof (`EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED`) — base-revision pin, human edit retains CONFLICT, blind overwrite forbidden (incl. STAGED_PENDING force / multi-overwrite), blank changeId refused, silent conflict clear forbidden, live Temporal NOT_WIRED (literal-only request normalize; live verify refused), claimed VERIFIED refused; ACCEPTED ≠ VERIFIED. Not sandbox/prod VERIFIED.
+**T-X025** is fixture ACCEPTED only via the external human edit during staging conflict-retained proof (`EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED`) — base-revision pin, human edit retains CONFLICT, blind overwrite forbidden (incl. STAGED_PENDING force / multi-overwrite / after owner-ack), blank changeId refused, silent conflict clear forbidden (owner-ack literal-only), live Temporal NOT_WIRED (literal-only request normalize; live verify refused), claimed VERIFIED refused; ACCEPTED ≠ VERIFIED. Not sandbox/prod VERIFIED.
 
 **T-X001** is fixture ACCEPTED only via the host-sleep monitoring coverage-gap coalesce proof (`HOST_SLEEP_MONITORING_COVERAGE_GAP`) — cadence-derived misses, catch-up probe required, no burst. Not sandbox/prod VERIFIED.
 

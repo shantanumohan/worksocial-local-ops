@@ -290,6 +290,21 @@ describe("soak service (M9)", () => {
         (p) => p.kind === SoakProofKind.EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED,
       ),
     ).toBe(true);
+    const extHumanEditProof = result.proofs.find(
+      (p) => p.kind === SoakProofKind.EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED,
+    );
+    expect(extHumanEditProof?.fixtureOnly).toBe(true);
+    expect(
+      extHumanEditProof?.details.some((d) => /SILENT_CLEAR_FORBIDDEN/.test(d)),
+    ).toBe(true);
+    expect(
+      extHumanEditProof?.details.some((d) => /NOT_WIRED/.test(d)),
+    ).toBe(true);
+    expect(
+      extHumanEditProof?.details.some((d) =>
+        /Owner-ack literal-only|claimedVerified literal-only/.test(d),
+      ),
+    ).toBe(true);
     expect(
       result.proofs.some(
         (p) => p.kind === SoakProofKind.OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS,
