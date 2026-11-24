@@ -128,4 +128,32 @@ describe("layout-capacity (T-X047)", () => {
     expect(result.excluded.map((e) => e.entryId)).toEqual(["hudson"]);
     expect(result.excluded[0]?.filter.defaultWouldAllowMismatch).toBe(true);
   });
+
+  it("excludes boardroom over boardroom cap while marketing max would allow", () => {
+    const over = filterByLayoutCapacity({
+      entryId: hudson.entryId,
+      defaultCapacity: hudson.defaultCapacity,
+      layoutCapacities: hudson.layoutCapacities,
+      requestedLayout: RoomLayout.BOARDROOM,
+      people: 20,
+    });
+    expect(over.allowed).toBe(false);
+    expect(over.effectiveCapacity).toBe(8);
+    expect(over.defaultWouldAllowMismatch).toBe(true);
+  });
+
+  it("admits theatre seating within theater layout capacity", () => {
+    expect(parseRequestedLayout("theatre seating for 30")).toBe(
+      RoomLayout.THEATER,
+    );
+    const ok = filterByLayoutCapacity({
+      entryId: hudson.entryId,
+      defaultCapacity: hudson.defaultCapacity,
+      layoutCapacities: hudson.layoutCapacities,
+      requestedLayout: RoomLayout.THEATER,
+      people: 30,
+    });
+    expect(ok.allowed).toBe(true);
+    expect(ok.effectiveCapacity).toBe(40);
+  });
 });

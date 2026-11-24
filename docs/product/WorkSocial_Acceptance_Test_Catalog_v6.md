@@ -977,7 +977,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X046** is fixture ACCEPTED only via the unsupported blog destination no fake publication proof (`UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION`) — OTHER_BLOG / Hub without adapter → `UNSUPPORTED_ACTION` / FAILED with null receipt; never invents `PUBLISHED_VERIFIED`. Distinct from T-US-022 / T-X045. Not sandbox/prod VERIFIED.
 
-**T-X047** is fixture ACCEPTED only via the layout-specific capacity mismatch filter proof (`LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS`) — requested layout capacity wins on `runSemanticSearch`; marketing max / mismatched layout must not admit. Not sandbox/prod VERIFIED.
+**T-X047** is fixture ACCEPTED only via the layout-specific capacity mismatch filter proof (`LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS`): every hop parse layout+people → layout-capacity filter vs marketing max → fit admit → ambiguous clarify (no silent pick) → boardroom/theatre edges. Distinct from T-US-046/T-X048 `HARD_SEARCH_CONSTRAINTS_NO_INVENTION` and T-US-045 `SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON`. Live search remains NOT_WIRED. Not sandbox/prod VERIFIED.
 
 **T-X051** is fixture ACCEPTED only via the wrong Zoho organization identity-mismatch proof (`WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH`) — observed org ≠ expected (incl. case-differ) blocks CRM write/bind; blank org refuse; fixture+`WIRED` / non-fixture matched refuse (`LIVE_TRANSPORT_NOT_WIRED`); `liveProviderWiring=NOT_WIRED`; `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 

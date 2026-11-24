@@ -403,10 +403,53 @@ describe("soak service (M9)", () => {
           SoakProofKind.UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION,
       ),
     ).toBe(true);
+    const layoutProof = result.proofs.find(
+      (p) =>
+        p.kind === SoakProofKind.LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS,
+    );
+    expect(layoutProof?.passed).toBe(true);
     expect(
-      result.proofs.some(
-        (p) =>
-          p.kind === SoakProofKind.LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS,
+      layoutProof?.details.some((d) =>
+        /exchange only \(hudson layout mismatch\)/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      layoutProof?.details.some((d) =>
+        /Counterfactual: marketing capacity 20 would wrongly allow classroom 20/.test(
+          d,
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      layoutProof?.details.some((d) =>
+        /Ambiguous layout phrases → unresolved clarify/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      layoutProof?.details.some((d) =>
+        /boardroom seating 20 → hudson excluded.*filter=layout_specific/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      layoutProof?.details.some((d) =>
+        /theatre seating 30 → hudson admitted.*default 20 would exclude.*filter=layout_specific/.test(
+          d,
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      layoutProof?.details.some((d) => /NOT_WIRED/.test(d)),
+    ).toBe(true);
+    expect(
+      layoutProof?.details.some((d) =>
+        /Distinct from HARD_SEARCH_CONSTRAINTS_NO_INVENTION/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      result.details.some((d) =>
+        /T-X047 fixture ACCEPTED via layout_specific_capacity_mismatch_filters only/.test(
+          d,
+        ),
       ),
     ).toBe(true);
     expect(
@@ -1161,6 +1204,47 @@ describe("soak service (M9)", () => {
     },
   );
 
+  it.each([
+    [
+      "HARD_SEARCH_CONSTRAINTS_NO_INVENTION",
+      SoakProofKind.HARD_SEARCH_CONSTRAINTS_NO_INVENTION,
+    ],
+    [
+      "SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON",
+      SoakProofKind.SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON,
+    ],
+    [
+      "EVAL_NO_GROUNDING_FAIL_CLOSED",
+      SoakProofKind.EVAL_NO_GROUNDING_FAIL_CLOSED,
+    ],
+  ] as const)(
+    "does not ACCEPTED T-X047 from wrong-proof %s",
+    (_label, kind) => {
+      const compiled = compileAcceptanceEvidence({
+        proofs: [
+          {
+            proofId: `p-wrong-tx047-${kind}`,
+            kind,
+            passed: true,
+            details: ["wrong sibling proof"],
+            applyAttemptCount: 1,
+            operationId: "op-wrong-tx047",
+            createdAtIso: "2026-11-21T18:00:00.000Z",
+            fixtureOnly: true as const,
+          },
+        ],
+        nowIso: "2026-11-21T18:01:00.000Z",
+        runId: `soak-tx047-wrong-${kind}`,
+        caseIds: ["T-X047"],
+      });
+      expect(compiled.caseResults).toHaveLength(1);
+      expect(compiled.caseResults[0]!.status).toBe(
+        AcceptanceCaseStatus.NOT_RUN,
+      );
+      expect(compiled.artifacts).toHaveLength(0);
+    },
+  );
+
   it("marks T-X066 FAILED when BACKUP_OMIT_RECEIPT proof fails", () => {
     const compiled = compileAcceptanceEvidence({
       proofs: [
@@ -1178,6 +1262,30 @@ describe("soak service (M9)", () => {
       nowIso: "2026-11-21T18:01:00.000Z",
       runId: "soak-tx066-fail",
       caseIds: ["T-X066"],
+    });
+    expect(compiled.caseResults).toHaveLength(1);
+    expect(compiled.caseResults[0]!.status).toBe(AcceptanceCaseStatus.FAILED);
+    expect(compiled.caseResults[0]!.artifactId).toBeNull();
+    expect(compiled.artifacts).toHaveLength(0);
+  });
+
+  it("marks T-X047 FAILED when LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS proof fails", () => {
+    const compiled = compileAcceptanceEvidence({
+      proofs: [
+        {
+          proofId: "p-layout-fail",
+          kind: SoakProofKind.LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS,
+          passed: false,
+          details: ["layout filter incomplete"],
+          applyAttemptCount: 1,
+          operationId: "op-layout-fail",
+          createdAtIso: "2026-11-21T18:00:00.000Z",
+          fixtureOnly: true as const,
+        },
+      ],
+      nowIso: "2026-11-21T18:01:00.000Z",
+      runId: "soak-tx047-fail",
+      caseIds: ["T-X047"],
     });
     expect(compiled.caseResults).toHaveLength(1);
     expect(compiled.caseResults[0]!.status).toBe(AcceptanceCaseStatus.FAILED);

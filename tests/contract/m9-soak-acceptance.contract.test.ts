@@ -199,6 +199,22 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(
       backupOmit?.details.some((d) => /NOT_WIRED/.test(d)),
     ).toBe(true);
+    const tx047 = run.run.caseResults.find((c) => c.caseId === "T-X047");
+    expect(tx047?.status).toBe(AcceptanceCaseStatus.ACCEPTED);
+    expect(tx047?.environment).toBe(AcceptanceEnvironment.FIXTURE);
+    expect(String(tx047?.status).toUpperCase()).not.toBe("VERIFIED");
+    const layoutCap = run.run.proofs.find(
+      (p) => p.kind === "layout_specific_capacity_mismatch_filters",
+    );
+    expect(layoutCap?.passed).toBe(true);
+    expect(
+      layoutCap?.details.some((d) => /NOT_WIRED/.test(d)),
+    ).toBe(true);
+    expect(
+      layoutCap?.details.some((d) =>
+        /Distinct from HARD_SEARCH_CONSTRAINTS_NO_INVENTION/.test(d),
+      ),
+    ).toBe(true);
     const tf24 = run.run.caseResults.find((c) => c.caseId === "T-F24");
     expect(tf24?.status).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(tf24?.environment).toBe(AcceptanceEnvironment.FIXTURE);

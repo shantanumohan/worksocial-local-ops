@@ -1236,7 +1236,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X041 fixture ACCEPTED via incomparable_trend_indices_rejected only — not live VERIFIED",
       "T-X042 fixture ACCEPTED via schema_differs_from_page_gate_fails only — not live VERIFIED",
       "T-X046 fixture ACCEPTED via unsupported_blog_destination_no_fake_publication only — not live VERIFIED",
-      "T-X047 fixture ACCEPTED via layout_specific_capacity_mismatch_filters only — not live VERIFIED",
+      "T-X047 fixture ACCEPTED via layout_specific_capacity_mismatch_filters only — every hop: parse layout+people → layout-capacity filter vs marketing max → fit admit → ambiguous clarify → boardroom/theatre edges; distinct from hard-search/semantic-no-result; live NOT_WIRED — not live VERIFIED",
       "T-X051 fixture ACCEPTED via wrong_zoho_organization_identity_mismatch only — not live VERIFIED",
       "T-X062 fixture ACCEPTED via sse_gap_full_state_resync only — not live VERIFIED",
       "T-X061 fixture ACCEPTED via keyboard_focus_restore_after_dialog only — not live VERIFIED",

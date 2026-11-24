@@ -772,6 +772,14 @@ describe("soak-acceptance domain", () => {
         SoakProofKind.LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS,
       ),
     ).toEqual(["T-X047"]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.HARD_SEARCH_CONSTRAINTS_NO_INVENTION),
+    ).not.toContain("T-X047");
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON,
+      ),
+    ).not.toContain("T-X047");
   });
 
   it("maps T-US-012 to GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED only", () => {
