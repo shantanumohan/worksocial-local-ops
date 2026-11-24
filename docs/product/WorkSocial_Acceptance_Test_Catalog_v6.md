@@ -886,7 +886,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X018 / T-US-054** are fixture ACCEPTED only via the self-approval rejected / independent A25 proof (`SELF_APPROVAL_REJECTED`) — ordinary self-approval cannot bind or approve; independent reviewer required. Not sandbox/prod VERIFIED.
 
-**T-X073** is fixture ACCEPTED only via the offboard ACTIVE_TOKEN residual proof (`OFFBOARD_ACTIVE_TOKEN_RESIDUAL`) — offboarding remains incomplete until live provider revoke is wired/performed (`ACTIVE_TOKEN` + `PROVIDER_REVOKE` residuals `BLOCKED_NOT_WIRED`). Live revoke stays **NOT_WIRED**; re-offboard / double live-revoke never invent remote success; ACCEPTED≠VERIFIED; never silently VERIFIED for live.
+**T-X073** is fixture ACCEPTED only via the offboard ACTIVE_TOKEN residual proof (`OFFBOARD_ACTIVE_TOKEN_RESIDUAL`) — offboarding remains incomplete until live provider revoke is wired/performed (`ACTIVE_TOKEN` + `PROVIDER_REVOKE` residuals `BLOCKED_NOT_WIRED`). Live revoke stays **NOT_WIRED**; claimLiveVerified / force-complete refuse; idempotent residual reclaim; re-offboard / double live-revoke never invent remote success; ACCEPTED≠VERIFIED; never silently VERIFIED for live.
 
 **T-US-060** is fixture ACCEPTED only via the emergency-stop / outbound-stop at commit proof (`EMERGENCY_STOP_AT_COMMIT`). Not sandbox/prod VERIFIED.
 
@@ -1101,7 +1101,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X070 | Validated payload not collected | Separate failure states *(fixture ACCEPTED — validated payload not collected separate failure states proof; not sandbox/prod VERIFIED)* |
 | T-X071 | Local host offline public discovery | Honest unavailability *(fixture ACCEPTED — host-offline public discovery unavailable proof; not sandbox/prod VERIFIED)* |
 | T-X072 | Customer data leaks into evaluation | Redaction blocks *(fixture ACCEPTED — customer data eval redaction blocks proof; not sandbox/prod VERIFIED)* |
-| T-X073 | Offboarding retains active token | Incomplete until revoked *(fixture ACCEPTED — offboard ACTIVE_TOKEN residual; live revoke NOT_WIRED; re-offboard/double revoke stay NOT_WIRED; ACCEPTED≠VERIFIED; not sandbox/prod VERIFIED)* |
+| T-X073 | Offboarding retains active token | Incomplete until revoked *(fixture ACCEPTED — offboard ACTIVE_TOKEN residual; live revoke NOT_WIRED; claim refuse; idempotent reclaim; ACCEPTED≠VERIFIED; not sandbox/prod VERIFIED)* |
 
 ## Counts
 

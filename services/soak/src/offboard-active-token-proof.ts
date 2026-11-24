@@ -1,14 +1,19 @@
 /**
  * Fixture proof for T-X073 — offboarding retains active provider token residual.
- * Hillclimb: re-offboard / double live-revoke stay NOT_WIRED; residual honesty
- * helper; ACCEPTED≠VERIFIED; secrets never leak. External effects: NONE.
- * Never invents live VERIFIED. Does not touch rebind / #43 lane.
+ * Hillclimb deepen I9 (edge honesty): idempotent residual reclaim;
+ * claimLiveVerified / forceComplete refuse; blank-id revoke still NOT_WIRED;
+ * re-offboard / double live-revoke stay NOT_WIRED; ACCEPTED≠VERIFIED;
+ * secrets never leak. External effects: NONE. Never invents live VERIFIED.
+ * Does not touch rebind / #43 lane.
  */
 
 import { join } from "node:path";
 import {
   SoakProofKind,
   assertOffboardActiveTokenResidualHonest,
+  assertOffboardActiveTokenResidualReclaimIdempotent,
+  attemptLiveProviderRevoke,
+  reclaimOffboardActiveTokenResidual,
   type SoakProofRecord,
 } from "@worksocial/domain";
 import { createCredentialBroker } from "@worksocial/credential-broker";
@@ -221,6 +226,61 @@ export async function proofOffboardActiveTokenResidual(
   } else {
     details.push(
       "double liveProviderRevoke → NOT_WIRED twice (no invent remote success)",
+    );
+  }
+
+  // I9 edge honesty: claimLiveVerified / forceComplete refuse; blank id still NOT_WIRED.
+  const claimLive = attemptLiveProviderRevoke({
+    connectionId: seeded.connection.connectionId,
+    referenceId: "fixture-ref",
+    claimLiveVerified: true,
+  });
+  const forceComplete = attemptLiveProviderRevoke({
+    connectionId: seeded.connection.connectionId,
+    referenceId: "fixture-ref",
+    forceCompleteRemoteRevoke: true,
+  });
+  const blankId = attemptLiveProviderRevoke({
+    connectionId: "   ",
+    referenceId: "",
+  });
+  if (
+    claimLive.code === "LIVE_CLAIM_REFUSED" &&
+    claimLive.liveProviderRevoke === "NOT_WIRED" &&
+    forceComplete.code === "LIVE_CLAIM_REFUSED" &&
+    blankId.code === "LIVE_PROVIDER_REVOKE_NOT_WIRED" &&
+    blankId.liveProviderSuccessClaimed === false
+  ) {
+    details.push(
+      "claimLiveVerified / forceComplete → LIVE_CLAIM_REFUSED; blank-id revoke still NOT_WIRED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `edge claim/blank unexpected claim=${JSON.stringify(claimLive)} force=${JSON.stringify(forceComplete)} blank=${JSON.stringify(blankId)}`,
+    );
+  }
+
+  // I9: idempotent residual reclaim — double honesty agrees; no invent live revoke.
+  const reclaim1 = reclaimOffboardActiveTokenResidual(manifest);
+  const reclaim2 = reclaimOffboardActiveTokenResidual(manifest);
+  const reclaimIdem = assertOffboardActiveTokenResidualReclaimIdempotent({
+    first: reclaim1,
+    second: reclaim2,
+  });
+  if (
+    reclaimIdem.ok &&
+    reclaimIdem.code === "OFFBOARD_RECLAIM_IDEMPOTENT" &&
+    reclaim1.honesty.ok &&
+    reclaim1.priorLiveRevokeInvented === false
+  ) {
+    details.push(
+      "idempotent reclaim: residual honesty agrees twice; no invent live revoke",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `idempotent reclaim unexpectedly idem=${JSON.stringify(reclaimIdem)} r1=${JSON.stringify(reclaim1)}`,
     );
   }
 
