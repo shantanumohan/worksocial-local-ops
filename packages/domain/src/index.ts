@@ -350,12 +350,17 @@ export {
   cycleDialogFocus,
   markTriggerUnrestorable,
   closeOverlayRestoreFocus,
+  dismissOverlayViaEscape,
   evaluateKeyboardFocusRestoreReview,
+  KEYBOARD_FOCUS_LIVE_BROWSER_WIRING,
   KEYBOARD_FOCUS_RESTORE_RELATED_CASE_IDS,
   type FocusTargetId,
   type FocusSession,
+  type KeyboardFocusHonesty,
+  type KeyboardFocusLiveBrowserWiring,
   type KeyboardFocusRestoreCode,
   type KeyboardFocusRestoreDecision,
+  type KeyboardFocusRestoreReview,
 } from "./keyboard-focus-restore.js";
 export {
   AlertSeverity,

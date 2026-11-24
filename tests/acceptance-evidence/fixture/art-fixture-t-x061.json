@@ -3,13 +3,13 @@
   "caseId": "T-X061",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X061 (Keyboard review and focus restore — A11y)\nproof=keyboard_focus_restore_after_dialog applyCount=1 :: Overlay opened; savedTrigger=btn-keyboard-review; activeFocus=dlg-close | Re-open refused; savedTrigger preserved | Tab backward: dlg-close → dlg-secondary (trap retained) | Tab forward: dlg-secondary → dlg-close (trap retained) | Focus restored to trigger btn-keyboard-review | Trigger btn-keyboard-review unrestorable — FOCUS_LOST (a11y fail-closed) | liveProviderSuccessClaimed=false externalEffects=NONE | fixtureOnly keyboard/focus model — not browser VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X061 (Keyboard review and focus restore — A11y)\nproof=keyboard_focus_restore_after_dialog applyCount=1 :: Overlay opened; savedTrigger=btn-keyboard-review; activeFocus=dlg-close | liveBrowserWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE | Re-open refused; savedTrigger preserved | Tab backward: dlg-close → dlg-secondary (trap retained) | Tab forward: dlg-secondary → dlg-close (trap retained) | Escape dismiss: Focus restored to trigger btn-keyboard-review | liveBrowserWiring=NOT_WIRED ACCEPTED≠VERIFIED | Focus restored to trigger btn-keyboard-review | liveBrowserWiring=NOT_WIRED ACCEPTED≠VERIFIED | Trigger btn-keyboard-review unrestorable — FOCUS_LOST (a11y fail-closed) | Escape while closed refused (no silent restore) | liveBrowserWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE | Distinct from T-US-055 (full keyboard journey + reduced motion) | claimLiveVerified → LIVE_BROWSER_CLAIM_REFUSED (fixture ACCEPTED ≠ VERIFIED) | requestLiveBrowserWire → LIVE_BROWSER_CLAIM_REFUSED (Playwright stays NOT_WIRED) | liveProviderSuccessClaimed=false externalEffects=NONE | fixtureOnly keyboard/focus model — not browser VERIFIED | Distinct from T-US-055 (full keyboard journey + reduced motion)\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "keyboard_focus_restore_after_dialog"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x061.json",
-  "createdAtIso": "2026-11-24T23:15:37.209Z",
+  "createdAtIso": "2026-11-24T23:21:26.839Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x061-77bbad8a2dbd"
+  "uniqueSourceArtifactId": "art-fixture-t-x061-6e419120f9c1"
 }

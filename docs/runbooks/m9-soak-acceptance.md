@@ -307,7 +307,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X062** maps only to `SSE_GAP_FULL_STATE_RESYNC` (offline/online SSE gap → full-state resync; pending gap blocks invent; liveProviderWiring NOT_WIRED; not live VERIFIED).
 
-**T-X061** maps only to `KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG` (dialog open/trap/restore or FOCUS_LOST; not live VERIFIED).
+**T-X061** maps only to `KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG` (dialog open/trap/Escape+close restore or FOCUS_LOST; Escape-while-closed refuse; liveBrowserWiring NOT_WIRED; LIVE_BROWSER_CLAIM_REFUSED; not live VERIFIED).
 
 **T-X068** maps only to `THIRTY_ALERTS_ONE_OUTAGE_GROUPED` (thirty alerts sharing one whitespace-normalized outageKey → one grouped incident with chronological alertIds / max severity / uniqueSources; live NOT_WIRED; not live VERIFIED).
 

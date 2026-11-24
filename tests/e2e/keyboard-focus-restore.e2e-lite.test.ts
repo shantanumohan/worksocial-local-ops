@@ -2,7 +2,7 @@
  * E2E-lite (offline): T-X061 keyboard focus restore soak path.
  * Recently landed #107 — additive coverage beyond m9 presence checks.
  * No live providers / browser. External effects: NONE. ACCEPTED ≠ VERIFIED.
- * Distinct from T-US-055 (still NOT_RUN).
+ * Distinct from T-US-055 (full keyboard journey + reduced motion).
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -47,11 +47,19 @@ describe("e2e-lite: T-X061 keyboard focus restore", () => {
     expect(proof?.fixtureOnly).toBe(true);
     expect(
       proof?.details.some((d) =>
-        /FOCUS_RESTORED|FOCUS_LOST|trap retained|Re-open refused/i.test(d),
+        /FOCUS_RESTORED|FOCUS_LOST|trap retained|Re-open refused|Escape/i.test(
+          d,
+        ),
       ),
     ).toBe(true);
     expect(
       proof?.details.some((d) => /externalEffects=NONE/i.test(d)),
+    ).toBe(true);
+    expect(
+      proof?.details.some((d) => /liveBrowserWiring=NOT_WIRED/i.test(d)),
+    ).toBe(true);
+    expect(
+      proof?.details.some((d) => /LIVE_BROWSER_CLAIM_REFUSED/i.test(d)),
     ).toBe(true);
     expect(
       proof?.details.some((d) => /not browser VERIFIED/i.test(d)),

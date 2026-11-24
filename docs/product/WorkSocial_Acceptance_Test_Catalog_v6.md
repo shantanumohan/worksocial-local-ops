@@ -983,7 +983,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X062** is fixture ACCEPTED only via the SSE gap full-state resync proof (`SSE_GAP_FULL_STATE_RESYNC`) — after offline UI reconnect (and for online gaps), a non-contiguous SSE sequence refuses incremental catch-up; outstanding `minResyncThroughSeq` blocks contiguous invent; covering full-state snapshot replaces UI stateDigest; invalid seq / blank digest refuse; `liveProviderWiring=NOT_WIRED`; missed events are never invented. Not sandbox/prod VERIFIED.
 
-**T-X061** is fixture ACCEPTED only via the keyboard focus restore after dialog proof (`KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG`) — overlay open captures the trigger, Tab/Shift+Tab traps within dialog focusables (including wrap edges), close restores focus to the trigger or fails closed as `FOCUS_LOST` when unrestorable; re-open while open is refused. Distinct from T-US-055 (full keyboard journey + reduced motion). Not sandbox/prod VERIFIED.
+**T-X061** is fixture ACCEPTED only via the keyboard focus restore after dialog proof (`KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG`) — overlay open captures the trigger, Tab/Shift+Tab traps within dialog focusables (including wrap edges), Escape and close restore focus to the trigger or fail closed as `FOCUS_LOST` when unrestorable; Escape while closed refuses silent restore; re-open while open is refused; `liveBrowserWiring=NOT_WIRED`; live VERIFIED / Playwright wire claims → `LIVE_BROWSER_CLAIM_REFUSED`; ChatGPT Ads ACCESS_BLOCKED; `externalEffects=NONE`. Distinct from T-US-055 (full keyboard journey + reduced motion). Not sandbox/prod VERIFIED.
 
 **T-X068** is fixture ACCEPTED only via the thirty alerts one outage grouped incident proof (`THIRTY_ALERTS_ONE_OUTAGE_GROUPED`) — alerts sharing one `outageKey` (whitespace-normalized) collapse into a single open incident (`alertCount=30`, chronological `alertIds`, max severity, `uniqueSourceCount`); distinct outage keys stay separate; live `NOT_WIRED`. Not sandbox/prod VERIFIED.
 
@@ -1089,7 +1089,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X058 | Third automatic repair attempt | Escalate *(fixture ACCEPTED — attempt-limit escalate; CMS NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X059 | Duplicate platform attribution | One booking; separate claims *(fixture ACCEPTED — duplicate platform attribution one-booking proof; liveProviderWiring NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X060 | Currency/timezone mismatch | No silent sum *(fixture ACCEPTED — whitespace match; INVALID_DIMENSION; NOT_WIRED; not sandbox/prod VERIFIED)* |
-| T-X061 | Keyboard review and focus restore | A11y *(fixture ACCEPTED — keyboard focus restore after dialog proof; not sandbox/prod VERIFIED)* |
+| T-X061 | Keyboard review and focus restore | A11y *(fixture ACCEPTED — Escape+close restore; liveBrowserWiring NOT_WIRED; LIVE_BROWSER_CLAIM_REFUSED; not sandbox/prod VERIFIED)* |
 | T-X062 | SSE gap after offline UI | Full-state resync *(fixture ACCEPTED — SSE gap full-state resync proof; liveProviderWiring NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X063 | Indirect prompt-injection exfiltration | Boundary denies *(fixture ACCEPTED — indirect-prompt-injection-exfil-denied proof; not sandbox/prod VERIFIED)* |
 | T-X064 | SSRF redirect and DNS rebind | Blocked every hop *(fixture ACCEPTED — SSRF redirect/DNS rebind every-hop proof; not sandbox/prod VERIFIED)* |

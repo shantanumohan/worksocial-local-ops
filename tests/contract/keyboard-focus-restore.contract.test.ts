@@ -2,7 +2,7 @@
  * Contract: T-X061 keyboard focus restore (recently landed #107).
  * Additive coverage around domain + soak map honesty.
  * ACCEPTED ≠ VERIFIED. External effects NONE. Live wiring NOT_WIRED.
- * Distinct from T-US-055 (full keyboard journey — still NOT_RUN).
+ * Distinct from T-US-055 (full keyboard journey + reduced motion).
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -99,8 +99,20 @@ describe("contract: T-X061 keyboard focus restore", () => {
       dialogFocusables: dialog,
     });
     expect(review.passed).toBe(true);
+    expect(review.escaped.code).toBe("FOCUS_RESTORED");
     expect(review.restored.code).toBe("FOCUS_RESTORED");
     expect(review.lost.code).toBe("FOCUS_LOST");
+    expect(review.liveBrowserWiring).toBe("NOT_WIRED");
+    expect(review.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(review.externalEffects).toBe("NONE");
+
+    const refused = evaluateKeyboardFocusRestoreReview({
+      triggerId: "btn-keyboard-review",
+      dialogFocusables: dialog,
+      claimLiveVerified: true,
+    });
+    expect(refused.passed).toBe(false);
+    expect(refused.restored.code).toBe("LIVE_BROWSER_CLAIM_REFUSED");
 
     expect([...KEYBOARD_FOCUS_RESTORE_RELATED_CASE_IDS]).toEqual(["T-X061"]);
     expect(expectedProofsForFixtureCase("T-X061")).toEqual([
