@@ -317,4 +317,4 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X071** maps only to `HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE` (offline host → honest UNAVAILABLE/HOST_OFFLINE across surfaces; ONLINE without prior → HOST_ONLINE_NO_PRIOR_UNAVAILABLE; live NOT_WIRED; not live VERIFIED).
 
-**T-X072** maps only to `CUSTOMER_DATA_EVAL_REDACTION_BLOCKS` (raw customer PII cannot enter EVAL_ONLY; redact → `REDACTED_FOR_EVAL`, raw passthrough / residual PII / live-VERIFIED claims → `CUSTOMER_DATA_LEAK_BLOCKED`; liveEvalWiring NOT_WIRED; externalEffects NONE; not live VERIFIED).
+**T-X072** maps only to `CUSTOMER_DATA_EVAL_REDACTION_BLOCKS` (raw customer PII cannot enter EVAL_ONLY; redact → `REDACTED_FOR_EVAL` incl. conversationId / boundary-safe intentLabel; eval prompts withhold conversationId; raw passthrough / residual PII / live-VERIFIED claims → `CUSTOMER_DATA_LEAK_BLOCKED`; liveEvalWiring NOT_WIRED; externalEffects NONE; not live VERIFIED).

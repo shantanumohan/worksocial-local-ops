@@ -156,6 +156,61 @@ export function proofCustomerDataEvalRedactionBlocks(
     );
   }
 
+  // 2c. Conversation ID embedding email is redacted; prompt never echoes conversationId.
+  const dirtyConv = prepareCustomerDataForEvaluation({
+    source: {
+      ...source,
+      conversationId: `thread-${source.customerEmail}`,
+    },
+    mode: "redact",
+  });
+  if (
+    dirtyConv.allowed &&
+    dirtyConv.payload != null &&
+    !/jordan\.lee@example\.com/i.test(dirtyConv.payload.conversationId) &&
+    /\[REDACTED_EMAIL\]/.test(dirtyConv.payload.conversationId)
+  ) {
+    const promptFromDirtyConv = buildEvalSafePromptFromPayload(dirtyConv.payload);
+    if (
+      !/jordan\.lee@example\.com/i.test(promptFromDirtyConv) &&
+      /\[REDACTED_CONVERSATION_ID\]/.test(promptFromDirtyConv)
+    ) {
+      details.push(
+        "conversationId with embedded email redacted; eval prompt uses [REDACTED_CONVERSATION_ID]",
+      );
+    } else {
+      passed = false;
+      details.push(`dirty-conv prompt unexpectedly ${promptFromDirtyConv}`);
+    }
+  } else {
+    passed = false;
+    details.push(`dirty conversationId unexpectedly ${JSON.stringify(dirtyConv)}`);
+  }
+
+  // 2d. Short display name must not corrupt intentLabel substrings (tour vs tour_request).
+  const shortName = prepareCustomerDataForEvaluation({
+    source: {
+      customerDisplayName: "Tour",
+      customerEmail: null,
+      customerPhone: null,
+      messageBody: "Looking for availability.",
+      conversationId: "conv-tour",
+      intentLabel: "tour_request",
+    },
+    mode: "redact",
+  });
+  if (
+    shortName.allowed &&
+    shortName.payload?.intentLabel === "tour_request"
+  ) {
+    details.push(
+      "short displayName Tour does not substring-corrupt intentLabel tour_request",
+    );
+  } else {
+    passed = false;
+    details.push(`short-name intent unexpectedly ${JSON.stringify(shortName)}`);
+  }
+
   // 3. Eval prompt built from redacted payload stays clean; raw email/name blocked.
   if (redacted.allowed && redacted.payload) {
     const safePrompt = buildEvalSafePromptFromPayload(redacted.payload);
@@ -164,10 +219,11 @@ export function proofCustomerDataEvalRedactionBlocks(
       clean.ok &&
       clean.code === "EVAL_PROMPT_CLEAN" &&
       clean.liveEvalWiring === "NOT_WIRED" &&
-      !/jordan\.lee@example\.com/i.test(safePrompt)
+      !/jordan\.lee@example\.com/i.test(safePrompt) &&
+      /\[REDACTED_CONVERSATION_ID\]/.test(safePrompt)
     ) {
       details.push(
-        "buildEvalSafePromptFromPayload → EVAL_PROMPT_CLEAN (liveEvalWiring=NOT_WIRED)",
+        "buildEvalSafePromptFromPayload → EVAL_PROMPT_CLEAN (liveEvalWiring=NOT_WIRED; conversationId withheld)",
       );
     } else {
       passed = false;

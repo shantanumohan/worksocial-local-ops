@@ -80,13 +80,20 @@ function knownTokens(known?: KnownCustomerIdentifiers | null): string[] {
     .filter((v) => v.length > 0);
 }
 
+/**
+ * Word/phrase-boundary match so short display names (e.g. "Tour") do not
+ * corrupt unrelated tokens like intentLabel "tour_request".
+ */
+function knownIdentifierBoundaryRe(token: string, flags: string): RegExp {
+  return new RegExp(`\\b${escapeRegExp(token)}\\b`, flags);
+}
+
 function containsKnownIdentifier(
   text: string,
   known?: KnownCustomerIdentifiers | null,
 ): boolean {
   for (const token of knownTokens(known)) {
-    const re = new RegExp(escapeRegExp(token), "i");
-    if (re.test(text)) return true;
+    if (knownIdentifierBoundaryRe(token, "i").test(text)) return true;
   }
   return false;
 }
@@ -99,8 +106,7 @@ function redactKnownIdentifiers(
   // Longest-first so full display names redact before shorter fragments.
   const tokens = knownTokens(known).sort((a, b) => b.length - a.length);
   for (const token of tokens) {
-    const re = new RegExp(escapeRegExp(token), "gi");
-    out = out.replace(re, "[REDACTED_NAME]");
+    out = out.replace(knownIdentifierBoundaryRe(token, "gi"), "[REDACTED_NAME]");
   }
   return out;
 }
@@ -139,6 +145,7 @@ function sourceHasIdentifiablePii(source: CustomerEvalSourceRecord): boolean {
   if (source.customerPhone && source.customerPhone.trim().length > 0) return true;
   if (containsRawCustomerPii(source.messageBody)) return true;
   if (containsRawCustomerPii(source.intentLabel)) return true;
+  if (containsRawCustomerPii(source.conversationId)) return true;
   return false;
 }
 
@@ -157,6 +164,7 @@ function blockedLeak(reasons: string[]): CustomerEvalRedactionDecision {
 /**
  * Compose an EVAL_ONLY judge prompt from an already-redacted payload only.
  * Callers must not concatenate raw source fields into prompts.
+ * Conversation IDs are never echoed — they may embed provider/customer identifiers.
  */
 export function buildEvalSafePromptFromPayload(
   payload: EvalSafeCustomerPayload,
@@ -164,7 +172,7 @@ export function buildEvalSafePromptFromPayload(
   return [
     "Judge fixture answer",
     `intent=${payload.intentLabel}`,
-    `conversationId=${payload.conversationId}`,
+    "conversationRef=[REDACTED_CONVERSATION_ID]",
     `body=${payload.messageBody}`,
     "customerDisplayName=[REDACTED_NAME]",
   ].join(" ");
@@ -227,6 +235,13 @@ export function prepareCustomerDataForEvaluation(input: {
   if (redactedIntent !== source.intentLabel) {
     redactedFields.push("intentLabel");
   }
+  const redactedConversationId = redactTextForEvaluation(
+    source.conversationId,
+    known,
+  );
+  if (redactedConversationId !== source.conversationId) {
+    redactedFields.push("conversationId");
+  }
 
   const payload: EvalSafeCustomerPayload = {
     customerDisplayName: "[REDACTED_NAME]",
@@ -239,7 +254,7 @@ export function prepareCustomerDataForEvaluation(input: {
         ? "[REDACTED_PHONE]"
         : null,
     messageBody: redactedBody,
-    conversationId: source.conversationId,
+    conversationId: redactedConversationId,
     intentLabel: redactedIntent,
     redacted: true,
     redactedFields,
@@ -247,7 +262,8 @@ export function prepareCustomerDataForEvaluation(input: {
 
   if (
     containsRawCustomerPii(payload.messageBody, known) ||
-    containsRawCustomerPii(payload.intentLabel, known)
+    containsRawCustomerPii(payload.intentLabel, known) ||
+    containsRawCustomerPii(payload.conversationId, known)
   ) {
     return blockedLeak([
       "Redaction left residual customer PII in evaluation payload — blocked (T-X072)",

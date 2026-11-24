@@ -145,7 +145,9 @@ describe("customer eval redaction (T-X072)", () => {
     const prompt = buildEvalSafePromptFromPayload(decision.payload);
     expect(prompt).not.toMatch(/jordan\.lee@example\.com/i);
     expect(prompt).not.toMatch(/Jordan Lee/i);
+    expect(prompt).not.toMatch(/conv-fixture-1/);
     expect(prompt).toMatch(/\[REDACTED_NAME\]/);
+    expect(prompt).toMatch(/\[REDACTED_CONVERSATION_ID\]/);
     const check = assertEvalPromptHasNoCustomerPii(prompt, {
       displayName: source.customerDisplayName,
       email: source.customerEmail,
@@ -153,6 +155,41 @@ describe("customer eval redaction (T-X072)", () => {
     });
     expect(check.ok).toBe(true);
     expect(check.liveEvalWiring).toBe("NOT_WIRED");
+  });
+
+  it("does not substring-redact clean intent labels against short display names", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        customerDisplayName: "Tour",
+        customerEmail: null,
+        customerPhone: null,
+        messageBody: "Looking for availability.",
+        conversationId: "conv-tour",
+        intentLabel: "tour_request",
+      },
+      mode: "redact",
+    });
+    expect(decision.allowed).toBe(true);
+    expect(decision.payload?.intentLabel).toBe("tour_request");
+    expect(decision.payload?.redactedFields).not.toContain("intentLabel");
+  });
+
+  it("redacts conversationId when it embeds customer email", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        ...source,
+        conversationId: "thread-jordan.lee@example.com",
+      },
+      mode: "redact",
+    });
+    expect(decision.allowed).toBe(true);
+    expect(decision.payload?.conversationId).not.toMatch(/jordan\.lee@example\.com/i);
+    expect(decision.payload?.conversationId).toMatch(/\[REDACTED_EMAIL\]/);
+    expect(decision.payload?.redactedFields).toContain("conversationId");
+    if (!decision.payload) return;
+    const prompt = buildEvalSafePromptFromPayload(decision.payload);
+    expect(prompt).not.toMatch(/jordan\.lee@example\.com/i);
+    expect(prompt).toMatch(/\[REDACTED_CONVERSATION_ID\]/);
   });
 
   it("detects and redacts PII in free text including known names", () => {
