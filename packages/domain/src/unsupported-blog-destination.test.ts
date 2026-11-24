@@ -1,0 +1,113 @@
+import { describe, expect, it } from "vitest";
+import {
+  AdapterLiveStatus,
+  ContentFormat,
+  DestinationKind,
+  PublicationOutcome,
+} from "./content.js";
+import {
+  classifyUnsupportedBlogDestination,
+  isBlogShapedKind,
+} from "./unsupported-blog-destination.js";
+
+function dest(partial: {
+  destinationId: string;
+  kind: (typeof DestinationKind)[keyof typeof DestinationKind];
+  fixtureAvailable: boolean;
+  allowedFormats?: (typeof ContentFormat)[keyof typeof ContentFormat][];
+  liveWiring?: (typeof AdapterLiveStatus)[keyof typeof AdapterLiveStatus];
+}) {
+  return {
+    destinationId: partial.destinationId,
+    kind: partial.kind,
+    displayName: partial.destinationId,
+    channelId: "ch",
+    allowedFormats: partial.allowedFormats ?? [ContentFormat.FULL_ARTICLE],
+    maxBodyChars: null,
+    requiresCanonicalUrl: false,
+    liveWiring: partial.liveWiring ?? AdapterLiveStatus.NOT_WIRED,
+    fixtureAvailable: partial.fixtureAvailable,
+    locationRelevant: false,
+    notes: "fixture",
+  };
+}
+
+function expectHonesty(
+  d: ReturnType<typeof classifyUnsupportedBlogDestination>,
+) {
+  expect(d.liveProviderWiring).toBe("NOT_WIRED");
+  expect(d.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  expect(d.externalEffects).toBe("NONE");
+  expect(d.inventPublishedVerified).toBe(false);
+}
+
+describe("unsupported blog destination (T-X046)", () => {
+  it("allows owned CMS with fixture adapter", () => {
+    const decision = classifyUnsupportedBlogDestination({
+      destination: dest({
+        destinationId: "dest-cms",
+        kind: DestinationKind.CMS,
+        fixtureAvailable: true,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    expect(decision.allowed).toBe(true);
+    expect(decision.code).toBe("OWNED_CMS_ALLOWED");
+    expect(decision.outcome).toBeNull();
+    expectHonesty(decision);
+  });
+
+  it("refuses OTHER_BLOG without adapter — never invents PUBLISHED_VERIFIED", () => {
+    const decision = classifyUnsupportedBlogDestination({
+      destination: dest({
+        destinationId: "dest-other-blog-unsupported",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: false,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("OTHER_BLOG_NO_ADAPTER_UNSUPPORTED");
+    expect(decision.outcome).toBe(PublicationOutcome.UNSUPPORTED_ACTION);
+    expectHonesty(decision);
+  });
+
+  it("refuses ChatGPT Hub FULL_ARTICLE (no invented blog-post API)", () => {
+    const decision = classifyUnsupportedBlogDestination({
+      destination: dest({
+        destinationId: "dest-chatgpt-hub",
+        kind: DestinationKind.CHATGPT_HUB,
+        fixtureAvailable: false,
+        allowedFormats: [ContentFormat.PROFILE_FACT],
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("HUB_FULL_BLOG_UNSUPPORTED");
+    expect(decision.outcome).toBe(PublicationOutcome.UNSUPPORTED_ACTION);
+    expectHonesty(decision);
+  });
+
+  it("refuses preferLive claims while adapters are NOT_WIRED", () => {
+    const decision = classifyUnsupportedBlogDestination({
+      destination: dest({
+        destinationId: "dest-cms",
+        kind: DestinationKind.CMS,
+        fixtureAvailable: true,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      preferLive: true,
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("LIVE_WIRE_CLAIM_REFUSED");
+    expect(decision.outcome).toBe(PublicationOutcome.UNSUPPORTED_ACTION);
+    expectHonesty(decision);
+  });
+
+  it("marks CMS/OTHER_BLOG/Hub as blog-shaped kinds", () => {
+    expect(isBlogShapedKind(DestinationKind.CMS)).toBe(true);
+    expect(isBlogShapedKind(DestinationKind.OTHER_BLOG)).toBe(true);
+    expect(isBlogShapedKind(DestinationKind.CHATGPT_HUB)).toBe(true);
+    expect(isBlogShapedKind(DestinationKind.GBP)).toBe(false);
+  });
+});

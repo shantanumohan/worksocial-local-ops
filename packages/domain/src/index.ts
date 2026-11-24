@@ -980,6 +980,13 @@ export {
   type AutomatedResponseLoopDecision,
 } from "./automated-response-loop.js";
 export {
+  classifyUnsupportedBlogDestination,
+  isBlogShapedKind,
+  UNSUPPORTED_BLOG_DESTINATION_RELATED_CASE_IDS,
+  type UnsupportedBlogDestinationCode,
+  type UnsupportedBlogDestinationDecision,
+} from "./unsupported-blog-destination.js";
+export {
   WorkflowInstancePhase,
   WorkflowUpgradeCode,
   WORKFLOW_UPGRADE_TEMPORAL_WIRING,
