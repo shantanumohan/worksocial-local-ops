@@ -7,6 +7,7 @@ import {
 } from "./content.js";
 import {
   classifyUnsupportedBlogDestination,
+  classifyUnsupportedBlogScheduledPublish,
   isBlogShapedKind,
 } from "./unsupported-blog-destination.js";
 
@@ -142,5 +143,51 @@ describe("unsupported blog destination (T-X046)", () => {
     expect(isBlogShapedKind(DestinationKind.OTHER_BLOG)).toBe(true);
     expect(isBlogShapedKind(DestinationKind.CHATGPT_HUB)).toBe(true);
     expect(isBlogShapedKind(DestinationKind.GBP)).toBe(false);
+  });
+
+  it("refuses OTHER_BLOG scheduled publish in America/New_York spring gap (G11)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-other-blog-unsupported",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: false,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-03-09",
+      hour: 2,
+      minute: 30,
+    });
+    expect(decision.scheduleOk).toBe(false);
+    expect(decision.scheduleCode).toBe("NONEXISTENT_LOCAL_TIME");
+    expect(decision.fireAtIso).toBeNull();
+    expect(decision.allowed).toBe(false);
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.publish.code).toBe("OTHER_BLOG_NO_ADAPTER_UNSUPPORTED");
+    expect(decision.publish.outcome).toBe(PublicationOutcome.UNSUPPORTED_ACTION);
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("resolves fall-back once but still refuses unsupported OTHER_BLOG (G11)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-other-blog-unsupported",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: false,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-11-02",
+      hour: 1,
+      minute: 30,
+    });
+    expect(decision.scheduleOk).toBe(true);
+    expect(decision.scheduleCode).toBe("SCHEDULE_RESOLVED");
+    expect(decision.ambiguous).toBe(true);
+    expect(decision.fireAtIso).not.toBeNull();
+    expect(decision.allowed).toBe(false);
+    expect(decision.publish.code).toBe("OTHER_BLOG_NO_ADAPTER_UNSUPPORTED");
+    expect(decision.inventPublishedVerified).toBe(false);
   });
 });

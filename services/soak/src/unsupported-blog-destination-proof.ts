@@ -8,7 +8,8 @@
  * gate; ChatGPT Hub full-blog format rejected. Domain classifier honesty
  * fields on every path. External effects: NONE.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
- * Hillclimb: classifyUnsupportedBlogDestination + preferLive refuse + Hub edge.
+ * Hillclimb: classifyUnsupportedBlogDestination + preferLive refuse + Hub edge;
+ * DST civil schedule gaps still refuse fake OTHER_BLOG publication (G11).
  */
 
 import { randomUUID } from "node:crypto";
@@ -29,6 +30,7 @@ import {
   SoakProofKind,
   SupportLabel,
   classifyUnsupportedBlogDestination,
+  classifyUnsupportedBlogScheduledPublish,
   createCanonicalArticle,
   createDestinationVariant,
   evaluateVariantReleaseGate,
@@ -488,8 +490,59 @@ export async function proofUnsupportedBlogDestinationNoFakePublication(
       details.push(`CMS positive control failed: ${JSON.stringify(cmsDraft)}`);
     }
 
+    // G11: DST spring gap schedule + unsupported OTHER_BLOG — no fake publish.
+    const springGap = classifyUnsupportedBlogScheduledPublish({
+      destination: otherBlog,
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-03-09",
+      hour: 2,
+      minute: 30,
+    });
+    if (
+      !springGap.scheduleOk &&
+      springGap.scheduleCode === "NONEXISTENT_LOCAL_TIME" &&
+      !springGap.allowed &&
+      springGap.inventPublishedVerified === false &&
+      springGap.publish.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED" &&
+      springGap.externalEffects === "NONE" &&
+      springGap.chatgptAdsAccess === "ACCESS_BLOCKED"
+    ) {
+      details.push(
+        "DST spring-gap schedule → NONEXISTENT_LOCAL_TIME; OTHER_BLOG still UNSUPPORTED; never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`DST spring schedule unexpected: ${JSON.stringify(springGap)}`);
+    }
+
+    // G11: fall-back resolves once; unsupported OTHER_BLOG still refused.
+    const fallBack = classifyUnsupportedBlogScheduledPublish({
+      destination: otherBlog,
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-11-02",
+      hour: 1,
+      minute: 30,
+    });
+    if (
+      fallBack.scheduleOk &&
+      fallBack.scheduleCode === "SCHEDULE_RESOLVED" &&
+      fallBack.ambiguous === true &&
+      !fallBack.allowed &&
+      fallBack.publish.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED" &&
+      fallBack.inventPublishedVerified === false
+    ) {
+      details.push(
+        "DST fall-back schedule resolves once; OTHER_BLOG still UNSUPPORTED — never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`DST fall schedule unexpected: ${JSON.stringify(fallBack)}`);
+    }
+
     details.push(
-      "liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED hillclimb=classify+preferLive+Hub",
+      "liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED deepen=G11 hillclimb=classify+preferLive+Hub+DST-schedule",
     );
     return finish(passed, details, nowIso, operationId);
   } finally {

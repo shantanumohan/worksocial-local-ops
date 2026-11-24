@@ -8,7 +8,8 @@
  * preferLive triggers LIVE_WIRE_CLAIM_REFUSED. Distinct from T-US-022 /
  * T-X045. External effects: NONE. ChatGPT Ads ACCESS_BLOCKED.
  * Hillclimb: honesty fields on every classification; Hub full-blog stays
- * unsupported; owned CMS / fixture OTHER_BLOG remain positive controls.
+ * unsupported; owned CMS / fixture OTHER_BLOG remain positive controls;
+ * DST civil schedule gaps still refuse fake publication (G11).
  */
 
 import {
@@ -20,6 +21,11 @@ import {
   type DestinationKindValue,
   type DestinationRegistryEntry,
 } from "./content.js";
+import {
+  LocalCivilResolveCode,
+  resolveLocalDateTime,
+  type LocalCivilResolveResult,
+} from "./recurring-schedule.js";
 
 export type UnsupportedBlogDestinationCode =
   | "OWNED_CMS_ALLOWED"
@@ -165,6 +171,102 @@ export function isBlogShapedKind(kind: DestinationKindValue): boolean {
     kind === DestinationKind.OTHER_BLOG ||
     kind === DestinationKind.CHATGPT_HUB
   );
+}
+
+export type UnsupportedBlogScheduleCode =
+  | "SCHEDULE_RESOLVED"
+  | "NONEXISTENT_LOCAL_TIME"
+  | "INVALID_SCHEDULE_INPUT";
+
+export type UnsupportedBlogScheduledPublishDecision = {
+  scheduleOk: boolean;
+  scheduleCode: UnsupportedBlogScheduleCode;
+  /** Canonical fire instant when schedule resolved; null on gap/invalid. */
+  fireAtIso: string | null;
+  /** Ambiguous fall-back hour when schedule resolved. */
+  ambiguous: boolean;
+  publish: UnsupportedBlogDestinationDecision;
+  /** Combined gate: schedule must resolve AND publish allowed. */
+  allowed: boolean;
+  inventPublishedVerified: false;
+  liveProviderWiring: AdapterLiveStatusValue;
+  chatgptAdsAccess: "ACCESS_BLOCKED";
+  externalEffects: "NONE";
+  reasons: string[];
+};
+
+/**
+ * Schedule a blog-shaped publish against civil local time (DST-aware).
+ * Spring-forward gaps refuse the schedule; fall-back ambiguous hours resolve
+ * once. Unsupported destinations still never invent PUBLISHED_VERIFIED even
+ * when the civil schedule resolves (T-X046 ∩ DST schedule edge).
+ */
+export function classifyUnsupportedBlogScheduledPublish(input: {
+  destination: DestinationRegistryEntry;
+  format: ContentFormatValue;
+  timeZone: string;
+  localDate: string;
+  hour: number;
+  minute: number;
+  preferLive?: boolean;
+}): UnsupportedBlogScheduledPublishDecision {
+  const publish = classifyUnsupportedBlogDestination({
+    destination: input.destination,
+    format: input.format,
+    ...(input.preferLive === undefined ? {} : { preferLive: input.preferLive }),
+  });
+  const resolved: LocalCivilResolveResult = resolveLocalDateTime({
+    timeZone: input.timeZone,
+    localDate: input.localDate,
+    hour: input.hour,
+    minute: input.minute,
+  });
+
+  if (!resolved.ok) {
+    const scheduleCode: UnsupportedBlogScheduleCode =
+      resolved.code === LocalCivilResolveCode.NONEXISTENT_LOCAL_TIME
+        ? "NONEXISTENT_LOCAL_TIME"
+        : "INVALID_SCHEDULE_INPUT";
+    return {
+      scheduleOk: false,
+      scheduleCode,
+      fireAtIso: null,
+      ambiguous: false,
+      publish,
+      allowed: false,
+      inventPublishedVerified: false,
+      liveProviderWiring: publish.liveProviderWiring,
+      chatgptAdsAccess: "ACCESS_BLOCKED",
+      externalEffects: "NONE",
+      reasons: [
+        `Civil schedule refused (${scheduleCode}) in ${input.timeZone} ${input.localDate} ${String(input.hour).padStart(2, "0")}:${String(input.minute).padStart(2, "0")}`,
+        "Never invent PUBLISHED_VERIFIED for unsupported blog — DST gap does not unlock publish",
+        ...publish.reasons,
+      ],
+    };
+  }
+
+  return {
+    scheduleOk: true,
+    scheduleCode: "SCHEDULE_RESOLVED",
+    fireAtIso: resolved.fireAtIso,
+    ambiguous: resolved.ambiguous,
+    publish,
+    allowed: publish.allowed,
+    inventPublishedVerified: false,
+    liveProviderWiring: publish.liveProviderWiring,
+    chatgptAdsAccess: "ACCESS_BLOCKED",
+    externalEffects: "NONE",
+    reasons: [
+      resolved.ambiguous
+        ? `Civil schedule resolved once on fall-back ambiguous hour → ${resolved.fireAtIso}`
+        : `Civil schedule resolved → ${resolved.fireAtIso}`,
+      publish.allowed
+        ? "Publish path allowed in fixture mode after schedule resolve"
+        : "Schedule resolved but publish still refused — never invent PUBLISHED_VERIFIED",
+      ...publish.reasons,
+    ],
+  };
 }
 
 export const UNSUPPORTED_BLOG_DESTINATION_RELATED_CASE_IDS = [
