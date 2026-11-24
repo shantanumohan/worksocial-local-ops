@@ -21,6 +21,8 @@ import {
   ingestFixtureWebhook,
   ingestInboundMessage,
   evaluateUnknownPolicyQuestion,
+  evaluateUnknownPolicyQuestionAttackSuite,
+  UNKNOWN_POLICY_QUESTION_RELATED_CASE_IDS,
   prepareConciergeReply,
   queueOutboundReply,
 } from "./inbox.js";
@@ -191,6 +193,8 @@ describe("inbox domain", () => {
     if (!unknown.allowed) {
       expect(unknown.code).toBe("UNKNOWN_POLICY_QUESTION");
       expect(unknown.escalateWithoutPromise).toBe(true);
+      expect(unknown.liveProviderWiring).toBe("NOT_WIRED");
+      expect(unknown.externalEffects).toBe("NONE");
     }
 
     const allowed = evaluateUnknownPolicyQuestion({
@@ -198,6 +202,10 @@ describe("inbox domain", () => {
       policy,
     });
     expect(allowed.allowed).toBe(true);
+    if (allowed.allowed) {
+      expect(allowed.liveProviderWiring).toBe("NOT_WIRED");
+      expect(allowed.externalEffects).toBe("NONE");
+    }
 
     const refusedDraft = prepareConciergeReply({
       draftId: "d-unknown",
@@ -230,6 +238,64 @@ describe("inbox domain", () => {
     expect(handoff.verifiedAnswers).toEqual([]);
     expect(handed.agentSendAllowed).toBe(false);
     expect(handed.humanOwned).toBe(true);
+  });
+
+  it("unknown-policy attack suite covers allowed + unknown/empty with NOT_WIRED", () => {
+    const policy = defaultResponsePolicy(now);
+    const conversation = createConversation({
+      conversationId: "c-suite",
+      providerThreadId: "thr-suite",
+      channel: InboxChannel.FIXTURE,
+      customerDisplayName: "Alex",
+      nowIso: now,
+    });
+    const suite = evaluateUnknownPolicyQuestionAttackSuite({
+      policy,
+      draftProbe: {
+        conversation,
+        nowIso: now,
+        citedFactIds: ["fact-hours"],
+        factLabels: new Map([["fact-hours", SupportLabel.SUPPORTED]]),
+      },
+    });
+    expect(suite.passed).toBe(true);
+    expect(
+      suite.details.some((d) => /liveProviderWiring=NOT_WIRED/i.test(d)),
+    ).toBe(true);
+    expect(
+      suite.details.some((d) =>
+        /prepareConciergeReply questionId="" → UNKNOWN_POLICY_QUESTION/.test(d),
+      ),
+    ).toBe(true);
+    expect([...UNKNOWN_POLICY_QUESTION_RELATED_CASE_IDS]).toEqual(["T-X055"]);
+  });
+
+  it("prepareConciergeReply routes empty/whitespace questionId through unknown-policy gate", () => {
+    const conversation = createConversation({
+      conversationId: "c-empty-qid",
+      providerThreadId: "thr-empty",
+      channel: InboxChannel.FIXTURE,
+      customerDisplayName: "Alex",
+      nowIso: now,
+    });
+    const policy = defaultResponsePolicy(now);
+    for (const questionId of ["", "   "] as const) {
+      const refused = prepareConciergeReply({
+        draftId: `d-empty-${questionId.length}`,
+        conversation,
+        inboundBody: "What is your cancellation policy?",
+        citedFactIds: ["fact-hours"],
+        factLabels: new Map([["fact-hours", SupportLabel.SUPPORTED]]),
+        policy,
+        bookingEvidence: [],
+        questionId,
+        nowIso: now,
+      });
+      expect(refused.ok).toBe(false);
+      if (!refused.ok) {
+        expect(refused.code).toBe("UNKNOWN_POLICY_QUESTION");
+      }
+    }
   });
 
   it("rejects human-request drafts and requires booking URL for links", () => {

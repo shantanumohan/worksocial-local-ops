@@ -532,33 +532,173 @@ export function acquireConversationLease(input: {
   };
 }
 
-/**
- * Unknown policy question gate (T-X055).
- * Questions outside `policy.allowedQuestionIds` must escalate without promising
- * an answer — never invent policy coverage.
- */
-export function evaluateUnknownPolicyQuestion(input: {
-  questionId: string;
-  policy: ResponsePolicy;
-}):
-  | { allowed: true; code: null; escalateWithoutPromise: false }
+/** Catalog cases tied to the unknown-policy escalate-without-promise gate. */
+export const UNKNOWN_POLICY_QUESTION_RELATED_CASE_IDS = ["T-X055"] as const;
+
+export type UnknownPolicyQuestionDecision =
+  | {
+      allowed: true;
+      code: null;
+      escalateWithoutPromise: false;
+      liveProviderWiring: "NOT_WIRED";
+      externalEffects: "NONE";
+    }
   | {
       allowed: false;
       code: "UNKNOWN_POLICY_QUESTION";
       reasons: string[];
       escalateWithoutPromise: true;
-    } {
-  if (input.policy.allowedQuestionIds.includes(input.questionId)) {
-    return { allowed: true, code: null, escalateWithoutPromise: false };
+      liveProviderWiring: "NOT_WIRED";
+      externalEffects: "NONE";
+    };
+
+/**
+ * Unknown policy question gate (T-X055).
+ * Questions outside `policy.allowedQuestionIds` must escalate without promising
+ * an answer — never invent policy coverage.
+ * Fixture honesty: liveProviderWiring NOT_WIRED; externalEffects NONE.
+ */
+export function evaluateUnknownPolicyQuestion(input: {
+  questionId: string;
+  policy: ResponsePolicy;
+}): UnknownPolicyQuestionDecision {
+  if (
+    input.questionId.trim() !== "" &&
+    input.policy.allowedQuestionIds.includes(input.questionId)
+  ) {
+    return {
+      allowed: true,
+      code: null,
+      escalateWithoutPromise: false,
+      liveProviderWiring: "NOT_WIRED",
+      externalEffects: "NONE",
+    };
   }
   return {
     allowed: false,
     code: "UNKNOWN_POLICY_QUESTION",
     reasons: [
-      `Question ${input.questionId} is not in response policy allowedQuestionIds — escalate without promise`,
+      input.questionId.trim() === ""
+        ? "Empty questionId is not in response policy allowedQuestionIds — escalate without promise"
+        : `Question ${input.questionId} is not in response policy allowedQuestionIds — escalate without promise`,
     ],
     escalateWithoutPromise: true,
+    liveProviderWiring: "NOT_WIRED",
+    externalEffects: "NONE",
   };
+}
+
+/**
+ * Hillclimb suite: allowed questions pass; unknown / empty / whitespace ids
+ * escalate without promise with fixture honesty fields. When `draftProbe` is
+ * supplied, empty/whitespace ids are also exercised through
+ * `prepareConciergeReply` (truthy-guard bypass forbidden).
+ */
+export function evaluateUnknownPolicyQuestionAttackSuite(input: {
+  policy: ResponsePolicy;
+  draftProbe?: {
+    conversation: ConversationRecord;
+    nowIso: string;
+    citedFactIds?: string[];
+    factLabels?: FactSupportLookup;
+  };
+}): {
+  passed: boolean;
+  details: string[];
+  decisions: UnknownPolicyQuestionDecision[];
+} {
+  const details: string[] = [];
+  const decisions: UnknownPolicyQuestionDecision[] = [];
+  let passed = true;
+
+  for (const questionId of input.policy.allowedQuestionIds) {
+    const decision = evaluateUnknownPolicyQuestion({
+      questionId,
+      policy: input.policy,
+    });
+    decisions.push(decision);
+    if (
+      decision.allowed &&
+      decision.escalateWithoutPromise === false &&
+      decision.liveProviderWiring === "NOT_WIRED" &&
+      decision.externalEffects === "NONE"
+    ) {
+      details.push(`allowed ${questionId} → pass (no escalate) NOT_WIRED`);
+    } else {
+      passed = false;
+      details.push(
+        `allowed ${questionId} unexpectedly ${JSON.stringify(decision)}`,
+      );
+    }
+  }
+
+  const unknowns = [
+    "undocumented_cancellation_guarantee",
+    "invented_lifetime_discount",
+    "",
+    "   ",
+  ];
+  for (const questionId of unknowns) {
+    const decision = evaluateUnknownPolicyQuestion({
+      questionId,
+      policy: input.policy,
+    });
+    decisions.push(decision);
+    if (
+      !decision.allowed &&
+      decision.code === "UNKNOWN_POLICY_QUESTION" &&
+      decision.escalateWithoutPromise === true &&
+      decision.liveProviderWiring === "NOT_WIRED" &&
+      decision.externalEffects === "NONE"
+    ) {
+      details.push(
+        `unknown ${JSON.stringify(questionId)} → UNKNOWN_POLICY_QUESTION escalateWithoutPromise NOT_WIRED`,
+      );
+    } else {
+      passed = false;
+      details.push(
+        `unknown ${JSON.stringify(questionId)} unexpectedly ${JSON.stringify(decision)}`,
+      );
+    }
+  }
+
+  if (input.draftProbe) {
+    const factLabels =
+      input.draftProbe.factLabels ??
+      new Map([["fact-hours", SupportLabel.SUPPORTED]]);
+    const citedFactIds = input.draftProbe.citedFactIds ?? ["fact-hours"];
+    for (const questionId of ["", "   "] as const) {
+      const refused = prepareConciergeReply({
+        draftId: `d-suite-empty-${questionId.length}`,
+        conversation: input.draftProbe.conversation,
+        inboundBody: "What is your cancellation policy?",
+        citedFactIds,
+        factLabels,
+        policy: input.policy,
+        bookingEvidence: [],
+        questionId,
+        nowIso: input.draftProbe.nowIso,
+      });
+      if (!refused.ok && refused.code === "UNKNOWN_POLICY_QUESTION") {
+        details.push(
+          `prepareConciergeReply questionId=${JSON.stringify(questionId)} → UNKNOWN_POLICY_QUESTION`,
+        );
+      } else {
+        passed = false;
+        details.push(
+          `prepareConciergeReply empty unexpectedly ${JSON.stringify(refused)}`,
+        );
+      }
+    }
+  }
+
+  if (passed) {
+    details.push(
+      "liveProviderWiring=NOT_WIRED externalEffects=NONE on every unknown-policy gate path",
+    );
+  }
+
+  return { passed, details, decisions };
 }
 
 /**
@@ -577,8 +717,9 @@ export function prepareConciergeReply(input: {
   /** Required when bookingClaim is AVAILABILITY_LINK — must be a real URL. */
   bookingLinkUrl?: string | null;
   /**
-   * Optional policy-question id. When set, must be in
-   * `policy.allowedQuestionIds` or the draft is refused (T-X055).
+   * Optional policy-question id. When provided (including empty / whitespace),
+   * must be in `policy.allowedQuestionIds` or the draft is refused (T-X055).
+   * `null` / `undefined` skip the gate; empty string does not.
    */
   questionId?: string | null;
   nowIso: string;
@@ -587,7 +728,8 @@ export function prepareConciergeReply(input: {
   | { ok: false; code: string; reasons: string[] } {
   const reasons: string[] = [];
 
-  if (input.questionId) {
+  // Non-null questionId (including "") must pass the unknown-policy gate.
+  if (input.questionId != null) {
     const questionGate = evaluateUnknownPolicyQuestion({
       questionId: input.questionId,
       policy: input.policy,

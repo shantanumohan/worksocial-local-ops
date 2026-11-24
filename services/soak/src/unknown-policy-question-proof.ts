@@ -17,6 +17,7 @@ import {
   createHandoff,
   defaultResponsePolicy,
   evaluateUnknownPolicyQuestion,
+  evaluateUnknownPolicyQuestionAttackSuite,
   prepareConciergeReply,
   type SoakProofRecord,
 } from "@worksocial/domain";
@@ -40,14 +41,19 @@ export function proofUnknownPolicyQuestionEscalatesWithoutPromise(
     nowIso,
   });
 
-  // 1. Allowed policy question positive control.
+  // 1. Allowed policy question positive control (honesty fields).
   const allowedGate = evaluateUnknownPolicyQuestion({
     questionId: "documented_policies",
     policy,
   });
-  if (allowedGate.allowed && !allowedGate.escalateWithoutPromise) {
+  if (
+    allowedGate.allowed &&
+    !allowedGate.escalateWithoutPromise &&
+    allowedGate.liveProviderWiring === "NOT_WIRED" &&
+    allowedGate.externalEffects === "NONE"
+  ) {
     details.push(
-      "allowed question documented_policies → allowed (no escalate)",
+      "allowed question documented_policies → allowed (no escalate) NOT_WIRED",
     );
   } else {
     passed = false;
@@ -85,10 +91,12 @@ export function proofUnknownPolicyQuestionEscalatesWithoutPromise(
   if (
     !unknownGate.allowed &&
     unknownGate.code === "UNKNOWN_POLICY_QUESTION" &&
-    unknownGate.escalateWithoutPromise
+    unknownGate.escalateWithoutPromise &&
+    unknownGate.liveProviderWiring === "NOT_WIRED" &&
+    unknownGate.externalEffects === "NONE"
   ) {
     details.push(
-      `unknown question ${unknownId} → UNKNOWN_POLICY_QUESTION escalateWithoutPromise`,
+      `unknown question ${unknownId} → UNKNOWN_POLICY_QUESTION escalateWithoutPromise NOT_WIRED`,
     );
   } else {
     passed = false;
@@ -164,6 +172,24 @@ export function proofUnknownPolicyQuestionEscalatesWithoutPromise(
   } else {
     passed = false;
     details.push("verifiedAnswers unexpectedly contained a promise-like answer");
+  }
+
+  // 6. Hillclimb attack suite: allowed + unknown/empty with NOT_WIRED honesty;
+  //    empty/whitespace also routed through prepareConciergeReply (no truthy bypass).
+  const suite = evaluateUnknownPolicyQuestionAttackSuite({
+    policy,
+    draftProbe: {
+      conversation,
+      nowIso,
+      citedFactIds: ["fact-hours"],
+      factLabels: new Map([["fact-hours", SupportLabel.SUPPORTED]]),
+    },
+  });
+  if (suite.passed) {
+    details.push(...suite.details);
+  } else {
+    passed = false;
+    details.push(`Attack suite failed: ${suite.details.join(" | ")}`);
   }
 
   details.push("liveProviderSuccessClaimed=false externalEffects=NONE");

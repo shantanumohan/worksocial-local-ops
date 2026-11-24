@@ -3,13 +3,13 @@
   "caseId": "T-X055",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X055 (Unknown policy question — escalate without promise)\nproof=unknown_policy_question_escalates_without_promise applyCount=1 :: allowed question documented_policies → allowed (no escalate) | prepareConciergeReply allows documented_policies questionId | unknown question undocumented_cancellation_guarantee → UNKNOWN_POLICY_QUESTION escalateWithoutPromise | prepareConciergeReply refuses unknown policy question (no promise draft) | createHandoff escalates with verifiedAnswers=[] humanOwned agentSendAllowed=false | no invented guarantee/promise in verifiedAnswers (escalate without promise) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X055 (Unknown policy question — escalate without promise)\nproof=unknown_policy_question_escalates_without_promise applyCount=1 :: allowed question documented_policies → allowed (no escalate) NOT_WIRED | prepareConciergeReply allows documented_policies questionId | unknown question undocumented_cancellation_guarantee → UNKNOWN_POLICY_QUESTION escalateWithoutPromise NOT_WIRED | prepareConciergeReply refuses unknown policy question (no promise draft) | createHandoff escalates with verifiedAnswers=[] humanOwned agentSendAllowed=false | no invented guarantee/promise in verifiedAnswers (escalate without promise) | allowed room_details → pass (no escalate) NOT_WIRED | allowed documented_policies → pass (no escalate) NOT_WIRED | allowed booking_link → pass (no escalate) NOT_WIRED | allowed tour_request → pass (no escalate) NOT_WIRED | allowed location_hours → pass (no escalate) NOT_WIRED | unknown \"undocumented_cancellation_guarantee\" → UNKNOWN_POLICY_QUESTION escalateWithoutPromise NOT_WIRED | unknown \"invented_lifetime_discount\" → UNKNOWN_POLICY_QUESTION escalateWithoutPromise NOT_WIRED | unknown \"\" → UNKNOWN_POLICY_QUESTION escalateWithoutPromise NOT_WIRED | unknown \"   \" → UNKNOWN_POLICY_QUESTION escalateWithoutPromise NOT_WIRED | prepareConciergeReply questionId=\"\" → UNKNOWN_POLICY_QUESTION | prepareConciergeReply questionId=\"   \" → UNKNOWN_POLICY_QUESTION | liveProviderWiring=NOT_WIRED externalEffects=NONE on every unknown-policy gate path | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "unknown_policy_question_escalates_without_promise"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x055.json",
-  "createdAtIso": "2026-11-24T23:00:05.045Z",
+  "createdAtIso": "2026-11-24T23:06:03.378Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x055-9d57d0ed338b"
+  "uniqueSourceArtifactId": "art-fixture-t-x055-1e5879139bc5"
 }

@@ -15,3 +15,4 @@ Focused offline contracts (no live providers):
 - `indirect-prompt-injection-exfil.contract.test.ts` — T-X063 attack-suite deny + soak map; fixture ACCEPTED ≠ VERIFIED; external effects NONE
 
 Run: `pnpm test:contract`
+- `unknown-policy-question.contract.test.ts` — T-X055 attack-suite escalate-without-promise + soak map; fixture ACCEPTED ≠ VERIFIED; external effects NONE
