@@ -991,7 +991,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X071** is fixture ACCEPTED only via the host-offline public discovery honest unavailability proof (`HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE`) — offline host → `UNAVAILABLE`/`HOST_OFFLINE` on all public-discovery surfaces (prior success ignored); claimed `AVAILABLE` refused; ONLINE without prior success → `HOST_ONLINE_NO_PRIOR_UNAVAILABLE` (never invent ranks or active coverage); live wiring stays `NOT_WIRED`. Distinct from T-X001 host-sleep monitoring coverage gaps. ChatGPT Ads stays ACCESS_BLOCKED. Not sandbox/prod VERIFIED.
 
-**T-X067** is fixture ACCEPTED only via the incompatible workflow upgrade blocked-or-retained proof (`INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED`) — in-flight RUNNING/APPLYING instances refuse breaking / cross-epoch definition upgrades and retain the compatible pin; compatible same-epoch upgrades may apply. Not sandbox/prod VERIFIED.
+**T-X067** is fixture ACCEPTED only via the incompatible workflow upgrade blocked-or-retained proof (`INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED`) — in-flight RUNNING/APPLYING instances refuse breaking / cross-epoch / breakingRevision definition upgrades and retain the compatible pin; IDLE/COMPLETE also refuse silent incompatible rebinds; compatible same-epoch upgrades may apply. Temporal/live workflow runtime stays **NOT_WIRED**; `externalEffects: NONE`. Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
 
 **T-X034** is fixture ACCEPTED only via the test-only Ads project vs production blocked proof (`ADS_TEST_PROJECT_PRODUCTION_BLOCKED`) — sandbox/test Ads project requesting LIVE returns `ADS_TEST_PROJECT_MISMATCH`; guarded production bind call count stays 0; external effects NONE. Distinct from T-US-012 (Google Ads TEST vs PRODUCTION) and soft-skip ChatGPT Ads connect cases (T-F07 / T-US-013 / T-US-014). Not sandbox/prod VERIFIED.
 
@@ -1093,7 +1093,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X064 | SSRF redirect and DNS rebind | Blocked every hop *(fixture ACCEPTED — SSRF redirect/DNS rebind every-hop proof; not sandbox/prod VERIFIED)* |
 | T-X065 | Worker reads browser auth state | OS deny *(fixture ACCEPTED — worker browser-auth OS deny; not sandbox/prod VERIFIED)* |
 | T-X066 | Backup omits remote receipt | Reconcile; no duplicate *(fixture ACCEPTED — backup/omit-receipt proof; not sandbox/prod VERIFIED)* |
-| T-X067 | Incompatible workflow upgrade | Blocked or compatible retained *(fixture ACCEPTED — incompatible workflow upgrade blocked or retained proof; not sandbox/prod VERIFIED)* |
+| T-X067 | Incompatible workflow upgrade | Blocked or compatible retained *(fixture ACCEPTED — incompatible workflow upgrade blocked or retained proof; epoch/rev/breaking edges + IDLE/COMPLETE retain; Temporal NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X068 | Thirty alerts one outage | Grouped incident *(fixture ACCEPTED — thirty alerts one outage grouped proof; not sandbox/prod VERIFIED)* |
 | T-X069 | Imported document becomes instructions | Quarantined as data *(fixture ACCEPTED)* |
 | T-X070 | Validated payload not collected | Separate failure states *(fixture ACCEPTED — validated payload not collected separate failure states proof; not sandbox/prod VERIFIED)* |

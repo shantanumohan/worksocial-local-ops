@@ -954,8 +954,12 @@ export {
 export {
   WorkflowInstancePhase,
   WorkflowUpgradeCode,
+  WORKFLOW_UPGRADE_TEMPORAL_WIRING,
   createWorkflowInstance,
   evaluateWorkflowDefinitionUpgrade,
+  isWorkflowInFlight,
+  workflowPinsMatchProposal,
+  classifyWorkflowIncompatibility,
   INCOMPATIBLE_WORKFLOW_UPGRADE_RELATED_CASE_IDS,
   type WorkflowInstancePhaseValue,
   type WorkflowDefinitionPin,
@@ -963,6 +967,7 @@ export {
   type WorkflowUpgradeCodeValue,
   type ProposedWorkflowDefinition,
   type WorkflowUpgradeDecision,
+  type WorkflowIncompatibilityCause,
 } from "./incompatible-workflow-upgrade.js";
 export {
   evaluateSsrfHop,

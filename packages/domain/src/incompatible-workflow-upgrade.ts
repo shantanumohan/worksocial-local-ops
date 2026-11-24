@@ -3,15 +3,20 @@
  *
  * An in-flight workflow instance is pinned to a definition version +
  * compatibilityEpoch. A non-breaking upgrade within the same epoch may apply.
- * A breaking / cross-epoch proposal against RUNNING or APPLYING work is
- * blocked; the compatible pin is retained (never silently rebound).
+ * A breaking / cross-epoch / breakingRevision proposal against RUNNING or
+ * APPLYING work is blocked; the compatible pin is retained (never silently
+ * rebound). IDLE/COMPLETE also refuse incompatible rebinds (retain pin).
  *
- * Pure domain. External effects: NONE. No Temporal/network/credentials.
+ * Pure domain. External effects: NONE. Temporal/live workflow runtime stays
+ * NOT_WIRED. Fixture ACCEPTED ≠ sandbox/prod VERIFIED. No invent past T-X073.
  */
 
 export const INCOMPATIBLE_WORKFLOW_UPGRADE_RELATED_CASE_IDS = [
   "T-X067",
 ] as const;
+
+/** Live Temporal / workflow-runtime wiring — always NOT_WIRED offline. */
+export const WORKFLOW_UPGRADE_TEMPORAL_WIRING = "NOT_WIRED" as const;
 
 export const WorkflowInstancePhase = {
   IDLE: "IDLE",
@@ -64,29 +69,76 @@ export type WorkflowUpgradeDecision = {
   instance: WorkflowInstanceRecord;
   upgradeApplied: boolean;
   externalEffects: "NONE";
+  /** Live Temporal remains NOT_WIRED for fixture soak. */
+  temporalWiring: typeof WORKFLOW_UPGRADE_TEMPORAL_WIRING;
 };
 
-function isInFlight(phase: WorkflowInstancePhaseValue): boolean {
+export function isWorkflowInFlight(
+  phase: WorkflowInstancePhaseValue,
+): boolean {
   return (
     phase === WorkflowInstancePhase.RUNNING ||
     phase === WorkflowInstancePhase.APPLYING
   );
 }
 
+export function workflowPinsMatchProposal(
+  current: WorkflowDefinitionPin,
+  proposed: ProposedWorkflowDefinition,
+): boolean {
+  return (
+    proposed.definitionVersion === current.definitionVersion &&
+    proposed.compatibilityEpoch === current.compatibilityEpoch &&
+    proposed.breakingRevision === current.breakingRevision &&
+    !proposed.breakingChange
+  );
+}
+
+export type WorkflowIncompatibilityCause =
+  | "breaking_change_flag"
+  | "compatibility_epoch_mismatch"
+  | "breaking_revision_mismatch"
+  | null;
+
+/** First matching incompatibility cause, or null when compatible. */
+export function classifyWorkflowIncompatibility(
+  current: WorkflowDefinitionPin,
+  proposed: ProposedWorkflowDefinition,
+): WorkflowIncompatibilityCause {
+  if (proposed.breakingChange) {
+    return "breaking_change_flag";
+  }
+  if (proposed.compatibilityEpoch !== current.compatibilityEpoch) {
+    return "compatibility_epoch_mismatch";
+  }
+  if (proposed.breakingRevision !== current.breakingRevision) {
+    return "breaking_revision_mismatch";
+  }
+  return null;
+}
+
 function isIncompatible(
   current: WorkflowDefinitionPin,
   proposed: ProposedWorkflowDefinition,
 ): boolean {
-  if (proposed.breakingChange) {
-    return true;
+  return classifyWorkflowIncompatibility(current, proposed) !== null;
+}
+
+function incompatibilityReasonDetail(
+  current: WorkflowDefinitionPin,
+  proposed: ProposedWorkflowDefinition,
+): string {
+  const cause = classifyWorkflowIncompatibility(current, proposed);
+  switch (cause) {
+    case "breaking_change_flag":
+      return "proposed.breakingChange=true";
+    case "compatibility_epoch_mismatch":
+      return `compatibilityEpoch mismatch (pinned=${current.compatibilityEpoch} proposed=${proposed.compatibilityEpoch})`;
+    case "breaking_revision_mismatch":
+      return `breakingRevision mismatch (pinned=${current.breakingRevision} proposed=${proposed.breakingRevision})`;
+    default:
+      return `epoch/breakingRevision mismatch (proposed epoch=${proposed.compatibilityEpoch} rev=${proposed.breakingRevision})`;
   }
-  if (proposed.compatibilityEpoch !== current.compatibilityEpoch) {
-    return true;
-  }
-  if (proposed.breakingRevision !== current.breakingRevision) {
-    return true;
-  }
-  return false;
 }
 
 export function createWorkflowInstance(input: {
@@ -109,6 +161,12 @@ export function createWorkflowInstance(input: {
   }
   if (!input.compatibilityEpoch.trim()) {
     throw new Error("compatibilityEpoch is required");
+  }
+  if (
+    input.breakingRevision !== undefined &&
+    (!Number.isInteger(input.breakingRevision) || input.breakingRevision < 0)
+  ) {
+    throw new Error("breakingRevision must be a non-negative integer");
   }
   return {
     workflowId: input.workflowId,
@@ -136,12 +194,7 @@ export function evaluateWorkflowDefinitionUpgrade(input: {
   const { instance, proposed, nowIso } = input;
   const current = instance.pin;
 
-  if (
-    proposed.definitionVersion === current.definitionVersion &&
-    proposed.compatibilityEpoch === current.compatibilityEpoch &&
-    proposed.breakingRevision === current.breakingRevision &&
-    !proposed.breakingChange
-  ) {
+  if (workflowPinsMatchProposal(current, proposed)) {
     return {
       allowed: true,
       code: WorkflowUpgradeCode.COMPATIBLE_DEFINITION_RETAINED,
@@ -152,19 +205,18 @@ export function evaluateWorkflowDefinitionUpgrade(input: {
       instance,
       upgradeApplied: false,
       externalEffects: "NONE",
+      temporalWiring: WORKFLOW_UPGRADE_TEMPORAL_WIRING,
     };
   }
 
-  if (isIncompatible(current, proposed) && isInFlight(instance.phase)) {
+  if (isIncompatible(current, proposed) && isWorkflowInFlight(instance.phase)) {
     return {
       allowed: false,
       code: WorkflowUpgradeCode.INCOMPATIBLE_UPGRADE_BLOCKED,
       reasons: [
         `Incompatible upgrade blocked for in-flight phase=${instance.phase}`,
         `Retained compatible pin definitionVersion=${current.definitionVersion} epoch=${current.compatibilityEpoch}`,
-        proposed.breakingChange
-          ? "proposed.breakingChange=true"
-          : `epoch/breakingRevision mismatch (proposed epoch=${proposed.compatibilityEpoch} rev=${proposed.breakingRevision})`,
+        incompatibilityReasonDetail(current, proposed),
       ],
       retainedPin: { ...current },
       instance: {
@@ -174,10 +226,11 @@ export function evaluateWorkflowDefinitionUpgrade(input: {
       },
       upgradeApplied: false,
       externalEffects: "NONE",
+      temporalWiring: WORKFLOW_UPGRADE_TEMPORAL_WIRING,
     };
   }
 
-  if (isIncompatible(current, proposed) && !isInFlight(instance.phase)) {
+  if (isIncompatible(current, proposed) && !isWorkflowInFlight(instance.phase)) {
     // Idle/complete: still refuse silent incompatible rebind; retain pin.
     return {
       allowed: false,
@@ -185,11 +238,13 @@ export function evaluateWorkflowDefinitionUpgrade(input: {
       reasons: [
         `Incompatible proposal refused for phase=${instance.phase}; compatible definition retained`,
         `pin definitionVersion=${current.definitionVersion} unchanged`,
+        incompatibilityReasonDetail(current, proposed),
       ],
       retainedPin: { ...current },
       instance,
       upgradeApplied: false,
       externalEffects: "NONE",
+      temporalWiring: WORKFLOW_UPGRADE_TEMPORAL_WIRING,
     };
   }
 
@@ -215,5 +270,6 @@ export function evaluateWorkflowDefinitionUpgrade(input: {
     instance: nextInstance,
     upgradeApplied: true,
     externalEffects: "NONE",
+    temporalWiring: WORKFLOW_UPGRADE_TEMPORAL_WIRING,
   };
 }
