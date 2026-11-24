@@ -65,6 +65,30 @@ export function isLeaseExpired(lease: HostLeaseRecord, nowMs: number): boolean {
   return Date.parse(lease.expiresAt) <= nowMs;
 }
 
+/**
+ * T-X002 deepen — classify a host sleep→wake clock jump against the lease.
+ * Mid-gap (wake before expiry): lease still held. Wake past expiry: catchup
+ * reclaim is honest (single reclaim; does not invent missed lease generations).
+ */
+export type WakeCatchupLeaseGap =
+  | { kind: "mid_gap_held"; expired: false }
+  | { kind: "wake_past_expiry"; expired: true; gapMs: number };
+
+export function classifyWakeCatchupLeaseGap(
+  lease: HostLeaseRecord,
+  wakeAtMs: number,
+): WakeCatchupLeaseGap {
+  const expiryMs = Date.parse(lease.expiresAt);
+  if (wakeAtMs < expiryMs) {
+    return { kind: "mid_gap_held", expired: false };
+  }
+  return {
+    kind: "wake_past_expiry",
+    expired: true,
+    gapMs: Math.max(0, wakeAtMs - expiryMs),
+  };
+}
+
 export function isLeaseHeldByGeneration(
   lease: HostLeaseRecord | null | undefined,
   hostId: string,

@@ -41,6 +41,7 @@ export {
 export {
   HOST_LEASE_HELD_MESSAGE,
   acquireHostLease,
+  classifyWakeCatchupLeaseGap,
   normalizeHostLeaseToken,
   isLeaseExpired,
   isLeaseHeldByGeneration,
@@ -50,6 +51,7 @@ export {
   type HostLeaseAcquireResult,
   type HostLeaseClock,
   type HostLeaseRecord,
+  type WakeCatchupLeaseGap,
 } from "./host-lease.js";
 
 export {

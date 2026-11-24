@@ -38,6 +38,21 @@ describe("proofCompetingSupervisorLease", () => {
         d.includes("Same-gen renew preserves leaseId+acquiredAt"),
       ),
     ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Wake mid-gap classify=mid_gap_held competitor LEASE_HELD"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Wake past-expiry classify=wake_past_expiry"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Multi-TTL wake catchup single reclaim"),
+      ),
+    ).toBe(true);
     expect(proof.details.some((d) => d.includes("honesty NOT_WIRED/NONE"))).toBe(
       true,
     );
