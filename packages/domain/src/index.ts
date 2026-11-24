@@ -13,6 +13,7 @@ export {
 export {
   applyTakeover,
   canAgentSend,
+  type AgentSendDenialCode,
   type ConversationState,
   type TakeoverResult,
 } from "./conversation-takeover.js";

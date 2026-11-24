@@ -732,17 +732,17 @@ export function createInboxService(
       });
       if (!sendGate.allowed) {
         details.push(...sendGate.reasons);
-        const terminal =
+        const takeoverOrRace =
           sendGate.code === "CONVERSATION_TAKEOVER" ||
-          sendGate.code === "MESSAGE_LIMIT";
+          sendGate.code === "VERSION_MISMATCH";
+        const terminal = takeoverOrRace || sendGate.code === "MESSAGE_LIMIT";
         const blocked: MessageRecord = {
           ...message,
-          sendStatus:
-            sendGate.code === "CONVERSATION_TAKEOVER"
-              ? MessageSendStatus.BLOCKED_TAKEOVER
-              : terminal
-                ? MessageSendStatus.FAILED
-                : message.sendStatus,
+          sendStatus: takeoverOrRace
+            ? MessageSendStatus.BLOCKED_TAKEOVER
+            : terminal
+              ? MessageSendStatus.FAILED
+              : message.sendStatus,
         };
         if (blocked.sendStatus !== message.sendStatus) {
           store.upsertMessage(blocked);

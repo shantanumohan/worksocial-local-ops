@@ -160,6 +160,8 @@ describe("inbox domain", () => {
     );
     expect(takeover.state.drafts[0]!.invalidatedAtIso).toBe(now);
     expect(takeover.state.ownershipEvents).toHaveLength(1);
+    expect(takeover.liveProviderWiring).toBe("NOT_WIRED");
+    expect(takeover.externalEffects).toBe("NONE");
 
     const sendGate = evaluateOutboundSendGate({
       conversation: takeover.conversation,
@@ -173,6 +175,141 @@ describe("inbox domain", () => {
       nowIso: now,
     });
     expect(sendGate.allowed).toBe(false);
+    if (!sendGate.allowed) {
+      expect(sendGate.code).toBe("CONVERSATION_TAKEOVER");
+    }
+  });
+
+  it("T-X053 pure version race yields VERSION_MISMATCH", () => {
+    const conversation = createConversation({
+      conversationId: "c1",
+      providerThreadId: "thr-1",
+      channel: InboxChannel.FIXTURE,
+      customerDisplayName: "Alex",
+      nowIso: now,
+    });
+    const policy = defaultResponsePolicy(now);
+    const draft = prepareConciergeReply({
+      draftId: "d1",
+      conversation,
+      inboundBody: "Need a room",
+      citedFactIds: ["fact-hours"],
+      factLabels: new Map([["fact-hours", SupportLabel.SUPPORTED]]),
+      policy,
+      bookingEvidence: [],
+      nowIso: now,
+    });
+    expect(draft.ok).toBe(true);
+    if (!draft.ok) return;
+
+    const queued = queueOutboundReply({
+      messageId: "out-1",
+      conversation,
+      draft: draft.draft,
+      nowIso: now,
+    });
+    expect(queued.ok).toBe(true);
+    if (!queued.ok) return;
+
+    const raced = {
+      ...conversation,
+      version: conversation.version + 1,
+    };
+    const raceGate = evaluateOutboundSendGate({
+      conversation: raced,
+      message: queued.message,
+      policy,
+      sentAgentMessageCount: 0,
+      bookingEvidence: [],
+      nowIso: now,
+    });
+    expect(raceGate.allowed).toBe(false);
+    if (!raceGate.allowed) {
+      expect(raceGate.code).toBe("VERSION_MISMATCH");
+    }
+  });
+
+  it("takeover cancels multi-queue and preserves SENT; queue-after fails", () => {
+    const conversation = createConversation({
+      conversationId: "c1",
+      providerThreadId: "thr-1",
+      channel: InboxChannel.FIXTURE,
+      customerDisplayName: "Alex",
+      nowIso: now,
+    });
+    const policy = defaultResponsePolicy(now);
+    const draft = prepareConciergeReply({
+      draftId: "d1",
+      conversation,
+      inboundBody: "Need a room",
+      citedFactIds: ["fact-hours"],
+      factLabels: new Map([["fact-hours", SupportLabel.SUPPORTED]]),
+      policy,
+      bookingEvidence: [],
+      nowIso: now,
+    });
+    expect(draft.ok).toBe(true);
+    if (!draft.ok) return;
+
+    const q1 = queueOutboundReply({
+      messageId: "out-1",
+      conversation,
+      draft: draft.draft,
+      nowIso: now,
+    });
+    const q2 = queueOutboundReply({
+      messageId: "out-2",
+      conversation,
+      draft: { ...draft.draft, draftId: "d-shadow" },
+      nowIso: now,
+    });
+    expect(q1.ok && q2.ok).toBe(true);
+    if (!q1.ok || !q2.ok) return;
+
+    const sent = {
+      ...q1.message,
+      messageId: "out-sent",
+      sendStatus: MessageSendStatus.SENT,
+      sentAtIso: now,
+    };
+
+    let state = emptyInboxState(now);
+    state = {
+      ...state,
+      responsePolicy: policy,
+      conversations: [conversation],
+      messages: [q1.message, q2.message, sent],
+      drafts: [draft.draft],
+    };
+
+    const takeover = applyConversationTakeover({
+      state,
+      conversationId: "c1",
+      nowIso: now,
+    });
+    expect(takeover.ok).toBe(true);
+    if (!takeover.ok) return;
+    expect(takeover.cancelledMessageIds.sort()).toEqual(["out-1", "out-2"]);
+    expect(
+      takeover.state.messages.find((m) => m.messageId === "out-sent")
+        ?.sendStatus,
+    ).toBe(MessageSendStatus.SENT);
+
+    const after = queueOutboundReply({
+      messageId: "out-after",
+      conversation: takeover.conversation,
+      draft: {
+        ...draft.draft,
+        draftId: "d-after",
+        preparedAtVersion: takeover.conversation.version,
+        invalidatedAtIso: null,
+      },
+      nowIso: now,
+    });
+    expect(after.ok).toBe(false);
+    if (!after.ok) {
+      expect(after.code).toBe("CONVERSATION_TAKEOVER");
+    }
   });
 
   it("escalates unknown policy questions without promising an answer", () => {

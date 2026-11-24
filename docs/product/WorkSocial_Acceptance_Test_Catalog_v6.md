@@ -902,7 +902,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-US-042** / **T-X057** are fixture ACCEPTED only via the repair weaken test rejected proof (`REPAIR_WEAKEN_TEST_REJECTED`) — all WeakenTestOperation values + hyphen/casing aliases fail closed; `__tests__/` paths protected; live CMS repair `NOT_WIRED`. Not sandbox/prod VERIFIED.
 
-**T-US-044** / **T-X053** are fixture ACCEPTED only via the takeover cancels unsent replies proof (`TAKEOVER_CANCELS_UNSENT_REPLIES`). Not sandbox/prod VERIFIED.
+**T-US-044** / **T-X053** are fixture ACCEPTED only via the takeover cancels unsent replies proof (`TAKEOVER_CANCELS_UNSENT_REPLIES`) — human takeover increments conversation version, cancels multi-queue unsent rows (`BLOCKED_TAKEOVER`), preserves already-SENT messages, and refuses queue/send after ownership flip (`CONVERSATION_TAKEOVER`); pure stale `preparedAtVersion` while agent send is still allowed yields `VERSION_MISMATCH` (T-X053 race); live wiring stays **NOT_WIRED**; `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 
 **T-US-018** / **T-X037** are fixture ACCEPTED only via the EVAL_ONLY operational tool forbidden proof (`EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN`). Not sandbox/prod VERIFIED.
 
@@ -1081,7 +1081,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X050 | Public synthetic flag abuse | Server grant required *(fixture ACCEPTED)* |
 | T-X051 | Wrong Zoho organization | Identity mismatch blocks *(fixture ACCEPTED — wrong-zoho-organization identity-mismatch proof; not sandbox/prod VERIFIED)* |
 | T-X052 | Synthetic conversion contamination | Excluded from commerce *(fixture ACCEPTED — synthetic conversion contamination excluded proof; not sandbox/prod VERIFIED)* |
-| T-X053 | Takeover races queued reply | Version invalidates send *(fixture ACCEPTED)* |
+| T-X053 | Takeover races queued reply | Version invalidates send *(fixture ACCEPTED — takeover cancels unsent / VERSION_MISMATCH race proof; not sandbox/prod VERIFIED)* |
 | T-X054 | Reply sent but CRM fails | CRM reconciles; no resend *(fixture ACCEPTED — reply sent CRM reconciles no-resend proof; liveCrmWiring NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X055 | Unknown policy question | Escalate without promise *(fixture ACCEPTED — unknown policy question escalates without promise proof; not sandbox/prod VERIFIED)* |
 | T-X056 | Automated response loop | Bounded; handoff *(fixture ACCEPTED — automated response loop bounded handoff proof; not sandbox/prod VERIFIED)* |
