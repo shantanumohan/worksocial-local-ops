@@ -117,6 +117,7 @@ function isIpv6LinkLocalOrUla(host: string): boolean {
  * Expand an IPv6 literal (compressed `::` and optional dotted-quad tail) into
  * eight hextet strings. Returns null when the shape is not a valid IPv6 form.
  */
+/** Expand IPv6 hextets so IPv4-mapped forms normalize before RFC4193/SSRF checks. */
 function expandIpv6Hextets(host: string): string[] | null {
   if (!host.includes(":")) return null;
 
