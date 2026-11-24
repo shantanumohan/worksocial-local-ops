@@ -252,21 +252,28 @@ function parseBudget(raw: unknown, fallbackIso: string): BudgetAccount {
   const empty = emptyEvaluationState(fallbackIso).budget;
   if (!raw || typeof raw !== "object") return empty;
   const row = raw as Record<string, unknown>;
+  const heldReservations =
+    typeof row.heldReservations === "object" && row.heldReservations !== null
+      ? (row.heldReservations as Record<string, number>)
+      : {};
+  // T-X027: heldMinor must match map sum. Legacy files may omit heldMinor or
+  // leave it stale — derive from per-reservation holds (never invent zero).
+  let heldMinor = 0;
+  for (const amount of Object.values(heldReservations)) {
+    heldMinor += Number(amount) || 0;
+  }
   return {
     dayKey: String(row.dayKey ?? empty.dayKey),
     currency: String(row.currency ?? empty.currency),
     limitMinor: Number(row.limitMinor ?? empty.limitMinor),
     reservedMinor: Number(row.reservedMinor ?? 0),
     settledMinor: Number(row.settledMinor ?? 0),
-    heldMinor: Number(row.heldMinor ?? 0),
+    heldMinor,
     openReservations:
       typeof row.openReservations === "object" && row.openReservations !== null
         ? (row.openReservations as Record<string, number>)
         : {},
-    heldReservations:
-      typeof row.heldReservations === "object" && row.heldReservations !== null
-        ? (row.heldReservations as Record<string, number>)
-        : {},
+    heldReservations,
     settledReservations:
       typeof row.settledReservations === "object" &&
       row.settledReservations !== null

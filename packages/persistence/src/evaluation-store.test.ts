@@ -143,6 +143,50 @@ describe("evaluation store (memory/file)", () => {
     expect(raw.budget.heldMinor).toBeUndefined();
   });
 
+  it("derives heldMinor from heldReservations map when omitted or stale (T-X027)", async () => {
+    const evalDir = join(dir, "evaluation");
+    mkdirSync(evalDir, { recursive: true });
+    const statePath = join(evalDir, "evaluation-state.json");
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        version: 1,
+        updatedAtIso: now,
+        connections: [],
+        suites: [],
+        runs: [],
+        budget: {
+          dayKey: "2026-11-21",
+          currency: "USD",
+          limitMinor: 1000,
+          reservedMinor: 0,
+          settledMinor: 0,
+          // Stale/omitted heldMinor must not invent zero capacity.
+          heldMinor: 0,
+          openReservations: {},
+          heldReservations: { "legacy-hold": 450 },
+          settledReservations: {},
+        },
+        liveEvalWiring: "NOT_WIRED",
+        chatgptAdsWiring: "NOT_WIRED",
+      }),
+      "utf8",
+    );
+    const store = createFileEvaluationStore(dir);
+    const state = await store.read();
+    expect(state.budget.heldReservations).toEqual({ "legacy-hold": 450 });
+    expect(state.budget.heldMinor).toBe(450);
+    expect(availableBudgetMinor(state.budget)).toBe(550);
+    expect(state.chatgptAdsWiring).toBe("NOT_WIRED");
+    expect(state.liveEvalWiring).toBe("NOT_WIRED");
+    const blocked = reserveBudget(state.budget, "over", 600);
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.code).toBe("BUDGET_EXHAUSTED");
+      expect(blocked.availableMinor).toBe(550);
+    }
+  });
+
   it("openEvaluationStore forceMemory ignores DATABASE_URL", () => {
     const opened = openEvaluationStore({
       stateDir: dir,

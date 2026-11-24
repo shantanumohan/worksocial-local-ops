@@ -6,6 +6,7 @@ import {
   cancelBudgetReservation,
   createBudgetAccount,
   heldReservationsTotalMinor,
+  isUnknownUsageHold,
   reserveBudget,
   settleBudget,
 } from "./budget-accounting.js";
@@ -380,5 +381,26 @@ describe("budget accounting", () => {
         actualMinor: 99,
       }),
     ).toThrow(/already settled with actual 80/i);
+  });
+
+  it("isUnknownUsageHold detects hold vs open/settled", () => {
+    const reserved = reserveBudget(account(), "r-flag", 120);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    expect(isUnknownUsageHold(reserved.account, "r-flag")).toBe(false);
+    const held = cancelBudgetReservation(reserved.account, "r-flag", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    expect(isUnknownUsageHold(held.account, "r-flag")).toBe(true);
+    expect(isUnknownUsageHold(held.account, "missing")).toBe(false);
+    const resolved = cancelBudgetReservation(held.account, "r-flag", {
+      known: true,
+      actualMinor: 40,
+    });
+    expect(resolved.ok).toBe(true);
+    if (!resolved.ok) return;
+    expect(isUnknownUsageHold(resolved.account, "r-flag")).toBe(false);
   });
 });

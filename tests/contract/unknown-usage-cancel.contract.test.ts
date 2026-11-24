@@ -19,6 +19,7 @@ import {
   createBudgetAccount,
   expectedProofsForFixtureCase,
   heldReservationsTotalMinor,
+  isUnknownUsageHold,
   mapProofToFixtureCases,
   reserveBudget,
 } from "@worksocial/domain";
@@ -67,6 +68,7 @@ describe("contract: T-X027 unknown usage cancel holds residual", () => {
     expect(cancelled.account.heldMinor).toBe(
       heldReservationsTotalMinor(cancelled.account),
     );
+    expect(isUnknownUsageHold(cancelled.account, "req-hold")).toBe(true);
   });
 
   it("maps T-X027 only to UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL", () => {

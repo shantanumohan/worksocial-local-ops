@@ -14,6 +14,7 @@ import {
   cancelBudgetReservation,
   createBudgetAccount,
   heldReservationsTotalMinor,
+  isUnknownUsageHold,
   reserveBudget,
   settleBudget,
   type SoakProofRecord,
@@ -247,6 +248,43 @@ export function proofUnknownUsageCancelHoldsResidual(
   } else {
     passed = false;
     details.push("Expected unknown-cancel after settled to throw");
+  }
+
+  // 9. Secondary hold still flagged; resolve it and clear inventory.
+  const afterPrimary = reconciled.ok ? reconciled.account : secondHold.account;
+  if (
+    isUnknownUsageHold(afterPrimary, "req-cancel-unknown-b") &&
+    !isUnknownUsageHold(afterPrimary, "req-cancel-unknown")
+  ) {
+    details.push(
+      "isUnknownUsageHold: secondary still held; primary cleared after reconcile",
+    );
+  } else {
+    passed = false;
+    details.push("Expected isUnknownUsageHold secondary=true primary=false");
+  }
+  const clearSecondary = cancelBudgetReservation(
+    afterPrimary,
+    "req-cancel-unknown-b",
+    { known: true, actualMinor: 0 },
+  );
+  if (
+    clearSecondary.ok &&
+    clearSecondary.costKind === "zero_release" &&
+    clearSecondary.account.heldMinor === 0 &&
+    heldReservationsTotalMinor(clearSecondary.account) === 0 &&
+    !isUnknownUsageHold(clearSecondary.account, "req-cancel-unknown-b") &&
+    availableBudgetMinor(clearSecondary.account) === 780 &&
+    clearSecondary.liveBudgetProviderWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "Secondary hold resolved known-zero → heldMinor=0; available=780; NOT_WIRED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Secondary hold clear failed: ${JSON.stringify(clearSecondary)}`,
+    );
   }
 
   details.push(

@@ -101,6 +101,19 @@ export function heldReservationsTotalMinor(account: BudgetAccount): number {
   return total;
 }
 
+/** True when reservationId is held for unknown usage (not zero, not settled). */
+export function isUnknownUsageHold(
+  account: BudgetAccount,
+  reservationId: string,
+): boolean {
+  const held = account.heldReservations ?? {};
+  return (
+    reservationId in held &&
+    !(reservationId in account.openReservations) &&
+    !(reservationId in account.settledReservations)
+  );
+}
+
 export function createBudgetAccount(input: {
   dayKey: string;
   currency: string;

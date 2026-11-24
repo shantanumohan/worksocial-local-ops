@@ -29,6 +29,7 @@ export {
   cancelBudgetReservation,
   createBudgetAccount,
   heldReservationsTotalMinor,
+  isUnknownUsageHold,
   reserveBudget,
   settleBudget,
   type BudgetAccount,
