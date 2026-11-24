@@ -25,6 +25,10 @@ describe("proofOldFenceAfterReassignment (T-X024)", () => {
     expect(joined).toMatch(/Worker A self-renew while live ok/);
     expect(joined).toMatch(/fenceCause=expired/);
     expect(joined).toMatch(/Expired-pre-reassignment A bind denied.*fenceCause=expired/);
+    expect(joined).toMatch(/Expired-pre-reassignment A mark denied.*fenceCause=expired/);
+    expect(joined).toMatch(
+      /At-expiry mismatched holder fenceCause=wrong_holder \(not expired\)/,
+    );
     expect(joined).toMatch(/attemptCount=3/);
     expect(joined).toMatch(/expired≠wrong_holder/);
     expect(joined).toMatch(/Old worker A reclaim refused/);
@@ -39,9 +43,12 @@ describe("proofOldFenceAfterReassignment (T-X024)", () => {
     expect(joined).toContain(
       `liveTemporalWiring=${OLD_FENCE_TEMPORAL_WIRING}`,
     );
+    expect(joined).toContain("chatgptAdsAccess=ACCESS_BLOCKED");
     expect(joined).toContain("softSkipAds=T-F07,T-US-013,T-US-014");
     expect(joined).toContain("liveProviderSuccessClaimed=false");
     expect(joined).toContain("externalEffects=NONE");
+    expect(joined).toContain("acceptedNotVerified=true");
+    expect(joined).not.toMatch(/\bVERIFIED\b/);
     expect(OLD_FENCE_TEMPORAL_WIRING).toBe("NOT_WIRED");
   });
 });

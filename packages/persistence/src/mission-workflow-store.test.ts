@@ -10,6 +10,7 @@ import {
   isMissionLeaseActive,
   missionLeaseFenceFailedMessage,
   OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
+  OLD_FENCE_HONESTY,
   type MissionWorkflowRecord,
 } from "./mission-workflow-store.js";
 
@@ -91,6 +92,29 @@ describe("classifyMissionLeaseFence / isMissionLeaseActive (T-X024)", () => {
     expect(missionLeaseFenceFailedMessage("wf-x", "wrong_holder")).toBe(
       "Lease fence failed for wf-x (fenceCause=wrong_holder)",
     );
+  });
+
+  it("keeps null expiry active and prefers wrong_holder over expired", () => {
+    const openEnded = baseRecord({ leaseExpiresAtIso: null });
+    expect(
+      classifyMissionLeaseFence(openEnded, "worker-a", "2099-01-01T00:00:00.000Z"),
+    ).toBe("active");
+    expect(
+      classifyMissionLeaseFence(
+        baseRecord(),
+        "worker-b",
+        "2026-11-21T18:00:01.000Z",
+      ),
+    ).toBe("wrong_holder");
+    expect(OLD_FENCE_HONESTY.liveTemporalWiring).toBe("NOT_WIRED");
+    expect(OLD_FENCE_HONESTY.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(OLD_FENCE_HONESTY.acceptedNotVerified).toBe(true);
+    expect(OLD_FENCE_HONESTY.externalEffects).toBe("NONE");
+    expect([...OLD_FENCE_HONESTY.softSkipAdsCases]).toEqual([
+      "T-F07",
+      "T-US-013",
+      "T-US-014",
+    ]);
   });
 });
 

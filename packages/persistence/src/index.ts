@@ -280,6 +280,7 @@ export {
   isMissionLeaseActive,
   missionLeaseFenceFailedMessage,
   OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
+  OLD_FENCE_HONESTY,
   type MissionLeaseFenceCause,
   type MissionWorkflowStore,
   type MissionWorkflowRecord,

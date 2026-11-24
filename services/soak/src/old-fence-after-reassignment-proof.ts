@@ -13,6 +13,8 @@
  * A self-renew positive control while live.
  * Hillclimb O3: Lease fence throws include fenceCause=…; post-bind
  * wrong_holder mark deny; Ads soft-skip honesty.
+ * Hillclimb O4: OLD_FENCE_HONESTY bundle; expired mark deny; wrong_holder
+ * precedes expired; ACCEPTED≠VERIFIED edge honesty.
  */
 
 import { randomUUID } from "node:crypto";
@@ -25,10 +27,12 @@ import {
   createMemoryMissionWorkflowStore,
   isMissionLeaseActive,
   OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
+  OLD_FENCE_HONESTY,
 } from "@worksocial/persistence";
 
 /** Live Temporal / mission runtime — always NOT_WIRED offline. */
-export const OLD_FENCE_TEMPORAL_WIRING = "NOT_WIRED" as const;
+export const OLD_FENCE_TEMPORAL_WIRING =
+  OLD_FENCE_HONESTY.liveTemporalWiring;
 
 /**
  * Complete expected proof set for T-X024 fixture ACCEPTED.
@@ -161,6 +165,47 @@ export async function proofOldFenceAfterReassignment(
   if (!expiredPreReassignDenied) {
     passed = false;
     details.push("Expired-pre-reassignment A bind unexpectedly succeeded");
+  }
+
+  // 2c. Expired-pre-reassignment markEffectPending also fenceCause=expired.
+  let expiredPreMarkDenied = false;
+  try {
+    await store.markEffectPending({
+      workflowId,
+      operationId: `${operationId}-expired-pre`,
+      holder: workerA,
+      nowIso: tAtExpiry,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (
+      /Lease fence failed/i.test(msg) &&
+      /fenceCause=expired/.test(msg)
+    ) {
+      expiredPreMarkDenied = true;
+      details.push(`Expired-pre-reassignment A mark denied: ${msg}`);
+    } else {
+      passed = false;
+      details.push(`Expired-pre-reassignment mark unexpected error: ${msg}`);
+    }
+  }
+  if (!expiredPreMarkDenied) {
+    passed = false;
+    details.push("Expired-pre-reassignment A mark unexpectedly succeeded");
+  }
+
+  // 2d. Edge: mismatched holder at expiry is wrong_holder (not expired).
+  if (
+    snapAtExpiry &&
+    classifyMissionLeaseFence(snapAtExpiry, workerB, tAtExpiry) ===
+      "wrong_holder"
+  ) {
+    details.push(
+      "At-expiry mismatched holder fenceCause=wrong_holder (not expired)",
+    );
+  } else {
+    passed = false;
+    details.push("At-expiry mismatched holder classification unexpected");
   }
 
   // 3. At exact expiry, Worker B reassigns the lease (attemptCount 2→3 after renew).
@@ -370,7 +415,7 @@ export async function proofOldFenceAfterReassignment(
   }
 
   details.push(
-    `relatedCases=${OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS.join(",")} liveTemporalWiring=${OLD_FENCE_TEMPORAL_WIRING} softSkipAds=T-F07,T-US-013,T-US-014 liveProviderSuccessClaimed=false externalEffects=NONE`,
+    `relatedCases=${OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS.join(",")} liveTemporalWiring=${OLD_FENCE_HONESTY.liveTemporalWiring} chatgptAdsAccess=${OLD_FENCE_HONESTY.chatgptAdsAccess} softSkipAds=${OLD_FENCE_HONESTY.softSkipAdsCases.join(",")} liveProviderSuccessClaimed=${OLD_FENCE_HONESTY.liveProviderSuccessClaimed} externalEffects=${OLD_FENCE_HONESTY.externalEffects} acceptedNotVerified=${OLD_FENCE_HONESTY.acceptedNotVerified}`,
   );
 
   return {

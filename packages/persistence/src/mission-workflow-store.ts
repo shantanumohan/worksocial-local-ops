@@ -149,8 +149,23 @@ export const OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS = [
 ] as const;
 
 /**
+ * Fixture honesty for T-X024 old-fence proofs (edge deepen O4).
+ * ACCEPTED ≠ VERIFIED; Temporal NOT_WIRED; Ads soft-skip; externalEffects NONE.
+ */
+export const OLD_FENCE_HONESTY = {
+  liveTemporalWiring: "NOT_WIRED",
+  chatgptAdsAccess: "ACCESS_BLOCKED",
+  softSkipAdsCases: ["T-F07", "T-US-013", "T-US-014"],
+  liveProviderSuccessClaimed: false,
+  externalEffects: "NONE",
+  acceptedNotVerified: true,
+} as const;
+
+/**
  * Why a holder may or may not commit under the mission lease fence.
  * Distinct causes keep expired ≠ wrong_holder (hillclimb O2).
+ * wrong_holder is checked before expiry so mismatched holders never
+ * report as expired (edge honesty O4).
  */
 export type MissionLeaseFenceCause =
   | "active"
@@ -161,6 +176,7 @@ export type MissionLeaseFenceCause =
 /**
  * Classify lease fence state for `holder` at `nowIso`.
  * Exact expiry (`nowIso === leaseExpiresAtIso`) → `expired`.
+ * Null `leaseExpiresAtIso` stays `active` for the matching holder.
  */
 export function classifyMissionLeaseFence(
   record: MissionWorkflowRecord,
