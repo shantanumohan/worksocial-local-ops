@@ -2730,7 +2730,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x068",
-      "evidenceNote": "Fixture ACCEPTED via THIRTY_ALERTS_ONE_OUTAGE_GROUPED only — thirty alerts sharing one outageKey collapse to one incident. ACCEPTED ≠ sandbox/prod VERIFIED. externalEffects=NONE."
+      "evidenceNote": "Fixture ACCEPTED via THIRTY_ALERTS_ONE_OUTAGE_GROUPED only — whitespace-normalized outageKey collapse; chronological alertIds; max severity; uniqueSources; live NOT_WIRED. ACCEPTED ≠ sandbox/prod VERIFIED. externalEffects=NONE."
     },
     {
       "id": "T-X069",

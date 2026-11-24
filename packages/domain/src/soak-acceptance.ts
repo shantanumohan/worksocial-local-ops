@@ -887,6 +887,8 @@ export const SoakProofKind = {
   KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG: "keyboard_focus_restore_after_dialog",
   /**
    * Thirty alerts for one outage collapse into one grouped incident (T-X068).
+   * Whitespace-normalized outageKey; chronological alertIds; max severity;
+   * uniqueSources; live NOT_WIRED. ACCEPTED ≠ VERIFIED.
    */
   THIRTY_ALERTS_ONE_OUTAGE_GROUPED: "thirty_alerts_one_outage_grouped",
   /**

@@ -3,13 +3,13 @@
   "caseId": "T-X068",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X068 (Thirty alerts one outage — grouped incident)\nproof=thirty_alerts_one_outage_grouped applyCount=1 :: 31 alerts → 2 grouped incidents (not 31) | outageKey=host:local-1 → 1 incident alertCount=30 severity=P0 (thirty alerts coalesced) | Distinct outageKey=provider:fixture-crm kept as separate incident alertCount=1 | Incident count < alert count — no one-alert-one-incident fan-out | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X068 (Thirty alerts one outage — grouped incident)\nproof=thirty_alerts_one_outage_grouped applyCount=1 :: 32 alerts → 3 grouped incidents (not 32); whitespace outageKey collapsed | outageKey=host:local-1 → 1 incident alertCount=30 severity=P0 uniqueSourceCount=6 chronological alertIds (shuffled input); liveProviderWiring=NOT_WIRED | Distinct outageKey=provider:fixture-crm kept as separate incident alertCount=1 | Third outageKey=capability:gsc-fetch kept separate (no silent cross-key merge) | Incident count < alert count — no one-alert-one-incident fan-out | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "thirty_alerts_one_outage_grouped"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x068.json",
-  "createdAtIso": "2026-11-24T22:02:26.989Z",
+  "createdAtIso": "2026-11-24T22:07:54.174Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x068-d2c12143ad40"
+  "uniqueSourceArtifactId": "art-fixture-t-x068-e98c3a7c132e"
 }

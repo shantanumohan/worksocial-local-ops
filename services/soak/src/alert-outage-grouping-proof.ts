@@ -1,6 +1,8 @@
 /**
  * Fixture proof for T-X068 — Thirty alerts one outage → grouped incident.
- * External effects: NONE.
+ * External effects: NONE. Live wiring NOT_WIRED.
+ * Hillclimb: whitespace outageKey collapse, chronological alertIds,
+ * uniqueSources, max severity, three-key separation.
  */
 
 import { randomUUID } from "node:crypto";
@@ -28,7 +30,8 @@ export function proofThirtyAlertsOneOutageGrouped(
   const primaryAlerts = Array.from({ length: 30 }, (_, i) =>
     createProbeAlert({
       alertId: `alert-primary-${String(i + 1).padStart(2, "0")}`,
-      outageKey: primaryOutage,
+      // Alternate padded keys — must still collapse to one incident.
+      outageKey: i % 2 === 0 ? primaryOutage : `  ${primaryOutage} `,
       source: `probe-role-A19-${(i % 6) + 1}`,
       raisedAtIso: new Date(baseMs + i * 500).toISOString(),
       severity: i === 0 ? AlertSeverity.P0 : AlertSeverity.P1,
@@ -47,18 +50,42 @@ export function proofThirtyAlertsOneOutageGrouped(
     }),
   ];
 
+  const tertiaryOutage = "capability:gsc-fetch";
+  const tertiaryAlerts = [
+    createProbeAlert({
+      alertId: "alert-tertiary-01",
+      outageKey: tertiaryOutage,
+      source: "probe-gsc",
+      raisedAtIso: new Date(baseMs + 25_000).toISOString(),
+      severity: AlertSeverity.P3,
+      message: "Fixture GSC fetch timeout",
+    }),
+  ];
+
+  // Deliberately shuffle primary alerts so chronological alertIds cannot
+  // pass via insertion-order preservation alone (Codex P2).
+  const shuffledPrimary = [
+    ...primaryAlerts.slice(10),
+    ...primaryAlerts.slice(0, 5).reverse(),
+    ...primaryAlerts.slice(5, 10),
+  ];
+  const allAlerts = [
+    ...shuffledPrimary,
+    ...secondaryAlerts,
+    ...tertiaryAlerts,
+  ];
   const incidents = groupAlertsIntoIncidents({
-    alerts: [...primaryAlerts, ...secondaryAlerts],
+    alerts: allAlerts,
     incidentIdForOutageKey: (k) => `inc-${k.replace(/[^a-z0-9-]/gi, "-")}`,
   });
 
-  if (incidents.length === 2) {
+  if (incidents.length === 3) {
     details.push(
-      `31 alerts → ${incidents.length} grouped incidents (not 31)`,
+      `32 alerts → ${incidents.length} grouped incidents (not 32); whitespace outageKey collapsed`,
     );
   } else {
     passed = false;
-    details.push(`Expected 2 incidents, got ${incidents.length}`);
+    details.push(`Expected 3 incidents, got ${incidents.length}`);
   }
 
   const primary = incidents.find((i) => i.outageKey === primaryOutage);
@@ -66,13 +93,19 @@ export function proofThirtyAlertsOneOutageGrouped(
     primary &&
     primary.alertCount === 30 &&
     primary.alertIds.length === 30 &&
+    primary.alertIds.every((id, idx) => id === primaryAlerts[idx]!.alertId) &&
     primary.severity === AlertSeverity.P0 &&
+    primary.uniqueSourceCount === 6 &&
+    primary.uniqueSources.length === 6 &&
     primary.status === "open" &&
+    primary.liveProviderWiring === "NOT_WIRED" &&
     primary.externalEffects === "NONE" &&
-    primary.fixtureOnly === true
+    primary.fixtureOnly === true &&
+    primary.firstRaisedAtIso === primaryAlerts[0]!.raisedAtIso &&
+    primary.lastRaisedAtIso === primaryAlerts[29]!.raisedAtIso
   ) {
     details.push(
-      `outageKey=${primaryOutage} → 1 incident alertCount=30 severity=P0 (thirty alerts coalesced)`,
+      `outageKey=${primaryOutage} → 1 incident alertCount=30 severity=P0 uniqueSourceCount=6 chronological alertIds (shuffled input); liveProviderWiring=NOT_WIRED`,
     );
   } else {
     passed = false;
@@ -83,7 +116,8 @@ export function proofThirtyAlertsOneOutageGrouped(
   if (
     secondary &&
     secondary.alertCount === 1 &&
-    secondary.severity === AlertSeverity.P2
+    secondary.severity === AlertSeverity.P2 &&
+    secondary.liveProviderWiring === "NOT_WIRED"
   ) {
     details.push(
       `Distinct outageKey=${secondaryOutage} kept as separate incident alertCount=1`,
@@ -95,8 +129,23 @@ export function proofThirtyAlertsOneOutageGrouped(
     );
   }
 
+  const tertiary = incidents.find((i) => i.outageKey === tertiaryOutage);
+  if (
+    tertiary &&
+    tertiary.alertCount === 1 &&
+    tertiary.severity === AlertSeverity.P3 &&
+    tertiary.liveProviderWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      `Third outageKey=${tertiaryOutage} kept separate (no silent cross-key merge)`,
+    );
+  } else {
+    passed = false;
+    details.push(`Tertiary grouping unexpectedly ${JSON.stringify(tertiary)}`);
+  }
+
   // Negative control: ungrouped fan-out would equal alert count — must not.
-  if (incidents.length < primaryAlerts.length + secondaryAlerts.length) {
+  if (incidents.length < allAlerts.length) {
     details.push(
       "Incident count < alert count — no one-alert-one-incident fan-out",
     );
@@ -105,7 +154,9 @@ export function proofThirtyAlertsOneOutageGrouped(
     details.push("Incident fan-out matched alert count (grouping failed)");
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  details.push(
+    "liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE",
+  );
 
   return {
     proofId: `proof-alert-group-${randomUUID()}`,
