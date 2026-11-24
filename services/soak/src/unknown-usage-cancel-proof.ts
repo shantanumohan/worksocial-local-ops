@@ -2,11 +2,13 @@
  * Fixture proof for T-X027 — unknown usage on cancelled request.
  *
  * Cancel with unknown usage must hold residual cost (not release as zero).
- * External effects: NONE.
+ * External effects: NONE. Live budget provider wiring stays NOT_WIRED.
+ * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 
 import { randomUUID } from "node:crypto";
 import {
+  BUDGET_LIVE_PROVIDER_WIRING,
   SoakProofKind,
   availableBudgetMinor,
   cancelBudgetReservation,
@@ -59,10 +61,12 @@ export function proofUnknownUsageCancelHoldsResidual(
     cancelled.costKind === "unknown_hold" &&
     cancelled.account.heldMinor === 700 &&
     cancelled.account.settledMinor === 0 &&
-    availableBudgetMinor(cancelled.account) === 300
+    availableBudgetMinor(cancelled.account) === 300 &&
+    cancelled.externalEffects === "NONE" &&
+    cancelled.liveBudgetProviderWiring === BUDGET_LIVE_PROVIDER_WIRING
   ) {
     details.push(
-      "Cancel unknown usage → heldMinor=700 (not zero); available stays 300",
+      "Cancel unknown usage → heldMinor=700 (not zero); available stays 300; liveBudgetProviderWiring=NOT_WIRED",
     );
   } else {
     passed = false;
@@ -70,22 +74,32 @@ export function proofUnknownUsageCancelHoldsResidual(
     return finish(passed, details, nowIso);
   }
 
-  // 3. Counterfactual: inventing zero via settle must be refused on a hold.
-  let settleRefused = false;
+  // 3. Counterfactual: inventing zero or non-zero via settle must be refused on a hold.
+  let settleZeroRefused = false;
+  let settleNonZeroRefused = false;
   try {
     settleBudget(cancelled.account, "req-cancel-unknown", 0);
   } catch (err) {
-    settleRefused = /held for unknown usage/i.test(
+    settleZeroRefused = /held for unknown usage/i.test(
       err instanceof Error ? err.message : String(err),
     );
   }
-  if (settleRefused) {
+  try {
+    settleBudget(cancelled.account, "req-cancel-unknown", 55);
+  } catch (err) {
+    settleNonZeroRefused = /held for unknown usage/i.test(
+      err instanceof Error ? err.message : String(err),
+    );
+  }
+  if (settleZeroRefused && settleNonZeroRefused) {
     details.push(
-      "Counterfactual settle-as-zero refused on unknown-usage hold",
+      "Counterfactual settle-as-zero and settle-nonzero refused on unknown-usage hold",
     );
   } else {
     passed = false;
-    details.push("Expected settle-as-zero on hold to throw");
+    details.push(
+      `Expected settle refuse on hold (zero=${settleZeroRefused} nonzero=${settleNonZeroRefused})`,
+    );
   }
 
   // 4. Positive control: known-zero cancel releases capacity honestly.
@@ -114,37 +128,126 @@ export function proofUnknownUsageCancelHoldsResidual(
     details.push(`Known-zero cancel failed: ${JSON.stringify(knownZero)}`);
   }
 
-  // 5. Concurrent capacity still accounts for the hold.
-  const blocked = reserveBudget(knownZero.ok ? knownZero.account : cancelled.account, "req-over", 400);
-  if (!blocked.ok && blocked.code === "BUDGET_EXHAUSTED" && blocked.availableMinor === 300) {
-    details.push("Hold residual blocks over-cap reserve (BUDGET_EXHAUSTED available=300)");
+  // 5. Concurrent capacity still accounts for the hold; under-cap reserve ok.
+  const afterKnownZero = knownZero.ok ? knownZero.account : cancelled.account;
+  const under = reserveBudget(afterKnownZero, "req-under", 300);
+  if (
+    under.ok &&
+    under.account.reservedMinor === 300 &&
+    under.account.heldMinor === 700 &&
+    availableBudgetMinor(under.account) === 0
+  ) {
+    details.push(
+      "Under-cap reserve while hold present → reserved=300 held=700 available=0",
+    );
+  } else {
+    passed = false;
+    details.push(`Under-cap reserve failed: ${JSON.stringify(under)}`);
+  }
+  const blocked = reserveBudget(
+    under.ok ? under.account : afterKnownZero,
+    "req-over",
+    1,
+  );
+  if (
+    !blocked.ok &&
+    blocked.code === "BUDGET_EXHAUSTED" &&
+    blocked.availableMinor === 0
+  ) {
+    details.push(
+      "Hold residual + under-cap reserve blocks further reserve (BUDGET_EXHAUSTED available=0)",
+    );
   } else {
     passed = false;
     details.push(`Expected BUDGET_EXHAUSTED after hold: ${JSON.stringify(blocked)}`);
   }
 
-  // 6. After reconcile, explicit known cancel may resolve the hold to actual.
-  const reconciled = cancelBudgetReservation(cancelled.account, "req-cancel-unknown", {
-    known: true,
-    actualMinor: 220,
-  });
+  // 6. Second concurrent unknown hold stacks residual.
+  // Release under-cap reservation first so multi-hold arithmetic is isolated.
+  const releaseUnder = under.ok
+    ? cancelBudgetReservation(under.account, "req-under", {
+        known: true,
+        actualMinor: 0,
+      })
+    : null;
+  const multiBase = releaseUnder?.ok ? releaseUnder.account : cancelled.account;
+  const secondReserve = reserveBudget(multiBase, "req-cancel-unknown-b", 150);
+  if (!secondReserve.ok) {
+    passed = false;
+    details.push(`Second reserve failed: ${JSON.stringify(secondReserve)}`);
+    return finish(passed, details, nowIso);
+  }
+  const secondHold = cancelBudgetReservation(
+    secondReserve.account,
+    "req-cancel-unknown-b",
+    { known: false },
+  );
+  if (
+    secondHold.ok &&
+    secondHold.costKind === "unknown_hold" &&
+    secondHold.account.heldMinor === 850 &&
+    secondHold.account.heldReservations["req-cancel-unknown"] === 700 &&
+    secondHold.account.heldReservations["req-cancel-unknown-b"] === 150 &&
+    availableBudgetMinor(secondHold.account) === 150 &&
+    secondHold.liveBudgetProviderWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "Concurrent multi-hold stacks heldMinor=850 (700+150); available=150; NOT_WIRED",
+    );
+  } else {
+    passed = false;
+    details.push(`Multi-hold stack failed: ${JSON.stringify(secondHold)}`);
+    return finish(passed, details, nowIso);
+  }
+
+  // 7. After reconcile, explicit known cancel may resolve the primary hold to actual.
+  const reconciled = cancelBudgetReservation(
+    secondHold.account,
+    "req-cancel-unknown",
+    {
+      known: true,
+      actualMinor: 220,
+    },
+  );
   if (
     reconciled.ok &&
     reconciled.costKind === "actual" &&
     reconciled.actualMinor === 220 &&
-    reconciled.account.heldMinor === 0 &&
+    reconciled.account.heldMinor === 150 &&
     reconciled.account.settledMinor === 220 &&
-    availableBudgetMinor(reconciled.account) === 780
+    availableBudgetMinor(reconciled.account) === 630 &&
+    reconciled.externalEffects === "NONE" &&
+    reconciled.liveBudgetProviderWiring === "NOT_WIRED"
   ) {
     details.push(
-      "Known reconcile after hold posts actual=220 and clears held residual",
+      "Known reconcile after hold posts actual=220; secondary hold 150 remains; externalEffects=NONE",
     );
   } else {
     passed = false;
     details.push(`Known hold resolve failed: ${JSON.stringify(reconciled)}`);
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  // 8. Refuse unknown-cancel replay on a settled reservation.
+  let settledUnknownRefused = false;
+  try {
+    cancelBudgetReservation(reconciled.ok ? reconciled.account : secondHold.account, "req-cancel-unknown", {
+      known: false,
+    });
+  } catch (err) {
+    settledUnknownRefused = /already settled/i.test(
+      err instanceof Error ? err.message : String(err),
+    );
+  }
+  if (settledUnknownRefused) {
+    details.push("Refuse unknown-cancel replay after settled");
+  } else {
+    passed = false;
+    details.push("Expected unknown-cancel after settled to throw");
+  }
+
+  details.push(
+    "liveProviderSuccessClaimed=false externalEffects=NONE liveBudgetProviderWiring=NOT_WIRED",
+  );
   return finish(passed, details, nowIso);
 }
 

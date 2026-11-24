@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  BUDGET_LIVE_PROVIDER_WIRING,
+  UNKNOWN_USAGE_CANCEL_RELATED_CASE_IDS,
   availableBudgetMinor,
   cancelBudgetReservation,
   createBudgetAccount,
@@ -203,6 +205,8 @@ describe("budget accounting", () => {
     if (!held.ok) return;
     expect(held.account.heldMinor).toBe(400);
     expect(availableBudgetMinor(held.account)).toBe(600);
+    expect(held.externalEffects).toBe("NONE");
+    expect(held.liveBudgetProviderWiring).toBe(BUDGET_LIVE_PROVIDER_WIRING);
 
     const resolved = cancelBudgetReservation(held.account, "r-reconcile", {
       known: true,
@@ -217,5 +221,113 @@ describe("budget accounting", () => {
     expect(resolved.account.settledMinor).toBe(175);
     expect(resolved.account.heldReservations).toEqual({});
     expect(availableBudgetMinor(resolved.account)).toBe(825);
+    expect(resolved.externalEffects).toBe("NONE");
+    expect(resolved.liveBudgetProviderWiring).toBe("NOT_WIRED");
+
+    const replay = cancelBudgetReservation(resolved.account, "r-reconcile", {
+      known: true,
+      actualMinor: 175,
+    });
+    expect(replay.ok).toBe(true);
+    if (!replay.ok) return;
+    expect(replay.replayed).toBe(true);
+    expect(replay.actualMinor).toBe(175);
+    expect(availableBudgetMinor(replay.account)).toBe(825);
+  });
+
+  it("stacks concurrent unknown-usage holds (T-X027 multi-hold)", () => {
+    const a = reserveBudget(account(), "r-a", 300);
+    expect(a.ok).toBe(true);
+    if (!a.ok) return;
+    const b = reserveBudget(a.account, "r-b", 200);
+    expect(b.ok).toBe(true);
+    if (!b.ok) return;
+    const holdA = cancelBudgetReservation(b.account, "r-a", { known: false });
+    expect(holdA.ok).toBe(true);
+    if (!holdA.ok) return;
+    const holdB = cancelBudgetReservation(holdA.account, "r-b", {
+      known: false,
+    });
+    expect(holdB.ok).toBe(true);
+    if (!holdB.ok) return;
+    expect(holdB.account.heldMinor).toBe(500);
+    expect(holdB.account.heldReservations).toEqual({ "r-a": 300, "r-b": 200 });
+    expect(availableBudgetMinor(holdB.account)).toBe(500);
+    expect(holdB.liveBudgetProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("refuses settle with non-zero actual on unknown-usage hold", () => {
+    const reserved = reserveBudget(account(), "r-nz", 250);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-nz", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    expect(() => settleBudget(held.account, "r-nz", 40)).toThrow(
+      /held for unknown usage/i,
+    );
+  });
+
+  it("refuses unknown-cancel replay after settled", () => {
+    const reserved = reserveBudget(account(), "r-settled", 150);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const settled = settleBudget(reserved.account, "r-settled", 90);
+    expect(settled.ok).toBe(true);
+    if (!settled.ok) return;
+    expect(() =>
+      cancelBudgetReservation(settled.account, "r-settled", { known: false }),
+    ).toThrow(/already settled/i);
+  });
+
+  it("allows under-cap reserve while unknown hold consumes residual", () => {
+    const reserved = reserveBudget(account(), "r-hold", 700);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-hold", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    expect(availableBudgetMinor(held.account)).toBe(300);
+    const under = reserveBudget(held.account, "r-under", 300);
+    expect(under.ok).toBe(true);
+    if (!under.ok) return;
+    expect(under.account.reservedMinor).toBe(300);
+    expect(under.account.heldMinor).toBe(700);
+    expect(availableBudgetMinor(under.account)).toBe(0);
+    expect(() => reserveBudget(held.account, "r-hold", 50)).toThrow(
+      /already exists/i,
+    );
+  });
+
+  it("resolves unknown-usage hold to known zero without inventing at cancel", () => {
+    const reserved = reserveBudget(account(), "r-zero-hold", 180);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-zero-hold", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    expect(held.costKind).toBe("unknown_hold");
+    expect(held.actualMinor).toBeNull();
+    const zeroed = cancelBudgetReservation(held.account, "r-zero-hold", {
+      known: true,
+      actualMinor: 0,
+    });
+    expect(zeroed.ok).toBe(true);
+    if (!zeroed.ok) return;
+    expect(zeroed.costKind).toBe("zero_release");
+    expect(zeroed.actualMinor).toBe(0);
+    expect(zeroed.account.heldMinor).toBe(0);
+    expect(availableBudgetMinor(zeroed.account)).toBe(1000);
+  });
+
+  it("pins T-X027 related ids and live wiring NOT_WIRED", () => {
+    expect(UNKNOWN_USAGE_CANCEL_RELATED_CASE_IDS).toEqual(["T-X027"]);
+    expect(BUDGET_LIVE_PROVIDER_WIRING).toBe("NOT_WIRED");
   });
 });

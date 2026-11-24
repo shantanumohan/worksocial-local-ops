@@ -2,7 +2,15 @@
  * Budget reservation and honest actual-cost settlement (pure arithmetic).
  * Settlement is reservation-aware: each reservationId settles at most once.
  * Cancel with unknown usage holds residual cost — never silently zero (T-X027).
+ *
+ * Live budget / provider wiring stays NOT_WIRED. Fixture ACCEPTED ≠ sandbox/prod
+ * VERIFIED. External effects: NONE. No invent past T-X073.
  */
+
+/** Live metered-usage / budget-provider wiring — always NOT_WIRED offline. */
+export const BUDGET_LIVE_PROVIDER_WIRING = "NOT_WIRED" as const;
+
+export const UNKNOWN_USAGE_CANCEL_RELATED_CASE_IDS = ["T-X027"] as const;
 
 export type BudgetAccount = {
   dayKey: string;
@@ -57,8 +65,15 @@ export type BudgetCancellation =
       actualMinor: number | null;
       costKind: "unknown_hold" | "actual" | "zero_release";
       replayed: boolean;
+      externalEffects: "NONE";
+      liveBudgetProviderWiring: typeof BUDGET_LIVE_PROVIDER_WIRING;
     }
   | { ok: false; code: "UNKNOWN_RESERVATION"; reservationId: string };
+
+const honesty = {
+  externalEffects: "NONE" as const,
+  liveBudgetProviderWiring: BUDGET_LIVE_PROVIDER_WIRING,
+};
 
 function available(account: BudgetAccount): number {
   return (
@@ -215,6 +230,7 @@ export function cancelBudgetReservation(
         actualMinor: null,
         costKind: "unknown_hold",
         replayed: true,
+        ...honesty,
       };
     }
     if (usage.actualMinor < 0) {
@@ -243,6 +259,7 @@ export function cancelBudgetReservation(
           },
         },
       },
+      ...honesty,
     };
   }
 
@@ -269,6 +286,7 @@ export function cancelBudgetReservation(
       costKind:
         priorSettled.actualMinor === 0 ? "zero_release" : "actual",
       replayed: true,
+      ...honesty,
     };
   }
 
@@ -300,6 +318,7 @@ export function cancelBudgetReservation(
           [reservationId]: reservedMinor,
         },
       },
+      ...honesty,
     };
   }
 
@@ -329,5 +348,6 @@ export function cancelBudgetReservation(
         },
       },
     },
+    ...honesty,
   };
 }

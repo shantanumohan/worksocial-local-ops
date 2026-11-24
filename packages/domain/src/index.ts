@@ -23,6 +23,8 @@ export {
   type EffectOutcome,
 } from "./simulated-effect-ledger.js";
 export {
+  BUDGET_LIVE_PROVIDER_WIRING,
+  UNKNOWN_USAGE_CANCEL_RELATED_CASE_IDS,
   availableBudgetMinor,
   cancelBudgetReservation,
   createBudgetAccount,
