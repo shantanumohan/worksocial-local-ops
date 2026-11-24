@@ -9,10 +9,13 @@
  * T-US-75 fixture ACCEPTED only via EMERGENCY_STOP_AT_COMMIT.
  * T-X005 fixture ACCEPTED only via FORGED_BROWSER_ROLE_IGNORED.
  * T-X006 fixture ACCEPTED only via CROSS_WORKSPACE_REFERENCE_DENIED.
- * T-X019/T-US-75 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED. */import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
+ * T-X019/T-US-75 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED.
+ */
+import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   AcceptanceCaseStatus,
   AcceptanceEnvironment,
@@ -26,6 +29,8 @@ import {
   createSoakService,
   runSoakRecoveryHarness,
 } from "@worksocial/soak";
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 describe("contract: M9 soak / acceptance evidence", () => {
   let dir: string;
@@ -260,11 +265,9 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(bad.ok).toBe(false);
   });
 
-  it("T-X025 fixture art keeps edge honesty (silent clear / NOT_WIRED / ACCEPTED≠VERIFIED)", async () => {
-    const { readFileSync } = await import("node:fs");
-    const { join: pathJoin } = await import("node:path");
-    const artPath = pathJoin(
-      process.cwd(),
+  it("T-X025 fixture art keeps edge honesty (silent clear / NOT_WIRED / ACCEPTED≠VERIFIED)", () => {
+    const artPath = resolve(
+      repoRoot,
       "tests/acceptance-evidence/fixture/art-fixture-t-x025.json",
     );
     const art = JSON.parse(readFileSync(artPath, "utf8")) as {
