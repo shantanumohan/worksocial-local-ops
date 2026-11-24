@@ -690,7 +690,7 @@ export function evaluateExplicitRebind(input: {
 
 /**
  * Honest live provider revoke attempt — always NOT_WIRED in this slice.
- * Never invents remote token revocation.
+ * Never invents remote token revocation or live VERIFIED completion (T-X073).
  */
 export function attemptLiveProviderRevoke(_input: {
   connectionId: string;
@@ -699,6 +699,7 @@ export function attemptLiveProviderRevoke(_input: {
   ok: false;
   code: "LIVE_PROVIDER_REVOKE_NOT_WIRED";
   liveProviderRevoke: "NOT_WIRED";
+  liveProviderSuccessClaimed: false;
   externalEffects: "NONE";
   reason: string;
 } {
@@ -706,9 +707,10 @@ export function attemptLiveProviderRevoke(_input: {
     ok: false,
     code: "LIVE_PROVIDER_REVOKE_NOT_WIRED",
     liveProviderRevoke: "NOT_WIRED",
+    liveProviderSuccessClaimed: false,
     externalEffects: "NONE",
     reason:
-      "Live provider credential revocation is NOT_WIRED. Local connection may be marked revoked; remote token revoke must be performed through the provider process separately.",
+      "Live provider credential revocation is NOT_WIRED (T-X073). Local connection may be marked revoked; remote token revoke must be performed through the provider process separately. ACCEPTED≠VERIFIED; externalEffects=NONE.",
   };
 }
 
@@ -757,7 +759,7 @@ export function buildOffboardingManifest(input: {
       kind: ResidualObligationKind.PROVIDER_REVOKE,
       status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
       summary:
-        "Live provider token revoke NOT_WIRED — residual obligation remains open until performed externally",
+        "Live provider token revoke NOT_WIRED — residual stays BLOCKED_NOT_WIRED until performed externally (never silently COMPLETED/VERIFIED)",
       connectionId: input.connectionId,
     },
   ];
@@ -768,7 +770,7 @@ export function buildOffboardingManifest(input: {
       kind: ResidualObligationKind.ACTIVE_TOKEN,
       status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
       summary:
-        "T-X073: provider-side token may still be active until live revoke is wired/performed",
+        "T-X073: provider-side token may still be active until live revoke is wired/performed — incomplete until revoked; ACCEPTED≠VERIFIED",
       connectionId: input.connectionId,
     });
   }
@@ -788,7 +790,74 @@ export function buildOffboardingManifest(input: {
     catalogClaim: "NOT_RUN",
     createdAtIso: input.nowIso,
     summary:
-      "Offboarding manifest (fixture). Local revoke + queue cancel + audit retained. Live provider revoke NOT_WIRED. Catalog NOT_RUN.",
+      "Offboarding manifest (fixture). Local revoke + queue cancel + audit retained. Live provider revoke NOT_WIRED. Incomplete until external revoke. ACCEPTED≠VERIFIED. Catalog NOT_RUN. externalEffects=NONE.",
+  };
+}
+
+/**
+ * Fail-closed honesty check for T-X073 offboarding manifests:
+ * ACTIVE_TOKEN + PROVIDER_REVOKE must remain BLOCKED_NOT_WIRED; live revoke NOT_WIRED;
+ * never invent COMPLETED remote revoke or live VERIFIED.
+ */
+export function assertOffboardActiveTokenResidualHonest(
+  manifest: OffboardingManifest,
+): {
+  ok: boolean;
+  code: "OFFBOARD_RESIDUAL_HONEST" | "OFFBOARD_RESIDUAL_DISHONEST";
+  reasons: string[];
+  liveProviderRevoke: "NOT_WIRED";
+  externalEffects: "NONE";
+} {
+  const reasons: string[] = [];
+  const active = manifest.residualObligations.find(
+    (o) => o.kind === ResidualObligationKind.ACTIVE_TOKEN,
+  );
+  const provider = manifest.residualObligations.find(
+    (o) => o.kind === ResidualObligationKind.PROVIDER_REVOKE,
+  );
+  if (active?.status !== ResidualObligationStatus.BLOCKED_NOT_WIRED) {
+    reasons.push("ACTIVE_TOKEN residual must be BLOCKED_NOT_WIRED (T-X073)");
+  }
+  if (provider?.status !== ResidualObligationStatus.BLOCKED_NOT_WIRED) {
+    reasons.push("PROVIDER_REVOKE residual must be BLOCKED_NOT_WIRED (T-X073)");
+  }
+  if (manifest.liveProviderRevoke !== "NOT_WIRED") {
+    reasons.push("liveProviderRevoke must stay NOT_WIRED");
+  }
+  if (manifest.externalEffects !== "NONE") {
+    reasons.push("externalEffects must be NONE");
+  }
+  if (manifest.catalogClaim !== "NOT_RUN") {
+    reasons.push("catalogClaim must stay NOT_RUN (fixture ACCEPTED ≠ VERIFIED)");
+  }
+  const blob = JSON.stringify(manifest);
+  // Allow honest "ACCEPTED≠VERIFIED" / "NOT_VERIFIED" phrasing; reject live success inventions.
+  if (
+    /liveProviderSuccessClaimed"\s*:\s*true/.test(blob) ||
+    /"live\s+VERIFIED"/i.test(blob) ||
+    /remote\s+revoke\s+(complete|succeeded)/i.test(blob) ||
+    /silently\s+VERIFIED\s+for\s+live/i.test(blob)
+  ) {
+    reasons.push("Manifest must not invent live VERIFIED or remote revoke success");
+  }
+  if (reasons.length > 0) {
+    return {
+      ok: false,
+      code: "OFFBOARD_RESIDUAL_DISHONEST",
+      reasons,
+      liveProviderRevoke: "NOT_WIRED",
+      externalEffects: "NONE",
+    };
+  }
+  return {
+    ok: true,
+    code: "OFFBOARD_RESIDUAL_HONEST",
+    reasons: [
+      "ACTIVE_TOKEN + PROVIDER_REVOKE BLOCKED_NOT_WIRED",
+      "liveProviderRevoke=NOT_WIRED externalEffects=NONE ACCEPTED≠VERIFIED",
+    ],
+    liveProviderRevoke: "NOT_WIRED",
+    externalEffects: "NONE",
   };
 }
 

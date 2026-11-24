@@ -3,6 +3,7 @@ import { EffectState } from "./effect-state-machine.js";
 import { ConnectionState, WriteReadiness } from "./connection-status.js";
 import {
   attemptLiveProviderRevoke,
+  assertOffboardActiveTokenResidualHonest,
   buildOffboardingManifest,
   buildRebindRecord,
   buildRotationRecord,
@@ -165,7 +166,10 @@ describe("credential rotation / revoke honesty", () => {
     });
     expect(live.ok).toBe(false);
     expect(live.code).toBe("LIVE_PROVIDER_REVOKE_NOT_WIRED");
+    expect(live.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(live.liveProviderSuccessClaimed).toBe(false);
     expect(live.externalEffects).toBe("NONE");
+    expect(live.reason).toMatch(/ACCEPTED≠VERIFIED/);
   });
 
   it("T-X029: different-account token requires explicit rebind; silent rotate denied", () => {
@@ -315,6 +319,28 @@ describe("credential rotation / revoke honesty", () => {
       (o) => o.kind === "ACTIVE_TOKEN",
     );
     expect(tokenObl?.status).toBe(ResidualObligationStatus.BLOCKED_NOT_WIRED);
+    expect(tokenObl?.summary).toMatch(/ACCEPTED≠VERIFIED/);
+    expect(manifest.summary).toMatch(/ACCEPTED≠VERIFIED/);
+
+    const honesty = assertOffboardActiveTokenResidualHonest(manifest);
+    expect(honesty.ok).toBe(true);
+    expect(honesty.code).toBe("OFFBOARD_RESIDUAL_HONEST");
+    expect(honesty.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(honesty.externalEffects).toBe("NONE");
+
+    const dishonest = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      liveProviderRevoke: "WIRED" as "NOT_WIRED",
+    });
+    expect(dishonest.ok).toBe(false);
+    expect(dishonest.code).toBe("OFFBOARD_RESIDUAL_DISHONEST");
+
+    const doubleLive = attemptLiveProviderRevoke({
+      connectionId: "conn-1",
+      referenceId: "cred-aaa",
+    });
+    expect(doubleLive.liveProviderSuccessClaimed).toBe(false);
+    expect(doubleLive.liveProviderRevoke).toBe("NOT_WIRED");
 
     const audit = createAuditEntry({
       entryId: "aud-1",

@@ -1859,6 +1859,7 @@ export {
   evaluateSilentRotateAllowed,
   evaluateExplicitRebind,
   attemptLiveProviderRevoke,
+  assertOffboardActiveTokenResidualHonest,
   buildOffboardingManifest,
   createAuditEntry,
   seedFixtureConnection,

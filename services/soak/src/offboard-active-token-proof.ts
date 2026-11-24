@@ -1,16 +1,14 @@
 /**
  * Fixture proof for T-X073 — offboarding retains active provider token residual.
- *
- * Catalog expected outcome is honesty that offboarding is incomplete until
- * live provider revoke is wired/performed. Asserts ACTIVE_TOKEN + PROVIDER_REVOKE
- * residuals as BLOCKED_NOT_WIRED, leases denied after local revoke, and
- * liveProviderRevoke stays NOT_WIRED. External effects: NONE.
+ * Hillclimb: re-offboard / double live-revoke stay NOT_WIRED; residual honesty
+ * helper; ACCEPTED≠VERIFIED; secrets never leak. External effects: NONE.
  * Never invents live VERIFIED. Does not touch rebind / #43 lane.
  */
 
 import { join } from "node:path";
 import {
   SoakProofKind,
+  assertOffboardActiveTokenResidualHonest,
   type SoakProofRecord,
 } from "@worksocial/domain";
 import { createCredentialBroker } from "@worksocial/credential-broker";
@@ -149,16 +147,83 @@ export async function proofOffboardActiveTokenResidual(
   const live = await creds.liveProviderRevoke({
     connectionId: seeded.connection.connectionId,
   });
-  if (live.code !== "LIVE_PROVIDER_REVOKE_NOT_WIRED") {
+  if (
+    live.code !== "LIVE_PROVIDER_REVOKE_NOT_WIRED" ||
+    live.liveProviderRevoke !== "NOT_WIRED" ||
+    live.liveProviderSuccessClaimed !== false ||
+    live.externalEffects !== "NONE"
+  ) {
     passed = false;
-    details.push(`liveProviderRevoke unexpected code=${live.code}`);
+    details.push(`liveProviderRevoke unexpected ${JSON.stringify(live)}`);
   } else {
     details.push(
-      "liveProviderRevoke=NOT_WIRED — T-X073 incomplete until external revoke",
+      "liveProviderRevoke=NOT_WIRED liveProviderSuccessClaimed=false — T-X073 incomplete until external revoke",
     );
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  const honesty = assertOffboardActiveTokenResidualHonest(manifest);
+  if (!honesty.ok) {
+    passed = false;
+    details.push(`residual honesty failed: ${honesty.reasons.join("; ")}`);
+  } else {
+    details.push(
+      `assertOffboardActiveTokenResidualHonest → ${honesty.code}; ACCEPTED≠VERIFIED`,
+    );
+  }
+
+  // Hillclimb: re-offboard after local revoke — residuals stay BLOCKED_NOT_WIRED.
+  const reOffboard = await creds.offboard({
+    connectionId: seeded.connection.connectionId,
+    approvedBy: "fixture-admin-reoffboard",
+    nowIso: nowPlus(nowIso, 450),
+  });
+  if (!reOffboard.ok) {
+    // Already-revoked may fail closed — still honest if not inventing live success.
+    details.push(
+      `Re-offboard after revoke: ${reOffboard.code} (fail-closed ok if no live VERIFIED)`,
+    );
+    if (
+      /VERIFIED|COMPLETED|live\s+revoke\s+success/i.test(
+        JSON.stringify(reOffboard),
+      )
+    ) {
+      passed = false;
+      details.push("Re-offboard must not invent live VERIFIED/COMPLETED revoke");
+    }
+  } else {
+    const reHonesty = assertOffboardActiveTokenResidualHonest(reOffboard.manifest);
+    if (!reHonesty.ok || reOffboard.manifest.liveProviderRevoke !== "NOT_WIRED") {
+      passed = false;
+      details.push(
+        `Re-offboard residual dishonest: ${reHonesty.reasons.join("; ")}`,
+      );
+    } else {
+      details.push(
+        "Re-offboard after local revoke → ACTIVE_TOKEN+PROVIDER_REVOKE still BLOCKED_NOT_WIRED",
+      );
+    }
+  }
+
+  // Hillclimb: double liveProviderRevoke — both stay NOT_WIRED, never success.
+  const live2 = await creds.liveProviderRevoke({
+    connectionId: seeded.connection.connectionId,
+  });
+  if (
+    live2.code !== "LIVE_PROVIDER_REVOKE_NOT_WIRED" ||
+    live2.liveProviderSuccessClaimed !== false ||
+    live2.externalEffects !== "NONE"
+  ) {
+    passed = false;
+    details.push(`double liveProviderRevoke unexpected ${JSON.stringify(live2)}`);
+  } else {
+    details.push(
+      "double liveProviderRevoke → NOT_WIRED twice (no invent remote success)",
+    );
+  }
+
+  details.push(
+    "liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED",
+  );
 
   return {
     proofId: `proof-offboard-token-${seeded.connection.connectionId}`,
@@ -167,7 +232,7 @@ export async function proofOffboardActiveTokenResidual(
     details,
     applyAttemptCount: 1,
     operationId: `op-tx073-${seeded.connection.connectionId}`,
-    createdAtIso: nowPlus(nowIso, 400),
+    createdAtIso: nowPlus(nowIso, 500),
     fixtureOnly: true,
   };
 }
