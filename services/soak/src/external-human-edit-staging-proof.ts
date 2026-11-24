@@ -17,6 +17,7 @@ import {
   digestFields,
   externalHumanEditLiveWiringStatus,
   independentVerifyStagingChange,
+  normalizeLiveTemporalWiringRequest,
   refuseClaimedVerifiedStaging,
   stageAgentChangeAgainstBase,
   type SoakProofRecord,
@@ -227,6 +228,93 @@ export function proofExternalHumanEditConflictRetained(
     passed = false;
     details.push(
       `Second-edit/restage unexpectedly status=${state.change?.status} restage=${JSON.stringify(restage)}`,
+    );
+  }
+
+  // STAGED_PENDING blind force (no human edit) still OVERWRITE_FORBIDDEN.
+  let pendingOnly = createExternalEditStagingState({
+    pageId: `${pageId}-pending`,
+    fields: baseFields,
+    revision: "rev-1",
+    nowIso,
+  });
+  const pendingStaged = stageAgentChangeAgainstBase(pendingOnly, {
+    changeId: `${changeId}-pending`,
+    expectedBaseRevision: "rev-1",
+    desiredFields: agentDesired,
+    nowIso,
+  });
+  if (pendingStaged.ok) {
+    pendingOnly = pendingStaged.state;
+  }
+  const pendingForce = attemptBlindAgentOverwrite(pendingOnly, { nowIso });
+  if (
+    pendingStaged.ok &&
+    !pendingForce.ok &&
+    pendingForce.code === "OVERWRITE_FORBIDDEN" &&
+    pendingForce.state.page.contentDigest === digestFields(agentDesired) &&
+    pendingForce.state.change?.status === StagingConflictStatus.STAGED_PENDING &&
+    pendingForce.liveTemporalWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "STAGED_PENDING blind force → OVERWRITE_FORBIDDEN; page unchanged; NOT_WIRED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `STAGED_PENDING force unexpectedly ${JSON.stringify(pendingForce)}`,
+    );
+  }
+
+  // Blank changeId / live stage / normalize fail-closed.
+  const blankId = stageAgentChangeAgainstBase(
+    createExternalEditStagingState({
+      pageId: `${pageId}-blank`,
+      fields: baseFields,
+      revision: "rev-1",
+      nowIso,
+    }),
+    {
+      changeId: "  ",
+      expectedBaseRevision: "rev-1",
+      desiredFields: agentDesired,
+      nowIso,
+    },
+  );
+  const liveStage = stageAgentChangeAgainstBase(
+    createExternalEditStagingState({
+      pageId: `${pageId}-live`,
+      fields: baseFields,
+      revision: "rev-1",
+      nowIso,
+    }),
+    {
+      changeId: `${changeId}-live`,
+      expectedBaseRevision: "rev-1",
+      desiredFields: agentDesired,
+      nowIso,
+      requestLiveTemporalWiring: true,
+    },
+  );
+  if (
+    !blankId.ok &&
+    blankId.code === "CHANGE_ID_REQUIRED" &&
+    blankId.liveTemporalWiring === "NOT_WIRED" &&
+    !liveStage.ok &&
+    liveStage.code === "LIVE_TEMPORAL_WIRING_NOT_WIRED" &&
+    normalizeLiveTemporalWiringRequest(true) === true &&
+    normalizeLiveTemporalWiringRequest("true") === true &&
+    normalizeLiveTemporalWiringRequest(1) === false &&
+    normalizeLiveTemporalWiringRequest("TRUE") === false &&
+    normalizeLiveTemporalWiringRequest(" true ") === false
+  ) {
+    details.push(
+      "Blank changeId → CHANGE_ID_REQUIRED; live stage → NOT_WIRED; normalizeLiveTemporalWiringRequest literal-only",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Blank/live/normalize unexpectedly blank=${JSON.stringify(blankId)} live=${JSON.stringify(liveStage)}`,
     );
   }
 

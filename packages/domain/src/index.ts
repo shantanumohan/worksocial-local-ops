@@ -331,6 +331,7 @@ export {
   independentVerifyStagingChange,
   refuseClaimedVerifiedStaging,
   externalHumanEditLiveWiringStatus,
+  normalizeLiveTemporalWiringRequest,
   type StagingConflictStatusValue,
   type StagingVerifyOutcomeValue,
   type StagingPageLedger,

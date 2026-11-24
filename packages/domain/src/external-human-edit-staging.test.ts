@@ -7,6 +7,7 @@ import {
   createExternalEditStagingState,
   externalHumanEditLiveWiringStatus,
   independentVerifyStagingChange,
+  normalizeLiveTemporalWiringRequest,
   refuseClaimedVerifiedStaging,
   stageAgentChangeAgainstBase,
 } from "./external-human-edit-staging.js";
@@ -242,5 +243,87 @@ describe("external human edit during staging (T-X025)", () => {
     expect(claimed.code).toBe("CLAIMED_VERIFIED_REFUSED");
     expect(claimed.verifiedClaimed).toBe(false);
     expect(claimed.reason).toMatch(/ACCEPTED only|not VERIFIED/i);
+
+    // STAGED_PENDING blind force still OVERWRITE_FORBIDDEN; page unchanged.
+    const force = attemptBlindAgentOverwrite(state, { nowIso: t0 });
+    expect(force.ok).toBe(false);
+    if (force.ok) return;
+    expect(force.code).toBe("OVERWRITE_FORBIDDEN");
+    expect(force.state.page.contentDigest).toBe(digestFields(agentDesired));
+    expect(force.state.change?.status).toBe(StagingConflictStatus.STAGED_PENDING);
+    expect(force.liveTemporalWiring).toBe("NOT_WIRED");
+  });
+
+  it("refuses blank changeId, whitespace base, live stage, and non-literal live aliases", () => {
+    const t0 = "2026-11-22T18:00:00.000Z";
+    const state = createExternalEditStagingState({
+      pageId: "page-pilot",
+      fields: baseFields,
+      revision: "rev-1",
+      nowIso: t0,
+    });
+
+    const blank = stageAgentChangeAgainstBase(state, {
+      changeId: "   ",
+      expectedBaseRevision: "rev-1",
+      desiredFields: agentDesired,
+      nowIso: t0,
+    });
+    expect(blank.ok).toBe(false);
+    if (blank.ok) return;
+    expect(blank.code).toBe("CHANGE_ID_REQUIRED");
+    expect(blank.liveTemporalWiring).toBe("NOT_WIRED");
+    expect(blank.externalEffects).toBe("NONE");
+
+    const padded = stageAgentChangeAgainstBase(state, {
+      changeId: "chg-pad",
+      expectedBaseRevision: " rev-1 ",
+      desiredFields: agentDesired,
+      nowIso: t0,
+    });
+    expect(padded.ok).toBe(true);
+    if (!padded.ok) return;
+    expect(padded.state.change?.expectedBaseRevision).toBe("rev-1");
+
+    const blankExpected = stageAgentChangeAgainstBase(state, {
+      changeId: "chg-blank-base",
+      expectedBaseRevision: "   ",
+      desiredFields: agentDesired,
+      nowIso: t0,
+    });
+    expect(blankExpected.ok).toBe(false);
+    if (blankExpected.ok) return;
+    expect(blankExpected.code).toBe("BASE_REVISION_MISMATCH");
+    expect(blankExpected.liveTemporalWiring).toBe("NOT_WIRED");
+
+    const liveStage = stageAgentChangeAgainstBase(state, {
+      changeId: "chg-live-stage",
+      expectedBaseRevision: "rev-1",
+      desiredFields: agentDesired,
+      nowIso: t0,
+      requestLiveTemporalWiring: true,
+    });
+    expect(liveStage.ok).toBe(false);
+    if (liveStage.ok) return;
+    expect(liveStage.code).toBe("LIVE_TEMPORAL_WIRING_NOT_WIRED");
+    expect(liveStage.state.change).toBeNull();
+
+    const liveLiteral = stageAgentChangeAgainstBase(state, {
+      changeId: "chg-live-str",
+      expectedBaseRevision: "rev-1",
+      desiredFields: agentDesired,
+      nowIso: t0,
+      requestLiveTemporalWiring: "true",
+    });
+    expect(liveLiteral.ok).toBe(false);
+    if (liveLiteral.ok) return;
+    expect(liveLiteral.code).toBe("LIVE_TEMPORAL_WIRING_NOT_WIRED");
+
+    expect(normalizeLiveTemporalWiringRequest(true)).toBe(true);
+    expect(normalizeLiveTemporalWiringRequest("true")).toBe(true);
+    expect(normalizeLiveTemporalWiringRequest(1)).toBe(false);
+    expect(normalizeLiveTemporalWiringRequest("TRUE")).toBe(false);
+    expect(normalizeLiveTemporalWiringRequest(" true ")).toBe(false);
+    expect(normalizeLiveTemporalWiringRequest("yes")).toBe(false);
   });
 });

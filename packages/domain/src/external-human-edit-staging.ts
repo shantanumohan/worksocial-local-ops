@@ -71,6 +71,18 @@ export function externalHumanEditLiveWiringStatus(): "NOT_WIRED" {
   return "NOT_WIRED";
 }
 
+/**
+ * Fail-closed live-wiring request flag (T-X025). Only boolean `true` or the
+ * exact literal string `"true"` counts — no trim/case folding, so `"TRUE"` /
+ * `" true "` / `1` never invent a live request that bypasses the refuse path
+ * when callers intended a request via non-literal aliases (those still refuse
+ * when passed through `attemptBlindAgentOverwrite` / stage with this helper
+ * returning true only for literal true).
+ */
+export function normalizeLiveTemporalWiringRequest(value: unknown): boolean {
+  return value === true || value === "true";
+}
+
 function nextRevision(prev: string): string {
   const n = Number.parseInt(prev.replace(/^rev-/, ""), 10);
   if (Number.isFinite(n)) {
@@ -119,37 +131,91 @@ export function stageAgentChangeAgainstBase(
     expectedBaseRevision: string;
     desiredFields: StagingPageFields;
     nowIso: string;
+    /** Request live Temporal apply — must stay NOT_WIRED offline. */
+    requestLiveTemporalWiring?: boolean | string | number | null;
   },
 ):
   | { ok: true; state: ExternalEditStagingState }
   | {
       ok: false;
-      code: "BASE_REVISION_MISMATCH" | "CHANGE_ALREADY_OPEN";
+      code:
+        | "BASE_REVISION_MISMATCH"
+        | "CHANGE_ALREADY_OPEN"
+        | "CHANGE_ID_REQUIRED"
+        | "LIVE_TEMPORAL_WIRING_NOT_WIRED";
       reason: string;
       state: ExternalEditStagingState;
+      liveTemporalWiring: "NOT_WIRED";
+      liveProviderSuccessClaimed: false;
+      externalEffects: "NONE";
     } {
+  const honesty = {
+    liveTemporalWiring: "NOT_WIRED" as const,
+    liveProviderSuccessClaimed: false as const,
+    externalEffects: "NONE" as const,
+  };
+
+  if (normalizeLiveTemporalWiringRequest(input.requestLiveTemporalWiring)) {
+    return {
+      ok: false,
+      code: "LIVE_TEMPORAL_WIRING_NOT_WIRED",
+      reason:
+        "Live Temporal/CMS staging remains NOT_WIRED — refuse live stage (T-X025)",
+      state: {
+        ...state,
+        ...honesty,
+      },
+      ...honesty,
+    };
+  }
+
+  if (!input.changeId.trim()) {
+    return {
+      ok: false,
+      code: "CHANGE_ID_REQUIRED",
+      reason: "changeId is required (blank/whitespace refused)",
+      state: {
+        ...state,
+        ...honesty,
+      },
+      ...honesty,
+    };
+  }
+
   if (state.change !== null) {
     return {
       ok: false,
       code: "CHANGE_ALREADY_OPEN",
       reason: "A staged change is already open — resolve conflict before restaging",
-      state,
+      state: {
+        ...state,
+        ...honesty,
+      },
+      ...honesty,
     };
   }
-  if (state.page.revision !== input.expectedBaseRevision) {
+
+  const expectedBase = input.expectedBaseRevision.trim();
+  const pageRevision = state.page.revision.trim();
+  if (!expectedBase || expectedBase !== pageRevision) {
     return {
       ok: false,
       code: "BASE_REVISION_MISMATCH",
       reason: `Expected base ${input.expectedBaseRevision}; page is ${state.page.revision}`,
-      state,
+      state: {
+        ...state,
+        ...honesty,
+      },
+      ...honesty,
     };
   }
+
   const desiredDigest = digestFields(input.desiredFields);
   const revision = nextRevision(state.page.revision);
   const change: StagedAgentChange = {
-    changeId: input.changeId,
+    changeId: input.changeId.trim(),
     pageId: state.page.pageId,
-    expectedBaseRevision: input.expectedBaseRevision,
+    expectedBaseRevision: expectedBase,
     desiredFields: { ...input.desiredFields },
     desiredDigest,
     status: StagingConflictStatus.STAGED_PENDING,
@@ -171,9 +237,7 @@ export function stageAgentChangeAgainstBase(
         updatedAtIso: input.nowIso,
       },
       change,
-      liveTemporalWiring: "NOT_WIRED",
-      liveProviderSuccessClaimed: false,
-      externalEffects: "NONE",
+      ...honesty,
     },
   };
 }
@@ -242,7 +306,7 @@ export function attemptBlindAgentOverwrite(
   input: {
     nowIso: string;
     /** Request live Temporal apply — must stay NOT_WIRED offline. */
-    requestLiveTemporalWiring?: boolean;
+    requestLiveTemporalWiring?: boolean | string | number | null;
   },
 ):
   | { ok: true; state: ExternalEditStagingState }
@@ -272,7 +336,7 @@ export function attemptBlindAgentOverwrite(
     externalEffects: "NONE" as const,
   };
 
-  if (input.requestLiveTemporalWiring) {
+  if (normalizeLiveTemporalWiringRequest(input.requestLiveTemporalWiring)) {
     return {
       ok: false,
       code: "LIVE_TEMPORAL_WIRING_NOT_WIRED",
