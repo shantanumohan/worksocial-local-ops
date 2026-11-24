@@ -1404,14 +1404,6 @@ export function soakNotWiredLiveWiring(): SoakNotWiredLiveWiring {
 export const SOAK_FIXTURE_STATUS_HONEST_NOTE =
   "M9 soak / acceptance evidence harness. Fixture proofs only. Live CMS/GSC/GA4/Zoho/Temporal NOT_WIRED. ChatGPT Ads access-blocked. ACCEPTED requires redacted evidence and complete proof set; never silently VERIFIED for live. Pilot gate uses server-recorded observations only. Short CI soaks do not satisfy the 72h pilot gate. Not R1-complete.";
 
-/**
- * Deterministic fixture clock for soak harness proofs that depend on
- * after-hours coverage (America/New_York via defaultResponsePolicy).
- * 2026-11-21 is Saturday → full-day coverage; avoids wall-clock CI flakes
- * during weekday business hours. Pilot gate still uses server wall clock.
- */
-export const SOAK_FIXTURE_HARNESS_NOW_ISO = "2026-11-21T18:00:00.000Z";
-
 export type PilotGateEvaluation = {
   status: PilotGateStatusValue;
   requiredMs: number;
