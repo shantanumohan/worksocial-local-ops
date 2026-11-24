@@ -979,7 +979,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X047** is fixture ACCEPTED only via the layout-specific capacity mismatch filter proof (`LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS`) — requested layout capacity wins on `runSemanticSearch`; marketing max / mismatched layout must not admit. Not sandbox/prod VERIFIED.
 
-**T-X051** is fixture ACCEPTED only via the wrong Zoho organization identity-mismatch proof (`WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH`) — observed org ≠ expected blocks CRM write/bind; live Zoho remains NOT_WIRED. Not sandbox/prod VERIFIED.
+**T-X051** is fixture ACCEPTED only via the wrong Zoho organization identity-mismatch proof (`WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH`) — observed org ≠ expected (incl. case-differ) blocks CRM write/bind; blank org refuse; fixture+`WIRED` / non-fixture matched refuse (`LIVE_TRANSPORT_NOT_WIRED`); `liveProviderWiring=NOT_WIRED`; `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 
 **T-X062** is fixture ACCEPTED only via the SSE gap full-state resync proof (`SSE_GAP_FULL_STATE_RESYNC`) — after offline UI reconnect (and for online gaps), a non-contiguous SSE sequence refuses incremental catch-up; outstanding `minResyncThroughSeq` blocks contiguous invent; covering full-state snapshot replaces UI stateDigest; invalid seq / blank digest refuse; `liveProviderWiring=NOT_WIRED`; missed events are never invented. Not sandbox/prod VERIFIED.
 
@@ -1079,7 +1079,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X048 | Unknown price or availability | No invention *(fixture ACCEPTED)* |
 | T-X049 | Thank-you but no CRM record | Fail at delivery *(fixture ACCEPTED)* |
 | T-X050 | Public synthetic flag abuse | Server grant required *(fixture ACCEPTED)* |
-| T-X051 | Wrong Zoho organization | Identity mismatch blocks *(fixture ACCEPTED — wrong-zoho-organization identity-mismatch proof; not sandbox/prod VERIFIED)* |
+| T-X051 | Wrong Zoho organization | Identity mismatch blocks *(fixture ACCEPTED — wrong-zoho-organization identity-mismatch proof; liveProviderWiring NOT_WIRED; externalEffects NONE; not sandbox/prod VERIFIED)* |
 | T-X052 | Synthetic conversion contamination | Excluded from commerce *(fixture ACCEPTED — synthetic conversion contamination excluded proof; not sandbox/prod VERIFIED)* |
 | T-X053 | Takeover races queued reply | Version invalidates send *(fixture ACCEPTED — takeover cancels unsent / VERSION_MISMATCH race proof; not sandbox/prod VERIFIED)* |
 | T-X054 | Reply sent but CRM fails | CRM reconciles; no resend *(fixture ACCEPTED — reply sent CRM reconciles no-resend proof; liveCrmWiring NOT_WIRED; not sandbox/prod VERIFIED)* |

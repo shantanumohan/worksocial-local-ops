@@ -6,7 +6,7 @@
  * no silent cross-org write. Live Zoho remains NOT_WIRED.
  *
  * Pure domain — no network I/O. Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
- * External effects: NONE.
+ * External effects: NONE. Live provider wiring: NOT_WIRED.
  */
 
 export const WRONG_ZOHO_ORGANIZATION_RELATED_CASE_IDS = ["T-X051"] as const;
@@ -47,14 +47,19 @@ export type ValidateZohoOrganizationBindingInput = {
   operation: "bind" | "crm_write" | "read_identity";
 };
 
+type Honesty = {
+  externalEffects: "NONE";
+  liveProviderWiring: "NOT_WIRED";
+};
+
 export type ValidateZohoOrganizationBindingResult =
-  | {
+  | ({
       ok: true;
       code: typeof ZohoOrganizationDecisionCode.MATCHED_FIXTURE;
       allowCrmWrite: true;
       reason: string;
-    }
-  | {
+    } & Honesty)
+  | ({
       ok: false;
       code: Exclude<
         ZohoOrganizationDecisionCodeValue,
@@ -62,15 +67,23 @@ export type ValidateZohoOrganizationBindingResult =
       >;
       allowCrmWrite: false;
       reason: string;
-    };
+    } & Honesty);
 
 function normalizeOrgId(raw: string): string {
   return raw.trim();
 }
 
+function honesty(): Honesty {
+  return {
+    externalEffects: "NONE",
+    liveProviderWiring: "NOT_WIRED",
+  };
+}
+
 /**
  * Validate that the observed Zoho organization matches the expected binding.
  * Wrong organization → IDENTITY_MISMATCH; CRM write blocked.
+ * Live / WIRED / non-fixture paths never invent success.
  */
 export function validateZohoOrganizationBinding(
   input: ValidateZohoOrganizationBindingInput,
@@ -84,6 +97,7 @@ export function validateZohoOrganizationBinding(
       code: ZohoOrganizationDecisionCode.MISSING_EXPECTED_ORG,
       allowCrmWrite: false,
       reason: "Expected Zoho organization id is required — refuse bind/write",
+      ...honesty(),
     };
   }
 
@@ -94,6 +108,7 @@ export function validateZohoOrganizationBinding(
       allowCrmWrite: false,
       reason:
         "Observed Zoho organization id is missing — identity mismatch blocks",
+      ...honesty(),
     };
   }
 
@@ -103,19 +118,24 @@ export function validateZohoOrganizationBinding(
       code: ZohoOrganizationDecisionCode.IDENTITY_MISMATCH,
       allowCrmWrite: false,
       reason: `Wrong Zoho organization: expected=${expected} observed=${observed} — identity mismatch blocks ${input.operation}`,
+      ...honesty(),
     };
   }
 
   const env = String(input.environment).trim().toLowerCase();
   const isFixture = env === ZohoOrganizationEnvironment.FIXTURE;
 
+  // Fixture path still refuses claimed live wiring — never invent VERIFIED.
   if (!isFixture || input.liveZohoWiring !== "NOT_WIRED") {
     return {
       ok: false,
       code: ZohoOrganizationDecisionCode.LIVE_TRANSPORT_NOT_WIRED,
       allowCrmWrite: false,
       reason:
-        "Zoho CRM write refused outside fixture NOT_WIRED path — no invented live success",
+        input.liveZohoWiring === "WIRED"
+          ? "Zoho CRM write refused while liveZohoWiring=WIRED — live transport NOT_WIRED; no invented live success (T-X051)"
+          : "Zoho CRM write refused outside fixture NOT_WIRED path — no invented live success",
+      ...honesty(),
     };
   }
 
@@ -124,6 +144,7 @@ export function validateZohoOrganizationBinding(
     code: ZohoOrganizationDecisionCode.MATCHED_FIXTURE,
     allowCrmWrite: true,
     reason:
-      "Fixture Zoho organization identity matched — CRM write allowed in fixture only (not live VERIFIED)",
+      "Fixture Zoho organization identity matched — CRM write allowed in fixture only (not live VERIFIED); liveProviderWiring=NOT_WIRED",
+    ...honesty(),
   };
 }

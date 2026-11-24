@@ -18,6 +18,8 @@ describe("wrong-zoho-organization (T-X051)", () => {
     if (!result.ok) {
       expect(result.code).toBe(ZohoOrganizationDecisionCode.IDENTITY_MISMATCH);
       expect(result.allowCrmWrite).toBe(false);
+      expect(result.externalEffects).toBe("NONE");
+      expect(result.liveProviderWiring).toBe("NOT_WIRED");
     }
   });
 
@@ -33,6 +35,8 @@ describe("wrong-zoho-organization (T-X051)", () => {
     if (result.ok) {
       expect(result.code).toBe(ZohoOrganizationDecisionCode.MATCHED_FIXTURE);
       expect(result.allowCrmWrite).toBe(true);
+      expect(result.externalEffects).toBe("NONE");
+      expect(result.liveProviderWiring).toBe("NOT_WIRED");
     }
   });
 
@@ -49,6 +53,7 @@ describe("wrong-zoho-organization (T-X051)", () => {
       expect(missingExpected.code).toBe(
         ZohoOrganizationDecisionCode.MISSING_EXPECTED_ORG,
       );
+      expect(missingExpected.liveProviderWiring).toBe("NOT_WIRED");
     }
 
     const missingObserved = validateZohoOrganizationBinding({
@@ -80,6 +85,72 @@ describe("wrong-zoho-organization (T-X051)", () => {
         ZohoOrganizationDecisionCode.LIVE_TRANSPORT_NOT_WIRED,
       );
       expect(result.allowCrmWrite).toBe(false);
+      expect(result.externalEffects).toBe("NONE");
+    }
+  });
+
+  it("matches after trimming whitespace around org ids", () => {
+    const result = validateZohoOrganizationBinding({
+      expectedOrganizationId: "  zoho-org-fixture  ",
+      observedOrganizationId: "zoho-org-fixture",
+      environment: ZohoOrganizationEnvironment.FIXTURE,
+      liveZohoWiring: "NOT_WIRED",
+      operation: "bind",
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.code).toBe(ZohoOrganizationDecisionCode.MATCHED_FIXTURE);
+      expect(result.liveProviderWiring).toBe("NOT_WIRED");
+    }
+  });
+
+  it("treats case-differing org ids as IDENTITY_MISMATCH", () => {
+    const result = validateZohoOrganizationBinding({
+      expectedOrganizationId: "zoho-org-fixture",
+      observedOrganizationId: "Zoho-Org-Fixture",
+      environment: ZohoOrganizationEnvironment.FIXTURE,
+      liveZohoWiring: "NOT_WIRED",
+      operation: "crm_write",
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe(ZohoOrganizationDecisionCode.IDENTITY_MISMATCH);
+      expect(result.allowCrmWrite).toBe(false);
+    }
+  });
+
+  it("refuses fixture match when liveZohoWiring=WIRED", () => {
+    const result = validateZohoOrganizationBinding({
+      expectedOrganizationId: "zoho-org-fixture",
+      observedOrganizationId: "zoho-org-fixture",
+      environment: ZohoOrganizationEnvironment.FIXTURE,
+      liveZohoWiring: "WIRED",
+      operation: "crm_write",
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe(
+        ZohoOrganizationDecisionCode.LIVE_TRANSPORT_NOT_WIRED,
+      );
+      expect(result.allowCrmWrite).toBe(false);
+      expect(result.liveProviderWiring).toBe("NOT_WIRED");
+      expect(result.externalEffects).toBe("NONE");
+    }
+  });
+
+  it("refuses matching sandbox org (non-fixture) with NOT_WIRED", () => {
+    const result = validateZohoOrganizationBinding({
+      expectedOrganizationId: "zoho-org-sandbox",
+      observedOrganizationId: "zoho-org-sandbox",
+      environment: ZohoOrganizationEnvironment.SANDBOX,
+      liveZohoWiring: "NOT_WIRED",
+      operation: "bind",
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe(
+        ZohoOrganizationDecisionCode.LIVE_TRANSPORT_NOT_WIRED,
+      );
     }
   });
 });
