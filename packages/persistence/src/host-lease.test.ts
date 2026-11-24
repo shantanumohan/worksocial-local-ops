@@ -281,4 +281,60 @@ describe("host-lease", () => {
       expect(boundary.lease.generationId).toBe("gen-3");
     }
   });
+
+  it("deepen: wake/catchup mid-gap held; past-expiry single reclaim (T-X002)", () => {
+    const seed = acquireHostLease(
+      null,
+      { hostId: "host-wake", holderPid: 1, generationId: "gen-a", ttlMs: 5_000 },
+      clockAt(10_000),
+    );
+    expect(seed.ok).toBe(true);
+    if (!seed.ok) return;
+
+    const mid = classifyWakeCatchupLeaseGap(seed.lease, 12_000);
+    expect(mid).toEqual({ kind: "mid_gap_held", expired: false });
+    const midDenied = acquireHostLease(
+      seed.lease,
+      { hostId: "host-wake", holderPid: 2, generationId: "gen-b", ttlMs: 5_000 },
+      clockAt(12_000),
+    );
+    expect(midDenied.ok).toBe(false);
+    if (!midDenied.ok) expect(midDenied.reason).toBe("LEASE_HELD");
+
+    const past = classifyWakeCatchupLeaseGap(seed.lease, 20_000);
+    expect(past.kind).toBe("wake_past_expiry");
+    if (past.kind === "wake_past_expiry") {
+      expect(past.expired).toBe(true);
+      expect(past.gapMs).toBe(5_000);
+    }
+    const reclaim = acquireHostLease(
+      seed.lease,
+      { hostId: "host-wake", holderPid: 3, generationId: "gen-c", ttlMs: 5_000 },
+      clockAt(20_000),
+    );
+    expect(reclaim.ok).toBe(true);
+    if (reclaim.ok) {
+      expect(reclaim.reclaimed).toBe(true);
+      expect(reclaim.lease.leaseId).not.toBe(seed.lease.leaseId);
+    }
+
+    // Multi-TTL sleep still yields one reclaim, not invented missed gens.
+    const multi = acquireHostLease(
+      null,
+      { hostId: "host-multi", holderPid: 10, generationId: "gen-m1", ttlMs: 1_000 },
+      clockAt(30_000),
+    );
+    expect(multi.ok).toBe(true);
+    if (!multi.ok) return;
+    const far = classifyWakeCatchupLeaseGap(multi.lease, 40_000);
+    expect(far.kind).toBe("wake_past_expiry");
+    if (far.kind === "wake_past_expiry") expect(far.gapMs).toBe(9_000);
+    const farReclaim = acquireHostLease(
+      multi.lease,
+      { hostId: "host-multi", holderPid: 11, generationId: "gen-m2", ttlMs: 5_000 },
+      clockAt(40_000),
+    );
+    expect(farReclaim.ok).toBe(true);
+    if (farReclaim.ok) expect(farReclaim.reclaimed).toBe(true);
+  });
 });

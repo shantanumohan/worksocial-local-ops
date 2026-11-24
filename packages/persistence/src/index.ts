@@ -41,6 +41,7 @@ export {
 export {
   HOST_LEASE_HELD_MESSAGE,
   acquireHostLease,
+  classifyWakeCatchupLeaseGap,
   normalizeHostLeaseToken,
   isLeaseExpired,
   isLeaseHeldByGeneration,

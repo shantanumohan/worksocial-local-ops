@@ -7,7 +7,8 @@
  *
  * Hillclimb: third competitor refused; isHolderAlive=true still LEASE_HELD;
  * whitespace-normalized tokens; LEASE_HELD message generic (no host/gen/pid leak);
- * honesty NOT_WIRED / externalEffects NONE. Never invents live VERIFIED.
+ * wake/catchup clock gaps (mid-gap held; past-expiry single reclaim); honesty
+ * NOT_WIRED / externalEffects NONE. Never invents live VERIFIED.
  */
 
 import { randomUUID } from "node:crypto";
@@ -281,7 +282,134 @@ export function proofCompetingSupervisorLease(
     }
   }
 
-  // 12. Ownership kill auth fail-closed for mismatched PID / missing markers.
+  // 12. Deepen — wake/catchup clock gaps: mid-gap held, wake-past-expiry reclaim once.
+  const wakeBase = baseMs + 90_000;
+  const wakeLease = acquireHostLease(
+    null,
+    {
+      hostId: "host-wake-soak",
+      holderPid: 8001,
+      generationId: "gen-wake-a",
+      ttlMs: 5_000,
+    },
+    clockAt(wakeBase),
+  );
+  if (!wakeLease.ok) {
+    passed = false;
+    details.push("Wake-catchup seed acquire failed");
+  } else {
+    const midGapMs = wakeBase + 2_000;
+    const midClass = classifyWakeCatchupLeaseGap(wakeLease.lease, midGapMs);
+    const midHeld = acquireHostLease(
+      wakeLease.lease,
+      {
+        hostId: "host-wake-soak",
+        holderPid: 8002,
+        generationId: "gen-wake-b",
+        ttlMs: 60_000,
+      },
+      clockAt(midGapMs),
+    );
+    if (
+      midClass.kind === "mid_gap_held" &&
+      !midClass.expired &&
+      !midHeld.ok &&
+      midHeld.reason === "LEASE_HELD"
+    ) {
+      details.push("Wake mid-gap classify=mid_gap_held competitor LEASE_HELD");
+    } else {
+      passed = false;
+      details.push("Wake mid-gap did not stay held");
+    }
+
+    const pastExpiryMs = wakeBase + 12_000;
+    const pastClass = classifyWakeCatchupLeaseGap(wakeLease.lease, pastExpiryMs);
+    const wakeReclaim = acquireHostLease(
+      wakeLease.lease,
+      {
+        hostId: "host-wake-soak",
+        holderPid: 8003,
+        generationId: "gen-wake-c",
+        ttlMs: 60_000,
+      },
+      clockAt(pastExpiryMs),
+    );
+    if (
+      pastClass.kind === "wake_past_expiry" &&
+      pastClass.expired &&
+      pastClass.gapMs >= 7_000 &&
+      wakeReclaim.ok &&
+      wakeReclaim.reclaimed
+    ) {
+      details.push(
+        `Wake past-expiry classify=wake_past_expiry gapMs=${pastClass.gapMs} reclaim ok`,
+      );
+      const afterWakeSecond = acquireHostLease(
+        wakeReclaim.lease,
+        {
+          hostId: "host-wake-soak",
+          holderPid: 8004,
+          generationId: "gen-wake-d",
+          ttlMs: 60_000,
+        },
+        clockAt(pastExpiryMs + 50),
+      );
+      if (!afterWakeSecond.ok && afterWakeSecond.reason === "LEASE_HELD") {
+        details.push("Post-wake-reclaim second competitor refused LEASE_HELD");
+      } else {
+        passed = false;
+        details.push("Post-wake-reclaim second competitor unexpectedly acquired");
+      }
+    } else {
+      passed = false;
+      details.push("Wake past-expiry reclaim failed");
+    }
+
+    // Multi-TTL sleep: one catchup reclaim only (no invented missed generations).
+    const multi = acquireHostLease(
+      null,
+      {
+        hostId: "host-wake-multi",
+        holderPid: 8010,
+        generationId: "gen-multi-a",
+        ttlMs: 1_000,
+      },
+      clockAt(wakeBase + 20_000),
+    );
+    if (!multi.ok) {
+      passed = false;
+      details.push("Multi-TTL wake seed acquire failed");
+    } else {
+      const farWakeMs = wakeBase + 20_000 + 10_000;
+      const farClass = classifyWakeCatchupLeaseGap(multi.lease, farWakeMs);
+      const farReclaim = acquireHostLease(
+        multi.lease,
+        {
+          hostId: "host-wake-multi",
+          holderPid: 8011,
+          generationId: "gen-multi-b",
+          ttlMs: 60_000,
+        },
+        clockAt(farWakeMs),
+      );
+      if (
+        farClass.kind === "wake_past_expiry" &&
+        farClass.gapMs >= 9_000 &&
+        farReclaim.ok &&
+        farReclaim.reclaimed &&
+        farReclaim.lease.leaseId !== multi.lease.leaseId
+      ) {
+        details.push(
+          "Multi-TTL wake catchup single reclaim (no invented missed gens)",
+        );
+      } else {
+        passed = false;
+        details.push("Multi-TTL wake catchup reclaim failed");
+      }
+    }
+  }
+
+  // 13. Ownership kill auth fail-closed for mismatched PID / missing markers.
   const ownershipOk = verifyProcessOwnership(
     { pid: 1001, serviceId: "api", generationId: genA },
     {
