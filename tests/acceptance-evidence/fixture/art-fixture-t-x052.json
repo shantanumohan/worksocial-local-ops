@@ -3,13 +3,13 @@
   "caseId": "T-X052",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X052 (Synthetic conversion contamination — excluded from commerce)\nproof=synthetic_conversion_contamination_excluded applyCount=1 :: synthetic conversion metric → excluded (not measured commerce win) | commerce projection excludes synthetic conversion contaminant (leadCount=1, revenue=5000, syntheticExcluded=1; contaminant 99999 not counted) | counterfactual: raw ledger revenue 104999 ≠ commerce revenue 5000 (contamination blocked) | appendCommerceLead refuses synthetic && countedInCommerce (fail closed) | createSyntheticLead synthetic=true + assertSyntheticExcludedFromCommercial | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X052 (Synthetic conversion contamination — excluded from commerce)\nproof=synthetic_conversion_contamination_excluded applyCount=1 :: synthetic conversion metric → excluded (not measured commerce win) | commerce projection excludes synthetic conversion contaminants (leadCount=1, revenue=5000, syntheticExcluded=2, syntheticExcludedRevenueMinor=100000; contaminants not counted; liveProviderWiring=NOT_WIRED) | counterfactual: raw ledger revenue 105000 ≠ commerce revenue 5000 (contamination blocked) | appendCommerceLead refuses synthetic && countedInCommerce (fail closed) | defense-in-depth: slipped synthetic+countedInCommerce still excluded from projection | createSyntheticLead synthetic=true + assertSyntheticExcludedFromCommercial | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "synthetic_conversion_contamination_excluded"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x052.json",
-  "createdAtIso": "2026-11-24T23:29:25.360Z",
+  "createdAtIso": "2026-11-24T23:33:50.262Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x052-f665c305764a"
+  "uniqueSourceArtifactId": "art-fixture-t-x052-802f05648491"
 }

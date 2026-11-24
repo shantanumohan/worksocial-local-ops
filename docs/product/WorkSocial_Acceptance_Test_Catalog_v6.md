@@ -940,7 +940,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X026** is fixture ACCEPTED only via the concurrent final budget reservation cap proof (`CONCURRENT_FINAL_BUDGET_RESERVATION_CAP`) — same-snapshot finals compose to `BUDGET_EXHAUSTED`; reserved never exceeds the daily limit. Not sandbox/prod VERIFIED.
 
-**T-X052** is fixture ACCEPTED only via the synthetic conversion contamination excluded proof (`SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED`) — synthetic conversion contaminants are projected out of commerce denominators; `synthetic && countedInCommerce` is refused. Distinct from T-X039/T-US-058 metric-denominators honesty and T-X050 public-flag grant. Not sandbox/prod VERIFIED.
+**T-X052** is fixture ACCEPTED only via the synthetic conversion contamination excluded proof (`SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED`) — synthetic conversion contaminants are projected out of commerce denominators (`syntheticExcludedRevenueMinor` tracked); `synthetic && countedInCommerce` is refused; defense-in-depth projection; live `NOT_WIRED`. Distinct from T-X039/T-US-058 metric-denominators honesty and T-X050 public-flag grant. Not sandbox/prod VERIFIED.
 
 **T-X054** is fixture ACCEPTED only via the reply sent CRM reconciles no-resend proof (`REPLY_SENT_CRM_RECONCILES_NO_RESEND`) — after outbound SENT/DELIVERED, CRM write failure reconciles/retries CRM only; outbound stays `retain_sent` and same-body resend is suppressed; inbound/QUEUED gated; CRM fail without intent still no resend; module mismatch still no resend; `fixtureOnly=false` / `claimLiveVerified` / `requestLiveCrmWire` → `LIVE_CRM_CLAIM_REFUSED`; `liveCrmWiring` stays NOT_WIRED; ChatGPT Ads ACCESS_BLOCKED; externalEffects NONE. Distinct from thank-you-without-CRM (T-US-040/T-X049). Not sandbox/prod VERIFIED.
 
@@ -1080,7 +1080,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X049 | Thank-you but no CRM record | Fail at delivery *(fixture ACCEPTED)* |
 | T-X050 | Public synthetic flag abuse | Server grant required *(fixture ACCEPTED)* |
 | T-X051 | Wrong Zoho organization | Identity mismatch blocks *(fixture ACCEPTED — wrong-zoho-organization identity-mismatch proof; liveProviderWiring NOT_WIRED; externalEffects NONE; not sandbox/prod VERIFIED)* |
-| T-X052 | Synthetic conversion contamination | Excluded from commerce *(fixture ACCEPTED — synthetic conversion contamination excluded proof; not sandbox/prod VERIFIED)* |
+| T-X052 | Synthetic conversion contamination | Excluded from commerce *(fixture ACCEPTED — synthetic conversion contamination excluded proof; excluded-revenue / NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X053 | Takeover races queued reply | Version invalidates send *(fixture ACCEPTED — takeover cancels unsent / VERSION_MISMATCH race proof; not sandbox/prod VERIFIED)* |
 | T-X054 | Reply sent but CRM fails | CRM reconciles; no resend *(fixture ACCEPTED — reply sent CRM reconciles no-resend proof; liveCrmWiring NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X055 | Unknown policy question | Escalate without promise *(fixture ACCEPTED — unknown policy question escalates without promise proof; not sandbox/prod VERIFIED)* |

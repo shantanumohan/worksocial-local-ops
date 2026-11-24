@@ -43,6 +43,10 @@ describe("lead-capture domain", () => {
     expect(totals.leadCount).toBe(1);
     expect(totals.revenueMinor).toBe(5000);
     expect(totals.syntheticExcludedCount).toBe(1);
+    expect(totals.syntheticExcludedRevenueMinor).toBe(99999);
+    expect(totals.liveProviderWiring).toBe("NOT_WIRED");
+    expect(totals.externalEffects).toBe("NONE");
+    expect(totals.fixtureOnly).toBe(true);
   });
 
   it("refuses synthetic leads marked countedInCommerce", () => {
@@ -59,6 +63,60 @@ describe("lead-capture domain", () => {
         now,
       ),
     ).toThrow(/countedInCommerce/);
+  });
+
+  it("projects out synthetic even if countedInCommerce slipped true (T-X052)", () => {
+    const totals = projectCommerceTotals([
+      {
+        recordId: "real",
+        synthetic: false,
+        revenueMinor: 1000,
+        countedInCommerce: true,
+      },
+      {
+        recordId: "slipped-synthetic",
+        synthetic: true,
+        revenueMinor: 50_000,
+        countedInCommerce: true,
+      },
+    ]);
+    expect(totals.leadCount).toBe(1);
+    expect(totals.revenueMinor).toBe(1000);
+    expect(totals.syntheticExcludedCount).toBe(1);
+    expect(totals.syntheticExcludedRevenueMinor).toBe(50_000);
+  });
+
+  it("does not count non-commerce real rows or multiple synthetics into leadCount", () => {
+    const totals = projectCommerceTotals([
+      {
+        recordId: "real-commerce",
+        synthetic: false,
+        revenueMinor: 2000,
+        countedInCommerce: true,
+      },
+      {
+        recordId: "real-audit-only",
+        synthetic: false,
+        revenueMinor: 3000,
+        countedInCommerce: false,
+      },
+      {
+        recordId: "syn-a",
+        synthetic: true,
+        revenueMinor: 10,
+        countedInCommerce: false,
+      },
+      {
+        recordId: "syn-b",
+        synthetic: true,
+        revenueMinor: 20,
+        countedInCommerce: false,
+      },
+    ]);
+    expect(totals.leadCount).toBe(1);
+    expect(totals.revenueMinor).toBe(2000);
+    expect(totals.syntheticExcludedCount).toBe(2);
+    expect(totals.syntheticExcludedRevenueMinor).toBe(30);
   });
 
   it("verifies required canary CRM fields", () => {
