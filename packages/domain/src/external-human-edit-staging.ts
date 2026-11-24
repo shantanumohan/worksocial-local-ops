@@ -105,9 +105,9 @@ export function createExternalEditStagingState(input: {
   }
   return {
     page: {
-      pageId: input.pageId,
+      pageId: input.pageId.trim(),
       fields: { ...input.fields },
-      revision: input.revision,
+      revision: input.revision.trim(),
       contentDigest: digestFields(input.fields),
       updatedAtIso: input.nowIso,
     },
@@ -116,6 +116,97 @@ export function createExternalEditStagingState(input: {
     liveTemporalWiring: "NOT_WIRED",
     liveProviderSuccessClaimed: false,
     externalEffects: "NONE",
+  };
+}
+
+/**
+ * Refuse silently clearing CONFLICT_RETAINED without an owner acknowledgment.
+ * Agent may not drop the conflict to invent a clean STAGED_PENDING / VERIFIED path.
+ */
+export function refuseSilentConflictClear(
+  state: ExternalEditStagingState,
+  input: { ownerAcknowledged?: boolean; nowIso: string },
+):
+  | {
+      ok: true;
+      code: "OWNER_ACK_RECORDED_CONFLICT_KEPT";
+      reason: string;
+      verifiedClaimed: false;
+      liveTemporalWiring: "NOT_WIRED";
+      liveProviderSuccessClaimed: false;
+      externalEffects: "NONE";
+      state: ExternalEditStagingState;
+    }
+  | {
+      ok: false;
+      code: "SILENT_CLEAR_FORBIDDEN" | "NO_CONFLICT";
+      reason: string;
+      verifiedClaimed: false;
+      liveTemporalWiring: "NOT_WIRED";
+      liveProviderSuccessClaimed: false;
+      externalEffects: "NONE";
+      state: ExternalEditStagingState;
+    } {
+  const honesty = {
+    verifiedClaimed: false as const,
+    liveTemporalWiring: "NOT_WIRED" as const,
+    liveProviderSuccessClaimed: false as const,
+    externalEffects: "NONE" as const,
+  };
+  const nextState: ExternalEditStagingState = {
+    ...state,
+    ...honesty,
+  };
+
+  if (state.change?.status !== StagingConflictStatus.CONFLICT_RETAINED) {
+    return {
+      ok: false,
+      code: "NO_CONFLICT",
+      reason: "No CONFLICT_RETAINED change to clear",
+      state: nextState,
+      ...honesty,
+    };
+  }
+
+  if (!input.ownerAcknowledged) {
+    return {
+      ok: false,
+      code: "SILENT_CLEAR_FORBIDDEN",
+      reason:
+        "Silent conflict clear forbidden — owner acknowledgment required; conflict retained (T-X025)",
+      state: {
+        ...nextState,
+        change: {
+          ...state.change,
+          status: StagingConflictStatus.CONFLICT_RETAINED,
+          recoveryNote:
+            state.change.recoveryNote ??
+            "Conflict retained — silent clear forbidden",
+          updatedAtIso: input.nowIso,
+        },
+      },
+      ...honesty,
+    };
+  }
+
+  // Owner ack recorded but conflict stays retained until a separate resolve path;
+  // never invents VERIFIED or clears to NONE.
+  return {
+    ok: true,
+    code: "OWNER_ACK_RECORDED_CONFLICT_KEPT",
+    reason:
+      "Owner acknowledgment recorded; CONFLICT_RETAINED kept (ACCEPTED≠VERIFIED)",
+    state: {
+      ...nextState,
+      change: {
+        ...state.change,
+        status: StagingConflictStatus.CONFLICT_RETAINED,
+        recoveryNote:
+          "Owner acknowledged external human edit — conflict still retained; not VERIFIED",
+        updatedAtIso: input.nowIso,
+      },
+    },
+    ...honesty,
   };
 }
 
@@ -449,7 +540,11 @@ export function refuseClaimedVerifiedStaging(
  */
 export function independentVerifyStagingChange(
   state: ExternalEditStagingState,
-  input: { nowIso: string },
+  input: {
+    nowIso: string;
+    /** Request live Temporal verify — must stay NOT_WIRED offline. */
+    requestLiveTemporalWiring?: boolean | string | number | null;
+  },
 ): {
   outcome: StagingVerifyOutcomeValue;
   matched: boolean;
@@ -459,6 +554,7 @@ export function independentVerifyStagingChange(
   externalEffects: "NONE";
   details: string[];
   state: ExternalEditStagingState;
+  refusedLiveTemporalWiring?: boolean;
 } {
   const honesty = {
     verifiedClaimed: false as const,
@@ -466,6 +562,23 @@ export function independentVerifyStagingChange(
     liveProviderSuccessClaimed: false as const,
     externalEffects: "NONE" as const,
   };
+
+  if (normalizeLiveTemporalWiringRequest(input.requestLiveTemporalWiring)) {
+    return {
+      outcome: StagingVerifyOutcome.MISMATCH,
+      matched: false,
+      details: [
+        "LIVE_TEMPORAL_WIRING_NOT_WIRED — refuse live independent verify (T-X025)",
+        "verifiedClaimed=false",
+      ],
+      state: {
+        ...state,
+        ...honesty,
+      },
+      refusedLiveTemporalWiring: true,
+      ...honesty,
+    };
+  }
 
   if (!state.change) {
     return {

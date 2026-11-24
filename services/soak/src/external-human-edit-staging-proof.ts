@@ -19,6 +19,7 @@ import {
   independentVerifyStagingChange,
   normalizeLiveTemporalWiringRequest,
   refuseClaimedVerifiedStaging,
+  refuseSilentConflictClear,
   stageAgentChangeAgainstBase,
   type SoakProofRecord,
 } from "@worksocial/domain";
@@ -315,6 +316,50 @@ export function proofExternalHumanEditConflictRetained(
     passed = false;
     details.push(
       `Blank/live/normalize unexpectedly blank=${JSON.stringify(blankId)} live=${JSON.stringify(liveStage)}`,
+    );
+  }
+
+  // NO_OPEN_CHANGE; multi-overwrite under conflict; silent clear forbidden; live verify refused.
+  const emptyOverwrite = attemptBlindAgentOverwrite(
+    createExternalEditStagingState({
+      pageId: `${pageId}-empty`,
+      fields: baseFields,
+      revision: "rev-1",
+      nowIso,
+    }),
+    { nowIso },
+  );
+  const multi = attemptBlindAgentOverwrite(state, { nowIso: tSecond });
+  if (multi.ok === false) {
+    state = multi.state;
+  }
+  const silent = refuseSilentConflictClear(state, { nowIso: tSecond });
+  const liveVerify = independentVerifyStagingChange(state, {
+    nowIso: tSecond,
+    requestLiveTemporalWiring: true,
+  });
+  if (
+    !emptyOverwrite.ok &&
+    emptyOverwrite.code === "NO_OPEN_CHANGE" &&
+    emptyOverwrite.state.agentOverwriteAttempts === 1 &&
+    multi.ok === false &&
+    multi.code === "OVERWRITE_FORBIDDEN" &&
+    multi.state.agentOverwriteAttempts >= 2 &&
+    multi.state.page.fields.title === "Second human edit" &&
+    !silent.ok &&
+    silent.code === "SILENT_CLEAR_FORBIDDEN" &&
+    silent.state.change?.status === StagingConflictStatus.CONFLICT_RETAINED &&
+    liveVerify.refusedLiveTemporalWiring === true &&
+    liveVerify.verifiedClaimed === false &&
+    liveVerify.liveTemporalWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "NO_OPEN_CHANGE; multi-overwrite keeps human; SILENT_CLEAR_FORBIDDEN; live verify → NOT_WIRED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `N3 controls unexpectedly empty=${JSON.stringify(emptyOverwrite)} multi=${JSON.stringify(multi)} silent=${JSON.stringify(silent)} liveVerify=${JSON.stringify(liveVerify)}`,
     );
   }
 

@@ -330,6 +330,7 @@ export {
   attemptBlindAgentOverwrite,
   independentVerifyStagingChange,
   refuseClaimedVerifiedStaging,
+  refuseSilentConflictClear,
   externalHumanEditLiveWiringStatus,
   normalizeLiveTemporalWiringRequest,
   type StagingConflictStatusValue,
