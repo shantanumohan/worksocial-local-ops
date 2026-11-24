@@ -310,6 +310,12 @@ describe("durable execution (memory fixture)", () => {
     const provider = await stores.fakeProvider.getByBusinessKey("biz-mismatch");
     expect(provider?.applyCount).toBe(1);
     expect(provider?.payloadDigest).toBe("digest-a");
+    // Codex P1: Conflict must not leave an orphan INTENDED digest-B intent.
+    expect(await stores.effects.get("op-mismatch-alt")).toBeUndefined();
+    expect(await stores.decisions.get("op-mismatch-alt")).toBeUndefined();
+    expect(
+      (await stores.effects.list()).some((e) => e.payloadDigest === "digest-b"),
+    ).toBe(false);
   });
 
   it("acceptPending conflicts after VERIFIED when payload digest differs (T-X022)", async () => {

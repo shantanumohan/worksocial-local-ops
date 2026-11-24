@@ -468,6 +468,21 @@ async function acceptWithStores(
     };
   }
 
+  // T-X022: refuse a new accept when the business key is already bound to a
+  // different payload digest *before* recording job/intent — otherwise a
+  // Conflict from applyOnce would leave an orphan INTENDED digest-B row.
+  const boundProvider = await stores.fakeProvider.getByBusinessKey(
+    input.businessIdempotencyKey,
+  );
+  if (
+    boundProvider &&
+    boundProvider.payloadDigest !== input.payloadDigest
+  ) {
+    throw new Error(
+      `Fake provider key ${input.businessIdempotencyKey} bound to a different payload digest`,
+    );
+  }
+
   const { job, created: jobCreated } = await stores.jobs.insertIdempotent({
     ...input.job,
     status: input.job.status ?? "queued",

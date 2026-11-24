@@ -48,6 +48,11 @@ describe("proofIdempotencyKeyPayloadMismatch (T-X022)", () => {
       ),
     ).toBe(true);
     expect(
+      proof.details.some((d) =>
+        d.includes("Alt-op Conflict left no orphan effect/decision"),
+      ),
+    ).toBe(true);
+    expect(
       proof.details.some(
         (d) =>
           d.includes(`liveProviderWiring=${IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING}`) &&

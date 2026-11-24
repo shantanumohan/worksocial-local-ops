@@ -159,12 +159,13 @@ export async function proofIdempotencyKeyPayloadMismatch(
   );
   if (!sameOpConflict) passed = false;
 
+  const altOp = `${operationId}-alt`;
   const sameKeyConflict = await expectMismatchConflict(
     "acceptPending same businessIdempotencyKey + different payloadDigest",
     details,
     () =>
       accept(svc, {
-        operationId: `${operationId}-alt`,
+        operationId: altOp,
         bizKey,
         digest: digestB,
         idem: `${idem}-alt`,
@@ -172,6 +173,25 @@ export async function proofIdempotencyKeyPayloadMismatch(
       }),
   );
   if (!sameKeyConflict) passed = false;
+
+  const altEffect = await svc.stores.effects.get(altOp);
+  const altDecision = await svc.stores.decisions.get(altOp);
+  const effectList = await svc.stores.effects.list();
+  const orphanDigestB = effectList.some(
+    (e) =>
+      e.payloadDigest === digestB ||
+      (e.businessIdempotencyKey === bizKey && e.operationId === altOp),
+  );
+  if (altEffect != null || altDecision != null || orphanDigestB) {
+    passed = false;
+    details.push(
+      `Alt-op partial write after Conflict: effect=${altEffect?.payloadDigest ?? "none"} decision=${altDecision?.outcome ?? "none"} orphanDigestB=${orphanDigestB}`,
+    );
+  } else {
+    details.push(
+      "Alt-op Conflict left no orphan effect/decision (digest B not recorded)",
+    );
+  }
 
   const wsConflict = await expectMismatchConflict(
     "acceptPending whitespace-distinct payloadDigest",
