@@ -5,6 +5,7 @@ import {
   availableBudgetMinor,
   cancelBudgetReservation,
   createBudgetAccount,
+  heldReservationsTotalMinor,
   reserveBudget,
   settleBudget,
 } from "./budget-accounting.js";
@@ -329,5 +330,55 @@ describe("budget accounting", () => {
   it("pins T-X027 related ids and live wiring NOT_WIRED", () => {
     expect(UNKNOWN_USAGE_CANCEL_RELATED_CASE_IDS).toEqual(["T-X027"]);
     expect(BUDGET_LIVE_PROVIDER_WIRING).toBe("NOT_WIRED");
+  });
+
+  it("keeps heldMinor equal to sum of heldReservations across hold/resolve", () => {
+    const a = reserveBudget(account(), "r1", 300);
+    expect(a.ok).toBe(true);
+    if (!a.ok) return;
+    const b = reserveBudget(a.account, "r2", 250);
+    expect(b.ok).toBe(true);
+    if (!b.ok) return;
+    const hold1 = cancelBudgetReservation(b.account, "r1", { known: false });
+    expect(hold1.ok).toBe(true);
+    if (!hold1.ok) return;
+    expect(heldReservationsTotalMinor(hold1.account)).toBe(300);
+    expect(hold1.account.heldMinor).toBe(
+      heldReservationsTotalMinor(hold1.account),
+    );
+    const hold2 = cancelBudgetReservation(hold1.account, "r2", {
+      known: false,
+    });
+    expect(hold2.ok).toBe(true);
+    if (!hold2.ok) return;
+    expect(hold2.account.heldMinor).toBe(550);
+    expect(heldReservationsTotalMinor(hold2.account)).toBe(550);
+
+    const resolved = cancelBudgetReservation(hold2.account, "r1", {
+      known: true,
+      actualMinor: 110,
+    });
+    expect(resolved.ok).toBe(true);
+    if (!resolved.ok) return;
+    expect(resolved.account.heldMinor).toBe(250);
+    expect(heldReservationsTotalMinor(resolved.account)).toBe(250);
+    expect(resolved.account.heldMinor).toBe(
+      heldReservationsTotalMinor(resolved.account),
+    );
+  });
+
+  it("refuses conflicting known-cancel after settled", () => {
+    const reserved = reserveBudget(account(), "r-conflict", 200);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const settled = settleBudget(reserved.account, "r-conflict", 80);
+    expect(settled.ok).toBe(true);
+    if (!settled.ok) return;
+    expect(() =>
+      cancelBudgetReservation(settled.account, "r-conflict", {
+        known: true,
+        actualMinor: 99,
+      }),
+    ).toThrow(/already settled with actual 80/i);
   });
 });

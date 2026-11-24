@@ -28,6 +28,7 @@ export {
   availableBudgetMinor,
   cancelBudgetReservation,
   createBudgetAccount,
+  heldReservationsTotalMinor,
   reserveBudget,
   settleBudget,
   type BudgetAccount,

@@ -13,6 +13,7 @@ import {
   availableBudgetMinor,
   cancelBudgetReservation,
   createBudgetAccount,
+  heldReservationsTotalMinor,
   reserveBudget,
   settleBudget,
   type SoakProofRecord,
@@ -188,11 +189,14 @@ export function proofUnknownUsageCancelHoldsResidual(
     secondHold.account.heldMinor === 850 &&
     secondHold.account.heldReservations["req-cancel-unknown"] === 700 &&
     secondHold.account.heldReservations["req-cancel-unknown-b"] === 150 &&
+    heldReservationsTotalMinor(secondHold.account) === 850 &&
+    secondHold.account.heldMinor ===
+      heldReservationsTotalMinor(secondHold.account) &&
     availableBudgetMinor(secondHold.account) === 150 &&
     secondHold.liveBudgetProviderWiring === "NOT_WIRED"
   ) {
     details.push(
-      "Concurrent multi-hold stacks heldMinor=850 (700+150); available=150; NOT_WIRED",
+      "Concurrent multi-hold stacks heldMinor=850 (700+150); map sum invariant; available=150; NOT_WIRED",
     );
   } else {
     passed = false;

@@ -88,6 +88,19 @@ export function availableBudgetMinor(account: BudgetAccount): number {
   return available(account);
 }
 
+/**
+ * Sum of per-reservation held residuals. Must equal `heldMinor` after every
+ * honest cancel/resolve path (T-X027 invariant — never silent zero).
+ */
+export function heldReservationsTotalMinor(account: BudgetAccount): number {
+  const held = account.heldReservations ?? {};
+  let total = 0;
+  for (const amount of Object.values(held)) {
+    total += amount;
+  }
+  return total;
+}
+
 export function createBudgetAccount(input: {
   dayKey: string;
   currency: string;
