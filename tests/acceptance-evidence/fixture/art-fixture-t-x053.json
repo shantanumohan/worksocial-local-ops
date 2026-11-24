@@ -3,13 +3,13 @@
   "caseId": "T-X053",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X053 (Takeover races queued reply — version invalidates send)\nproof=takeover_cancels_unsent_replies applyCount=1 :: Queued agent reply bound to conversation version | Takeover incremented version 1→2; humanOwned; agent send blocked | Queued reply cancelled and draft invalidated | Message sendStatus=BLOCKED_TAKEOVER | Outbound send gate denies post-takeover/stale-version send (CONVERSATION_TAKEOVER) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X053 (Takeover races queued reply — version invalidates send)\nproof=takeover_cancels_unsent_replies applyCount=1 :: Queued agent reply bound to conversation version | Second queued agent reply bound to same conversation version | Takeover honesty: liveProviderWiring=NOT_WIRED externalEffects=NONE | Takeover incremented version 1→2; humanOwned; agent send blocked | Multi-queue: both queued replies cancelled and draft invalidated | Message sendStatus=BLOCKED_TAKEOVER (both queued rows) | SENT message preserved (not cancelled by takeover) | T-X053 takeover race → VERSION_MISMATCH (stale preparedAtVersion via applyConversationTakeover) | Queue-after-takeover refused (CONVERSATION_TAKEOVER at matching version) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "takeover_cancels_unsent_replies"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x053.json",
-  "createdAtIso": "2026-11-24T23:10:56.813Z",
+  "createdAtIso": "2026-11-24T23:15:37.209Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x053-85bd350c9b16"
+  "uniqueSourceArtifactId": "art-fixture-t-x053-77bbad8a2dbd"
 }
