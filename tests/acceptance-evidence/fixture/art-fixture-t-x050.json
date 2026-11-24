@@ -3,13 +3,13 @@
   "caseId": "T-X050",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X050 (Public synthetic flag abuse — server grant required)\nproof=public_synthetic_flag_requires_server_grant applyCount=1 :: Browser boundary: public ws_synthetic=true without server canary grant → denied GRANT_MISSING | Browser boundary: same claim with server canary grant → AUTHORIZED synthetic submit | Domain bind: public claim without grant → GRANT_MISSING (counterfactual public flag alone would mark synthetic) | Positive control: server canary grant without client claim → AUTHORIZED | No claim + no grant → not synthetic (NO_CLAIM) | proofClock=2026-11-21T19:05:20.000Z | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X050 (Public synthetic flag abuse — server grant required)\nproof=public_synthetic_flag_requires_server_grant applyCount=1 :: Browser boundary: public ws_synthetic=true without server canary grant → denied GRANT_MISSING | Browser boundary: same claim with server canary grant → AUTHORIZED synthetic submit | Browser boundary: is_synthetic=true without grant → denied GRANT_MISSING | Browser boundary: ws_synthetic=false + is_synthetic=true without grant → denied GRANT_MISSING (OR) | Domain bind: whitespace-normalized public claim without grant → GRANT_MISSING (counterfactual; honesty NOT_WIRED/NONE) | Domain bind: dual-field OR (false+true) without grant → GRANT_MISSING | Positive control: server canary grant without client claim → AUTHORIZED | Server grant wins over clientClaimedSynthetic=false → AUTHORIZED | No claim + no grant → not synthetic (NO_CLAIM) | proofClock=2026-11-21T19:05:20.000Z | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "public_synthetic_flag_requires_server_grant"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x050.json",
-  "createdAtIso": "2026-11-24T23:33:50.262Z",
+  "createdAtIso": "2026-11-24T23:38:05.704Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x050-802f05648491"
+  "uniqueSourceArtifactId": "art-fixture-t-x050-1ec93a9b7be3"
 }

@@ -152,7 +152,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X009** maps only to `CLI_ERROR_DESPITE_EXIT_ZERO`.
 
-**T-X050** maps only to `PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT`.
+**T-X050** maps only to `PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT` (OR dual-field / whitespace public claims denied without server canary grant; server grant wins over client false; not live VERIFIED).
 
 
 **T-X021** maps only to `CONCURRENT_IDEMPOTENT_RELEASE` (not retry-only `NO_DUPLICATE_EFFECTS`).

@@ -924,7 +924,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-US-040** / **T-X049** are fixture ACCEPTED only via the thank-you without CRM fails delivery proof (`THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY`). Not sandbox/prod VERIFIED.
 
-**T-X050** is fixture ACCEPTED only via the public synthetic flag requires server grant proof (`PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT`) — client/public `ws_synthetic` / `is_synthetic` cannot authorize synthetic labeling without a server-issued canary grant; browser submission boundary and fixture CRM enforce the gate. Not sandbox/prod VERIFIED.
+**T-X050** is fixture ACCEPTED only via the public synthetic flag requires server grant proof (`PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT`) — client/public `ws_synthetic` / `is_synthetic` cannot authorize synthetic labeling without a server-issued canary grant; either field's positive claim wins (OR; dual-field mask refused); whitespace-normalized claims denied without grant; server grant wins over client `false`; browser submission boundary and fixture CRM enforce the gate; live wiring stays **NOT_WIRED**; `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 
 **T-X010** is fixture ACCEPTED only via the malicious prompt no shell injection proof (`MALICIOUS_PROMPT_NO_SHELL_INJECTION`) — prompt via stdin; fixed argv; `shell: false`. Not sandbox/prod VERIFIED.
 
@@ -1078,7 +1078,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X047 | Layout-specific capacity mismatch | Filter correctly *(fixture ACCEPTED — layout-specific capacity mismatch filter proof; not sandbox/prod VERIFIED)* |
 | T-X048 | Unknown price or availability | No invention *(fixture ACCEPTED)* |
 | T-X049 | Thank-you but no CRM record | Fail at delivery *(fixture ACCEPTED)* |
-| T-X050 | Public synthetic flag abuse | Server grant required *(fixture ACCEPTED)* |
+| T-X050 | Public synthetic flag abuse | Server grant required *(fixture ACCEPTED — public synthetic flag requires server grant proof; OR dual-field / whitespace; not sandbox/prod VERIFIED)* |
 | T-X051 | Wrong Zoho organization | Identity mismatch blocks *(fixture ACCEPTED — wrong-zoho-organization identity-mismatch proof; liveProviderWiring NOT_WIRED; externalEffects NONE; not sandbox/prod VERIFIED)* |
 | T-X052 | Synthetic conversion contamination | Excluded from commerce *(fixture ACCEPTED — synthetic conversion contamination excluded proof; excluded-revenue / NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X053 | Takeover races queued reply | Version invalidates send *(fixture ACCEPTED — takeover cancels unsent / VERSION_MISMATCH race proof; not sandbox/prod VERIFIED)* |
