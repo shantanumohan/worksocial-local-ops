@@ -288,6 +288,8 @@ export const SoakProofKind = {
   /**
    * Currency/timezone mismatch — refuse silent sum (T-X060).
    * Heterogeneous currency or reporting timezone series never invent a total.
+   * Whitespace-normalized match; blank → INVALID_DIMENSION; live NOT_WIRED.
+   * ACCEPTED ≠ VERIFIED.
    */
   CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM:
     "currency_timezone_mismatch_no_silent_sum",
