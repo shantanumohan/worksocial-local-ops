@@ -16,3 +16,4 @@ Focused offline contracts (no live providers):
 
 Run: `pnpm test:contract`
 - `unknown-policy-question.contract.test.ts` — T-X055 attack-suite escalate-without-promise + soak map; fixture ACCEPTED ≠ VERIFIED; external effects NONE
+- `partial-campaign-destinations.contract.test.ts` — T-X045 attack-suite per-destination PARTIAL honesty + soak map; fixture ACCEPTED ≠ VERIFIED; external effects NONE

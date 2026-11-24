@@ -15,6 +15,7 @@ import {
   DistributionRunStatus,
   SoakProofKind,
   createDistributionRun,
+  evaluatePartialCampaignDestinationsAttackSuite,
   listRecoverableDestinations,
   upsertDestinationAttempt,
   type SoakProofRecord,
@@ -234,6 +235,31 @@ export function proofPartialCampaignDestinationsPerState(
   } else {
     passed = false;
     details.push(`All-failed unexpected status=${allFailed.status}`);
+  }
+
+  // Spot-check honesty fields on the primary mixed run.
+  if (
+    run.liveProviderWiring === "NOT_WIRED" &&
+    run.externalEffects === "NONE" &&
+    run.fixtureOnly === true
+  ) {
+    details.push(
+      "DistributionRun liveProviderWiring=NOT_WIRED externalEffects=NONE fixtureOnly",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `honesty fields unexpected wiring=${run.liveProviderWiring} effects=${run.externalEffects}`,
+    );
+  }
+
+  // Hillclimb attack suite (mixed / pending / failed / blocked).
+  const suite = evaluatePartialCampaignDestinationsAttackSuite({ nowIso });
+  if (suite.passed) {
+    details.push(...suite.details);
+  } else {
+    passed = false;
+    details.push(`Attack suite failed: ${suite.details.join(" | ")}`);
   }
 
   details.push(

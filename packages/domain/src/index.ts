@@ -630,6 +630,7 @@ export {
 } from "./content.js";
 export {
   CANONICAL_PUBLISH_RELATED_CASE_IDS,
+  PARTIAL_CAMPAIGN_DESTINATIONS_RELATED_CASE_IDS,
   DistributionRunStatus,
   DestinationAttemptStatus,
   EDITABLE_ARTICLE_STATUSES,
@@ -644,6 +645,7 @@ export {
   upsertDestinationAttempt,
   deriveDistributionStatus,
   listRecoverableDestinations,
+  evaluatePartialCampaignDestinationsAttackSuite,
   contentReviewStillBound,
   type DistributionRunStatusValue,
   type DestinationAttemptStatusValue,

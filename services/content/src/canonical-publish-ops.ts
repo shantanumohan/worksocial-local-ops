@@ -81,6 +81,8 @@ function toRunRecord(run: DistributionRun): ContentDistributionRunRecord {
     attempts: run.attempts.map((a) => ({ ...a })),
     businessIdempotencyKey: run.businessIdempotencyKey,
     fixtureOnly: run.fixtureOnly,
+    liveProviderWiring: run.liveProviderWiring,
+    externalEffects: run.externalEffects,
     createdAtIso: run.createdAtIso,
     updatedAtIso: run.updatedAtIso,
   };
@@ -96,6 +98,8 @@ function fromRunRecord(record: ContentDistributionRunRecord): DistributionRun {
     attempts: record.attempts.map((a) => a as unknown as DestinationAttempt),
     businessIdempotencyKey: record.businessIdempotencyKey,
     fixtureOnly: record.fixtureOnly,
+    liveProviderWiring: record.liveProviderWiring ?? "NOT_WIRED",
+    externalEffects: record.externalEffects ?? "NONE",
     createdAtIso: record.createdAtIso,
     updatedAtIso: record.updatedAtIso,
   };

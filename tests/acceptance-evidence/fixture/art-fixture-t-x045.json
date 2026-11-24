@@ -3,13 +3,13 @@
   "caseId": "T-X045",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X045 (Partial campaign destinations — per-destination states)\nproof=partial_campaign_destinations_per_state applyCount=1 :: Distribution run starts PLANNING with zero attempts | Mixed VERIFIED+FAILED+UNKNOWN_REMOTE → DistributionRunStatus.PARTIAL | Per-destination states retained independently (cms=VERIFIED, gbp=FAILED, linkedin=UNKNOWN_REMOTE) | Recoverable destinations = unfinished only (gbp, linkedin); verified cms not re-applied | ACCEPTED_PENDING destination kept distinct from VERIFIED; run stays IN_PROGRESS (not COMPLETE) | All-destination FAILED → DistributionRunStatus.FAILED (honest) | liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X045 (Partial campaign destinations — per-destination states)\nproof=partial_campaign_destinations_per_state applyCount=1 :: Distribution run starts PLANNING with zero attempts | Mixed VERIFIED+FAILED+UNKNOWN_REMOTE → DistributionRunStatus.PARTIAL | Per-destination states retained independently (cms=VERIFIED, gbp=FAILED, linkedin=UNKNOWN_REMOTE) | Recoverable destinations = unfinished only (gbp, linkedin); verified cms not re-applied | ACCEPTED_PENDING destination kept distinct from VERIFIED; run stays IN_PROGRESS (not COMPLETE) | All-destination FAILED → DistributionRunStatus.FAILED (honest) | DistributionRun liveProviderWiring=NOT_WIRED externalEffects=NONE fixtureOnly | Mixed VERIFIED+FAILED+UNKNOWN_REMOTE → PARTIAL with NOT_WIRED honesty | Recoverable destinations = unfinished only; verified cms not re-applied | ACCEPTED_PENDING kept distinct from VERIFIED; run stays IN_PROGRESS (not COMPLETE) | All-destination FAILED → DistributionRunStatus.FAILED (honest) | BLOCKED+VERIFIED → PARTIAL; only blocked destination recoverable | liveProviderWiring=NOT_WIRED externalEffects=NONE on every partial-destination path | liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "partial_campaign_destinations_per_state"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x045.json",
-  "createdAtIso": "2026-11-24T23:46:57.302Z",
+  "createdAtIso": "2026-11-24T23:53:47.823Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x045-9bc484fa43d5"
+  "uniqueSourceArtifactId": "art-fixture-t-x045-6b90b612d733"
 }

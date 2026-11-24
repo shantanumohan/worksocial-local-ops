@@ -10,6 +10,7 @@
 import { createHash } from "node:crypto";
 import {
   ArticleStatus,
+  DestinationKind,
   digestArticleContent,
   evaluateArticleGate,
   type ArticleStatusValue,
@@ -35,6 +36,11 @@ export const CANONICAL_PUBLISH_RELATED_CASE_IDS = [
   "T-C05", // versioned draft authoring
   "T-C06", // claim/source QA + A25 binding
   "T-C07", // multi-destination partial failure recovery
+] as const;
+
+/** Catalog cases tied to partial-destination per-state honesty (T-X045). */
+export const PARTIAL_CAMPAIGN_DESTINATIONS_RELATED_CASE_IDS = [
+  "T-X045",
 ] as const;
 
 export const DistributionRunStatus = {
@@ -112,6 +118,9 @@ export type DistributionRun = {
   /** Stable business key for the whole run (idempotent retry). */
   businessIdempotencyKey: string;
   fixtureOnly: boolean;
+  /** Fixture honesty — domain helpers never wire live providers. */
+  liveProviderWiring: "NOT_WIRED";
+  externalEffects: "NONE";
   createdAtIso: string;
   updatedAtIso: string;
 };
@@ -456,6 +465,8 @@ export function createDistributionRun(input: {
     attempts: [],
     businessIdempotencyKey: input.businessIdempotencyKey,
     fixtureOnly: input.fixtureOnly,
+    liveProviderWiring: "NOT_WIRED",
+    externalEffects: "NONE",
     createdAtIso: input.createdAtIso,
     updatedAtIso: input.createdAtIso,
   };
@@ -536,6 +547,266 @@ export function listRecoverableDestinations(
       a.status === DestinationAttemptStatus.ACCEPTED_PENDING ||
       a.status === DestinationAttemptStatus.PENDING,
   );
+}
+
+/**
+ * Hillclimb suite (T-X045): mixed per-destination states → PARTIAL;
+ * recoverable = unfinished only; ACCEPTED_PENDING ≠ VERIFIED; all-failed
+ * stays FAILED; every run carries liveProviderWiring=NOT_WIRED.
+ */
+export function evaluatePartialCampaignDestinationsAttackSuite(input: {
+  nowIso: string;
+}): {
+  passed: boolean;
+  details: string[];
+  runs: DistributionRun[];
+} {
+  const details: string[] = [];
+  const runs: DistributionRun[] = [];
+  let passed = true;
+  const nowIso = input.nowIso;
+  const articleId = "art-suite-x045";
+  const campaignId = "camp-suite-x045";
+
+  let mixed = createDistributionRun({
+    runId: "run-suite-mixed",
+    campaignId,
+    articleId,
+    destinationIds: ["dest-cms", "dest-gbp", "dest-linkedin"],
+    businessIdempotencyKey: "biz-suite-mixed",
+    fixtureOnly: true,
+    createdAtIso: nowIso,
+  });
+  mixed = upsertDestinationAttempt(mixed, {
+    attemptId: "s-cms",
+    destinationId: "dest-cms",
+    kind: DestinationKind.CMS,
+    variantId: null,
+    articleId,
+    status: DestinationAttemptStatus.VERIFIED,
+    operationKey: "suite:cms",
+    durableOperationId: "dur-cms",
+    gatewayOperationId: "gw-cms",
+    receiptId: "rcpt-cms",
+    outcome: "PUBLISHED_VERIFIED",
+    summary: "cms verified",
+    updatedAtIso: nowIso,
+  });
+  mixed = upsertDestinationAttempt(mixed, {
+    attemptId: "s-gbp",
+    destinationId: "dest-gbp",
+    kind: DestinationKind.GBP,
+    variantId: "var-gbp",
+    articleId,
+    status: DestinationAttemptStatus.FAILED,
+    operationKey: "suite:gbp",
+    durableOperationId: null,
+    gatewayOperationId: "gw-gbp",
+    receiptId: "rcpt-gbp",
+    outcome: "FAILED",
+    summary: "gbp failed",
+    updatedAtIso: nowIso,
+  });
+  mixed = upsertDestinationAttempt(mixed, {
+    attemptId: "s-li",
+    destinationId: "dest-linkedin",
+    kind: DestinationKind.LINKEDIN,
+    variantId: "var-li",
+    articleId,
+    status: DestinationAttemptStatus.UNKNOWN_REMOTE,
+    operationKey: "suite:li",
+    durableOperationId: "dur-li",
+    gatewayOperationId: "gw-li",
+    receiptId: null,
+    outcome: "UNKNOWN_REMOTE_OUTCOME",
+    summary: "linkedin unknown",
+    updatedAtIso: nowIso,
+  });
+  runs.push(mixed);
+
+  if (
+    mixed.status === DistributionRunStatus.PARTIAL &&
+    mixed.liveProviderWiring === "NOT_WIRED" &&
+    mixed.externalEffects === "NONE"
+  ) {
+    details.push(
+      "Mixed VERIFIED+FAILED+UNKNOWN_REMOTE → PARTIAL with NOT_WIRED honesty",
+    );
+  } else {
+    passed = false;
+    details.push(`mixed unexpectedly status=${mixed.status} wiring=${mixed.liveProviderWiring}`);
+  }
+
+  const recoverable = listRecoverableDestinations(mixed).map((a) => a.destinationId);
+  if (
+    recoverable.length === 2 &&
+    recoverable.includes("dest-gbp") &&
+    recoverable.includes("dest-linkedin") &&
+    !recoverable.includes("dest-cms")
+  ) {
+    details.push(
+      "Recoverable destinations = unfinished only; verified cms not re-applied",
+    );
+  } else {
+    passed = false;
+    details.push(`recoverable unexpected: ${recoverable.join(",")}`);
+  }
+
+  let pendingPeer = createDistributionRun({
+    runId: "run-suite-pending",
+    campaignId,
+    articleId,
+    destinationIds: ["dest-cms", "dest-gbp"],
+    businessIdempotencyKey: "biz-suite-pending",
+    fixtureOnly: true,
+    createdAtIso: nowIso,
+  });
+  pendingPeer = upsertDestinationAttempt(pendingPeer, {
+    attemptId: "p-cms",
+    destinationId: "dest-cms",
+    kind: DestinationKind.CMS,
+    variantId: null,
+    articleId,
+    status: DestinationAttemptStatus.VERIFIED,
+    operationKey: "suite:cms2",
+    durableOperationId: "dur-cms2",
+    gatewayOperationId: "gw-cms2",
+    receiptId: "rcpt-cms2",
+    outcome: "PUBLISHED_VERIFIED",
+    summary: "cms verified",
+    updatedAtIso: nowIso,
+  });
+  pendingPeer = upsertDestinationAttempt(pendingPeer, {
+    attemptId: "p-gbp",
+    destinationId: "dest-gbp",
+    kind: DestinationKind.GBP,
+    variantId: "var-gbp2",
+    articleId,
+    status: DestinationAttemptStatus.ACCEPTED_PENDING,
+    operationKey: "suite:gbp2",
+    durableOperationId: null,
+    gatewayOperationId: "gw-gbp2",
+    receiptId: "rcpt-gbp2",
+    outcome: "ACCEPTED_PENDING",
+    summary: "gbp accepted pending ≠ verified",
+    updatedAtIso: nowIso,
+  });
+  runs.push(pendingPeer);
+  if (
+    pendingPeer.status === DistributionRunStatus.IN_PROGRESS &&
+    pendingPeer.liveProviderWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "ACCEPTED_PENDING kept distinct from VERIFIED; run stays IN_PROGRESS (not COMPLETE)",
+    );
+  } else {
+    passed = false;
+    details.push(`pendingPeer unexpectedly status=${pendingPeer.status}`);
+  }
+
+  let allFailed = createDistributionRun({
+    runId: "run-suite-failed",
+    campaignId,
+    articleId,
+    destinationIds: ["dest-cms", "dest-gbp"],
+    businessIdempotencyKey: "biz-suite-failed",
+    fixtureOnly: true,
+    createdAtIso: nowIso,
+  });
+  for (const destId of ["dest-cms", "dest-gbp"] as const) {
+    allFailed = upsertDestinationAttempt(allFailed, {
+      attemptId: `f-${destId}`,
+      destinationId: destId,
+      kind: destId === "dest-cms" ? DestinationKind.CMS : DestinationKind.GBP,
+      variantId: null,
+      articleId,
+      status: DestinationAttemptStatus.FAILED,
+      operationKey: `suite:fail:${destId}`,
+      durableOperationId: null,
+      gatewayOperationId: null,
+      receiptId: null,
+      outcome: "FAILED",
+      summary: "failed",
+      updatedAtIso: nowIso,
+    });
+  }
+  runs.push(allFailed);
+  if (
+    allFailed.status === DistributionRunStatus.FAILED &&
+    allFailed.externalEffects === "NONE"
+  ) {
+    details.push("All-destination FAILED → DistributionRunStatus.FAILED (honest)");
+  } else {
+    passed = false;
+    details.push(`allFailed unexpectedly status=${allFailed.status}`);
+  }
+
+  // BLOCKED + VERIFIED peer also yields PARTIAL (not COMPLETE).
+  let blockedPeer = createDistributionRun({
+    runId: "run-suite-blocked",
+    campaignId,
+    articleId,
+    destinationIds: ["dest-cms", "dest-gbp"],
+    businessIdempotencyKey: "biz-suite-blocked",
+    fixtureOnly: true,
+    createdAtIso: nowIso,
+  });
+  blockedPeer = upsertDestinationAttempt(blockedPeer, {
+    attemptId: "b-cms",
+    destinationId: "dest-cms",
+    kind: DestinationKind.CMS,
+    variantId: null,
+    articleId,
+    status: DestinationAttemptStatus.VERIFIED,
+    operationKey: "suite:b-cms",
+    durableOperationId: "dur-b-cms",
+    gatewayOperationId: "gw-b-cms",
+    receiptId: "rcpt-b-cms",
+    outcome: "PUBLISHED_VERIFIED",
+    summary: "cms verified",
+    updatedAtIso: nowIso,
+  });
+  blockedPeer = upsertDestinationAttempt(blockedPeer, {
+    attemptId: "b-gbp",
+    destinationId: "dest-gbp",
+    kind: DestinationKind.GBP,
+    variantId: null,
+    articleId,
+    status: DestinationAttemptStatus.BLOCKED,
+    operationKey: "suite:b-gbp",
+    durableOperationId: null,
+    gatewayOperationId: null,
+    receiptId: null,
+    outcome: "BLOCKED",
+    summary: "gbp blocked",
+    updatedAtIso: nowIso,
+  });
+  runs.push(blockedPeer);
+  const blockedRecoverable = listRecoverableDestinations(blockedPeer).map(
+    (a) => a.destinationId,
+  );
+  if (
+    blockedPeer.status === DistributionRunStatus.PARTIAL &&
+    blockedRecoverable.includes("dest-gbp") &&
+    !blockedRecoverable.includes("dest-cms")
+  ) {
+    details.push(
+      "BLOCKED+VERIFIED → PARTIAL; only blocked destination recoverable",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `blockedPeer unexpectedly status=${blockedPeer.status} recoverable=${blockedRecoverable.join(",")}`,
+    );
+  }
+
+  if (passed) {
+    details.push(
+      "liveProviderWiring=NOT_WIRED externalEffects=NONE on every partial-destination path",
+    );
+  }
+
+  return { passed, details, runs };
 }
 
 export function contentReviewStillBound(binding: ReviewBinding): boolean {
