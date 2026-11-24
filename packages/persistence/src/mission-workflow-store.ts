@@ -312,7 +312,77 @@ export function evaluateOldFenceAcceptanceLabel(
   };
 }
 
-/** Stable honesty detail line for soak evidence (O4/O5/O6). */
+/**
+ * Fixture external-effects gate (T-X024 O7).
+ * Only `NONE` is allowed — any other claim → EXTERNAL_EFFECTS_CLAIM_REFUSED.
+ */
+export type OldFenceExternalEffectsDecision = {
+  allowed: boolean;
+  code: "EXTERNAL_EFFECTS_NONE_OK" | "EXTERNAL_EFFECTS_CLAIM_REFUSED";
+  claim: string;
+  externalEffects: typeof OLD_FENCE_HONESTY.externalEffects;
+  acceptedNotVerified: typeof OLD_FENCE_HONESTY.acceptedNotVerified;
+};
+
+export function evaluateOldFenceExternalEffects(
+  claim: string,
+): OldFenceExternalEffectsDecision {
+  const honesty = {
+    externalEffects: OLD_FENCE_HONESTY.externalEffects,
+    acceptedNotVerified: OLD_FENCE_HONESTY.acceptedNotVerified,
+  } as const;
+  if (claim === "NONE") {
+    return {
+      allowed: true,
+      code: "EXTERNAL_EFFECTS_NONE_OK",
+      claim,
+      ...honesty,
+    };
+  }
+  return {
+    allowed: false,
+    code: "EXTERNAL_EFFECTS_CLAIM_REFUSED",
+    claim,
+    ...honesty,
+  };
+}
+
+/**
+ * Fixture live-provider-success gate (T-X024 O7).
+ * `true` → LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED (fixture never claims live apply).
+ */
+export type OldFenceLiveProviderSuccessDecision = {
+  allowed: boolean;
+  code: "LIVE_PROVIDER_SUCCESS_NONE_OK" | "LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED";
+  claimed: boolean;
+  liveProviderSuccessClaimed: typeof OLD_FENCE_HONESTY.liveProviderSuccessClaimed;
+  externalEffects: typeof OLD_FENCE_HONESTY.externalEffects;
+};
+
+export function evaluateOldFenceLiveProviderSuccess(
+  claimed: boolean,
+): OldFenceLiveProviderSuccessDecision {
+  const honesty = {
+    liveProviderSuccessClaimed: OLD_FENCE_HONESTY.liveProviderSuccessClaimed,
+    externalEffects: OLD_FENCE_HONESTY.externalEffects,
+  } as const;
+  if (claimed === false) {
+    return {
+      allowed: true,
+      code: "LIVE_PROVIDER_SUCCESS_NONE_OK",
+      claimed,
+      ...honesty,
+    };
+  }
+  return {
+    allowed: false,
+    code: "LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED",
+    claimed,
+    ...honesty,
+  };
+}
+
+/** Stable honesty detail line for soak evidence (O4–O7). */
 export function formatOldFenceHonestyDetail(
   relatedCaseIds: readonly string[] = OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
 ): string {

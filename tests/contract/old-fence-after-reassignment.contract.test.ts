@@ -15,6 +15,8 @@ import {
 import {
   evaluateFixtureTemporalWiring,
   evaluateOldFenceAcceptanceLabel,
+  evaluateOldFenceExternalEffects,
+  evaluateOldFenceLiveProviderSuccess,
   missionLeaseFenceFailedMessage,
   parseMissionLeaseFenceCause,
   OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
@@ -66,6 +68,15 @@ describe("contract: T-X024 old fence after reassignment", () => {
     expect(evaluateOldFenceAcceptanceLabel("VERIFIED").code).toBe(
       "VERIFIED_CLAIM_REFUSED",
     );
+    expect(evaluateOldFenceExternalEffects("NONE").code).toBe(
+      "EXTERNAL_EFFECTS_NONE_OK",
+    );
+    expect(evaluateOldFenceExternalEffects("LIVE_APPLY").code).toBe(
+      "EXTERNAL_EFFECTS_CLAIM_REFUSED",
+    );
+    expect(evaluateOldFenceLiveProviderSuccess(true).code).toBe(
+      "LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED",
+    );
     expect(
       parseMissionLeaseFenceCause(
         missionLeaseFenceFailedMessage("wf-c", "wrong_holder"),
@@ -76,10 +87,14 @@ describe("contract: T-X024 old fence after reassignment", () => {
     expect(art.summary).toMatch(/FIXTURE_OK/);
     expect(art.summary).toMatch(/VERIFIED_CLAIM_REFUSED/);
     expect(art.summary).toMatch(/ACCEPTED_OK/);
+    expect(art.summary).toMatch(/EXTERNAL_EFFECTS_CLAIM_REFUSED/);
+    expect(art.summary).toMatch(/LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED/);
     expect(art.summary).toMatch(/1ms-before-expiry boundary/);
     expect(art.summary).toMatch(/fenceCause=expired/);
     expect(art.summary).toMatch(/fenceCause=wrong_holder/);
     expect(art.summary).toMatch(/Post-commit old A mark denied/);
+    expect(art.summary).toMatch(/Self-reclaim after own expiry before foreign/);
+    expect(art.summary).toMatch(/UNFENCED_RECOVERY_NOT_FENCE_PROOF/);
     expect(art.summary).toMatch(/softSkipAds=T-F07,T-US-013,T-US-014/);
     expect(art.summary).toMatch(/liveTemporalWiring=NOT_WIRED/);
     expect(art.summary).toMatch(/acceptedNotVerified=true/);

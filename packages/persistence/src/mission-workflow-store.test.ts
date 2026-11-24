@@ -9,6 +9,8 @@ import {
   createMemoryMissionWorkflowStore,
   evaluateFixtureTemporalWiring,
   evaluateOldFenceAcceptanceLabel,
+  evaluateOldFenceExternalEffects,
+  evaluateOldFenceLiveProviderSuccess,
   formatOldFenceHonestyDetail,
   isMissionLeaseActive,
   missionLeaseFenceFailedMessage,
@@ -173,6 +175,21 @@ describe("classifyMissionLeaseFence / isMissionLeaseActive (T-X024)", () => {
     expect(evaluateOldFenceAcceptanceLabel("VERIFIED").allowed).toBe(false);
     expect(evaluateOldFenceAcceptanceLabel("sandbox-verified").code).toBe(
       "VERIFIED_CLAIM_REFUSED",
+    );
+  });
+
+  it("refuses non-NONE externalEffects and live provider success claims", () => {
+    expect(evaluateOldFenceExternalEffects("NONE").code).toBe(
+      "EXTERNAL_EFFECTS_NONE_OK",
+    );
+    expect(evaluateOldFenceExternalEffects("LIVE_APPLY").code).toBe(
+      "EXTERNAL_EFFECTS_CLAIM_REFUSED",
+    );
+    expect(evaluateOldFenceLiveProviderSuccess(false).code).toBe(
+      "LIVE_PROVIDER_SUCCESS_NONE_OK",
+    );
+    expect(evaluateOldFenceLiveProviderSuccess(true).code).toBe(
+      "LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED",
     );
   });
 });

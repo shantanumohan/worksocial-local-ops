@@ -19,6 +19,8 @@
  * FIXTURE_OK; domain soakNotWiredLiveWiring().temporal alignment.
  * Hillclimb O6: parseMissionLeaseFenceCause round-trip; 1ms-before-expiry
  * still active; VERIFIED_CLAIM_REFUSED; post-commit mark phase fence.
+ * Hillclimb O7: EXTERNAL_EFFECTS_CLAIM_REFUSED; LIVE_PROVIDER_SUCCESS refuse;
+ * self-reclaim-before-foreign side path; recoverEffectPending unfenced honesty.
  */
 
 import { randomUUID } from "node:crypto";
@@ -32,6 +34,8 @@ import {
   createMemoryMissionWorkflowStore,
   evaluateFixtureTemporalWiring,
   evaluateOldFenceAcceptanceLabel,
+  evaluateOldFenceExternalEffects,
+  evaluateOldFenceLiveProviderSuccess,
   formatOldFenceHonestyDetail,
   isMissionLeaseActive,
   OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
@@ -68,6 +72,10 @@ export async function proofOldFenceAfterReassignment(
   const domainTemporal = soakNotWiredLiveWiring().temporal;
   const acceptedOk = evaluateOldFenceAcceptanceLabel("ACCEPTED");
   const verifiedRefuse = evaluateOldFenceAcceptanceLabel("VERIFIED");
+  const effectsNoneOk = evaluateOldFenceExternalEffects("NONE");
+  const effectsRefuse = evaluateOldFenceExternalEffects("LIVE_APPLY");
+  const liveProviderNoneOk = evaluateOldFenceLiveProviderSuccess(false);
+  const liveProviderRefuse = evaluateOldFenceLiveProviderSuccess(true);
   if (
     liveTemporalRefuse.code === "LIVE_TEMPORAL_CLAIM_REFUSED" &&
     liveTemporalRefuse.allowed === false &&
@@ -96,6 +104,21 @@ export async function proofOldFenceAfterReassignment(
   } else {
     passed = false;
     details.push("Fixture acceptance label honesty gate unexpected");
+  }
+  if (
+    effectsNoneOk.code === "EXTERNAL_EFFECTS_NONE_OK" &&
+    effectsRefuse.code === "EXTERNAL_EFFECTS_CLAIM_REFUSED" &&
+    liveProviderNoneOk.code === "LIVE_PROVIDER_SUCCESS_NONE_OK" &&
+    liveProviderRefuse.code === "LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED" &&
+    OLD_FENCE_HONESTY.externalEffects === "NONE" &&
+    OLD_FENCE_HONESTY.liveProviderSuccessClaimed === false
+  ) {
+    details.push(
+      "EXTERNAL_EFFECTS_CLAIM_REFUSED for non-NONE; LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED for true; NONE/false only",
+    );
+  } else {
+    passed = false;
+    details.push("Fixture externalEffects/liveProvider honesty gate unexpected");
   }
 
   const enqueued = await store.enqueue({
@@ -502,6 +525,109 @@ export async function proofOldFenceAfterReassignment(
   if (!postCommitMarkDenied) {
     passed = false;
     details.push("Post-commit old A mark unexpectedly succeeded");
+  }
+
+  // 6. Side workflow: original holder self-reclaim after own expiry (before foreign).
+  const sideReclaimStore = createMemoryMissionWorkflowStore();
+  const sideReclaimWf = `wf-reclaim-${randomUUID().slice(0, 8)}`;
+  await sideReclaimStore.enqueue({
+    workflowId: sideReclaimWf,
+    jobId: `job-reclaim-${randomUUID().slice(0, 8)}`,
+    temporalWiring: "FIXTURE",
+    nowIso: t0,
+  });
+  await sideReclaimStore.claimLease({
+    workflowId: sideReclaimWf,
+    holder: workerA,
+    leaseExpiresAtIso: tLeaseExpiry,
+    nowIso: t0,
+  });
+  const selfReclaimed = await sideReclaimStore.claimLease({
+    workflowId: sideReclaimWf,
+    holder: workerA,
+    leaseExpiresAtIso: new Date(Date.parse(tAtExpiry) + 10_000).toISOString(),
+    nowIso: tAtExpiry,
+  });
+  if (
+    selfReclaimed?.leaseHolder === workerA &&
+    selfReclaimed.attemptCount === 2 &&
+    classifyMissionLeaseFence(selfReclaimed, workerA, tAfterExpiry) === "active"
+  ) {
+    details.push(
+      "Self-reclaim after own expiry before foreign ok attemptCount=2 fenceCause=active",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Self-reclaim after own expiry unexpected holder=${selfReclaimed?.leaseHolder} attempts=${selfReclaimed?.attemptCount}`,
+    );
+  }
+
+  // 7. Side workflow: recoverEffectPending is intentionally unfenced — not a fence proof.
+  const sideRecoverStore = createMemoryMissionWorkflowStore();
+  const sideRecoverWf = `wf-recover-${randomUUID().slice(0, 8)}`;
+  const sideRecoverOp = `op-recover-${randomUUID().slice(0, 8)}`;
+  await sideRecoverStore.enqueue({
+    workflowId: sideRecoverWf,
+    jobId: `job-recover-${randomUUID().slice(0, 8)}`,
+    temporalWiring: "FIXTURE",
+    nowIso: t0,
+  });
+  await sideRecoverStore.claimLease({
+    workflowId: sideRecoverWf,
+    holder: workerA,
+    leaseExpiresAtIso: tLeaseExpiry,
+    nowIso: t0,
+  });
+  await sideRecoverStore.claimLease({
+    workflowId: sideRecoverWf,
+    holder: workerB,
+    leaseExpiresAtIso: new Date(Date.parse(tAtExpiry) + 5_000).toISOString(),
+    nowIso: tAtExpiry,
+  });
+  // Stale A bind is fenced (wrong_holder); recover bypasses lease fence by design.
+  let sideStaleBindDenied = false;
+  try {
+    await sideRecoverStore.bindOperationWhileLeased({
+      workflowId: sideRecoverWf,
+      operationId: `${sideRecoverOp}-stale`,
+      holder: workerA,
+      nowIso: tAfterExpiry,
+      payloadDigest: "digest-recover-stale",
+      businessIdempotencyKey: "biz-recover-stale",
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (parseMissionLeaseFenceCause(msg) === "wrong_holder") {
+      sideStaleBindDenied = true;
+    }
+  }
+  let recovered;
+  try {
+    recovered = await sideRecoverStore.recoverEffectPending({
+      workflowId: sideRecoverWf,
+      operationId: sideRecoverOp,
+      nowIso: tAfterExpiry,
+    });
+  } catch (err) {
+    passed = false;
+    details.push(
+      `recoverEffectPending unexpected fail: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+  if (
+    sideStaleBindDenied &&
+    recovered?.phase === "effect_pending" &&
+    recovered.operationId === sideRecoverOp
+  ) {
+    details.push(
+      "UNFENCED_RECOVERY_NOT_FENCE_PROOF: stale A bind wrong_holder but recoverEffectPending ok (not old-worker commit)",
+    );
+  } else if (passed) {
+    passed = false;
+    details.push(
+      `Unfenced recover honesty unexpected bindDenied=${sideStaleBindDenied} phase=${recovered?.phase}`,
+    );
   }
 
   details.push(

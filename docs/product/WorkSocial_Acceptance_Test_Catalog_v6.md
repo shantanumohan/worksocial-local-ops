@@ -1009,7 +1009,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X017** is fixture ACCEPTED only via the stop-after-dispatch reconcile / no fake cancel proof (`STOP_AFTER_DISPATCH_RECONCILE`) — once APPLYING has started, stop retains work for reconcile (APPLYING→CANCELLED forbidden). Not sandbox/prod VERIFIED.
 
-**T-X024** is fixture ACCEPTED only via the old fence after reassignment proof (`OLD_FENCE_AFTER_REASSIGNMENT`) — 1ms-before-expiry active, exact-expiry (`fenceCause=expired`), expired≠wrong_holder after reassignment, self-renew positive control, old-holder reclaim refuse, post-commit phase fence (bind+mark), `VERIFIED_CLAIM_REFUSED`; Temporal NOT_WIRED. Not sandbox/prod VERIFIED.
+**T-X024** is fixture ACCEPTED only via the old fence after reassignment proof (`OLD_FENCE_AFTER_REASSIGNMENT`) — 1ms-before-expiry active, exact-expiry (`fenceCause=expired`), expired≠wrong_holder after reassignment, self-renew / self-reclaim-before-foreign positive controls, old-holder reclaim refuse while foreign live, post-commit phase fence (bind+mark), `recoverEffectPending` labeled `UNFENCED_RECOVERY_NOT_FENCE_PROOF`, `VERIFIED_CLAIM_REFUSED` / `EXTERNAL_EFFECTS_CLAIM_REFUSED`; Temporal NOT_WIRED. Not sandbox/prod VERIFIED.
 
 **T-X011** is fixture ACCEPTED only via the output bomb bounded/quarantined proof (`OUTPUT_BOMB_BOUNDED_QUARANTINED`) — oversized CLI stdout is refused (`OUTPUT_TOO_LARGE`) and not delivered; non-finite/≤0 max refused; close-path one-shot bomb quarantined; idempotent reclaim (no invent deliver; assessment.code / quarantine.reason drift refused); simultaneous live-claim flags refused; live VERIFIED / force-deliver claims refused; ACCEPTED≠VERIFIED. Not sandbox/prod VERIFIED.
 
