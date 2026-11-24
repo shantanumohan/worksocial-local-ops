@@ -453,6 +453,43 @@ describe("credential rotation / revoke honesty", () => {
     expect(reclaimTrip.ok).toBe(true);
     expect(r1.priorLiveRevokeInvented).toBe(false);
 
+    // I12: claim wins over padded id; PROVIDER_REVOKE SATISFIED dishonest;
+    // invent ACTIVE_TOKEN closed; honest+dishonest reclaim → DRIFT.
+    const claimOnPadded = attemptLiveProviderRevoke({
+      connectionId: "  conn-1  ",
+      referenceId: "cred-aaa",
+      claimLiveVerified: true,
+    });
+    expect(claimOnPadded.code).toBe("LIVE_CLAIM_REFUSED");
+    expect(claimOnPadded.liveProviderSuccessClaimed).toBe(false);
+
+    const providerSatisfied = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      residualObligations: manifest.residualObligations.map((o) =>
+        o.kind === "PROVIDER_REVOKE"
+          ? { ...o, status: ResidualObligationStatus.SATISFIED }
+          : o,
+      ),
+    });
+    expect(providerSatisfied.ok).toBe(false);
+
+    const inventTokenClosed = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "ACTIVE_TOKEN residual satisfied after remote revoke",
+    });
+    expect(inventTokenClosed.ok).toBe(false);
+
+    const dishonestReclaim = reclaimOffboardActiveTokenResidual({
+      ...manifest,
+      liveProviderRevoke: "WIRED" as "NOT_WIRED",
+    });
+    const reclaimDrift = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: dishonestReclaim,
+    });
+    expect(reclaimDrift.ok).toBe(false);
+    expect(reclaimDrift.code).toBe("OFFBOARD_RECLAIM_DRIFT");
+
     const audit = createAuditEntry({
       entryId: "aud-1",
       kind: CredentialAuditKind.OFFBOARDED,

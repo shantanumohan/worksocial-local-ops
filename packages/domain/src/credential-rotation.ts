@@ -904,7 +904,12 @@ export function assertOffboardActiveTokenResidualHonest(
     /\blive\s+revoke\s+(completed|complete|succeeded|success)\b/i.test(
       scrubbed,
     ) ||
-    /\boffboarding\s+is\s+now\s+live\b/i.test(scrubbed)
+    /\boffboarding\s+is\s+now\s+live\b/i.test(scrubbed) ||
+    // I12: inventing ACTIVE_TOKEN residual closed/satisfied is dishonest.
+    /\bACTIVE_TOKEN\b[\s\S]{0,80}\b(satisfied|completed|closed)\b/i.test(
+      scrubbed,
+    ) ||
+    /\btoken\s+(is\s+)?(fully\s+)?revoked\s+(remotely|live)\b/i.test(scrubbed)
   ) {
     reasons.push("Manifest must not invent live VERIFIED or remote revoke success");
   }

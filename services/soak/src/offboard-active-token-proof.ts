@@ -1,8 +1,8 @@
 /**
  * Fixture proof for T-X073 — offboarding retains active provider token residual.
- * Hillclimb deepen I11: padded connection/reference ids stay NOT_WIRED;
- * dual claim+force refuse; missing ACTIVE_TOKEN dishonest; triple reclaim;
- * I9 reclaim / claimLiveVerified / forceComplete; blank-id revoke;
+ * Hillclimb deepen I12: claim-on-padded → LIVE_CLAIM_REFUSED; invent
+ * ACTIVE_TOKEN closed dishonest; honest+dishonest reclaim → DRIFT;
+ * I11 padded ids / dual claim; I9 reclaim; blank-id revoke;
  * re-offboard / double live-revoke stay NOT_WIRED; ACCEPTED≠VERIFIED;
  * secrets never leak. External effects: NONE. Never invents live VERIFIED.
  * Does not touch rebind / #43 lane.
@@ -10,6 +10,7 @@
 
 import { join } from "node:path";
 import {
+  ResidualObligationStatus,
   SoakProofKind,
   assertOffboardActiveTokenResidualHonest,
   assertOffboardActiveTokenResidualReclaimIdempotent,
@@ -305,6 +306,50 @@ export async function proofOffboardActiveTokenResidual(
     passed = false;
     details.push(
       `idempotent reclaim unexpectedly idem=${JSON.stringify(reclaimIdem)} trip=${JSON.stringify(reclaimTrip)} r1=${JSON.stringify(reclaim1)}`,
+    );
+  }
+
+  // I12: claim-on-padded refuse; invent ACTIVE_TOKEN closed dishonest; reclaim drift.
+  const claimOnPadded = attemptLiveProviderRevoke({
+    connectionId: `  ${seeded.connection.connectionId}  `,
+    referenceId: "fixture-ref",
+    claimLiveVerified: true,
+  });
+  const inventClosed = assertOffboardActiveTokenResidualHonest({
+    ...manifest,
+    summary: "ACTIVE_TOKEN residual satisfied after remote revoke",
+  });
+  const providerSatisfied = assertOffboardActiveTokenResidualHonest({
+    ...manifest,
+    residualObligations: manifest.residualObligations.map((o) =>
+      o.kind === "PROVIDER_REVOKE"
+        ? { ...o, status: ResidualObligationStatus.SATISFIED }
+        : o,
+    ),
+  });
+  const dishonestReclaim = reclaimOffboardActiveTokenResidual({
+    ...manifest,
+    liveProviderRevoke: "WIRED" as "NOT_WIRED",
+  });
+  const reclaimDrift = assertOffboardActiveTokenResidualReclaimIdempotent({
+    first: reclaim1,
+    second: dishonestReclaim,
+  });
+  if (
+    claimOnPadded.code === "LIVE_CLAIM_REFUSED" &&
+    claimOnPadded.liveProviderSuccessClaimed === false &&
+    !inventClosed.ok &&
+    !providerSatisfied.ok &&
+    !reclaimDrift.ok &&
+    reclaimDrift.code === "OFFBOARD_RECLAIM_DRIFT"
+  ) {
+    details.push(
+      "I12 edges: claim-on-padded LIVE_CLAIM_REFUSED; invent ACTIVE_TOKEN closed dishonest; PROVIDER_REVOKE SATISFIED dishonest; honest+dishonest reclaim DRIFT",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `I12 edges unexpectedly claimPad=${JSON.stringify(claimOnPadded)} invent=${JSON.stringify(inventClosed)} sat=${JSON.stringify(providerSatisfied)} drift=${JSON.stringify(reclaimDrift)}`,
     );
   }
 
