@@ -180,4 +180,33 @@ describe("evaluateStandingAuthority", () => {
       expect(result.decision.reason.includes(foreignAsset)).toBe(false);
     }
   });
+
+  it("does not treat padded '*' as a wildcard (T-X006 Codex P2)", () => {
+    const result = evaluateStandingAuthority(
+      baseRequest({
+        policies: [{ ...policy, channelId: " * " }],
+        grants: [{ ...grant, targetAccountId: " * ", allowedAssetScope: [" * "] }],
+      }),
+    );
+    expect(result.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(result.match).toBeNull();
+  });
+
+  it("rejects non-string object ids instead of coercing (T-X006 Codex P2)", () => {
+    expect(normalizeAuthorityObjectId(["owned-site"] as unknown as string)).toBeNull();
+    expect(normalizeAuthorityObjectId(42 as unknown as string)).toBeNull();
+    const result = evaluateStandingAuthority(
+      baseRequest({
+        channelId: ["owned-site"] as unknown as string,
+      }),
+    );
+    expect(result.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(result.match).toBeNull();
+  });
 });
