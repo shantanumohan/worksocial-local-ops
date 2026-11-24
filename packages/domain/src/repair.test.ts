@@ -28,6 +28,8 @@ import {
   evaluateTestIntegrityGate,
   injectFixtureDefect,
   pathIsProtected,
+  normalizeTestOperation,
+  isWeakenTestOperation,
   recordRepairAttempt,
   cmsRepairWiringStatus,
   type FixtureAssetSnapshot,
@@ -89,9 +91,18 @@ function healthyProposal(overrides?: Partial<Parameters<typeof createRepairPropo
   });
 }
 
+describe("weaken op normalization (T-X057)", () => {
+  it("normalizes hyphen/casing aliases", () => {
+    expect(normalizeTestOperation(" Disable-Test ")).toBe("disable_test");
+    expect(isWeakenTestOperation("Disable-Test")).toBe(true);
+    expect(isWeakenTestOperation("run_regression")).toBe(false);
+  });
+});
+
 describe("path protection", () => {
   it("flags tests, policies, and gateway paths", () => {
     expect(pathIsProtected("tests/unit/foo.test.ts")).toBe(true);
+    expect(pathIsProtected("__tests__/cta.spec.ts")).toBe(true);
     expect(pathIsProtected("packages/domain/src/standing-authority.ts")).toBe(
       true,
     );
@@ -111,6 +122,19 @@ describe("test integrity gate", () => {
     expect(gate.allowed).toBe(false);
     if (!gate.allowed) {
       expect(gate.code).toBe("TEST_INTEGRITY_VIOLATION");
+    }
+  });
+
+
+  it("rejects hyphen/casing aliases of weaken operations (T-X057)", () => {
+    const proposal = healthyProposal({
+      testOperations: ["Disable-Test", "SKIP_ASSERTION"],
+    });
+    const gate = evaluateTestIntegrityGate(proposal);
+    expect(gate.allowed).toBe(false);
+    if (!gate.allowed) {
+      expect(gate.code).toBe("TEST_INTEGRITY_VIOLATION");
+      expect(gate.reasons.length).toBeGreaterThanOrEqual(2);
     }
   });
 

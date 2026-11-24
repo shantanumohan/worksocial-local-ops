@@ -900,7 +900,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-US-024** is fixture ACCEPTED only via the agent cannot widen grant proof (`AGENT_CANNOT_WIDEN_GRANT`). Not sandbox/prod VERIFIED.
 
-**T-US-042** / **T-X057** are fixture ACCEPTED only via the repair weaken test rejected proof (`REPAIR_WEAKEN_TEST_REJECTED`). Not sandbox/prod VERIFIED.
+**T-US-042** / **T-X057** are fixture ACCEPTED only via the repair weaken test rejected proof (`REPAIR_WEAKEN_TEST_REJECTED`) — all WeakenTestOperation values + hyphen/casing aliases fail closed; `__tests__/` paths protected; live CMS repair `NOT_WIRED`. Not sandbox/prod VERIFIED.
 
 **T-US-044** / **T-X053** are fixture ACCEPTED only via the takeover cancels unsent replies proof (`TAKEOVER_CANCELS_UNSENT_REPLIES`). Not sandbox/prod VERIFIED.
 

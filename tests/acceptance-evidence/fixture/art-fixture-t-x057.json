@@ -3,13 +3,13 @@
   "caseId": "T-X057",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X057 (Repair disables failing test — rejected)\nproof=repair_weaken_test_rejected applyCount=1 :: Healthy repair preserves test baseline | DISABLE_TEST weaken operation rejected (TEST_INTEGRITY_VIOLATION) | tests/unit/cta.test.ts is protected | Protected test path patch rejected (PROTECTED_PATH) | Test baseline digest mutation rejected | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X057 (Repair disables failing test — rejected)\nproof=repair_weaken_test_rejected applyCount=1 :: Healthy repair preserves test baseline | All 7 WeakenTestOperation values rejected (TEST_INTEGRITY_VIOLATION) incl. DISABLE_TEST | Hyphen/casing alias Disable-Test rejected (TEST_INTEGRITY_VIOLATION) | tests/unit/cta.test.ts and __tests__/cta.spec.ts are protected | Protected test path patch rejected (PROTECTED_PATH) | __tests__/ path patch rejected (PROTECTED_PATH) | Test baseline digest mutation rejected | cmsRepairWiringStatus=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "repair_weaken_test_rejected"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x057.json",
-  "createdAtIso": "2026-11-24T22:50:29.969Z",
+  "createdAtIso": "2026-11-24T22:54:57.096Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x057-5165b77ad947"
+  "uniqueSourceArtifactId": "art-fixture-t-x057-7aa752a4b7b6"
 }

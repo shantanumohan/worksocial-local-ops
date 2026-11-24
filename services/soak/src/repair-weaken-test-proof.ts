@@ -2,7 +2,9 @@
  * Fixture proof for T-US-042 / T-X057 — repair cannot weaken protected tests.
  *
  * Test-integrity and protected-path gates reject disable/skip/delete weaken
- * operations and patches under tests/. External effects: NONE.
+ * operations and patches under tests/. Hillclimb: all WeakenTestOperation
+ * values + hyphen/casing aliases; __tests__/ protection; live NOT_WIRED.
+ * External effects: NONE.
  */
 
 import { randomUUID } from "node:crypto";
@@ -14,6 +16,7 @@ import {
   RepairProposalStatus,
   SoakProofKind,
   WeakenTestOperation,
+  cmsRepairWiringStatus,
   createIncident,
   createRepairProposal,
   createRepairTicket,
@@ -91,15 +94,52 @@ export function proofRepairWeakenTestRejected(nowIso: string): SoakProofRecord {
     details.push("Healthy repair unexpectedly failed test integrity");
   }
 
-  // 2. Explicit weaken operation (disable failing test) rejected — T-X057.
-  const weaken = createRepairProposal({
-    proposalId: "prop-weaken",
+  // 2. Every WeakenTestOperation value rejected — T-X057.
+  const weakenOps = Object.values(WeakenTestOperation);
+  let allWeakenRejected = true;
+  for (const op of weakenOps) {
+    const weaken = createRepairProposal({
+      proposalId: `prop-weaken-${op}`,
+      ticket: t,
+      authorRoleId: "A24",
+      title: `Weaken via ${op}`,
+      summary: "Disable/skip/mutate tests instead of fixing CTA",
+      patches: healthy.patches,
+      testOperations: [op],
+      regressionProbeId: "probe-cta",
+      testBaselineDigest: baseline,
+      proposedTestBaselineDigest: baseline,
+      fixtureOnly: true,
+      createdAtIso: nowIso,
+      status: RepairProposalStatus.READY_FOR_REVIEW,
+    });
+    const weakenGate = evaluateTestIntegrityGate(weaken);
+    if (
+      !(
+        !weakenGate.allowed &&
+        weakenGate.code === "TEST_INTEGRITY_VIOLATION"
+      )
+    ) {
+      allWeakenRejected = false;
+      passed = false;
+      details.push(`${op} unexpectedly passed test integrity`);
+    }
+  }
+  if (allWeakenRejected) {
+    details.push(
+      `All ${weakenOps.length} WeakenTestOperation values rejected (TEST_INTEGRITY_VIOLATION) incl. DISABLE_TEST`,
+    );
+  }
+
+  // 3. Hyphen/casing aliases still fail closed.
+  const alias = createRepairProposal({
+    proposalId: "prop-alias",
     ticket: t,
     authorRoleId: "A24",
-    title: "Disable failing test",
-    summary: "Disable failing probe test instead of fixing CTA",
+    title: "Alias weaken",
+    summary: "Disable-Test alias",
     patches: healthy.patches,
-    testOperations: [WeakenTestOperation.DISABLE_TEST],
+    testOperations: ["Disable-Test"],
     regressionProbeId: "probe-cta",
     testBaselineDigest: baseline,
     proposedTestBaselineDigest: baseline,
@@ -107,25 +147,25 @@ export function proofRepairWeakenTestRejected(nowIso: string): SoakProofRecord {
     createdAtIso: nowIso,
     status: RepairProposalStatus.READY_FOR_REVIEW,
   });
-  const weakenGate = evaluateTestIntegrityGate(weaken);
-  if (
-    !weakenGate.allowed &&
-    weakenGate.code === "TEST_INTEGRITY_VIOLATION"
-  ) {
+  const aliasGate = evaluateTestIntegrityGate(alias);
+  if (!aliasGate.allowed && aliasGate.code === "TEST_INTEGRITY_VIOLATION") {
     details.push(
-      "DISABLE_TEST weaken operation rejected (TEST_INTEGRITY_VIOLATION)",
+      "Hyphen/casing alias Disable-Test rejected (TEST_INTEGRITY_VIOLATION)",
     );
   } else {
     passed = false;
-    details.push("DISABLE_TEST unexpectedly passed test integrity");
+    details.push("Disable-Test alias unexpectedly allowed");
   }
 
-  // 3. Protected test path patch rejected — T-US-042.
-  if (pathIsProtected("tests/unit/cta.test.ts")) {
-    details.push("tests/unit/cta.test.ts is protected");
+  // 4. Protected test path patch rejected — T-US-042 / T-X057.
+  if (
+    pathIsProtected("tests/unit/cta.test.ts") &&
+    pathIsProtected("__tests__/cta.spec.ts")
+  ) {
+    details.push("tests/unit/cta.test.ts and __tests__/cta.spec.ts are protected");
   } else {
     passed = false;
-    details.push("Expected tests/unit/cta.test.ts to be protected");
+    details.push("Expected test paths to be protected");
   }
   const pathHit = createRepairProposal({
     proposalId: "prop-path",
@@ -157,7 +197,37 @@ export function proofRepairWeakenTestRejected(nowIso: string): SoakProofRecord {
     details.push("Protected test path patch unexpectedly allowed");
   }
 
-  // 4. Baseline digest mutation rejected.
+  const dunderPath = createRepairProposal({
+    proposalId: "prop-dunder",
+    ticket: t,
+    authorRoleId: "A24",
+    title: "Mutate __tests__",
+    summary: "Mutate __tests__ path",
+    patches: [
+      {
+        path: "__tests__/cta.spec.ts",
+        op: RepairPatchOp.REPLACE_FIELD,
+        before: "it(",
+        after: "it.skip(",
+      },
+    ],
+    testOperations: ["run_regression"],
+    regressionProbeId: "probe-cta",
+    testBaselineDigest: baseline,
+    proposedTestBaselineDigest: baseline,
+    fixtureOnly: true,
+    createdAtIso: nowIso,
+    status: RepairProposalStatus.READY_FOR_REVIEW,
+  });
+  const dunderGate = evaluateProtectedPathGate(dunderPath);
+  if (!dunderGate.allowed && dunderGate.code === "PROTECTED_PATH") {
+    details.push("__tests__/ path patch rejected (PROTECTED_PATH)");
+  } else {
+    passed = false;
+    details.push("__tests__/ path unexpectedly allowed");
+  }
+
+  // 5. Baseline digest mutation rejected.
   const baselineTamper = createRepairProposal({
     proposalId: "prop-baseline",
     ticket: t,
@@ -181,7 +251,16 @@ export function proofRepairWeakenTestRejected(nowIso: string): SoakProofRecord {
     details.push("Baseline digest mutation unexpectedly allowed");
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  if (cmsRepairWiringStatus() === "NOT_WIRED") {
+    details.push(
+      "cmsRepairWiringStatus=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Expected cmsRepairWiringStatus=NOT_WIRED; got ${cmsRepairWiringStatus()}`,
+    );
+  }
 
   return {
     proofId: `proof-repair-weaken-${randomUUID()}`,
@@ -189,7 +268,7 @@ export function proofRepairWeakenTestRejected(nowIso: string): SoakProofRecord {
     passed,
     details,
     applyAttemptCount: 1,
-    operationId: `op-us042-${randomUUID().slice(0, 8)}`,
+    operationId: `op-tx057-${randomUUID().slice(0, 8)}`,
     createdAtIso: nowIso,
     fixtureOnly: true,
   };

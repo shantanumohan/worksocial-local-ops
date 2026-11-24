@@ -294,6 +294,7 @@ export function emptyRepairState(nowIso: string): RepairState {
  */
 export const PROTECTED_PATH_PATTERNS: readonly RegExp[] = [
   /(^|\/)tests\//i,
+  /(^|\/)__tests__\//i,
   /\.test\.[jt]sx?$/i,
   /\.spec\.[jt]sx?$/i,
   /(^|\/)instructions\//i,
@@ -312,6 +313,16 @@ export const PROTECTED_PATH_PATTERNS: readonly RegExp[] = [
 export function pathIsProtected(path: string): boolean {
   const normalized = path.replace(/\\/g, "/");
   return PROTECTED_PATH_PATTERNS.some((re) => re.test(normalized));
+}
+
+/** Normalize declared test ops so casing/hyphen aliases still fail closed (T-X057). */
+export function normalizeTestOperation(op: string): string {
+  return op.trim().toLowerCase().replace(/-/g, "_");
+}
+
+export function isWeakenTestOperation(op: string): boolean {
+  const normalized = normalizeTestOperation(op);
+  return (Object.values(WeakenTestOperation) as string[]).includes(normalized);
 }
 
 export function digestTestBaseline(
@@ -494,10 +505,9 @@ export function evaluateTestIntegrityGate(
   proposal: RepairProposal,
 ): RepairGateDecision {
   const reasons: string[] = [];
-  const weakenValues = new Set<string>(Object.values(WeakenTestOperation));
 
   for (const op of proposal.testOperations) {
-    if (weakenValues.has(op)) {
+    if (isWeakenTestOperation(op)) {
       reasons.push(
         `Test operation "${op}" weakens tests — fail closed (v3 §19 / v6 invariant 11)`,
       );
