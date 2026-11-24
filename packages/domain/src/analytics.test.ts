@@ -119,6 +119,39 @@ describe("analytics — GA4 property kind", () => {
     );
     expect(transport.ok).toBe(false);
     if (!transport.ok) expect(transport.code).toBe("LIVE_CLAIM_REFUSED");
+
+    const dualClaim = validateGa4PropertyBinding(
+      {
+        propertyId: "100000001",
+        kind: Ga4PropertyKind.GA4_PROPERTY,
+        measurementId: "G-FIXTURE",
+        displayName: "Dual claim",
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      { claimLiveVerified: true, requestLiveGa4Transport: true },
+    );
+    expect(dualClaim.ok).toBe(false);
+    if (!dualClaim.ok) expect(dualClaim.code).toBe("LIVE_CLAIM_REFUSED");
+
+    const padded = validateGa4PropertyBinding({
+      propertyId: "  100000001  ",
+      kind: Ga4PropertyKind.GA4_PROPERTY,
+      measurementId: "G-FIXTURE",
+      displayName: "Padded id",
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(padded.ok).toBe(false);
+    if (!padded.ok) expect(padded.code).toBe("WRONG_PROPERTY_KIND");
+
+    const midShaped = validateGa4PropertyBinding({
+      propertyId: "G-ABC123",
+      kind: Ga4PropertyKind.GA4_PROPERTY,
+      measurementId: "G-ABC123",
+      displayName: "Measurement id as property",
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(midShaped.ok).toBe(false);
+    if (!midShaped.ok) expect(midShaped.code).toBe("WRONG_PROPERTY_KIND");
   });
 
   it("idempotent reclaim of wrong-kind refuse (T-X031 I8)", () => {

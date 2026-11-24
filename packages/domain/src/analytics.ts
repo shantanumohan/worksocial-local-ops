@@ -96,6 +96,17 @@ export function validateGa4PropertyBinding(
       ...GA4_BIND_HONESTY,
     };
   }
+  // Whitespace-padded ids refused (T-X031 deepen I10) — no silent trim invent.
+  if (binding.propertyId !== binding.propertyId.trim()) {
+    return {
+      ok: false,
+      code: "WRONG_PROPERTY_KIND",
+      reasons: [
+        "Whitespace-padded GA4 property id refused (T-X031); ACCEPTED≠VERIFIED",
+      ],
+      ...GA4_BIND_HONESTY,
+    };
+  }
   if (binding.kind !== Ga4PropertyKind.GA4_PROPERTY) {
     return {
       ok: false,
@@ -113,6 +124,17 @@ export function validateGa4PropertyBinding(
       code: "WRONG_PROPERTY_KIND",
       reasons: [
         "UA-shaped property id labeled as ga4_property refused (T-X031); ACCEPTED≠VERIFIED",
+      ],
+      ...GA4_BIND_HONESTY,
+    };
+  }
+  // Measurement-id shape (G-…) labeled as ga4_property refused (T-X031 deepen I10).
+  if (/^G-[A-Z0-9]+$/i.test(binding.propertyId.trim())) {
+    return {
+      ok: false,
+      code: "WRONG_PROPERTY_KIND",
+      reasons: [
+        "Measurement-id-shaped property id labeled as ga4_property refused (T-X031); ACCEPTED≠VERIFIED",
       ],
       ...GA4_BIND_HONESTY,
     };
@@ -276,6 +298,12 @@ export function assertGa4WrongPropertyKindHonest(
   }
   if (
     decision.ok &&
+    decision.binding.environment === AnalyticsEnvironment.NOT_WIRED
+  ) {
+    reasons.push("Must not accept NOT_WIRED environment bind");
+  }
+  if (
+    decision.ok &&
     decision.binding.environment === AnalyticsEnvironment.UNAVAILABLE
   ) {
     reasons.push("Must not accept UNAVAILABLE environment bind");
@@ -285,9 +313,21 @@ export function assertGa4WrongPropertyKindHonest(
   }
   if (
     decision.ok &&
+    decision.binding.propertyId !== decision.binding.propertyId.trim()
+  ) {
+    reasons.push("Must not accept whitespace-padded property id");
+  }
+  if (
+    decision.ok &&
     /^UA-\d+/i.test(decision.binding.propertyId.trim())
   ) {
     reasons.push("Must not accept UA-shaped property id as GA4");
+  }
+  if (
+    decision.ok &&
+    /^G-[A-Z0-9]+$/i.test(decision.binding.propertyId.trim())
+  ) {
+    reasons.push("Must not accept measurement-id-shaped property id as GA4");
   }
   if (reasons.length > 0) {
     return {

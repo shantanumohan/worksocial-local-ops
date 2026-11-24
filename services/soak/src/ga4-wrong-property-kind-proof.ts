@@ -1,9 +1,9 @@
 /**
  * Fixture proof for T-X031 — wrong GA4 property kind refused.
- * Hillclimb deepen I8: idempotent reclaim; UA-shaped id mislabeled as GA4;
- * UNAVAILABLE env refuse; measurement-id-only / unknown refuse; live VERIFIED
- * claim refused; liveGa4Transport NOT_WIRED; ACCEPTED≠VERIFIED.
- * External effects: NONE.
+ * Hillclimb deepen I10: whitespace-padded / measurement-id-shaped property id
+ * refuse; dual live-claim refuse; I8 reclaim + UA-shaped / UNAVAILABLE;
+ * measurement-id-only / unknown refuse; liveGa4Transport NOT_WIRED;
+ * ACCEPTED≠VERIFIED. External effects: NONE.
  */
 
 import { randomUUID } from "node:crypto";
@@ -262,6 +262,55 @@ export function proofGa4WrongPropertyKindRefused(
     passed = false;
     details.push(
       `idempotent reclaim unexpectedly idem=${JSON.stringify(reclaimIdem)} r1=${JSON.stringify(reclaim1)} afterClaim=${JSON.stringify(afterLiveClaim)} after=${JSON.stringify(reclaimAfterClaim)}`,
+    );
+  }
+
+  // I10: whitespace-padded id + measurement-id-shaped property id + dual claim refuse.
+  const padded = validateGa4PropertyBinding({
+    propertyId: "  100000001  ",
+    kind: Ga4PropertyKind.GA4_PROPERTY,
+    measurementId: "G-FIXTURE",
+    displayName: "Padded",
+    environment: AnalyticsEnvironment.FIXTURE,
+  });
+  const midShaped = validateGa4PropertyBinding({
+    propertyId: "G-XYZ999",
+    kind: Ga4PropertyKind.GA4_PROPERTY,
+    measurementId: "G-XYZ999",
+    displayName: "Mid as property",
+    environment: AnalyticsEnvironment.FIXTURE,
+  });
+  const dualClaim = validateGa4PropertyBinding(
+    {
+      propertyId: "100000001",
+      kind: Ga4PropertyKind.GA4_PROPERTY,
+      measurementId: "G-FIXTURE",
+      displayName: "Dual claim",
+      environment: AnalyticsEnvironment.FIXTURE,
+    },
+    { claimLiveVerified: true, requestLiveGa4Transport: true },
+  );
+  const reclaim3 = reclaimGa4WrongPropertyKindDecision(uaBinding);
+  const reclaimTrip = assertGa4WrongPropertyKindReclaimIdempotent({
+    first: reclaim1,
+    second: reclaim3,
+  });
+  if (
+    !padded.ok &&
+    padded.code === "WRONG_PROPERTY_KIND" &&
+    !midShaped.ok &&
+    midShaped.code === "WRONG_PROPERTY_KIND" &&
+    !dualClaim.ok &&
+    dualClaim.code === "LIVE_CLAIM_REFUSED" &&
+    reclaimTrip.ok
+  ) {
+    details.push(
+      "I10 edges: padded id + measurement-id-shaped property refuse; dual live-claim LIVE_CLAIM_REFUSED; triple reclaim idempotent",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `I10 edges unexpectedly padded=${JSON.stringify(padded)} mid=${JSON.stringify(midShaped)} dual=${JSON.stringify(dualClaim)} trip=${JSON.stringify(reclaimTrip)}`,
     );
   }
 
