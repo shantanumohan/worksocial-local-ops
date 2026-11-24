@@ -1011,7 +1011,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X024** is fixture ACCEPTED only via the old fence after reassignment proof (`OLD_FENCE_AFTER_REASSIGNMENT`). Not sandbox/prod VERIFIED.
 
-**T-X011** is fixture ACCEPTED only via the output bomb bounded/quarantined proof (`OUTPUT_BOMB_BOUNDED_QUARANTINED`) — oversized CLI stdout is refused (`OUTPUT_TOO_LARGE`) and not delivered; non-finite/≤0 max refused; close-path one-shot bomb quarantined; live VERIFIED / force-deliver claims refused; ACCEPTED≠VERIFIED. Not sandbox/prod VERIFIED.
+**T-X011** is fixture ACCEPTED only via the output bomb bounded/quarantined proof (`OUTPUT_BOMB_BOUNDED_QUARANTINED`) — oversized CLI stdout is refused (`OUTPUT_TOO_LARGE`) and not delivered; non-finite/≤0 max refused; close-path one-shot bomb quarantined; idempotent reclaim (no invent deliver after refuse); live VERIFIED / force-deliver claims refused; ACCEPTED≠VERIFIED. Not sandbox/prod VERIFIED.
 
 **T-X003** is fixture ACCEPTED only via the symlink escape after root verification proof (`SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION`) — logical root check then canonical/realpath deny when a symlink would write outside the verified root. Not sandbox/prod VERIFIED.
 
@@ -1037,7 +1037,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X008 | Fact changes after review | Stale; no publish *(fixture ACCEPTED — fact changes after review stale / no publish proof; not sandbox/prod VERIFIED)* |
 | T-X009 | CLI error despite exit 0 | Job fails *(fixture ACCEPTED — CLI error despite exit 0 proof; not sandbox/prod VERIFIED)* |
 | T-X010 | Malicious prompt interpolation | No shell injection *(fixture ACCEPTED)* |
-| T-X011 | Output bomb | Bounded/quarantined *(fixture ACCEPTED — OUTPUT_TOO_LARGE quarantine; non-finite max refused; close-path quarantine; live claim refused; ACCEPTED≠VERIFIED; not sandbox/prod VERIFIED)* |
+| T-X011 | Output bomb | Bounded/quarantined *(fixture ACCEPTED — OUTPUT_TOO_LARGE quarantine; non-finite max refused; close-path quarantine; idempotent reclaim; live claim refused; ACCEPTED≠VERIFIED; not sandbox/prod VERIFIED)* |
 | T-X012 | Orphan worker on deadline | Process tree stopped *(fixture ACCEPTED)* |
 | T-X013 | Replay historical workflow | No repeated external I/O *(fixture ACCEPTED — replay historical no-repeat-I/O proof; not sandbox/prod VERIFIED)* |
 | T-X014 | Approval wait survives restart | Resume wait; no slot hold *(fixture ACCEPTED)* |

@@ -15,7 +15,9 @@ import {
   DEFAULT_LIVE_CLI_TOOLS,
   assessStdoutBound,
   assertOutputBombBoundedHonest,
+  assertOutputBombReclaimIdempotent,
   quarantineStdoutDelivery,
+  reclaimOutputBombDecision,
   planClaudeCliInvocation,
   invokeClaudeCli,
 } from "./cli-adapter.js";
@@ -130,6 +132,29 @@ describe("claude-runner (R1-04)", () => {
 
     const emoji = assessStdoutBound("🔥".repeat(20), 40);
     expect(emoji.withinBound).toBe(false);
+
+    // Idempotent reclaim (I7): double reclaim of bomb agrees; no invent deliver.
+    const bomb = "B".repeat(100);
+    const r1 = reclaimOutputBombDecision(bomb, 50);
+    const r2 = reclaimOutputBombDecision(bomb, 50);
+    const idem = assertOutputBombReclaimIdempotent({ first: r1, second: r2 });
+    expect(idem.ok).toBe(true);
+    expect(idem.code).toBe("OUTPUT_BOMB_RECLAIM_IDEMPOTENT");
+    expect(r1.quarantine.deliver).toBe(false);
+    expect(r1.priorDeliverInvented).toBe(false);
+
+    const forced = reclaimOutputBombDecision(bomb, 50, {
+      forceDeliverDespiteBomb: true,
+    });
+    expect(forced.quarantine.deliver).toBe(false);
+    if (!forced.quarantine.deliver) {
+      expect(forced.quarantine.code).toBe("LIVE_CLAIM_REFUSED");
+    }
+    const afterForce = reclaimOutputBombDecision(bomb, 50);
+    expect(afterForce.quarantine.deliver).toBe(false);
+    if (!afterForce.quarantine.deliver) {
+      expect(afterForce.quarantine.code).toBe("OUTPUT_TOO_LARGE");
+    }
   });
 
   it("refuses invokeClaudeCli when maxOutputBytes is nonpositive or non-finite (T-X011)", async () => {

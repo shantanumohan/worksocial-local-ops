@@ -220,6 +220,110 @@ export function quarantineStdoutDelivery(
   };
 }
 
+export type OutputBombReclaimResult = {
+  assessment: StdoutBoundAssessment;
+  quarantine: StdoutQuarantineDecision;
+  /** Pure reclaim — never invents prior delivery. */
+  priorDeliverInvented: false;
+  liveProviderSuccessClaimed: false;
+  externalEffects: "NONE";
+};
+
+/**
+ * Idempotent reclaim of a bound+quarantine decision (T-X011 deepen I7).
+ * Re-running on the same stdout must not invent delivery after a prior refuse.
+ */
+export function reclaimOutputBombDecision(
+  stdoutUtf8: string,
+  maxOutputBytes: number,
+  opts?: {
+    claimLiveVerified?: boolean;
+    forceDeliverDespiteBomb?: boolean;
+  },
+): OutputBombReclaimResult {
+  const assessment = assessStdoutBound(stdoutUtf8, maxOutputBytes);
+  const quarantine = quarantineStdoutDelivery(assessment, opts);
+  return {
+    assessment,
+    quarantine,
+    priorDeliverInvented: false,
+    ...OUTPUT_BOMB_HONESTY,
+  };
+}
+
+/**
+ * Fail-closed: two reclaim passes over the same bomb must agree — no invent deliver.
+ */
+export function assertOutputBombReclaimIdempotent(input: {
+  first: OutputBombReclaimResult;
+  second: OutputBombReclaimResult;
+}): {
+  ok: boolean;
+  code: "OUTPUT_BOMB_RECLAIM_IDEMPOTENT" | "OUTPUT_BOMB_RECLAIM_DRIFT";
+  reasons: string[];
+  externalEffects: "NONE";
+} {
+  const reasons: string[] = [];
+  const { first, second } = input;
+  if (first.priorDeliverInvented !== false || second.priorDeliverInvented !== false) {
+    reasons.push("priorDeliverInvented must be false on both reclaim passes");
+  }
+  if (
+    first.liveProviderSuccessClaimed !== false ||
+    second.liveProviderSuccessClaimed !== false
+  ) {
+    reasons.push("liveProviderSuccessClaimed must be false on reclaim");
+  }
+  if (first.externalEffects !== "NONE" || second.externalEffects !== "NONE") {
+    reasons.push("externalEffects must be NONE on reclaim");
+  }
+  if (first.assessment.withinBound !== second.assessment.withinBound) {
+    reasons.push("reclaim assessment.withinBound drifted");
+  }
+  if (first.assessment.byteLength !== second.assessment.byteLength) {
+    reasons.push("reclaim assessment.byteLength drifted");
+  }
+  if (first.quarantine.deliver !== second.quarantine.deliver) {
+    reasons.push("reclaim quarantine.deliver drifted");
+  }
+  if (
+    !first.assessment.withinBound &&
+    (first.quarantine.deliver === true || second.quarantine.deliver === true)
+  ) {
+    reasons.push("idempotent reclaim must not deliver oversized stdout");
+  }
+  if (
+    first.quarantine.deliver === false &&
+    second.quarantine.deliver === false
+  ) {
+    if (first.quarantine.code !== second.quarantine.code) {
+      reasons.push("reclaim quarantine.code drifted");
+    }
+    if (
+      first.quarantine.quarantinedStdout !== null ||
+      second.quarantine.quarantinedStdout !== null
+    ) {
+      reasons.push("reclaim must not retain bomb payload");
+    }
+  }
+  if (reasons.length > 0) {
+    return {
+      ok: false,
+      code: "OUTPUT_BOMB_RECLAIM_DRIFT",
+      reasons,
+      externalEffects: "NONE",
+    };
+  }
+  return {
+    ok: true,
+    code: "OUTPUT_BOMB_RECLAIM_IDEMPOTENT",
+    reasons: [
+      "idempotent reclaim: same bound/quarantine; no invent deliver; ACCEPTED≠VERIFIED",
+    ],
+    externalEffects: "NONE",
+  };
+}
+
 /**
  * Fail-closed honesty check for T-X011 bound/quarantine decisions.
  */

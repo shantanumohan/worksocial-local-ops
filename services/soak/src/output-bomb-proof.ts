@@ -1,8 +1,9 @@
 /**
  * Fixture proof for T-X011 — output bomb bounded/quarantined.
- * Hillclimb deepen: exact-at-bound ok; zero/negative/non-finite max refused;
- * UTF-8 4-byte emoji bomb; close-path one-shot bomb quarantine; live VERIFIED /
- * force-deliver refused; mismatched honesty; ACCEPTED≠VERIFIED.
+ * Hillclimb deepen I7: idempotent reclaim; exact-at-bound ok;
+ * zero/negative/non-finite max refused; UTF-8 4-byte emoji bomb;
+ * close-path one-shot bomb quarantine; live VERIFIED / force-deliver refused;
+ * mismatched honesty; ACCEPTED≠VERIFIED.
  * Oversized stdout is refused (OUTPUT_TOO_LARGE) and not delivered.
  * External effects: NONE. Never invents live VERIFIED.
  */
@@ -15,8 +16,10 @@ import { SoakProofKind, type SoakProofRecord } from "@worksocial/domain";
 import {
   assessStdoutBound,
   assertOutputBombBoundedHonest,
+  assertOutputBombReclaimIdempotent,
   invokeClaudeCli,
   quarantineStdoutDelivery,
+  reclaimOutputBombDecision,
 } from "@worksocial/claude-runner";
 
 /**
@@ -355,6 +358,38 @@ export async function proofOutputBombBoundedQuarantined(
     } else {
       passed = false;
       details.push(`Under-bound invoke unexpectedly ${JSON.stringify(okInvoke)}`);
+    }
+
+    // 6. Idempotent reclaim (I7): double reclaim of bomb agrees; no invent deliver.
+    const reclaim1 = reclaimOutputBombDecision(bombText, maxBytes);
+    const reclaim2 = reclaimOutputBombDecision(bombText, maxBytes);
+    const reclaimIdem = assertOutputBombReclaimIdempotent({
+      first: reclaim1,
+      second: reclaim2,
+    });
+    const afterForce = reclaimOutputBombDecision(bombText, maxBytes, {
+      forceDeliverDespiteBomb: true,
+    });
+    const reclaimAfterForce = reclaimOutputBombDecision(bombText, maxBytes);
+    if (
+      reclaimIdem.ok &&
+      reclaimIdem.code === "OUTPUT_BOMB_RECLAIM_IDEMPOTENT" &&
+      reclaim1.quarantine.deliver === false &&
+      reclaim1.priorDeliverInvented === false &&
+      afterForce.quarantine.deliver === false &&
+      afterForce.quarantine.code === "LIVE_CLAIM_REFUSED" &&
+      reclaimAfterForce.quarantine.deliver === false &&
+      !reclaimAfterForce.assessment.withinBound &&
+      reclaimAfterForce.quarantine.code === "OUTPUT_TOO_LARGE"
+    ) {
+      details.push(
+        "idempotent reclaim: double bomb reclaim agrees; post-force reclaim still OUTPUT_TOO_LARGE (no invent deliver)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `idempotent reclaim unexpectedly idem=${JSON.stringify(reclaimIdem)} r1=${JSON.stringify(reclaim1)} afterForce=${JSON.stringify(afterForce)} after=${JSON.stringify(reclaimAfterForce)}`,
+      );
     }
 
     details.push(
