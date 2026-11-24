@@ -108,11 +108,39 @@ function isExpired(expiresAtIso: string | null, nowIso: string): boolean {
   return parseTime(expiresAtIso) <= parseTime(nowIso);
 }
 
-function scopeAllows(scope: string[], assetId: string): boolean {
-  if (scope.includes("*")) {
-    return true;
+/**
+ * Normalize channel/account/asset object ids for standing authority match.
+ * Trims surrounding whitespace; empty / whitespace-only → null (fail closed).
+ * T-X006 hillclimb: padded foreign ids must not confuse exact equality.
+ */
+export function normalizeAuthorityObjectId(
+  raw: string | null | undefined,
+): string | null {
+  if (raw === null || raw === undefined) {
+    return null;
   }
-  return scope.includes(assetId);
+  const trimmed = String(raw).trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+  return trimmed;
+}
+
+function scopeAllows(scope: string[], assetId: string): boolean {
+  const want = normalizeAuthorityObjectId(assetId);
+  if (want === null) {
+    return false;
+  }
+  for (const entry of scope) {
+    const normalized = normalizeAuthorityObjectId(entry);
+    if (normalized === "*") {
+      return true;
+    }
+    if (normalized === want) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -142,6 +170,14 @@ export function findMatchingGrant(
     return null;
   }
 
+  const channelId = normalizeAuthorityObjectId(request.channelId);
+  const targetAccountId = normalizeAuthorityObjectId(request.targetAccountId);
+  const assetId = normalizeAuthorityObjectId(request.assetId);
+  // Whitespace-only / missing object ids never match a standing grant.
+  if (channelId === null || targetAccountId === null || assetId === null) {
+    return null;
+  }
+
   for (const policy of request.policies) {
     if (!policy.enabled) {
       continue;
@@ -149,7 +185,8 @@ export function findMatchingGrant(
     if (policy.actorRole !== request.actorRole && policy.actorRole !== "*") {
       continue;
     }
-    if (policy.channelId !== request.channelId && policy.channelId !== "*") {
+    const policyChannel = normalizeAuthorityObjectId(policy.channelId);
+    if (policyChannel !== channelId && policyChannel !== "*") {
       continue;
     }
     if (policy.actionClass !== request.actionClass) {
@@ -158,7 +195,7 @@ export function findMatchingGrant(
     if (isExpired(policy.expiresAtIso, request.nowIso)) {
       continue;
     }
-    if (!scopeAllows(policy.allowedAssetScope, request.assetId)) {
+    if (!scopeAllows(policy.allowedAssetScope, assetId)) {
       continue;
     }
 
@@ -169,10 +206,8 @@ export function findMatchingGrant(
       if (grant.revoked) {
         continue;
       }
-      if (
-        grant.targetAccountId !== request.targetAccountId &&
-        grant.targetAccountId !== "*"
-      ) {
+      const grantAccount = normalizeAuthorityObjectId(grant.targetAccountId);
+      if (grantAccount !== targetAccountId && grantAccount !== "*") {
         continue;
       }
       if (
@@ -181,7 +216,7 @@ export function findMatchingGrant(
       ) {
         continue;
       }
-      if (!scopeAllows(grant.allowedAssetScope, request.assetId)) {
+      if (!scopeAllows(grant.allowedAssetScope, assetId)) {
         continue;
       }
       if (isExpired(grant.expiresAtIso, request.nowIso)) {

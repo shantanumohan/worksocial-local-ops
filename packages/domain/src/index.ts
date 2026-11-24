@@ -121,6 +121,7 @@ export {
   OperatingMode,
   evaluateStandingAuthority,
   findMatchingGrant,
+  normalizeAuthorityObjectId,
   type ActionClassValue,
   type OperatingModeValue,
   type StandingPolicy,

@@ -133,4 +133,50 @@ describe("evaluateStandingAuthority", () => {
       code: "RATE_LIMIT_EXCEEDED",
     });
   });
+
+  it("allows whitespace-padded in-workspace object ids (T-X006 hillclimb)", () => {
+    const result = evaluateStandingAuthority(
+      baseRequest({
+        channelId: "  owned-site  ",
+        targetAccountId: "\tacct-1\n",
+        assetId: " page-home ",
+      }),
+    );
+    expect(result.decision).toEqual({ allowed: true });
+    expect(result.match?.grant.grantId).toBe("grant-1");
+  });
+
+  it("denies whitespace-only object ids without leaking (T-X006 hillclimb)", () => {
+    const result = evaluateStandingAuthority(
+      baseRequest({ channelId: "   ", assetId: "\t" }),
+    );
+    expect(result.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+      reason: "No capability grant for this action",
+    });
+    expect(result.match).toBeNull();
+  });
+
+  it("denies foreign channel+asset dual substitution without leak (T-X006)", () => {
+    const foreignChannel = "ws-foreign-site";
+    const foreignAsset = "page-foreign-secret";
+    const result = evaluateStandingAuthority(
+      baseRequest({
+        channelId: `  ${foreignChannel}  `,
+        assetId: ` ${foreignAsset} `,
+      }),
+    );
+    expect(result.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+      reason: "No capability grant for this action",
+    });
+    expect(result.match).toBeNull();
+    expect(result.decision.allowed).toBe(false);
+    if (!result.decision.allowed) {
+      expect(result.decision.reason.includes(foreignChannel)).toBe(false);
+      expect(result.decision.reason.includes(foreignAsset)).toBe(false);
+    }
+  });
 });

@@ -4,7 +4,10 @@
  *
  * Standing authority scopes channel + account + asset. Substituting a
  * foreign workspace object into an otherwise valid request yields generic
- * GRANT_MISSING (reason does not echo the foreign id). External effects: NONE.
+ * GRANT_MISSING (reason does not echo the foreign id).
+ *
+ * Hillclimb: whitespace-normalized object ids; dual foreign substitution;
+ * whitespace-only ids fail closed. Honesty NOT_WIRED / externalEffects NONE.
  * Avoids credential rebind (#43) lane.
  */
 
@@ -189,7 +192,80 @@ export function proofCrossWorkspaceReferenceDenied(
     );
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  // 5. Hillclimb — whitespace-padded in-workspace ids still match.
+  const paddedOk = evaluateStandingAuthority(
+    baseRequest(nowIso, {
+      channelId: `  ${wsA.channelId}  `,
+      targetAccountId: `\t${wsA.targetAccountId}\n`,
+      assetId: ` ${wsA.assetId} `,
+    }),
+  );
+  if (paddedOk.decision.allowed) {
+    details.push(
+      "Whitespace-padded in-workspace ids allowed (normalized match)",
+    );
+  } else {
+    passed = false;
+    details.push("Whitespace-padded in-workspace request unexpectedly denied");
+  }
+
+  // 6. Hillclimb — whitespace-padded foreign channel denied without leak.
+  const paddedForeign = evaluateStandingAuthority(
+    baseRequest(nowIso, { channelId: `  ${wsB.channelId}  ` }),
+  );
+  const paddedCheck = isGenericGrantMissing(
+    paddedForeign.decision,
+    foreignTokens,
+  );
+  if (paddedCheck.ok && paddedForeign.match === null) {
+    details.push(
+      "Whitespace-padded foreign channel denied GRANT_MISSING without leak",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Padded foreign channel failed: ${"why" in paddedCheck ? paddedCheck.why : "match leaked"}`,
+    );
+  }
+
+  // 7. Hillclimb — dual foreign channel+asset substitution.
+  const dual = evaluateStandingAuthority(
+    baseRequest(nowIso, {
+      channelId: wsB.channelId,
+      assetId: wsB.assetId,
+    }),
+  );
+  const dualCheck = isGenericGrantMissing(dual.decision, foreignTokens);
+  if (dualCheck.ok && dual.match === null) {
+    details.push(
+      "Dual foreign channel+asset substitution denied GRANT_MISSING without leak",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Dual foreign check failed: ${"why" in dualCheck ? dualCheck.why : "match leaked"}`,
+    );
+  }
+
+  // 8. Hillclimb — whitespace-only ids fail closed.
+  const blank = evaluateStandingAuthority(
+    baseRequest(nowIso, { channelId: "   ", assetId: "\t" }),
+  );
+  if (
+    !blank.decision.allowed &&
+    blank.decision.code === "GRANT_MISSING" &&
+    blank.match === null
+  ) {
+    details.push("Whitespace-only object ids fail closed GRANT_MISSING");
+  } else {
+    passed = false;
+    details.push("Whitespace-only object ids unexpectedly authorized");
+  }
+
+  details.push("honesty NOT_WIRED/NONE");
+  details.push(
+    "liveProviderSuccessClaimed=false catalogClaim=ACCEPTED≠VERIFIED externalEffects=NONE",
+  );
 
   return {
     proofId: `proof-cross-workspace-${randomUUID()}`,

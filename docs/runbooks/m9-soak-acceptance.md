@@ -48,7 +48,7 @@ Honest fixture ACCEPTED cases: **T-X001**, **T-X014**, **T-X020**, **T-US-048**,
 
 **T-X005** maps only to `FORGED_BROWSER_ROLE_IGNORED`.
 
-**T-X006** maps only to `CROSS_WORKSPACE_REFERENCE_DENIED`.
+**T-X006** maps only to `CROSS_WORKSPACE_REFERENCE_DENIED` (whitespace-normalized object ids; dual foreign channel+asset denied without leak; whitespace-only fail-closed; not live VERIFIED).
 
 **T-X019 / T-US-036** map only to `APPROVED_PAYLOAD_EDIT_INVALIDATED` (checksum/revision/evidence/artifact; sticky INVALIDATED; blank pin + empty proposalId/bindingId refuse; trim-normalized; padded mismatch still INVALIDATED; blank verdict author refuse; supplied proposal author/id swap refuse; padded verdict/supplied proposalId refuse; verdict author mismatch refuse; blank verdict proposalId refuse; padded verdict authorRoleId refuse; LIVE_REVIEW_CLAIM_REFUSED; live NOT_WIRED; distinct from T-US-035 and T-US-054/T-X018).
 
