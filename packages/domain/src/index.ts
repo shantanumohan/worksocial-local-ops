@@ -1000,10 +1000,13 @@ export {
 } from "./host-offline-public-discovery.js";
 export {
   assertEvalPromptHasNoCustomerPii,
+  buildEvalSafePromptFromPayload,
   containsRawCustomerPii,
   prepareCustomerDataForEvaluation,
   redactTextForEvaluation,
+  CUSTOMER_EVAL_LIVE_WIRING,
   CUSTOMER_EVAL_REDACTION_RELATED_CASE_IDS,
+  type CustomerEvalLiveWiring,
   type CustomerEvalRedactionDecision,
   type CustomerEvalRedactionMode,
   type CustomerEvalSourceRecord,

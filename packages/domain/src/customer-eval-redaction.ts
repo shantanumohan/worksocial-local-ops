@@ -7,7 +7,8 @@
  * on raw passthrough (`CUSTOMER_DATA_LEAK_BLOCKED`).
  *
  * Distinct from EVAL_ONLY tool forbid (T-US-018/T-X037) and soak evidence
- * summary redaction helpers. External effects: NONE. ChatGPT Ads stays blocked.
+ * summary redaction helpers. Live eval fleet stays NOT_WIRED.
+ * External effects: NONE. ChatGPT Ads stays blocked. ACCEPTED ≠ VERIFIED.
  */
 
 export type CustomerEvalSourceRecord = {
@@ -16,7 +17,7 @@ export type CustomerEvalSourceRecord = {
   customerPhone: string | null;
   messageBody: string;
   conversationId: string;
-  /** Non-PII fixture context safe for evaluation. */
+  /** Non-PII fixture context safe for evaluation — still scanned for leaks. */
   intentLabel: string;
 };
 
@@ -33,6 +34,11 @@ export type EvalSafeCustomerPayload = {
 
 export type CustomerEvalRedactionMode = "redact" | "raw_passthrough";
 
+/** Live EVAL_ONLY fleet / provider wiring — always NOT_WIRED for fixture proofs. */
+export const CUSTOMER_EVAL_LIVE_WIRING = "NOT_WIRED" as const;
+
+export type CustomerEvalLiveWiring = typeof CUSTOMER_EVAL_LIVE_WIRING;
+
 export type CustomerEvalRedactionDecision =
   | {
       allowed: true;
@@ -40,6 +46,8 @@ export type CustomerEvalRedactionDecision =
       payload: EvalSafeCustomerPayload;
       reasons: string[];
       externalEffects: "NONE";
+      liveEvalWiring: CustomerEvalLiveWiring;
+      liveProviderSuccessClaimed: false;
     }
   | {
       allowed: false;
@@ -47,6 +55,8 @@ export type CustomerEvalRedactionDecision =
       payload: null;
       reasons: string[];
       externalEffects: "NONE";
+      liveEvalWiring: CustomerEvalLiveWiring;
+      liveProviderSuccessClaimed: false;
     };
 
 export type KnownCustomerIdentifiers = {
@@ -128,19 +138,65 @@ function sourceHasIdentifiablePii(source: CustomerEvalSourceRecord): boolean {
   if (source.customerEmail && source.customerEmail.trim().length > 0) return true;
   if (source.customerPhone && source.customerPhone.trim().length > 0) return true;
   if (containsRawCustomerPii(source.messageBody)) return true;
+  if (containsRawCustomerPii(source.intentLabel)) return true;
   return false;
+}
+
+function blockedLeak(reasons: string[]): CustomerEvalRedactionDecision {
+  return {
+    allowed: false,
+    code: "CUSTOMER_DATA_LEAK_BLOCKED",
+    payload: null,
+    reasons,
+    externalEffects: "NONE",
+    liveEvalWiring: CUSTOMER_EVAL_LIVE_WIRING,
+    liveProviderSuccessClaimed: false,
+  };
+}
+
+/**
+ * Compose an EVAL_ONLY judge prompt from an already-redacted payload only.
+ * Callers must not concatenate raw source fields into prompts.
+ */
+export function buildEvalSafePromptFromPayload(
+  payload: EvalSafeCustomerPayload,
+): string {
+  return [
+    "Judge fixture answer",
+    `intent=${payload.intentLabel}`,
+    `conversationId=${payload.conversationId}`,
+    `body=${payload.messageBody}`,
+    "customerDisplayName=[REDACTED_NAME]",
+  ].join(" ");
 }
 
 /**
  * Prepare customer-origin data for an EVAL_ONLY surface.
  * Raw passthrough with identifiable PII is blocked; redact mode yields a
  * fixture-safe payload that evaluation may consume.
+ * Live-verified / live-fleet claims are refused (NOT_WIRED).
  */
 export function prepareCustomerDataForEvaluation(input: {
   source: CustomerEvalSourceRecord;
   mode: CustomerEvalRedactionMode;
+  /** Forbidden — fixture proofs never claim live VERIFIED. */
+  claimLiveVerified?: boolean;
+  /** Forbidden — live EVAL fleet stays NOT_WIRED. */
+  requestLiveEvalFleet?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.claimLiveVerified === true) {
+    return blockedLeak([
+      "Live VERIFIED customer-eval claims are forbidden — fixture ACCEPTED only (T-X072)",
+    ]);
+  }
+  if (input.requestLiveEvalFleet === true) {
+    return blockedLeak([
+      "Live EVAL fleet remains NOT_WIRED — refuse live eval wiring (T-X072)",
+    ]);
+  }
+
   const known: KnownCustomerIdentifiers = {
     displayName: source.customerDisplayName,
     email: source.customerEmail,
@@ -148,15 +204,9 @@ export function prepareCustomerDataForEvaluation(input: {
   };
 
   if (mode === "raw_passthrough" && sourceHasIdentifiablePii(source)) {
-    return {
-      allowed: false,
-      code: "CUSTOMER_DATA_LEAK_BLOCKED",
-      payload: null,
-      reasons: [
-        "Raw customer PII cannot enter evaluation — redaction required (T-X072)",
-      ],
-      externalEffects: "NONE",
-    };
+    return blockedLeak([
+      "Raw customer PII cannot enter evaluation — redaction required (T-X072)",
+    ]);
   }
 
   const redactedFields: string[] = [];
@@ -173,6 +223,10 @@ export function prepareCustomerDataForEvaluation(input: {
   if (redactedBody !== source.messageBody) {
     redactedFields.push("messageBody");
   }
+  const redactedIntent = redactTextForEvaluation(source.intentLabel, known);
+  if (redactedIntent !== source.intentLabel) {
+    redactedFields.push("intentLabel");
+  }
 
   const payload: EvalSafeCustomerPayload = {
     customerDisplayName: "[REDACTED_NAME]",
@@ -186,21 +240,18 @@ export function prepareCustomerDataForEvaluation(input: {
         : null,
     messageBody: redactedBody,
     conversationId: source.conversationId,
-    intentLabel: source.intentLabel,
+    intentLabel: redactedIntent,
     redacted: true,
     redactedFields,
   };
 
-  if (containsRawCustomerPii(payload.messageBody, known)) {
-    return {
-      allowed: false,
-      code: "CUSTOMER_DATA_LEAK_BLOCKED",
-      payload: null,
-      reasons: [
-        "Redaction left residual customer PII in evaluation payload — blocked (T-X072)",
-      ],
-      externalEffects: "NONE",
-    };
+  if (
+    containsRawCustomerPii(payload.messageBody, known) ||
+    containsRawCustomerPii(payload.intentLabel, known)
+  ) {
+    return blockedLeak([
+      "Redaction left residual customer PII in evaluation payload — blocked (T-X072)",
+    ]);
   }
 
   return {
@@ -211,8 +262,12 @@ export function prepareCustomerDataForEvaluation(input: {
       redactedFields.length > 0
         ? `Redacted fields for evaluation: ${redactedFields.join(", ")}`
         : "No identifiable customer PII present; eval payload marked redacted",
+      "liveEvalWiring=NOT_WIRED",
+      "ACCEPTED≠VERIFIED",
     ],
     externalEffects: "NONE",
+    liveEvalWiring: CUSTOMER_EVAL_LIVE_WIRING,
+    liveProviderSuccessClaimed: false,
   };
 }
 
@@ -228,6 +283,7 @@ export function assertEvalPromptHasNoCustomerPii(
   ok: boolean;
   code: "EVAL_PROMPT_CLEAN" | "CUSTOMER_DATA_LEAK_BLOCKED";
   reasons: string[];
+  liveEvalWiring: CustomerEvalLiveWiring;
 } {
   if (containsRawCustomerPii(prompt, known)) {
     return {
@@ -236,12 +292,14 @@ export function assertEvalPromptHasNoCustomerPii(
       reasons: [
         "Evaluation prompt contains raw customer identifiers — blocked (T-X072)",
       ],
+      liveEvalWiring: CUSTOMER_EVAL_LIVE_WIRING,
     };
   }
   return {
     ok: true,
     code: "EVAL_PROMPT_CLEAN",
     reasons: ["Evaluation prompt has no raw customer identifiers"],
+    liveEvalWiring: CUSTOMER_EVAL_LIVE_WIRING,
   };
 }
 

@@ -3,7 +3,7 @@
   "caseId": "T-X072",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X072 (Customer data leaks into evaluation — redaction blocks)\nproof=customer_data_eval_redaction_blocks applyCount=1 :: redact mode → REDACTED_FOR_EVAL; name/email/phone/body identifiers stripped | display name embedded in messageBody → [REDACTED_NAME] (no raw name leak) | raw_passthrough with customer PII → CUSTOMER_DATA_LEAK_BLOCKED | eval prompt from redacted payload → EVAL_PROMPT_CLEAN | eval prompt with raw customer email → CUSTOMER_DATA_LEAK_BLOCKED | eval prompt with raw display name → CUSTOMER_DATA_LEAK_BLOCKED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X072 (Customer data leaks into evaluation — redaction blocks)\nproof=customer_data_eval_redaction_blocks applyCount=1 :: redact mode → REDACTED_FOR_EVAL; name/email/phone/body identifiers stripped; liveEvalWiring=NOT_WIRED | display name embedded in messageBody → [REDACTED_NAME] (no raw name leak) | intentLabel embedded email → [REDACTED_EMAIL] | raw_passthrough with customer PII → CUSTOMER_DATA_LEAK_BLOCKED | claimLiveVerified / requestLiveEvalFleet → CUSTOMER_DATA_LEAK_BLOCKED (NOT_WIRED) | buildEvalSafePromptFromPayload → EVAL_PROMPT_CLEAN (liveEvalWiring=NOT_WIRED) | eval prompt with raw customer email → CUSTOMER_DATA_LEAK_BLOCKED | eval prompt with raw display name → CUSTOMER_DATA_LEAK_BLOCKED | liveProviderSuccessClaimed=false liveEvalWiring=NOT_WIRED externalEffects=NONE ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "customer_data_eval_redaction_blocks"
   ],
