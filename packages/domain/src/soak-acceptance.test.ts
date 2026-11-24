@@ -10,14 +10,21 @@ import {
   PILOT_SOAK_REQUIRED_MS,
   PilotGateStatus,
   PilotObservationKind,
+  SOAK_CHATGPT_ADS_SOFT_SKIP_CASE_IDS,
+  SOAK_FIXTURE_CASE_IDS,
   SOAK_FIXTURE_HARNESS_NOW_ISO,
+  SOAK_FIXTURE_STATUS_HONEST_NOTE,
+  SOAK_NOT_WIRED_LIVE_WIRING,
+  SOAK_RELATED_CASE_IDS,
   SoakProofKind,
   buildRedactedArtifact,
+  emptySoakAcceptanceState,
   evaluatePilotGate,
   expectedProofsForFixtureCase,
   mapProofToFixtureCases,
   redactEvidenceSummary,
   soakChatGptAdsBlocked,
+  soakNotWiredLiveWiring,
   uniqueFixtureEvidenceArtifactId,
   validateAcceptanceCaseStatus,
 } from "./soak-acceptance.js";
@@ -1488,13 +1495,6 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X035"]);
   });
 
-  it("pins SOAK_FIXTURE_HARNESS_NOW_ISO inside after-hours coverage", () => {
-    const policy = defaultResponsePolicy(SOAK_FIXTURE_HARNESS_NOW_ISO);
-    expect(
-      isWithinCoverageWindow(policy, SOAK_FIXTURE_HARNESS_NOW_ISO),
-    ).toBe(true);
-  });
-
   it("maps T-X036 to RECENT_ADS_CONVERSION_BLANK_PENDING only", () => {
     expect(expectedProofsForFixtureCase("T-X036")).toEqual([
       SoakProofKind.RECENT_ADS_CONVERSION_BLANK_PENDING,
@@ -1504,5 +1504,43 @@ describe("soak-acceptance domain", () => {
         SoakProofKind.RECENT_ADS_CONVERSION_BLANK_PENDING,
       ),
     ).toEqual(["T-X036"]);
+  });
+
+  it("exposes shared NOT_WIRED live wiring helper without mutable shared state", () => {
+    const a = soakNotWiredLiveWiring();
+    const b = soakNotWiredLiveWiring();
+    expect(a).toEqual(SOAK_NOT_WIRED_LIVE_WIRING);
+    expect(b).toEqual(SOAK_NOT_WIRED_LIVE_WIRING);
+    expect(a).not.toBe(SOAK_NOT_WIRED_LIVE_WIRING);
+    expect(a).not.toBe(b);
+    (a as { cms: string }).cms = "WIRED";
+    expect(soakNotWiredLiveWiring().cms).toBe("NOT_WIRED");
+    expect(SOAK_NOT_WIRED_LIVE_WIRING.cms).toBe("NOT_WIRED");
+    expect(emptySoakAcceptanceState("2026-11-24T21:00:00.000Z").liveWiring).toEqual(
+      SOAK_NOT_WIRED_LIVE_WIRING,
+    );
+    expect(SOAK_FIXTURE_STATUS_HONEST_NOTE).toMatch(/never silently VERIFIED/);
+    expect(SOAK_FIXTURE_STATUS_HONEST_NOTE).toMatch(/NOT_WIRED/);
+  });
+
+  it("keeps SOAK_RELATED unique and includes soft-skip ChatGPT Ads companions", () => {
+    expect([...SOAK_CHATGPT_ADS_SOFT_SKIP_CASE_IDS]).toEqual([
+      "T-F07",
+      "T-US-013",
+      "T-US-014",
+    ]);
+    for (const id of SOAK_CHATGPT_ADS_SOFT_SKIP_CASE_IDS) {
+      expect(SOAK_RELATED_CASE_IDS).toContain(id);
+    }
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X073");
+    expect(SOAK_RELATED_CASE_IDS.filter((id) => id === "T-X073")).toHaveLength(1);
+    expect(new Set(SOAK_RELATED_CASE_IDS).size).toBe(SOAK_RELATED_CASE_IDS.length);
+  });
+
+  it("pins SOAK_FIXTURE_HARNESS_NOW_ISO inside after-hours coverage", () => {
+    const policy = defaultResponsePolicy(SOAK_FIXTURE_HARNESS_NOW_ISO);
+    expect(
+      isWithinCoverageWindow(policy, SOAK_FIXTURE_HARNESS_NOW_ISO),
+    ).toBe(true);
   });
 });
