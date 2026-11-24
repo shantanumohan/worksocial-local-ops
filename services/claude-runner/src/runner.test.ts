@@ -14,6 +14,7 @@ import {
   isRegisteredAgentName,
   DEFAULT_LIVE_CLI_TOOLS,
   assessStdoutBound,
+  assertOutputBombBoundedHonest,
   quarantineStdoutDelivery,
   planClaudeCliInvocation,
 } from "./cli-adapter.js";
@@ -69,10 +70,42 @@ describe("claude-runner (R1-04)", () => {
     if (!over.withinBound) {
       expect(over.code).toBe("OUTPUT_TOO_LARGE");
     }
-    expect(quarantineStdoutDelivery(over).deliver).toBe(false);
+    expect(over.liveProviderSuccessClaimed).toBe(false);
+    expect(over.externalEffects).toBe("NONE");
+    const overQ = quarantineStdoutDelivery(over);
+    expect(overQ.deliver).toBe(false);
+    if (!overQ.deliver) {
+      expect(overQ.quarantinedStdout).toBeNull();
+    }
+    expect(
+      assertOutputBombBoundedHonest({ assessment: over, quarantine: overQ }).ok,
+    ).toBe(true);
+
     const under = assessStdoutBound("ok", 50);
     expect(under.withinBound).toBe(true);
     expect(quarantineStdoutDelivery(under).deliver).toBe(true);
+
+    const atBound = assessStdoutBound("A".repeat(50), 50);
+    expect(atBound.withinBound).toBe(true);
+
+    const zeroMax = assessStdoutBound("x", 0);
+    expect(zeroMax.withinBound).toBe(false);
+
+    const liveClaim = quarantineStdoutDelivery(under, {
+      claimLiveVerified: true,
+    });
+    expect(liveClaim.deliver).toBe(false);
+    if (!liveClaim.deliver) {
+      expect(liveClaim.code).toBe("LIVE_CLAIM_REFUSED");
+    }
+
+    const force = quarantineStdoutDelivery(over, {
+      forceDeliverDespiteBomb: true,
+    });
+    expect(force.deliver).toBe(false);
+    if (!force.deliver) {
+      expect(force.code).toBe("LIVE_CLAIM_REFUSED");
+    }
   });
 
   it("plans CLI with prompt on stdin only — no shell interpolation (T-X010)", () => {

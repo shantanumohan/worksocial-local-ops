@@ -1,5 +1,7 @@
 /**
  * Fixture proof for T-X011 — output bomb bounded/quarantined.
+ * Hillclimb: exact-at-bound ok; zero max refused; live VERIFIED /
+ * force-deliver refused; honesty helper; ACCEPTED≠VERIFIED.
  * Oversized stdout is refused (OUTPUT_TOO_LARGE) and not delivered.
  * External effects: NONE. Never invents live VERIFIED.
  */
@@ -11,6 +13,7 @@ import { join } from "node:path";
 import { SoakProofKind, type SoakProofRecord } from "@worksocial/domain";
 import {
   assessStdoutBound,
+  assertOutputBombBoundedHonest,
   invokeClaudeCli,
   quarantineStdoutDelivery,
 } from "@worksocial/claude-runner";
@@ -35,7 +38,11 @@ export async function proofOutputBombBoundedQuarantined(
     if (
       !over.withinBound &&
       over.code === "OUTPUT_TOO_LARGE" &&
-      overQ.deliver === false
+      over.liveProviderSuccessClaimed === false &&
+      over.externalEffects === "NONE" &&
+      overQ.deliver === false &&
+      !overQ.deliver &&
+      overQ.quarantinedStdout === null
     ) {
       details.push(
         `Oversized stdout (${over.byteLength}B > ${maxBytes}) → OUTPUT_TOO_LARGE quarantined`,
@@ -50,12 +57,34 @@ export async function proofOutputBombBoundedQuarantined(
     // 2. Under-bound content remains deliverable.
     const safe = assessStdoutBound("ok-fixture\n", maxBytes);
     const safeQ = quarantineStdoutDelivery(safe);
-    if (safe.withinBound && safeQ.deliver === true) {
+    if (
+      safe.withinBound &&
+      safeQ.deliver === true &&
+      safeQ.liveProviderSuccessClaimed === false
+    ) {
       details.push("Under-bound stdout remains deliverable");
     } else {
       passed = false;
       details.push(
         `Under-bound unexpectedly ${JSON.stringify({ safe, safeQ })}`,
+      );
+    }
+
+    // 2b. Exact-at-bound is deliverable; zero max refuses.
+    const atBound = assessStdoutBound("A".repeat(maxBytes), maxBytes);
+    const zeroMax = assessStdoutBound("x", 0);
+    if (
+      atBound.withinBound &&
+      !zeroMax.withinBound &&
+      zeroMax.code === "OUTPUT_TOO_LARGE"
+    ) {
+      details.push(
+        "Exact-at-bound deliverable; maxOutputBytes≤0 → OUTPUT_TOO_LARGE",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `at-bound/zeroMax unexpectedly ${JSON.stringify({ atBound, zeroMax })}`,
       );
     }
 
@@ -73,6 +102,42 @@ export async function proofOutputBombBoundedQuarantined(
     } else {
       passed = false;
       details.push(`UTF-8 bound unexpectedly ${JSON.stringify(multiBound)}`);
+    }
+
+    // 3b. Live VERIFIED / force-deliver claims refused.
+    const liveClaim = quarantineStdoutDelivery(safe, {
+      claimLiveVerified: true,
+    });
+    const forceBomb = quarantineStdoutDelivery(over, {
+      forceDeliverDespiteBomb: true,
+    });
+    if (
+      !liveClaim.deliver &&
+      liveClaim.code === "LIVE_CLAIM_REFUSED" &&
+      !forceBomb.deliver &&
+      forceBomb.code === "LIVE_CLAIM_REFUSED"
+    ) {
+      details.push(
+        "claimLiveVerified / forceDeliverDespiteBomb → LIVE_CLAIM_REFUSED",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `live claims unexpectedly claim=${JSON.stringify(liveClaim)} force=${JSON.stringify(forceBomb)}`,
+      );
+    }
+
+    const honesty = assertOutputBombBoundedHonest({
+      assessment: over,
+      quarantine: overQ,
+    });
+    if (honesty.ok) {
+      details.push(
+        `assertOutputBombBoundedHonest → ${honesty.code}; ACCEPTED≠VERIFIED`,
+      );
+    } else {
+      passed = false;
+      details.push(`honesty failed: ${honesty.reasons.join("; ")}`);
     }
 
     // 4. Production invokeClaudeCli path with local bomb executable (shebang).
@@ -117,6 +182,29 @@ export async function proofOutputBombBoundedQuarantined(
       details.push(`Bomb invoke unexpectedly ${JSON.stringify(bombInvoke)}`);
     }
 
+    // 4b. Double bomb still quarantined (no invent delivery).
+    const bombInvoke2 = await invokeClaudeCli({
+      executablePath: bombScript,
+      agentName: "A01",
+      cwd: workDir,
+      modelId: "fixture-model",
+      prompt: "ignored-by-bomb-2",
+      timeoutMs: 5_000,
+      maxOutputBytes: maxBytes,
+    });
+    if (
+      !bombInvoke2.ok &&
+      bombInvoke2.code === "OUTPUT_TOO_LARGE" &&
+      bombInvoke2.stdout === undefined
+    ) {
+      details.push(
+        "double invokeClaudeCli bomb → OUTPUT_TOO_LARGE twice (no invent delivery)",
+      );
+    } else {
+      passed = false;
+      details.push(`Double bomb unexpectedly ${JSON.stringify(bombInvoke2)}`);
+    }
+
     // 5. Positive control: under-bound local CLI delivers stdout.
     const okScript = join(workDir, "ok-cli.mjs");
     writeFileSync(
@@ -147,7 +235,9 @@ export async function proofOutputBombBoundedQuarantined(
       details.push(`Under-bound invoke unexpectedly ${JSON.stringify(okInvoke)}`);
     }
 
-    details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+    details.push(
+      "liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED",
+    );
   } finally {
     rmSync(workDir, { recursive: true, force: true });
   }

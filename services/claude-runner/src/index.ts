@@ -13,6 +13,7 @@ export {
   stopProcessTree,
   assessStdoutBound,
   quarantineStdoutDelivery,
+  assertOutputBombBoundedHonest,
   type ClaudeCliDetection,
   type ClaudeCliInvokeRequest,
   type ClaudeCliInvokeResult,
