@@ -989,6 +989,8 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X064** is fixture ACCEPTED only via the SSRF redirect / DNS rebind blocked-every-hop proof (`SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP`) — each hop must be allowlisted https with public resolved addresses; private redirects and DNS rebind denied. Fixture hop chains only (no live DNS/fetch). Not sandbox/prod VERIFIED.
 
+**T-X065** is fixture ACCEPTED only via the worker browser auth state OS-deny proof (`WORKER_BROWSER_AUTH_STATE_OS_DENIED`) — workers are OS-denied from system Chrome cookies, OS browser profiles, OAuth callback cookies, and workspace partitions; browser-pool and host-admin cannot silently reuse system/OS auth; workspace partition requires browser-pool + explicit consent (sealed ref only); fixture vault remains intact on deny; live browser-auth reads stay **NOT_WIRED**; `externalEffects: NONE`. Distinct from T-US-053 / T-X005 / T-X063. Not sandbox/prod VERIFIED.
+
 **T-X071** is fixture ACCEPTED only via the host-offline public discovery honest unavailability proof (`HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE`) — offline host → `UNAVAILABLE`/`HOST_OFFLINE` on all public-discovery surfaces (prior success ignored); claimed `AVAILABLE` refused; ONLINE without prior success → `HOST_ONLINE_NO_PRIOR_UNAVAILABLE` (never invent ranks or active coverage); live wiring stays `NOT_WIRED`. Distinct from T-X001 host-sleep monitoring coverage gaps. ChatGPT Ads stays ACCESS_BLOCKED. Not sandbox/prod VERIFIED.
 
 **T-X067** is fixture ACCEPTED only via the incompatible workflow upgrade blocked-or-retained proof (`INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED`) — in-flight RUNNING/APPLYING instances refuse breaking / cross-epoch / breakingRevision definition upgrades and retain the compatible pin; IDLE/COMPLETE also refuse silent incompatible rebinds; compatible same-epoch upgrades may apply. Temporal/live workflow runtime stays **NOT_WIRED**; `externalEffects: NONE`. Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
@@ -1091,7 +1093,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X062 | SSE gap after offline UI | Full-state resync *(fixture ACCEPTED — SSE gap full-state resync proof; not sandbox/prod VERIFIED)* |
 | T-X063 | Indirect prompt-injection exfiltration | Boundary denies *(fixture ACCEPTED — indirect-prompt-injection-exfil-denied proof; not sandbox/prod VERIFIED)* |
 | T-X064 | SSRF redirect and DNS rebind | Blocked every hop *(fixture ACCEPTED — SSRF redirect/DNS rebind every-hop proof; not sandbox/prod VERIFIED)* |
-| T-X065 | Worker reads browser auth state | OS deny *(fixture ACCEPTED — worker browser-auth OS deny; not sandbox/prod VERIFIED)* |
+| T-X065 | Worker reads browser auth state | OS deny *(fixture ACCEPTED — worker/browser-pool/host-admin OS deny; vault intact; live NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X066 | Backup omits remote receipt | Reconcile; no duplicate *(fixture ACCEPTED — backup/omit-receipt proof; not sandbox/prod VERIFIED)* |
 | T-X067 | Incompatible workflow upgrade | Blocked or compatible retained *(fixture ACCEPTED — incompatible workflow upgrade blocked or retained proof; epoch/rev/breaking edges + IDLE/COMPLETE retain; Temporal NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X068 | Thirty alerts one outage | Grouped incident *(fixture ACCEPTED — thirty alerts one outage grouped proof; whitespace outageKey / uniqueSources / NOT_WIRED; not sandbox/prod VERIFIED)* |

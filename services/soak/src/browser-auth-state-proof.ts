@@ -4,20 +4,29 @@
  * Exercises the credential-broker browser-auth boundary (not a pure label
  * check alone): fixture vault material exists, workers request a read, the
  * domain OS-deny gate is enforced at the broker, and raw cookie bytes never
- * leave. External effects: NONE.
+ * leave. External effects: NONE. Live browser-auth reads: NOT_WIRED.
+ * ACCEPTED ≠ VERIFIED.
  */
 
 import { randomUUID } from "node:crypto";
 import {
+  BROWSER_AUTH_LIVE_WIRING,
   BrowserAuthAccessCode,
+  BrowserAuthPrincipal,
   BrowserAuthStateKind,
   SoakProofKind,
+  SYSTEM_BROWSER_AUTH_STATE_KINDS,
+  evaluateBrowserAuthStateAccess,
+  isSystemBrowserAuthStateKind,
+  isWorkerBrowserAuthOsDeny,
   type SoakProofRecord,
 } from "@worksocial/domain";
 import { createCredentialBroker } from "@worksocial/credential-broker";
 
 /**
  * Complete expected proof set for T-X065 fixture ACCEPTED.
+ * Hillclimb: host-admin deny, full system-kind pool deny, vault integrity,
+ * liveBrowserAuthWiring=NOT_WIRED.
  */
 export function proofWorkerBrowserAuthStateOsDenied(
   nowIso: string,
@@ -38,6 +47,24 @@ export function proofWorkerBrowserAuthStateOsDenied(
     BrowserAuthStateKind.OS_BROWSER_PROFILE,
     BrowserAuthStateKind.OAUTH_CALLBACK_COOKIES,
   ] as const;
+
+  const workerDomainPrincipals = [
+    BrowserAuthPrincipal.CLAUDE_RUNNER,
+    BrowserAuthPrincipal.EVALUATION_WORKER,
+    BrowserAuthPrincipal.LEARNING_WORKER,
+    BrowserAuthPrincipal.WORKFLOW_WORKER,
+  ] as const;
+
+  // Snapshot vault presence before denies (isolation ≠ wipe).
+  const vaultBefore = Object.fromEntries(
+    systemKinds.map((k) => {
+      const probe = broker.requestBrowserAuthState({
+        principal: "claude-runner",
+        stateKind: k,
+      });
+      return [k, probe.materialPresentInVault];
+    }),
+  );
 
   // 1. Every worker × system auth-state kind → OS_DENY via broker boundary
   //    (vault material remains present; authMaterial always null).
@@ -68,6 +95,28 @@ export function proofWorkerBrowserAuthStateOsDenied(
     }
   }
 
+  // Domain helper honesty for each worker principal.
+  for (const principal of workerDomainPrincipals) {
+    const domainDeny = evaluateBrowserAuthStateAccess({
+      principal,
+      stateKind: BrowserAuthStateKind.SYSTEM_CHROME_COOKIES,
+      explicitUserConsent: true,
+    });
+    if (
+      isWorkerBrowserAuthOsDeny(domainDeny) &&
+      domainDeny.liveBrowserAuthWiring === BROWSER_AUTH_LIVE_WIRING
+    ) {
+      details.push(
+        `domain ${principal} → system_chrome_cookies: OS_DENY; liveBrowserAuthWiring=NOT_WIRED`,
+      );
+    } else {
+      passed = false;
+      details.push(
+        `domain ${principal} deny unexpectedly ${JSON.stringify(domainDeny)}`,
+      );
+    }
+  }
+
   // 2. Worker cannot escalate via forged consent on workspace partition.
   const workerPartition = broker.requestBrowserAuthState({
     principal: "workflow-worker",
@@ -90,29 +139,61 @@ export function proofWorkerBrowserAuthStateOsDenied(
     );
   }
 
-  // 3. Browser-pool cannot silently reuse system Chrome (vault intact).
-  const poolChrome = broker.requestBrowserAuthState({
-    principal: "browser-pool",
-    stateKind: BrowserAuthStateKind.SYSTEM_CHROME_COOKIES,
-    explicitUserConsent: true,
-  });
-  if (
-    poolChrome.allowed === false &&
-    poolChrome.code === BrowserAuthAccessCode.OS_DENY &&
-    poolChrome.authMaterial === null &&
-    poolChrome.materialPresentInVault === true
-  ) {
-    details.push(
-      "boundary browser-pool → system_chrome_cookies: OS_DENY (no silent reuse)",
-    );
-  } else {
-    passed = false;
-    details.push(
-      `browser-pool system Chrome unexpectedly ${JSON.stringify(poolChrome)}`,
-    );
+  // 3. Browser-pool cannot silently reuse any system/OS auth kind.
+  for (const stateKind of SYSTEM_BROWSER_AUTH_STATE_KINDS) {
+    if (!isSystemBrowserAuthStateKind(stateKind)) {
+      passed = false;
+      details.push(`isSystemBrowserAuthStateKind(${stateKind}) unexpectedly false`);
+      continue;
+    }
+    const poolDenied = broker.requestBrowserAuthState({
+      principal: "browser-pool",
+      stateKind,
+      explicitUserConsent: true,
+    });
+    if (
+      poolDenied.allowed === false &&
+      poolDenied.code === BrowserAuthAccessCode.OS_DENY &&
+      poolDenied.authMaterial === null &&
+      poolDenied.materialPresentInVault === true
+    ) {
+      details.push(
+        `boundary browser-pool → ${stateKind}: OS_DENY (no silent reuse)`,
+      );
+    } else {
+      passed = false;
+      details.push(
+        `browser-pool ${stateKind} unexpectedly ${JSON.stringify(poolDenied)}`,
+      );
+    }
   }
 
-  // 4. Positive control: browser-pool + consent → workspace partition ALLOWED
+  // 4. Host-admin cannot silently reuse system Chrome / OS profile / OAuth.
+  for (const stateKind of systemKinds) {
+    const adminDenied = broker.requestBrowserAuthState({
+      principal: "host-admin",
+      stateKind,
+      explicitUserConsent: true,
+    });
+    if (
+      adminDenied.allowed === false &&
+      adminDenied.code === BrowserAuthAccessCode.OS_DENY &&
+      adminDenied.authMaterial === null &&
+      adminDenied.materialPresentInVault === true &&
+      adminDenied.externalEffects === "NONE"
+    ) {
+      details.push(
+        `boundary host-admin → ${stateKind}: OS_DENY (no silent reuse)`,
+      );
+    } else {
+      passed = false;
+      details.push(
+        `host-admin ${stateKind} unexpectedly ${JSON.stringify(adminDenied)}`,
+      );
+    }
+  }
+
+  // 5. Positive control: browser-pool + consent → workspace partition ALLOWED
   //    with sealed ref only (still no raw auth material).
   const poolOk = broker.requestBrowserAuthState({
     principal: "browser-pool",
@@ -136,7 +217,7 @@ export function proofWorkerBrowserAuthStateOsDenied(
     );
   }
 
-  // 5. Without consent, workspace partition stays CONSENT_REQUIRED.
+  // 6. Without consent, workspace partition stays CONSENT_REQUIRED.
   const needsConsent = broker.requestBrowserAuthState({
     principal: "browser-pool",
     stateKind: BrowserAuthStateKind.WORKSPACE_BROWSER_PARTITION,
@@ -154,8 +235,23 @@ export function proofWorkerBrowserAuthStateOsDenied(
     );
   }
 
+  // 7. Vault still present after all denies (isolation ≠ wipe).
+  const vaultIntact = systemKinds.every((k) => {
+    const probe = broker.requestBrowserAuthState({
+      principal: "claude-runner",
+      stateKind: k,
+    });
+    return vaultBefore[k] === true && probe.materialPresentInVault === true;
+  });
+  if (vaultIntact) {
+    details.push("fixture vault intact after OS_DENY matrix (isolation ≠ wipe)");
+  } else {
+    passed = false;
+    details.push("fixture vault presence regress after OS_DENY matrix");
+  }
+
   details.push(
-    "liveBrowserAuthRead=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE",
+    "liveBrowserAuthRead=NOT_WIRED liveBrowserAuthWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE",
   );
 
   return {

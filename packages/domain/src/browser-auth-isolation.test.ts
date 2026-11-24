@@ -1,20 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
+  BROWSER_AUTH_LIVE_WIRING,
   BrowserAuthAccessCode,
   BrowserAuthPrincipal,
   BrowserAuthStateKind,
+  SYSTEM_BROWSER_AUTH_STATE_KINDS,
+  WORKER_BROWSER_AUTH_PRINCIPALS,
   evaluateBrowserAuthStateAccess,
+  isSystemBrowserAuthStateKind,
   isWorkerBrowserAuthOsDeny,
 } from "./browser-auth-isolation.js";
 
 describe("browser-auth-isolation (T-X065)", () => {
   it("OS-denies every worker principal reading system Chrome cookies", () => {
-    for (const principal of [
-      BrowserAuthPrincipal.CLAUDE_RUNNER,
-      BrowserAuthPrincipal.EVALUATION_WORKER,
-      BrowserAuthPrincipal.LEARNING_WORKER,
-      BrowserAuthPrincipal.WORKFLOW_WORKER,
-    ] as const) {
+    for (const principal of WORKER_BROWSER_AUTH_PRINCIPALS) {
       const decision = evaluateBrowserAuthStateAccess({
         principal,
         stateKind: BrowserAuthStateKind.SYSTEM_CHROME_COOKIES,
@@ -24,11 +23,13 @@ describe("browser-auth-isolation (T-X065)", () => {
       expect(decision.code).toBe(BrowserAuthAccessCode.OS_DENY);
       expect(decision.authMaterialReturned).toBe(false);
       expect(decision.externalEffects).toBe("NONE");
+      expect(decision.liveBrowserAuthWiring).toBe(BROWSER_AUTH_LIVE_WIRING);
+      expect(decision.liveBrowserAuthWiring).toBe("NOT_WIRED");
       expect(isWorkerBrowserAuthOsDeny(decision)).toBe(true);
     }
   });
 
-  it("OS-denies workers for OS profile and OAuth callback cookies", () => {
+  it("OS-denies workers for OS profile, OAuth cookies, and workspace partition", () => {
     for (const stateKind of [
       BrowserAuthStateKind.OS_BROWSER_PROFILE,
       BrowserAuthStateKind.OAUTH_CALLBACK_COOKIES,
@@ -39,23 +40,23 @@ describe("browser-auth-isolation (T-X065)", () => {
         stateKind,
       });
       expect(isWorkerBrowserAuthOsDeny(decision)).toBe(true);
+      expect(decision.liveBrowserAuthWiring).toBe("NOT_WIRED");
     }
   });
 
-  it("OS-denies browser-pool silent reuse of system Chrome / OS profile", () => {
-    const chrome = evaluateBrowserAuthStateAccess({
-      principal: BrowserAuthPrincipal.BROWSER_POOL,
-      stateKind: BrowserAuthStateKind.SYSTEM_CHROME_COOKIES,
-      explicitUserConsent: true,
-    });
-    expect(chrome.allowed).toBe(false);
-    expect(chrome.code).toBe(BrowserAuthAccessCode.OS_DENY);
-
-    const profile = evaluateBrowserAuthStateAccess({
-      principal: BrowserAuthPrincipal.BROWSER_POOL,
-      stateKind: BrowserAuthStateKind.OS_BROWSER_PROFILE,
-    });
-    expect(profile.code).toBe(BrowserAuthAccessCode.OS_DENY);
+  it("OS-denies browser-pool silent reuse of every system/OS auth kind", () => {
+    for (const stateKind of SYSTEM_BROWSER_AUTH_STATE_KINDS) {
+      expect(isSystemBrowserAuthStateKind(stateKind)).toBe(true);
+      const decision = evaluateBrowserAuthStateAccess({
+        principal: BrowserAuthPrincipal.BROWSER_POOL,
+        stateKind,
+        explicitUserConsent: true,
+      });
+      expect(decision.allowed).toBe(false);
+      expect(decision.code).toBe(BrowserAuthAccessCode.OS_DENY);
+      expect(decision.authMaterialReturned).toBe(false);
+      expect(decision.liveBrowserAuthWiring).toBe("NOT_WIRED");
+    }
   });
 
   it("requires consent for workspace partition; allows browser-pool with consent", () => {
@@ -65,6 +66,7 @@ describe("browser-auth-isolation (T-X065)", () => {
     });
     expect(without.allowed).toBe(false);
     expect(without.code).toBe(BrowserAuthAccessCode.CONSENT_REQUIRED);
+    expect(without.liveBrowserAuthWiring).toBe("NOT_WIRED");
 
     const withConsent = evaluateBrowserAuthStateAccess({
       principal: BrowserAuthPrincipal.BROWSER_POOL,
@@ -74,5 +76,41 @@ describe("browser-auth-isolation (T-X065)", () => {
     expect(withConsent.allowed).toBe(true);
     expect(withConsent.code).toBe(BrowserAuthAccessCode.ALLOWED);
     expect(withConsent.authMaterialReturned).toBe(false);
+    expect(withConsent.externalEffects).toBe("NONE");
+    expect(withConsent.liveBrowserAuthWiring).toBe("NOT_WIRED");
+  });
+
+  it("OS-denies host-admin silent reuse of system/OS auth state", () => {
+    for (const stateKind of SYSTEM_BROWSER_AUTH_STATE_KINDS) {
+      const decision = evaluateBrowserAuthStateAccess({
+        principal: BrowserAuthPrincipal.HOST_ADMIN,
+        stateKind,
+        explicitUserConsent: true,
+      });
+      expect(decision.allowed).toBe(false);
+      expect(decision.code).toBe(BrowserAuthAccessCode.OS_DENY);
+      expect(decision.authMaterialReturned).toBe(false);
+      expect(decision.externalEffects).toBe("NONE");
+      expect(decision.liveBrowserAuthWiring).toBe("NOT_WIRED");
+    }
+  });
+
+  it("denies host-admin workspace partition (not browser-pool)", () => {
+    const decision = evaluateBrowserAuthStateAccess({
+      principal: BrowserAuthPrincipal.HOST_ADMIN,
+      stateKind: BrowserAuthStateKind.WORKSPACE_BROWSER_PARTITION,
+      explicitUserConsent: true,
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe(BrowserAuthAccessCode.OS_DENY);
+    expect(decision.authMaterialReturned).toBe(false);
+  });
+
+  it("marks workspace partition as non-system auth kind", () => {
+    expect(
+      isSystemBrowserAuthStateKind(
+        BrowserAuthStateKind.WORKSPACE_BROWSER_PARTITION,
+      ),
+    ).toBe(false);
   });
 });
