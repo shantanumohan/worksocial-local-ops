@@ -21,6 +21,8 @@ describe("SSE gap after offline UI (T-X062)", () => {
     expect(d1.allowedIncremental).toBe(true);
     expect(d1.fullStateResyncRequired).toBe(false);
     expect(d1.cursor.lastAppliedSeq).toBe(11);
+    expect(d1.externalEffects).toBe("NONE");
+    expect(d1.liveProviderWiring).toBe("NOT_WIRED");
     cursor = d1.cursor;
 
     const d2 = evaluateSseEventAfterOffline({
@@ -30,6 +32,7 @@ describe("SSE gap after offline UI (T-X062)", () => {
     });
     expect(d2.code).toBe("INCREMENTAL_APPLY");
     expect(d2.cursor.lastAppliedSeq).toBe(12);
+    expect(d2.liveProviderWiring).toBe("NOT_WIRED");
   });
 
   it("refuses incremental catch-up on SSE gap and records minResyncThroughSeq", () => {
@@ -52,6 +55,7 @@ describe("SSE gap after offline UI (T-X062)", () => {
     expect(gap.cursor.minResyncThroughSeq).toBe(15);
     expect(gap.cursor.offline).toBe(false);
     expect(gap.externalEffects).toBe("NONE");
+    expect(gap.liveProviderWiring).toBe("NOT_WIRED");
   });
 
   it("rejects snapshot that does not cover the detected gap", () => {
@@ -80,6 +84,7 @@ describe("SSE gap after offline UI (T-X062)", () => {
     expect(insufficient.fullStateResyncRequired).toBe(true);
     expect(insufficient.cursor.minResyncThroughSeq).toBe(15);
     expect(insufficient.cursor.stateDigest).toBe("digest-seq-10");
+    expect(insufficient.liveProviderWiring).toBe("NOT_WIRED");
   });
 
   it("applies covering snapshot, replaces stateDigest, then resumes incremental", () => {
@@ -113,6 +118,7 @@ describe("SSE gap after offline UI (T-X062)", () => {
     expect(resync.cursor.stateDigest).toBe("digest-snap-42");
     expect(resync.cursor.stateDigest).not.toBe("digest-seq-10");
     expect(resync.externalEffects).toBe("NONE");
+    expect(resync.liveProviderWiring).toBe("NOT_WIRED");
 
     const next = evaluateSseEventAfterOffline({
       cursor: resync.cursor,
@@ -133,6 +139,7 @@ describe("SSE gap after offline UI (T-X062)", () => {
       reconnecting: false,
     });
     expect(still.code).toBe("STILL_OFFLINE");
+    expect(still.liveProviderWiring).toBe("NOT_WIRED");
 
     const online = createSseUiCursor({
       lastAppliedSeq: 10,
@@ -144,5 +151,132 @@ describe("SSE gap after offline UI (T-X062)", () => {
       reconnecting: false,
     });
     expect(stale.code).toBe("IGNORE_STALE");
+    expect(stale.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("requires full-state resync for online gap without prior offline mark", () => {
+    const cursor = createSseUiCursor({
+      lastAppliedSeq: 20,
+      stateDigest: "digest-seq-20",
+    });
+    const gap = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 25, payloadId: "e25" },
+      reconnecting: false,
+    });
+    expect(gap.code).toBe("SSE_GAP_FULL_RESYNC_REQUIRED");
+    expect(gap.allowedIncremental).toBe(false);
+    expect(gap.cursor.lastAppliedSeq).toBe(20);
+    expect(gap.cursor.minResyncThroughSeq).toBe(25);
+    expect(gap.cursor.stateDigest).toBe("digest-seq-20");
+    expect(gap.externalEffects).toBe("NONE");
+    expect(gap.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("blocks contiguous apply while outstanding gap pending (no invent)", () => {
+    let cursor = createSseUiCursor({
+      lastAppliedSeq: 10,
+      stateDigest: "digest-seq-10",
+    });
+    cursor = markSseUiOffline(cursor);
+    const gap = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 15, payloadId: "e15" },
+      reconnecting: true,
+    });
+    expect(gap.cursor.minResyncThroughSeq).toBe(15);
+
+    const blocked = evaluateSseEventAfterOffline({
+      cursor: gap.cursor,
+      event: { seq: 11, payloadId: "e11-invent" },
+      reconnecting: false,
+    });
+    expect(blocked.code).toBe("SSE_GAP_FULL_RESYNC_REQUIRED");
+    expect(blocked.allowedIncremental).toBe(false);
+    expect(blocked.cursor.lastAppliedSeq).toBe(10);
+    expect(blocked.cursor.minResyncThroughSeq).toBe(15);
+    expect(blocked.cursor.stateDigest).toBe("digest-seq-10");
+    expect(blocked.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("raises minResyncThroughSeq when a larger gap arrives while pending", () => {
+    let cursor = createSseUiCursor({
+      lastAppliedSeq: 10,
+      stateDigest: "digest-seq-10",
+    });
+    cursor = markSseUiOffline(cursor);
+    const first = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 15, payloadId: "e15" },
+      reconnecting: true,
+    });
+    expect(first.cursor.minResyncThroughSeq).toBe(15);
+
+    const raised = evaluateSseEventAfterOffline({
+      cursor: first.cursor,
+      event: { seq: 22, payloadId: "e22" },
+      reconnecting: false,
+    });
+    expect(raised.code).toBe("SSE_GAP_FULL_RESYNC_REQUIRED");
+    expect(raised.cursor.minResyncThroughSeq).toBe(22);
+    expect(raised.cursor.lastAppliedSeq).toBe(10);
+  });
+
+  it("accepts snapshot covering beyond minResyncThroughSeq", () => {
+    let cursor = createSseUiCursor({
+      lastAppliedSeq: 10,
+      stateDigest: "digest-seq-10",
+    });
+    cursor = markSseUiOffline(cursor);
+    const gap = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 15, payloadId: "e15" },
+      reconnecting: true,
+    });
+
+    const beyond = applySseFullStateResync({
+      cursor: gap.cursor,
+      snapshot: {
+        revision: 99,
+        coversThroughSeq: 20,
+        entityCount: 9,
+        stateDigest: "  digest-snap-beyond-20  ",
+      },
+    });
+    expect(beyond.code).toBe("FULL_STATE_RESYNC");
+    expect(beyond.cursor.lastAppliedSeq).toBe(20);
+    expect(beyond.cursor.minResyncThroughSeq).toBeNull();
+    expect(beyond.cursor.stateDigest).toBe("digest-snap-beyond-20");
+    expect(beyond.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("refuses invalid seq and blank/whitespace snapshot digests", () => {
+    const cursor = createSseUiCursor({
+      lastAppliedSeq: 10,
+      stateDigest: "digest-seq-10",
+    });
+    for (const seq of [0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      const bad = evaluateSseEventAfterOffline({
+        cursor,
+        event: { seq, payloadId: "bad" },
+        reconnecting: false,
+      });
+      expect(bad.code).toBe("INVALID_SEQ");
+      expect(bad.allowedIncremental).toBe(false);
+      expect(bad.liveProviderWiring).toBe("NOT_WIRED");
+      expect(bad.externalEffects).toBe("NONE");
+    }
+
+    const blank = applySseFullStateResync({
+      cursor,
+      snapshot: {
+        revision: 1,
+        coversThroughSeq: 10,
+        entityCount: 1,
+        stateDigest: "   ",
+      },
+    });
+    expect(blank.code).toBe("SNAPSHOT_INSUFFICIENT_COVERAGE");
+    expect(blank.liveProviderWiring).toBe("NOT_WIRED");
   });
 });

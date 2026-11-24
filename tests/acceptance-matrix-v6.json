@@ -2634,7 +2634,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x062",
-      "evidenceNote": "Fixture ACCEPTED via SSE_GAP_FULL_STATE_RESYNC (offline SSE gap refuses incremental catch-up; covering snapshot replaces stateDigest; missed events not invented) — not sandbox/prod VERIFIED"
+      "evidenceNote": "Fixture ACCEPTED via SSE_GAP_FULL_STATE_RESYNC (offline/online SSE gap refuses incremental catch-up; pending minResyncThroughSeq blocks invent; covering snapshot replaces stateDigest; invalid seq/blank digest refuse; liveProviderWiring=NOT_WIRED; missed events not invented) — not sandbox/prod VERIFIED"
     },
     {
       "id": "T-X063",

@@ -981,7 +981,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X051** is fixture ACCEPTED only via the wrong Zoho organization identity-mismatch proof (`WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH`) — observed org ≠ expected blocks CRM write/bind; live Zoho remains NOT_WIRED. Not sandbox/prod VERIFIED.
 
-**T-X062** is fixture ACCEPTED only via the SSE gap full-state resync proof (`SSE_GAP_FULL_STATE_RESYNC`) — after offline UI reconnect, a non-contiguous SSE sequence refuses incremental catch-up and requires a covering full-state snapshot that replaces UI stateDigest; missed events are never invented. Not sandbox/prod VERIFIED.
+**T-X062** is fixture ACCEPTED only via the SSE gap full-state resync proof (`SSE_GAP_FULL_STATE_RESYNC`) — after offline UI reconnect (and for online gaps), a non-contiguous SSE sequence refuses incremental catch-up; outstanding `minResyncThroughSeq` blocks contiguous invent; covering full-state snapshot replaces UI stateDigest; invalid seq / blank digest refuse; `liveProviderWiring=NOT_WIRED`; missed events are never invented. Not sandbox/prod VERIFIED.
 
 **T-X061** is fixture ACCEPTED only via the keyboard focus restore after dialog proof (`KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG`) — overlay open captures the trigger, Tab/Shift+Tab traps within dialog focusables (including wrap edges), close restores focus to the trigger or fails closed as `FOCUS_LOST` when unrestorable; re-open while open is refused. Distinct from T-US-055 (full keyboard journey + reduced motion). Not sandbox/prod VERIFIED.
 
@@ -1090,7 +1090,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X059 | Duplicate platform attribution | One booking; separate claims *(fixture ACCEPTED — duplicate platform attribution one-booking proof; not sandbox/prod VERIFIED)* |
 | T-X060 | Currency/timezone mismatch | No silent sum *(fixture ACCEPTED — currency/timezone mismatch no silent sum proof; not sandbox/prod VERIFIED)* |
 | T-X061 | Keyboard review and focus restore | A11y *(fixture ACCEPTED — keyboard focus restore after dialog proof; not sandbox/prod VERIFIED)* |
-| T-X062 | SSE gap after offline UI | Full-state resync *(fixture ACCEPTED — SSE gap full-state resync proof; not sandbox/prod VERIFIED)* |
+| T-X062 | SSE gap after offline UI | Full-state resync *(fixture ACCEPTED — SSE gap full-state resync proof; liveProviderWiring NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X063 | Indirect prompt-injection exfiltration | Boundary denies *(fixture ACCEPTED — indirect-prompt-injection-exfil-denied proof; not sandbox/prod VERIFIED)* |
 | T-X064 | SSRF redirect and DNS rebind | Blocked every hop *(fixture ACCEPTED — SSRF redirect/DNS rebind every-hop proof; not sandbox/prod VERIFIED)* |
 | T-X065 | Worker reads browser auth state | OS deny *(fixture ACCEPTED — worker/browser-pool/host-admin OS deny; vault intact; live NOT_WIRED; not sandbox/prod VERIFIED)* |
