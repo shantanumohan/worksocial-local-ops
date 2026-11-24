@@ -207,7 +207,9 @@ export {
 export {
   IndirectInjectionChannel,
   ExfiltrationEffect,
+  INDIRECT_PROMPT_INJECTION_RELATED_CASE_IDS,
   evaluateIndirectPromptInjectionBoundary,
+  evaluateIndirectPromptInjectionAttackSuite,
   isAbsoluteExfiltrationEffect,
   type IndirectInjectionChannelValue,
   type ExfiltrationEffectValue,

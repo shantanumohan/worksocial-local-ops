@@ -12,5 +12,6 @@ Focused offline contracts (no live providers):
 - `recovery-evidence.contract.test.ts` — WP10 stale vs active vs URO; live recovery NOT_RUN; local credential paths fixture; live provider revoke NOT_WIRED
 - `credential-rotation.contract.test.ts` — WP10 revoke → cancel queued → audit retained; live provider revoke NOT_WIRED; external effects NONE; catalog NOT_RUN
 - `keyboard-focus-restore.contract.test.ts` — T-X061 open/trap/restore + FOCUS_LOST; soak map; fixture ACCEPTED ≠ VERIFIED; external effects NONE
+- `indirect-prompt-injection-exfil.contract.test.ts` — T-X063 attack-suite deny + soak map; fixture ACCEPTED ≠ VERIFIED; external effects NONE
 
 Run: `pnpm test:contract`

@@ -7,6 +7,7 @@
  * proposals through proposeEffect after validateRoleStructuredOutput; that
  * absolute-forbids secret_exfiltration / credential_access / broker_secret_read
  * (same path as live). External effects: NONE.
+ * ACCEPTED ≠ VERIFIED (fixture honesty).
  */
 
 import { createHash, randomUUID } from "node:crypto";
@@ -16,6 +17,7 @@ import {
   IndirectInjectionChannel,
   SoakProofKind,
   compileInputPackage,
+  evaluateIndirectPromptInjectionAttackSuite,
   evaluateIndirectPromptInjectionBoundary,
   proposeEffect,
   roleForbidsEffect,
@@ -236,20 +238,38 @@ export function proofIndirectPromptInjectionExfilDenied(
     details.push("A27 unexpectedly allows credential_access");
   }
 
-  // 5. Positive control: trusted non-exfil passes injection boundary only.
-  const trustedOk = evaluateIndirectPromptInjectionBoundary({
+  // 5. Hillclimb attack suite: every channel × exfil effect × trust label denied
+  //    with liveProviderWiring=NOT_WIRED; MEASURED_EVIDENCE never instruction-eligible;
+  //    trusted non-exfil positive control.
+  const suite = evaluateIndirectPromptInjectionAttackSuite();
+  if (suite.passed) {
+    details.push(...suite.details);
+  } else {
+    passed = false;
+    details.push(`Attack suite failed: ${suite.details.join(" | ")}`);
+  }
+
+  // 6. Spot-check boundary honesty fields on a single trusted+exfil deny.
+  const trustedExfil = evaluateIndirectPromptInjectionBoundary({
     channel: IndirectInjectionChannel.WEB,
     trustLabel: ArtifactTrustLabel.TRUSTED_INSTRUCTION,
-    attemptedEffect: "summarize_faq",
+    attemptedEffect: ExfiltrationEffect.SECRET_EXFILTRATION,
     coercedRoleId: "A27",
   });
-  if (trustedOk.allowed && trustedOk.instructionEligible === true) {
+  if (
+    trustedExfil.allowed === false &&
+    trustedExfil.code === "EXFILTRATION_DENIED" &&
+    trustedExfil.liveProviderWiring === "NOT_WIRED" &&
+    trustedExfil.externalEffects === "NONE"
+  ) {
     details.push(
-      "Trusted instruction + summarize_faq passes injection boundary (positive control)",
+      "Trusted+secret_exfiltration still EXFILTRATION_DENIED with liveProviderWiring=NOT_WIRED",
     );
   } else {
     passed = false;
-    details.push(`Trusted positive control unexpectedly ${JSON.stringify(trustedOk)}`);
+    details.push(
+      `Trusted exfil honesty unexpectedly ${JSON.stringify(trustedExfil)}`,
+    );
   }
 
   details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
