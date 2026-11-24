@@ -332,7 +332,22 @@ describe("demand observations", () => {
       ratio: 1.5,
       comparabilityGroup: "extract-week-2026-W45",
       label: "comparable",
+      liveProviderWiring: "NOT_WIRED",
+      externalEffects: "NONE",
     });
+
+    // Case/whitespace-normalized unit + source still comparable.
+    const normalized = compareTrendIndices(base, {
+      ...base,
+      rawValue: 100,
+      unit: " Relative_Interest_Index ",
+      sourceSystem: " Trends_Fixture_A ",
+    });
+    expect(normalized.kind).toBe("comparable");
+    if (normalized.kind === "comparable") {
+      expect(normalized.ratio).toBe(2);
+      expect(normalized.externalEffects).toBe("NONE");
+    }
 
     const otherExtract = compareTrendIndices(base, {
       ...base,
@@ -343,6 +358,8 @@ describe("demand observations", () => {
       kind: "rejected",
       reason: "incomparable_group",
       label: "incomparable",
+      liveProviderWiring: "NOT_WIRED",
+      externalEffects: "NONE",
     });
 
     const unlabeled = compareTrendIndices(
@@ -353,7 +370,18 @@ describe("demand observations", () => {
       kind: "rejected",
       reason: "missing_comparability_group",
       label: "unlabeled",
+      liveProviderWiring: "NOT_WIRED",
+      externalEffects: "NONE",
     });
+
+    const blankGroup = compareTrendIndices(
+      { ...base, comparabilityGroup: "   " },
+      { ...base, rawValue: 60, comparabilityGroup: "   " },
+    );
+    expect(blankGroup.kind).toBe("rejected");
+    if (blankGroup.kind === "rejected") {
+      expect(blankGroup.reason).toBe("missing_comparability_group");
+    }
 
     const unitMismatch = compareTrendIndices(base, {
       ...base,
@@ -363,6 +391,7 @@ describe("demand observations", () => {
     expect(unitMismatch.kind).toBe("rejected");
     if (unitMismatch.kind === "rejected") {
       expect(unitMismatch.reason).toBe("unit_mismatch");
+      expect(unitMismatch.liveProviderWiring).toBe("NOT_WIRED");
     }
 
     const sourceMismatch = compareTrendIndices(base, {
@@ -374,6 +403,39 @@ describe("demand observations", () => {
       kind: "rejected",
       reason: "source_mismatch",
       label: "incomparable",
+      liveProviderWiring: "NOT_WIRED",
+      externalEffects: "NONE",
+    });
+
+    const zeroBaseline = compareTrendIndices(
+      { ...base, rawValue: 0 },
+      { ...base, rawValue: 40 },
+    );
+    expect(zeroBaseline).toMatchObject({
+      kind: "rejected",
+      reason: "zero_baseline",
+      label: "invalid",
+      externalEffects: "NONE",
+    });
+
+    const nonTrend = compareTrendIndices(
+      { ...base, kind: DemandSignalKind.FAQ },
+      base,
+    );
+    expect(nonTrend).toMatchObject({
+      kind: "rejected",
+      reason: "non_trend",
+      label: "invalid",
+    });
+
+    const missingValue = compareTrendIndices(
+      { ...base, rawValue: null },
+      base,
+    );
+    expect(missingValue).toMatchObject({
+      kind: "rejected",
+      reason: "missing_value",
+      label: "invalid",
     });
   });
 });

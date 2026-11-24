@@ -3,7 +3,8 @@
  *
  * Never divides arbitrary indices from different data extracts. Same
  * comparability group + unit + sourceSystem required before a ratio is
- * allowed. External effects: NONE. Never invents live VERIFIED.
+ * allowed. Unit/source matching is trim + case-insensitive. External
+ * effects: NONE. Never invents live VERIFIED.
  */
 
 import { randomUUID } from "node:crypto";
@@ -84,14 +85,39 @@ export function proofIncomparableTrendIndicesRejected(
   if (
     comparable.kind === "comparable" &&
     comparable.ratio === 1.5 &&
-    comparable.label === "comparable"
+    comparable.label === "comparable" &&
+    comparable.liveProviderWiring === "NOT_WIRED" &&
+    comparable.externalEffects === "NONE"
   ) {
     details.push(
-      "same comparability group + unit + source → comparable ratio=1.5",
+      "same comparability group + unit + source → comparable ratio=1.5 (honesty NOT_WIRED/NONE)",
     );
   } else {
     passed = false;
     details.push(`comparable control unexpectedly ${JSON.stringify(comparable)}`);
+  }
+
+  // Case/whitespace-normalized unit + source still comparable.
+  const normalized = compareTrendIndices(left, {
+    kind: rightSame.kind,
+    rawValue: 80,
+    unit: " Relative_Interest_Index ",
+    comparabilityGroup: "extract-week-2026-W45",
+    sourceSystem: " Trends_Fixture_A ",
+  });
+  if (
+    normalized.kind === "comparable" &&
+    normalized.ratio === 2 &&
+    normalized.externalEffects === "NONE"
+  ) {
+    details.push(
+      "case/whitespace-normalized unit+source → comparable ratio=2",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `normalized comparable unexpectedly ${JSON.stringify(normalized)}`,
+    );
   }
 
   const otherExtract = registerDemandObservation({
@@ -125,7 +151,8 @@ export function proofIncomparableTrendIndicesRejected(
   if (
     rejectedGroup.kind === "rejected" &&
     rejectedGroup.reason === "incomparable_group" &&
-    rejectedGroup.label === "incomparable"
+    rejectedGroup.label === "incomparable" &&
+    rejectedGroup.externalEffects === "NONE"
   ) {
     details.push(
       "different comparability groups → rejected/labeled incomparable (no ratio)",
@@ -170,6 +197,33 @@ export function proofIncomparableTrendIndicesRejected(
     details.push(`unlabeled unexpectedly ${JSON.stringify(unlabeled)}`);
   }
 
+  const blankGroup = compareTrendIndices(
+    {
+      kind: left.kind,
+      rawValue: left.rawValue,
+      unit: left.unit,
+      comparabilityGroup: "   ",
+      sourceSystem: left.sourceSystem,
+    },
+    {
+      kind: rightSame.kind,
+      rawValue: rightSame.rawValue,
+      unit: rightSame.unit,
+      comparabilityGroup: "   ",
+      sourceSystem: rightSame.sourceSystem,
+    },
+  );
+  if (
+    blankGroup.kind === "rejected" &&
+    blankGroup.reason === "missing_comparability_group" &&
+    blankGroup.label === "unlabeled"
+  ) {
+    details.push("whitespace-only comparability group → rejected/labeled unlabeled");
+  } else {
+    passed = false;
+    details.push(`blank group unexpectedly ${JSON.stringify(blankGroup)}`);
+  }
+
   const unitMismatch = compareTrendIndices(left, {
     ...rightSame,
     unit: "search_volume",
@@ -200,6 +254,75 @@ export function proofIncomparableTrendIndicesRejected(
     details.push(
       `source mismatch unexpectedly ${JSON.stringify(sourceMismatch)}`,
     );
+  }
+
+  const zeroBaseline = compareTrendIndices(
+    {
+      kind: left.kind,
+      rawValue: 0,
+      unit: left.unit,
+      comparabilityGroup: left.comparabilityGroup,
+      sourceSystem: left.sourceSystem,
+    },
+    {
+      kind: rightSame.kind,
+      rawValue: 40,
+      unit: rightSame.unit,
+      comparabilityGroup: rightSame.comparabilityGroup,
+      sourceSystem: rightSame.sourceSystem,
+    },
+  );
+  if (
+    zeroBaseline.kind === "rejected" &&
+    zeroBaseline.reason === "zero_baseline" &&
+    zeroBaseline.label === "invalid"
+  ) {
+    details.push("zero baseline → rejected/labeled invalid (no ratio)");
+  } else {
+    passed = false;
+    details.push(`zero baseline unexpectedly ${JSON.stringify(zeroBaseline)}`);
+  }
+
+  const nonTrend = compareTrendIndices(
+    {
+      kind: DemandSignalKind.FAQ,
+      rawValue: 10,
+      unit: left.unit,
+      comparabilityGroup: left.comparabilityGroup,
+      sourceSystem: left.sourceSystem,
+    },
+    rightSame,
+  );
+  if (
+    nonTrend.kind === "rejected" &&
+    nonTrend.reason === "non_trend" &&
+    nonTrend.label === "invalid"
+  ) {
+    details.push("non-trend kind → rejected/labeled invalid");
+  } else {
+    passed = false;
+    details.push(`non-trend unexpectedly ${JSON.stringify(nonTrend)}`);
+  }
+
+  const missingValue = compareTrendIndices(
+    {
+      kind: left.kind,
+      rawValue: null,
+      unit: left.unit,
+      comparabilityGroup: left.comparabilityGroup,
+      sourceSystem: left.sourceSystem,
+    },
+    rightSame,
+  );
+  if (
+    missingValue.kind === "rejected" &&
+    missingValue.reason === "missing_value" &&
+    missingValue.label === "invalid"
+  ) {
+    details.push("missing rawValue → rejected/labeled invalid");
+  } else {
+    passed = false;
+    details.push(`missing value unexpectedly ${JSON.stringify(missingValue)}`);
   }
 
   details.push("liveProviderSuccessClaimed=false externalEffects=NONE");

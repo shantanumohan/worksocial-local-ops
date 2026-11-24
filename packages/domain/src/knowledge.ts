@@ -521,6 +521,9 @@ export function registerDemandObservation(input: {
  * different incomparable data extracts. Same non-empty comparability group,
  * unit, and sourceSystem are required before a ratio is allowed. Otherwise
  * reject and label — do not invent a cross-extract change.
+ *
+ * Unit/source matching is trim + case-insensitive. Honesty stamps stay
+ * NOT_WIRED / NONE on every outcome (fixture ACCEPTED ≠ VERIFIED).
  */
 export type TrendIndexComparison =
   | {
@@ -528,6 +531,8 @@ export type TrendIndexComparison =
       ratio: number;
       comparabilityGroup: string;
       label: "comparable";
+      liveProviderWiring: "NOT_WIRED";
+      externalEffects: "NONE";
     }
   | {
       kind: "rejected";
@@ -540,7 +545,23 @@ export type TrendIndexComparison =
         | "source_mismatch"
         | "zero_baseline";
       label: "incomparable" | "unlabeled" | "invalid";
+      liveProviderWiring: "NOT_WIRED";
+      externalEffects: "NONE";
     };
+
+const TREND_COMPARISON_HONESTY = {
+  liveProviderWiring: "NOT_WIRED" as const,
+  externalEffects: "NONE" as const,
+};
+
+/** Normalize unit/source tokens for comparison (trim + lowercase). */
+export function normalizeTrendComparabilityToken(
+  value: string | null | undefined,
+): string | null {
+  if (value === undefined || value === null) return null;
+  const normalized = String(value).trim().toLowerCase();
+  return normalized.length > 0 ? normalized : null;
+}
 
 export function compareTrendIndices(
   left: Pick<
@@ -564,18 +585,34 @@ export function compareTrendIndices(
     left.kind !== DemandSignalKind.TREND ||
     right.kind !== DemandSignalKind.TREND
   ) {
-    return { kind: "rejected", reason: "non_trend", label: "invalid" };
+    return {
+      kind: "rejected",
+      reason: "non_trend",
+      label: "invalid",
+      ...TREND_COMPARISON_HONESTY,
+    };
   }
   if (left.rawValue === null || right.rawValue === null) {
-    return { kind: "rejected", reason: "missing_value", label: "invalid" };
+    return {
+      kind: "rejected",
+      reason: "missing_value",
+      label: "invalid",
+      ...TREND_COMPARISON_HONESTY,
+    };
   }
   const leftGroup = left.comparabilityGroup?.trim() || null;
   const rightGroup = right.comparabilityGroup?.trim() || null;
-  if (leftGroup === null || rightGroup === null) {
+  if (
+    leftGroup === null ||
+    rightGroup === null ||
+    leftGroup.length === 0 ||
+    rightGroup.length === 0
+  ) {
     return {
       kind: "rejected",
       reason: "missing_comparability_group",
       label: "unlabeled",
+      ...TREND_COMPARISON_HONESTY,
     };
   }
   if (leftGroup !== rightGroup) {
@@ -583,28 +620,47 @@ export function compareTrendIndices(
       kind: "rejected",
       reason: "incomparable_group",
       label: "incomparable",
+      ...TREND_COMPARISON_HONESTY,
     };
   }
-  const leftUnit = left.unit?.trim() || null;
-  const rightUnit = right.unit?.trim() || null;
+  const leftUnit = normalizeTrendComparabilityToken(left.unit);
+  const rightUnit = normalizeTrendComparabilityToken(right.unit);
   if (leftUnit === null || rightUnit === null || leftUnit !== rightUnit) {
-    return { kind: "rejected", reason: "unit_mismatch", label: "incomparable" };
+    return {
+      kind: "rejected",
+      reason: "unit_mismatch",
+      label: "incomparable",
+      ...TREND_COMPARISON_HONESTY,
+    };
   }
-  if (left.sourceSystem.trim() !== right.sourceSystem.trim()) {
+  const leftSource = normalizeTrendComparabilityToken(left.sourceSystem);
+  const rightSource = normalizeTrendComparabilityToken(right.sourceSystem);
+  if (
+    leftSource === null ||
+    rightSource === null ||
+    leftSource !== rightSource
+  ) {
     return {
       kind: "rejected",
       reason: "source_mismatch",
       label: "incomparable",
+      ...TREND_COMPARISON_HONESTY,
     };
   }
   if (left.rawValue === 0) {
-    return { kind: "rejected", reason: "zero_baseline", label: "invalid" };
+    return {
+      kind: "rejected",
+      reason: "zero_baseline",
+      label: "invalid",
+      ...TREND_COMPARISON_HONESTY,
+    };
   }
   return {
     kind: "comparable",
     ratio: right.rawValue / left.rawValue,
     comparabilityGroup: leftGroup,
     label: "comparable",
+    ...TREND_COMPARISON_HONESTY,
   };
 }
 
