@@ -84,6 +84,17 @@ export type AuthorityRequest = {
    * Supplied by the gateway; unused grants pass 0.
    */
   grantUsesInLastHour?: number;
+  /**
+   * T-X006 deepen — supervisor singleton host-lease fence (opt-in).
+   * When true, `supervisorLeaseHeld` must be true or no grant matches
+   * (generic GRANT_MISSING; no host/generation leak in the reason).
+   */
+  requireSupervisorLeaseFence?: boolean;
+  /**
+   * True when the caller holds the local-singleton host lease for their generation.
+   * Computed outside domain (e.g. isLeaseHeldByGeneration); never trust client body.
+   */
+  supervisorLeaseHeld?: boolean;
 };
 
 export type AuthorityMatch = {
@@ -174,6 +185,14 @@ export function findMatchingGrant(
   request: AuthorityRequest,
 ): AuthorityMatch | null {
   if (modeBlocksWrite(request.operatingMode, request.actionClass)) {
+    return null;
+  }
+
+  // Supervisor lease fence — missing/mismatched generation fails closed.
+  if (
+    request.requireSupervisorLeaseFence === true &&
+    request.supervisorLeaseHeld !== true
+  ) {
     return null;
   }
 

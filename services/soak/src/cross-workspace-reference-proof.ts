@@ -7,7 +7,10 @@
  * GRANT_MISSING (reason does not echo the foreign id).
  *
  * Hillclimb: whitespace-normalized object ids; dual foreign substitution;
- * whitespace-only ids fail closed. Honesty NOT_WIRED / externalEffects NONE.
+ * whitespace-only ids fail closed.
+ * Deepen (wave 11): supervisor singleton host-lease fence — missing/mismatched
+ * generation fail closed with generic GRANT_MISSING (no leak); held lease +
+ * in-workspace still allows. Honesty NOT_WIRED / externalEffects NONE.
  * Avoids credential rebind (#43) lane.
  */
 
@@ -26,6 +29,11 @@ import {
   type SoakProofRecord,
   type StandingPolicy,
 } from "@worksocial/domain";
+import {
+  acquireHostLease,
+  isLeaseHeldByGeneration,
+  type HostLeaseClock,
+} from "@worksocial/persistence";
 
 const now = "2026-11-21T22:30:00.000Z";
 
@@ -69,6 +77,10 @@ const grantA: CapabilityGrant = {
   createdAtIso: now,
 };
 
+function clockAt(ms: number): HostLeaseClock {
+  return { nowMs: () => ms };
+}
+
 function baseRequest(
   nowIso: string,
   overrides: Partial<AuthorityRequest> = {},
@@ -91,6 +103,9 @@ function baseRequest(
     prerequisiteConflict: false,
     policies: [policyA],
     grants: [grantA],
+    // Deepen default: fence on with held lease (caller must opt out / override).
+    requireSupervisorLeaseFence: true,
+    supervisorLeaseHeld: true,
     ...overrides,
   };
 }
@@ -314,6 +329,82 @@ export function proofCrossWorkspaceReferenceDenied(
     details.push(
       `Write-gate padded foreign unexpectedly ${JSON.stringify(paddedForeignGate)}`,
     );
+  }
+
+  // 10. Deepen — supervisor lease fence from real host-lease acquire.
+  const baseMs = Date.parse(nowIso);
+  const leaseHost = "host-tx006-fence";
+  const leaseGen = `gen-tx006-${randomUUID().slice(0, 8)}`;
+  const acquired = acquireHostLease(
+    null,
+    { hostId: leaseHost, holderPid: 4242, generationId: leaseGen, ttlMs: 60_000 },
+    clockAt(baseMs),
+  );
+  if (!acquired.ok) {
+    passed = false;
+    details.push("Supervisor lease acquire failed for fence deepen");
+  } else {
+    const held = isLeaseHeldByGeneration(
+      acquired.lease,
+      leaseHost,
+      leaseGen,
+      baseMs + 100,
+    );
+    const fencedOk = evaluateStandingAuthority(
+      baseRequest(nowIso, {
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: held,
+      }),
+    );
+    if (held && fencedOk.decision.allowed) {
+      details.push(
+        "Supervisor lease fence held → in-workspace publish allowed",
+      );
+    } else {
+      passed = false;
+      details.push("Supervisor lease fence held unexpectedly denied");
+    }
+
+    const missingFence = evaluateStandingAuthority(
+      baseRequest(nowIso, {
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: false,
+      }),
+    );
+    const missingCheck = isGenericGrantMissing(
+      missingFence.decision,
+      [leaseHost, leaseGen, ...foreignTokens],
+    );
+    if (missingCheck.ok && missingFence.match === null) {
+      details.push(
+        "Supervisor lease fence missing → GRANT_MISSING without leak",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `Lease fence missing failed: ${"why" in missingCheck ? missingCheck.why : "match leaked"}`,
+      );
+    }
+
+    const foreignWithFence = evaluateStandingAuthority(
+      baseRequest(nowIso, {
+        channelId: wsB.channelId,
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: held,
+      }),
+    );
+    const foreignFenceCheck = isGenericGrantMissing(
+      foreignWithFence.decision,
+      foreignTokens,
+    );
+    if (foreignFenceCheck.ok && foreignWithFence.match === null) {
+      details.push(
+        "Lease held + foreign channel still GRANT_MISSING without leak",
+      );
+    } else {
+      passed = false;
+      details.push("Lease held + foreign channel unexpectedly passed");
+    }
   }
 
   details.push("honesty NOT_WIRED/NONE");

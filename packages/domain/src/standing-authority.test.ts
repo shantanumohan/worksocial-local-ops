@@ -209,4 +209,27 @@ describe("evaluateStandingAuthority", () => {
     });
     expect(result.match).toBeNull();
   });
+
+  it("supervisor lease fence denies without held lease (T-X006 deepen)", () => {
+    const denied = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: false,
+      }),
+    );
+    expect(denied.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+      reason: "No capability grant for this action",
+    });
+    expect(denied.match).toBeNull();
+
+    const allowed = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: true,
+      }),
+    );
+    expect(allowed.decision).toEqual({ allowed: true });
+  });
 });
