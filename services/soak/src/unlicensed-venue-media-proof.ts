@@ -1,10 +1,12 @@
 /**
  * Fixture proof for T-X044 — Unlicensed venue media: publish blocked.
  *
+ * Hillclimb: liveMediaWiring NOT_WIRED; refuse live VERIFIED / live publish
+ * wire; chatgptAdsAccess ACCESS_BLOCKED; honesty on bundle skip path.
  * Exercises the content `releaseCanonical` boundary with venueMedia attached.
  * Unlicensed media blocks before gateway (no receipt / no provider mutate).
  * Licensed + cleared + owner-approved is the positive control at this gate.
- * External effects: NONE.
+ * External effects: NONE. Never invents live VERIFIED.
  */
 
 import { mkdtempSync, rmSync } from "node:fs";
@@ -18,6 +20,7 @@ import {
   SupportLabel,
   VenueMediaLicenseStatus,
   evaluateVenueMediaPublishGate,
+  gateVenueMediaBundleForPublish,
   type SoakProofRecord,
 } from "@worksocial/domain";
 import {
@@ -90,9 +93,15 @@ export function proofUnlicensedVenueMediaPublishBlocked(
     if (
       !unlicensedEval.allowed &&
       unlicensedEval.code === "UNLICENSED_MEDIA" &&
-      unlicensedEval.publishBlocked
+      unlicensedEval.publishBlocked &&
+      unlicensedEval.liveMediaWiring === "NOT_WIRED" &&
+      unlicensedEval.liveProviderSuccessClaimed === false &&
+      unlicensedEval.chatgptAdsAccess === "ACCESS_BLOCKED" &&
+      unlicensedEval.externalEffects === "NONE"
     ) {
-      details.push("Domain: unlicensed venue media → UNLICENSED_MEDIA");
+      details.push(
+        "Domain: unlicensed venue media → UNLICENSED_MEDIA; liveMediaWiring=NOT_WIRED",
+      );
     } else {
       passed = false;
       details.push(`Domain unlicensed failed: ${JSON.stringify(unlicensedEval)}`);
@@ -221,8 +230,95 @@ export function proofUnlicensedVenueMediaPublishBlocked(
       details.push("Unlicensed/invented path unexpectedly produced a receipt");
     }
 
+    // 5. Live VERIFIED / live publish wire refused at domain + bundle.
+    const liveVerified = evaluateVenueMediaPublishGate({
+      mediaAssetId: "venue-lobby-approved",
+      licenseStatus: VenueMediaLicenseStatus.LICENSED,
+      rightsCleared: true,
+      ownerApproved: true,
+      claimLiveVerified: true,
+    });
+    const liveWire = gateVenueMediaBundleForPublish(
+      [
+        {
+          mediaAssetId: "venue-lobby-approved",
+          licenseStatus: VenueMediaLicenseStatus.LICENSED,
+          rightsCleared: true,
+          ownerApproved: true,
+        },
+      ],
+      { requestLivePublishWire: true },
+    );
+    if (
+      !liveVerified.allowed &&
+      liveVerified.code === "LIVE_MEDIA_CLAIM_REFUSED" &&
+      !liveWire.allowed &&
+      liveWire.code === "LIVE_MEDIA_CLAIM_REFUSED" &&
+      liveWire.liveMediaWiring === "NOT_WIRED"
+    ) {
+      details.push(
+        "claimLiveVerified / requestLivePublishWire → LIVE_MEDIA_CLAIM_REFUSED (NOT_WIRED)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `live claims unexpectedly verified=${JSON.stringify(liveVerified)} wire=${JSON.stringify(liveWire)}`,
+      );
+    }
+
+    // 5b. preferLive releaseCanonical must still hit T-X044 media gate (no receipt).
+    const preferLiveUnlicensed = service.releaseCanonical({
+      articleId: CONTENT_PILOT_ARTICLE_ID,
+      authority,
+      productionMapping: mapping,
+      factLabels,
+      nowIso,
+      preferLive: true,
+      venueMedia: [
+        {
+          mediaAssetId: "venue-lobby-prefer-live-unlicensed",
+          licenseStatus: VenueMediaLicenseStatus.UNLICENSED,
+          rightsCleared: false,
+          ownerApproved: false,
+        },
+      ],
+    });
+    if (
+      preferLiveUnlicensed.receipt === null &&
+      preferLiveUnlicensed.gatewayDecision === null &&
+      preferLiveUnlicensed.details.some((d) => /UNLICENSED_MEDIA/.test(d))
+    ) {
+      details.push(
+        "releaseCanonical preferLive=true + unlicensed venueMedia → blocked before live path (receipt=null)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `preferLive unlicensed unexpectedly receipt=${preferLiveUnlicensed.receipt !== null} details=${JSON.stringify(preferLiveUnlicensed.details)}`,
+      );
+    }
+
+    // 6. Empty bundle skip still honest NOT_WIRED / NONE.
+    const skipped = gateVenueMediaBundleForPublish([]);
+    if (
+      skipped.allowed &&
+      "skipped" in skipped &&
+      skipped.skipped === true &&
+      skipped.liveMediaWiring === "NOT_WIRED" &&
+      skipped.externalEffects === "NONE"
+    ) {
+      details.push(
+        "empty venueMedia bundle → skipped; liveMediaWiring=NOT_WIRED externalEffects=NONE",
+      );
+    } else {
+      passed = false;
+      details.push(`bundle skip unexpectedly ${JSON.stringify(skipped)}`);
+    }
+
     details.push(`proofClock=${nowIso}`);
-    details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+    details.push(
+      "liveProviderSuccessClaimed=false liveMediaWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE ACCEPTED≠VERIFIED",
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

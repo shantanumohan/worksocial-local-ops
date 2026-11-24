@@ -956,7 +956,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X027** is fixture ACCEPTED only via the unknown usage cancel holds residual proof (`UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL`). Not sandbox/prod VERIFIED.
 
-**T-X044** is fixture ACCEPTED only via the unlicensed venue media publish-blocked proof (`UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED`) — `releaseCanonical` fails closed for unlicensed / unknown / expired / pending-clearance / uncleared rights / unapproved invented media. Not sandbox/prod VERIFIED.
+**T-X044** is fixture ACCEPTED only via the unlicensed venue media publish-blocked proof (`UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED`) — `releaseCanonical` fails closed for unlicensed / unknown / expired / pending-clearance / uncleared rights / unapproved invented media; `claimLiveVerified` / `requestLivePublishWire` → `LIVE_MEDIA_CLAIM_REFUSED`; `liveMediaWiring` stays NOT_WIRED; ChatGPT Ads ACCESS_BLOCKED; externalEffects NONE. Not sandbox/prod VERIFIED.
 
 **T-US-006** is fixture ACCEPTED only via the unbound write path fail-closed proof (`UNBOUND_WRITE_PATH_FAIL_CLOSED`) — unbound URL OBSERVE/CREATE analysis may proceed without a mapped pilot write path; ROUTINE_PUBLISH on an unbound channel/asset fail closed with `prerequisiteMissing` and no matched path; `applyAttemptCount=0` (gate-only). Not sandbox/prod VERIFIED.
 

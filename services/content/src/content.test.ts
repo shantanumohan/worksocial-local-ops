@@ -241,6 +241,37 @@ describe("content service", () => {
     expect(blocked.details.join(" ")).toMatch(/UNLICENSED_MEDIA/);
   });
 
+  it("blocks preferLive releaseCanonical when venue media is unlicensed (T-X044)", () => {
+    const { service } = makeService();
+    service.seedFixtures(now);
+    service.approveArticle({
+      articleId: CONTENT_PILOT_ARTICLE_ID,
+      factLabels: labels,
+      nowIso: now,
+    });
+    const { mapping } = service.seedAndProveContentMapping(now);
+    const blocked = service.releaseCanonical({
+      articleId: CONTENT_PILOT_ARTICLE_ID,
+      authority: demoAuthority(now),
+      productionMapping: mapping,
+      factLabels: labels,
+      nowIso: now,
+      preferLive: true,
+      venueMedia: [
+        {
+          mediaAssetId: "venue-lobby-prefer-live-unlicensed",
+          licenseStatus: VenueMediaLicenseStatus.UNLICENSED,
+          rightsCleared: false,
+          ownerApproved: false,
+        },
+      ],
+    });
+    expect(blocked.gatewayDecision).toBeNull();
+    expect(blocked.receipt).toBeNull();
+    expect(blocked.details.join(" ")).toMatch(/UNLICENSED_MEDIA/);
+    expect(blocked.liveCmsPublishWiring).toBe("NOT_WIRED");
+  });
+
   it("keeps APPROVED on gateway denial and settles FAILED on bad read-back", () => {
     const { service, gateway } = makeService();
     service.seedFixtures(now);
