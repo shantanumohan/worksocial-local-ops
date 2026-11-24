@@ -173,7 +173,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X056** maps only to `AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF` (agent message cap → MESSAGE_LIMIT handoff; not live VERIFIED).
 
-**T-X059** maps only to `DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING`.
+**T-X059** maps only to `DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING` (one booking; separate claims; liveProviderWiring NOT_WIRED; not live VERIFIED). Shared map with T-US-038.
 
 **T-X070** maps only to `VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES` (VALIDATION_FAILED ≠ COLLECTION_FAILED; empty recordId → COLLECTION_FAILED; live NOT_WIRED; not live VERIFIED).
 

@@ -24,17 +24,22 @@ describe("platform-attribution (T-X059)", () => {
     ]);
     expect(projection.uniqueBookingCount).toBe(1);
     expect(projection.platformClaimCount).toBe(2);
+    expect(projection.distinctPlatformCount).toBe(2);
     expect(projection.claimsByPlatform.google_ads).toBe(1);
     expect(projection.claimsByPlatform.meta_ads).toBe(1);
-    expect(projection.retainedClaims.map((c) => c.claimId).sort()).toEqual([
+    expect(projection.retainedClaims.map((c) => c.claimId)).toEqual([
       "c-google",
       "c-meta",
     ]);
     expect(projection.wouldDoubleCountIfSummed).toBe(true);
+    expect(projection.externalEffects).toBe("NONE");
+    expect(projection.liveProviderWiring).toBe("NOT_WIRED");
 
     const decision = refuseSilentPlatformSum(projection);
     expect(decision.allowed).toBe(false);
     expect(decision.code).toBe("SILENT_PLATFORM_SUM_REFUSED");
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.liveProviderWiring).toBe("NOT_WIRED");
   });
 
   it("allows matching claim and unique counts without double-count", () => {
@@ -48,8 +53,11 @@ describe("platform-attribution (T-X059)", () => {
     ]);
     expect(projection.uniqueBookingCount).toBe(1);
     expect(projection.platformClaimCount).toBe(1);
+    expect(projection.distinctPlatformCount).toBe(1);
     expect(projection.wouldDoubleCountIfSummed).toBe(false);
-    expect(refuseSilentPlatformSum(projection).allowed).toBe(true);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(true);
+    expect(decision.liveProviderWiring).toBe("NOT_WIRED");
   });
 
   it("counts prototype-key platformIds without inheritance collision", () => {
@@ -72,5 +80,165 @@ describe("platform-attribution (T-X059)", () => {
     expect(projection.platformClaimCount).toBe(2);
     expect(projection.uniqueBookingCount).toBe(1);
     expect(projection.retainedClaims).toHaveLength(2);
+    expect(projection.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("keeps uniqueBookingCount=1 for three platforms claiming one booking", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-g",
+        platformId: "google_ads",
+        bookingId: "booking-triple",
+        claimedAtIso: "2026-11-22T19:00:02.000Z",
+      },
+      {
+        claimId: "c-m",
+        platformId: "meta_ads",
+        bookingId: "booking-triple",
+        claimedAtIso: "2026-11-22T19:00:00.000Z",
+      },
+      {
+        claimId: "c-l",
+        platformId: "linkedin_ads",
+        bookingId: "booking-triple",
+        claimedAtIso: "2026-11-22T19:00:01.000Z",
+      },
+    ]);
+    expect(projection.uniqueBookingCount).toBe(1);
+    expect(projection.platformClaimCount).toBe(3);
+    expect(projection.distinctPlatformCount).toBe(3);
+    expect(projection.wouldDoubleCountIfSummed).toBe(true);
+    expect(projection.retainedClaims.map((c) => c.claimId)).toEqual([
+      "c-m",
+      "c-l",
+      "c-g",
+    ]);
+    expect(refuseSilentPlatformSum(projection).code).toBe(
+      "SILENT_PLATFORM_SUM_REFUSED",
+    );
+  });
+
+  it("counts two distinct bookings across platforms without double-count", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-a",
+        platformId: "google_ads",
+        bookingId: "booking-a",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "c-b",
+        platformId: "meta_ads",
+        bookingId: "booking-b",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(projection.uniqueBookingCount).toBe(2);
+    expect(projection.platformClaimCount).toBe(2);
+    expect(projection.wouldDoubleCountIfSummed).toBe(false);
+    expect(refuseSilentPlatformSum(projection).allowed).toBe(true);
+  });
+
+  it("trims claim fields and sorts retainedClaims chronologically", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "  c-late  ",
+        platformId: "  google_ads ",
+        bookingId: " booking-trim ",
+        claimedAtIso: "2026-11-22T19:00:05.000Z",
+      },
+      {
+        claimId: "c-early",
+        platformId: "meta_ads",
+        bookingId: "booking-trim",
+        claimedAtIso: "2026-11-22T19:00:01.000Z",
+      },
+    ]);
+    expect(projection.retainedClaims.map((c) => c.claimId)).toEqual([
+      "c-early",
+      "c-late",
+    ]);
+    expect(projection.retainedClaims[1]?.platformId).toBe("google_ads");
+    expect(projection.uniqueBookingIds).toEqual(["booking-trim"]);
+  });
+
+  it("refuses blank/invalid claim fields — never invents unique bookings", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "   ",
+        platformId: "google_ads",
+        bookingId: "booking-x",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "c-ok",
+        platformId: "meta_ads",
+        bookingId: "booking-x",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(projection.hasInvalidClaims).toBe(true);
+    expect(projection.invalidClaimCount).toBe(1);
+    expect(projection.platformClaimCount).toBe(1);
+    expect(projection.uniqueBookingCount).toBe(1);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("INVALID_ATTRIBUTION_CLAIM");
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("rejects malformed claimedAtIso instead of accepting the claim", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-bad-ts",
+        platformId: "google_ads",
+        bookingId: "booking-bad-ts",
+        claimedAtIso: "not-a-date",
+      },
+    ]);
+    expect(projection.hasInvalidClaims).toBe(true);
+    expect(projection.invalidClaimCount).toBe(1);
+    expect(projection.platformClaimCount).toBe(0);
+    expect(projection.uniqueBookingCount).toBe(0);
+    expect(refuseSilentPlatformSum(projection).code).toBe(
+      "INVALID_ATTRIBUTION_CLAIM",
+    );
+  });
+
+  it("sorts retainedClaims by parsed UTC instant across offsets", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-later-lex",
+        platformId: "google_ads",
+        bookingId: "booking-offset",
+        // Lexicographically earlier string, but later instant than +02:00 row.
+        claimedAtIso: "2026-11-22T18:00:00Z",
+      },
+      {
+        claimId: "c-earlier-offset",
+        platformId: "meta_ads",
+        bookingId: "booking-offset",
+        // 17:30Z — earlier than 18:00Z, but string sorts after "18:00:00Z".
+        claimedAtIso: "2026-11-22T19:30:00+02:00",
+      },
+    ]);
+    expect(projection.retainedClaims.map((c) => c.claimId)).toEqual([
+      "c-earlier-offset",
+      "c-later-lex",
+    ]);
+    expect(projection.uniqueBookingCount).toBe(1);
+    expect(projection.platformClaimCount).toBe(2);
+  });
+
+  it("projects empty input as zero unique without double-count flag", () => {
+    const projection = projectUniqueOutcomes([]);
+    expect(projection.uniqueBookingCount).toBe(0);
+    expect(projection.platformClaimCount).toBe(0);
+    expect(projection.distinctPlatformCount).toBe(0);
+    expect(projection.wouldDoubleCountIfSummed).toBe(false);
+    expect(projection.hasInvalidClaims).toBe(false);
+    expect(projection.externalEffects).toBe("NONE");
+    expect(refuseSilentPlatformSum(projection).allowed).toBe(true);
   });
 });

@@ -948,7 +948,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X056** is fixture ACCEPTED only via the automated response loop bounded handoff proof (`AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF`) — `maxAgentMessagesPerConversation` enforces `MESSAGE_LIMIT` and creates a handoff (`handed_off`, `agentSendAllowed=false`); no unbounded auto-reply loop. Distinct from takeover-cancels-unsent (T-US-044/T-X053). Not sandbox/prod VERIFIED.
 
-**T-X059** is fixture ACCEPTED only via the duplicate platform attribution one-booking proof (`DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING`) — multiple platforms may claim the same booking; unique outcome count stays 1 and platform claims remain separate (no silent sum). Not sandbox/prod VERIFIED.
+**T-X059** is fixture ACCEPTED only via the duplicate platform attribution one-booking proof (`DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING`) — multiple platforms may claim the same booking; unique outcome count stays 1; platform claims remain separate ledger rows (chronological retain; trim); blank/invalid claim fields refuse (`INVALID_ATTRIBUTION_CLAIM`); `liveProviderWiring=NOT_WIRED`; never silently sum into unique bookings. Not sandbox/prod VERIFIED.
 
 **T-X060** is fixture ACCEPTED only via the currency/timezone mismatch no silent sum proof (`CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM`) — matched currency+reportingTimezone series may aggregate (whitespace-normalized); currency or timezone mismatch / blank dimensions return `totalMinor=null` (`INVALID_DIMENSION` for blanks); never invents a cross-dimension total; live `NOT_WIRED`. Distinct from T-X059 platform-attribution uniqueness. Not sandbox/prod VERIFIED.
 
@@ -1087,7 +1087,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X056 | Automated response loop | Bounded; handoff *(fixture ACCEPTED — automated response loop bounded handoff proof; not sandbox/prod VERIFIED)* |
 | T-X057 | Repair disables failing test | Rejected *(fixture ACCEPTED)* |
 | T-X058 | Third automatic repair attempt | Escalate *(fixture ACCEPTED — attempt-limit escalate; CMS NOT_WIRED; not sandbox/prod VERIFIED)* |
-| T-X059 | Duplicate platform attribution | One booking; separate claims *(fixture ACCEPTED — duplicate platform attribution one-booking proof; not sandbox/prod VERIFIED)* |
+| T-X059 | Duplicate platform attribution | One booking; separate claims *(fixture ACCEPTED — duplicate platform attribution one-booking proof; liveProviderWiring NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X060 | Currency/timezone mismatch | No silent sum *(fixture ACCEPTED — whitespace match; INVALID_DIMENSION; NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X061 | Keyboard review and focus restore | A11y *(fixture ACCEPTED — keyboard focus restore after dialog proof; not sandbox/prod VERIFIED)* |
 | T-X062 | SSE gap after offline UI | Full-state resync *(fixture ACCEPTED — SSE gap full-state resync proof; liveProviderWiring NOT_WIRED; not sandbox/prod VERIFIED)* |
