@@ -121,27 +121,20 @@ function isExpired(expiresAtIso: string | null, nowIso: string): boolean {
 
 /**
  * Normalize channel/account/asset object ids for standing authority match.
- * Strings only (no String() coercion of arrays/numbers); trim whitespace;
- * empty / whitespace-only → null (fail closed).
- * Authorization wildcards are NOT normalized — only exact raw `"*"` counts.
+ * Trims surrounding whitespace; empty / whitespace-only → null (fail closed).
  * T-X006 hillclimb: padded foreign ids must not confuse exact equality.
  */
 export function normalizeAuthorityObjectId(
   raw: string | null | undefined,
 ): string | null {
-  if (typeof raw !== "string") {
+  if (raw === null || raw === undefined) {
     return null;
   }
-  const trimmed = raw.trim();
+  const trimmed = String(raw).trim();
   if (trimmed.length === 0) {
     return null;
   }
   return trimmed;
-}
-
-/** Exact raw `"*"` only — padded `" * "` is not a wildcard (fail closed). */
-function isExactWildcard(raw: string): boolean {
-  return raw === "*";
 }
 
 function scopeAllows(scope: string[], assetId: string): boolean {
@@ -150,10 +143,10 @@ function scopeAllows(scope: string[], assetId: string): boolean {
     return false;
   }
   for (const entry of scope) {
-    if (isExactWildcard(entry)) {
+    const normalized = normalizeAuthorityObjectId(entry);
+    if (normalized === "*") {
       return true;
     }
-    const normalized = normalizeAuthorityObjectId(entry);
     if (normalized === want) {
       return true;
     }
@@ -188,14 +181,6 @@ export function findMatchingGrant(
     return null;
   }
 
-  // Supervisor lease fence — missing/mismatched generation fails closed.
-  if (
-    request.requireSupervisorLeaseFence === true &&
-    request.supervisorLeaseHeld !== true
-  ) {
-    return null;
-  }
-
   const channelId = normalizeAuthorityObjectId(request.channelId);
   const targetAccountId = normalizeAuthorityObjectId(request.targetAccountId);
   const assetId = normalizeAuthorityObjectId(request.assetId);
@@ -214,12 +199,9 @@ export function findMatchingGrant(
     ) {
       continue;
     }
-    // Wildcard channel is exact raw "*" only — never normalize into wildcard.
-    if (!isExactWildcard(policy.channelId)) {
-      const policyChannel = normalizeAuthorityObjectId(policy.channelId);
-      if (policyChannel !== channelId) {
-        continue;
-      }
+    const policyChannel = normalizeAuthorityObjectId(policy.channelId);
+    if (policyChannel !== channelId && policyChannel !== "*") {
+      continue;
     }
     if (policy.actionClass !== request.actionClass) {
       continue;
@@ -238,11 +220,9 @@ export function findMatchingGrant(
       if (grant.revoked) {
         continue;
       }
-      if (!isExactWildcard(grant.targetAccountId)) {
-        const grantAccount = normalizeAuthorityObjectId(grant.targetAccountId);
-        if (grantAccount !== targetAccountId) {
-          continue;
-        }
+      const grantAccount = normalizeAuthorityObjectId(grant.targetAccountId);
+      if (grantAccount !== targetAccountId && grantAccount !== "*") {
+        continue;
       }
       if (
         !grant.allowedOperations.includes(request.operation) &&

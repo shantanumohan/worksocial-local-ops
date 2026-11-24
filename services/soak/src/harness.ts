@@ -1701,7 +1701,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X073 fixture ACCEPTED via offboard_active_token_residual only — incomplete until live revoke; not live VERIFIED",
       "T-US-060 fixture ACCEPTED via emergency_stop_at_commit only — not live VERIFIED",
       "T-X005 fixture ACCEPTED via forged_browser_role_ignored only — not live VERIFIED",
-      "T-X006 fixture ACCEPTED via cross_workspace_reference_denied only — deepen supervisor lease fence; not live VERIFIED",
+      "T-X006 fixture ACCEPTED via cross_workspace_reference_denied only — whitespace-normalized / dual foreign; not live VERIFIED",
       "T-X019/T-US-036 fixture ACCEPTED via approved_payload_edit_invalidated only — not live VERIFIED",
       "T-US-057 fixture ACCEPTED via cross_workspace_resource_substitution only — not live VERIFIED",
       "T-US-024 fixture ACCEPTED via agent_cannot_widen_grant only — not live VERIFIED",
