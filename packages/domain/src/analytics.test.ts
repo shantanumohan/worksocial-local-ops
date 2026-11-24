@@ -196,6 +196,80 @@ describe("analytics — GA4 property kind", () => {
       expect(reclaimClean.decision.code).toBe("WRONG_PROPERTY_KIND");
     }
   });
+
+  it("I13 edges: claim-on-padded refuse; invent closed dishonest; reclaim DRIFT", () => {
+    const claimOnPadded = validateGa4PropertyBinding(
+      {
+        propertyId: "  100000001  ",
+        kind: Ga4PropertyKind.GA4_PROPERTY,
+        measurementId: "G-FIXTURE",
+        displayName: "Claim on padded",
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      { claimLiveVerified: true },
+    );
+    expect(claimOnPadded.ok).toBe(false);
+    if (!claimOnPadded.ok) expect(claimOnPadded.code).toBe("LIVE_CLAIM_REFUSED");
+
+    const claimOnMid = validateGa4PropertyBinding(
+      {
+        propertyId: "G-ABC123",
+        kind: Ga4PropertyKind.GA4_PROPERTY,
+        measurementId: "G-ABC123",
+        displayName: "Claim on mid-shaped",
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      { requestLiveGa4Transport: true },
+    );
+    expect(claimOnMid.ok).toBe(false);
+    if (!claimOnMid.ok) expect(claimOnMid.code).toBe("LIVE_CLAIM_REFUSED");
+
+    const inventClosed = assertGa4WrongPropertyKindHonest({
+      ok: false,
+      code: "WRONG_PROPERTY_KIND",
+      reasons: [
+        "live GA4 transport is now verified and delivered; property kind is now closed",
+      ],
+      liveProviderSuccessClaimed: false,
+      liveGa4Transport: "NOT_WIRED",
+      externalEffects: "NONE",
+    });
+    expect(inventClosed.ok).toBe(false);
+    expect(inventClosed.code).toBe("GA4_KIND_DISHONEST");
+
+    const uaBinding = {
+      propertyId: "UA-123",
+      kind: Ga4PropertyKind.UA_PROPERTY,
+      measurementId: null,
+      displayName: "Legacy",
+      environment: AnalyticsEnvironment.FIXTURE,
+    };
+    const honest = reclaimGa4WrongPropertyKindDecision(uaBinding);
+    const dishonest = {
+      ...honest,
+      priorBindInvented: false as const,
+      decision: {
+        ok: true as const,
+        binding: {
+          propertyId: "100000001",
+          kind: Ga4PropertyKind.GA4_PROPERTY,
+          measurementId: "G-FIXTURE",
+          displayName: "Invented accept",
+          environment: AnalyticsEnvironment.FIXTURE,
+        },
+        reasons: ["invented accept after refuse"],
+        liveProviderSuccessClaimed: false as const,
+        liveGa4Transport: "NOT_WIRED" as const,
+        externalEffects: "NONE" as const,
+      },
+    };
+    const drift = assertGa4WrongPropertyKindReclaimIdempotent({
+      first: honest,
+      second: dishonest,
+    });
+    expect(drift.ok).toBe(false);
+    expect(drift.code).toBe("GA4_KIND_RECLAIM_DRIFT");
+  });
 });
 
 describe("analytics — GA4 debug ≠ receipt", () => {

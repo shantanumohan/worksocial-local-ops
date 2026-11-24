@@ -96,6 +96,18 @@ export function validateGa4PropertyBinding(
       ...GA4_BIND_HONESTY,
     };
   }
+  // I13: claim/transport on padded or wrong-kind ids refuse LIVE_CLAIM first —
+  // never invent a live bind success path past ACCEPTED≠VERIFIED.
+  if (opts?.claimLiveVerified === true || opts?.requestLiveGa4Transport === true) {
+    return {
+      ok: false,
+      code: "LIVE_CLAIM_REFUSED",
+      reasons: [
+        "Live VERIFIED / live GA4 transport claim refused — fixture ACCEPTED≠VERIFIED; liveGa4Transport=NOT_WIRED",
+      ],
+      ...GA4_BIND_HONESTY,
+    };
+  }
   // Whitespace-padded ids refused (T-X031 deepen I10) — no silent trim invent.
   if (binding.propertyId !== binding.propertyId.trim()) {
     return {
@@ -149,16 +161,6 @@ export function validateGa4PropertyBinding(
       code: "WRONG_PROPERTY_KIND",
       reasons: [
         "Live/unavailable GA4 bind refused — live query transport remains NOT_WIRED (T-X031); ACCEPTED≠VERIFIED",
-      ],
-      ...GA4_BIND_HONESTY,
-    };
-  }
-  if (opts?.claimLiveVerified === true || opts?.requestLiveGa4Transport === true) {
-    return {
-      ok: false,
-      code: "LIVE_CLAIM_REFUSED",
-      reasons: [
-        "Live VERIFIED / live GA4 transport claim refused — fixture ACCEPTED≠VERIFIED; liveGa4Transport=NOT_WIRED",
       ],
       ...GA4_BIND_HONESTY,
     };
@@ -328,6 +330,21 @@ export function assertGa4WrongPropertyKindHonest(
     /^G-[A-Z0-9]+$/i.test(decision.binding.propertyId.trim())
   ) {
     reasons.push("Must not accept measurement-id-shaped property id as GA4");
+  }
+  // I13: inventing live transport delivered / closed VERIFIED in reasons is dishonest.
+  const reasonBlob = decision.reasons.join(" ");
+  if (
+    /\blive\s+(GA4\s+)?(transport|metrics)\s+(is\s+)?(now\s+)?(delivered|verified|wired)\b/i.test(
+      reasonBlob,
+    ) ||
+    /\bcatalogClaim\s*=\s*VERIFIED\b/i.test(reasonBlob) ||
+    /\bproperty\s+kind\s+(is\s+)?(now\s+)?(satisfied|completed|closed)\b/i.test(
+      reasonBlob,
+    )
+  ) {
+    reasons.push(
+      "Must not invent live GA4 transport/metrics success or closed kind",
+    );
   }
   if (reasons.length > 0) {
     return {

@@ -1,8 +1,9 @@
 /**
  * Fixture proof for T-X031 — wrong GA4 property kind refused.
- * Hillclimb deepen I10: whitespace-padded / measurement-id-shaped property id
- * refuse; dual live-claim refuse; I8 reclaim + UA-shaped / UNAVAILABLE;
- * measurement-id-only / unknown refuse; liveGa4Transport NOT_WIRED;
+ * Hillclimb deepen I13: claim-on-padded / claim-on-mid LIVE_CLAIM_REFUSED;
+ * invent live-transport-closed dishonest; honest+dishonest reclaim DRIFT.
+ * I10: whitespace-padded / measurement-id-shaped; dual live-claim refuse.
+ * I8 reclaim + UA-shaped / UNAVAILABLE; liveGa4Transport NOT_WIRED;
  * ACCEPTED≠VERIFIED. External effects: NONE.
  */
 
@@ -311,6 +312,79 @@ export function proofGa4WrongPropertyKindRefused(
     passed = false;
     details.push(
       `I10 edges unexpectedly padded=${JSON.stringify(padded)} mid=${JSON.stringify(midShaped)} dual=${JSON.stringify(dualClaim)} trip=${JSON.stringify(reclaimTrip)}`,
+    );
+  }
+
+  // I13: claim-on-padded / claim-on-mid → LIVE_CLAIM_REFUSED; invent closed dishonest; reclaim DRIFT.
+  const claimOnPadded = validateGa4PropertyBinding(
+    {
+      propertyId: "  100000001  ",
+      kind: Ga4PropertyKind.GA4_PROPERTY,
+      measurementId: "G-FIXTURE",
+      displayName: "Claim on padded",
+      environment: AnalyticsEnvironment.FIXTURE,
+    },
+    { claimLiveVerified: true },
+  );
+  const claimOnMid = validateGa4PropertyBinding(
+    {
+      propertyId: "G-XYZ999",
+      kind: Ga4PropertyKind.GA4_PROPERTY,
+      measurementId: "G-XYZ999",
+      displayName: "Claim on mid-shaped",
+      environment: AnalyticsEnvironment.FIXTURE,
+    },
+    { requestLiveGa4Transport: true },
+  );
+  const inventClosed = assertGa4WrongPropertyKindHonest({
+    ok: false,
+    code: "WRONG_PROPERTY_KIND",
+    reasons: [
+      "live GA4 transport is now verified and delivered; property kind is now closed",
+    ],
+    liveProviderSuccessClaimed: false,
+    liveGa4Transport: "NOT_WIRED",
+    externalEffects: "NONE",
+  });
+  const dishonestReclaim = {
+    ...reclaim1,
+    priorBindInvented: false as const,
+    decision: {
+      ok: true as const,
+      binding: {
+        propertyId: "100000001",
+        kind: Ga4PropertyKind.GA4_PROPERTY,
+        measurementId: "G-FIXTURE",
+        displayName: "Invented accept",
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      reasons: ["invented accept after refuse"],
+      liveProviderSuccessClaimed: false as const,
+      liveGa4Transport: "NOT_WIRED" as const,
+      externalEffects: "NONE" as const,
+    },
+  };
+  const reclaimDrift = assertGa4WrongPropertyKindReclaimIdempotent({
+    first: reclaim1,
+    second: dishonestReclaim,
+  });
+  if (
+    !claimOnPadded.ok &&
+    claimOnPadded.code === "LIVE_CLAIM_REFUSED" &&
+    !claimOnMid.ok &&
+    claimOnMid.code === "LIVE_CLAIM_REFUSED" &&
+    !inventClosed.ok &&
+    inventClosed.code === "GA4_KIND_DISHONEST" &&
+    !reclaimDrift.ok &&
+    reclaimDrift.code === "GA4_KIND_RECLAIM_DRIFT"
+  ) {
+    details.push(
+      "I13 edges: claim-on-padded/mid LIVE_CLAIM_REFUSED; invent live-transport closed dishonest; honest+dishonest reclaim DRIFT",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `I13 edges unexpectedly claimPad=${JSON.stringify(claimOnPadded)} claimMid=${JSON.stringify(claimOnMid)} invent=${JSON.stringify(inventClosed)} drift=${JSON.stringify(reclaimDrift)}`,
     );
   }
 
