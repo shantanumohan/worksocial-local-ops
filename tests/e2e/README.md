@@ -12,3 +12,4 @@ Offline end-to-end-lite journeys for Release 1 monitoring (R1-05).
 pnpm test:e2e
 ```
 - `unknown-policy-question.e2e-lite.test.ts` — T-X055 soak proof ACCEPTED path; external effects NONE; never VERIFIED
+- `partial-campaign-destinations.e2e-lite.test.ts` — T-X045 soak proof ACCEPTED path; external effects NONE; never VERIFIED

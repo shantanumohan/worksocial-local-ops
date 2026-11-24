@@ -1002,7 +1002,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X072** is fixture ACCEPTED only via the customer data eval redaction blocks proof (`CUSTOMER_DATA_EVAL_REDACTION_BLOCKS`) — raw customer PII cannot enter EVAL_ONLY; redact yields `REDACTED_FOR_EVAL` (incl. embedded display names, intentLabel identifiers, and conversationId PII; known-name redaction is word-boundary safe); eval prompts withhold raw conversationId; raw passthrough, residual PII, and live-VERIFIED / live-fleet claims are `CUSTOMER_DATA_LEAK_BLOCKED`; `liveEvalWiring` stays NOT_WIRED; externalEffects NONE. Distinct from EVAL_ONLY tool forbid (T-US-018/T-X037). Not sandbox/prod VERIFIED.
 
-**T-X045** is fixture ACCEPTED only via the partial campaign destinations / per-destination states proof (`PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE`) — mixed VERIFIED/FAILED/UNKNOWN_REMOTE yields PARTIAL; ACCEPTED_PENDING stays distinct from VERIFIED; recoverable destinations exclude verified peers. Not sandbox/prod VERIFIED.
+**T-X045** is fixture ACCEPTED only via the partial campaign destinations / per-destination states proof (`PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE`) — mixed VERIFIED/FAILED/UNKNOWN_REMOTE yields PARTIAL; ACCEPTED_PENDING stays distinct from VERIFIED; recoverable destinations exclude verified peers; every DistributionRun carries `liveProviderWiring=NOT_WIRED` / `externalEffects=NONE`; attack suite covers mixed/pending/failed/blocked. Not sandbox/prod VERIFIED.
 
 **T-X028** is fixture ACCEPTED only via the actual cost exceeds estimate overrun visible proof (`ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE`) — `settleBudget` posts full `actualMinor` when it exceeds the reserved estimate; overrun visible in `settledMinor`; reservation released; `heldMinor` stays 0. Not sandbox/prod VERIFIED.
 
@@ -1073,7 +1073,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X042 | Schema differs from page | Gate fails *(fixture ACCEPTED — schema differs from page gate fails proof; not sandbox/prod VERIFIED)* |
 | T-X043 | Optimization breaks CTA | Journey regression fails *(fixture ACCEPTED — optimization breaks CTA journey fails proof; not sandbox/prod VERIFIED)* |
 | T-X044 | Unlicensed venue media | Publish blocked *(fixture ACCEPTED — unlicensed venue media publish-blocked proof; not sandbox/prod VERIFIED)* |
-| T-X045 | Partial campaign destinations | Per-destination states *(fixture ACCEPTED — partial destinations per-state proof; not sandbox/prod VERIFIED)* |
+| T-X045 | Partial campaign destinations | Per-destination states *(fixture ACCEPTED — partial destinations / NOT_WIRED attack suite; not sandbox/prod VERIFIED)* |
 | T-X046 | Unsupported blog destination | No fake publication *(fixture ACCEPTED — unsupported blog destination no fake publication proof; not sandbox/prod VERIFIED)* |
 | T-X047 | Layout-specific capacity mismatch | Filter correctly *(fixture ACCEPTED — layout-specific capacity mismatch filter proof; not sandbox/prod VERIFIED)* |
 | T-X048 | Unknown price or availability | No invention *(fixture ACCEPTED)* |

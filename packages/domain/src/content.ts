@@ -290,6 +290,9 @@ export type ContentDistributionRunRecord = {
   attempts: Array<Record<string, unknown>>;
   businessIdempotencyKey: string;
   fixtureOnly: boolean;
+  /** Fixture honesty — persisted with the run (never live-wired). */
+  liveProviderWiring: "NOT_WIRED";
+  externalEffects: "NONE";
   createdAtIso: string;
   updatedAtIso: string;
 };

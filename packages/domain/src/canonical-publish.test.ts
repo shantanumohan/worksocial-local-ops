@@ -3,11 +3,13 @@ import { SupportLabel } from "./knowledge.js";
 import {
   DestinationAttemptStatus,
   DistributionRunStatus,
+  PARTIAL_CAMPAIGN_DESTINATIONS_RELATED_CASE_IDS,
   bindContentIndependentReview,
   createDistributionRun,
   digestContentEvidencePackage,
   editCanonicalArticle,
   evaluateClaimSourceQa,
+  evaluatePartialCampaignDestinationsAttackSuite,
   listRecoverableDestinations,
   stableContentOperationKey,
   upsertDestinationAttempt,
@@ -234,6 +236,8 @@ describe("canonical-publish — stable keys + partial recovery", () => {
       fixtureOnly: true,
       createdAtIso: now,
     });
+    expect(run.liveProviderWiring).toBe("NOT_WIRED");
+    expect(run.externalEffects).toBe("NONE");
     run = upsertDestinationAttempt(run, {
       attemptId: "a1",
       destinationId: "dest-cms",
@@ -265,7 +269,28 @@ describe("canonical-publish — stable keys + partial recovery", () => {
       updatedAtIso: now,
     });
     expect(run.status).toBe(DistributionRunStatus.PARTIAL);
+    expect(run.liveProviderWiring).toBe("NOT_WIRED");
+    expect(run.externalEffects).toBe("NONE");
     const recoverable = listRecoverableDestinations(run);
     expect(recoverable.map((r) => r.destinationId)).toEqual(["dest-gbp"]);
+  });
+
+  it("partial-destination attack suite covers mixed/pending/failed/blocked with NOT_WIRED", () => {
+    const suite = evaluatePartialCampaignDestinationsAttackSuite({
+      nowIso: now,
+    });
+    expect(suite.passed).toBe(true);
+    expect(
+      suite.details.some((d) => /liveProviderWiring=NOT_WIRED/i.test(d)),
+    ).toBe(true);
+    expect([...PARTIAL_CAMPAIGN_DESTINATIONS_RELATED_CASE_IDS]).toEqual([
+      "T-X045",
+    ]);
+    expect(
+      suite.runs.every(
+        (r) =>
+          r.liveProviderWiring === "NOT_WIRED" && r.externalEffects === "NONE",
+      ),
+    ).toBe(true);
   });
 });
