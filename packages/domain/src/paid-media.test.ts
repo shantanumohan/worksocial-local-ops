@@ -497,6 +497,33 @@ describe("paid-media — delivery diagnosis + proposals / F16", () => {
     expect(notWired.freshness).toBe(AdsConversionFreshness.UNAVAILABLE);
     expect(notWired.displayValue).toBeNull();
 
+    // LIVE remains unavailable while Ads transport is NOT_WIRED — no false live claim.
+    const liveRefused = classifyRecentAdsConversion({
+      campaignId: "camp-live",
+      conversions: 4,
+      blank: false,
+      attributionSettled: true,
+      environment: AnalyticsEnvironment.LIVE,
+    });
+    expect(liveRefused.freshness).toBe(AdsConversionFreshness.UNAVAILABLE);
+    expect(liveRefused.displayValue).toBeNull();
+    expect(liveRefused.conversions).toEqual({
+      kind: "unavailable",
+      reason: "unsupported",
+    });
+    expect(liveRefused.reasons.join(" ")).toMatch(/LIVE|NOT_WIRED/i);
+
+    const sandbox = classifyRecentAdsConversion({
+      campaignId: "camp-sandbox",
+      conversions: 2,
+      blank: false,
+      attributionSettled: true,
+      environment: AnalyticsEnvironment.SANDBOX,
+    });
+    expect(sandbox.freshness).toBe(AdsConversionFreshness.SANDBOX);
+    expect(sandbox.displayValue).toBe(2);
+    expect(sandbox.conversions.kind).toBe("measured");
+
     const unavailable = classifyRecentAdsConversion({
       campaignId: "camp-unavail",
       conversions: 7,

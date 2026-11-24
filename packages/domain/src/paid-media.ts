@@ -433,11 +433,14 @@ export function diagnoseDelivery(
 /**
  * Freshness label for recent Ads conversions (T-X036).
  * Blank / unsettled values stay PENDING — never coerce to a false zero.
+ * LIVE stays UNAVAILABLE while Ads transport is NOT_WIRED (no false live claim).
+ * SANDBOX provenance is labeled separately from FIXTURE / SETTLED.
  */
 export const AdsConversionFreshness = {
   PENDING: "pending",
   SETTLED: "settled",
   FIXTURE: "fixture",
+  SANDBOX: "sandbox",
   UNAVAILABLE: "unavailable",
 } as const;
 
@@ -472,28 +475,32 @@ export type RecentAdsConversionClassification = {
 /**
  * Recent Ads conversion blank → PENDING, not a false zero (T-X036).
  * Settled measured 0 remains an honest zero; blank/null/unsettled stay pending.
+ * LIVE observations refuse a measured claim while Ads transport is NOT_WIRED.
  */
 export function classifyRecentAdsConversion(
   obs: RecentAdsConversionObservation,
 ): RecentAdsConversionClassification {
   if (
     obs.environment === AnalyticsEnvironment.NOT_WIRED ||
+    obs.environment === AnalyticsEnvironment.LIVE ||
     obs.environment === AnalyticsEnvironment.UNAVAILABLE
   ) {
     const reason =
-      obs.environment === AnalyticsEnvironment.NOT_WIRED
-        ? ("unsupported" as const)
-        : ("provider_error" as const);
+      obs.environment === AnalyticsEnvironment.UNAVAILABLE
+        ? ("provider_error" as const)
+        : ("unsupported" as const);
+    const message =
+      obs.environment === AnalyticsEnvironment.LIVE
+        ? "LIVE Ads conversion refused — transport NOT_WIRED; no false live claim"
+        : obs.environment === AnalyticsEnvironment.NOT_WIRED
+          ? "Ads conversion live adapter NOT_WIRED — no conversion claim"
+          : "Ads conversion observation UNAVAILABLE — no conversion claim";
     return {
       campaignId: obs.campaignId,
       conversions: { kind: "unavailable", reason },
       freshness: AdsConversionFreshness.UNAVAILABLE,
       displayValue: null,
-      reasons: [
-        obs.environment === AnalyticsEnvironment.NOT_WIRED
-          ? "Ads conversion live adapter NOT_WIRED — no conversion claim"
-          : "Ads conversion observation UNAVAILABLE — no conversion claim",
-      ],
+      reasons: [message],
     };
   }
 
@@ -523,18 +530,23 @@ export function classifyRecentAdsConversion(
     sampleSize: 1,
     sourceStatus: "ok",
   });
+  if (obs.environment === AnalyticsEnvironment.FIXTURE) {
+    return {
+      campaignId: obs.campaignId,
+      conversions,
+      freshness: AdsConversionFreshness.FIXTURE,
+      displayValue: obs.conversions,
+      reasons: ["FIXTURE Ads conversion sample — not live account data"],
+    };
+  }
+  // SANDBOX only — LIVE already refused above while transport is NOT_WIRED.
   return {
     campaignId: obs.campaignId,
     conversions,
-    freshness:
-      obs.environment === AnalyticsEnvironment.FIXTURE
-        ? AdsConversionFreshness.FIXTURE
-        : AdsConversionFreshness.SETTLED,
+    freshness: AdsConversionFreshness.SANDBOX,
     displayValue: obs.conversions,
     reasons: [
-      obs.environment === AnalyticsEnvironment.FIXTURE
-        ? "FIXTURE Ads conversion sample — not live account data"
-        : "Settled Ads conversion (honest measured value, including zero)",
+      "SANDBOX Ads conversion sample — not production LIVE; provenance preserved",
     ],
   };
 }

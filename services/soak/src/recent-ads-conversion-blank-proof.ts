@@ -112,7 +112,7 @@ export function proofRecentAdsConversionBlankPending(
     );
   }
 
-  // NOT_WIRED / UNAVAILABLE stay unavailable — distinct from pending blank.
+  // NOT_WIRED / LIVE / UNAVAILABLE stay unavailable — distinct from pending blank.
   const notWired = classifyRecentAdsConversion({
     campaignId: "camp-not-wired",
     conversions: 5,
@@ -127,6 +127,47 @@ export function proofRecentAdsConversionBlankPending(
     details.push(
       `NOT_WIRED classification unexpectedly ${JSON.stringify(notWired)}`,
     );
+  }
+
+  const liveRefused = classifyRecentAdsConversion({
+    campaignId: "camp-live-refused",
+    conversions: 4,
+    blank: false,
+    attributionSettled: true,
+    environment: AnalyticsEnvironment.LIVE,
+  });
+  if (
+    liveRefused.freshness === AdsConversionFreshness.UNAVAILABLE &&
+    liveRefused.displayValue === null &&
+    liveRefused.conversions.kind === "unavailable" &&
+    /LIVE|NOT_WIRED/i.test(liveRefused.reasons.join(" "))
+  ) {
+    details.push(
+      "LIVE Ads conversion refused while transport NOT_WIRED (no false live claim)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `LIVE refusal unexpectedly ${JSON.stringify(liveRefused)}`,
+    );
+  }
+
+  const sandbox = classifyRecentAdsConversion({
+    campaignId: "camp-sandbox",
+    conversions: 2,
+    blank: false,
+    attributionSettled: true,
+    environment: AnalyticsEnvironment.SANDBOX,
+  });
+  if (
+    sandbox.freshness === AdsConversionFreshness.SANDBOX &&
+    sandbox.displayValue === 2 &&
+    sandbox.conversions.kind === "measured"
+  ) {
+    details.push("SANDBOX Ads conversion preserves sandbox provenance");
+  } else {
+    passed = false;
+    details.push(`SANDBOX classification unexpectedly ${JSON.stringify(sandbox)}`);
   }
 
   const unavailable = classifyRecentAdsConversion({
