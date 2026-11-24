@@ -7,6 +7,8 @@ import { describe, expect, it } from "vitest";
 import {
   classifyMissionLeaseFence,
   createMemoryMissionWorkflowStore,
+  evaluateFixtureTemporalWiring,
+  formatOldFenceHonestyDetail,
   isMissionLeaseActive,
   missionLeaseFenceFailedMessage,
   OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
@@ -116,6 +118,20 @@ describe("classifyMissionLeaseFence / isMissionLeaseActive (T-X024)", () => {
       "T-US-014",
     ]);
   });
+
+  it("refuses live Temporal claims; FIXTURE_OK only", () => {
+    expect(evaluateFixtureTemporalWiring("FIXTURE").code).toBe("FIXTURE_OK");
+    expect(evaluateFixtureTemporalWiring("TEMPORAL").code).toBe(
+      "LIVE_TEMPORAL_CLAIM_REFUSED",
+    );
+    expect(evaluateFixtureTemporalWiring("LOCAL_DURABLE").code).toBe(
+      "LIVE_TEMPORAL_CLAIM_REFUSED",
+    );
+    expect(evaluateFixtureTemporalWiring("NOT_WIRED").code).toBe(
+      "LIVE_TEMPORAL_CLAIM_REFUSED",
+    );
+    expect(formatOldFenceHonestyDetail()).toContain("acceptedNotVerified=true");
+  });
 });
 
 describe("memory mission workflow store lease fence", () => {
@@ -224,5 +240,37 @@ describe("memory mission workflow store lease fence", () => {
       nowIso: "2026-11-21T18:00:02.000Z",
     });
     expect(pending.phase).toBe("effect_pending");
+  });
+
+  it("allows original holder reclaim after own expiry before foreign reassignment", async () => {
+    const store = createMemoryMissionWorkflowStore();
+    const workflowId = "wf-reclaim-self";
+    await store.enqueue({
+      workflowId,
+      jobId: "job-reclaim-self",
+      temporalWiring: "FIXTURE",
+      nowIso: "2026-11-21T18:00:00.000Z",
+    });
+    await store.claimLease({
+      workflowId,
+      holder: "worker-a",
+      leaseExpiresAtIso: "2026-11-21T18:00:01.000Z",
+      nowIso: "2026-11-21T18:00:00.000Z",
+    });
+    const reclaimed = await store.claimLease({
+      workflowId,
+      holder: "worker-a",
+      leaseExpiresAtIso: "2026-11-21T18:00:10.000Z",
+      nowIso: "2026-11-21T18:00:01.000Z",
+    });
+    expect(reclaimed?.leaseHolder).toBe("worker-a");
+    expect(reclaimed?.attemptCount).toBe(2);
+    expect(
+      classifyMissionLeaseFence(
+        reclaimed!,
+        "worker-a",
+        "2026-11-21T18:00:02.000Z",
+      ),
+    ).toBe("active");
   });
 });

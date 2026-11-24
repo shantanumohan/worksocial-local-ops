@@ -218,6 +218,52 @@ export function missionLeaseFenceFailedMessage(
   return `Lease fence failed for ${workflowId} (fenceCause=${cause})`;
 }
 
+/**
+ * Fixture soak may only claim FIXTURE temporal wiring (T-X024 O5).
+ * TEMPORAL / LOCAL_DURABLE / bare NOT_WIRED-as-store-row → LIVE_TEMPORAL_CLAIM_REFUSED.
+ */
+export type FixtureTemporalWiringDecision = {
+  allowed: boolean;
+  code: "FIXTURE_OK" | "LIVE_TEMPORAL_CLAIM_REFUSED";
+  temporalWiring: MissionTemporalWiring;
+  liveTemporalWiring: typeof OLD_FENCE_HONESTY.liveTemporalWiring;
+  externalEffects: typeof OLD_FENCE_HONESTY.externalEffects;
+  acceptedNotVerified: typeof OLD_FENCE_HONESTY.acceptedNotVerified;
+  chatgptAdsAccess: typeof OLD_FENCE_HONESTY.chatgptAdsAccess;
+};
+
+export function evaluateFixtureTemporalWiring(
+  wiring: MissionTemporalWiring,
+): FixtureTemporalWiringDecision {
+  const honesty = {
+    liveTemporalWiring: OLD_FENCE_HONESTY.liveTemporalWiring,
+    externalEffects: OLD_FENCE_HONESTY.externalEffects,
+    acceptedNotVerified: OLD_FENCE_HONESTY.acceptedNotVerified,
+    chatgptAdsAccess: OLD_FENCE_HONESTY.chatgptAdsAccess,
+  } as const;
+  if (wiring === "FIXTURE") {
+    return {
+      allowed: true,
+      code: "FIXTURE_OK",
+      temporalWiring: wiring,
+      ...honesty,
+    };
+  }
+  return {
+    allowed: false,
+    code: "LIVE_TEMPORAL_CLAIM_REFUSED",
+    temporalWiring: wiring,
+    ...honesty,
+  };
+}
+
+/** Stable honesty detail line for soak evidence (O4/O5). */
+export function formatOldFenceHonestyDetail(
+  relatedCaseIds: readonly string[] = OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
+): string {
+  return `relatedCases=${relatedCaseIds.join(",")} liveTemporalWiring=${OLD_FENCE_HONESTY.liveTemporalWiring} chatgptAdsAccess=${OLD_FENCE_HONESTY.chatgptAdsAccess} softSkipAds=${OLD_FENCE_HONESTY.softSkipAdsCases.join(",")} liveProviderSuccessClaimed=${OLD_FENCE_HONESTY.liveProviderSuccessClaimed} externalEffects=${OLD_FENCE_HONESTY.externalEffects} acceptedNotVerified=${OLD_FENCE_HONESTY.acceptedNotVerified}`;
+}
+
 export function createMemoryMissionWorkflowStore(): MissionWorkflowStore {
   const byId = new Map<string, MissionWorkflowRecord>();
 

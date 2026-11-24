@@ -22,6 +22,9 @@ describe("proofOldFenceAfterReassignment (T-X024)", () => {
     expect(proof.applyAttemptCount).toBe(1);
 
     const joined = proof.details.join(" | ");
+    expect(joined).toMatch(/LIVE_TEMPORAL_CLAIM_REFUSED for TEMPORAL\+LOCAL_DURABLE/);
+    expect(joined).toMatch(/FIXTURE_OK/);
+    expect(joined).toMatch(/domainTemporal=NOT_WIRED/);
     expect(joined).toMatch(/Worker A self-renew while live ok/);
     expect(joined).toMatch(/fenceCause=expired/);
     expect(joined).toMatch(/Expired-pre-reassignment A bind denied.*fenceCause=expired/);

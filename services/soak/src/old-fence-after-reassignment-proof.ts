@@ -15,16 +15,21 @@
  * wrong_holder mark deny; Ads soft-skip honesty.
  * Hillclimb O4: OLD_FENCE_HONESTY bundle; expired mark deny; wrong_holder
  * precedes expired; ACCEPTED≠VERIFIED edge honesty.
+ * Hillclimb O5: LIVE_TEMPORAL_CLAIM_REFUSED for non-FIXTURE wiring;
+ * FIXTURE_OK; domain soakNotWiredLiveWiring().temporal alignment.
  */
 
 import { randomUUID } from "node:crypto";
 import {
   SoakProofKind,
+  soakNotWiredLiveWiring,
   type SoakProofRecord,
 } from "@worksocial/domain";
 import {
   classifyMissionLeaseFence,
   createMemoryMissionWorkflowStore,
+  evaluateFixtureTemporalWiring,
+  formatOldFenceHonestyDetail,
   isMissionLeaseActive,
   OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
   OLD_FENCE_HONESTY,
@@ -53,16 +58,40 @@ export async function proofOldFenceAfterReassignment(
   const tAfterExpiry = new Date(Date.parse(t0) + 2_000).toISOString();
   const operationId = `op-fence-${randomUUID().slice(0, 8)}`;
 
+  const liveTemporalRefuse = evaluateFixtureTemporalWiring("TEMPORAL");
+  const localDurableRefuse = evaluateFixtureTemporalWiring("LOCAL_DURABLE");
+  const fixtureOk = evaluateFixtureTemporalWiring("FIXTURE");
+  const domainTemporal = soakNotWiredLiveWiring().temporal;
+  if (
+    liveTemporalRefuse.code === "LIVE_TEMPORAL_CLAIM_REFUSED" &&
+    liveTemporalRefuse.allowed === false &&
+    localDurableRefuse.code === "LIVE_TEMPORAL_CLAIM_REFUSED" &&
+    fixtureOk.code === "FIXTURE_OK" &&
+    fixtureOk.allowed === true &&
+    domainTemporal === OLD_FENCE_HONESTY.liveTemporalWiring
+  ) {
+    details.push(
+      `LIVE_TEMPORAL_CLAIM_REFUSED for TEMPORAL+LOCAL_DURABLE; FIXTURE_OK; domainTemporal=${domainTemporal}`,
+    );
+  } else {
+    passed = false;
+    details.push("Fixture temporal wiring honesty gate unexpected");
+  }
+
   const enqueued = await store.enqueue({
     workflowId,
     jobId,
     temporalWiring: "FIXTURE",
     nowIso: t0,
   });
-  if (enqueued.temporalWiring !== "FIXTURE") {
+  const enqueueGate = evaluateFixtureTemporalWiring(enqueued.temporalWiring);
+  if (
+    enqueued.temporalWiring !== "FIXTURE" ||
+    enqueueGate.code !== "FIXTURE_OK"
+  ) {
     passed = false;
     details.push(
-      `Enqueue temporalWiring unexpected=${enqueued.temporalWiring}`,
+      `Enqueue temporalWiring unexpected=${enqueued.temporalWiring} gate=${enqueueGate.code}`,
     );
   }
 
@@ -415,7 +444,7 @@ export async function proofOldFenceAfterReassignment(
   }
 
   details.push(
-    `relatedCases=${OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS.join(",")} liveTemporalWiring=${OLD_FENCE_HONESTY.liveTemporalWiring} chatgptAdsAccess=${OLD_FENCE_HONESTY.chatgptAdsAccess} softSkipAds=${OLD_FENCE_HONESTY.softSkipAdsCases.join(",")} liveProviderSuccessClaimed=${OLD_FENCE_HONESTY.liveProviderSuccessClaimed} externalEffects=${OLD_FENCE_HONESTY.externalEffects} acceptedNotVerified=${OLD_FENCE_HONESTY.acceptedNotVerified}`,
+    formatOldFenceHonestyDetail(OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS),
   );
 
   return {

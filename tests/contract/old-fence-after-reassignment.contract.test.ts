@@ -13,6 +13,7 @@ import {
   SoakProofKind,
 } from "@worksocial/domain";
 import {
+  evaluateFixtureTemporalWiring,
   OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
   OLD_FENCE_HONESTY,
 } from "@worksocial/persistence";
@@ -54,6 +55,13 @@ describe("contract: T-X024 old fence after reassignment", () => {
       status?: string;
     };
     expect(art.caseId).toBe("T-X024");
+    expect(evaluateFixtureTemporalWiring("TEMPORAL").code).toBe(
+      "LIVE_TEMPORAL_CLAIM_REFUSED",
+    );
+    expect(evaluateFixtureTemporalWiring("FIXTURE").code).toBe("FIXTURE_OK");
+
+    expect(art.summary).toMatch(/LIVE_TEMPORAL_CLAIM_REFUSED/);
+    expect(art.summary).toMatch(/FIXTURE_OK/);
     expect(art.summary).toMatch(/fenceCause=expired/);
     expect(art.summary).toMatch(/fenceCause=wrong_holder/);
     expect(art.summary).toMatch(/softSkipAds=T-F07,T-US-013,T-US-014/);
