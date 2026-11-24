@@ -604,6 +604,7 @@ export {
   inspectGscRowManifest,
   isInvisibleOnlyGscQuery,
   evaluateChatGptAdsAccess,
+  isAdsTestProjectProductionMismatch,
   attemptGuardedChatGptAdsProductionBind,
   ANALYTICS_RELATED_CASE_IDS,
   type AnalyticsEnvironmentValue,
