@@ -7,6 +7,7 @@ import {
   createBudgetAccount,
   heldReservationsTotalMinor,
   isUnknownUsageHold,
+  normalizeBudgetHolds,
   reserveBudget,
   settleBudget,
 } from "./budget-accounting.js";
@@ -402,5 +403,67 @@ describe("budget accounting", () => {
     expect(resolved.ok).toBe(true);
     if (!resolved.ok) return;
     expect(isUnknownUsageHold(resolved.account, "r-flag")).toBe(false);
+  });
+
+  it("available uses hold map even when heldMinor field is stale (T-X027)", () => {
+    const reserved = reserveBudget(account(), "r-stale", 400);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-stale", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const stale = {
+      ...held.account,
+      heldMinor: 0, // stale — must not invent capacity
+    };
+    expect(heldReservationsTotalMinor(stale)).toBe(400);
+    expect(availableBudgetMinor(stale)).toBe(600);
+    const blocked = reserveBudget(stale, "r-over", 700);
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.code).toBe("BUDGET_EXHAUSTED");
+      expect(blocked.availableMinor).toBe(600);
+    }
+    const normalized = normalizeBudgetHolds(stale);
+    expect(normalized.heldMinor).toBe(400);
+    expect(availableBudgetMinor(normalized)).toBe(600);
+  });
+
+  it("resolves unknown hold when known actual equals reserved", () => {
+    const reserved = reserveBudget(account(), "r-eq", 275);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-eq", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const resolved = cancelBudgetReservation(held.account, "r-eq", {
+      known: true,
+      actualMinor: 275,
+    });
+    expect(resolved.ok).toBe(true);
+    if (!resolved.ok) return;
+    expect(resolved.costKind).toBe("actual");
+    expect(resolved.actualMinor).toBe(275);
+    expect(resolved.account.heldMinor).toBe(0);
+    expect(availableBudgetMinor(resolved.account)).toBe(725);
+    expect(resolved.liveBudgetProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("ignores non-finite hold map amounts in sum", () => {
+    const weird = {
+      ...account(),
+      heldReservations: {
+        bad: Number.NaN,
+        neg: -50,
+        ok: 200,
+      },
+      heldMinor: 0,
+    };
+    expect(heldReservationsTotalMinor(weird)).toBe(200);
+    expect(availableBudgetMinor(weird)).toBe(800);
   });
 });

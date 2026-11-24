@@ -76,11 +76,12 @@ const honesty = {
 };
 
 function available(account: BudgetAccount): number {
+  // Hold map is source of truth — ignore stale heldMinor (T-X027).
   return (
     account.limitMinor -
     account.reservedMinor -
     account.settledMinor -
-    (account.heldMinor ?? 0)
+    heldReservationsTotalMinor(account)
   );
 }
 
@@ -91,12 +92,16 @@ export function availableBudgetMinor(account: BudgetAccount): number {
 /**
  * Sum of per-reservation held residuals. Must equal `heldMinor` after every
  * honest cancel/resolve path (T-X027 invariant — never silent zero).
+ * Non-finite map values are ignored (never invent capacity).
  */
 export function heldReservationsTotalMinor(account: BudgetAccount): number {
   const held = account.heldReservations ?? {};
   let total = 0;
   for (const amount of Object.values(held)) {
-    total += amount;
+    const n = Number(amount);
+    if (Number.isFinite(n) && n > 0) {
+      total += n;
+    }
   }
   return total;
 }
@@ -112,6 +117,18 @@ export function isUnknownUsageHold(
     !(reservationId in account.openReservations) &&
     !(reservationId in account.settledReservations)
   );
+}
+
+/**
+ * Sync `heldMinor` to the hold-map sum. Map is source of truth — stale
+ * heldMinor must not invent available capacity (T-X027).
+ */
+export function normalizeBudgetHolds(account: BudgetAccount): BudgetAccount {
+  const heldMinor = heldReservationsTotalMinor(account);
+  if (account.heldMinor === heldMinor) {
+    return account;
+  }
+  return { ...account, heldMinor };
 }
 
 export function createBudgetAccount(input: {

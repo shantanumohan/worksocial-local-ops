@@ -15,6 +15,7 @@ import {
   createBudgetAccount,
   heldReservationsTotalMinor,
   isUnknownUsageHold,
+  normalizeBudgetHolds,
   reserveBudget,
   settleBudget,
   type SoakProofRecord,
@@ -287,8 +288,34 @@ export function proofUnknownUsageCancelHoldsResidual(
     );
   }
 
+  // 10. Stale heldMinor field must not invent capacity (map is source of truth).
+  const staleProbe = {
+    ...cancelled.account,
+    heldMinor: 0,
+  };
+  const staleAvail = availableBudgetMinor(staleProbe);
+  const staleBlocked = reserveBudget(staleProbe, "req-stale-over", 400);
+  const normalized = normalizeBudgetHolds(staleProbe);
+  if (
+    staleAvail === 300 &&
+    !staleBlocked.ok &&
+    staleBlocked.code === "BUDGET_EXHAUSTED" &&
+    staleBlocked.availableMinor === 300 &&
+    normalized.heldMinor === 700 &&
+    heldReservationsTotalMinor(normalized) === 700
+  ) {
+    details.push(
+      "Stale heldMinor=0 cannot invent capacity; map hold 700 → available=300; normalizeBudgetHolds restores heldMinor",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Stale heldMinor probe failed avail=${staleAvail} blocked=${JSON.stringify(staleBlocked)} norm=${normalized.heldMinor}`,
+    );
+  }
+
   details.push(
-    "liveProviderSuccessClaimed=false externalEffects=NONE liveBudgetProviderWiring=NOT_WIRED",
+    "liveProviderSuccessClaimed=false externalEffects=NONE liveBudgetProviderWiring=NOT_WIRED ACCEPTED≠VERIFIED",
   );
   return finish(passed, details, nowIso);
 }

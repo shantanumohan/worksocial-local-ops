@@ -21,6 +21,7 @@ import {
   heldReservationsTotalMinor,
   isUnknownUsageHold,
   mapProofToFixtureCases,
+  normalizeBudgetHolds,
   reserveBudget,
 } from "@worksocial/domain";
 import { createFileSoakStore } from "@worksocial/persistence";
@@ -69,6 +70,12 @@ describe("contract: T-X027 unknown usage cancel holds residual", () => {
       heldReservationsTotalMinor(cancelled.account),
     );
     expect(isUnknownUsageHold(cancelled.account, "req-hold")).toBe(true);
+
+    const stale = { ...cancelled.account, heldMinor: 0 };
+    expect(availableBudgetMinor(stale)).toBe(400);
+    expect(normalizeBudgetHolds(stale).heldMinor).toBe(600);
+    const blocked = reserveBudget(stale, "req-over", 500);
+    expect(blocked.ok).toBe(false);
   });
 
   it("maps T-X027 only to UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL", () => {

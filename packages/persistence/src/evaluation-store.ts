@@ -258,9 +258,13 @@ function parseBudget(raw: unknown, fallbackIso: string): BudgetAccount {
       : {};
   // T-X027: heldMinor must match map sum. Legacy files may omit heldMinor or
   // leave it stale — derive from per-reservation holds (never invent zero).
+  // Non-finite / non-positive map values do not invent capacity.
   let heldMinor = 0;
   for (const amount of Object.values(heldReservations)) {
-    heldMinor += Number(amount) || 0;
+    const n = Number(amount);
+    if (Number.isFinite(n) && n > 0) {
+      heldMinor += n;
+    }
   }
   return {
     dayKey: String(row.dayKey ?? empty.dayKey),
