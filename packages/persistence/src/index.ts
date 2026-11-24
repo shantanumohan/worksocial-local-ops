@@ -276,6 +276,7 @@ export {
 export {
   createMemoryMissionWorkflowStore,
   createPgMissionWorkflowStore,
+  isMissionLeaseActive,
   type MissionWorkflowStore,
   type MissionWorkflowRecord,
   type MissionWorkflowInsert,

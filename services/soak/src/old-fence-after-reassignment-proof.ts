@@ -3,7 +3,12 @@
  *
  * Worker A leases a mission workflow; after lease expiry Worker B reassigns.
  * Worker A's subsequent commit (bind / markEffectPending) fails the lease fence;
- * Worker B can commit. External effects: NONE. Never invents live VERIFIED.
+ * Worker B can commit. External effects: NONE. Temporal stays NOT_WIRED.
+ * Fixture ACCEPTED ≠ sandbox/prod VERIFIED. Never invents past T-X073.
+ *
+ * Hillclimb: expired-pre-reassignment deny, exact-expiry reclaim gate,
+ * old-A reclaim refused while B live, attemptCount on reassignment,
+ * post-commit phase fence for old A.
  */
 
 import { randomUUID } from "node:crypto";
@@ -11,7 +16,13 @@ import {
   SoakProofKind,
   type SoakProofRecord,
 } from "@worksocial/domain";
-import { createMemoryMissionWorkflowStore } from "@worksocial/persistence";
+import {
+  createMemoryMissionWorkflowStore,
+  isMissionLeaseActive,
+} from "@worksocial/persistence";
+
+/** Live Temporal / mission runtime — always NOT_WIRED offline. */
+export const OLD_FENCE_TEMPORAL_WIRING = "NOT_WIRED" as const;
 
 /**
  * Complete expected proof set for T-X024 fixture ACCEPTED.
@@ -28,15 +39,22 @@ export async function proofOldFenceAfterReassignment(
   const workerB = `worker-b-${randomUUID().slice(0, 8)}`;
   const t0 = nowIso;
   const tLeaseExpiry = new Date(Date.parse(t0) + 1_000).toISOString();
+  const tAtExpiry = tLeaseExpiry;
   const tAfterExpiry = new Date(Date.parse(t0) + 2_000).toISOString();
   const operationId = `op-fence-${randomUUID().slice(0, 8)}`;
 
-  await store.enqueue({
+  const enqueued = await store.enqueue({
     workflowId,
     jobId,
     temporalWiring: "FIXTURE",
     nowIso: t0,
   });
+  if (enqueued.temporalWiring !== "FIXTURE") {
+    passed = false;
+    details.push(
+      `Enqueue temporalWiring unexpected=${enqueued.temporalWiring}`,
+    );
+  }
 
   // 1. Worker A acquires the lease (pre-reassignment).
   const leasedA = await store.claimLease({
@@ -68,20 +86,79 @@ export async function proofOldFenceAfterReassignment(
     details.push("Worker B stole live lease — unexpected");
   }
 
-  // 3. After expiry, Worker B reassigns the lease.
-  const leasedB = await store.claimLease({
-    workflowId,
-    holder: workerB,
-    leaseExpiresAtIso: new Date(Date.parse(tAfterExpiry) + 5_000).toISOString(),
-    nowIso: tAfterExpiry,
-  });
-  if (leasedB?.leaseHolder === workerB && leasedB.phase === "leased") {
+  // 2b. Exact expiry: A's lease inactive at boundary; A cannot bind pre-reassignment.
+  const snapAtExpiry = await store.get(workflowId);
+  if (
+    snapAtExpiry &&
+    isMissionLeaseActive(snapAtExpiry, workerA, tAtExpiry) === false
+  ) {
     details.push(
-      `Worker B reassigned lease holder=${workerB} after A expiry`,
+      `Exact expiry boundary: isMissionLeaseActive(A, now=expires)=false`,
     );
   } else {
     passed = false;
-    details.push("Worker B failed to reassign after A lease expiry");
+    details.push("Exact expiry boundary: A lease still active at equals");
+  }
+
+  let expiredPreReassignDenied = false;
+  try {
+    await store.bindOperationWhileLeased({
+      workflowId,
+      operationId: `${operationId}-expired-pre`,
+      holder: workerA,
+      nowIso: tAtExpiry,
+      payloadDigest: "digest-expired-pre",
+      businessIdempotencyKey: "biz-expired-pre",
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/Lease fence failed/i.test(msg)) {
+      expiredPreReassignDenied = true;
+      details.push(`Expired-pre-reassignment A bind denied: ${msg}`);
+    } else {
+      passed = false;
+      details.push(`Expired-pre-reassignment unexpected error: ${msg}`);
+    }
+  }
+  if (!expiredPreReassignDenied) {
+    passed = false;
+    details.push("Expired-pre-reassignment A bind unexpectedly succeeded");
+  }
+
+  // 3. At exact expiry, Worker B reassigns the lease.
+  const leasedB = await store.claimLease({
+    workflowId,
+    holder: workerB,
+    leaseExpiresAtIso: new Date(Date.parse(tAtExpiry) + 5_000).toISOString(),
+    nowIso: tAtExpiry,
+  });
+  if (
+    leasedB?.leaseHolder === workerB &&
+    leasedB.phase === "leased" &&
+    leasedB.attemptCount === 2
+  ) {
+    details.push(
+      `Worker B reassigned lease holder=${workerB} at exact expiry attemptCount=2`,
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Worker B reassign unexpected holder=${leasedB?.leaseHolder} attempts=${leasedB?.attemptCount}`,
+    );
+  }
+
+  // 3b. Old worker A cannot reclaim while B holds a live lease.
+  const reclaimA = await store.claimLease({
+    workflowId,
+    holder: workerA,
+    leaseExpiresAtIso: new Date(Date.parse(tAfterExpiry) + 10_000).toISOString(),
+    nowIso: tAfterExpiry,
+  });
+  if (reclaimA === null) {
+    details.push("Old worker A reclaim refused while B lease live");
+  } else {
+    passed = false;
+    details.push("Old worker A reclaimed while B lease live — unexpected");
   }
 
   // 4. Old worker A cannot commit — lease fence fails on bind + markEffectPending.
@@ -172,8 +249,34 @@ export async function proofOldFenceAfterReassignment(
     );
   }
 
+  // 5b. After B commit, old A still cannot bind (phase fence — not leased).
+  let postCommitDenied = false;
+  try {
+    await store.bindOperationWhileLeased({
+      workflowId,
+      operationId: `${operationId}-post`,
+      holder: workerA,
+      nowIso: tAfterExpiry,
+      payloadDigest: "digest-post",
+      businessIdempotencyKey: "biz-post",
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/must be leased|Lease fence failed/i.test(msg)) {
+      postCommitDenied = true;
+      details.push(`Post-commit old A bind denied: ${msg}`);
+    } else {
+      passed = false;
+      details.push(`Post-commit old A unexpected error: ${msg}`);
+    }
+  }
+  if (!postCommitDenied) {
+    passed = false;
+    details.push("Post-commit old A bind unexpectedly succeeded");
+  }
+
   details.push(
-    "liveTemporalWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE",
+    `liveTemporalWiring=${OLD_FENCE_TEMPORAL_WIRING} liveProviderSuccessClaimed=false externalEffects=NONE`,
   );
 
   return {

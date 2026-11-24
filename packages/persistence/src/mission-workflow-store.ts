@@ -143,7 +143,12 @@ function rowToMission(row: Record<string, unknown>): MissionWorkflowRecord {
   };
 }
 
-function leaseActive(
+/**
+ * True when `holder` still owns an unexpired lease on `record`.
+ * Exact expiry (`nowIso === leaseExpiresAtIso`) is inactive — enables
+ * T-X024 reassignment at the boundary without a live Temporal clock.
+ */
+export function isMissionLeaseActive(
   record: MissionWorkflowRecord,
   holder: string,
   nowIso: string,
@@ -228,7 +233,7 @@ export function createMemoryMissionWorkflowStore(): MissionWorkflowStore {
           `Workflow ${input.workflowId} must be leased to bind operation`,
         );
       }
-      if (!leaseActive(existing, input.holder, input.nowIso)) {
+      if (!isMissionLeaseActive(existing, input.holder, input.nowIso)) {
         throw new Error(`Lease fence failed for ${input.workflowId}`);
       }
       const updated: MissionWorkflowRecord = {
@@ -253,7 +258,7 @@ export function createMemoryMissionWorkflowStore(): MissionWorkflowStore {
           `Workflow ${input.workflowId} must be leased to mark effect_pending`,
         );
       }
-      if (!leaseActive(existing, input.holder, input.nowIso)) {
+      if (!isMissionLeaseActive(existing, input.holder, input.nowIso)) {
         throw new Error(`Lease fence failed for ${input.workflowId}`);
       }
       if (
