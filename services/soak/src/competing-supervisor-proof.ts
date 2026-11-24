@@ -3,8 +3,11 @@
  *
  * First generation acquires the local-singleton lease; a second live generation
  * is refused (no duplicate leases). Dead-holder reclaim is allowed. Ownership
- * kill auth stays fail-closed for mismatched PIDs. External effects: NONE.
- * Never invents live VERIFIED. Does not touch credential rebind (#43 lane).
+ * kill auth stays fail-closed for mismatched PIDs.
+ *
+ * Hillclimb: third competitor refused; isHolderAlive=true still LEASE_HELD;
+ * whitespace-normalized tokens; LEASE_HELD message generic (no host/gen/pid leak);
+ * honesty NOT_WIRED / externalEffects NONE. Never invents live VERIFIED.
  */
 
 import { randomUUID } from "node:crypto";
@@ -13,6 +16,7 @@ import {
   type SoakProofRecord,
 } from "@worksocial/domain";
 import {
+  HOST_LEASE_HELD_MESSAGE,
   acquireHostLease,
   describeOwnershipCapability,
   verifyProcessOwnership,
@@ -37,6 +41,7 @@ export function proofCompetingSupervisorLease(
   const hostId = "host-soak-lease";
   const genA = `gen-a-${randomUUID().slice(0, 8)}`;
   const genB = `gen-b-${randomUUID().slice(0, 8)}`;
+  const genC = `gen-c-${randomUUID().slice(0, 8)}`;
 
   // 1. First supervisor acquires the singleton lease.
   const first = acquireHostLease(
@@ -69,13 +74,55 @@ export function proofCompetingSupervisorLease(
   } else if (second.reason !== "LEASE_HELD") {
     passed = false;
     details.push(`Second supervisor denied with unexpected reason=${second.reason}`);
+  } else if (second.message !== HOST_LEASE_HELD_MESSAGE) {
+    passed = false;
+    details.push(`LEASE_HELD message not generic: ${second.message}`);
+  } else if (
+    second.message.includes(hostId) ||
+    second.message.includes(genA) ||
+    second.message.includes("1001")
+  ) {
+    passed = false;
+    details.push("LEASE_HELD message leaked host/generation/pid");
   } else {
     details.push(
-      `Second supervisor refused reason=LEASE_HELD holderGeneration=${second.holder?.generationId ?? "unknown"}`,
+      `Second supervisor refused reason=LEASE_HELD holderGeneration=${second.holder?.generationId ?? "unknown"} messageGeneric=true`,
     );
   }
 
-  // 3. Dead-holder reclaim allowed (honest crash recovery, still one lease).
+  // 3. Hillclimb — third competitor also refused (still singleton).
+  const third = acquireHostLease(
+    held,
+    { hostId, holderPid: 4004, generationId: genC, ttlMs: 60_000 },
+    clockAt(baseMs + 1_500),
+  );
+  if (!third.ok && third.reason === "LEASE_HELD") {
+    details.push("Third concurrent supervisor refused LEASE_HELD");
+  } else {
+    passed = false;
+    details.push("Third concurrent supervisor unexpectedly acquired or mismatched");
+  }
+
+  // 4. Hillclimb — explicit live probe still refuses reclaim.
+  const liveProbe = acquireHostLease(
+    held,
+    {
+      hostId,
+      holderPid: 5005,
+      generationId: genC,
+      ttlMs: 60_000,
+      isHolderAlive: () => true,
+    },
+    clockAt(baseMs + 1_800),
+  );
+  if (!liveProbe.ok && liveProbe.reason === "LEASE_HELD") {
+    details.push("isHolderAlive=true still refuses reclaim (LEASE_HELD)");
+  } else {
+    passed = false;
+    details.push("Live holder probe unexpectedly allowed reclaim");
+  }
+
+  // 5. Dead-holder reclaim allowed (honest crash recovery, still one lease).
   const reclaimed = acquireHostLease(
     held,
     {
@@ -99,7 +146,39 @@ export function proofCompetingSupervisorLease(
     );
   }
 
-  // 4. Ownership kill auth fail-closed for mismatched PID / missing markers.
+  // 6. Hillclimb — whitespace-padded same-generation renew.
+  const paddedRenew = acquireHostLease(
+    held,
+    {
+      hostId: `  ${hostId}  `,
+      holderPid: 3004,
+      generationId: ` ${genB} `,
+      ttlMs: 60_000,
+    },
+    clockAt(baseMs + 2_500),
+  );
+  if (paddedRenew.ok && !paddedRenew.reclaimed) {
+    details.push("Whitespace-padded host/generation same-gen renew ok");
+    held = paddedRenew.lease;
+  } else {
+    passed = false;
+    details.push("Whitespace-padded same-gen renew failed");
+  }
+
+  // 7. Hillclimb — whitespace-only tokens fail closed.
+  const blank = acquireHostLease(
+    held,
+    { hostId: "   ", holderPid: 1, generationId: genB, ttlMs: 60_000 },
+    clockAt(baseMs + 2_800),
+  );
+  if (!blank.ok && blank.reason === "INVALID_INPUT") {
+    details.push("Whitespace-only hostId fail closed INVALID_INPUT");
+  } else {
+    passed = false;
+    details.push("Whitespace-only hostId unexpectedly accepted");
+  }
+
+  // 8. Ownership kill auth fail-closed for mismatched PID / missing markers.
   const ownershipOk = verifyProcessOwnership(
     { pid: 1001, serviceId: "api", generationId: genA },
     {
@@ -140,7 +219,10 @@ export function proofCompetingSupervisorLease(
     details.push("heartbeatFallback must remain false (kill auth honesty)");
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  details.push("honesty NOT_WIRED/NONE");
+  details.push(
+    "liveProviderSuccessClaimed=false catalogClaim=ACCEPTED≠VERIFIED externalEffects=NONE",
+  );
 
   return {
     proofId: `proof-competing-supervisor-${randomUUID()}`,

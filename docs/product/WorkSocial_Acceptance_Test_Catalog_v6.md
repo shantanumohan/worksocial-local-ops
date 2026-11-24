@@ -757,7 +757,7 @@ Each case: Level behavior_acceptance | Status NOT_RUN unless listed under fixtur
 - **T-US-051** Design/release readiness (F26/SC-23) — release acceptance packet. *(fixture ACCEPTED — design/release readiness packet proof; not sandbox/prod VERIFIED)*
 
 ### Failure / gate cases (evidence: blocking decision, preserved inputs, current state, recovery path)
-- **T-US-002** Competing supervisors refused; no duplicate leases. *(fixture ACCEPTED — competing-supervisor / singleton host-lease proof; not sandbox/prod VERIFIED)*
+- **T-US-002** Competing supervisors refused; no duplicate leases. *(fixture ACCEPTED — competing-supervisor / singleton host-lease proof; third competitor / generic LEASE_HELD; not sandbox/prod VERIFIED)*
 - **T-US-004** Unsafe folders / unresolved facts blocked; safe facts usable. *(fixture ACCEPTED — unsafe folders / unresolved facts blocked proof; not sandbox/prod VERIFIED)*
 - **T-US-006** Unbound URL: analysis ok, write blocked. *(fixture ACCEPTED — unbound write path fail-closed proof; not sandbox/prod VERIFIED)*
 - **T-US-008** GA4 debug validation ≠ measured receipt *(fixture ACCEPTED)*.
@@ -882,7 +882,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-F24 / T-US-047** are fixture ACCEPTED only via the recover / rotate / reconcile / offboard proof (`RECOVER_ROTATE_RECONCILE`) with the complete F24 evidence set (health timeline, capability stop, rotation record without secrets, reconciliation receipts, recovery test, offboarding manifest + residual obligations). Live provider revoke remains **NOT_WIRED**; never silently VERIFIED for live.
 
-**T-US-002 / T-X002** are fixture ACCEPTED only via the competing-supervisor / singleton host-lease proof (`COMPETING_SUPERVISOR_LEASE`) — second live generation refused, dead-holder reclaim allowed, ownership kill auth fail-closed. Not sandbox/prod VERIFIED.
+**T-US-002 / T-X002** are fixture ACCEPTED only via the competing-supervisor / singleton host-lease proof (`COMPETING_SUPERVISOR_LEASE`) — second live generation refused, dead-holder reclaim allowed, ownership kill auth fail-closed; third competitor refused; `isHolderAlive=true` still `LEASE_HELD`; whitespace-normalized host/generation tokens; `LEASE_HELD` message generic (no host/generation/pid leak); live wiring stays **NOT_WIRED**; `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 
 **T-X018 / T-US-054** are fixture ACCEPTED only via the self-approval rejected / independent A25 proof (`SELF_APPROVAL_REJECTED`) — ordinary self-approval cannot bind or approve; independent reviewer required. Not sandbox/prod VERIFIED.
 
@@ -1028,7 +1028,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | ID | Title | Focus |
 |---|---|---|
 | T-X001 | Host sleeps during scheduled monitoring | Coverage gap honest; coalesce *(fixture ACCEPTED)* |
-| T-X002 | Two supervisors start together | Single host lease *(fixture ACCEPTED — competing-supervisor lease proof; not sandbox/prod VERIFIED)* |
+| T-X002 | Two supervisors start together | Single host lease *(fixture ACCEPTED — competing-supervisor lease proof; third competitor / generic LEASE_HELD; not sandbox/prod VERIFIED)* |
 | T-X003 | Symlink escape after root verification | Write denied outside root *(fixture ACCEPTED — symlink escape after root verification proof; not sandbox/prod VERIFIED)* |
 | T-X004 | Disk full during evidence write | No partial completed manifest *(fixture ACCEPTED — ENOSPC/EDQUOT write|rename|mkdir; EIO/EACCES/EPERM no-partial incl. rename/mkdir; safe runId+C0/DEL/dot-edge/.. refuse; prior preserve incl. EPERM/EIO; NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X005 | Forged browser role | Payload role ignored *(fixture ACCEPTED — forged browser role ignored proof; not sandbox/prod VERIFIED)* |

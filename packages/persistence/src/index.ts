@@ -39,7 +39,9 @@ export {
 } from "./storage-roots.js";
 
 export {
+  HOST_LEASE_HELD_MESSAGE,
   acquireHostLease,
+  normalizeHostLeaseToken,
   isLeaseExpired,
   isLeaseHeldByGeneration,
   releaseHostLease,

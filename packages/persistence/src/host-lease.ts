@@ -1,6 +1,9 @@
 /**
  * Singleton host lease — one supervisor generation owns local lifecycle at a time.
  * Closing the editor must not silently destroy job state; slots renew the lease.
+ *
+ * T-X002 / T-US-002 hillclimb: normalize host/generation tokens; LEASE_HELD
+ * messages stay generic (no host/generation/pid leak); whitespace-only fail closed.
  */
 
 export type HostLeaseRecord = {
@@ -33,8 +36,29 @@ export const systemClock: HostLeaseClock = {
   nowMs: () => Date.now(),
 };
 
+/** Generic deny — do not echo holder host/generation/pid in the message. */
+export const HOST_LEASE_HELD_MESSAGE =
+  "Host lease held by another live supervisor generation." as const;
+
 function toIso(ms: number): string {
   return new Date(ms).toISOString();
+}
+
+/**
+ * Normalize hostId / generationId tokens. Strings only; trim whitespace;
+ * empty / whitespace-only → null (fail closed).
+ */
+export function normalizeHostLeaseToken(
+  raw: string | null | undefined,
+): string | null {
+  if (typeof raw !== "string") {
+    return null;
+  }
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+  return trimmed;
 }
 
 export function isLeaseExpired(lease: HostLeaseRecord, nowMs: number): boolean {
@@ -50,7 +74,19 @@ export function isLeaseHeldByGeneration(
   if (!lease || isLeaseExpired(lease, nowMs)) {
     return false;
   }
-  return lease.hostId === hostId && lease.generationId === generationId;
+  const wantHost = normalizeHostLeaseToken(hostId);
+  const wantGen = normalizeHostLeaseToken(generationId);
+  const haveHost = normalizeHostLeaseToken(lease.hostId);
+  const haveGen = normalizeHostLeaseToken(lease.generationId);
+  if (
+    wantHost === null ||
+    wantGen === null ||
+    haveHost === null ||
+    haveGen === null
+  ) {
+    return false;
+  }
+  return haveHost === wantHost && haveGen === wantGen;
 }
 
 /**
@@ -72,29 +108,36 @@ export function acquireHostLease(
   },
   clock: HostLeaseClock = systemClock,
 ): HostLeaseAcquireResult {
-  const hostId = input.hostId.trim();
-  const generationId = input.generationId.trim();
+  const hostId = normalizeHostLeaseToken(input.hostId);
+  const generationId = normalizeHostLeaseToken(input.generationId);
   if (
-    !hostId ||
-    !generationId ||
+    hostId === null ||
+    generationId === null ||
     !Number.isFinite(input.holderPid) ||
     input.holderPid <= 0
   ) {
     return {
       ok: false,
       reason: "INVALID_INPUT",
-      message: "hostId, generationId, and positive holderPid are required to acquire a host lease.",
+      message:
+        "hostId, generationId, and positive holderPid are required to acquire a host lease.",
     };
   }
 
   const now = clock.nowMs();
   const ttlMs = input.ttlMs ?? 60_000;
   const expired = !current || isLeaseExpired(current, now);
+  const currentHost = current
+    ? normalizeHostLeaseToken(current.hostId)
+    : null;
+  const currentGen = current
+    ? normalizeHostLeaseToken(current.generationId)
+    : null;
   const sameGeneration =
     current !== null &&
     current !== undefined &&
-    current.hostId === hostId &&
-    current.generationId === generationId;
+    currentHost === hostId &&
+    currentGen === generationId;
   const holderDead =
     current !== null &&
     current !== undefined &&
@@ -106,7 +149,7 @@ export function acquireHostLease(
     return {
       ok: false,
       reason: "LEASE_HELD",
-      message: `Host lease held by host=${current.hostId} generation=${current.generationId} holderPid=${current.holderPid} until ${current.expiresAt}.`,
+      message: HOST_LEASE_HELD_MESSAGE,
       holder: current,
     };
   }
@@ -115,7 +158,8 @@ export function acquireHostLease(
   const acquiredAt = sameGeneration && current ? current.acquiredAt : toIso(now);
   const lease: HostLeaseRecord = {
     leaseId:
-      input.leaseId ?? (sameGeneration && current ? current.leaseId : `lease-${now}`),
+      input.leaseId ??
+      (sameGeneration && current ? current.leaseId : `lease-${now}`),
     hostId,
     generationId,
     holderPid: input.holderPid,
@@ -142,12 +186,17 @@ export function renewHostLease(
   clock: HostLeaseClock = systemClock,
 ): HostLeaseAcquireResult {
   if (
-    !isLeaseHeldByGeneration(current, input.hostId, input.generationId, clock.nowMs())
+    !isLeaseHeldByGeneration(
+      current,
+      input.hostId,
+      input.generationId,
+      clock.nowMs(),
+    )
   ) {
     return {
       ok: false,
       reason: "LEASE_HELD",
-      message: "Cannot renew a lease not held by this host/generation.",
+      message: HOST_LEASE_HELD_MESSAGE,
       holder: current,
     };
   }
@@ -180,11 +229,19 @@ export function releaseHostLease(
   ) {
     return { ok: true, released: true };
   }
-  if (current.hostId === input.hostId && current.holderPid === input.holderPid) {
+  const wantHost = normalizeHostLeaseToken(input.hostId);
+  const haveHost = normalizeHostLeaseToken(current.hostId);
+  if (
+    wantHost !== null &&
+    haveHost === wantHost &&
+    current.holderPid === input.holderPid
+  ) {
     return { ok: true, released: true };
   }
   const holderDead =
-    input.isHolderAlive !== undefined ? !input.isHolderAlive(current.holderPid) : false;
+    input.isHolderAlive !== undefined
+      ? !input.isHolderAlive(current.holderPid)
+      : false;
   if (input.force === true || holderDead) {
     return { ok: true, released: true };
   }

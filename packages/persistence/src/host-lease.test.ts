@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  HOST_LEASE_HELD_MESSAGE,
   acquireHostLease,
   isLeaseExpired,
+  normalizeHostLeaseToken,
   releaseHostLease,
   renewHostLease,
   type HostLeaseClock,
@@ -156,6 +158,83 @@ describe("host-lease", () => {
       expect(reclaimed.reclaimed).toBe(true);
       expect(reclaimed.lease.generationId).toBe("gen-2");
       expect(reclaimed.lease.holderPid).toBe(200);
+    }
+  });
+
+  it("keeps LEASE_HELD message generic without host/generation/pid leak (T-X002)", () => {
+    const first = acquireHostLease(
+      null,
+      { hostId: "host-secret", holderPid: 777, generationId: "gen-secret", ttlMs: 60_000 },
+      clockAt(1_000),
+    );
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const second = acquireHostLease(
+      first.lease,
+      { hostId: "host-secret", holderPid: 888, generationId: "gen-other", ttlMs: 60_000 },
+      clockAt(2_000),
+    );
+    expect(second.ok).toBe(false);
+    if (!second.ok) {
+      expect(second.reason).toBe("LEASE_HELD");
+      expect(second.message).toBe(HOST_LEASE_HELD_MESSAGE);
+      expect(second.message.includes("host-secret")).toBe(false);
+      expect(second.message.includes("gen-secret")).toBe(false);
+      expect(second.message.includes("777")).toBe(false);
+      expect(second.holder?.generationId).toBe("gen-secret");
+    }
+  });
+
+  it("renews with whitespace-padded host/generation tokens (T-X002)", () => {
+    const acquired = acquireHostLease(
+      null,
+      { hostId: "  host-a  ", holderPid: 42, generationId: " gen-1 ", ttlMs: 10_000 },
+      clockAt(1_000),
+    );
+    expect(acquired.ok).toBe(true);
+    if (!acquired.ok) return;
+    expect(acquired.lease.hostId).toBe("host-a");
+    expect(acquired.lease.generationId).toBe("gen-1");
+    const renewed = renewHostLease(
+      acquired.lease,
+      { hostId: "\thost-a\n", holderPid: 99, generationId: "  gen-1  ", ttlMs: 10_000 },
+      clockAt(2_000),
+    );
+    expect(renewed.ok).toBe(true);
+  });
+
+  it("rejects whitespace-only tokens and refuses when isHolderAlive is true (T-X002)", () => {
+    expect(normalizeHostLeaseToken("   ")).toBeNull();
+    const blank = acquireHostLease(
+      null,
+      { hostId: "   ", holderPid: 1, generationId: "gen-1" },
+      clockAt(1_000),
+    );
+    expect(blank.ok).toBe(false);
+    if (!blank.ok) expect(blank.reason).toBe("INVALID_INPUT");
+
+    const first = acquireHostLease(
+      null,
+      { hostId: "host-a", holderPid: 100, generationId: "gen-1", ttlMs: 60_000 },
+      clockAt(1_000),
+    );
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const liveProbe = acquireHostLease(
+      first.lease,
+      {
+        hostId: "host-a",
+        holderPid: 200,
+        generationId: "gen-2",
+        ttlMs: 60_000,
+        isHolderAlive: () => true,
+      },
+      clockAt(2_000),
+    );
+    expect(liveProbe.ok).toBe(false);
+    if (!liveProbe.ok) {
+      expect(liveProbe.reason).toBe("LEASE_HELD");
+      expect(liveProbe.message).toBe(HOST_LEASE_HELD_MESSAGE);
     }
   });
 });
