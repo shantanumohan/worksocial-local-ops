@@ -382,6 +382,28 @@ describe("credential rotation / revoke honesty", () => {
     });
     expect(forceComplete.code).toBe("LIVE_CLAIM_REFUSED");
 
+    const dualClaim = attemptLiveProviderRevoke({
+      connectionId: "conn-1",
+      referenceId: "cred-aaa",
+      claimLiveVerified: true,
+      forceCompleteRemoteRevoke: true,
+    });
+    expect(dualClaim.code).toBe("LIVE_CLAIM_REFUSED");
+    expect(dualClaim.liveProviderSuccessClaimed).toBe(false);
+
+    const paddedConn = attemptLiveProviderRevoke({
+      connectionId: "  conn-1  ",
+      referenceId: "cred-aaa",
+    });
+    expect(paddedConn.code).toBe("LIVE_PROVIDER_REVOKE_NOT_WIRED");
+    expect(paddedConn.liveProviderSuccessClaimed).toBe(false);
+
+    const paddedRef = attemptLiveProviderRevoke({
+      connectionId: "conn-1",
+      referenceId: "  cred-aaa  ",
+    });
+    expect(paddedRef.code).toBe("LIVE_PROVIDER_REVOKE_NOT_WIRED");
+
     const satisfiedToken = assertOffboardActiveTokenResidualHonest({
       ...manifest,
       residualObligations: manifest.residualObligations.map((o) =>
@@ -398,14 +420,37 @@ describe("credential rotation / revoke honesty", () => {
     });
     expect(prodOn.ok).toBe(false);
 
+    const noLocalRevoke = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      revokedLocally: false as true,
+    });
+    expect(noLocalRevoke.ok).toBe(false);
+
+    const missingToken = assertOffboardActiveTokenResidualHonest(
+      buildOffboardingManifest({
+        manifestId: "ob-no-token",
+        connectionId: "conn-1",
+        cancelResults,
+        hasActiveTokenResidual: false,
+        nowIso: NOW,
+      }),
+    );
+    expect(missingToken.ok).toBe(false);
+
     const r1 = reclaimOffboardActiveTokenResidual(manifest);
     const r2 = reclaimOffboardActiveTokenResidual(manifest);
+    const r3 = reclaimOffboardActiveTokenResidual(manifest);
     const reclaimIdem = assertOffboardActiveTokenResidualReclaimIdempotent({
       first: r1,
       second: r2,
     });
+    const reclaimTrip = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: r3,
+    });
     expect(reclaimIdem.ok).toBe(true);
     expect(reclaimIdem.code).toBe("OFFBOARD_RECLAIM_IDEMPOTENT");
+    expect(reclaimTrip.ok).toBe(true);
     expect(r1.priorLiveRevokeInvented).toBe(false);
 
     const audit = createAuditEntry({

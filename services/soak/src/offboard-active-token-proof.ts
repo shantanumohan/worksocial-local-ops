@@ -1,7 +1,8 @@
 /**
  * Fixture proof for T-X073 — offboarding retains active provider token residual.
- * Hillclimb deepen I9 (edge honesty): idempotent residual reclaim;
- * claimLiveVerified / forceComplete refuse; blank-id revoke still NOT_WIRED;
+ * Hillclimb deepen I11: padded connection/reference ids stay NOT_WIRED;
+ * dual claim+force refuse; missing ACTIVE_TOKEN dishonest; triple reclaim;
+ * I9 reclaim / claimLiveVerified / forceComplete; blank-id revoke;
  * re-offboard / double live-revoke stay NOT_WIRED; ACCEPTED≠VERIFIED;
  * secrets never leak. External effects: NONE. Never invents live VERIFIED.
  * Does not touch rebind / #43 lane.
@@ -229,7 +230,7 @@ export async function proofOffboardActiveTokenResidual(
     );
   }
 
-  // I9 edge honesty: claimLiveVerified / forceComplete refuse; blank id still NOT_WIRED.
+  // I9/I11 edge honesty: claim/force/dual refuse; blank + padded ids still NOT_WIRED.
   const claimLive = attemptLiveProviderRevoke({
     connectionId: seeded.connection.connectionId,
     referenceId: "fixture-ref",
@@ -240,47 +241,70 @@ export async function proofOffboardActiveTokenResidual(
     referenceId: "fixture-ref",
     forceCompleteRemoteRevoke: true,
   });
+  const dualClaim = attemptLiveProviderRevoke({
+    connectionId: seeded.connection.connectionId,
+    referenceId: "fixture-ref",
+    claimLiveVerified: true,
+    forceCompleteRemoteRevoke: true,
+  });
   const blankId = attemptLiveProviderRevoke({
     connectionId: "   ",
     referenceId: "",
+  });
+  const paddedConn = attemptLiveProviderRevoke({
+    connectionId: `  ${seeded.connection.connectionId}  `,
+    referenceId: "fixture-ref",
+  });
+  const paddedRef = attemptLiveProviderRevoke({
+    connectionId: seeded.connection.connectionId,
+    referenceId: "  fixture-ref  ",
   });
   if (
     claimLive.code === "LIVE_CLAIM_REFUSED" &&
     claimLive.liveProviderRevoke === "NOT_WIRED" &&
     forceComplete.code === "LIVE_CLAIM_REFUSED" &&
+    dualClaim.code === "LIVE_CLAIM_REFUSED" &&
     blankId.code === "LIVE_PROVIDER_REVOKE_NOT_WIRED" &&
-    blankId.liveProviderSuccessClaimed === false
+    blankId.liveProviderSuccessClaimed === false &&
+    paddedConn.code === "LIVE_PROVIDER_REVOKE_NOT_WIRED" &&
+    paddedRef.code === "LIVE_PROVIDER_REVOKE_NOT_WIRED"
   ) {
     details.push(
-      "claimLiveVerified / forceComplete → LIVE_CLAIM_REFUSED; blank-id revoke still NOT_WIRED",
+      "claim/force/dual → LIVE_CLAIM_REFUSED; blank+padded ids still NOT_WIRED",
     );
   } else {
     passed = false;
     details.push(
-      `edge claim/blank unexpected claim=${JSON.stringify(claimLive)} force=${JSON.stringify(forceComplete)} blank=${JSON.stringify(blankId)}`,
+      `edge claim/blank/padded unexpectedly claim=${JSON.stringify(claimLive)} force=${JSON.stringify(forceComplete)} dual=${JSON.stringify(dualClaim)} blank=${JSON.stringify(blankId)} padC=${JSON.stringify(paddedConn)} padR=${JSON.stringify(paddedRef)}`,
     );
   }
 
-  // I9: idempotent residual reclaim — double honesty agrees; no invent live revoke.
+  // I9/I11: idempotent residual reclaim — double+triple honesty agrees; no invent live revoke.
   const reclaim1 = reclaimOffboardActiveTokenResidual(manifest);
   const reclaim2 = reclaimOffboardActiveTokenResidual(manifest);
+  const reclaim3 = reclaimOffboardActiveTokenResidual(manifest);
   const reclaimIdem = assertOffboardActiveTokenResidualReclaimIdempotent({
     first: reclaim1,
     second: reclaim2,
   });
+  const reclaimTrip = assertOffboardActiveTokenResidualReclaimIdempotent({
+    first: reclaim1,
+    second: reclaim3,
+  });
   if (
     reclaimIdem.ok &&
     reclaimIdem.code === "OFFBOARD_RECLAIM_IDEMPOTENT" &&
+    reclaimTrip.ok &&
     reclaim1.honesty.ok &&
     reclaim1.priorLiveRevokeInvented === false
   ) {
     details.push(
-      "idempotent reclaim: residual honesty agrees twice; no invent live revoke",
+      "idempotent reclaim: residual honesty agrees twice+triple; no invent live revoke",
     );
   } else {
     passed = false;
     details.push(
-      `idempotent reclaim unexpectedly idem=${JSON.stringify(reclaimIdem)} r1=${JSON.stringify(reclaim1)}`,
+      `idempotent reclaim unexpectedly idem=${JSON.stringify(reclaimIdem)} trip=${JSON.stringify(reclaimTrip)} r1=${JSON.stringify(reclaim1)}`,
     );
   }
 

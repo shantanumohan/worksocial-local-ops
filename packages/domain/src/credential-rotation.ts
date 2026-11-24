@@ -720,6 +720,21 @@ export function attemptLiveProviderRevoke(input: {
         "Live VERIFIED / force-complete remote revoke refused — live provider revoke stays NOT_WIRED (T-X073); ACCEPTED≠VERIFIED; externalEffects=NONE.",
     };
   }
+  // Whitespace-padded / empty ids still refuse inventing a live revoke (I11).
+  if (
+    input.connectionId !== input.connectionId.trim() ||
+    input.referenceId !== input.referenceId.trim()
+  ) {
+    return {
+      ok: false,
+      code: "LIVE_PROVIDER_REVOKE_NOT_WIRED",
+      liveProviderRevoke: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
+      externalEffects: "NONE",
+      reason:
+        "Whitespace-padded connection/reference id — live provider revoke stays NOT_WIRED (T-X073); ACCEPTED≠VERIFIED; externalEffects=NONE.",
+    };
+  }
   return {
     ok: false,
     code: "LIVE_PROVIDER_REVOKE_NOT_WIRED",
@@ -855,6 +870,19 @@ export function assertOffboardActiveTokenResidualHonest(
     (manifest as { productionActivated: boolean }).productionActivated !== false
   ) {
     reasons.push("productionActivated must stay false (T-X073 edge honesty)");
+  }
+  if (
+    (manifest as { revokedLocally: boolean }).revokedLocally !== true
+  ) {
+    reasons.push("revokedLocally must be true (T-X073 edge honesty I11)");
+  }
+  if ((manifest as { auditRetained: boolean }).auditRetained !== true) {
+    reasons.push("auditRetained must be true (T-X073 edge honesty I11)");
+  }
+  if (
+    (manifest as { schedulesDisabled: boolean }).schedulesDisabled !== true
+  ) {
+    reasons.push("schedulesDisabled must be true (T-X073 edge honesty I11)");
   }
   const blob = JSON.stringify(manifest);
   // Allow honest ACCEPTED≠VERIFIED / NOT_VERIFIED / never-silently phrasing;
