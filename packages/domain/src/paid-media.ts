@@ -14,6 +14,10 @@ import {
   type AnalyticsEnvironmentValue,
   type ChatGptAdsAccessDecision,
 } from "./analytics.js";
+import {
+  classifyMetric,
+  type MetricClassification,
+} from "./metric-missingness.js";
 
 export const PaidMediaPlatform = {
   GOOGLE_ADS: "google_ads",
@@ -426,6 +430,115 @@ export function diagnoseDelivery(
   };
 }
 
+/**
+ * Freshness label for recent Ads conversions (T-X036).
+ * Blank / unsettled values stay PENDING — never coerce to a false zero.
+ */
+export const AdsConversionFreshness = {
+  PENDING: "pending",
+  SETTLED: "settled",
+  FIXTURE: "fixture",
+  UNAVAILABLE: "unavailable",
+} as const;
+
+export type AdsConversionFreshnessValue =
+  (typeof AdsConversionFreshness)[keyof typeof AdsConversionFreshness];
+
+export type RecentAdsConversionObservation = {
+  campaignId: string;
+  /**
+   * null when the Ads provider left the conversion cell blank / omitted —
+   * never invent 0 for a blank recent conversion (T-X036).
+   */
+  conversions: number | null;
+  /** Explicit blank/omitted field from the Ads report. */
+  blank: boolean;
+  attributionSettled: boolean;
+  environment: AnalyticsEnvironmentValue;
+};
+
+export type RecentAdsConversionClassification = {
+  campaignId: string;
+  conversions: MetricClassification;
+  freshness: AdsConversionFreshnessValue;
+  /**
+   * Numeric display value. null while pending/blank — callers must not
+   * substitute 0 for a blank recent conversion.
+   */
+  displayValue: number | null;
+  reasons: string[];
+};
+
+/**
+ * Recent Ads conversion blank → PENDING, not a false zero (T-X036).
+ * Settled measured 0 remains an honest zero; blank/null/unsettled stay pending.
+ */
+export function classifyRecentAdsConversion(
+  obs: RecentAdsConversionObservation,
+): RecentAdsConversionClassification {
+  if (
+    obs.environment === AnalyticsEnvironment.NOT_WIRED ||
+    obs.environment === AnalyticsEnvironment.UNAVAILABLE
+  ) {
+    const reason =
+      obs.environment === AnalyticsEnvironment.NOT_WIRED
+        ? ("unsupported" as const)
+        : ("provider_error" as const);
+    return {
+      campaignId: obs.campaignId,
+      conversions: { kind: "unavailable", reason },
+      freshness: AdsConversionFreshness.UNAVAILABLE,
+      displayValue: null,
+      reasons: [
+        obs.environment === AnalyticsEnvironment.NOT_WIRED
+          ? "Ads conversion live adapter NOT_WIRED — no conversion claim"
+          : "Ads conversion observation UNAVAILABLE — no conversion claim",
+      ],
+    };
+  }
+
+  if (obs.blank || obs.conversions === null || !obs.attributionSettled) {
+    const conversions = classifyMetric({
+      metricId: `ads-conversions:${obs.campaignId}`,
+      value: null,
+      sampleSize: null,
+      sourceStatus: "missing",
+    });
+    return {
+      campaignId: obs.campaignId,
+      conversions,
+      freshness: AdsConversionFreshness.PENDING,
+      displayValue: null,
+      reasons: [
+        obs.blank || obs.conversions === null
+          ? "Recent Ads conversion blank/omitted — PENDING, not false zero (T-X036)"
+          : "Attribution window not settled — PENDING conversions, not false zero (T-X036)",
+      ],
+    };
+  }
+
+  const conversions = classifyMetric({
+    metricId: `ads-conversions:${obs.campaignId}`,
+    value: obs.conversions,
+    sampleSize: 1,
+    sourceStatus: "ok",
+  });
+  return {
+    campaignId: obs.campaignId,
+    conversions,
+    freshness:
+      obs.environment === AnalyticsEnvironment.FIXTURE
+        ? AdsConversionFreshness.FIXTURE
+        : AdsConversionFreshness.SETTLED,
+    displayValue: obs.conversions,
+    reasons: [
+      obs.environment === AnalyticsEnvironment.FIXTURE
+        ? "FIXTURE Ads conversion sample — not live account data"
+        : "Settled Ads conversion (honest measured value, including zero)",
+    ],
+  };
+}
+
 export type CreatePaidProposalInput = {
   proposalId: string;
   platform: PaidMediaPlatformValue;
@@ -485,7 +598,8 @@ export function createPaidMediaProposal(
 
   if (
     input.changeKind === PaidChangeKind.BUDGET_ADJUST &&
-    input.diagnosis.kind === DeliveryDiagnosisKind.DELAYED_ATTRIBUTION
+    (input.diagnosis.kind === DeliveryDiagnosisKind.DELAYED_ATTRIBUTION ||
+      !input.diagnosis.attributionSettled)
   ) {
     return {
       ok: false,

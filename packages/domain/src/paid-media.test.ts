@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { AnalyticsEnvironment, evaluateChatGptAdsAccess } from "./analytics.js";
 import {
+  AdsConversionFreshness,
   DeliveryDiagnosisKind,
   PaidChangeKind,
   PaidMediaPlatform,
   PaidMediaWiring,
   PaidProposalStatus,
   attemptPaidMediaExecution,
+  classifyRecentAdsConversion,
   createAnalysisDefinition,
   createAnalysisHypothesis,
   createDecisionBrief,
@@ -449,5 +451,100 @@ describe("paid-media — delivery diagnosis + proposals / F16", () => {
     expect(exec.code).toBe("PROPOSAL_INVALIDATED");
     expect(exec.externalEffects).toBe("NONE");
     expect(exec.mutationAttempted).toBe(false);
+  });
+
+  it("treats blank recent Ads conversions as PENDING, not false zero (T-X036)", () => {
+    const blank = classifyRecentAdsConversion({
+      campaignId: "camp-blank",
+      conversions: null,
+      blank: true,
+      attributionSettled: false,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(blank.freshness).toBe(AdsConversionFreshness.PENDING);
+    expect(blank.displayValue).toBeNull();
+    expect(blank.conversions.kind).toBe("missing");
+    expect(blank.reasons.join(" ")).toMatch(/PENDING|not false zero/i);
+
+    const unsettled = classifyRecentAdsConversion({
+      campaignId: "camp-unsettled",
+      conversions: 0,
+      blank: false,
+      attributionSettled: false,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(unsettled.freshness).toBe(AdsConversionFreshness.PENDING);
+    expect(unsettled.displayValue).toBeNull();
+
+    const settledZero = classifyRecentAdsConversion({
+      campaignId: "camp-zero",
+      conversions: 0,
+      blank: false,
+      attributionSettled: true,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(settledZero.freshness).toBe(AdsConversionFreshness.FIXTURE);
+    expect(settledZero.displayValue).toBe(0);
+    expect(settledZero.conversions.kind).toBe("measured");
+
+    const notWired = classifyRecentAdsConversion({
+      campaignId: "camp-nw",
+      conversions: 3,
+      blank: false,
+      attributionSettled: true,
+      environment: AnalyticsEnvironment.NOT_WIRED,
+    });
+    expect(notWired.freshness).toBe(AdsConversionFreshness.UNAVAILABLE);
+    expect(notWired.displayValue).toBeNull();
+
+    const unavailable = classifyRecentAdsConversion({
+      campaignId: "camp-unavail",
+      conversions: 7,
+      blank: false,
+      attributionSettled: true,
+      environment: AnalyticsEnvironment.UNAVAILABLE,
+    });
+    expect(unavailable.freshness).toBe(AdsConversionFreshness.UNAVAILABLE);
+    expect(unavailable.displayValue).toBeNull();
+    expect(unavailable.conversions).toEqual({
+      kind: "unavailable",
+      reason: "provider_error",
+    });
+
+    // Zero-delivery + unsettled attribution still blocks budget adjust.
+    const noImpressions = diagnoseDelivery({
+      impressions: 0,
+      clicks: 0,
+      eventsPresent: false,
+      attributionSettled: false,
+      sameDaySpendComplete: false,
+    });
+    expect(noImpressions.kind).toBe(DeliveryDiagnosisKind.NO_IMPRESSIONS);
+    const blockedZeroDelivery = createPaidMediaProposal({
+      proposalId: "p-zero-unsettled",
+      platform: PaidMediaPlatform.GOOGLE_ADS,
+      accountId: "acct",
+      campaignId: "c-zero",
+      changeKind: PaidChangeKind.BUDGET_ADJUST,
+      hypothesis: "h",
+      exactChange: "+5",
+      risk: "r",
+      alternative: "a",
+      diagnosis: noImpressions,
+      financialDiff: {
+        currency: "USD",
+        dailyBudgetBeforeMinor: 1000,
+        dailyBudgetAfterMinor: 1500,
+        lifetimeImpactMinor: null,
+        sharedBudgetAffected: false,
+        sharedBudgetImpactKnown: true,
+        notes: [],
+      },
+      createdAtIso: "2026-11-21T12:00:00.000Z",
+    });
+    expect(blockedZeroDelivery.ok).toBe(false);
+    if (!blockedZeroDelivery.ok) {
+      expect(blockedZeroDelivery.code).toBe("PARTIAL_SPEND");
+    }
   });
 });
