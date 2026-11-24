@@ -8,6 +8,7 @@
  *    recorded activity results only — never re-invoking acceptPending,
  *    verifyIndependent, or fakeProvider.applyOnce.
  * 3) Assert applyAttemptCount stays 1 and the provider ledger does not grow.
+ * 4) Second replay + empty-history fail-closed keep honesty (T-X013 hillclimb).
  *
  * Distinct from mid-flight NO_DUPLICATE_EFFECTS (ACCEPTED_PENDING retry) and
  * from CRASH_RESTART (resume then verify once). Also distinct from merely
@@ -18,6 +19,11 @@
 import { randomUUID } from "node:crypto";
 import {
   SoakProofKind,
+  createHistoryOnlyReplayHooks,
+  replayEmptyHistoryFailsClosed,
+  replayMissionWorkflowHistory,
+  type ReplayActivityResult,
+  type ReplayWorkflowHistory,
   type SoakProofRecord,
 } from "@worksocial/domain";
 import {
@@ -29,44 +35,6 @@ import {
   type DurableExecutionService,
   type VerifyIndependentResult,
 } from "@worksocial/persistence";
-
-type ActivityName = "enqueue" | "claimAndAccept" | "verify";
-
-type ActivityResult =
-  | { activity: "enqueue"; workflowId: string; phase: "queued" }
-  | {
-      activity: "claimAndAccept";
-      phase: "effect_pending";
-      outcome: "ACCEPTED_PENDING";
-      applyAttemptCount: number;
-      providerCreated: boolean;
-      operationId: string;
-    }
-  | {
-      activity: "verify";
-      phase: "succeeded";
-      outcome: "VERIFIED";
-      applyAttemptCount: number;
-      matched: boolean;
-      operationId: string;
-    };
-
-type WorkflowHistory = {
-  events: ActivityResult[];
-  terminal: {
-    outcome: "VERIFIED";
-    applyAttemptCount: number;
-    operationId: string;
-  };
-};
-
-type ReplayHooks = {
-  onScheduleActivity: (
-    name: ActivityName,
-    recorded: ActivityResult,
-  ) => ActivityResult;
-  onForbiddenLiveIo: (label: string) => void;
-};
 
 function openService(stateDir: string): DurableExecutionService {
   return createDurableExecutionService(createFileDurableStores(stateDir));
@@ -116,88 +84,6 @@ function jobFields(operationId: string, jobId: string, idem: string) {
   };
 }
 
-function runMissionWorkflowControlFlow(hooks: {
-  enqueue: () => ActivityResult;
-  claimAndAccept: () => ActivityResult;
-  verify: () => ActivityResult;
-}): {
-  outcome: "VERIFIED" | "FAILED";
-  applyAttemptCount: number;
-  operationId: string;
-} {
-  const enq = hooks.enqueue();
-  if (enq.activity !== "enqueue" || enq.phase !== "queued") {
-    return { outcome: "FAILED", applyAttemptCount: 0, operationId: "unknown" };
-  }
-  const accepted = hooks.claimAndAccept();
-  if (accepted.activity !== "claimAndAccept") {
-    return { outcome: "FAILED", applyAttemptCount: 0, operationId: "unknown" };
-  }
-  const verified = hooks.verify();
-  if (verified.activity !== "verify") {
-    return {
-      outcome: "FAILED",
-      applyAttemptCount: accepted.applyAttemptCount,
-      operationId: accepted.operationId,
-    };
-  }
-  if (verified.outcome !== "VERIFIED" || !verified.matched) {
-    return {
-      outcome: "FAILED",
-      applyAttemptCount: accepted.applyAttemptCount,
-      operationId: accepted.operationId,
-    };
-  }
-  return {
-    outcome: "VERIFIED",
-    applyAttemptCount: verified.applyAttemptCount,
-    operationId: verified.operationId,
-  };
-}
-
-function replayMissionWorkflowHistory(
-  history: WorkflowHistory,
-  hooks: ReplayHooks,
-): {
-  outcome: "VERIFIED" | "FAILED";
-  applyAttemptCount: number;
-  operationId: string;
-} {
-  let cursor = 0;
-  const take = (expected: ActivityName): ActivityResult => {
-    const recorded = history.events[cursor];
-    cursor += 1;
-    if (!recorded || recorded.activity !== expected) {
-      hooks.onForbiddenLiveIo(
-        `history_mismatch expected=${expected} got=${recorded?.activity ?? "eof"}`,
-      );
-      return {
-        activity: "verify",
-        phase: "succeeded",
-        outcome: "VERIFIED",
-        applyAttemptCount: -1,
-        matched: false,
-        operationId: "mismatch",
-      };
-    }
-    return hooks.onScheduleActivity(expected, recorded);
-  };
-
-  const result = runMissionWorkflowControlFlow({
-    enqueue: () => take("enqueue"),
-    claimAndAccept: () => take("claimAndAccept"),
-    verify: () => take("verify"),
-  });
-
-  if (cursor !== history.events.length) {
-    hooks.onForbiddenLiveIo(
-      `history_unread_tail remaining=${history.events.length - cursor}`,
-    );
-    return { ...result, outcome: "FAILED" };
-  }
-  return result;
-}
-
 /**
  * Complete expected proof set for T-X013 fixture ACCEPTED.
  */
@@ -214,7 +100,7 @@ export async function proofReplayHistoricalNoRepeatIo(
   const workflowId = `wf-${operationId}`;
 
   const liveSvc = openService(stateDir);
-  const historyEvents: ActivityResult[] = [];
+  const historyEvents: ReplayActivityResult[] = [];
 
   historyEvents.push({
     activity: "enqueue",
@@ -265,7 +151,7 @@ export async function proofReplayHistoricalNoRepeatIo(
     `Recorded verify outcome=${verified.decision.outcome} matched=${verified.matched} applyCount=${verified.applyAttemptCount}`,
   );
 
-  const history: WorkflowHistory = {
+  const history: ReplayWorkflowHistory = {
     events: historyEvents,
     terminal: {
       outcome: "VERIFIED",
@@ -282,30 +168,46 @@ export async function proofReplayHistoricalNoRepeatIo(
     (p) => p.operationId === operationId,
   ).length;
 
-  let forbiddenLiveIo = 0;
-  let scheduledFromHistory = 0;
-  const liveIoLabels: string[] = [];
-
-  const forbiddenLiveHooks: ReplayHooks = {
-    onScheduleActivity: (name, recorded) => {
-      if (recorded.activity !== name) {
-        forbiddenLiveIo += 1;
-        liveIoLabels.push(`schedule_mismatch:${name}`);
-        throw new Error(`Replay scheduled ${name} with mismatched history`);
-      }
-      scheduledFromHistory += 1;
-      return recorded;
-    },
-    onForbiddenLiveIo: (label) => {
-      forbiddenLiveIo += 1;
-      liveIoLabels.push(label);
-    },
-  };
-
-  const replayed = replayMissionWorkflowHistory(history, forbiddenLiveHooks);
+  const firstHooks = createHistoryOnlyReplayHooks();
+  const replayed = replayMissionWorkflowHistory(history, firstHooks.hooks);
+  const firstSummary = firstHooks.summary();
   details.push(
-    `History replay outcome=${replayed.outcome} applyCount=${replayed.applyAttemptCount} scheduledFromHistory=${scheduledFromHistory}`,
+    `History replay outcome=${replayed.outcome} applyCount=${replayed.applyAttemptCount} scheduledFromHistory=${firstSummary.scheduledFromHistory}`,
   );
+
+  // Second replay — still history-only; ledger must not grow.
+  const secondHooks = createHistoryOnlyReplayHooks();
+  const secondReplay = replayMissionWorkflowHistory(history, secondHooks.hooks);
+  const secondSummary = secondHooks.summary();
+  if (
+    secondReplay.outcome === "VERIFIED" &&
+    secondSummary.scheduledFromHistory === 3 &&
+    secondSummary.forbiddenLiveIo === 0 &&
+    secondSummary.externalEffects === "NONE"
+  ) {
+    details.push(
+      "Second history replay → VERIFIED scheduledFromHistory=3 forbiddenLiveIo=0 (honesty NOT_WIRED/NONE)",
+    );
+  } else {
+    details.push(
+      `Second replay unexpectedly ${JSON.stringify({ secondReplay, secondSummary })}`,
+    );
+  }
+
+  const emptyFail = replayEmptyHistoryFailsClosed();
+  if (
+    emptyFail.outcome.outcome === "FAILED" &&
+    emptyFail.summary.forbiddenLiveIo > 0 &&
+    emptyFail.summary.liveProviderWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "Empty history fail-closed → FAILED without inventing live I/O success",
+    );
+  } else {
+    details.push(
+      `Empty history unexpectedly ${JSON.stringify(emptyFail)}`,
+    );
+  }
 
   const rehydrateSvc = openService(stateDir);
   const decisionAfter = await rehydrateSvc.getDecision(operationId);
@@ -319,9 +221,9 @@ export async function proofReplayHistoricalNoRepeatIo(
   details.push(
     `Post-replay durable outcome=${decisionAfter?.outcome ?? "missing"} applyCount=${applyAfterReplay} opProviders=${thisOpAfter} ledgerDelta=${providersAfterReplay.length - providersBeforeReplay.length}`,
   );
-  if (forbiddenLiveIo > 0) {
+  if (firstSummary.forbiddenLiveIo > 0) {
     details.push(
-      `Forbidden live I/O during replay count=${forbiddenLiveIo} labels=${liveIoLabels.join(",")}`,
+      `Forbidden live I/O during replay count=${firstSummary.forbiddenLiveIo} labels=${firstSummary.liveIoLabels.join(",")}`,
     );
   } else {
     details.push(
@@ -340,8 +242,15 @@ export async function proofReplayHistoricalNoRepeatIo(
     replayed.outcome === "VERIFIED" &&
     replayed.applyAttemptCount === 1 &&
     replayed.operationId === operationId &&
-    scheduledFromHistory === 3 &&
-    forbiddenLiveIo === 0 &&
+    firstSummary.scheduledFromHistory === 3 &&
+    firstSummary.forbiddenLiveIo === 0 &&
+    firstSummary.externalEffects === "NONE" &&
+    firstSummary.liveProviderWiring === "NOT_WIRED" &&
+    secondReplay.outcome === "VERIFIED" &&
+    secondSummary.scheduledFromHistory === 3 &&
+    secondSummary.forbiddenLiveIo === 0 &&
+    emptyFail.outcome.outcome === "FAILED" &&
+    emptyFail.summary.forbiddenLiveIo > 0 &&
     applyBeforeReplay === 1 &&
     applyAfterReplay === 1 &&
     thisOpBefore === 1 &&
