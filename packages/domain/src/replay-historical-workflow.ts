@@ -130,6 +130,21 @@ export function replayMissionWorkflowHistory(
         operationId: "mismatch",
       };
     }
+    // Edge — blank enqueue workflowId must fail closed (no invented identity).
+    if (
+      recorded.activity === "enqueue" &&
+      (!recorded.workflowId || recorded.workflowId.trim().length === 0)
+    ) {
+      hooks.onForbiddenLiveIo("history_enqueue_workflowId_blank");
+      return {
+        activity: "verify",
+        phase: "succeeded",
+        outcome: "VERIFIED",
+        applyAttemptCount: -1,
+        matched: false,
+        operationId: "mismatch",
+      };
+    }
     return hooks.onScheduleActivity(expected, recorded);
   };
 
