@@ -312,6 +312,45 @@ export function evaluateChatGptAdsAccess(
   };
 }
 
+/**
+ * Fixture Ads production-bind boundary (T-X034).
+ * Access is evaluated first; the production binder is invoked only when allowed.
+ * Instrumented `productionBind` call counts prove a refused test project never
+ * reaches a production bind/mutate adapter. External effects: NONE.
+ * Fixture ACCEPTED ≠ sandbox/prod VERIFIED. Distinct from T-US-012 (Google Ads).
+ */
+export type GuardedChatGptAdsProductionBindResult = {
+  bound: boolean;
+  decision: ChatGptAdsAccessDecision;
+  /** How many times the production binder was invoked (0 when refused). */
+  productionBindCallCount: number;
+  externalEffects: "NONE";
+};
+
+export function attemptGuardedChatGptAdsProductionBind(input: {
+  access: ChatGptAdsAccessInput;
+  projectId: string;
+  /** Fake/live adapter hook — must only run when access.allowed. */
+  productionBind: (projectId: string) => void;
+}): GuardedChatGptAdsProductionBindResult {
+  const decision = evaluateChatGptAdsAccess(input.access);
+  if (!decision.allowed) {
+    return {
+      bound: false,
+      decision,
+      productionBindCallCount: 0,
+      externalEffects: "NONE",
+    };
+  }
+  input.productionBind(input.projectId);
+  return {
+    bound: true,
+    decision,
+    productionBindCallCount: 1,
+    externalEffects: "NONE",
+  };
+}
+
 export type AnalyticsReadSnapshot = {
   snapshotId: string;
   source: "gsc" | "ga4";

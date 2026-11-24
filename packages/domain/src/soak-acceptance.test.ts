@@ -1459,4 +1459,13 @@ describe("soak-acceptance domain", () => {
     ).toEqual(["T-X067"]);
   });
 
+  it("maps T-X034 to ADS_TEST_PROJECT_PRODUCTION_BLOCKED only", () => {
+    expect(expectedProofsForFixtureCase("T-X034")).toEqual([
+      SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED),
+    ).toEqual(["T-X034"]);
+  });
+
 });

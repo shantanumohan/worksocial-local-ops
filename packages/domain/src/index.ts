@@ -467,6 +467,7 @@ export {
   interpretGa4DebugValidation,
   classifyGscDemand,
   evaluateChatGptAdsAccess,
+  attemptGuardedChatGptAdsProductionBind,
   ANALYTICS_RELATED_CASE_IDS,
   type AnalyticsEnvironmentValue,
   type Ga4PropertyKindValue,
@@ -478,6 +479,7 @@ export {
   type GscDemandClassification,
   type ChatGptAdsAccessInput,
   type ChatGptAdsAccessDecision,
+  type GuardedChatGptAdsProductionBindResult,
   type AnalyticsReadSnapshot,
 } from "./analytics.js";
 export {

@@ -200,6 +200,8 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-US-012** maps only to `GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED` (Google Ads TEST vs PRODUCTION credential/customer separation; LIVE NOT_WIRED; not live VERIFIED).
 
+**T-X034** maps only to `ADS_TEST_PROJECT_PRODUCTION_BLOCKED` (test-only/sandbox Ads project cannot bind production/LIVE; bind call count 0; distinct from T-US-012; not live VERIFIED).
+
 **T-US-015** maps only to `CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY` (Claude Code runtime + test API EVAL_ONLY connect; readiness separated; live NOT_WIRED; not live VERIFIED).
 
 **T-US-017** maps only to `CONNECT_GEMINI_EVALUATION_EVAL_ONLY` (Gemini Evaluation EVAL_ONLY connect; data-use decision, broker credential, model snapshot, test mode; live NOT_WIRED; cannot publish/respond; not live VERIFIED).
