@@ -35,6 +35,13 @@ type Matrix = {
     notRun?: number;
     accepted?: number;
   };
+  summary?: {
+    total?: number;
+    byStatus?: Record<string, number>;
+    blockingOpen?: number;
+    generatedAt?: string;
+    source?: string;
+  };
   sourceDocument?: string;
 };
 
@@ -100,6 +107,7 @@ if (matrixIds.length !== new Set(matrixIds).size) {
 
 let acceptedCount = 0;
 let notRunCount = 0;
+const caseStatusCounts: Record<string, number> = {};
 
 for (const c of matrix.cases) {
   if (c.status.toUpperCase() === "VERIFIED") {
@@ -110,6 +118,7 @@ for (const c of matrix.cases) {
   if (!ALLOWED_STATUSES.has(c.status)) {
     errors.push(`${c.id} status must be NOT_RUN|ACCEPTED|BLOCKED|FAILED, got ${c.status}`);
   }
+  caseStatusCounts[c.status] = (caseStatusCounts[c.status] ?? 0) + 1;
   if (c.status === "NOT_RUN") notRunCount += 1;
   if (c.status === "ACCEPTED") {
     acceptedCount += 1;
@@ -198,6 +207,44 @@ if (matrix.totals.notRun !== undefined && matrix.totals.notRun !== notRunCount) 
 }
 if (matrix.totals.accepted !== undefined && matrix.totals.accepted !== acceptedCount) {
   errors.push(`totals.accepted expected ${acceptedCount}, got ${matrix.totals.accepted}`);
+}
+
+// summary.byStatus must match the full cases[] status map — ACCEPTED ≠ VERIFIED
+if (matrix.summary?.byStatus) {
+  const summaryKeys = new Set(Object.keys(matrix.summary.byStatus));
+  const caseKeys = new Set(Object.keys(caseStatusCounts));
+  for (const status of new Set([...summaryKeys, ...caseKeys])) {
+    if (status === "VERIFIED") {
+      const verifiedCount = matrix.summary.byStatus.VERIFIED ?? 0;
+      if (verifiedCount !== 0 || (caseStatusCounts.VERIFIED ?? 0) !== 0) {
+        errors.push(
+          `summary.byStatus.VERIFIED must be 0 — ACCEPTED ≠ VERIFIED; never silently VERIFIED for live`,
+        );
+      }
+      continue;
+    }
+    const expected = caseStatusCounts[status] ?? 0;
+    const actual = matrix.summary.byStatus[status] ?? 0;
+    if (expected !== actual) {
+      errors.push(
+        `summary.byStatus.${status} expected ${expected}, got ${actual} (drift vs cases[])`,
+      );
+    }
+  }
+  // Zero-count allowed statuses may be omitted from summary; non-zero must match.
+  // Unexpected summary keys outside ALLOWED_STATUSES ∪ {VERIFIED} are honesty drift.
+  for (const status of summaryKeys) {
+    if (!ALLOWED_STATUSES.has(status) && status !== "VERIFIED") {
+      errors.push(
+        `summary.byStatus has unexpected status key ${status} (allowed: ${[...ALLOWED_STATUSES].join("|")})`,
+      );
+    }
+  }
+}
+if (matrix.summary?.total !== undefined && matrix.summary.total !== matrix.cases.length) {
+  errors.push(
+    `summary.total expected ${matrix.cases.length}, got ${matrix.summary.total}`,
+  );
 }
 
 const adsGateIds = ["T-F07", "T-US-013", "T-US-014"];
