@@ -353,6 +353,34 @@ export async function proofIdempotencyKeyPayloadMismatch(
   );
   if (!suffixConflict) passed = false;
 
+  const bomConflict = await expectMismatchConflict(
+    "acceptPending BOM-prefixed payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `\ufeff${digestA}`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!bomConflict) passed = false;
+
+  const doubleSpaceConflict = await expectMismatchConflict(
+    "acceptPending double-space-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}  `,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!doubleSpaceConflict) passed = false;
+
   // Concurrent multi-alt digest-B barrage — all Conflict; no orphans; applyCount=1.
   const barrageN = 8;
   const barrageIds = Array.from(
@@ -623,6 +651,53 @@ export async function proofIdempotencyKeyPayloadMismatch(
     );
   }
 
+  // Post-VERIFIED concurrent digest-B barrage — all Conflict; outcome stays VERIFIED.
+  const verifiedBarrageN = 6;
+  const verifiedBarrageIds = Array.from(
+    { length: verifiedBarrageN },
+    (_, i) => `${operationId}-vbarrage-${i}`,
+  );
+  const verifiedBarrageResults = await Promise.all(
+    verifiedBarrageIds.map((opId) =>
+      accept(svc, {
+        operationId: opId,
+        bizKey,
+        digest: digestB,
+        idem: `${idem}-vbarrage-${opId.slice(-8)}`,
+        nowIso,
+      })
+        .then(() => ({ ok: false as const }))
+        .catch((err) => ({
+          ok: isIdempotencyPayloadMismatchError(err) as boolean,
+        })),
+    ),
+  );
+  const verifiedBarrageAllConflict = verifiedBarrageResults.every((r) => r.ok);
+  const verifiedBarrageOrphans = (
+    await Promise.all(verifiedBarrageIds.map((id) => svc.stores.effects.get(id)))
+  ).some((e) => e != null);
+  const afterVerifiedBarrage = await svc.stores.fakeProvider.getByBusinessKey(
+    bizKey,
+  );
+  const decisionAfterVerifiedBarrage = await svc.stores.decisions.get(
+    operationId,
+  );
+  if (
+    !verifiedBarrageAllConflict ||
+    verifiedBarrageOrphans ||
+    afterVerifiedBarrage?.applyCount !== 1 ||
+    decisionAfterVerifiedBarrage?.outcome !== "VERIFIED"
+  ) {
+    passed = false;
+    details.push(
+      `Post-VERIFIED concurrent barrage failed: conflicts=${verifiedBarrageResults.filter((r) => r.ok).length}/${verifiedBarrageN} orphans=${verifiedBarrageOrphans} applyCount=${afterVerifiedBarrage?.applyCount} outcome=${decisionAfterVerifiedBarrage?.outcome}`,
+    );
+  } else {
+    details.push(
+      `Post-VERIFIED concurrent ${verifiedBarrageN}-way digest-B accepts → all Conflict; no orphans; outcome stays VERIFIED applyCount=1`,
+    );
+  }
+
   // Receipt integrity: no digest-B observations recorded after Conflicts.
   const receipts = await svc.stores.receipts.listForOperation(operationId);
   const receiptDigestB = receipts.some((r) => r.observedDigest === digestB);
@@ -706,6 +781,39 @@ export async function proofIdempotencyKeyPayloadMismatch(
   }
   if (!wrongVerifyOk) passed = false;
 
+  // Post-FAILED acceptPending with digest-B still Conflict; applyCount stays 1.
+  const postFailedConflict = await expectMismatchConflict(
+    "acceptPending after FAILED + different payloadDigest",
+    details,
+    () =>
+      accept(svc, {
+        operationId: wrongVerifyOp,
+        bizKey: wrongVerifyBiz,
+        digest: digestB,
+        idem: `${idem}-wrong-verify-b`,
+        nowIso,
+      }),
+  );
+  const afterPostFailed = await svc.stores.fakeProvider.getByBusinessKey(
+    wrongVerifyBiz,
+  );
+  const decisionPostFailed = await svc.stores.decisions.get(wrongVerifyOp);
+  let postFailedOk =
+    postFailedConflict &&
+    afterPostFailed?.applyCount === 1 &&
+    afterPostFailed.payloadDigest === digestA &&
+    decisionPostFailed?.outcome === "FAILED";
+  if (!postFailedOk) {
+    passed = false;
+    details.push(
+      `Post-FAILED digest-B refuse unexpected: conflict=${postFailedConflict} applyCount=${afterPostFailed?.applyCount} outcome=${decisionPostFailed?.outcome}`,
+    );
+  } else {
+    details.push(
+      "Post-FAILED digest-B acceptPending → Conflict; applyCount=1; outcome stays FAILED",
+    );
+  }
+
   details.push(
     `liveProviderSuccessClaimed=false liveProviderWiring=${IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING} externalEffects=NONE ACCEPTED≠VERIFIED chatgptAdsConnectSoftSkip=${IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP.join(",")} ACCESS_BLOCKED`,
   );
@@ -732,6 +840,8 @@ export async function proofIdempotencyKeyPayloadMismatch(
       zwspConflict &&
       prefixConflict &&
       suffixConflict &&
+      bomConflict &&
+      doubleSpaceConflict &&
       barrageAllConflict &&
       !barrageOrphans &&
       sameDigestAllOk &&
@@ -739,7 +849,10 @@ export async function proofIdempotencyKeyPayloadMismatch(
       !mixOrphans &&
       bizKeyMismatchOk &&
       verifiedPathConflict &&
-      wrongVerifyOk,
+      verifiedBarrageAllConflict &&
+      !verifiedBarrageOrphans &&
+      wrongVerifyOk &&
+      postFailedOk,
     details,
     applyAttemptCount: afterVerified?.applyCount ?? first.applyAttemptCount,
     operationId,

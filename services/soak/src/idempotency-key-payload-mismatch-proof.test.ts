@@ -104,10 +104,35 @@ describe("proofIdempotencyKeyPayloadMismatch (T-X022)", () => {
       ),
     ).toBe(true);
     expect(
+      proof.details.some((d) =>
+        d.includes("BOM-prefixed payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("double-space-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
       proof.details.some(
         (d) =>
           d.includes("Interleaved concurrent mix") &&
           d.includes("applyCount=1"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Post-VERIFIED concurrent") &&
+          d.includes("all Conflict") &&
+          d.includes("VERIFIED applyCount=1"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Post-FAILED digest-B acceptPending → Conflict") &&
+          d.includes("FAILED"),
       ),
     ).toBe(true);
     expect(
