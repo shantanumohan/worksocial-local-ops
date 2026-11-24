@@ -35,6 +35,8 @@ export type PublicDiscoveryUnavailableReasonValue =
 
 export const PublicDiscoveryDecisionCode = {
   HOST_ONLINE_AVAILABLE: "HOST_ONLINE_AVAILABLE",
+  /** ONLINE but no measured prior success — UNAVAILABLE, never invented. */
+  HOST_ONLINE_NO_PRIOR_UNAVAILABLE: "HOST_ONLINE_NO_PRIOR_UNAVAILABLE",
   HOST_OFFLINE_UNAVAILABLE: "HOST_OFFLINE_UNAVAILABLE",
   CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED:
     "CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED",
@@ -55,6 +57,8 @@ export type PublicDiscoveryObservation = {
   inventedDiscoveryRank: number | null;
   hostLiveness: HostDiscoveryLivenessValue;
   chatgptAdsAccess: "ACCESS_BLOCKED";
+  /** Live public-discovery wiring is never claimed from this fixture path. */
+  liveProviderWiring: "NOT_WIRED";
   externalEffects: "NONE";
   code: PublicDiscoveryDecisionCodeValue;
   reasons: string[];
@@ -83,6 +87,7 @@ export function evaluateHostOfflinePublicDiscovery(input: {
     surface,
     observedAtIso: input.nowIso,
     chatgptAdsAccess: "ACCESS_BLOCKED" as const,
+    liveProviderWiring: "NOT_WIRED" as const,
     externalEffects: "NONE" as const,
     hostLiveness: input.hostLiveness,
   };
@@ -94,6 +99,7 @@ export function evaluateHostOfflinePublicDiscovery(input: {
       ...base,
       availability: PublicDiscoveryAvailability.UNAVAILABLE,
       unavailableReason: PublicDiscoveryUnavailableReason.HOST_OFFLINE,
+      // Prior success must never invent coverage or ranks while offline.
       activeCoverageClaimed: false,
       inventedDiscoveryRank: null,
       code: claimedAvailable
@@ -103,36 +109,45 @@ export function evaluateHostOfflinePublicDiscovery(input: {
         ? [
             "Host OFFLINE — claimed AVAILABLE refused; honest UNAVAILABLE/HOST_OFFLINE",
             "activeCoverageClaimed=false inventedDiscoveryRank=null",
-            "chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+            "chatgptAdsAccess=ACCESS_BLOCKED liveProviderWiring=NOT_WIRED externalEffects=NONE",
           ]
         : [
             "Host OFFLINE — public discovery UNAVAILABLE (HOST_OFFLINE)",
             "No pretend active coverage; no invented discovery rank",
-            "chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+            "Prior success ignored while offline — never invent AVAILABLE",
+            "chatgptAdsAccess=ACCESS_BLOCKED liveProviderWiring=NOT_WIRED externalEffects=NONE",
           ],
     };
   }
 
   // ONLINE — measured availability only when a prior success exists; still never Ads.
   const hasPriorSuccess = Boolean(input.lastSuccessfulDiscoveryAtIso);
+  if (hasPriorSuccess) {
+    return {
+      ...base,
+      availability: PublicDiscoveryAvailability.AVAILABLE,
+      unavailableReason: null,
+      activeCoverageClaimed: true,
+      inventedDiscoveryRank: null,
+      code: PublicDiscoveryDecisionCode.HOST_ONLINE_AVAILABLE,
+      reasons: [
+        "Host ONLINE with prior discovery success — AVAILABLE allowed",
+        "chatgptAdsAccess=ACCESS_BLOCKED liveProviderWiring=NOT_WIRED externalEffects=NONE",
+      ],
+    };
+  }
+
   return {
     ...base,
-    availability: hasPriorSuccess
-      ? PublicDiscoveryAvailability.AVAILABLE
-      : PublicDiscoveryAvailability.UNAVAILABLE,
+    availability: PublicDiscoveryAvailability.UNAVAILABLE,
     unavailableReason: null,
-    activeCoverageClaimed: hasPriorSuccess,
+    activeCoverageClaimed: false,
     inventedDiscoveryRank: null,
-    code: PublicDiscoveryDecisionCode.HOST_ONLINE_AVAILABLE,
-    reasons: hasPriorSuccess
-      ? [
-          "Host ONLINE with prior discovery success — AVAILABLE allowed",
-          "chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
-        ]
-      : [
-          "Host ONLINE but no prior discovery success — UNAVAILABLE (not invented)",
-          "chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
-        ],
+    code: PublicDiscoveryDecisionCode.HOST_ONLINE_NO_PRIOR_UNAVAILABLE,
+    reasons: [
+      "Host ONLINE but no prior discovery success — UNAVAILABLE (not invented)",
+      "chatgptAdsAccess=ACCESS_BLOCKED liveProviderWiring=NOT_WIRED externalEffects=NONE",
+    ],
   };
 }
 

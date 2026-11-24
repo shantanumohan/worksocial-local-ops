@@ -989,7 +989,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X064** is fixture ACCEPTED only via the SSRF redirect / DNS rebind blocked-every-hop proof (`SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP`) — each hop must be allowlisted https with public resolved addresses; private redirects and DNS rebind denied. Fixture hop chains only (no live DNS/fetch). Not sandbox/prod VERIFIED.
 
-**T-X071** is fixture ACCEPTED only via the host-offline public discovery honest unavailability proof (`HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE`) — offline host → `UNAVAILABLE`/`HOST_OFFLINE`; claimed `AVAILABLE` refused; no inventing ranks or active coverage. Distinct from T-X001 host-sleep monitoring coverage gaps. ChatGPT Ads stays ACCESS_BLOCKED. Not sandbox/prod VERIFIED.
+**T-X071** is fixture ACCEPTED only via the host-offline public discovery honest unavailability proof (`HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE`) — offline host → `UNAVAILABLE`/`HOST_OFFLINE` on all public-discovery surfaces (prior success ignored); claimed `AVAILABLE` refused; ONLINE without prior success → `HOST_ONLINE_NO_PRIOR_UNAVAILABLE` (never invent ranks or active coverage); live wiring stays `NOT_WIRED`. Distinct from T-X001 host-sleep monitoring coverage gaps. ChatGPT Ads stays ACCESS_BLOCKED. Not sandbox/prod VERIFIED.
 
 **T-X067** is fixture ACCEPTED only via the incompatible workflow upgrade blocked-or-retained proof (`INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED`) — in-flight RUNNING/APPLYING instances refuse breaking / cross-epoch definition upgrades and retain the compatible pin; compatible same-epoch upgrades may apply. Not sandbox/prod VERIFIED.
 

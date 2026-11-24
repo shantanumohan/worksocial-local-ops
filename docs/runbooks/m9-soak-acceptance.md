@@ -313,4 +313,4 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X064**, **T-X071** maps only to `SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP` (redirect + DNS rebind blocked every hop; fixture only; not live VERIFIED).
 
-**T-X071** maps only to `HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE` (offline host → honest UNAVAILABLE/HOST_OFFLINE; not live VERIFIED).
+**T-X071** maps only to `HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE` (offline host → honest UNAVAILABLE/HOST_OFFLINE across surfaces; ONLINE without prior → HOST_ONLINE_NO_PRIOR_UNAVAILABLE; live NOT_WIRED; not live VERIFIED).

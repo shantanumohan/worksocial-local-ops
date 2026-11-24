@@ -3627,7 +3627,7 @@
       "caseId": "T-X071",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X071 (Local host offline public discovery — honest unavailability)\nproof=host_offline_public_discovery_unavailable applyCount=1 :: Host ONLINE + prior success → AVAILABLE; chatgptAdsAccess=ACCESS_BLOCKED | Host OFFLINE → UNAVAILABLE/HOST_OFFLINE; activeCoverageClaimed=false; no invented rank | Claimed AVAILABLE while OFFLINE → CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X071 (Local host offline public discovery — honest unavailability)\nproof=host_offline_public_discovery_unavailable applyCount=1 :: Host ONLINE + prior success → AVAILABLE; chatgptAdsAccess=ACCESS_BLOCKED; liveProviderWiring=NOT_WIRED | Host ONLINE without prior success → UNAVAILABLE (HOST_ONLINE_NO_PRIOR_UNAVAILABLE); no invented rank | Host OFFLINE → UNAVAILABLE/HOST_OFFLINE on geo_presence+chatgpt_business+public_visibility; prior success ignored; activeCoverageClaimed=false; no invented rank | Claimed AVAILABLE while OFFLINE → CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED; liveProviderWiring=NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "host_offline_public_discovery_unavailable"
       ],
@@ -5856,7 +5856,7 @@
       "caseId": "T-X071",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X071 (Local host offline public discovery — honest unavailability)\nproof=host_offline_public_discovery_unavailable applyCount=1 :: Host ONLINE + prior success → AVAILABLE; chatgptAdsAccess=ACCESS_BLOCKED | Host OFFLINE → UNAVAILABLE/HOST_OFFLINE; activeCoverageClaimed=false; no invented rank | Claimed AVAILABLE while OFFLINE → CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X071 (Local host offline public discovery — honest unavailability)\nproof=host_offline_public_discovery_unavailable applyCount=1 :: Host ONLINE + prior success → AVAILABLE; chatgptAdsAccess=ACCESS_BLOCKED; liveProviderWiring=NOT_WIRED | Host ONLINE without prior success → UNAVAILABLE (HOST_ONLINE_NO_PRIOR_UNAVAILABLE); no invented rank | Host OFFLINE → UNAVAILABLE/HOST_OFFLINE on geo_presence+chatgpt_business+public_visibility; prior success ignored; activeCoverageClaimed=false; no invented rank | Claimed AVAILABLE while OFFLINE → CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED; liveProviderWiring=NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "host_offline_public_discovery_unavailable"
       ],
