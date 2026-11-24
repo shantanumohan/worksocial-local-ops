@@ -25,6 +25,7 @@ import {
   replayEmptyHistoryFailsClosed,
   replayMissionWorkflowHistory,
   replayPartialHistoryFailsClosed,
+  replayTwoEventHistoryFailsClosed,
   type ReplayActivityResult,
   type ReplayWorkflowHistory,
   type SoakProofRecord,
@@ -227,6 +228,21 @@ export async function proofReplayHistoricalNoRepeatIo(
     );
   }
 
+  const twoEventFail = replayTwoEventHistoryFailsClosed();
+  if (
+    twoEventFail.outcome.outcome === "FAILED" &&
+    twoEventFail.summary.forbiddenLiveIo > 0 &&
+    twoEventFail.summary.liveIoLabels.some((l) => l.includes("history_mismatch"))
+  ) {
+    details.push(
+      "Two-event truncation fail-closed → FAILED (missing verify not invented)",
+    );
+  } else {
+    details.push(
+      `Two-event truncation unexpectedly ${JSON.stringify(twoEventFail)}`,
+    );
+  }
+
   // Codex harden — missing terminal / claim-op drift refuse after full events.
   const missingTerminalHooks = createHistoryOnlyReplayHooks();
   const missingTerminal = replayMissionWorkflowHistory(
@@ -267,6 +283,58 @@ export async function proofReplayHistoricalNoRepeatIo(
     );
   } else {
     details.push("Claim/terminal cross-bind unexpectedly passed");
+  }
+
+  // Edge — claim applyAttemptCount drift + negative terminal apply refuse.
+  const applyDriftHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) =>
+      e.activity === "claimAndAccept"
+        ? { ...e, applyAttemptCount: e.applyAttemptCount + 5 }
+        : e,
+    ),
+    terminal: { ...history.terminal },
+  };
+  const applyDriftHooks = createHistoryOnlyReplayHooks();
+  const applyDriftReplay = replayMissionWorkflowHistory(
+    applyDriftHistory,
+    applyDriftHooks.hooks,
+  );
+  const applyDriftSummary = applyDriftHooks.summary();
+  if (
+    applyDriftReplay.outcome === "FAILED" &&
+    applyDriftSummary.liveIoLabels.some((l) =>
+      l.includes("history_activity_terminal_op_mismatch"),
+    )
+  ) {
+    details.push(
+      "Claim applyAttemptCount drift → FAILED (edge apply cross-bind)",
+    );
+  } else {
+    details.push("Claim applyAttemptCount drift unexpectedly passed");
+  }
+
+  const negTerminalHooks = createHistoryOnlyReplayHooks();
+  const negTerminal = replayMissionWorkflowHistory(
+    {
+      events: history.events,
+      terminal: {
+        outcome: "VERIFIED",
+        applyAttemptCount: -1,
+        operationId,
+      },
+    },
+    negTerminalHooks.hooks,
+  );
+  const negSummary = negTerminalHooks.summary();
+  if (
+    negTerminal.outcome === "FAILED" &&
+    negSummary.liveIoLabels.some((l) =>
+      l.includes("history_terminal_missing_or_incomplete"),
+    )
+  ) {
+    details.push("Negative terminal applyAttemptCount → FAILED (edge)");
+  } else {
+    details.push("Negative terminal apply unexpectedly passed");
   }
 
   const rehydrateSvc = openService(stateDir);
@@ -313,8 +381,12 @@ export async function proofReplayHistoricalNoRepeatIo(
     emptyFail.summary.forbiddenLiveIo > 0 &&
     partialFail.outcome.outcome === "FAILED" &&
     partialFail.summary.forbiddenLiveIo > 0 &&
+    twoEventFail.outcome.outcome === "FAILED" &&
+    twoEventFail.summary.forbiddenLiveIo > 0 &&
     missingTerminal.outcome === "FAILED" &&
     driftReplay.outcome === "FAILED" &&
+    applyDriftReplay.outcome === "FAILED" &&
+    negTerminal.outcome === "FAILED" &&
     applyBeforeReplay === 1 &&
     applyAfterReplay === 1 &&
     thisOpBefore === 1 &&

@@ -1729,7 +1729,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X022 fixture ACCEPTED via idempotency_key_payload_mismatch only — not live VERIFIED",
       "T-X065 fixture ACCEPTED via worker_browser_auth_state_os_denied only — not live VERIFIED",
       "T-X063 fixture ACCEPTED via indirect_prompt_injection_exfil_denied only — not live VERIFIED",
-      "T-X013 fixture ACCEPTED via replay_historical_no_repeat_io only — second replay + empty/partial fail-closed + terminal cross-bind; not live VERIFIED",
+      "T-X013 fixture ACCEPTED via replay_historical_no_repeat_io only — second replay + empty/partial/two-event fail-closed + opId/apply cross-bind; not live VERIFIED",
       "T-X027 fixture ACCEPTED via unknown_usage_cancel_holds_residual only — not live VERIFIED",
       "T-X004 fixture ACCEPTED via disk_full_evidence_no_partial_completed only — not live VERIFIED",
       "T-X043 fixture ACCEPTED via optimization_breaks_cta_journey_fails only — href-only / empty-steps / live NOT_WIRED — not live VERIFIED",
