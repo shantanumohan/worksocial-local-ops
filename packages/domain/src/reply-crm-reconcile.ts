@@ -5,7 +5,8 @@
  * write failure must reconcile/retry CRM only. The outbound must stay
  * retain_sent — never re-queue or re-send the same reply. Distinct from
  * thank-you-without-CRM (T-US-040/T-X049) and unknown-remote reconcile
- * (T-X020). External effects: NONE.
+ * (T-X020). Live CRM wiring stays NOT_WIRED. External effects: NONE.
+ * ChatGPT Ads ACCESS_BLOCKED. Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 
 import {
@@ -23,6 +24,11 @@ import {
   type ReconciliationResult,
 } from "./monitoring.js";
 
+/** Live CRM provider wiring — always NOT_WIRED for fixture proofs. */
+export const REPLY_CRM_LIVE_WIRING = "NOT_WIRED" as const;
+
+export type ReplyCrmLiveWiring = typeof REPLY_CRM_LIVE_WIRING;
+
 export type CrmAttemptOutcome =
   | { ok: true; crmRecordId: string }
   | { ok: false; reason: string };
@@ -31,6 +37,7 @@ export type ReplyCrmReconcileCode =
   | "REPLY_NOT_SENT"
   | "CRM_OK"
   | "CRM_RECONCILE_NO_RESEND"
+  | "LIVE_CRM_CLAIM_REFUSED"
   | null;
 
 export type ReplyCrmReconcileDecision = {
@@ -42,10 +49,30 @@ export type ReplyCrmReconcileDecision = {
   reasons: string[];
   /** Present when CRM failed and reconcile was evaluated. */
   reconcile: ReconciliationResult | null;
+  externalEffects: "NONE";
+  liveCrmWiring: ReplyCrmLiveWiring;
+  liveProviderSuccessClaimed: false;
+  chatgptAdsAccess: "ACCESS_BLOCKED";
 };
+
+function baseHonesty(): Pick<
+  ReplyCrmReconcileDecision,
+  | "externalEffects"
+  | "liveCrmWiring"
+  | "liveProviderSuccessClaimed"
+  | "chatgptAdsAccess"
+> {
+  return {
+    externalEffects: "NONE",
+    liveCrmWiring: REPLY_CRM_LIVE_WIRING,
+    liveProviderSuccessClaimed: false,
+    chatgptAdsAccess: "ACCESS_BLOCKED",
+  };
+}
 
 /**
  * Evaluate post-send CRM failure: retain SENT reply; reconcile CRM; forbid resend.
+ * Live-verified / live-CRM-wire claims are refused (NOT_WIRED).
  */
 export function evaluateReplySentCrmFailure(input: {
   message: MessageRecord;
@@ -55,7 +82,58 @@ export function evaluateReplySentCrmFailure(input: {
   /** Remote receipts observed during reconcile (may be empty on failure). */
   crmReceipts?: readonly CanaryRemoteReceipt[];
   expectedModuleId?: string;
+  /** Forbidden — fixture proofs never claim live VERIFIED. */
+  claimLiveVerified?: boolean;
+  /** Forbidden — live CRM provider stays NOT_WIRED. */
+  requestLiveCrmWire?: boolean;
 }): ReplyCrmReconcileDecision {
+  if (input.claimLiveVerified === true) {
+    return {
+      allowed: false,
+      code: "LIVE_CRM_CLAIM_REFUSED",
+      replyAction: "none",
+      crmAction: "none",
+      resendAllowed: false,
+      reasons: [
+        "Live VERIFIED reply+CRM claims are forbidden — fixture ACCEPTED only (T-X054)",
+        "liveCrmWiring=NOT_WIRED ACCEPTED≠VERIFIED",
+      ],
+      reconcile: null,
+      ...baseHonesty(),
+    };
+  }
+  if (input.requestLiveCrmWire === true) {
+    return {
+      allowed: false,
+      code: "LIVE_CRM_CLAIM_REFUSED",
+      replyAction: "none",
+      crmAction: "none",
+      resendAllowed: false,
+      reasons: [
+        "Live CRM provider remains NOT_WIRED — refuse live CRM wiring (T-X054)",
+        "chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+      ],
+      reconcile: null,
+      ...baseHonesty(),
+    };
+  }
+  // Trusted fixture boundary — never assert fixture honesty on non-fixture messages.
+  if (input.message.fixtureOnly !== true) {
+    return {
+      allowed: false,
+      code: "LIVE_CRM_CLAIM_REFUSED",
+      replyAction: "none",
+      crmAction: "none",
+      resendAllowed: false,
+      reasons: [
+        "Non-fixture message refused — T-X054 honesty fields are fixture-only (fixtureOnly required)",
+        "liveCrmWiring=NOT_WIRED ACCEPTED≠VERIFIED externalEffects=NONE",
+      ],
+      reconcile: null,
+      ...baseHonesty(),
+    };
+  }
+
   if (input.message.direction !== MessageDirection.OUTBOUND) {
     return {
       allowed: false,
@@ -65,6 +143,7 @@ export function evaluateReplySentCrmFailure(input: {
       resendAllowed: false,
       reasons: ["Only outbound replies participate in reply+CRM reconcile"],
       reconcile: null,
+      ...baseHonesty(),
     };
   }
   if (
@@ -81,6 +160,7 @@ export function evaluateReplySentCrmFailure(input: {
         `Reply must already be SENT/DELIVERED for T-X054; current=${input.message.sendStatus}`,
       ],
       reconcile: null,
+      ...baseHonesty(),
     };
   }
 
@@ -93,8 +173,11 @@ export function evaluateReplySentCrmFailure(input: {
       resendAllowed: false,
       reasons: [
         `CRM recorded (${input.crmAttempt.crmRecordId}); outbound remains ${input.message.sendStatus}; resend forbidden`,
+        "liveCrmWiring=NOT_WIRED",
+        "ACCEPTED≠VERIFIED",
       ],
       reconcile: null,
+      ...baseHonesty(),
     };
   }
 
@@ -120,9 +203,12 @@ export function evaluateReplySentCrmFailure(input: {
         ? [
             `CRM reconcile status=${reconcile.status} verdict=${reconcile.verdict} blocksRetry=${reconcile.blocksRetry}`,
           ]
-        : []),
+        : ["CRM fail without intent — still retain_sent; resend forbidden"]),
+      "liveCrmWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED",
+      "ACCEPTED≠VERIFIED",
     ],
     reconcile,
+    ...baseHonesty(),
   };
 }
 

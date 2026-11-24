@@ -951,8 +951,10 @@ export {
   assertOutboundResendSuppressed,
   evaluateReplySentCrmFailure,
   isMissingRemoteReconcile,
+  REPLY_CRM_LIVE_WIRING,
   REPLY_CRM_RECONCILE_RELATED_CASE_IDS,
   type CrmAttemptOutcome,
+  type ReplyCrmLiveWiring,
   type ReplyCrmReconcileCode,
   type ReplyCrmReconcileDecision,
 } from "./reply-crm-reconcile.js";
