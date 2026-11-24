@@ -6,6 +6,7 @@ import {
   PILOT_SOAK_REQUIRED_MS,
   PilotGateStatus,
   PilotObservationKind,
+  SOAK_FIXTURE_HARNESS_NOW_ISO,
   SoakProofKind,
   buildRedactedArtifact,
   evaluatePilotGate,
@@ -16,6 +17,10 @@ import {
   uniqueFixtureEvidenceArtifactId,
   validateAcceptanceCaseStatus,
 } from "./soak-acceptance.js";
+import {
+  defaultResponsePolicy,
+  isWithinCoverageWindow,
+} from "./inbox.js";
 
 function allProofs(ended: string) {
   return [
@@ -1457,6 +1462,22 @@ describe("soak-acceptance domain", () => {
         SoakProofKind.INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED,
       ),
     ).toEqual(["T-X067"]);
+  });
+
+  it("maps T-X034 to ADS_TEST_PROJECT_PRODUCTION_BLOCKED only", () => {
+    expect(expectedProofsForFixtureCase("T-X034")).toEqual([
+      SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED),
+    ).toEqual(["T-X034"]);
+  });
+
+  it("pins SOAK_FIXTURE_HARNESS_NOW_ISO inside after-hours coverage", () => {
+    const policy = defaultResponsePolicy(SOAK_FIXTURE_HARNESS_NOW_ISO);
+    expect(
+      isWithinCoverageWindow(policy, SOAK_FIXTURE_HARNESS_NOW_ISO),
+    ).toBe(true);
   });
 
 });

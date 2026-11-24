@@ -912,6 +912,12 @@ export const SoakProofKind = {
    */
   INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED:
     "incompatible_workflow_upgrade_blocked_or_retained",
+  /**
+   * Test-only (sandbox) Ads project cannot bind production/LIVE (T-X034).
+   * SANDBOX→LIVE → ADS_TEST_PROJECT_MISMATCH; production bind call count stays 0.
+   * Distinct from T-US-012 (Google Ads TEST vs PRODUCTION credential/customer).
+   */
+  ADS_TEST_PROJECT_PRODUCTION_BLOCKED: "ads_test_project_production_blocked",
 } as const;
 
 export type SoakProofKindValue =
@@ -949,6 +955,14 @@ export const PILOT_SOAK_REQUIRED_MS = 72 * 60 * 60 * 1000;
 
 /** Max gap between consecutive server observations for continuity (6 hours). */
 export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
+
+/**
+ * Deterministic fixture clock for soak harness proofs that depend on
+ * after-hours coverage (America/New_York via defaultResponsePolicy).
+ * 2026-11-21 is Saturday → full-day coverage; avoids wall-clock CI flakes
+ * during weekday business hours. Pilot gate still uses server wall clock.
+ */
+export const SOAK_FIXTURE_HARNESS_NOW_ISO = "2026-11-21T18:00:00.000Z";
 
 /**
  * Catalog cases the fixture soak/evidence harness can honestly ACCEPTED offline.
@@ -1027,6 +1041,7 @@ export const DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS = 6 * 60 * 60 * 1000;
  * T-X064 requires SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP (every hop checked).
  * T-X071 requires HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE.
  * T-X067 requires INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED.
+ * T-X034 requires ADS_TEST_PROJECT_PRODUCTION_BLOCKED (test Ads project ≠ production).
  * T-US-012 requires GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED (test ≠ production).
  * T-US-015 requires CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY (runtime ≠ API readiness; EVAL_ONLY).
 * T-US-016 requires CLAUDE_RUNTIME_EVAL_AUTH_SEPARATED.
@@ -1207,6 +1222,7 @@ export const SOAK_FIXTURE_CASE_IDS = [
   "T-X067",
   "T-X071",
   "T-X072",
+  "T-X034",
   "T-US-011",
   "T-US-012",
   "T-US-015",
@@ -1764,6 +1780,8 @@ export function expectedProofsForFixtureCase(
       return [SoakProofKind.HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE];
     case "T-X067":
       return [SoakProofKind.INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED];
+    case "T-X034":
+      return [SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED];
     case "T-US-011":
       return [SoakProofKind.CONNECT_GOOGLE_ADS_ANALYZE_ONLY];
     case "T-US-012":
@@ -2060,6 +2078,8 @@ export function mapProofToFixtureCases(
       return ["T-X071"];
     case SoakProofKind.INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED:
       return ["T-X067"];
+    case SoakProofKind.ADS_TEST_PROJECT_PRODUCTION_BLOCKED:
+      return ["T-X034"];
     case SoakProofKind.GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED:
       return ["T-US-012"];
     case SoakProofKind.CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY:

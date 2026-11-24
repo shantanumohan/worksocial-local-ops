@@ -467,6 +467,7 @@ export {
   interpretGa4DebugValidation,
   classifyGscDemand,
   evaluateChatGptAdsAccess,
+  attemptGuardedChatGptAdsProductionBind,
   ANALYTICS_RELATED_CASE_IDS,
   type AnalyticsEnvironmentValue,
   type Ga4PropertyKindValue,
@@ -478,6 +479,7 @@ export {
   type GscDemandClassification,
   type ChatGptAdsAccessInput,
   type ChatGptAdsAccessDecision,
+  type GuardedChatGptAdsProductionBindResult,
   type AnalyticsReadSnapshot,
 } from "./analytics.js";
 export {
@@ -862,6 +864,7 @@ export {
   PilotObservationKind,
   PILOT_SOAK_REQUIRED_MS,
   DEFAULT_PILOT_MAX_OBSERVATION_GAP_MS,
+  SOAK_FIXTURE_HARNESS_NOW_ISO,
   SOAK_FIXTURE_CASE_IDS,
   SOAK_RELATED_CASE_IDS,
   emptySoakAcceptanceState,
