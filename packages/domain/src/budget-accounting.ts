@@ -131,6 +131,14 @@ export function normalizeBudgetHolds(account: BudgetAccount): BudgetAccount {
   return { ...account, heldMinor };
 }
 
+/** Reservation ids currently held for unknown usage (T-X027). */
+export function listUnknownUsageHoldIds(
+  account: BudgetAccount,
+): readonly string[] {
+  const held = account.heldReservations ?? {};
+  return Object.keys(held).filter((id) => isUnknownUsageHold(account, id));
+}
+
 export function createBudgetAccount(input: {
   dayKey: string;
   currency: string;
@@ -263,9 +271,11 @@ export function cancelBudgetReservation(
   const priorHeld = account.heldReservations[reservationId];
   if (priorHeld !== undefined) {
     if (!usage.known) {
+      // Idempotent replay — return normalized account so stale heldMinor
+      // cannot leak through (T-X027 map is source of truth).
       return {
         ok: true,
-        account,
+        account: normalizeBudgetHolds(account),
         reservationId,
         reservedMinor: priorHeld,
         heldMinor: priorHeld,

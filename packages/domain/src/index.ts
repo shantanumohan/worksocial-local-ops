@@ -30,6 +30,7 @@ export {
   createBudgetAccount,
   heldReservationsTotalMinor,
   isUnknownUsageHold,
+  listUnknownUsageHoldIds,
   normalizeBudgetHolds,
   reserveBudget,
   settleBudget,

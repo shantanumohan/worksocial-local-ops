@@ -7,6 +7,7 @@ import {
   createBudgetAccount,
   heldReservationsTotalMinor,
   isUnknownUsageHold,
+  listUnknownUsageHoldIds,
   normalizeBudgetHolds,
   reserveBudget,
   settleBudget,
@@ -522,5 +523,43 @@ describe("budget accounting", () => {
     expect(heldB.account.heldMinor).toBe(250);
     expect(heldReservationsTotalMinor(heldB.account)).toBe(250);
     expect(availableBudgetMinor(heldB.account)).toBe(750);
+  });
+
+  it("unknown-hold replay normalizes stale heldMinor on returned account", () => {
+    const reserved = reserveBudget(account(), "r-replay", 320);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-replay", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const stale = { ...held.account, heldMinor: 0 };
+    const replay = cancelBudgetReservation(stale, "r-replay", { known: false });
+    expect(replay.ok).toBe(true);
+    if (!replay.ok) return;
+    expect(replay.replayed).toBe(true);
+    expect(replay.account.heldMinor).toBe(320);
+    expect(listUnknownUsageHoldIds(replay.account)).toEqual(["r-replay"]);
+  });
+
+  it("settle open reservation while sibling hold remains intact", () => {
+    const a = reserveBudget(account(), "r-hold", 400);
+    expect(a.ok).toBe(true);
+    if (!a.ok) return;
+    const held = cancelBudgetReservation(a.account, "r-hold", { known: false });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const b = reserveBudget(held.account, "r-open", 100);
+    expect(b.ok).toBe(true);
+    if (!b.ok) return;
+    const settled = settleBudget(b.account, "r-open", 55);
+    expect(settled.ok).toBe(true);
+    if (!settled.ok) return;
+    expect(settled.account.settledMinor).toBe(55);
+    expect(isUnknownUsageHold(settled.account, "r-hold")).toBe(true);
+    expect(listUnknownUsageHoldIds(settled.account)).toEqual(["r-hold"]);
+    expect(heldReservationsTotalMinor(settled.account)).toBe(400);
+    expect(availableBudgetMinor(settled.account)).toBe(545);
   });
 });

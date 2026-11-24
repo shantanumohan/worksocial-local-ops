@@ -15,6 +15,7 @@ import {
   createBudgetAccount,
   heldReservationsTotalMinor,
   isUnknownUsageHold,
+  listUnknownUsageHoldIds,
   normalizeBudgetHolds,
   reserveBudget,
   settleBudget,
@@ -338,6 +339,64 @@ export function proofUnknownUsageCancelHoldsResidual(
     passed = false;
     details.push(
       `Stale resolve heldMinor failed: ${JSON.stringify(resolveStale)}`,
+    );
+  }
+
+  // 12. Idempotent unknown-hold replay normalizes stale heldMinor on return.
+  const replayStale = {
+    ...cancelled.account,
+    heldMinor: 0,
+  };
+  const replayed = cancelBudgetReservation(
+    replayStale,
+    "req-cancel-unknown",
+    { known: false },
+  );
+  const holdIds = listUnknownUsageHoldIds(cancelled.account);
+  if (
+    replayed.ok &&
+    replayed.replayed === true &&
+    replayed.account.heldMinor === 700 &&
+    heldReservationsTotalMinor(replayed.account) === 700 &&
+    holdIds.length === 1 &&
+    holdIds[0] === "req-cancel-unknown" &&
+    replayed.liveBudgetProviderWiring === BUDGET_LIVE_PROVIDER_WIRING
+  ) {
+    details.push(
+      "Unknown-hold replay normalizes stale heldMinor→700; listUnknownUsageHoldIds returns primary hold",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Replay normalize / list holds failed: ${JSON.stringify(replayed)} ids=${JSON.stringify(holdIds)}`,
+    );
+  }
+
+  // 13. Settle open reservation while sibling unknown hold remains intact.
+  const withOpen = reserveBudget(cancelled.account, "req-sibling-open", 50);
+  if (!withOpen.ok) {
+    passed = false;
+    details.push(`Sibling open reserve failed: ${JSON.stringify(withOpen)}`);
+    return finish(passed, details, nowIso);
+  }
+  const siblingSettle = settleBudget(withOpen.account, "req-sibling-open", 40);
+  if (
+    siblingSettle.ok &&
+    siblingSettle.account.settledMinor === 40 &&
+    isUnknownUsageHold(siblingSettle.account, "req-cancel-unknown") &&
+    listUnknownUsageHoldIds(siblingSettle.account).includes(
+      "req-cancel-unknown",
+    ) &&
+    heldReservationsTotalMinor(siblingSettle.account) === 700 &&
+    availableBudgetMinor(siblingSettle.account) === 260
+  ) {
+    details.push(
+      "Settle open sibling while unknown hold intact → settled=40 held=700 available=260; liveBudgetProviderWiring stays NOT_WIRED on cancel paths",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Sibling settle-with-hold failed: ${JSON.stringify(siblingSettle)}`,
     );
   }
 

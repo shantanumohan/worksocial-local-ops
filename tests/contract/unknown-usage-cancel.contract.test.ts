@@ -20,6 +20,7 @@ import {
   expectedProofsForFixtureCase,
   heldReservationsTotalMinor,
   isUnknownUsageHold,
+  listUnknownUsageHoldIds,
   mapProofToFixtureCases,
   normalizeBudgetHolds,
   reserveBudget,
@@ -76,6 +77,13 @@ describe("contract: T-X027 unknown usage cancel holds residual", () => {
     expect(normalizeBudgetHolds(stale).heldMinor).toBe(600);
     const blocked = reserveBudget(stale, "req-over", 500);
     expect(blocked.ok).toBe(false);
+
+    const replay = cancelBudgetReservation(stale, "req-hold", { known: false });
+    expect(replay.ok).toBe(true);
+    if (!replay.ok) return;
+    expect(replay.replayed).toBe(true);
+    expect(replay.account.heldMinor).toBe(600);
+    expect(listUnknownUsageHoldIds(replay.account)).toEqual(["req-hold"]);
   });
 
   it("maps T-X027 only to UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL", () => {
