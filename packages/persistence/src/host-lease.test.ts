@@ -4,6 +4,7 @@ import {
   acquireHostLease,
   classifyWakeCatchupLeaseGap,
   isLeaseExpired,
+  renewHostLease,
   normalizeHostLeaseToken,
   releaseHostLease,
   renewHostLease,
@@ -334,5 +335,55 @@ describe("host-lease", () => {
     );
     expect(farReclaim.ok).toBe(true);
     if (farReclaim.ok) expect(farReclaim.reclaimed).toBe(true);
+  });
+
+  it("edge: exact-expiry wake gapMs=0; mid-gap renew; post-expiry renew refuse (T-X002)", () => {
+    const seed = acquireHostLease(
+      null,
+      { hostId: "host-edge", holderPid: 1, generationId: "gen-e", ttlMs: 5_000 },
+      clockAt(50_000),
+    );
+    expect(seed.ok).toBe(true);
+    if (!seed.ok) return;
+
+    const expiryMs = Date.parse(seed.lease.expiresAt);
+    const atExpiry = classifyWakeCatchupLeaseGap(seed.lease, expiryMs);
+    expect(atExpiry).toEqual({
+      kind: "wake_past_expiry",
+      expired: true,
+      gapMs: 0,
+    });
+    const reclaim = acquireHostLease(
+      seed.lease,
+      { hostId: "host-edge", holderPid: 2, generationId: "gen-f", ttlMs: 5_000 },
+      clockAt(expiryMs),
+    );
+    expect(reclaim.ok).toBe(true);
+    if (reclaim.ok) expect(reclaim.reclaimed).toBe(true);
+
+    const renewSeed = acquireHostLease(
+      null,
+      { hostId: "host-rn", holderPid: 10, generationId: "gen-rn", ttlMs: 10_000 },
+      clockAt(60_000),
+    );
+    expect(renewSeed.ok).toBe(true);
+    if (!renewSeed.ok) return;
+    const mid = renewHostLease(
+      renewSeed.lease,
+      { hostId: "host-rn", holderPid: 10, generationId: "gen-rn", ttlMs: 10_000 },
+      clockAt(63_000),
+    );
+    expect(mid.ok).toBe(true);
+    if (mid.ok) {
+      expect(mid.reclaimed).toBe(false);
+      expect(mid.lease.leaseId).toBe(renewSeed.lease.leaseId);
+    }
+    const post = renewHostLease(
+      renewSeed.lease,
+      { hostId: "host-rn", holderPid: 10, generationId: "gen-rn", ttlMs: 10_000 },
+      clockAt(Date.parse(renewSeed.lease.expiresAt) + 1),
+    );
+    expect(post.ok).toBe(false);
+    if (!post.ok) expect(post.reason).toBe("LEASE_HELD");
   });
 });
