@@ -985,7 +985,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X061** is fixture ACCEPTED only via the keyboard focus restore after dialog proof (`KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG`) — overlay open captures the trigger, Tab/Shift+Tab traps within dialog focusables (including wrap edges), close restores focus to the trigger or fails closed as `FOCUS_LOST` when unrestorable; re-open while open is refused. Distinct from T-US-055 (full keyboard journey + reduced motion). Not sandbox/prod VERIFIED.
 
-**T-X068** is fixture ACCEPTED only via the thirty alerts one outage grouped incident proof (`THIRTY_ALERTS_ONE_OUTAGE_GROUPED`) — alerts sharing one `outageKey` collapse into a single open incident (`alertCount=30`); distinct outage keys stay separate. Not sandbox/prod VERIFIED.
+**T-X068** is fixture ACCEPTED only via the thirty alerts one outage grouped incident proof (`THIRTY_ALERTS_ONE_OUTAGE_GROUPED`) — alerts sharing one `outageKey` (whitespace-normalized) collapse into a single open incident (`alertCount=30`, chronological `alertIds`, max severity, `uniqueSourceCount`); distinct outage keys stay separate; live `NOT_WIRED`. Not sandbox/prod VERIFIED.
 
 **T-X064** is fixture ACCEPTED only via the SSRF redirect / DNS rebind blocked-every-hop proof (`SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP`) — each hop must be allowlisted https with public resolved addresses; private redirects and DNS rebind denied. Fixture hop chains only (no live DNS/fetch). Not sandbox/prod VERIFIED.
 
@@ -1094,7 +1094,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X065 | Worker reads browser auth state | OS deny *(fixture ACCEPTED — worker browser-auth OS deny; not sandbox/prod VERIFIED)* |
 | T-X066 | Backup omits remote receipt | Reconcile; no duplicate *(fixture ACCEPTED — backup/omit-receipt proof; not sandbox/prod VERIFIED)* |
 | T-X067 | Incompatible workflow upgrade | Blocked or compatible retained *(fixture ACCEPTED — incompatible workflow upgrade blocked or retained proof; epoch/rev/breaking edges + IDLE/COMPLETE retain; Temporal NOT_WIRED; not sandbox/prod VERIFIED)* |
-| T-X068 | Thirty alerts one outage | Grouped incident *(fixture ACCEPTED — thirty alerts one outage grouped proof; not sandbox/prod VERIFIED)* |
+| T-X068 | Thirty alerts one outage | Grouped incident *(fixture ACCEPTED — thirty alerts one outage grouped proof; whitespace outageKey / uniqueSources / NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X069 | Imported document becomes instructions | Quarantined as data *(fixture ACCEPTED)* |
 | T-X070 | Validated payload not collected | Separate failure states *(fixture ACCEPTED — validated payload not collected separate failure states proof; not sandbox/prod VERIFIED)* |
 | T-X071 | Local host offline public discovery | Honest unavailability *(fixture ACCEPTED — host-offline public discovery unavailable proof; not sandbox/prod VERIFIED)* |

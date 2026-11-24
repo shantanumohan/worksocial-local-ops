@@ -461,7 +461,7 @@ export function compileAcceptanceEvidence(
     "T-X051 fixture ACCEPTED only via WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH",
     "T-X062 fixture ACCEPTED only via SSE_GAP_FULL_STATE_RESYNC",
     "T-X061 fixture ACCEPTED only via KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG",
-    "T-X068 fixture ACCEPTED only via THIRTY_ALERTS_ONE_OUTAGE_GROUPED",
+    "T-X068 fixture ACCEPTED only via THIRTY_ALERTS_ONE_OUTAGE_GROUPED (whitespace outageKey; uniqueSources; NOT_WIRED)",
     "T-X072 fixture ACCEPTED only via CUSTOMER_DATA_EVAL_REDACTION_BLOCKS",
     "T-X064 fixture ACCEPTED only via SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP (every hop: private/DNS-rebind/off-allowlist/NON_HTTPS/CREDENTIALS; IPv6 fe80::/10 + IPv4-mapped ::ffff: private; liveDns/liveFetch NOT_WIRED)",
     "T-X071 fixture ACCEPTED only via HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE",

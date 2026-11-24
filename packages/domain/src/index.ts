@@ -358,6 +358,7 @@ export {
   AlertSeverity,
   createProbeAlert,
   groupAlertsIntoIncidents,
+  normalizeOutageKey,
   ALERT_OUTAGE_GROUPING_RELATED_CASE_IDS,
   type AlertSeverityValue,
   type ProbeAlertRecord,

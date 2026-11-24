@@ -4,7 +4,10 @@
  * Probe/role alerts that share the same `outageKey` collapse into one
  * grouped incident. A burst of thirty alerts for a single host/provider
  * outage must not open thirty incidents. Distinct outage keys remain
- * separate. Pure domain. External effects: NONE.
+ * separate. Whitespace around outageKey is normalized so accidental
+ * padding cannot invent a second incident. Pure domain.
+ * External effects: NONE. Live provider wiring: NOT_WIRED.
+ * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 
 export const AlertSeverity = {
@@ -41,14 +44,23 @@ export type GroupedIncidentRecord = {
   outageKey: string;
   alertIds: string[];
   alertCount: number;
+  /** Distinct probe/role sources that contributed (order of first appearance). */
+  uniqueSources: string[];
+  uniqueSourceCount: number;
   firstRaisedAtIso: string;
   lastRaisedAtIso: string;
   /** Highest severity among member alerts (P0 > P1 > P2 > P3). */
   severity: AlertSeverityValue;
   status: "open";
+  liveProviderWiring: "NOT_WIRED";
   externalEffects: "NONE";
   fixtureOnly: true;
 };
+
+/** Normalize outage keys so padding cannot invent a parallel incident. */
+export function normalizeOutageKey(outageKey: string): string {
+  return outageKey.trim();
+}
 
 export function createProbeAlert(input: {
   alertId: string;
@@ -61,7 +73,8 @@ export function createProbeAlert(input: {
   if (!input.alertId.trim()) {
     throw new Error("alertId is required");
   }
-  if (!input.outageKey.trim()) {
+  const outageKey = normalizeOutageKey(input.outageKey);
+  if (!outageKey) {
     throw new Error("outageKey is required");
   }
   if (!input.source.trim()) {
@@ -69,8 +82,8 @@ export function createProbeAlert(input: {
   }
   return {
     alertId: input.alertId,
-    outageKey: input.outageKey,
-    source: input.source,
+    outageKey,
+    source: input.source.trim(),
     raisedAtIso: input.raisedAtIso,
     severity: input.severity,
     message: input.message,
@@ -86,7 +99,7 @@ function maxSeverity(
 }
 
 /**
- * Group alerts by outageKey into one open incident per outage.
+ * Group alerts by normalized outageKey into one open incident per outage.
  * Does not invent incidents for empty input. Never fans one outage into
  * N incidents when N alerts share a key.
  */
@@ -97,11 +110,12 @@ export function groupAlertsIntoIncidents(input: {
 }): GroupedIncidentRecord[] {
   const byKey = new Map<string, ProbeAlertRecord[]>();
   for (const alert of input.alerts) {
-    const existing = byKey.get(alert.outageKey);
+    const key = normalizeOutageKey(alert.outageKey);
+    const existing = byKey.get(key);
     if (existing) {
-      existing.push(alert);
+      existing.push({ ...alert, outageKey: key });
     } else {
-      byKey.set(alert.outageKey, [alert]);
+      byKey.set(key, [{ ...alert, outageKey: key }]);
     }
   }
 
@@ -117,18 +131,25 @@ export function groupAlertsIntoIncidents(input: {
     const first = sorted[0]!;
     const last = sorted[sorted.length - 1]!;
     let severity = first.severity;
+    const uniqueSources: string[] = [];
     for (const m of sorted) {
       severity = maxSeverity(severity, m.severity);
+      if (!uniqueSources.includes(m.source)) {
+        uniqueSources.push(m.source);
+      }
     }
     incidents.push({
       incidentId: input.incidentIdForOutageKey(outageKey),
       outageKey,
       alertIds: sorted.map((m) => m.alertId),
       alertCount: sorted.length,
+      uniqueSources,
+      uniqueSourceCount: uniqueSources.length,
       firstRaisedAtIso: first.raisedAtIso,
       lastRaisedAtIso: last.raisedAtIso,
       severity,
       status: "open",
+      liveProviderWiring: "NOT_WIRED",
       externalEffects: "NONE",
       fixtureOnly: true,
     });

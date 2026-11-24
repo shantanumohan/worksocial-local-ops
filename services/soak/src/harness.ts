@@ -1226,7 +1226,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X051 fixture ACCEPTED via wrong_zoho_organization_identity_mismatch only — not live VERIFIED",
       "T-X062 fixture ACCEPTED via sse_gap_full_state_resync only — not live VERIFIED",
       "T-X061 fixture ACCEPTED via keyboard_focus_restore_after_dialog only — not live VERIFIED",
-      "T-X068 fixture ACCEPTED via thirty_alerts_one_outage_grouped only — not live VERIFIED",
+      "T-X068 fixture ACCEPTED via thirty_alerts_one_outage_grouped only — whitespace outageKey collapse; uniqueSources; live NOT_WIRED — not live VERIFIED",
       "T-X072 fixture ACCEPTED via customer_data_eval_redaction_blocks only — not live VERIFIED",
       "T-X064 fixture ACCEPTED via ssrf_redirect_dns_rebind_blocked_every_hop only — every hop incl. NON_HTTPS/CREDENTIALS/IPv6 fe80::/10/IPv4-mapped ::ffff:; liveDns/liveFetch NOT_WIRED — not live VERIFIED",
       "T-X071 fixture ACCEPTED via host_offline_public_discovery_unavailable only — not live VERIFIED",
