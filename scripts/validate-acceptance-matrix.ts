@@ -35,6 +35,13 @@ type Matrix = {
     notRun?: number;
     accepted?: number;
   };
+  summary?: {
+    total?: number;
+    byStatus?: Record<string, number>;
+    blockingOpen?: number;
+    generatedAt?: string;
+    source?: string;
+  };
   sourceDocument?: string;
 };
 
@@ -198,6 +205,32 @@ if (matrix.totals.notRun !== undefined && matrix.totals.notRun !== notRunCount) 
 }
 if (matrix.totals.accepted !== undefined && matrix.totals.accepted !== acceptedCount) {
   errors.push(`totals.accepted expected ${acceptedCount}, got ${matrix.totals.accepted}`);
+}
+
+// summary.byStatus must match cases[] — ACCEPTED ≠ VERIFIED; never silently drift
+if (matrix.summary?.byStatus) {
+  const summaryNotRun = matrix.summary.byStatus.NOT_RUN ?? 0;
+  const summaryAccepted = matrix.summary.byStatus.ACCEPTED ?? 0;
+  if (summaryNotRun !== notRunCount) {
+    errors.push(
+      `summary.byStatus.NOT_RUN expected ${notRunCount}, got ${summaryNotRun} (drift vs cases[])`,
+    );
+  }
+  if (summaryAccepted !== acceptedCount) {
+    errors.push(
+      `summary.byStatus.ACCEPTED expected ${acceptedCount}, got ${summaryAccepted} (drift vs cases[])`,
+    );
+  }
+  if ((matrix.summary.byStatus.VERIFIED ?? 0) !== 0) {
+    errors.push(
+      `summary.byStatus.VERIFIED must be 0 — ACCEPTED ≠ VERIFIED; never silently VERIFIED for live`,
+    );
+  }
+}
+if (matrix.summary?.total !== undefined && matrix.summary.total !== matrix.cases.length) {
+  errors.push(
+    `summary.total expected ${matrix.cases.length}, got ${matrix.summary.total}`,
+  );
 }
 
 const adsGateIds = ["T-F07", "T-US-013", "T-US-014"];
