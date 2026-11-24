@@ -3,6 +3,7 @@ import {
   createHistoryOnlyReplayHooks,
   replayEmptyHistoryFailsClosed,
   replayMissionWorkflowHistory,
+  replayPartialHistoryFailsClosed,
   type ReplayWorkflowHistory,
 } from "./replay-historical-workflow.js";
 
@@ -127,6 +128,64 @@ describe("replay historical workflow (T-X013)", () => {
     expect(result.outcome).toBe("FAILED");
     expect(
       summary().liveIoLabels.some((l) => l.includes("history_terminal_mismatch")),
+    ).toBe(true);
+  });
+
+  it("fails closed on whitespace-only terminal operationId (Codex harden)", () => {
+    const history = sampleHistory();
+    history.terminal = {
+      outcome: "VERIFIED",
+      applyAttemptCount: 1,
+      operationId: "   ",
+    };
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_terminal_missing_or_incomplete"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed when claim opId disagrees with terminal (Codex harden)", () => {
+    const history = sampleHistory();
+    const claim = history.events[1];
+    if (claim && claim.activity === "claimAndAccept") {
+      claim.operationId = "op-drift";
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_activity_terminal_op_mismatch"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed on partial activity truncation without inventing success", () => {
+    const { outcome, summary } = replayPartialHistoryFailsClosed();
+    expect(outcome.outcome).toBe("FAILED");
+    expect(summary.forbiddenLiveIo).toBeGreaterThan(0);
+    expect(summary.liveIoLabels.some((l) => l.includes("history_mismatch"))).toBe(
+      true,
+    );
+    expect(summary.externalEffects).toBe("NONE");
+  });
+
+  it("fails closed on unread history tail events", () => {
+    const history = sampleHistory();
+    history.events.push({
+      activity: "enqueue",
+      workflowId: "wf-extra",
+      phase: "queued",
+    });
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) => l.includes("history_unread_tail")),
     ).toBe(true);
   });
 });

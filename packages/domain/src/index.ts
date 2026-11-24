@@ -14,6 +14,7 @@ export {
   createHistoryOnlyReplayHooks,
   replayEmptyHistoryFailsClosed,
   replayMissionWorkflowHistory,
+  replayPartialHistoryFailsClosed,
   runMissionWorkflowControlFlow,
   type ReplayActivityName,
   type ReplayActivityResult,
