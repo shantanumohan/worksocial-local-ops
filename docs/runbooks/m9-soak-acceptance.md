@@ -116,7 +116,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-US-024** maps only to `AGENT_CANNOT_WIDEN_GRANT`.
 
-**T-US-042** / **T-X057** map only to `REPAIR_WEAKEN_TEST_REJECTED`.
+**T-US-042** / **T-X057** map only to `REPAIR_WEAKEN_TEST_REJECTED` (weaken aliases + `__tests__/` protected; live NOT_WIRED).
 
 **T-US-044** / **T-X053** map only to `TAKEOVER_CANCELS_UNSENT_REPLIES`.
 

@@ -748,6 +748,8 @@ export {
   buildRepairReleaseOutcome,
   applyRepairReleaseVerification,
   listRepairOutcomesForLearning,
+  normalizeTestOperation,
+  isWeakenTestOperation,
   cmsRepairWiringStatus,
   type RepairClassValue,
   type IncidentSeverityValue,
