@@ -94,6 +94,7 @@ export function proofHostOfflinePublicDiscoveryUnavailable(
     });
     if (
       !(
+        offline.surface === surface &&
         offline.availability === PublicDiscoveryAvailability.UNAVAILABLE &&
         offline.unavailableReason ===
           PublicDiscoveryUnavailableReason.HOST_OFFLINE &&
