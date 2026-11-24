@@ -138,7 +138,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X031** maps only to `GA4_WRONG_PROPERTY_KIND_REFUSED`.
 
-**T-US-040** / **T-X049** map only to `THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY`.
+**T-US-040** / **T-X049** map only to `THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY` (DOM thank-you ≠ CRM success; MISSING_REMOTE fails delivery; CRM_RECONCILE_NOT_DELIVERY for other non-success; browser stage limited to BROWSER/FORM_ACCEPT; live Zoho NOT_WIRED; externalEffects NONE; not live VERIFIED).
 
 **T-X017** maps only to `STOP_AFTER_DISPATCH_RECONCILE`.
 

@@ -3,13 +3,13 @@
   "caseId": "T-US-040",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-US-040 (Thank-you without Zoho record fails at CRM)\nproof=thank_you_without_crm_fails_delivery applyCount=1 :: DOM thank-you fixture → SUCCESS (independent of CRM) | Empty CRM receipts → MISSING_REMOTE FAILURE (thank-you ≠ CRM success) | CRM_WRITE failure with submission → isCrmDeliveryFailure | Matched synthetic CRM receipt → MATCHED SUCCESS | Journey without CRM failure → isCrmDeliveryFailure=false | liveZohoWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-US-040 (Thank-you without Zoho record fails at CRM)\nproof=thank_you_without_crm_fails_delivery applyCount=1 :: DOM thank-you fixture → SUCCESS (independent of CRM) | evaluateThankYouWithoutCrmDelivery DOM-only → not deliverySucceeded (NOT_WIRED/NONE) | Empty CRM receipts → MISSING_REMOTE FAILURE (thank-you ≠ CRM success) | evaluateThankYouWithoutCrmDelivery DOM+MISSING_REMOTE → fail at delivery | CRM_WRITE failure with submission → isCrmDeliveryFailure | BROWSER/FORM_ACCEPT pre-submit only; INCIDENT/REPAIR/REVERIFY not browser; BROWSER failure ≠ CRM delivery | DUPLICATE_REMOTE → CRM_RECONCILE_NOT_DELIVERY (distinct from MISSING_REMOTE) | VERIFY/CLEANUP stage failures → isCrmDeliveryFailure (with submission) | Matched synthetic CRM receipt → MATCHED SUCCESS | evaluateThankYouWithoutCrmDelivery MATCHED → deliverySucceeded (liveProviderSuccessClaimed=false) | Journey without CRM failure → isCrmDeliveryFailure=false | liveZohoWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "thank_you_without_crm_fails_delivery"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-040.json",
-  "createdAtIso": "2026-11-24T23:41:59.845Z",
+  "createdAtIso": "2026-11-24T23:46:57.302Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-040-537fd6e17178"
+  "uniqueSourceArtifactId": "art-fixture-t-us-040-9bc484fa43d5"
 }
