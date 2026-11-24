@@ -111,6 +111,7 @@ import { proofHostOfflinePublicDiscoveryUnavailable } from "./host-offline-publi
 import { proofIncompatibleWorkflowUpgradeBlockedOrRetained } from "./incompatible-workflow-upgrade-proof.js";
 import { proofAdsTestProjectProductionBlocked } from "./ads-test-project-production-proof.js";
 import { proofSharedAdBudgetExternalChangeInvalidates } from "./shared-ad-budget-external-change-proof.js";
+import { proofRecentAdsConversionBlankPending } from "./recent-ads-conversion-blank-proof.js";
 import { proofDuplicatePlatformAttributionOneBooking } from "./duplicate-platform-attribution-proof.js";
 import { proofCurrencyTimezoneMismatchNoSilentSum } from "./currency-timezone-mismatch-proof.js";
 import { proofValidatedPayloadNotCollectedSeparateStates } from "./validated-payload-not-collected-proof.js";
@@ -1085,6 +1086,9 @@ export async function runSoakRecoveryHarness(input: {
   proofs.push(
     proofSharedAdBudgetExternalChangeInvalidates(nowPlus(nowIso, 1_430_000)),
   );
+  proofs.push(
+    proofRecentAdsConversionBlankPending(nowPlus(nowIso, 1_440_000)),
+  );
   const allPassed = proofs.every((p) => p.passed);
   return {
     proofs,
@@ -1229,6 +1233,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X067 fixture ACCEPTED via incompatible_workflow_upgrade_blocked_or_retained only — not live VERIFIED",
       "T-X034 fixture ACCEPTED via ads_test_project_production_blocked only — not live VERIFIED",
       "T-X035 fixture ACCEPTED via shared_ad_budget_external_change_invalidates only — not live VERIFIED",
+      "T-X036 fixture ACCEPTED via recent_ads_conversion_blank_pending only — not live VERIFIED",
     ],
   };
 }

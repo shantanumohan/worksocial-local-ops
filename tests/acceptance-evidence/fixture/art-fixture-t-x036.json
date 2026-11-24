@@ -1,0 +1,15 @@
+{
+  "artifactId": "art-fixture-t-x036",
+  "caseId": "T-X036",
+  "environment": "fixture",
+  "redacted": true,
+  "summary": "Fixture ACCEPTED for T-X036 (Recent Ads conversion blank — PENDING, not false zero)\nproof=recent_ads_conversion_blank_pending applyCount=1 :: Blank Ads conversion → PENDING (displayValue null, not zero) | Omitted null conversions → PENDING (not invented zero) | Unsettled attribution with 0 → PENDING (not settled false-zero claim) | Settled fixture zero → honest measured 0 (distinct from blank) | NOT_WIRED Ads → unavailable (distinct from PENDING blank) | LIVE Ads conversion refused while transport NOT_WIRED (no false live claim) | SANDBOX Ads conversion preserves sandbox provenance | UNAVAILABLE Ads observation → unavailable (not SETTLED data claim) | diagnoseDelivery → DELAYED_ATTRIBUTION while unsettled | Budget recommendation blocked while recent conversion PENDING (PARTIAL_SPEND) | Zero impressions + unsettled → NO_IMPRESSIONS (delivery before conversion) | Budget blocked on zero-delivery unsettled path (PARTIAL_SPEND via !attributionSettled) | Budget blocked on LOW_CLICKS unsettled path (PARTIAL_SPEND via !attributionSettled) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "proofKinds": [
+    "recent_ads_conversion_blank_pending"
+  ],
+  "evidenceRef": "soak/evidence/art-fixture-t-x036.json",
+  "createdAtIso": "2026-11-24T21:27:22.560Z",
+  "liveProviderSuccessClaimed": false,
+  "externalEffects": "NONE",
+  "uniqueSourceArtifactId": "art-fixture-t-x036-4439db7ed06a"
+}
