@@ -283,6 +283,76 @@ export async function proofIdempotencyKeyPayloadMismatch(
   );
   if (!crlfConflict) passed = false;
 
+  const leadingPadConflict = await expectMismatchConflict(
+    "acceptPending leading-space-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: ` ${digestA}`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!leadingPadConflict) passed = false;
+
+  const nbspConflict = await expectMismatchConflict(
+    "acceptPending NBSP-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}\u00a0`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!nbspConflict) passed = false;
+
+  const zwspConflict = await expectMismatchConflict(
+    "acceptPending ZWSP-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}\u200b`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!zwspConflict) passed = false;
+
+  const prefixConflict = await expectMismatchConflict(
+    "acceptPending prefix-distinct payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `x${digestA}`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!prefixConflict) passed = false;
+
+  const suffixConflict = await expectMismatchConflict(
+    "acceptPending suffix-distinct payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}-x`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!suffixConflict) passed = false;
+
   // Concurrent multi-alt digest-B barrage — all Conflict; no orphans; applyCount=1.
   const barrageN = 8;
   const barrageIds = Array.from(
@@ -378,6 +448,61 @@ export async function proofIdempotencyKeyPayloadMismatch(
   } else {
     details.push(
       `Concurrent ${sameDigestN}-way same-digest accepts → all replay created=false applyCount=1 (not Conflict)`,
+    );
+  }
+
+  // Interleaved concurrent mix: same-digest OK + digest-B Conflict; applyCount stays 1.
+  const mixN = 4;
+  const mixJobs = Array.from({ length: mixN * 2 }, (_, i) => {
+    const mismatch = i % 2 === 0;
+    const opId = `${operationId}-mix-${i}`;
+    return {
+      opId,
+      mismatch,
+      run: () =>
+        accept(svc, {
+          operationId: opId,
+          bizKey,
+          digest: mismatch ? digestB : digestA,
+          idem: `${idem}-mix-${i}`,
+          nowIso,
+        }),
+    };
+  });
+  const mixResults = await Promise.all(
+    mixJobs.map((job) =>
+      job
+        .run()
+        .then((r) => ({
+          mismatch: job.mismatch,
+          ok: job.mismatch
+            ? false
+            : r.providerCreated === false &&
+              r.provider.applyCount === 1 &&
+              r.provider.payloadDigest === digestA &&
+              r.provider.remoteRef === first.provider.remoteRef,
+        }))
+        .catch((err) => ({
+          mismatch: job.mismatch,
+          ok: job.mismatch && isIdempotencyPayloadMismatchError(err),
+        })),
+    ),
+  );
+  const mixOk = mixResults.every((r) => r.ok);
+  const mixOrphans = (
+    await Promise.all(
+      mixJobs.filter((j) => j.mismatch).map((j) => svc.stores.effects.get(j.opId)),
+    )
+  ).some((e) => e != null);
+  const mixApply = await svc.stores.fakeProvider.getByBusinessKey(bizKey);
+  if (!mixOk || mixOrphans || mixApply?.applyCount !== 1) {
+    passed = false;
+    details.push(
+      `Interleaved concurrent mix failed: ok=${mixResults.filter((r) => r.ok).length}/${mixResults.length} orphans=${mixOrphans} applyCount=${mixApply?.applyCount}`,
+    );
+  } else {
+    details.push(
+      `Interleaved concurrent mix (${mixN} same-digest + ${mixN} mismatch) → replays OK + Conflicts; no orphans; applyCount=1`,
     );
   }
 
@@ -602,9 +727,16 @@ export async function proofIdempotencyKeyPayloadMismatch(
       caseConflict &&
       tabConflict &&
       crlfConflict &&
+      leadingPadConflict &&
+      nbspConflict &&
+      zwspConflict &&
+      prefixConflict &&
+      suffixConflict &&
       barrageAllConflict &&
       !barrageOrphans &&
       sameDigestAllOk &&
+      mixOk &&
+      !mixOrphans &&
       bizKeyMismatchOk &&
       verifiedPathConflict &&
       wrongVerifyOk,

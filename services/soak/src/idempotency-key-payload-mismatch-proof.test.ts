@@ -80,6 +80,38 @@ describe("proofIdempotencyKeyPayloadMismatch (T-X022)", () => {
     ).toBe(true);
     expect(
       proof.details.some((d) =>
+        d.includes("leading-space-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("NBSP-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("ZWSP-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("prefix-distinct payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("suffix-distinct payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Interleaved concurrent mix") &&
+          d.includes("applyCount=1"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
         d.includes("Receipt integrity") && d.includes("digest A only"),
       ),
     ).toBe(true);

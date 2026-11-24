@@ -614,4 +614,76 @@ describe("durable execution (memory fixture)", () => {
     );
   });
 
+  it("NBSP/ZWSP/prefix digests Conflict after bind (T-X022)", async () => {
+    const stores = createMemoryDurableStores();
+    const service = createDurableExecutionService(stores);
+    const base = {
+      job: {
+        jobId: newJobId(),
+        roleId: "A01" as const,
+        workflowId: "wf-unicode",
+        siteId: "site-1",
+        assetId: "page-home",
+        trigger: "manual",
+        policyVersion: "1",
+        inputArtifactIds: [] as string[],
+        capabilityGrantId: "grant-1",
+        sourceRevision: "rev-1",
+        maxAttempts: 2,
+        deadlineSeconds: 600,
+        idempotencyKey: "idem-unicode",
+        expectedOutcome: "verified",
+      },
+      operationId: "op-unicode",
+      businessIdempotencyKey: "biz-unicode",
+      nowIso: "2026-11-20T09:00:00.000Z",
+    };
+    await service.acceptPending({
+      ...base,
+      payloadDigest: "digest-bound",
+      decision: {
+        decisionId: "dec-unicode-a",
+        operationId: "op-unicode",
+        payloadDigest: "digest-bound",
+        allowed: true,
+        code: null,
+        reason: "ok",
+        grantId: "grant-1",
+        policyId: "pol-1",
+        decidedAtIso: "2026-11-20T09:00:00.000Z",
+        writePathId: null,
+        gateDetails: [],
+      },
+    });
+    for (const [label, digest] of [
+      ["nbsp", "digest-bound\u00a0"],
+      ["zwsp", "digest-bound\u200b"],
+      ["prefix", "xdigest-bound"],
+      ["leading", " digest-bound"],
+    ] as const) {
+      await expect(
+        service.acceptPending({
+          ...base,
+          payloadDigest: digest,
+          decision: {
+            decisionId: `dec-unicode-${label}`,
+            operationId: "op-unicode",
+            payloadDigest: digest,
+            allowed: true,
+            code: null,
+            reason: "ok",
+            grantId: "grant-1",
+            policyId: "pol-1",
+            decidedAtIso: "2026-11-20T09:00:01.000Z",
+            writePathId: null,
+            gateDetails: [],
+          },
+        }),
+      ).rejects.toThrow(/payload mismatch/i);
+    }
+    expect(
+      (await stores.fakeProvider.getByBusinessKey("biz-unicode"))?.applyCount,
+    ).toBe(1);
+  });
+
 });
