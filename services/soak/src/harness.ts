@@ -1144,7 +1144,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X024 fixture ACCEPTED via old_fence_after_reassignment only — not live VERIFIED",
       "T-X011 fixture ACCEPTED via output_bomb_bounded_quarantined only — not live VERIFIED",
       "T-X003 fixture ACCEPTED via symlink_escape_after_root_verification only — not live VERIFIED",
-      "T-X050 fixture ACCEPTED via public_synthetic_flag_requires_server_grant only — not live VERIFIED",
+      "T-X050 fixture ACCEPTED via public_synthetic_flag_requires_server_grant only — OR dual-field / whitespace; not live VERIFIED",
       "T-X010 fixture ACCEPTED via malicious_prompt_no_shell_injection only — not live VERIFIED",
       "T-X009 fixture ACCEPTED via cli_error_despite_exit_zero only — not live VERIFIED",
       "T-X001 fixture ACCEPTED via host_sleep_monitoring_coverage_gap only — not live VERIFIED",

@@ -2442,7 +2442,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x050",
-      "evidenceNote": "Fixture public-synthetic-flag-requires-server-grant proof only — not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture ACCEPTED via PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT only — OR dual-field / whitespace claims denied without grant; server grant wins over client false; ACCEPTED ≠ sandbox/prod VERIFIED; externalEffects=NONE."
     },
     {
       "id": "T-X051",
