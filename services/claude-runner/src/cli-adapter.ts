@@ -148,11 +148,13 @@ export function assessStdoutBound(
   maxOutputBytes: number,
 ): StdoutBoundAssessment {
   const byteLength = Buffer.byteLength(stdoutUtf8, "utf8");
-  if (!(maxOutputBytes > 0)) {
+  // Refuse non-finite / non-positive bounds (NaN, ±Infinity, ≤0) — T-X011 deepen.
+  if (!Number.isFinite(maxOutputBytes) || !(maxOutputBytes > 0)) {
     return {
       withinBound: false,
       code: "OUTPUT_TOO_LARGE",
-      reason: "maxOutputBytes must be a positive bound (T-X011); ACCEPTED≠VERIFIED",
+      reason:
+        "maxOutputBytes must be a finite positive bound (T-X011); ACCEPTED≠VERIFIED",
       byteLength,
       ...OUTPUT_BOMB_HONESTY,
     };
@@ -264,6 +266,10 @@ export function assertOutputBombBoundedHonest(input: {
     reasons.push(
       "OUTPUT_TOO_LARGE quarantine requires over-bound assessment (mismatched pair)",
     );
+  }
+  // LIVE_CLAIM_REFUSED / any non-deliver must never retain bomb payload (T-X011 deepen).
+  if (quarantine.deliver === false && quarantine.quarantinedStdout !== null) {
+    reasons.push("Non-deliver quarantine must not retain bomb stdout payload");
   }
   if (reasons.length > 0) {
     return {
@@ -535,13 +541,16 @@ export function invokeClaudeCli(
   request: ClaudeCliInvokeRequest,
 ): Promise<ClaudeCliInvokeResult> {
   // Fail closed before spawn when the bound itself is invalid (T-X011).
-  // Otherwise a quiet child with maxOutputBytes≤0 could return ok:true.
-  if (!(request.maxOutputBytes > 0)) {
+  // Otherwise a quiet child with maxOutputBytes≤0 / Infinity could return ok:true.
+  if (
+    !Number.isFinite(request.maxOutputBytes) ||
+    !(request.maxOutputBytes > 0)
+  ) {
     return Promise.resolve({
       ok: false,
       code: "OUTPUT_TOO_LARGE",
       reason:
-        "maxOutputBytes must be a positive bound before spawn (T-X011); ACCEPTED≠VERIFIED",
+        "maxOutputBytes must be a finite positive bound before spawn (T-X011); ACCEPTED≠VERIFIED",
     });
   }
 
@@ -645,6 +654,18 @@ export function invokeClaudeCli(
     child.on("close", (code) => {
       clearTimeout(timer);
       const durationMs = Date.now() - started;
+      // Close-path bound re-check (T-X011 deepen): race-safe quarantine if the
+      // last chunk arrived as the process exited before the data handler settled.
+      const closeBound = assessStdoutBound(stdout, request.maxOutputBytes);
+      if (!closeBound.withinBound) {
+        finish({
+          ok: false,
+          code: closeBound.code,
+          reason: closeBound.reason,
+          durationMs,
+        });
+        return;
+      }
       const classified = classifyClaudeCliCompletion({
         exitCode: code,
         stdout,

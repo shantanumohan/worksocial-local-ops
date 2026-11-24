@@ -91,6 +91,11 @@ describe("claude-runner (R1-04)", () => {
 
     const zeroMax = assessStdoutBound("x", 0);
     expect(zeroMax.withinBound).toBe(false);
+    expect(assessStdoutBound("x", -1).withinBound).toBe(false);
+    expect(assessStdoutBound("x", Number.POSITIVE_INFINITY).withinBound).toBe(
+      false,
+    );
+    expect(assessStdoutBound("x", Number.NaN).withinBound).toBe(false);
 
     const liveClaim = quarantineStdoutDelivery(under, {
       claimLiveVerified: true,
@@ -115,9 +120,19 @@ describe("claude-runner (R1-04)", () => {
     });
     expect(mismatched.ok).toBe(false);
     expect(mismatched.code).toBe("OUTPUT_BOMB_DISHONEST");
+
+    expect(
+      assertOutputBombBoundedHonest({
+        assessment: under,
+        quarantine: liveClaim,
+      }).ok,
+    ).toBe(true);
+
+    const emoji = assessStdoutBound("🔥".repeat(20), 40);
+    expect(emoji.withinBound).toBe(false);
   });
 
-  it("refuses invokeClaudeCli when maxOutputBytes is nonpositive (T-X011)", async () => {
+  it("refuses invokeClaudeCli when maxOutputBytes is nonpositive or non-finite (T-X011)", async () => {
     const { mkdtempSync, writeFileSync, chmodSync, rmSync } = await import(
       "node:fs"
     );
@@ -132,17 +147,19 @@ describe("claude-runner (R1-04)", () => {
         "utf8",
       );
       chmodSync(script, 0o755);
-      const zero = await invokeClaudeCli({
-        executablePath: script,
-        agentName: "A01",
-        cwd: dir,
-        modelId: "fixture-model",
-        prompt: "quiet",
-        timeoutMs: 2_000,
-        maxOutputBytes: 0,
-      });
-      expect(zero.ok).toBe(false);
-      if (!zero.ok) expect(zero.code).toBe("OUTPUT_TOO_LARGE");
+      for (const maxOutputBytes of [0, -1, Number.POSITIVE_INFINITY, Number.NaN]) {
+        const result = await invokeClaudeCli({
+          executablePath: script,
+          agentName: "A01",
+          cwd: dir,
+          modelId: "fixture-model",
+          prompt: "quiet",
+          timeoutMs: 2_000,
+          maxOutputBytes,
+        });
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.code).toBe("OUTPUT_TOO_LARGE");
+      }
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

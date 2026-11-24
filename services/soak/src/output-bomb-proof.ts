@@ -1,7 +1,8 @@
 /**
  * Fixture proof for T-X011 — output bomb bounded/quarantined.
- * Hillclimb: exact-at-bound ok; zero max refused; live VERIFIED /
- * force-deliver refused; honesty helper; ACCEPTED≠VERIFIED.
+ * Hillclimb deepen: exact-at-bound ok; zero/negative/non-finite max refused;
+ * UTF-8 4-byte emoji bomb; close-path one-shot bomb quarantine; live VERIFIED /
+ * force-deliver refused; mismatched honesty; ACCEPTED≠VERIFIED.
  * Oversized stdout is refused (OUTPUT_TOO_LARGE) and not delivered.
  * External effects: NONE. Never invents live VERIFIED.
  */
@@ -70,38 +71,63 @@ export async function proofOutputBombBoundedQuarantined(
       );
     }
 
-    // 2b. Exact-at-bound is deliverable; zero max refuses.
+    // 2b. Exact-at-bound is deliverable; zero/negative/non-finite max refuses.
     const atBound = assessStdoutBound("A".repeat(maxBytes), maxBytes);
     const zeroMax = assessStdoutBound("x", 0);
+    const negMax = assessStdoutBound("x", -1);
+    const infMax = assessStdoutBound("x", Number.POSITIVE_INFINITY);
+    const nanMax = assessStdoutBound("x", Number.NaN);
     if (
       atBound.withinBound &&
       !zeroMax.withinBound &&
-      zeroMax.code === "OUTPUT_TOO_LARGE"
+      zeroMax.code === "OUTPUT_TOO_LARGE" &&
+      !negMax.withinBound &&
+      !infMax.withinBound &&
+      !nanMax.withinBound
     ) {
       details.push(
-        "Exact-at-bound deliverable; maxOutputBytes≤0 → OUTPUT_TOO_LARGE",
+        "Exact-at-bound deliverable; maxOutputBytes≤0/∞/NaN → OUTPUT_TOO_LARGE",
       );
     } else {
       passed = false;
       details.push(
-        `at-bound/zeroMax unexpectedly ${JSON.stringify({ atBound, zeroMax })}`,
+        `at-bound/non-finite unexpectedly ${JSON.stringify({ atBound, zeroMax, negMax, infMax, nanMax })}`,
       );
     }
 
-    // 3. UTF-8 multi-byte counted by bytes, not characters.
+    // 2c. Empty stdout under a finite bound remains deliverable.
+    const empty = assessStdoutBound("", maxBytes);
+    const emptyQ = quarantineStdoutDelivery(empty);
+    if (empty.withinBound && empty.byteLength === 0 && emptyQ.deliver === true) {
+      details.push("Empty stdout under finite bound remains deliverable");
+    } else {
+      passed = false;
+      details.push(
+        `empty stdout unexpectedly ${JSON.stringify({ empty, emptyQ })}`,
+      );
+    }
+
+    // 3. UTF-8 multi-byte counted by bytes, not characters (2-byte + 4-byte).
     const multi = "é".repeat(maxBytes); // 2 bytes each in UTF-8
     const multiBound = assessStdoutBound(multi, maxBytes);
+    const emoji = "🔥".repeat(Math.ceil(maxBytes / 2)); // 4 bytes each
+    const emojiBound = assessStdoutBound(emoji, maxBytes);
     if (
       !multiBound.withinBound &&
       multiBound.code === "OUTPUT_TOO_LARGE" &&
-      multiBound.byteLength > maxBytes
+      multiBound.byteLength > maxBytes &&
+      !emojiBound.withinBound &&
+      emojiBound.code === "OUTPUT_TOO_LARGE" &&
+      emojiBound.byteLength > maxBytes
     ) {
       details.push(
-        `UTF-8 multi-byte bomb counted by bytes (${multiBound.byteLength}B)`,
+        `UTF-8 multi-byte bomb counted by bytes (2B=${multiBound.byteLength}; 4B=${emojiBound.byteLength})`,
       );
     } else {
       passed = false;
-      details.push(`UTF-8 bound unexpectedly ${JSON.stringify(multiBound)}`);
+      details.push(
+        `UTF-8 bound unexpectedly ${JSON.stringify({ multiBound, emojiBound })}`,
+      );
     }
 
     // 3b. Live VERIFIED / force-deliver claims refused.
@@ -131,13 +157,28 @@ export async function proofOutputBombBoundedQuarantined(
       assessment: over,
       quarantine: overQ,
     });
-    if (honesty.ok) {
+    const mismatched = assertOutputBombBoundedHonest({
+      assessment: safe,
+      quarantine: overQ,
+    });
+    const liveHonest = assertOutputBombBoundedHonest({
+      assessment: safe,
+      quarantine: liveClaim,
+    });
+    if (
+      honesty.ok &&
+      !mismatched.ok &&
+      mismatched.code === "OUTPUT_BOMB_DISHONEST" &&
+      liveHonest.ok
+    ) {
       details.push(
-        `assertOutputBombBoundedHonest → ${honesty.code}; ACCEPTED≠VERIFIED`,
+        `assertOutputBombBoundedHonest → honest over/quarantine; mismatched DISHONEST; LIVE_CLAIM honest; ACCEPTED≠VERIFIED`,
       );
     } else {
       passed = false;
-      details.push(`honesty failed: ${honesty.reasons.join("; ")}`);
+      details.push(
+        `honesty unexpectedly h=${JSON.stringify(honesty)} m=${JSON.stringify(mismatched)} l=${JSON.stringify(liveHonest)}`,
+      );
     }
 
     // 4. Production invokeClaudeCli path with local bomb executable (shebang).
@@ -205,7 +246,7 @@ export async function proofOutputBombBoundedQuarantined(
       details.push(`Double bomb unexpectedly ${JSON.stringify(bombInvoke2)}`);
     }
 
-    // 4c. Nonpositive maxOutputBytes refused before spawn (no quiet ok:true).
+    // 4c. Nonpositive / non-finite maxOutputBytes refused before spawn (no quiet ok:true).
     const zeroBoundInvoke = await invokeClaudeCli({
       executablePath: bombScript,
       agentName: "A01",
@@ -215,18 +256,75 @@ export async function proofOutputBombBoundedQuarantined(
       timeoutMs: 2_000,
       maxOutputBytes: 0,
     });
+    const negBoundInvoke = await invokeClaudeCli({
+      executablePath: bombScript,
+      agentName: "A01",
+      cwd: workDir,
+      modelId: "fixture-model",
+      prompt: "should-not-spawn-neg",
+      timeoutMs: 2_000,
+      maxOutputBytes: -7,
+    });
+    const infBoundInvoke = await invokeClaudeCli({
+      executablePath: bombScript,
+      agentName: "A01",
+      cwd: workDir,
+      modelId: "fixture-model",
+      prompt: "should-not-spawn-inf",
+      timeoutMs: 2_000,
+      maxOutputBytes: Number.POSITIVE_INFINITY,
+    });
     if (
       !zeroBoundInvoke.ok &&
-      zeroBoundInvoke.code === "OUTPUT_TOO_LARGE"
+      zeroBoundInvoke.code === "OUTPUT_TOO_LARGE" &&
+      !negBoundInvoke.ok &&
+      negBoundInvoke.code === "OUTPUT_TOO_LARGE" &&
+      !infBoundInvoke.ok &&
+      infBoundInvoke.code === "OUTPUT_TOO_LARGE"
     ) {
       details.push(
-        "maxOutputBytes≤0 invokeClaudeCli → OUTPUT_TOO_LARGE before spawn",
+        "maxOutputBytes≤0/-/∞ invokeClaudeCli → OUTPUT_TOO_LARGE before spawn",
       );
     } else {
       passed = false;
       details.push(
-        `zero-bound invoke unexpectedly ${JSON.stringify(zeroBoundInvoke)}`,
+        `non-finite-bound invoke unexpectedly z=${JSON.stringify(zeroBoundInvoke)} n=${JSON.stringify(negBoundInvoke)} i=${JSON.stringify(infBoundInvoke)}`,
       );
+    }
+
+    // 4d. One-shot bomb (writes oversized then exits) — close-path quarantine.
+    const oneshotScript = join(workDir, "oneshot-bomb.mjs");
+    writeFileSync(
+      oneshotScript,
+      [
+        "#!/usr/bin/env node",
+        `process.stdout.write(Buffer.alloc(${maxBytes + 512}, 0x42));`,
+        "process.exit(0);",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+    chmodSync(oneshotScript, 0o755);
+    const oneshot = await invokeClaudeCli({
+      executablePath: oneshotScript,
+      agentName: "A01",
+      cwd: workDir,
+      modelId: "fixture-model",
+      prompt: "oneshot-bomb",
+      timeoutMs: 5_000,
+      maxOutputBytes: maxBytes,
+    });
+    if (
+      !oneshot.ok &&
+      oneshot.code === "OUTPUT_TOO_LARGE" &&
+      oneshot.stdout === undefined
+    ) {
+      details.push(
+        "one-shot bomb → OUTPUT_TOO_LARGE on close-path; bomb stdout quarantined",
+      );
+    } else {
+      passed = false;
+      details.push(`one-shot bomb unexpectedly ${JSON.stringify(oneshot)}`);
     }
 
     // 5. Positive control: under-bound local CLI delivers stdout.
