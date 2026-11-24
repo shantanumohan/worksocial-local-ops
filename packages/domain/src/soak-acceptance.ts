@@ -923,6 +923,7 @@ export const SoakProofKind = {
    */
   SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES:
     "shared_ad_budget_external_change_invalidates",
+  /**
    * Recent Ads conversion blank → PENDING, not a false zero (T-X036).
    * Blank/omitted/unsettled conversions stay PENDING (displayValue null);
    * never coerce to a false zero; budget adjust blocked while unsettled.

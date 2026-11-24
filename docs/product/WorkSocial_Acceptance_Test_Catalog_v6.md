@@ -1062,7 +1062,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X033 | Omitted GSC rows | Unknown ≠ zero *(fixture ACCEPTED)* |
 | T-X034 | Test-only Ads project vs production | Blocked *(fixture ACCEPTED — test Ads project vs production blocked proof; not sandbox/prod VERIFIED)* |
 | T-X035 | Shared ad budget changed externally | Proposal invalidated *(fixture ACCEPTED — shared ad budget external change invalidates proof; not sandbox/prod VERIFIED)* |
-| T-X036 | Recent Ads conversion blank | Pending; no false zero *(fixture ACCEPTED — recent Ads conversion blank PENDING proof; not sandbox/prod VERIFIED)*
+| T-X036 | Recent Ads conversion blank | Pending; no false zero *(fixture ACCEPTED — recent Ads conversion blank PENDING proof; not sandbox/prod VERIFIED)* |
 | T-X037 | Gemini tries operational tool | No effect *(fixture ACCEPTED)* |
 | T-X038 | Grounding configured but unused | No grounded pass *(fixture ACCEPTED)* |
 | T-X039 | Provider error vs answer failure | Separate denominators *(fixture ACCEPTED)* |
