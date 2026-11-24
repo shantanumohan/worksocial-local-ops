@@ -149,25 +149,49 @@ export function replayMissionWorkflowHistory(
   // Bind terminal record to the replayed outcome — missing or conflicting
   // terminal must fail closed (truncated / inconsistent history).
   const terminal = history.terminal;
+  const terminalOpId =
+    typeof terminal?.operationId === "string" ? terminal.operationId.trim() : "";
+  const terminalApply = terminal?.applyAttemptCount;
   if (
     !terminal ||
     terminal.outcome !== "VERIFIED" ||
-    typeof terminal.applyAttemptCount !== "number" ||
-    typeof terminal.operationId !== "string" ||
-    terminal.operationId.length === 0
+    typeof terminalApply !== "number" ||
+    !Number.isFinite(terminalApply) ||
+    !Number.isInteger(terminalApply) ||
+    terminalApply < 0 ||
+    terminalOpId.length === 0
   ) {
     hooks.onForbiddenLiveIo("history_terminal_missing_or_incomplete");
     return { ...result, outcome: "FAILED" };
   }
   if (
     result.outcome === "VERIFIED" &&
-    (terminal.applyAttemptCount !== result.applyAttemptCount ||
-      terminal.operationId !== result.operationId)
+    (terminalApply !== result.applyAttemptCount ||
+      terminalOpId !== result.operationId)
   ) {
     hooks.onForbiddenLiveIo(
-      `history_terminal_mismatch op=${terminal.operationId}≠${result.operationId} apply=${terminal.applyAttemptCount}≠${result.applyAttemptCount}`,
+      `history_terminal_mismatch op=${terminalOpId}≠${result.operationId} apply=${terminalApply}≠${result.applyAttemptCount}`,
     );
     return { ...result, outcome: "FAILED" };
+  }
+
+  // Codex harden — cross-bind claim/verify activity opIds to terminal when
+  // the full three-event chain was scheduled (refuse inconsistent history).
+  if (result.outcome === "VERIFIED" && history.events.length === 3) {
+    const claim = history.events[1];
+    const verify = history.events[2];
+    if (
+      !claim ||
+      claim.activity !== "claimAndAccept" ||
+      !verify ||
+      verify.activity !== "verify" ||
+      claim.operationId !== terminalOpId ||
+      verify.operationId !== terminalOpId ||
+      verify.applyAttemptCount !== terminalApply
+    ) {
+      hooks.onForbiddenLiveIo("history_activity_terminal_op_mismatch");
+      return { ...result, outcome: "FAILED" };
+    }
   }
   return result;
 }
@@ -225,6 +249,35 @@ export function replayEmptyHistoryFailsClosed(): {
         outcome: "VERIFIED",
         applyAttemptCount: 0,
         operationId: "empty",
+      },
+    },
+    hooks,
+  );
+  return { outcome, summary: summary() };
+}
+
+/**
+ * Partial activity truncation (enqueue only) must fail closed — terminal alone
+ * must not invent a VERIFIED mission success (T-X013 Codex harden).
+ */
+export function replayPartialHistoryFailsClosed(): {
+  outcome: ReplayMissionOutcome;
+  summary: ReplayNoRepeatIoSummary;
+} {
+  const { hooks, summary } = createHistoryOnlyReplayHooks();
+  const outcome = replayMissionWorkflowHistory(
+    {
+      events: [
+        {
+          activity: "enqueue",
+          workflowId: "wf-partial",
+          phase: "queued",
+        },
+      ],
+      terminal: {
+        outcome: "VERIFIED",
+        applyAttemptCount: 1,
+        operationId: "op-partial",
       },
     },
     hooks,

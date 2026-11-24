@@ -8,7 +8,9 @@
  *    recorded activity results only — never re-invoking acceptPending,
  *    verifyIndependent, or fakeProvider.applyOnce.
  * 3) Assert applyAttemptCount stays 1 and the provider ledger does not grow.
- * 4) Second replay + empty-history fail-closed keep honesty (T-X013 hillclimb).
+ * 4) Second replay + empty/partial-history fail-closed keep honesty (T-X013).
+ * 5) Codex harden: terminal bind + claim/verify/terminal opId cross-bind;
+ *    whitespace terminal tokens and unread tails refuse without inventing I/O.
  *
  * Distinct from mid-flight NO_DUPLICATE_EFFECTS (ACCEPTED_PENDING retry) and
  * from CRASH_RESTART (resume then verify once). Also distinct from merely
@@ -22,6 +24,7 @@ import {
   createHistoryOnlyReplayHooks,
   replayEmptyHistoryFailsClosed,
   replayMissionWorkflowHistory,
+  replayPartialHistoryFailsClosed,
   type ReplayActivityResult,
   type ReplayWorkflowHistory,
   type SoakProofRecord,
@@ -209,6 +212,63 @@ export async function proofReplayHistoricalNoRepeatIo(
     );
   }
 
+  const partialFail = replayPartialHistoryFailsClosed();
+  if (
+    partialFail.outcome.outcome === "FAILED" &&
+    partialFail.summary.forbiddenLiveIo > 0 &&
+    partialFail.summary.liveIoLabels.some((l) => l.includes("history_mismatch"))
+  ) {
+    details.push(
+      "Partial history fail-closed → FAILED (terminal alone cannot invent VERIFIED)",
+    );
+  } else {
+    details.push(
+      `Partial history unexpectedly ${JSON.stringify(partialFail)}`,
+    );
+  }
+
+  // Codex harden — missing terminal / claim-op drift refuse after full events.
+  const missingTerminalHooks = createHistoryOnlyReplayHooks();
+  const missingTerminal = replayMissionWorkflowHistory(
+    { events: history.events, terminal: undefined } as unknown as ReplayWorkflowHistory,
+    missingTerminalHooks.hooks,
+  );
+  const missingSummary = missingTerminalHooks.summary();
+  if (
+    missingTerminal.outcome === "FAILED" &&
+    missingSummary.liveIoLabels.some((l) =>
+      l.includes("history_terminal_missing_or_incomplete"),
+    )
+  ) {
+    details.push("Missing terminal after complete events → FAILED (Codex harden)");
+  } else {
+    details.push("Missing terminal unexpectedly passed");
+  }
+
+  const driftHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) =>
+      e.activity === "claimAndAccept"
+        ? { ...e, operationId: `${operationId}-drift` }
+        : e,
+    ),
+    terminal: { ...history.terminal },
+  };
+  const driftHooks = createHistoryOnlyReplayHooks();
+  const driftReplay = replayMissionWorkflowHistory(driftHistory, driftHooks.hooks);
+  const driftSummary = driftHooks.summary();
+  if (
+    driftReplay.outcome === "FAILED" &&
+    driftSummary.liveIoLabels.some((l) =>
+      l.includes("history_activity_terminal_op_mismatch"),
+    )
+  ) {
+    details.push(
+      "Claim/terminal opId cross-bind mismatch → FAILED (Codex harden)",
+    );
+  } else {
+    details.push("Claim/terminal cross-bind unexpectedly passed");
+  }
+
   const rehydrateSvc = openService(stateDir);
   const decisionAfter = await rehydrateSvc.getDecision(operationId);
   const providersAfterReplay = await rehydrateSvc.stores.fakeProvider.list();
@@ -251,6 +311,10 @@ export async function proofReplayHistoricalNoRepeatIo(
     secondSummary.forbiddenLiveIo === 0 &&
     emptyFail.outcome.outcome === "FAILED" &&
     emptyFail.summary.forbiddenLiveIo > 0 &&
+    partialFail.outcome.outcome === "FAILED" &&
+    partialFail.summary.forbiddenLiveIo > 0 &&
+    missingTerminal.outcome === "FAILED" &&
+    driftReplay.outcome === "FAILED" &&
     applyBeforeReplay === 1 &&
     applyAfterReplay === 1 &&
     thisOpBefore === 1 &&

@@ -32,6 +32,21 @@ describe("proofReplayHistoricalNoRepeatIo", () => {
       ),
     ).toBe(true);
     expect(
+      proof.details.some((d) =>
+        d.includes("Partial history fail-closed → FAILED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Missing terminal after complete events → FAILED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Claim/terminal opId cross-bind mismatch → FAILED"),
+      ),
+    ).toBe(true);
+    expect(
       proof.details.some((d) => d.includes("honesty NOT_WIRED/NONE")),
     ).toBe(true);
     expect(
