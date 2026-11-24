@@ -217,6 +217,10 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(
       run.run.caseResults.find((c) => c.caseId === "T-US-043")?.status,
     ).toBe(AcceptanceCaseStatus.ACCEPTED);
+    const tx064 = run.run.caseResults.find((c) => c.caseId === "T-X064");
+    expect(tx064?.status).toBe(AcceptanceCaseStatus.ACCEPTED);
+    expect(tx064?.environment).toBe(AcceptanceEnvironment.FIXTURE);
+    expect(String(tx064?.status).toUpperCase()).not.toBe("VERIFIED");
   });
 
   it("rejects silent VERIFIED status for live claims", () => {

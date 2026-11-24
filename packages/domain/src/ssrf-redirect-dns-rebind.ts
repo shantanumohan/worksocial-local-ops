@@ -113,9 +113,41 @@ function isIpv6LinkLocalOrUla(host: string): boolean {
   return false;
 }
 
+/**
+ * Unwrap IPv4-mapped IPv6 (`:ffff:a.b.c.d` / `:ffff:aabb:ccdd`) to dotted IPv4.
+ * Returns null when the address is not IPv4-mapped.
+ */
+export function unwrapIpv4MappedAddress(address: string): string | null {
+  const host = normalizeHost(address).split("%")[0]!;
+  // Common form ::ffff:a.b.c.d (also [bracketed] via normalizeHost).
+  const dotted = /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i.exec(host);
+  if (dotted) {
+    return dotted[1]!;
+  }
+  // Hex form ::ffff:aabb:ccdd (last two hextets encode IPv4).
+  const hex = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i.exec(host);
+  if (!hex) {
+    return null;
+  }
+  const hi = Number.parseInt(hex[1]!, 16);
+  const lo = Number.parseInt(hex[2]!, 16);
+  if (!Number.isFinite(hi) || !Number.isFinite(lo)) {
+    return null;
+  }
+  return `${(hi >> 8) & 0xff}.${hi & 0xff}.${(lo >> 8) & 0xff}.${lo & 0xff}`;
+}
+
 /** True when a resolved address is non-public (SSRF / DNS-rebind target). */
 export function isPrivateOrLocalAddress(address: string): boolean {
-  return isPrivateOrLocalHostname(address);
+  if (isPrivateOrLocalHostname(address)) {
+    return true;
+  }
+  // IPv4-mapped IPv6 can hide RFC1918 / link-local / metadata behind ::ffff:.
+  const mapped = unwrapIpv4MappedAddress(address);
+  if (mapped !== null && isPrivateOrLocalHostname(mapped)) {
+    return true;
+  }
+  return false;
 }
 
 function hostOnAllowlist(

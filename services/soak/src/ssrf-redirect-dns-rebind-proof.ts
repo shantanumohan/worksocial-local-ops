@@ -194,6 +194,80 @@ export function proofSsrfRedirectDnsRebindBlockedEveryHop(
     details.push(`IPv6 link-local rebind unexpectedly ${JSON.stringify(v6Rebind)}`);
   }
 
+  // 7. NON_HTTPS on redirect hop — every hop checked (not only private/DNS).
+  const nonHttps = evaluateSsrfRedirectDnsRebindChain({
+    allowedHosts: ALLOWED,
+    hops: [
+      {
+        hopIndex: 0,
+        url: "https://worksocial.com/start",
+        resolvedAddresses: ["93.184.216.34"],
+      },
+      {
+        hopIndex: 1,
+        url: "http://cdn.worksocial.com/downgrade",
+        resolvedAddresses: ["151.101.1.1"],
+      },
+    ],
+  });
+  if (
+    nonHttps.allowed === false &&
+    nonHttps.blockedHopIndex === 1 &&
+    nonHttps.blockedCode === "NON_HTTPS" &&
+    nonHttps.hopVerdicts[0]?.allowed === true
+  ) {
+    details.push("Redirect hop 1 → http NON_HTTPS (hop 0 still allowed)");
+  } else {
+    passed = false;
+    details.push(`NON_HTTPS unexpectedly ${JSON.stringify(nonHttps)}`);
+  }
+
+  // 8. Credentials in URL forbidden on initial hop.
+  const creds = evaluateSsrfRedirectDnsRebindChain({
+    allowedHosts: ALLOWED,
+    hops: [
+      {
+        hopIndex: 0,
+        url: "https://user:secret@worksocial.com/x",
+        resolvedAddresses: ["93.184.216.34"],
+      },
+    ],
+  });
+  if (
+    creds.allowed === false &&
+    creds.blockedHopIndex === 0 &&
+    creds.blockedCode === "CREDENTIALS_FORBIDDEN"
+  ) {
+    details.push("Initial hop credentials in URL → CREDENTIALS_FORBIDDEN");
+  } else {
+    passed = false;
+    details.push(`CREDENTIALS_FORBIDDEN unexpectedly ${JSON.stringify(creds)}`);
+  }
+
+  // 9. IPv4-mapped IPv6 must not hide RFC1918 rebind (::ffff:10.x).
+  const mapped = evaluateSsrfRedirectDnsRebindChain({
+    allowedHosts: ALLOWED,
+    hops: [
+      {
+        hopIndex: 0,
+        url: "https://worksocial.com/mapped",
+        resolvedAddresses: ["::ffff:10.1.2.3"],
+      },
+    ],
+  });
+  if (
+    mapped.allowed === false &&
+    mapped.blockedHopIndex === 0 &&
+    mapped.blockedCode === "DNS_REBIND_PRIVATE_ADDRESS"
+  ) {
+    details.push(
+      "IPv4-mapped rebind → ::ffff:10.1.2.3 DNS_REBIND_PRIVATE_ADDRESS",
+    );
+  } else {
+    passed = false;
+    details.push(`IPv4-mapped rebind unexpectedly ${JSON.stringify(mapped)}`);
+  }
+
   details.push(
     "liveDnsResolve=NOT_WIRED liveFetch=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE",
   );

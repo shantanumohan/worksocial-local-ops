@@ -1228,7 +1228,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X061 fixture ACCEPTED via keyboard_focus_restore_after_dialog only — not live VERIFIED",
       "T-X068 fixture ACCEPTED via thirty_alerts_one_outage_grouped only — not live VERIFIED",
       "T-X072 fixture ACCEPTED via customer_data_eval_redaction_blocks only — not live VERIFIED",
-      "T-X064 fixture ACCEPTED via ssrf_redirect_dns_rebind_blocked_every_hop only — not live VERIFIED",
+      "T-X064 fixture ACCEPTED via ssrf_redirect_dns_rebind_blocked_every_hop only — every hop incl. NON_HTTPS/CREDENTIALS/IPv6 fe80::/10/IPv4-mapped ::ffff:; liveDns/liveFetch NOT_WIRED — not live VERIFIED",
       "T-X071 fixture ACCEPTED via host_offline_public_discovery_unavailable only — not live VERIFIED",
       "T-X067 fixture ACCEPTED via incompatible_workflow_upgrade_blocked_or_retained only — not live VERIFIED",
       "T-X034 fixture ACCEPTED via ads_test_project_production_blocked only — not live VERIFIED",
