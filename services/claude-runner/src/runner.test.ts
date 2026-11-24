@@ -17,6 +17,7 @@ import {
   assertOutputBombBoundedHonest,
   quarantineStdoutDelivery,
   planClaudeCliInvocation,
+  invokeClaudeCli,
 } from "./cli-adapter.js";
 import { createClaudeRunner } from "./runner.js";
 import { runAllRoleFixtureEvaluations } from "./fixture-runner.js";
@@ -105,6 +106,45 @@ describe("claude-runner (R1-04)", () => {
     expect(force.deliver).toBe(false);
     if (!force.deliver) {
       expect(force.code).toBe("LIVE_CLAIM_REFUSED");
+    }
+
+    // Mismatched pair: under-bound assessment + OUTPUT_TOO_LARGE quarantine.
+    const mismatched = assertOutputBombBoundedHonest({
+      assessment: under,
+      quarantine: overQ,
+    });
+    expect(mismatched.ok).toBe(false);
+    expect(mismatched.code).toBe("OUTPUT_BOMB_DISHONEST");
+  });
+
+  it("refuses invokeClaudeCli when maxOutputBytes is nonpositive (T-X011)", async () => {
+    const { mkdtempSync, writeFileSync, chmodSync, rmSync } = await import(
+      "node:fs"
+    );
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const dir = mkdtempSync(join(tmpdir(), "ws-bound-"));
+    try {
+      const script = join(dir, "quiet.mjs");
+      writeFileSync(
+        script,
+        "#!/usr/bin/env node\nprocess.exit(0);\n",
+        "utf8",
+      );
+      chmodSync(script, 0o755);
+      const zero = await invokeClaudeCli({
+        executablePath: script,
+        agentName: "A01",
+        cwd: dir,
+        modelId: "fixture-model",
+        prompt: "quiet",
+        timeoutMs: 2_000,
+        maxOutputBytes: 0,
+      });
+      expect(zero.ok).toBe(false);
+      if (!zero.ok) expect(zero.code).toBe("OUTPUT_TOO_LARGE");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 

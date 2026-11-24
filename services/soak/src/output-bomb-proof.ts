@@ -205,6 +205,30 @@ export async function proofOutputBombBoundedQuarantined(
       details.push(`Double bomb unexpectedly ${JSON.stringify(bombInvoke2)}`);
     }
 
+    // 4c. Nonpositive maxOutputBytes refused before spawn (no quiet ok:true).
+    const zeroBoundInvoke = await invokeClaudeCli({
+      executablePath: bombScript,
+      agentName: "A01",
+      cwd: workDir,
+      modelId: "fixture-model",
+      prompt: "should-not-spawn-as-success",
+      timeoutMs: 2_000,
+      maxOutputBytes: 0,
+    });
+    if (
+      !zeroBoundInvoke.ok &&
+      zeroBoundInvoke.code === "OUTPUT_TOO_LARGE"
+    ) {
+      details.push(
+        "maxOutputBytes≤0 invokeClaudeCli → OUTPUT_TOO_LARGE before spawn",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `zero-bound invoke unexpectedly ${JSON.stringify(zeroBoundInvoke)}`,
+      );
+    }
+
     // 5. Positive control: under-bound local CLI delivers stdout.
     const okScript = join(workDir, "ok-cli.mjs");
     writeFileSync(

@@ -255,6 +255,16 @@ export function assertOutputBombBoundedHonest(input: {
   if (quarantine.deliver === true && !assessment.withinBound) {
     reasons.push("Cannot deliver when assessment is over bound");
   }
+  // Reject mismatched pairs: OUTPUT_TOO_LARGE quarantine requires over-bound assessment.
+  if (
+    quarantine.deliver === false &&
+    quarantine.code === "OUTPUT_TOO_LARGE" &&
+    assessment.withinBound
+  ) {
+    reasons.push(
+      "OUTPUT_TOO_LARGE quarantine requires over-bound assessment (mismatched pair)",
+    );
+  }
   if (reasons.length > 0) {
     return {
       ok: false,
@@ -524,6 +534,17 @@ function readCliVersion(
 export function invokeClaudeCli(
   request: ClaudeCliInvokeRequest,
 ): Promise<ClaudeCliInvokeResult> {
+  // Fail closed before spawn when the bound itself is invalid (T-X011).
+  // Otherwise a quiet child with maxOutputBytes≤0 could return ok:true.
+  if (!(request.maxOutputBytes > 0)) {
+    return Promise.resolve({
+      ok: false,
+      code: "OUTPUT_TOO_LARGE",
+      reason:
+        "maxOutputBytes must be a positive bound before spawn (T-X011); ACCEPTED≠VERIFIED",
+    });
+  }
+
   const plan = planClaudeCliInvocation({
     agentName: request.agentName,
     modelId: request.modelId,
