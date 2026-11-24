@@ -134,6 +134,7 @@ export function acquireHostLease(
 ): HostLeaseAcquireResult {
   const hostId = normalizeHostLeaseToken(input.hostId);
   const generationId = normalizeHostLeaseToken(input.generationId);
+  const ttlMs = input.ttlMs === undefined ? 60_000 : input.ttlMs;
   if (
     hostId === null ||
     generationId === null ||
@@ -146,7 +147,7 @@ export function acquireHostLease(
       ok: false,
       reason: "INVALID_INPUT",
       message:
-        "hostId, generationId, and positive holderPid are required to acquire a host lease.",
+        "hostId, generationId, positive holderPid, and positive ttlMs are required to acquire a host lease.",
     };
   }
 

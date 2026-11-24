@@ -240,4 +240,45 @@ describe("host-lease", () => {
       expect(liveProbe.message).toBe(HOST_LEASE_HELD_MESSAGE);
     }
   });
+
+  it("deepen: rejects non-positive ttl; cross-host LEASE_HELD; exact-expiry reclaim (T-X002)", () => {
+    const badTtl = acquireHostLease(
+      null,
+      { hostId: "host-a", holderPid: 1, generationId: "gen-1", ttlMs: 0 },
+      clockAt(1_000),
+    );
+    expect(badTtl.ok).toBe(false);
+    if (!badTtl.ok) expect(badTtl.reason).toBe("INVALID_INPUT");
+
+    const first = acquireHostLease(
+      null,
+      { hostId: "host-a", holderPid: 100, generationId: "gen-1", ttlMs: 5_000 },
+      clockAt(1_000),
+    );
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+
+    const crossHost = acquireHostLease(
+      first.lease,
+      { hostId: "host-other", holderPid: 200, generationId: "gen-2", ttlMs: 5_000 },
+      clockAt(2_000),
+    );
+    expect(crossHost.ok).toBe(false);
+    if (!crossHost.ok) {
+      expect(crossHost.reason).toBe("LEASE_HELD");
+      expect(crossHost.message).toBe(HOST_LEASE_HELD_MESSAGE);
+    }
+
+    const expiryMs = Date.parse(first.lease.expiresAt);
+    const boundary = acquireHostLease(
+      first.lease,
+      { hostId: "host-a", holderPid: 300, generationId: "gen-3", ttlMs: 5_000 },
+      clockAt(expiryMs),
+    );
+    expect(boundary.ok).toBe(true);
+    if (boundary.ok) {
+      expect(boundary.reclaimed).toBe(true);
+      expect(boundary.lease.generationId).toBe("gen-3");
+    }
+  });
 });

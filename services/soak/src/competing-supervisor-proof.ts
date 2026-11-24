@@ -180,7 +180,108 @@ export function proofCompetingSupervisorLease(
     details.push("Whitespace-only hostId unexpectedly accepted");
   }
 
-  // 8. Ownership kill auth fail-closed for mismatched PID / missing markers.
+  // 8. Deepen — non-positive ttlMs fail closed.
+  const badTtl = acquireHostLease(
+    held,
+    { hostId, holderPid: 1, generationId: genB, ttlMs: 0 },
+    clockAt(baseMs + 2_900),
+  );
+  if (!badTtl.ok && badTtl.reason === "INVALID_INPUT") {
+    details.push("Non-positive ttlMs fail closed INVALID_INPUT");
+  } else {
+    passed = false;
+    details.push("Non-positive ttlMs unexpectedly accepted");
+  }
+
+  // 9. Deepen — cross-hostId competition still singleton LEASE_HELD.
+  const crossHost = acquireHostLease(
+    held,
+    {
+      hostId: "host-other-soak",
+      holderPid: 6006,
+      generationId: genC,
+      ttlMs: 60_000,
+    },
+    clockAt(baseMs + 3_000),
+  );
+  if (
+    !crossHost.ok &&
+    crossHost.reason === "LEASE_HELD" &&
+    crossHost.message === HOST_LEASE_HELD_MESSAGE
+  ) {
+    details.push("Cross-hostId competitor refused LEASE_HELD (generic message)");
+  } else {
+    passed = false;
+    details.push("Cross-hostId competitor unexpectedly acquired");
+  }
+
+  // 10. Deepen — same-gen renew preserves leaseId and acquiredAt.
+  const priorLeaseId = held?.leaseId;
+  const priorAcquiredAt = held?.acquiredAt;
+  const sameGen = acquireHostLease(
+    held,
+    { hostId, holderPid: 3005, generationId: genB, ttlMs: 60_000 },
+    clockAt(baseMs + 3_200),
+  );
+  if (
+    sameGen.ok &&
+    !sameGen.reclaimed &&
+    sameGen.lease.leaseId === priorLeaseId &&
+    sameGen.lease.acquiredAt === priorAcquiredAt
+  ) {
+    details.push("Same-gen renew preserves leaseId+acquiredAt reclaimed=false");
+    held = sameGen.lease;
+  } else {
+    passed = false;
+    details.push("Same-gen renew did not preserve lease identity");
+  }
+
+  // 11. Deepen — exact expiry boundary reclaim, then second live refused.
+  const short = acquireHostLease(
+    null,
+    { hostId: "host-expire-soak", holderPid: 7007, generationId: "gen-exp-a", ttlMs: 1_000 },
+    clockAt(baseMs + 10_000),
+  );
+  if (!short.ok) {
+    passed = false;
+    details.push("Short-ttl acquire failed for expiry boundary deepen");
+  } else {
+    const expiryMs = Date.parse(short.lease.expiresAt);
+    const atExpiry = acquireHostLease(
+      short.lease,
+      {
+        hostId: "host-expire-soak",
+        holderPid: 7008,
+        generationId: "gen-exp-b",
+        ttlMs: 60_000,
+      },
+      clockAt(expiryMs),
+    );
+    if (atExpiry.ok && atExpiry.reclaimed) {
+      details.push("Exact-expiry boundary reclaim ok reclaimed=true");
+      const afterExpirySecond = acquireHostLease(
+        atExpiry.lease,
+        {
+          hostId: "host-expire-soak",
+          holderPid: 7009,
+          generationId: "gen-exp-c",
+          ttlMs: 60_000,
+        },
+        clockAt(expiryMs + 100),
+      );
+      if (!afterExpirySecond.ok && afterExpirySecond.reason === "LEASE_HELD") {
+        details.push("Post-expiry-reclaim second competitor refused LEASE_HELD");
+      } else {
+        passed = false;
+        details.push("Post-expiry-reclaim second competitor unexpectedly acquired");
+      }
+    } else {
+      passed = false;
+      details.push("Exact-expiry boundary reclaim failed");
+    }
+  }
+
+  // 12. Ownership kill auth fail-closed for mismatched PID / missing markers.
   const ownershipOk = verifyProcessOwnership(
     { pid: 1001, serviceId: "api", generationId: genA },
     {

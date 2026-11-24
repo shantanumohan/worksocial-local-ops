@@ -23,6 +23,21 @@ describe("proofCompetingSupervisorLease", () => {
         d.includes("Whitespace-padded host/generation same-gen renew ok"),
       ),
     ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Cross-hostId competitor refused LEASE_HELD"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Exact-expiry boundary reclaim ok"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Same-gen renew preserves leaseId+acquiredAt"),
+      ),
+    ).toBe(true);
     expect(proof.details.some((d) => d.includes("honesty NOT_WIRED/NONE"))).toBe(
       true,
     );
