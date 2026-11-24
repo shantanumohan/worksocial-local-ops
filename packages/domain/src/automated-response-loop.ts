@@ -5,7 +5,9 @@
  * When the bound is reached, further outbound sends refuse with MESSAGE_LIMIT
  * and the conversation must hand off (no unbounded loop). Distinct from
  * takeover-cancels-unsent (T-US-044/T-X053) and unknown-policy escalate
- * (T-X055). External effects: NONE.
+ * (T-X055). External effects: NONE. Live wiring NOT_WIRED.
+ * Hillclimb: honesty fields on every decision; over-bound still handoffs;
+ * max=1 and max=0 edges stay MESSAGE_LIMIT_HANDOFF (no unbounded loop).
  */
 
 import {
@@ -32,6 +34,16 @@ export type AutomatedResponseLoopDecision = {
   /** Present when bound was hit and a handoff was materialized. */
   handoff: HandoffRecord | null;
   conversation: ConversationRecord;
+  /** Live inbox wiring is never claimed from this fixture path. */
+  liveProviderWiring: "NOT_WIRED";
+  chatgptAdsAccess: "ACCESS_BLOCKED";
+  externalEffects: "NONE";
+};
+
+const HONESTY = {
+  liveProviderWiring: "NOT_WIRED" as const,
+  chatgptAdsAccess: "ACCESS_BLOCKED" as const,
+  externalEffects: "NONE" as const,
 };
 
 /**
@@ -65,9 +77,11 @@ export function evaluateAutomatedResponseLoopBound(input: {
       handoffRequired: false,
       reasons: [
         `Sent agent count ${input.sentAgentMessageCount} < max ${input.policy.maxAgentMessagesPerConversation} — loop within bound`,
+        "liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
       ],
       handoff: null,
       conversation: input.conversation,
+      ...HONESTY,
     };
   }
 
@@ -92,9 +106,11 @@ export function evaluateAutomatedResponseLoopBound(input: {
       reasons: [
         ...sendGate.reasons,
         `Handoff ${handoff.handoffId} required; conversation status=${ConversationStatus.HANDED_OFF}`,
+        "liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
       ],
       handoff,
       conversation,
+      ...HONESTY,
     };
   }
 
@@ -102,9 +118,13 @@ export function evaluateAutomatedResponseLoopBound(input: {
     allowed: false,
     code: null,
     handoffRequired: false,
-    reasons: sendGate.reasons,
+    reasons: [
+      ...sendGate.reasons,
+      "liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+    ],
     handoff: null,
     conversation: input.conversation,
+    ...HONESTY,
   };
 }
 

@@ -946,7 +946,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X055** is fixture ACCEPTED only via the unknown policy question escalates without promise proof (`UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE`) — questions outside `allowedQuestionIds` refuse the concierge draft and escalate handoff with empty `verifiedAnswers` (no invented promise). Not sandbox/prod VERIFIED.
 
-**T-X056** is fixture ACCEPTED only via the automated response loop bounded handoff proof (`AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF`) — `maxAgentMessagesPerConversation` enforces `MESSAGE_LIMIT` and creates a handoff (`handed_off`, `agentSendAllowed=false`); no unbounded auto-reply loop. Distinct from takeover-cancels-unsent (T-US-044/T-X053). Not sandbox/prod VERIFIED.
+**T-X056** is fixture ACCEPTED only via the automated response loop bounded handoff proof (`AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF`) — `maxAgentMessagesPerConversation` enforces `MESSAGE_LIMIT` and creates a handoff (`handed_off`, `agentSendAllowed=false`); over-bound and `max=0` still hand off (no unbounded auto-reply loop); live wiring stays `NOT_WIRED`; ChatGPT Ads ACCESS_BLOCKED; `externalEffects=NONE`. Distinct from takeover-cancels-unsent (T-US-044/T-X053). Not sandbox/prod VERIFIED.
 
 **T-X059** is fixture ACCEPTED only via the duplicate platform attribution one-booking proof (`DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING`) — multiple platforms may claim the same booking; unique outcome count stays 1; platform claims remain separate ledger rows (chronological retain; trim); blank/invalid claim fields refuse (`INVALID_ATTRIBUTION_CLAIM`); `liveProviderWiring=NOT_WIRED`; never silently sum into unique bookings. Not sandbox/prod VERIFIED.
 
