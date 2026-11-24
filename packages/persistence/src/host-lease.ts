@@ -110,22 +110,24 @@ export function acquireHostLease(
 ): HostLeaseAcquireResult {
   const hostId = normalizeHostLeaseToken(input.hostId);
   const generationId = normalizeHostLeaseToken(input.generationId);
+  const ttlMs = input.ttlMs === undefined ? 60_000 : input.ttlMs;
   if (
     hostId === null ||
     generationId === null ||
     !Number.isFinite(input.holderPid) ||
-    input.holderPid <= 0
+    input.holderPid <= 0 ||
+    !Number.isFinite(ttlMs) ||
+    ttlMs <= 0
   ) {
     return {
       ok: false,
       reason: "INVALID_INPUT",
       message:
-        "hostId, generationId, and positive holderPid are required to acquire a host lease.",
+        "hostId, generationId, positive holderPid, and positive ttlMs are required to acquire a host lease.",
     };
   }
 
   const now = clock.nowMs();
-  const ttlMs = input.ttlMs ?? 60_000;
   const expired = !current || isLeaseExpired(current, now);
   const currentHost = current
     ? normalizeHostLeaseToken(current.hostId)
