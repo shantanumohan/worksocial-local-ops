@@ -2474,7 +2474,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x052",
-      "evidenceNote": "Fixture ACCEPTED via SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED only — synthetic conversion contaminant excluded from commerce denominators; synthetic+countedInCommerce refused. ACCEPTED ≠ sandbox/prod VERIFIED. externalEffects=NONE."
+      "evidenceNote": "Fixture ACCEPTED via SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED only — syntheticExcludedRevenueMinor tracked; defense-in-depth projection; synthetic+countedInCommerce refused; live NOT_WIRED. ACCEPTED ≠ sandbox/prod VERIFIED. externalEffects=NONE."
     },
     {
       "id": "T-X053",

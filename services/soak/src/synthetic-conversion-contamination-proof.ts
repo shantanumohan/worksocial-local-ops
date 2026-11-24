@@ -5,7 +5,9 @@
  * (lead count, revenue). Contaminating synthetics stay ledgered for audit but
  * are projected out; synthetic+countedInCommerce is refused. Distinct from
  * T-X039/T-US-058 (metric denominators honesty bundle) and T-X050 (public flag
- * grant). External effects: NONE. Never invents live VERIFIED.
+ * grant). External effects: NONE. Live wiring NOT_WIRED. Never invents live VERIFIED.
+ * Hillclimb: syntheticExcludedRevenueMinor, defense-in-depth projection,
+ * multi-contaminant, honesty stamps.
  */
 
 import { randomUUID } from "node:crypto";
@@ -72,14 +74,29 @@ export function proofSyntheticConversionContaminationExcluded(
     },
     nowIso,
   );
+  // Second contaminant — excluded revenue must accumulate.
+  state = appendCommerceLead(
+    state,
+    {
+      recordId: "rec-synthetic-conversion-contaminant-2",
+      synthetic: true,
+      revenueMinor: 1,
+      countedInCommerce: false,
+    },
+    nowIso,
+  );
   const totals = projectCommerceTotals(state.commerceLeads);
   if (
     totals.leadCount === 1 &&
     totals.revenueMinor === 5000 &&
-    totals.syntheticExcludedCount === 1
+    totals.syntheticExcludedCount === 2 &&
+    totals.syntheticExcludedRevenueMinor === 100_000 &&
+    totals.liveProviderWiring === "NOT_WIRED" &&
+    totals.externalEffects === "NONE" &&
+    totals.fixtureOnly === true
   ) {
     details.push(
-      "commerce projection excludes synthetic conversion contaminant (leadCount=1, revenue=5000, syntheticExcluded=1; contaminant 99999 not counted)",
+      "commerce projection excludes synthetic conversion contaminants (leadCount=1, revenue=5000, syntheticExcluded=2, syntheticExcludedRevenueMinor=100000; contaminants not counted; liveProviderWiring=NOT_WIRED)",
     );
   } else {
     passed = false;
@@ -93,9 +110,9 @@ export function proofSyntheticConversionContaminationExcluded(
     (n, row) => n + row.revenueMinor,
     0,
   );
-  if (rawLedgerRevenue === 104_999 && totals.revenueMinor === 5000) {
+  if (rawLedgerRevenue === 105_000 && totals.revenueMinor === 5000) {
     details.push(
-      "counterfactual: raw ledger revenue 104999 ≠ commerce revenue 5000 (contamination blocked)",
+      "counterfactual: raw ledger revenue 105000 ≠ commerce revenue 5000 (contamination blocked)",
     );
   } else {
     passed = false;
@@ -131,7 +148,38 @@ export function proofSyntheticConversionContaminationExcluded(
     );
   }
 
-  // 5. Canary synthetic lead assert commercial exclusion.
+  // 5. Defense-in-depth: slipped synthetic+countedInCommerce still projected out.
+  const slipped = projectCommerceTotals([
+    {
+      recordId: "rec-real",
+      synthetic: false,
+      revenueMinor: 100,
+      countedInCommerce: true,
+    },
+    {
+      recordId: "rec-slipped",
+      synthetic: true,
+      revenueMinor: 9_000,
+      countedInCommerce: true,
+    },
+  ]);
+  if (
+    slipped.leadCount === 1 &&
+    slipped.revenueMinor === 100 &&
+    slipped.syntheticExcludedCount === 1 &&
+    slipped.syntheticExcludedRevenueMinor === 9_000
+  ) {
+    details.push(
+      "defense-in-depth: slipped synthetic+countedInCommerce still excluded from projection",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `defense-in-depth projection unexpectedly ${JSON.stringify(slipped)}`,
+    );
+  }
+
+  // 6. Canary synthetic lead assert commercial exclusion.
   const lead = createSyntheticLead({
     correlationId: `canary-conv-${randomUUID().slice(0, 8)}`,
   });
@@ -147,7 +195,9 @@ export function proofSyntheticConversionContaminationExcluded(
     );
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  details.push(
+    "liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE",
+  );
 
   return {
     proofId: `proof-synth-conv-contam-${randomUUID()}`,

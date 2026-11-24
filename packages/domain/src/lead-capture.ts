@@ -111,7 +111,12 @@ export type CommerceTotalsProjection = {
   revenueMinor: number;
   bookingCount: number;
   syntheticExcludedCount: number;
+  /** Revenue that stayed on the ledger but was projected out of commerce. */
+  syntheticExcludedRevenueMinor: number;
   rows: CommerceLeadRow[];
+  liveProviderWiring: "NOT_WIRED";
+  externalEffects: "NONE";
+  fixtureOnly: true;
 };
 
 export type LeadCaptureState = {
@@ -138,6 +143,7 @@ export const LEAD_CAPTURE_RELATED_CASE_IDS = [
   "T-F21",
   "T-US-020",
   "T-US-040",
+  "T-X052",
 ] as const;
 
 export function emptyLeadCaptureState(nowIso: string): LeadCaptureState {
@@ -238,19 +244,28 @@ export function markJourneySuccess(
 }
 
 /**
- * Project commerce totals — synthetic canary leads are never counted.
+ * Project commerce totals — synthetic canary / conversion contaminants are
+ * never counted (T-X052). Defense-in-depth: even a slipped
+ * synthetic+countedInCommerce row is projected out. Live NOT_WIRED.
  */
 export function projectCommerceTotals(
   leads: readonly CommerceLeadRow[],
 ): CommerceTotalsProjection {
   const commercial = leads.filter((l) => !l.synthetic && l.countedInCommerce);
-  const syntheticExcludedCount = leads.filter((l) => l.synthetic).length;
+  const synthetics = leads.filter((l) => l.synthetic);
   return {
     leadCount: commercial.length,
     revenueMinor: commercial.reduce((n, l) => n + l.revenueMinor, 0),
     bookingCount: 0,
-    syntheticExcludedCount,
+    syntheticExcludedCount: synthetics.length,
+    syntheticExcludedRevenueMinor: synthetics.reduce(
+      (n, l) => n + l.revenueMinor,
+      0,
+    ),
     rows: [...leads],
+    liveProviderWiring: "NOT_WIRED",
+    externalEffects: "NONE",
+    fixtureOnly: true,
   };
 }
 
