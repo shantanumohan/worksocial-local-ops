@@ -2538,7 +2538,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x056",
-      "evidenceNote": "Fixture automated-response-loop-bounded-handoff proof only — not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture automated-response-loop-bounded-handoff proof only — MESSAGE_LIMIT handoff; over-bound/max=0 still hand off; liveProviderWiring=NOT_WIRED; not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X057",

@@ -171,7 +171,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X055** maps only to `UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE`.
 
-**T-X056** maps only to `AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF` (agent message cap → MESSAGE_LIMIT handoff; not live VERIFIED).
+**T-X056** maps only to `AUTOMATED_RESPONSE_LOOP_BOUNDED_HANDOFF` (agent message cap → MESSAGE_LIMIT handoff; over-bound/max=0 still hand off; live NOT_WIRED; not live VERIFIED).
 
 **T-X059** maps only to `DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING` (one booking; separate claims; liveProviderWiring NOT_WIRED; not live VERIFIED). Shared map with T-US-038.
 

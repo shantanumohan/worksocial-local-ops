@@ -1,6 +1,7 @@
 /**
  * Fixture proof for T-X056 — Automated response loop bounded; handoff.
- * External effects: NONE.
+ * External effects: NONE. Live wiring NOT_WIRED. ChatGPT Ads ACCESS_BLOCKED.
+ * Hillclimb: over-bound, max=1/max=0 edges, honesty fields on every path.
  */
 
 import { randomUUID } from "node:crypto";
@@ -38,6 +39,18 @@ function queuedOutbound(
     sentAtIso: null as string | null,
     deliveredAtIso: null as string | null,
   };
+}
+
+function honestyOk(decision: {
+  liveProviderWiring: string;
+  chatgptAdsAccess: string;
+  externalEffects: string;
+}): boolean {
+  return (
+    decision.liveProviderWiring === "NOT_WIRED" &&
+    decision.chatgptAdsAccess === "ACCESS_BLOCKED" &&
+    decision.externalEffects === "NONE"
+  );
 }
 
 /**
@@ -80,10 +93,11 @@ export function proofAutomatedResponseLoopBoundedHandoff(
     within.code === "WITHIN_BOUND" &&
     within.handoffRequired === false &&
     within.handoff === null &&
-    within.conversation.agentSendAllowed === true
+    within.conversation.agentSendAllowed === true &&
+    honestyOk(within)
   ) {
     details.push(
-      "sentAgentMessageCount=1 < max=2 → WITHIN_BOUND; no handoff",
+      "sentAgentMessageCount=1 < max=2 → WITHIN_BOUND; no handoff; liveProviderWiring=NOT_WIRED",
     );
   } else {
     passed = false;
@@ -111,7 +125,8 @@ export function proofAutomatedResponseLoopBoundedHandoff(
     atBound.handoff.acknowledged === false &&
     atBound.conversation.status === ConversationStatus.HANDED_OFF &&
     atBound.conversation.humanOwned === true &&
-    atBound.conversation.agentSendAllowed === false
+    atBound.conversation.agentSendAllowed === false &&
+    honestyOk(atBound)
   ) {
     details.push(
       "sentAgentMessageCount=2 ≥ max=2 → MESSAGE_LIMIT_HANDOFF; status=handed_off; agentSendAllowed=false",
@@ -138,7 +153,8 @@ export function proofAutomatedResponseLoopBoundedHandoff(
     over.allowed === false &&
     over.code === "MESSAGE_LIMIT_HANDOFF" &&
     over.handoffRequired === true &&
-    over.conversation.agentSendAllowed === false
+    over.conversation.agentSendAllowed === false &&
+    honestyOk(over)
   ) {
     details.push(
       "Over-bound sentAgentMessageCount=5 still MESSAGE_LIMIT_HANDOFF (no unbounded loop)",
@@ -148,7 +164,37 @@ export function proofAutomatedResponseLoopBoundedHandoff(
     details.push(`Over-bound unexpectedly ${JSON.stringify(over)}`);
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  // max=0: even with zero prior sends, bound handoffs immediately.
+  const max0 = evaluateAutomatedResponseLoopBound({
+    conversation,
+    message: queuedOutbound(
+      conversation.conversationId,
+      conversation.version,
+      nowIso,
+    ),
+    policy: { ...policy, maxAgentMessagesPerConversation: 0 },
+    sentAgentMessageCount: 0,
+    handoffId: `ho-max0-${randomUUID().slice(0, 8)}`,
+    nowIso,
+  });
+  if (
+    max0.allowed === false &&
+    max0.code === "MESSAGE_LIMIT_HANDOFF" &&
+    max0.handoffRequired === true &&
+    max0.conversation.agentSendAllowed === false &&
+    honestyOk(max0)
+  ) {
+    details.push(
+      "maxAgentMessagesPerConversation=0 → MESSAGE_LIMIT_HANDOFF with sent=0 (no unbounded loop)",
+    );
+  } else {
+    passed = false;
+    details.push(`max=0 unexpectedly ${JSON.stringify(max0)}`);
+  }
+
+  details.push(
+    "liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+  );
 
   return {
     proofId: `proof-auto-loop-${randomUUID()}`,
