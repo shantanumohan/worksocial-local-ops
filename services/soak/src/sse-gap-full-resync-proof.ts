@@ -1,8 +1,10 @@
 /**
  * Fixture proof for T-X062 — SSE gap after offline UI → full-state resync.
- * Additive hillclimb: liveProviderWiring=NOT_WIRED; online gap; pending-gap
- * blocks contiguous invent; covering-beyond; invalid seq refuse.
- * External effects: NONE. Never live VERIFIED.
+ * Hillclimb: liveProviderWiring=NOT_WIRED; chatgptAdsAccess=ACCESS_BLOCKED;
+ * LIVE_SSE_CLAIM_REFUSED for live VERIFIED / live SSE wire; STILL_OFFLINE;
+ * regressive snapshot refuse; online gap; pending-gap blocks invent;
+ * covering-beyond; invalid seq refuse. External effects: NONE.
+ * Never invents live VERIFIED.
  */
 
 import { randomUUID } from "node:crypto";
@@ -39,10 +41,12 @@ export function proofSseGapFullStateResync(nowIso: string): SoakProofRecord {
     contiguous.cursor.lastAppliedSeq === 101 &&
     contiguous.cursor.stateDigest.startsWith("digest-event-101-") &&
     contiguous.externalEffects === "NONE" &&
-    contiguous.liveProviderWiring === "NOT_WIRED"
+    contiguous.liveProviderWiring === "NOT_WIRED" &&
+    contiguous.chatgptAdsAccess === "ACCESS_BLOCKED" &&
+    contiguous.liveProviderSuccessClaimed === false
   ) {
     details.push(
-      "Online contiguous seq=101 → INCREMENTAL_APPLY; lastAppliedSeq=101; stateDigest advanced; liveProviderWiring=NOT_WIRED",
+      "Online contiguous seq=101 → INCREMENTAL_APPLY; lastAppliedSeq=101; stateDigest advanced; liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED",
     );
     cursor = contiguous.cursor;
   } else {
@@ -225,7 +229,8 @@ export function proofSseGapFullStateResync(nowIso: string): SoakProofRecord {
   if (
     resume.code === "INCREMENTAL_APPLY" &&
     resume.cursor.lastAppliedSeq === 111 &&
-    resume.liveProviderWiring === "NOT_WIRED"
+    resume.liveProviderWiring === "NOT_WIRED" &&
+    resume.chatgptAdsAccess === "ACCESS_BLOCKED"
   ) {
     details.push(
       "Post-resync contiguous seq=111 → INCREMENTAL_APPLY (stream resumes)",
@@ -235,8 +240,100 @@ export function proofSseGapFullStateResync(nowIso: string): SoakProofRecord {
     details.push(`Resume unexpectedly ${JSON.stringify(resume)}`);
   }
 
+  // 6. STILL_OFFLINE — events not applied until reconnect.
+  const offlineCursor = markSseUiOffline(
+    createSseUiCursor({ lastAppliedSeq: 5, stateDigest: "digest-seq-5" }),
+  );
+  const stillOffline = evaluateSseEventAfterOffline({
+    cursor: offlineCursor,
+    event: { seq: 6, payloadId: "p-offline" },
+    reconnecting: false,
+  });
+  if (
+    stillOffline.code === "STILL_OFFLINE" &&
+    stillOffline.allowedIncremental === false &&
+    stillOffline.cursor.lastAppliedSeq === 5 &&
+    stillOffline.liveProviderWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "Still offline seq=6 → STILL_OFFLINE; lastApplied stays 5; liveProviderWiring=NOT_WIRED",
+    );
+  } else {
+    passed = false;
+    details.push(`Still-offline unexpectedly ${JSON.stringify(stillOffline)}`);
+  }
+
+  // 7. Regressive snapshot below lastApplied refused.
+  const regressive = applySseFullStateResync({
+    cursor: createSseUiCursor({
+      lastAppliedSeq: 50,
+      stateDigest: "digest-seq-50",
+    }),
+    snapshot: {
+      revision: 1,
+      coversThroughSeq: 40,
+      entityCount: 2,
+      stateDigest: "digest-old-40",
+    },
+  });
+  if (
+    regressive.code === "IGNORE_STALE" &&
+    regressive.cursor.lastAppliedSeq === 50 &&
+    regressive.cursor.stateDigest === "digest-seq-50" &&
+    regressive.chatgptAdsAccess === "ACCESS_BLOCKED"
+  ) {
+    details.push(
+      "Regressive coversThroughSeq=40 < lastApplied=50 → IGNORE_STALE; prior state retained",
+    );
+  } else {
+    passed = false;
+    details.push(`Regressive unexpectedly ${JSON.stringify(regressive)}`);
+  }
+
+  // 8. Live VERIFIED / live SSE wire refused.
+  const liveVerified = evaluateSseEventAfterOffline({
+    cursor: createSseUiCursor({ lastAppliedSeq: 1, stateDigest: "d1" }),
+    event: { seq: 2, payloadId: "p2" },
+    reconnecting: false,
+    claimLiveVerified: true,
+  });
+  if (
+    liveVerified.code === "LIVE_SSE_CLAIM_REFUSED" &&
+    liveVerified.liveProviderWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "claimLiveVerified → LIVE_SSE_CLAIM_REFUSED (fixture ACCEPTED ≠ VERIFIED)",
+    );
+  } else {
+    passed = false;
+    details.push(`claimLiveVerified unexpectedly ${JSON.stringify(liveVerified)}`);
+  }
+
+  const liveWire = applySseFullStateResync({
+    cursor: createSseUiCursor({ lastAppliedSeq: 1, stateDigest: "d1" }),
+    snapshot: {
+      revision: 1,
+      coversThroughSeq: 1,
+      entityCount: 1,
+      stateDigest: "digest-wire",
+    },
+    requestLiveSseWire: true,
+  });
+  if (
+    liveWire.code === "LIVE_SSE_CLAIM_REFUSED" &&
+    liveWire.chatgptAdsAccess === "ACCESS_BLOCKED" &&
+    liveWire.cursor.stateDigest === "d1"
+  ) {
+    details.push(
+      "requestLiveSseWire → LIVE_SSE_CLAIM_REFUSED (SSE transport stays NOT_WIRED)",
+    );
+  } else {
+    passed = false;
+    details.push(`requestLiveSseWire unexpectedly ${JSON.stringify(liveWire)}`);
+  }
+
   details.push(
-    "liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE ACCEPTED≠VERIFIED",
+    "liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE ACCEPTED≠VERIFIED",
   );
 
   return {

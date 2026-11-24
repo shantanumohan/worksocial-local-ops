@@ -337,12 +337,16 @@ export {
   markSseUiOffline,
   evaluateSseEventAfterOffline,
   applySseFullStateResync,
+  SSE_GAP_LIVE_PROVIDER_WIRING,
   SSE_GAP_FULL_RESYNC_RELATED_CASE_IDS,
   type SseUiCursor,
   type SseStreamEvent,
   type SseFullStateSnapshot,
+  type SseGapLiveProviderWiring,
+  type SseLiveClaimInput,
   type SseReconnectDecisionCode,
   type SseReconnectDecision,
+  type SseReconnectHonesty,
 } from "./sse-gap-full-resync.js";
 export {
   emptyFocusSession,

@@ -1238,7 +1238,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X046 fixture ACCEPTED via unsupported_blog_destination_no_fake_publication only — not live VERIFIED",
       "T-X047 fixture ACCEPTED via layout_specific_capacity_mismatch_filters only — not live VERIFIED",
       "T-X051 fixture ACCEPTED via wrong_zoho_organization_identity_mismatch only — not live VERIFIED",
-      "T-X062 fixture ACCEPTED via sse_gap_full_state_resync only — not live VERIFIED",
+      "T-X062 fixture ACCEPTED via sse_gap_full_state_resync only — STILL_OFFLINE/regressive refuse; LIVE_SSE_CLAIM_REFUSED; Ads ACCESS_BLOCKED — not live VERIFIED",
       "T-X061 fixture ACCEPTED via keyboard_focus_restore_after_dialog only — not live VERIFIED",
       "T-X068 fixture ACCEPTED via thirty_alerts_one_outage_grouped only — whitespace outageKey collapse; uniqueSources; live NOT_WIRED — not live VERIFIED",
       "T-X072 fixture ACCEPTED via customer_data_eval_redaction_blocks only — not live VERIFIED",

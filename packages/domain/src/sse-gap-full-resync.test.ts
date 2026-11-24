@@ -23,6 +23,8 @@ describe("SSE gap after offline UI (T-X062)", () => {
     expect(d1.cursor.lastAppliedSeq).toBe(11);
     expect(d1.externalEffects).toBe("NONE");
     expect(d1.liveProviderWiring).toBe("NOT_WIRED");
+    expect(d1.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(d1.liveProviderSuccessClaimed).toBe(false);
     cursor = d1.cursor;
 
     const d2 = evaluateSseEventAfterOffline({
@@ -265,6 +267,7 @@ describe("SSE gap after offline UI (T-X062)", () => {
       expect(bad.allowedIncremental).toBe(false);
       expect(bad.liveProviderWiring).toBe("NOT_WIRED");
       expect(bad.externalEffects).toBe("NONE");
+      expect(bad.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
     }
 
     const blank = applySseFullStateResync({
@@ -278,5 +281,66 @@ describe("SSE gap after offline UI (T-X062)", () => {
     });
     expect(blank.code).toBe("SNAPSHOT_INSUFFICIENT_COVERAGE");
     expect(blank.liveProviderWiring).toBe("NOT_WIRED");
+    expect(blank.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("refuses live VERIFIED and live SSE wire claims", () => {
+    const cursor = createSseUiCursor({
+      lastAppliedSeq: 10,
+      stateDigest: "digest-seq-10",
+    });
+    const verified = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 11, payloadId: "e11" },
+      reconnecting: false,
+      claimLiveVerified: true,
+    });
+    expect(verified.code).toBe("LIVE_SSE_CLAIM_REFUSED");
+    expect(verified.allowedIncremental).toBe(false);
+    expect(verified.liveProviderWiring).toBe("NOT_WIRED");
+    expect(verified.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+
+    const wire = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 11, payloadId: "e11" },
+      reconnecting: false,
+      requestLiveSseWire: true,
+    });
+    expect(wire.code).toBe("LIVE_SSE_CLAIM_REFUSED");
+    expect(wire.externalEffects).toBe("NONE");
+
+    const snapWire = applySseFullStateResync({
+      cursor,
+      snapshot: {
+        revision: 1,
+        coversThroughSeq: 10,
+        entityCount: 1,
+        stateDigest: "digest-ok",
+      },
+      requestLiveSseWire: true,
+    });
+    expect(snapWire.code).toBe("LIVE_SSE_CLAIM_REFUSED");
+    expect(snapWire.cursor.stateDigest).toBe("digest-seq-10");
+  });
+
+  it("refuses regressive snapshot below lastAppliedSeq", () => {
+    const cursor = createSseUiCursor({
+      lastAppliedSeq: 20,
+      stateDigest: "digest-seq-20",
+    });
+    const regressive = applySseFullStateResync({
+      cursor,
+      snapshot: {
+        revision: 2,
+        coversThroughSeq: 15,
+        entityCount: 3,
+        stateDigest: "digest-old",
+      },
+    });
+    expect(regressive.code).toBe("IGNORE_STALE");
+    expect(regressive.fullStateResyncRequired).toBe(true);
+    expect(regressive.cursor.lastAppliedSeq).toBe(20);
+    expect(regressive.cursor.stateDigest).toBe("digest-seq-20");
+    expect(regressive.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
   });
 });

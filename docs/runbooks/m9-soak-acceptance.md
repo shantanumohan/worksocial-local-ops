@@ -307,7 +307,7 @@ Suggested owner Windows flow (state off OneDrive):
 **T-X051** maps only to `WRONG_ZOHO_ORGANIZATION_IDENTITY_MISMATCH` (trim match; case-differ IDENTITY_MISMATCH; blank refuse; fixture+WIRED / non-fixture matched refuse; liveProviderWiring NOT_WIRED; externalEffects NONE; not live VERIFIED).
 
 
-**T-X062** maps only to `SSE_GAP_FULL_STATE_RESYNC` (offline/online SSE gap → full-state resync; pending gap blocks invent; liveProviderWiring NOT_WIRED; not live VERIFIED).
+**T-X062** maps only to `SSE_GAP_FULL_STATE_RESYNC` (offline/online SSE gap → full-state resync; pending gap blocks invent; STILL_OFFLINE/regressive refuse; liveProviderWiring NOT_WIRED; LIVE_SSE_CLAIM_REFUSED; Ads ACCESS_BLOCKED; not live VERIFIED).
 
 **T-X061** maps only to `KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG` (dialog open/trap/restore or FOCUS_LOST; not live VERIFIED).
 

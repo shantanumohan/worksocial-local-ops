@@ -5,9 +5,16 @@
  * (sequence gap) must refuse incremental catch-up and require a full-state
  * snapshot resync that covers at least the observed gap seq and replaces UI
  * state. Missed events are never invented. Online gaps and outstanding
- * minResyncThroughSeq likewise block incremental apply. External effects:
- * NONE. Live provider wiring: NOT_WIRED.
+ * minResyncThroughSeq likewise block incremental apply.
+ *
+ * Live SSE / provider transport stays NOT_WIRED. Live VERIFIED claims and
+ * live SSE wire requests are refused. ChatGPT Ads ACCESS_BLOCKED.
+ * External effects: NONE. Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
+
+export const SSE_GAP_LIVE_PROVIDER_WIRING = "NOT_WIRED" as const;
+
+export type SseGapLiveProviderWiring = typeof SSE_GAP_LIVE_PROVIDER_WIRING;
 
 export type SseUiCursor = {
   /** Last contiguous event sequence applied by the UI. */
@@ -47,7 +54,16 @@ export type SseReconnectDecisionCode =
   | "SNAPSHOT_INSUFFICIENT_COVERAGE"
   | "IGNORE_STALE"
   | "STILL_OFFLINE"
-  | "INVALID_SEQ";
+  | "INVALID_SEQ"
+  | "LIVE_SSE_CLAIM_REFUSED";
+
+export type SseReconnectHonesty = {
+  externalEffects: "NONE";
+  /** Live SSE / provider transport stays fixture-only. */
+  liveProviderWiring: SseGapLiveProviderWiring;
+  liveProviderSuccessClaimed: false;
+  chatgptAdsAccess: "ACCESS_BLOCKED";
+};
 
 export type SseReconnectDecision = {
   code: SseReconnectDecisionCode;
@@ -55,19 +71,37 @@ export type SseReconnectDecision = {
   fullStateResyncRequired: boolean;
   cursor: SseUiCursor;
   reasons: string[];
-  externalEffects: "NONE";
-  /** Live SSE / provider transport stays fixture-only. */
-  liveProviderWiring: "NOT_WIRED";
-};
+} & SseReconnectHonesty;
+
+function honesty(): SseReconnectHonesty {
+  return {
+    externalEffects: "NONE",
+    liveProviderWiring: SSE_GAP_LIVE_PROVIDER_WIRING,
+    liveProviderSuccessClaimed: false,
+    chatgptAdsAccess: "ACCESS_BLOCKED",
+  };
+}
 
 function decision(
-  partial: Omit<SseReconnectDecision, "externalEffects" | "liveProviderWiring">,
+  partial: Omit<SseReconnectDecision, keyof SseReconnectHonesty>,
 ): SseReconnectDecision {
   return {
     ...partial,
-    externalEffects: "NONE",
-    liveProviderWiring: "NOT_WIRED",
+    ...honesty(),
   };
+}
+
+function refuseLiveClaim(
+  cursor: SseUiCursor,
+  reasons: string[],
+): SseReconnectDecision {
+  return decision({
+    code: "LIVE_SSE_CLAIM_REFUSED",
+    allowedIncremental: false,
+    fullStateResyncRequired: cursor.minResyncThroughSeq != null,
+    cursor,
+    reasons,
+  });
 }
 
 function isValidSeq(seq: number): boolean {
@@ -92,6 +126,13 @@ export function markSseUiOffline(cursor: SseUiCursor): SseUiCursor {
   return { ...cursor, offline: true };
 }
 
+export type SseLiveClaimInput = {
+  /** Forbidden — fixture proofs never claim live VERIFIED. */
+  claimLiveVerified?: boolean;
+  /** Forbidden — live SSE transport stays NOT_WIRED. */
+  requestLiveSseWire?: boolean;
+};
+
 /**
  * Apply one SSE event after reconnect (or while online).
  * Contiguous next seq → incremental apply (only when no outstanding gap).
@@ -99,14 +140,30 @@ export function markSseUiOffline(cursor: SseUiCursor): SseUiCursor {
  * resync required; records/raises minResyncThroughSeq. Missed mid events are
  * never invented. Stale/duplicate (seq <= lastApplied) → ignore.
  * Invalid (non-positive / non-integer / non-finite) seq → refuse.
+ * Live VERIFIED / live SSE wire claims → LIVE_SSE_CLAIM_REFUSED.
  */
-export function evaluateSseEventAfterOffline(input: {
-  cursor: SseUiCursor;
-  event: SseStreamEvent;
-  /** Callers set true when this evaluation is the first after reconnect. */
-  reconnecting: boolean;
-}): SseReconnectDecision {
+export function evaluateSseEventAfterOffline(
+  input: {
+    cursor: SseUiCursor;
+    event: SseStreamEvent;
+    /** Callers set true when this evaluation is the first after reconnect. */
+    reconnecting: boolean;
+  } & SseLiveClaimInput,
+): SseReconnectDecision {
   const { cursor, event, reconnecting } = input;
+
+  if (input.claimLiveVerified === true) {
+    return refuseLiveClaim(cursor, [
+      "Live VERIFIED SSE claims are forbidden — fixture ACCEPTED only (T-X062)",
+      "liveProviderWiring=NOT_WIRED ACCEPTED≠VERIFIED",
+    ]);
+  }
+  if (input.requestLiveSseWire === true) {
+    return refuseLiveClaim(cursor, [
+      "Live SSE transport remains NOT_WIRED — refuse live SSE wire (T-X062)",
+      "chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+    ]);
+  }
 
   if (!isValidSeq(event.seq)) {
     return decision({
@@ -128,6 +185,7 @@ export function evaluateSseEventAfterOffline(input: {
       cursor,
       reasons: [
         "UI still offline — SSE events are not applied until reconnect + gap check",
+        "liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED",
       ],
     });
   }
@@ -161,6 +219,7 @@ export function evaluateSseEventAfterOffline(input: {
       },
       reasons: [
         `Contiguous seq=${event.seq} after lastApplied=${onlineCursor.lastAppliedSeq} — incremental apply`,
+        "liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED",
       ],
     });
   }
@@ -192,10 +251,25 @@ export function evaluateSseEventAfterOffline(input: {
  * Snapshot must cover minResyncThroughSeq (when set) and replace UI stateDigest.
  * Does not invent missed intermediate events. Live wiring stays NOT_WIRED.
  */
-export function applySseFullStateResync(input: {
-  cursor: SseUiCursor;
-  snapshot: SseFullStateSnapshot;
-}): SseReconnectDecision {
+export function applySseFullStateResync(
+  input: {
+    cursor: SseUiCursor;
+    snapshot: SseFullStateSnapshot;
+  } & SseLiveClaimInput,
+): SseReconnectDecision {
+  if (input.claimLiveVerified === true) {
+    return refuseLiveClaim(input.cursor, [
+      "Live VERIFIED full-state resync claims are forbidden — fixture ACCEPTED only (T-X062)",
+      "liveProviderWiring=NOT_WIRED ACCEPTED≠VERIFIED",
+    ]);
+  }
+  if (input.requestLiveSseWire === true) {
+    return refuseLiveClaim(input.cursor, [
+      "Live SSE transport remains NOT_WIRED — refuse live snapshot wire (T-X062)",
+      "chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+    ]);
+  }
+
   if (!input.snapshot.stateDigest.trim()) {
     return decision({
       code: "SNAPSHOT_INSUFFICIENT_COVERAGE",
@@ -232,6 +306,7 @@ export function applySseFullStateResync(input: {
       cursor: input.cursor,
       reasons: [
         `Snapshot coversThroughSeq=${input.snapshot.coversThroughSeq} < lastAppliedSeq=${input.cursor.lastAppliedSeq} — refuse regressive snapshot`,
+        "liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED",
       ],
     });
   }
@@ -267,7 +342,7 @@ export function applySseFullStateResync(input: {
     fullStateResyncRequired: false,
     cursor: next,
     reasons: [
-      `Full-state resync applied revision=${input.snapshot.revision} coversThroughSeq=${input.snapshot.coversThroughSeq} entities=${input.snapshot.entityCount}; stateDigest ${priorDigest} → ${next.stateDigest}; missed SSE events not invented; liveProviderWiring=NOT_WIRED`,
+      `Full-state resync applied revision=${input.snapshot.revision} coversThroughSeq=${input.snapshot.coversThroughSeq} entities=${input.snapshot.entityCount}; stateDigest ${priorDigest} → ${next.stateDigest}; missed SSE events not invented; liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED`,
     ],
   });
 }
