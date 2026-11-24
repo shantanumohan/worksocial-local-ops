@@ -15,6 +15,7 @@ export {
   replayEmptyHistoryFailsClosed,
   replayMissionWorkflowHistory,
   replayPartialHistoryFailsClosed,
+  replayTwoEventHistoryFailsClosed,
   runMissionWorkflowControlFlow,
   type ReplayActivityName,
   type ReplayActivityResult,

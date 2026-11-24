@@ -4,6 +4,7 @@ import {
   replayEmptyHistoryFailsClosed,
   replayMissionWorkflowHistory,
   replayPartialHistoryFailsClosed,
+  replayTwoEventHistoryFailsClosed,
   type ReplayWorkflowHistory,
 } from "./replay-historical-workflow.js";
 
@@ -187,5 +188,48 @@ describe("replay historical workflow (T-X013)", () => {
     expect(
       summary().liveIoLabels.some((l) => l.includes("history_unread_tail")),
     ).toBe(true);
+  });
+
+  it("fails closed when claim applyAttemptCount drifts from terminal (edge)", () => {
+    const history = sampleHistory();
+    const claim = history.events[1];
+    if (claim && claim.activity === "claimAndAccept") {
+      claim.applyAttemptCount = 7;
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_activity_terminal_op_mismatch"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed on negative terminal applyAttemptCount (edge)", () => {
+    const history = sampleHistory();
+    history.terminal = {
+      outcome: "VERIFIED",
+      applyAttemptCount: -1,
+      operationId: "op-1",
+    };
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_terminal_missing_or_incomplete"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed on two-event truncation without inventing verify", () => {
+    const { outcome, summary } = replayTwoEventHistoryFailsClosed();
+    expect(outcome.outcome).toBe("FAILED");
+    expect(summary.forbiddenLiveIo).toBeGreaterThan(0);
+    expect(summary.liveIoLabels.some((l) => l.includes("history_mismatch"))).toBe(
+      true,
+    );
+    expect(summary.externalEffects).toBe("NONE");
   });
 });

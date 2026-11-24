@@ -175,8 +175,8 @@ export function replayMissionWorkflowHistory(
     return { ...result, outcome: "FAILED" };
   }
 
-  // Codex harden — cross-bind claim/verify activity opIds to terminal when
-  // the full three-event chain was scheduled (refuse inconsistent history).
+  // Codex harden — cross-bind claim/verify activity opIds + applyAttemptCount
+  // to terminal when the full three-event chain was scheduled.
   if (result.outcome === "VERIFIED" && history.events.length === 3) {
     const claim = history.events[1];
     const verify = history.events[2];
@@ -187,6 +187,7 @@ export function replayMissionWorkflowHistory(
       verify.activity !== "verify" ||
       claim.operationId !== terminalOpId ||
       verify.operationId !== terminalOpId ||
+      claim.applyAttemptCount !== terminalApply ||
       verify.applyAttemptCount !== terminalApply
     ) {
       hooks.onForbiddenLiveIo("history_activity_terminal_op_mismatch");
@@ -278,6 +279,43 @@ export function replayPartialHistoryFailsClosed(): {
         outcome: "VERIFIED",
         applyAttemptCount: 1,
         operationId: "op-partial",
+      },
+    },
+    hooks,
+  );
+  return { outcome, summary: summary() };
+}
+
+/**
+ * Two-event truncation (enqueue + claim, missing verify) must fail closed —
+ * terminal cannot invent the missing verify step (T-X013 edge deepen).
+ */
+export function replayTwoEventHistoryFailsClosed(): {
+  outcome: ReplayMissionOutcome;
+  summary: ReplayNoRepeatIoSummary;
+} {
+  const { hooks, summary } = createHistoryOnlyReplayHooks();
+  const outcome = replayMissionWorkflowHistory(
+    {
+      events: [
+        {
+          activity: "enqueue",
+          workflowId: "wf-two",
+          phase: "queued",
+        },
+        {
+          activity: "claimAndAccept",
+          phase: "effect_pending",
+          outcome: "ACCEPTED_PENDING",
+          applyAttemptCount: 1,
+          providerCreated: true,
+          operationId: "op-two",
+        },
+      ],
+      terminal: {
+        outcome: "VERIFIED",
+        applyAttemptCount: 1,
+        operationId: "op-two",
       },
     },
     hooks,
