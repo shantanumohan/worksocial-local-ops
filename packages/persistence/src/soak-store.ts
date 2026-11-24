@@ -8,7 +8,9 @@ import { mkdirSync, readFileSync, existsSync } from "node:fs";
 import { atomicWriteEvidenceJson } from "./evidence-manifest-write.js";
 import { join } from "node:path";
 import {
+  SOAK_FIXTURE_STATUS_HONEST_NOTE,
   emptySoakAcceptanceState,
+  soakNotWiredLiveWiring,
   type AcceptanceCaseEvidenceRecord,
   type PilotGateObservation,
   type RedactedEvidenceArtifact,
@@ -84,13 +86,8 @@ export function createFileSoakStore(stateDir: string): SoakStore {
       artifacts: existing.artifacts ?? [],
       caseLedger: existing.caseLedger ?? [],
       pilotObservations: existing.pilotObservations ?? [],
-      liveWiring: {
-        cms: "NOT_WIRED",
-        gsc: "NOT_WIRED",
-        ga4: "NOT_WIRED",
-        zoho: "NOT_WIRED",
-        temporal: "NOT_WIRED",
-      },
+      // Always force fixture honesty — persisted live claims cannot elevate wiring.
+      liveWiring: soakNotWiredLiveWiring(),
       chatgptAdsWiring: "NOT_WIRED",
     };
   };
@@ -99,13 +96,7 @@ export function createFileSoakStore(stateDir: string): SoakStore {
     mkdirSync(evidenceDir, { recursive: true });
     atomicWriteJson(statePath, {
       ...state,
-      liveWiring: {
-        cms: "NOT_WIRED",
-        gsc: "NOT_WIRED",
-        ga4: "NOT_WIRED",
-        zoho: "NOT_WIRED",
-        temporal: "NOT_WIRED",
-      },
+      liveWiring: soakNotWiredLiveWiring(),
       chatgptAdsWiring: "NOT_WIRED",
       updatedAtIso: state.updatedAtIso,
     } satisfies SoakAcceptanceState);
@@ -208,11 +199,10 @@ export function createFileSoakStore(stateDir: string): SoakStore {
         notRunCount,
         pilotGateLast: last?.pilotGate ?? null,
         pilotObservationCount: state.pilotObservations.length,
-        liveWiring: state.liveWiring,
+        liveWiring: soakNotWiredLiveWiring(),
         chatgptAdsWiring: "NOT_WIRED",
         r1CompleteClaimed: false,
-        honestNote:
-          "M9 soak / acceptance evidence harness. Fixture proofs only. Live CMS/GSC/GA4/Zoho/Temporal NOT_WIRED. ChatGPT Ads access-blocked. ACCEPTED requires redacted evidence and complete proof set; never silently VERIFIED for live. Pilot gate uses server-recorded observations only. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-US-056 via honest outage durable hosted contact path; T-X003 via symlink escape after root verification (not live VERIFIED). Short CI soaks do not satisfy the 72h pilot gate. Not R1-complete; T-US-011 via CONNECT_GOOGLE_ADS_ANALYZE_ONLY (not live VERIFIED); T-X029 via EXPLICIT_ACCOUNT_REBIND (not live VERIFIED); T-X030 via RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE (not live VERIFIED).",
+        honestNote: SOAK_FIXTURE_STATUS_HONEST_NOTE,
       };
     },
   };

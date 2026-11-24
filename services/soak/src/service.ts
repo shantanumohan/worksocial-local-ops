@@ -9,8 +9,10 @@ import {
   PILOT_SOAK_REQUIRED_MS,
   PilotObservationKind,
   SOAK_FIXTURE_HARNESS_NOW_ISO,
+  SOAK_FIXTURE_STATUS_HONEST_NOTE,
   SOAK_RELATED_CASE_IDS,
   evaluatePilotGate,
+  soakNotWiredLiveWiring,
   type PilotGateObservation,
   type SoakRunRecord,
 } from "@worksocial/domain";
@@ -184,17 +186,10 @@ export function createSoakService(store: SoakStore): SoakService {
         pilotGate,
         pilotObservations: gateObservations,
         chatgptAds: compiled.chatgptAds,
-        liveWiring: {
-          cms: "NOT_WIRED",
-          gsc: "NOT_WIRED",
-          ga4: "NOT_WIRED",
-          zoho: "NOT_WIRED",
-          temporal: "NOT_WIRED",
-        },
+        liveWiring: soakNotWiredLiveWiring(),
         r1CompleteClaimed: false,
         externalEffects: "NONE",
-        honestNote:
-          "Fixture soak only. Pilot gate uses server-recorded observations only (client claim dates ignored). Live providers NOT_WIRED. T-X066 via backup/omit-receipt; T-F24/T-US-047 via recover/rotate/reconcile; T-US-002/T-X002 via competing-supervisor lease; T-X018/T-US-054 via self-approval rejected; T-X073 via offboard ACTIVE_TOKEN residual; T-US-060 via emergency stop at commit; T-US-056 via honest outage durable hosted contact path; T-X005 via forged browser role ignored; T-X006 via cross-workspace reference denied; T-X019/T-US-036 via approved payload edit invalidated; T-X029 via explicit rebind; T-X015 via DST recurring schedule no duplicates — not live VERIFIED. T-X008 via fact changes after review stale. T-X023 via eventual consistency false not-found — not live VERIFIED. T-X030 via rate-limit bounded backoff preserves deadline — not live VERIFIED. T-US-045 via semantic search no-result evaluation comparison — not live VERIFIED. Not R1-complete.",
+        honestNote: SOAK_FIXTURE_STATUS_HONEST_NOTE,
       };
       store.addRun(run);
 

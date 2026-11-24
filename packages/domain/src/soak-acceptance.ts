@@ -1282,12 +1282,23 @@ export const SOAK_FIXTURE_CASE_IDS = [
 
 export type SoakFixtureCaseId = (typeof SOAK_FIXTURE_CASE_IDS)[number];
 
-/** Related catalog IDs (fixture ACCEPTED set + adjacent recovery/ads cases). */
+/**
+ * Related catalog IDs (fixture ACCEPTED set + soft-skip ChatGPT Ads companions).
+ * Soft-skip Ads stay NOT_RUN until transport/entitlement exists — never invent past T-X073.
+ * T-X073 is already in SOAK_FIXTURE_CASE_IDS (no duplicate).
+ */
 export const SOAK_RELATED_CASE_IDS: readonly string[] = [
   ...SOAK_FIXTURE_CASE_IDS,
   "T-F07",
   "T-US-013",
-  "T-X073",
+  "T-US-014",
+] as const;
+
+/** Soft-skip ChatGPT Ads catalog IDs (ACCESS_BLOCKED / NOT_WIRED until transport). */
+export const SOAK_CHATGPT_ADS_SOFT_SKIP_CASE_IDS = [
+  "T-F07",
+  "T-US-013",
+  "T-US-014",
 ] as const;
 
 export type RedactedEvidenceArtifact = {
@@ -1343,17 +1354,55 @@ export type SoakRunRecord = {
     wiring: "NOT_WIRED";
     reason: string;
   };
-  liveWiring: {
-    cms: "NOT_WIRED";
-    gsc: "NOT_WIRED";
-    ga4: "NOT_WIRED";
-    zoho: "NOT_WIRED";
-    temporal: "NOT_WIRED";
-  };
+  liveWiring: SoakNotWiredLiveWiring;
   r1CompleteClaimed: false;
   externalEffects: "NONE";
   honestNote: string;
 };
+
+/**
+ * Fixture soak live-provider wiring — always NOT_WIRED for offline proofs.
+ * Shared by domain empty state, persistence soak-store, and soak service runs.
+ */
+export type SoakNotWiredLiveWiring = {
+  cms: "NOT_WIRED";
+  gsc: "NOT_WIRED";
+  ga4: "NOT_WIRED";
+  zoho: "NOT_WIRED";
+  temporal: "NOT_WIRED";
+};
+
+/** Frozen runtime template — mutation via Object.assign / property set fails closed. */
+export const SOAK_NOT_WIRED_LIVE_WIRING: Readonly<SoakNotWiredLiveWiring> =
+  Object.freeze({
+    cms: "NOT_WIRED",
+    gsc: "NOT_WIRED",
+    ga4: "NOT_WIRED",
+    zoho: "NOT_WIRED",
+    temporal: "NOT_WIRED",
+  } as const satisfies SoakNotWiredLiveWiring);
+
+/**
+ * Fresh mutable copy for state records.
+ * Builds literals independently of the exported template so a poisoned
+ * Object.assign on the export cannot leak into new soak runs.
+ */
+export function soakNotWiredLiveWiring(): SoakNotWiredLiveWiring {
+  return {
+    cms: "NOT_WIRED",
+    gsc: "NOT_WIRED",
+    ga4: "NOT_WIRED",
+    zoho: "NOT_WIRED",
+    temporal: "NOT_WIRED",
+  };
+}
+
+/**
+ * Stable status honest-note for soak-store / owner reports.
+ * Case-specific proof mapping lives in expectedProofsForFixtureCase — not here.
+ */
+export const SOAK_FIXTURE_STATUS_HONEST_NOTE =
+  "M9 soak / acceptance evidence harness. Fixture proofs only. Live CMS/GSC/GA4/Zoho/Temporal NOT_WIRED. ChatGPT Ads access-blocked. ACCEPTED requires redacted evidence and complete proof set; never silently VERIFIED for live. Pilot gate uses server-recorded observations only. Short CI soaks do not satisfy the 72h pilot gate. Not R1-complete.";
 
 export type PilotGateEvaluation = {
   status: PilotGateStatusValue;
@@ -1386,13 +1435,7 @@ export function emptySoakAcceptanceState(nowIso: string): SoakAcceptanceState {
     artifacts: [],
     caseLedger: [],
     pilotObservations: [],
-    liveWiring: {
-      cms: "NOT_WIRED",
-      gsc: "NOT_WIRED",
-      ga4: "NOT_WIRED",
-      zoho: "NOT_WIRED",
-      temporal: "NOT_WIRED",
-    },
+    liveWiring: soakNotWiredLiveWiring(),
     chatgptAdsWiring: "NOT_WIRED",
   };
 }
