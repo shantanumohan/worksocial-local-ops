@@ -143,6 +143,41 @@ function rowToMission(row: Record<string, unknown>): MissionWorkflowRecord {
   };
 }
 
+/** T-X024 related case — fixture ACCEPTED only; never invent past T-X073. */
+export const OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS = [
+  "T-X024",
+] as const;
+
+/**
+ * Why a holder may or may not commit under the mission lease fence.
+ * Distinct causes keep expired ≠ wrong_holder (hillclimb O2).
+ */
+export type MissionLeaseFenceCause =
+  | "active"
+  | "expired"
+  | "wrong_holder"
+  | "no_holder";
+
+/**
+ * Classify lease fence state for `holder` at `nowIso`.
+ * Exact expiry (`nowIso === leaseExpiresAtIso`) → `expired`.
+ */
+export function classifyMissionLeaseFence(
+  record: MissionWorkflowRecord,
+  holder: string,
+  nowIso: string,
+): MissionLeaseFenceCause {
+  if (record.leaseHolder == null) return "no_holder";
+  if (record.leaseHolder !== holder) return "wrong_holder";
+  if (
+    record.leaseExpiresAtIso &&
+    Date.parse(record.leaseExpiresAtIso) <= Date.parse(nowIso)
+  ) {
+    return "expired";
+  }
+  return "active";
+}
+
 /**
  * True when `holder` still owns an unexpired lease on `record`.
  * Exact expiry (`nowIso === leaseExpiresAtIso`) is inactive — enables
@@ -153,9 +188,7 @@ export function isMissionLeaseActive(
   holder: string,
   nowIso: string,
 ): boolean {
-  if (record.leaseHolder !== holder) return false;
-  if (!record.leaseExpiresAtIso) return true;
-  return Date.parse(record.leaseExpiresAtIso) > Date.parse(nowIso);
+  return classifyMissionLeaseFence(record, holder, nowIso) === "active";
 }
 
 export function createMemoryMissionWorkflowStore(): MissionWorkflowStore {

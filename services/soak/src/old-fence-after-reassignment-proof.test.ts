@@ -11,7 +11,7 @@ import {
 } from "./old-fence-after-reassignment-proof.js";
 
 describe("proofOldFenceAfterReassignment (T-X024)", () => {
-  it("passes with exact-expiry, reclaim refuse, and honesty markers", async () => {
+  it("passes with fenceCause classify, self-renew, and honesty markers", async () => {
     const proof = await proofOldFenceAfterReassignment(
       "2026-11-21T18:00:00.000Z",
     );
@@ -22,13 +22,17 @@ describe("proofOldFenceAfterReassignment (T-X024)", () => {
     expect(proof.applyAttemptCount).toBe(1);
 
     const joined = proof.details.join(" | ");
-    expect(joined).toMatch(/Exact expiry boundary/);
+    expect(joined).toMatch(/Worker A self-renew while live ok/);
+    expect(joined).toMatch(/fenceCause=expired/);
     expect(joined).toMatch(/Expired-pre-reassignment A bind denied/);
-    expect(joined).toMatch(/attemptCount=2/);
+    expect(joined).toMatch(/attemptCount=3/);
+    expect(joined).toMatch(/wrong_holder/);
+    expect(joined).toMatch(/expired≠wrong_holder/);
     expect(joined).toMatch(/Old worker A reclaim refused/);
     expect(joined).toMatch(/Old worker A bind denied/);
     expect(joined).toMatch(/Worker B commit ok/);
     expect(joined).toMatch(/Post-commit old A bind denied/);
+    expect(joined).toContain("relatedCases=T-X024");
     expect(joined).toContain(
       `liveTemporalWiring=${OLD_FENCE_TEMPORAL_WIRING}`,
     );

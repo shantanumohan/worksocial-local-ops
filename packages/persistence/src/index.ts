@@ -276,7 +276,10 @@ export {
 export {
   createMemoryMissionWorkflowStore,
   createPgMissionWorkflowStore,
+  classifyMissionLeaseFence,
   isMissionLeaseActive,
+  OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
+  type MissionLeaseFenceCause,
   type MissionWorkflowStore,
   type MissionWorkflowRecord,
   type MissionWorkflowInsert,

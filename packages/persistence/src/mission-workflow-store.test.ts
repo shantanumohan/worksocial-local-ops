@@ -5,8 +5,10 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  classifyMissionLeaseFence,
   createMemoryMissionWorkflowStore,
   isMissionLeaseActive,
+  OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
   type MissionWorkflowRecord,
 } from "./mission-workflow-store.js";
 
@@ -34,40 +36,56 @@ function baseRecord(
   };
 }
 
-describe("isMissionLeaseActive (T-X024 fence)", () => {
+describe("classifyMissionLeaseFence / isMissionLeaseActive (T-X024)", () => {
+  it("maps related case to T-X024 only", () => {
+    expect([...OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS]).toEqual([
+      "T-X024",
+    ]);
+  });
+
   it("is active before expiry for matching holder", () => {
+    const rec = baseRecord();
     expect(
-      isMissionLeaseActive(
-        baseRecord(),
-        "worker-a",
-        "2026-11-21T18:00:00.500Z",
-      ),
+      classifyMissionLeaseFence(rec, "worker-a", "2026-11-21T18:00:00.500Z"),
+    ).toBe("active");
+    expect(
+      isMissionLeaseActive(rec, "worker-a", "2026-11-21T18:00:00.500Z"),
     ).toBe(true);
   });
 
-  it("is inactive at exact expiry boundary", () => {
+  it("is expired at exact expiry boundary", () => {
+    const rec = baseRecord();
     expect(
-      isMissionLeaseActive(
-        baseRecord(),
-        "worker-a",
-        "2026-11-21T18:00:01.000Z",
-      ),
+      classifyMissionLeaseFence(rec, "worker-a", "2026-11-21T18:00:01.000Z"),
+    ).toBe("expired");
+    expect(
+      isMissionLeaseActive(rec, "worker-a", "2026-11-21T18:00:01.000Z"),
     ).toBe(false);
   });
 
-  it("is inactive for mismatched holder", () => {
+  it("is wrong_holder for mismatched holder (distinct from expired)", () => {
+    const rec = baseRecord();
     expect(
-      isMissionLeaseActive(
-        baseRecord(),
-        "worker-b",
-        "2026-11-21T18:00:00.500Z",
+      classifyMissionLeaseFence(rec, "worker-b", "2026-11-21T18:00:00.500Z"),
+    ).toBe("wrong_holder");
+    expect(
+      classifyMissionLeaseFence(rec, "worker-b", "2026-11-21T18:00:01.000Z"),
+    ).toBe("wrong_holder");
+  });
+
+  it("is no_holder when lease never claimed", () => {
+    expect(
+      classifyMissionLeaseFence(
+        baseRecord({ leaseHolder: null, leaseExpiresAtIso: null, phase: "enqueued" }),
+        "worker-a",
+        "2026-11-21T18:00:00.000Z",
       ),
-    ).toBe(false);
+    ).toBe("no_holder");
   });
 });
 
 describe("memory mission workflow store lease fence", () => {
-  it("refuses steal while live and fences old holder after reassignment", async () => {
+  it("allows self-renew, refuses steal, fences old holder after reassignment", async () => {
     const store = createMemoryMissionWorkflowStore();
     const workflowId = "wf-fence-unit";
     await store.enqueue({
@@ -94,6 +112,21 @@ describe("memory mission workflow store lease fence", () => {
     });
     expect(steal).toBeNull();
 
+    const renewed = await store.claimLease({
+      workflowId,
+      holder: "worker-a",
+      leaseExpiresAtIso: "2026-11-21T18:00:01.000Z",
+      nowIso: "2026-11-21T18:00:00.500Z",
+    });
+    expect(renewed?.attemptCount).toBe(2);
+    expect(
+      classifyMissionLeaseFence(
+        renewed!,
+        "worker-a",
+        "2026-11-21T18:00:00.500Z",
+      ),
+    ).toBe("active");
+
     await expect(
       store.bindOperationWhileLeased({
         workflowId,
@@ -112,7 +145,14 @@ describe("memory mission workflow store lease fence", () => {
       nowIso: "2026-11-21T18:00:01.000Z",
     });
     expect(leasedB?.leaseHolder).toBe("worker-b");
-    expect(leasedB?.attemptCount).toBe(2);
+    expect(leasedB?.attemptCount).toBe(3);
+    expect(
+      classifyMissionLeaseFence(
+        leasedB!,
+        "worker-a",
+        "2026-11-21T18:00:02.000Z",
+      ),
+    ).toBe("wrong_holder");
 
     const reclaimA = await store.claimLease({
       workflowId,

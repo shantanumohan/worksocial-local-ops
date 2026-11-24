@@ -6,9 +6,11 @@
  * Worker B can commit. External effects: NONE. Temporal stays NOT_WIRED.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED. Never invents past T-X073.
  *
- * Hillclimb: expired-pre-reassignment deny, exact-expiry reclaim gate,
+ * Hillclimb O1: expired-pre-reassignment deny, exact-expiry reclaim gate,
  * old-A reclaim refused while B live, attemptCount on reassignment,
  * post-commit phase fence for old A.
+ * Hillclimb O2: classifyMissionLeaseFence (expired ≠ wrong_holder);
+ * A self-renew positive control while live.
  */
 
 import { randomUUID } from "node:crypto";
@@ -17,8 +19,10 @@ import {
   type SoakProofRecord,
 } from "@worksocial/domain";
 import {
+  classifyMissionLeaseFence,
   createMemoryMissionWorkflowStore,
   isMissionLeaseActive,
+  OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
 } from "@worksocial/persistence";
 
 /** Live Temporal / mission runtime — always NOT_WIRED offline. */
@@ -86,18 +90,47 @@ export async function proofOldFenceAfterReassignment(
     details.push("Worker B stole live lease — unexpected");
   }
 
-  // 2b. Exact expiry: A's lease inactive at boundary; A cannot bind pre-reassignment.
-  const snapAtExpiry = await store.get(workflowId);
+  // 2a. Positive control: A self-renew while live (fence must not block holder).
+  const tMid = new Date(Date.parse(t0) + 500).toISOString();
+  const renewedA = await store.claimLease({
+    workflowId,
+    holder: workerA,
+    leaseExpiresAtIso: tLeaseExpiry,
+    nowIso: tMid,
+  });
   if (
+    renewedA?.leaseHolder === workerA &&
+    renewedA.attemptCount === 2 &&
+    classifyMissionLeaseFence(renewedA, workerA, tMid) === "active"
+  ) {
+    details.push(
+      `Worker A self-renew while live ok attemptCount=2 fenceCause=active`,
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Worker A self-renew unexpected holder=${renewedA?.leaseHolder} attempts=${renewedA?.attemptCount}`,
+    );
+  }
+
+  // 2b. Exact expiry: classify=expired; A cannot bind pre-reassignment.
+  const snapAtExpiry = await store.get(workflowId);
+  const causeAtExpiry = snapAtExpiry
+    ? classifyMissionLeaseFence(snapAtExpiry, workerA, tAtExpiry)
+    : null;
+  if (
+    causeAtExpiry === "expired" &&
     snapAtExpiry &&
     isMissionLeaseActive(snapAtExpiry, workerA, tAtExpiry) === false
   ) {
     details.push(
-      `Exact expiry boundary: isMissionLeaseActive(A, now=expires)=false`,
+      `Exact expiry boundary: fenceCause=expired isMissionLeaseActive=false`,
     );
   } else {
     passed = false;
-    details.push("Exact expiry boundary: A lease still active at equals");
+    details.push(
+      `Exact expiry boundary unexpected cause=${causeAtExpiry ?? "missing"}`,
+    );
   }
 
   let expiredPreReassignDenied = false;
@@ -114,7 +147,9 @@ export async function proofOldFenceAfterReassignment(
     const msg = err instanceof Error ? err.message : String(err);
     if (/Lease fence failed/i.test(msg)) {
       expiredPreReassignDenied = true;
-      details.push(`Expired-pre-reassignment A bind denied: ${msg}`);
+      details.push(
+        `Expired-pre-reassignment A bind denied fenceCause=expired: ${msg}`,
+      );
     } else {
       passed = false;
       details.push(`Expired-pre-reassignment unexpected error: ${msg}`);
@@ -125,7 +160,7 @@ export async function proofOldFenceAfterReassignment(
     details.push("Expired-pre-reassignment A bind unexpectedly succeeded");
   }
 
-  // 3. At exact expiry, Worker B reassigns the lease.
+  // 3. At exact expiry, Worker B reassigns the lease (attemptCount 2→3 after renew).
   const leasedB = await store.claimLease({
     workflowId,
     holder: workerB,
@@ -135,16 +170,31 @@ export async function proofOldFenceAfterReassignment(
   if (
     leasedB?.leaseHolder === workerB &&
     leasedB.phase === "leased" &&
-    leasedB.attemptCount === 2
+    leasedB.attemptCount === 3
   ) {
     details.push(
-      `Worker B reassigned lease holder=${workerB} at exact expiry attemptCount=2`,
+      `Worker B reassigned lease holder=${workerB} at exact expiry attemptCount=3`,
     );
   } else {
     passed = false;
     details.push(
       `Worker B reassign unexpected holder=${leasedB?.leaseHolder} attempts=${leasedB?.attemptCount}`,
     );
+  }
+
+  // 3a. After reassignment, A is wrong_holder (distinct from expired).
+  if (
+    leasedB &&
+    classifyMissionLeaseFence(leasedB, workerA, tAfterExpiry) ===
+      "wrong_holder" &&
+    classifyMissionLeaseFence(leasedB, workerB, tAfterExpiry) === "active"
+  ) {
+    details.push(
+      "Post-reassignment fenceCause A=wrong_holder B=active (expired≠wrong_holder)",
+    );
+  } else {
+    passed = false;
+    details.push("Post-reassignment fenceCause classification unexpected");
   }
 
   // 3b. Old worker A cannot reclaim while B holds a live lease.
@@ -276,7 +326,7 @@ export async function proofOldFenceAfterReassignment(
   }
 
   details.push(
-    `liveTemporalWiring=${OLD_FENCE_TEMPORAL_WIRING} liveProviderSuccessClaimed=false externalEffects=NONE`,
+    `relatedCases=${OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS.join(",")} liveTemporalWiring=${OLD_FENCE_TEMPORAL_WIRING} liveProviderSuccessClaimed=false externalEffects=NONE`,
   );
 
   return {
