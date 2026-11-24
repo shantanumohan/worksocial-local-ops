@@ -562,4 +562,44 @@ describe("budget accounting", () => {
     expect(heldReservationsTotalMinor(settled.account)).toBe(400);
     expect(availableBudgetMinor(settled.account)).toBe(545);
   });
+
+  it("corrupt zero/NaN map entries are not unknown holds; settle normalizes stale heldMinor", () => {
+    const reserved = reserveBudget(account(), "r-real", 300);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-real", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const corrupt = {
+      ...held.account,
+      heldMinor: 0,
+      heldReservations: {
+        ...held.account.heldReservations,
+        "ghost-zero": 0,
+        "ghost-nan": Number.NaN,
+      },
+    };
+    expect(isUnknownUsageHold(corrupt, "ghost-zero")).toBe(false);
+    expect(isUnknownUsageHold(corrupt, "ghost-nan")).toBe(false);
+    expect(isUnknownUsageHold(corrupt, "r-real")).toBe(true);
+    expect(listUnknownUsageHoldIds(corrupt)).toEqual(["r-real"]);
+    expect(heldReservationsTotalMinor(corrupt)).toBe(300);
+
+    const next = reserveBudget(corrupt, "r-open", 50);
+    expect(next.ok).toBe(true);
+    if (!next.ok) return;
+    expect(next.account.heldMinor).toBe(300);
+
+    const settled = settleBudget(
+      { ...next.account, heldMinor: 0 },
+      "r-open",
+      40,
+    );
+    expect(settled.ok).toBe(true);
+    if (!settled.ok) return;
+    expect(settled.account.heldMinor).toBe(300);
+    expect(availableBudgetMinor(settled.account)).toBe(660);
+  });
 });

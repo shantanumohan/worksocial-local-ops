@@ -400,6 +400,49 @@ export function proofUnknownUsageCancelHoldsResidual(
     );
   }
 
+  // 14. Corrupt zero/NaN map entries are not holds; settle restores stale heldMinor.
+  const corrupt = {
+    ...cancelled.account,
+    heldMinor: 0,
+    heldReservations: {
+      ...cancelled.account.heldReservations,
+      "ghost-zero": 0,
+      "ghost-nan": Number.NaN,
+    },
+  };
+  const corruptIds = listUnknownUsageHoldIds(corrupt);
+  const corruptOpen = reserveBudget(corrupt, "req-corrupt-open", 20);
+  if (!corruptOpen.ok) {
+    passed = false;
+    details.push(`Corrupt-map reserve failed: ${JSON.stringify(corruptOpen)}`);
+    return finish(passed, details, nowIso);
+  }
+  const corruptSettle = settleBudget(
+    { ...corruptOpen.account, heldMinor: 0 },
+    "req-corrupt-open",
+    15,
+  );
+  if (
+    !isUnknownUsageHold(corrupt, "ghost-zero") &&
+    !isUnknownUsageHold(corrupt, "ghost-nan") &&
+    isUnknownUsageHold(corrupt, "req-cancel-unknown") &&
+    corruptIds.length === 1 &&
+    corruptIds[0] === "req-cancel-unknown" &&
+    corruptOpen.account.heldMinor === 700 &&
+    corruptSettle.ok &&
+    corruptSettle.account.heldMinor === 700 &&
+    availableBudgetMinor(corruptSettle.account) === 285
+  ) {
+    details.push(
+      "Corrupt 0/NaN map entries ignored as holds; reserve/settle normalize stale heldMinor→700",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Corrupt-map / settle-normalize failed ids=${JSON.stringify(corruptIds)} settle=${JSON.stringify(corruptSettle)}`,
+    );
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false externalEffects=NONE liveBudgetProviderWiring=NOT_WIRED ACCEPTED≠VERIFIED",
   );

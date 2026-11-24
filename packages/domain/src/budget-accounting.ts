@@ -112,8 +112,11 @@ export function isUnknownUsageHold(
   reservationId: string,
 ): boolean {
   const held = account.heldReservations ?? {};
+  const amount = Number(held[reservationId]);
+  // Align with map-sum: zero / non-finite entries are not honest holds (T-X027).
   return (
-    reservationId in held &&
+    Number.isFinite(amount) &&
+    amount > 0 &&
     !(reservationId in account.openReservations) &&
     !(reservationId in account.settledReservations)
   );
@@ -177,18 +180,19 @@ export function reserveBudget(
   if (amountMinor > avail) {
     return { ok: false, code: "BUDGET_EXHAUSTED", availableMinor: avail };
   }
+  // Normalize heldMinor so stale field cannot leak on reserve path (T-X027).
   return {
     ok: true,
     reservationId,
     amountMinor,
-    account: {
+    account: normalizeBudgetHolds({
       ...account,
       reservedMinor: account.reservedMinor + amountMinor,
       openReservations: {
         ...account.openReservations,
         [reservationId]: amountMinor,
       },
-    },
+    }),
   };
 }
 
@@ -215,7 +219,7 @@ export function settleBudget(
     }
     return {
       ok: true,
-      account,
+      account: normalizeBudgetHolds(account),
       reservationId,
       reservedMinor: prior.reservedMinor,
       actualMinor: prior.actualMinor,
@@ -223,7 +227,7 @@ export function settleBudget(
     };
   }
 
-  if (reservationId in account.heldReservations) {
+  if (isUnknownUsageHold(account, reservationId)) {
     throw new Error(
       `Reservation ${reservationId} is held for unknown usage — cannot settle as known actual without explicit known cancel`,
     );
@@ -241,7 +245,7 @@ export function settleBudget(
     reservedMinor,
     actualMinor,
     replayed: false,
-    account: {
+    account: normalizeBudgetHolds({
       ...account,
       reservedMinor: account.reservedMinor - reservedMinor,
       settledMinor: account.settledMinor + actualMinor,
@@ -250,7 +254,7 @@ export function settleBudget(
         ...account.settledReservations,
         [reservationId]: { reservedMinor, actualMinor },
       },
-    },
+    }),
   };
 }
 
