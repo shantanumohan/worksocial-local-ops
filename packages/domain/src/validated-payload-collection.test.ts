@@ -15,6 +15,14 @@ function signedBody(bodyObj: Record<string, unknown>) {
   };
 }
 
+function expectHonesty(
+  decision: ReturnType<typeof evaluateValidatedPayloadCollection>,
+) {
+  expect(decision.liveProviderWiring).toBe("NOT_WIRED");
+  expect(decision.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  expect(decision.externalEffects).toBe("NONE");
+}
+
 describe("validated payload collection (T-X070)", () => {
   it("collects when signature+schema validate and collector succeeds", () => {
     const { body, signatureHex, eventId } = signedBody({
@@ -31,6 +39,7 @@ describe("validated payload collection (T-X070)", () => {
     expect(decision.collected).toBe(true);
     expect(decision.collectionAttempted).toBe(true);
     expect(decision.recordId).toBe("rec-1");
+    expectHonesty(decision);
   });
 
   it("reports VALIDATION_FAILED on bad signature without collecting", () => {
@@ -50,6 +59,7 @@ describe("validated payload collection (T-X070)", () => {
     expect(decision.collected).toBe(false);
     expect(decision.collectionAttempted).toBe(false);
     expect(decision.recordId).toBeNull();
+    expectHonesty(decision);
   });
 
   it("rejects signature with non-hex suffix even when prefix matches", () => {
@@ -64,6 +74,7 @@ describe("validated payload collection (T-X070)", () => {
     });
     expect(decision.code).toBe("VALIDATION_FAILED");
     expect(decision.collectionAttempted).toBe(false);
+    expectHonesty(decision);
   });
 
   it("reports COLLECTION_FAILED when validated but durable write fails", () => {
@@ -87,6 +98,7 @@ describe("validated payload collection (T-X070)", () => {
     expect(decision.reasons.some((r) => /not VALIDATION_FAILED/.test(r))).toBe(
       true,
     );
+    expectHonesty(decision);
   });
 
   it("maps thrown collector errors to COLLECTION_FAILED", () => {
@@ -106,6 +118,25 @@ describe("validated payload collection (T-X070)", () => {
     expect(decision.collected).toBe(false);
     expect(decision.collectionAttempted).toBe(true);
     expect(decision.reasons.some((r) => /disk full/.test(r))).toBe(true);
+    expectHonesty(decision);
+  });
+
+  it("maps empty collector recordId to COLLECTION_FAILED", () => {
+    const { body, signatureHex, eventId } = signedBody({
+      eventId: "evt-empty-id",
+      kind: "lead.created",
+    });
+    const decision = evaluateValidatedPayloadCollection({
+      payload: { eventId, body, signatureHex },
+      secret,
+      collect: () => ({ ok: true, recordId: "   " }),
+    });
+    expect(decision.code).toBe("COLLECTION_FAILED");
+    expect(decision.validated).toBe(true);
+    expect(decision.collected).toBe(false);
+    expect(decision.collectionAttempted).toBe(true);
+    expect(decision.recordId).toBeNull();
+    expectHonesty(decision);
   });
 
   it("rejects non-string body eventId", () => {
@@ -121,6 +152,58 @@ describe("validated payload collection (T-X070)", () => {
     });
     expect(decision.code).toBe("VALIDATION_FAILED");
     expect(decision.collectionAttempted).toBe(false);
+    expectHonesty(decision);
+  });
+
+  it("rejects envelope/body eventId mismatch without collecting", () => {
+    const body = JSON.stringify({ eventId: "evt-body", kind: "lead.created" });
+    const decision = evaluateValidatedPayloadCollection({
+      payload: {
+        eventId: "evt-envelope",
+        body,
+        signatureHex: fixtureWebhookSignature(body, secret),
+      },
+      secret,
+      collect: () => {
+        throw new Error("collect must not run");
+      },
+    });
+    expect(decision.code).toBe("VALIDATION_FAILED");
+    expect(decision.collectionAttempted).toBe(false);
+    expect(decision.reasons.some((r) => /does not match/.test(r))).toBe(true);
+    expectHonesty(decision);
+  });
+
+  it("rejects non-object JSON body (array) as VALIDATION_FAILED", () => {
+    const body = JSON.stringify([{ eventId: "evt-arr", kind: "lead.created" }]);
+    const decision = evaluateValidatedPayloadCollection({
+      payload: {
+        eventId: "evt-arr",
+        body,
+        signatureHex: fixtureWebhookSignature(body, secret),
+      },
+      secret,
+      collect: () => ({ ok: true, recordId: "nope" }),
+    });
+    expect(decision.code).toBe("VALIDATION_FAILED");
+    expect(decision.collectionAttempted).toBe(false);
+    expectHonesty(decision);
+  });
+
+  it("rejects invalid JSON body as VALIDATION_FAILED", () => {
+    const body = "{not-json";
+    const decision = evaluateValidatedPayloadCollection({
+      payload: {
+        eventId: "evt-badjson",
+        body,
+        signatureHex: fixtureWebhookSignature(body, secret),
+      },
+      secret,
+      collect: () => ({ ok: true, recordId: "nope" }),
+    });
+    expect(decision.code).toBe("VALIDATION_FAILED");
+    expect(decision.collectionAttempted).toBe(false);
+    expectHonesty(decision);
   });
 
   it("uses trusted requiredFields config, not payload metadata", () => {
@@ -136,6 +219,7 @@ describe("validated payload collection (T-X070)", () => {
     });
     expect(decision.code).toBe("VALIDATION_FAILED");
     expect(decision.reasons.some((r) => /kind/.test(r))).toBe(true);
+    expectHonesty(decision);
   });
 
   it("keeps VALIDATION_FAILED and COLLECTION_FAILED as distinct codes", () => {
@@ -160,5 +244,7 @@ describe("validated payload collection (T-X070)", () => {
     expect(badSig.code).toBe("VALIDATION_FAILED");
     expect(badCollect.code).toBe("COLLECTION_FAILED");
     expect(badSig.code).not.toBe(badCollect.code);
+    expectHonesty(badSig);
+    expectHonesty(badCollect);
   });
 });

@@ -1,6 +1,7 @@
 /**
  * Fixture proof for T-X070 — Validated payload not collected; separate failure states.
- * External effects: NONE.
+ * External effects: NONE. Live wiring NOT_WIRED. ChatGPT Ads ACCESS_BLOCKED.
+ * Hillclimb: empty recordId, envelope mismatch, JSON array body, honesty fields.
  */
 
 import { randomUUID } from "node:crypto";
@@ -20,6 +21,18 @@ function signedEnvelope(bodyObj: Record<string, unknown>) {
     body,
     signatureHex: fixtureWebhookSignature(body, FIXTURE_SECRET),
   };
+}
+
+function honestyOk(decision: {
+  liveProviderWiring: string;
+  chatgptAdsAccess: string;
+  externalEffects: string;
+}): boolean {
+  return (
+    decision.liveProviderWiring === "NOT_WIRED" &&
+    decision.chatgptAdsAccess === "ACCESS_BLOCKED" &&
+    decision.externalEffects === "NONE"
+  );
 }
 
 /**
@@ -49,10 +62,11 @@ export function proofValidatedPayloadNotCollectedSeparateStates(
     collected.validated === true &&
     collected.collected === true &&
     collected.collectionAttempted === true &&
-    collected.recordId != null
+    collected.recordId != null &&
+    honestyOk(collected)
   ) {
     details.push(
-      "Valid signature+schema + durable write → COLLECTED (validated=true collected=true)",
+      "Valid signature+schema + durable write → COLLECTED (validated=true collected=true); liveProviderWiring=NOT_WIRED",
     );
   } else {
     passed = false;
@@ -75,10 +89,11 @@ export function proofValidatedPayloadNotCollectedSeparateStates(
     badSig.validated === false &&
     badSig.collected === false &&
     badSig.collectionAttempted === false &&
-    badSig.recordId === null
+    badSig.recordId === null &&
+    honestyOk(badSig)
   ) {
     details.push(
-      "Bad webhook signature → VALIDATION_FAILED (collectionAttempted=false)",
+      "Bad webhook signature → VALIDATION_FAILED (collectionAttempted=false); liveProviderWiring=NOT_WIRED",
     );
   } else {
     passed = false;
@@ -100,7 +115,8 @@ export function proofValidatedPayloadNotCollectedSeparateStates(
     notCollected.validated === true &&
     notCollected.collected === false &&
     notCollected.collectionAttempted === true &&
-    notCollected.recordId === null
+    notCollected.recordId === null &&
+    honestyOk(notCollected)
   ) {
     details.push(
       "Validated payload not collected → COLLECTION_FAILED (validated=true collected=false; not VALIDATION_FAILED)",
@@ -128,7 +144,8 @@ export function proofValidatedPayloadNotCollectedSeparateStates(
     thrown.code === "COLLECTION_FAILED" &&
     thrown.validated === true &&
     thrown.collected === false &&
-    thrown.collectionAttempted === true
+    thrown.collectionAttempted === true &&
+    honestyOk(thrown)
   ) {
     details.push(
       "Collector throw → COLLECTION_FAILED (validated=true; not VALIDATION_FAILED)",
@@ -136,6 +153,61 @@ export function proofValidatedPayloadNotCollectedSeparateStates(
   } else {
     passed = false;
     details.push(`Thrown collector unexpectedly ${JSON.stringify(thrown)}`);
+  }
+
+  // Empty recordId → COLLECTION_FAILED (validated path; not VALIDATION_FAILED).
+  const emptyIdEnv = signedEnvelope({
+    eventId: `evt-empty-${randomUUID().slice(0, 8)}`,
+    kind: "lead.created",
+  });
+  const emptyId = evaluateValidatedPayloadCollection({
+    payload: emptyIdEnv,
+    secret: FIXTURE_SECRET,
+    collect: () => ({ ok: true, recordId: "  " }),
+  });
+  if (
+    emptyId.code === "COLLECTION_FAILED" &&
+    emptyId.validated === true &&
+    emptyId.collected === false &&
+    emptyId.collectionAttempted === true &&
+    emptyId.recordId === null &&
+    honestyOk(emptyId)
+  ) {
+    details.push(
+      "Empty collector recordId → COLLECTION_FAILED (validated=true; not VALIDATION_FAILED)",
+    );
+  } else {
+    passed = false;
+    details.push(`Empty recordId unexpectedly ${JSON.stringify(emptyId)}`);
+  }
+
+  // Envelope/body eventId mismatch → VALIDATION_FAILED without collection.
+  const mismatchBody = JSON.stringify({
+    eventId: "evt-body",
+    kind: "lead.created",
+  });
+  const mismatch = evaluateValidatedPayloadCollection({
+    payload: {
+      eventId: "evt-envelope",
+      body: mismatchBody,
+      signatureHex: fixtureWebhookSignature(mismatchBody, FIXTURE_SECRET),
+    },
+    secret: FIXTURE_SECRET,
+    collect: () => {
+      throw new Error("collect must not run on envelope mismatch");
+    },
+  });
+  if (
+    mismatch.code === "VALIDATION_FAILED" &&
+    mismatch.collectionAttempted === false &&
+    honestyOk(mismatch)
+  ) {
+    details.push(
+      "Envelope/body eventId mismatch → VALIDATION_FAILED (collectionAttempted=false)",
+    );
+  } else {
+    passed = false;
+    details.push(`Envelope mismatch unexpectedly ${JSON.stringify(mismatch)}`);
   }
 
   // Malformed hex suffix must not validate.
@@ -149,7 +221,8 @@ export function proofValidatedPayloadNotCollectedSeparateStates(
   });
   if (
     suffixReject.code === "VALIDATION_FAILED" &&
-    suffixReject.collectionAttempted === false
+    suffixReject.collectionAttempted === false &&
+    honestyOk(suffixReject)
   ) {
     details.push("Non-hex signature suffix → VALIDATION_FAILED");
   } else {
@@ -169,7 +242,9 @@ export function proofValidatedPayloadNotCollectedSeparateStates(
     details.push("Failure states were conflated into one code");
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  details.push(
+    "liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
+  );
 
   return {
     proofId: `proof-validated-payload-${randomUUID()}`,

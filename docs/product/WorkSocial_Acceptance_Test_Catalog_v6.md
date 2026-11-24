@@ -952,7 +952,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X060** is fixture ACCEPTED only via the currency/timezone mismatch no silent sum proof (`CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM`) — matched currency+reportingTimezone series may aggregate; currency or timezone mismatch returns `totalMinor=null` (never invents a cross-dimension total). Distinct from T-X059 platform-attribution uniqueness. Not sandbox/prod VERIFIED.
 
-**T-X070** is fixture ACCEPTED only via the validated payload not collected separate failure states proof (`VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES`) — fixture webhook signature/schema validation failure reports `VALIDATION_FAILED` without collection; a valid payload whose durable write fails reports `COLLECTION_FAILED` (`validated=true`, `collected=false`); codes stay distinct. Not sandbox/prod VERIFIED.
+**T-X070** is fixture ACCEPTED only via the validated payload not collected separate failure states proof (`VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES`) — fixture webhook signature/schema/envelope validation failure reports `VALIDATION_FAILED` without collection; a valid payload whose durable write fails (or returns empty `recordId`) reports `COLLECTION_FAILED` (`validated=true`, `collected=false`); codes stay distinct; live wiring stays `NOT_WIRED`; ChatGPT Ads ACCESS_BLOCKED; `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 
 **T-X027** is fixture ACCEPTED only via the unknown usage cancel holds residual proof (`UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL`). Not sandbox/prod VERIFIED.
 
