@@ -810,7 +810,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X015** is fixture ACCEPTED only via the DST recurring schedule no-duplicates proof (`DST_RECURRING_SCHEDULE_NO_DUPLICATES`) — America/New_York civil occurrence keys; spring-forward gap skipped; fall-back ambiguous hour claims once across durable reload. Not sandbox/prod VERIFIED.
 
-**T-X066** is fixture ACCEPTED only via the backup / omit-receipt / post-restore reconcile proof (`BACKUP_OMIT_RECEIPT`). Retry-only no-duplicate-effects does **not** satisfy this case. Not sandbox/prod VERIFIED.
+**T-X066** is fixture ACCEPTED only via the backup / omit-receipt / post-restore reconcile proof (`BACKUP_OMIT_RECEIPT`): every hop omit receipts+providerEffects → restore ACCEPTED_PENDING with local provider omitted → remote SoR reconcile without re-apply → verify matched applyCount=1 → retry providerCreated=false. Distinct from retry-only `NO_DUPLICATE_EFFECTS`, T-X020/T-US-048 `UNKNOWN_REMOTE_RECONCILE`, and T-F24/T-US-047 `RECOVER_ROTATE_RECONCILE`. Live backup/restore providers remain NOT_WIRED. Not sandbox/prod VERIFIED.
 
 **T-F01** is fixture ACCEPTED only via the create trusted local workspace complete F01 evidence proof (`CREATE_TRUSTED_LOCAL_WORKSPACE`) — owner session, workspace configuration revision, timestamped diagnostics (not a decorative online badge), Observe initial authority, startup result + recovery test, and explicit blockers with next actions; public writes refused; live provider wiring stays **NOT_WIRED**. Distinct from T-US-001 readiness blockers/next-actions summary. Never silently VERIFIED for live.
 
