@@ -6,8 +6,13 @@
  * refuses those reads with OS_DENY. Workspace browser partitions remain
  * separate from system Chrome and are only readable by the browser-pool
  * principal after explicit user consent — never by reasoning/workflow
- * workers. Pure domain; no Node/OS I/O. External effects: NONE.
+ * workers. Host admin also cannot silently reuse system/OS auth state.
+ * Live OS browser reads stay NOT_WIRED. Pure domain; no Node/OS I/O.
+ * External effects: NONE. Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
+
+/** Live OS / Chrome browser-auth reads — always NOT_WIRED offline. */
+export const BROWSER_AUTH_LIVE_WIRING = "NOT_WIRED" as const;
 
 export const BrowserAuthStateKind = {
   SYSTEM_CHROME_COOKIES: "system_chrome_cookies",
@@ -71,7 +76,22 @@ export type BrowserAuthStateAccessDecision = {
   /** Never returns cookie/token material — access decision only. */
   authMaterialReturned: false;
   externalEffects: "NONE";
+  /** Live OS browser-auth reads remain NOT_WIRED for fixture soak. */
+  liveBrowserAuthWiring: typeof BROWSER_AUTH_LIVE_WIRING;
 };
+
+function denyOs(
+  reason: string,
+): BrowserAuthStateAccessDecision {
+  return {
+    allowed: false,
+    code: BrowserAuthAccessCode.OS_DENY,
+    reason,
+    authMaterialReturned: false,
+    externalEffects: "NONE",
+    liveBrowserAuthWiring: BROWSER_AUTH_LIVE_WIRING,
+  };
+}
 
 /**
  * Evaluate whether a principal may read browser authentication state.
@@ -82,23 +102,15 @@ export function evaluateBrowserAuthStateAccess(
   request: BrowserAuthStateAccessRequest,
 ): BrowserAuthStateAccessDecision {
   if (WORKER_BROWSER_AUTH_PRINCIPALS.has(request.principal)) {
-    return {
-      allowed: false,
-      code: BrowserAuthAccessCode.OS_DENY,
-      reason: `Principal '${request.principal}' is OS-denied from reading browser auth state (${request.stateKind})`,
-      authMaterialReturned: false,
-      externalEffects: "NONE",
-    };
+    return denyOs(
+      `Principal '${request.principal}' is OS-denied from reading browser auth state (${request.stateKind})`,
+    );
   }
 
   if (SYSTEM_BROWSER_AUTH_STATE_KINDS.has(request.stateKind)) {
-    return {
-      allowed: false,
-      code: BrowserAuthAccessCode.OS_DENY,
-      reason: `System/OS browser auth state '${request.stateKind}' is OS-denied (no silent Chrome/profile reuse)`,
-      authMaterialReturned: false,
-      externalEffects: "NONE",
-    };
+    return denyOs(
+      `System/OS browser auth state '${request.stateKind}' is OS-denied (no silent Chrome/profile reuse)`,
+    );
   }
 
   // Workspace partition — browser-pool only, with explicit consent.
@@ -114,6 +126,7 @@ export function evaluateBrowserAuthStateAccess(
           "Workspace browser partition requires explicit user consent before mount",
         authMaterialReturned: false,
         externalEffects: "NONE",
+        liveBrowserAuthWiring: BROWSER_AUTH_LIVE_WIRING,
       };
     }
     return {
@@ -123,29 +136,22 @@ export function evaluateBrowserAuthStateAccess(
         "Browser-pool may mount workspace partition after explicit user consent (not system Chrome)",
       authMaterialReturned: false,
       externalEffects: "NONE",
+      liveBrowserAuthWiring: BROWSER_AUTH_LIVE_WIRING,
     };
   }
 
   if (request.principal === BrowserAuthPrincipal.HOST_ADMIN) {
     // Host admin still cannot silently reuse system Chrome cookies.
     if (SYSTEM_BROWSER_AUTH_STATE_KINDS.has(request.stateKind)) {
-      return {
-        allowed: false,
-        code: BrowserAuthAccessCode.OS_DENY,
-        reason: "Host admin cannot silently reuse system/OS browser auth state",
-        authMaterialReturned: false,
-        externalEffects: "NONE",
-      };
+      return denyOs(
+        "Host admin cannot silently reuse system/OS browser auth state",
+      );
     }
   }
 
-  return {
-    allowed: false,
-    code: BrowserAuthAccessCode.OS_DENY,
-    reason: `Browser auth state access denied for principal '${request.principal}' / kind '${request.stateKind}'`,
-    authMaterialReturned: false,
-    externalEffects: "NONE",
-  };
+  return denyOs(
+    `Browser auth state access denied for principal '${request.principal}' / kind '${request.stateKind}'`,
+  );
 }
 
 /** True when the decision is the catalog OS deny for a worker read attempt. */
@@ -155,6 +161,14 @@ export function isWorkerBrowserAuthOsDeny(
   return (
     decision.allowed === false &&
     decision.code === BrowserAuthAccessCode.OS_DENY &&
-    decision.authMaterialReturned === false
+    decision.authMaterialReturned === false &&
+    decision.liveBrowserAuthWiring === BROWSER_AUTH_LIVE_WIRING
   );
+}
+
+/** True when state kind is system/OS browser auth material. */
+export function isSystemBrowserAuthStateKind(
+  stateKind: BrowserAuthStateKindValue,
+): boolean {
+  return SYSTEM_BROWSER_AUTH_STATE_KINDS.has(stateKind);
 }

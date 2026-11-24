@@ -8,8 +8,8 @@
     "trusted_workspace_readiness_blockers_next_actions"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-001.json",
-  "createdAtIso": "2026-11-24T22:07:54.174Z",
+  "createdAtIso": "2026-11-24T22:25:23.636Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-001-e98c3a7c132e"
+  "uniqueSourceArtifactId": "art-fixture-t-us-001-381f2a5e79ac"
 }

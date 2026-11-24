@@ -161,7 +161,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X007** maps only to `WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP`.
 
-**T-X065** maps only to `WORKER_BROWSER_AUTH_STATE_OS_DENIED` (worker OS deny for browser auth state; not live VERIFIED).
+**T-X065** maps only to `WORKER_BROWSER_AUTH_STATE_OS_DENIED` (workers / browser-pool / host-admin OS-denied from system Chrome, OS profile, and OAuth callback cookies; workspace partition needs browser-pool + consent; vault intact on deny; live browser-auth NOT_WIRED; externalEffects NONE; not live VERIFIED).
 
 **T-X004** maps only to `DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED`.
 
