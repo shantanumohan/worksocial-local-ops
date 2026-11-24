@@ -19,6 +19,8 @@ import {
   digestTestBaseline,
   emptyRepairState,
   evaluateAttemptLimitGate,
+  evaluateRepairAttemptLimitEscalation,
+  shouldRecordAttemptOnGateDenial,
   evaluateFixtureCanary,
   evaluateProtectedPathGate,
   evaluateRepairReleaseGate,
@@ -184,6 +186,84 @@ describe("attempt limit", () => {
     });
     expect(denied.allowed).toBe(false);
     if (!denied.allowed) expect(denied.code).toBe("ATTEMPT_LIMIT");
+  });
+
+  it("does not escalate on first RELEASED success within limit", () => {
+    const a1 = recordRepairAttempt({
+      attemptId: "a-ok",
+      ticket: ticket(),
+      proposalId: "prop-1",
+      outcome: RepairAttemptOutcome.RELEASED,
+      createdAtIso: now,
+    });
+    expect(a1.ticket.attemptCount).toBe(1);
+    expect(a1.ticket.status).toBe(RepairTicketStatus.RELEASED_PENDING);
+    const gate = evaluateAttemptLimitGate({
+      ticket: a1.ticket,
+      startingNewAttempt: true,
+    });
+    expect(gate.allowed).toBe(true);
+  });
+
+  it("escalates on GATE_DENIED at max attempts", () => {
+    let t = ticket();
+    t = recordRepairAttempt({
+      attemptId: "g1",
+      ticket: t,
+      proposalId: "prop-1",
+      outcome: RepairAttemptOutcome.GATE_DENIED,
+      createdAtIso: now,
+    }).ticket;
+    const a2 = recordRepairAttempt({
+      attemptId: "g2",
+      ticket: t,
+      proposalId: "prop-1",
+      outcome: RepairAttemptOutcome.GATE_DENIED,
+      createdAtIso: now,
+    });
+    expect(a2.ticket.status).toBe(RepairTicketStatus.ESCALATED);
+    expect(a2.ticket.attemptCount).toBe(2);
+  });
+
+  it("T-X058 honesty wrapper: ATTEMPT_LIMIT + NOT_WIRED + externalEffects NONE", () => {
+    expect(cmsRepairWiringStatus()).toBe("NOT_WIRED");
+    let t = ticket();
+    t = recordRepairAttempt({
+      attemptId: "h1",
+      ticket: t,
+      proposalId: "prop-1",
+      outcome: RepairAttemptOutcome.TESTS_FAILED,
+      createdAtIso: now,
+    }).ticket;
+    t = recordRepairAttempt({
+      attemptId: "h2",
+      ticket: t,
+      proposalId: "prop-1",
+      outcome: RepairAttemptOutcome.TESTS_FAILED,
+      createdAtIso: now,
+    }).ticket;
+    const decision = evaluateRepairAttemptLimitEscalation({
+      ticket: t,
+      startingNewAttempt: true,
+    });
+    expect(decision.allowed).toBe(false);
+    if (!decision.allowed) expect(decision.code).toBe("ATTEMPT_LIMIT");
+    expect(decision.escalated).toBe(true);
+    expect(decision.cmsRepairWiring).toBe("NOT_WIRED");
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.maxAttempts).toBe(MAX_REPAIR_ATTEMPTS);
+    expect(decision.attemptCount).toBe(2);
+
+    // Not starting a new attempt: still reports escalated ticket honesty.
+    const inspect = evaluateRepairAttemptLimitEscalation({
+      ticket: t,
+      startingNewAttempt: false,
+    });
+    expect(inspect.allowed).toBe(true);
+    expect(inspect.escalated).toBe(true);
+    expect(inspect.externalEffects).toBe("NONE");
+    expect(shouldRecordAttemptOnGateDenial("ATTEMPT_LIMIT")).toBe(false);
+    expect(shouldRecordAttemptOnGateDenial("PROTECTED_PATH")).toBe(true);
   });
 });
 

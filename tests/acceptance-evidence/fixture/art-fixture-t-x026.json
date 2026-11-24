@@ -8,8 +8,8 @@
     "concurrent_final_budget_reservation_cap"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x026.json",
-  "createdAtIso": "2026-11-24T22:40:53.727Z",
+  "createdAtIso": "2026-11-24T22:46:08.421Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x026-058ee3136e68"
+  "uniqueSourceArtifactId": "art-fixture-t-x026-22f7073ee39e"
 }

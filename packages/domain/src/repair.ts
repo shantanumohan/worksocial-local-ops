@@ -602,6 +602,45 @@ export function evaluateAttemptLimitGate(input: {
   };
 }
 
+/**
+ * T-X058 honesty wrapper: attempt-limit gate + CMS NOT_WIRED + externalEffects NONE.
+ * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
+ */
+export type RepairAttemptLimitEscalationDecision = RepairGateDecision & {
+  externalEffects: "NONE";
+  cmsRepairWiring: "NOT_WIRED";
+  /** True when ticket already ESCALATED or this gate is ATTEMPT_LIMIT. */
+  escalated: boolean;
+  maxAttempts: number;
+  attemptCount: number;
+};
+
+export function evaluateRepairAttemptLimitEscalation(input: {
+  ticket: RepairTicket;
+  startingNewAttempt: boolean;
+}): RepairAttemptLimitEscalationDecision {
+  const gate = evaluateAttemptLimitGate(input);
+  const escalated =
+    input.ticket.status === RepairTicketStatus.ESCALATED ||
+    (!gate.allowed && gate.code === "ATTEMPT_LIMIT");
+  return {
+    ...gate,
+    externalEffects: "NONE",
+    cmsRepairWiring: "NOT_WIRED",
+    escalated,
+    maxAttempts: input.ticket.maxAttempts,
+    attemptCount: input.ticket.attemptCount,
+  };
+}
+
+/**
+ * T-X058: ATTEMPT_LIMIT denials must not be persisted as another repair
+ * attempt (would inflate attemptCount past maxAttempts).
+ */
+export function shouldRecordAttemptOnGateDenial(code: string | null): boolean {
+  return code !== "ATTEMPT_LIMIT";
+}
+
 export function toEffectProposal(proposal: RepairProposal): EffectProposal {
   return {
     proposalId: proposal.proposalId,

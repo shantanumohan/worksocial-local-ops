@@ -122,7 +122,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-US-018** / **T-X037** map only to `EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN`.
 
-**T-X058** maps only to `REPAIR_ATTEMPT_LIMIT_ESCALATED`.
+**T-X058** maps only to `REPAIR_ATTEMPT_LIMIT_ESCALATED` (MAX_REPAIR_ATTEMPTS=2; third automatic start ATTEMPT_LIMIT after ESCALATED; CMS repair NOT_WIRED; externalEffects NONE; not live VERIFIED).
 
 **T-X069** maps only to `IMPORTED_DOC_QUARANTINED_AS_DATA` (quarantine forces null instructionVersion; UNTRUSTED_SOURCE not instruction-eligible; live NOT_WIRED; not live VERIFIED).
 

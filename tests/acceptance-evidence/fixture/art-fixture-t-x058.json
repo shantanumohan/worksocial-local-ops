@@ -3,13 +3,13 @@
   "caseId": "T-X058",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X058 (Third automatic repair attempt — escalate)\nproof=repair_attempt_limit_escalated applyCount=1 :: MAX_REPAIR_ATTEMPTS=2 | CMS repair wiring NOT_WIRED | First automatic attempt allowed | Attempt 1 recorded (TESTS_FAILED) | Second automatic attempt allowed (at max) | Attempt 2 recorded; ticket status=ESCALATED | Third automatic attempt denied (ATTEMPT_LIMIT) — escalate | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X058 (Third automatic repair attempt — escalate)\nproof=repair_attempt_limit_escalated applyCount=1 :: MAX_REPAIR_ATTEMPTS=2 | CMS repair wiring NOT_WIRED | First automatic attempt allowed | Attempt 1 recorded (TESTS_FAILED) | Second automatic attempt allowed (at max) | Attempt 2 recorded; ticket status=ESCALATED | Third automatic attempt denied (ATTEMPT_LIMIT) — escalate without recording attempt; cmsRepairWiring=NOT_WIRED externalEffects=NONE | GATE_DENIED ×2 → ESCALATED; third attempt ATTEMPT_LIMIT | RELEASED within limit → RELEASED_PENDING (no premature escalate) | liveProviderSuccessClaimed=false cmsRepairWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "repair_attempt_limit_escalated"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x058.json",
-  "createdAtIso": "2026-11-24T22:40:53.727Z",
+  "createdAtIso": "2026-11-24T22:46:08.421Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x058-058ee3136e68"
+  "uniqueSourceArtifactId": "art-fixture-t-x058-22f7073ee39e"
 }

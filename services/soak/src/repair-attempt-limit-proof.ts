@@ -3,6 +3,7 @@
  *
  * MAX_REPAIR_ATTEMPTS=2: after two failed attempts the ticket is ESCALATED
  * and starting a third attempt is denied (ATTEMPT_LIMIT). External effects: NONE.
+ * CMS repair wiring: NOT_WIRED. ACCEPTED ≠ VERIFIED.
  */
 
 import { randomUUID } from "node:crypto";
@@ -18,12 +19,16 @@ import {
   createIncident,
   createRepairTicket,
   evaluateAttemptLimitGate,
+  evaluateRepairAttemptLimitEscalation,
   recordRepairAttempt,
+  shouldRecordAttemptOnGateDenial,
   type SoakProofRecord,
 } from "@worksocial/domain";
 
 /**
  * Complete expected proof set for T-X058 fixture ACCEPTED.
+ * Hillclimb: GATE_DENIED escalate path, honesty wrapper, SUCCESS non-escalate,
+ * CMS NOT_WIRED.
  */
 export function proofRepairAttemptLimitEscalated(
   nowIso: string,
@@ -126,20 +131,111 @@ export function proofRepairAttemptLimitEscalated(
   }
 
   // Third automatic attempt refused — T-X058.
-  const thirdGate = evaluateAttemptLimitGate({
+  const thirdHonesty = evaluateRepairAttemptLimitEscalation({
     ticket,
     startingNewAttempt: true,
   });
-  if (!thirdGate.allowed && thirdGate.code === "ATTEMPT_LIMIT") {
+  if (
+    !thirdHonesty.allowed &&
+    thirdHonesty.code === "ATTEMPT_LIMIT" &&
+    thirdHonesty.escalated === true &&
+    thirdHonesty.cmsRepairWiring === "NOT_WIRED" &&
+    thirdHonesty.externalEffects === "NONE" &&
+    thirdHonesty.maxAttempts === MAX_REPAIR_ATTEMPTS &&
+    shouldRecordAttemptOnGateDenial("ATTEMPT_LIMIT") === false &&
+    ticket.attemptCount === MAX_REPAIR_ATTEMPTS
+  ) {
     details.push(
-      "Third automatic attempt denied (ATTEMPT_LIMIT) — escalate",
+      "Third automatic attempt denied (ATTEMPT_LIMIT) — escalate without recording attempt; cmsRepairWiring=NOT_WIRED externalEffects=NONE",
     );
   } else {
     passed = false;
-    details.push("Third attempt unexpectedly allowed or wrong code");
+    details.push(
+      `Third honesty gate unexpectedly ${JSON.stringify(thirdHonesty)} count=${ticket.attemptCount}`,
+    );
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  // GATE_DENIED path also escalates at max (parallel ticket).
+  let gateDeniedTicket = createRepairTicket({
+    ticketId: "tkt-gate-denied",
+    incident,
+    repairClass: RepairClass.RESTORE_CTA,
+    worktreeRef: "worktrees/tkt-gate-denied",
+    sourceRevision: "rev-healthy",
+    fixtureOnly: true,
+    createdAtIso: nowIso,
+  });
+  gateDeniedTicket = recordRepairAttempt({
+    attemptId: "gd1",
+    ticket: gateDeniedTicket,
+    proposalId: "prop-gd",
+    outcome: RepairAttemptOutcome.GATE_DENIED,
+    createdAtIso: nowIso,
+  }).ticket;
+  gateDeniedTicket = recordRepairAttempt({
+    attemptId: "gd2",
+    ticket: gateDeniedTicket,
+    proposalId: "prop-gd",
+    outcome: RepairAttemptOutcome.GATE_DENIED,
+    createdAtIso: nowIso,
+  }).ticket;
+  if (
+    gateDeniedTicket.status === RepairTicketStatus.ESCALATED &&
+    gateDeniedTicket.attemptCount === 2
+  ) {
+    const thirdGd = evaluateAttemptLimitGate({
+      ticket: gateDeniedTicket,
+      startingNewAttempt: true,
+    });
+    if (!thirdGd.allowed && thirdGd.code === "ATTEMPT_LIMIT") {
+      details.push(
+        "GATE_DENIED ×2 → ESCALATED; third attempt ATTEMPT_LIMIT",
+      );
+    } else {
+      passed = false;
+      details.push(`GATE_DENIED third unexpectedly ${JSON.stringify(thirdGd)}`);
+    }
+  } else {
+    passed = false;
+    details.push(
+      `GATE_DENIED escalate unexpectedly status=${gateDeniedTicket.status} count=${gateDeniedTicket.attemptCount}`,
+    );
+  }
+
+  // SUCCESS within limit does not escalate.
+  let successTicket = createRepairTicket({
+    ticketId: "tkt-success",
+    incident,
+    repairClass: RepairClass.RESTORE_CTA,
+    worktreeRef: "worktrees/tkt-success",
+    sourceRevision: "rev-healthy",
+    fixtureOnly: true,
+    createdAtIso: nowIso,
+  });
+  successTicket = recordRepairAttempt({
+    attemptId: "ok1",
+    ticket: successTicket,
+    proposalId: "prop-ok",
+    outcome: RepairAttemptOutcome.RELEASED,
+    createdAtIso: nowIso,
+  }).ticket;
+  if (
+    successTicket.attemptCount === 1 &&
+    successTicket.status === RepairTicketStatus.RELEASED_PENDING
+  ) {
+    details.push(
+      "RELEASED within limit → RELEASED_PENDING (no premature escalate)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `SUCCESS path unexpectedly status=${successTicket.status} count=${successTicket.attemptCount}`,
+    );
+  }
+
+  details.push(
+    "liveProviderSuccessClaimed=false cmsRepairWiring=NOT_WIRED externalEffects=NONE",
+  );
 
   return {
     proofId: `proof-attempt-limit-${randomUUID()}`,

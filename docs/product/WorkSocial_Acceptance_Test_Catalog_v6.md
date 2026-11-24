@@ -906,7 +906,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-US-018** / **T-X037** are fixture ACCEPTED only via the EVAL_ONLY operational tool forbidden proof (`EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN`). Not sandbox/prod VERIFIED.
 
-**T-X058** is fixture ACCEPTED only via the repair attempt limit escalated proof (`REPAIR_ATTEMPT_LIMIT_ESCALATED`). Not sandbox/prod VERIFIED.
+**T-X058** is fixture ACCEPTED only via the repair attempt limit escalated proof (`REPAIR_ATTEMPT_LIMIT_ESCALATED`) — `MAX_REPAIR_ATTEMPTS=2`; after two failed automatic attempts (`TESTS_FAILED` or `GATE_DENIED`) the ticket is `ESCALATED` and a third start is denied (`ATTEMPT_LIMIT`); SUCCESS/`RELEASED` within limit does not premature-escalate; CMS repair stays **NOT_WIRED**; `externalEffects: NONE`. Distinct from T-F21 / T-US-041 / T-US-042/T-X057. Not sandbox/prod VERIFIED.
 
 **T-X069** is fixture ACCEPTED only via the imported doc quarantined as data proof (`IMPORTED_DOC_QUARANTINED_AS_DATA`) — pending/quarantined/rejected imports force `instructionVersion=null` (claimed versions refused); `UNTRUSTED_SOURCE` compile entries stay `instructionEligible=false`; untrusted attachment content is never instruction-eligible. Live wiring stays `NOT_WIRED`. Not sandbox/prod VERIFIED.
 
@@ -1086,7 +1086,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X055 | Unknown policy question | Escalate without promise *(fixture ACCEPTED — unknown policy question escalates without promise proof; not sandbox/prod VERIFIED)* |
 | T-X056 | Automated response loop | Bounded; handoff *(fixture ACCEPTED — automated response loop bounded handoff proof; not sandbox/prod VERIFIED)* |
 | T-X057 | Repair disables failing test | Rejected *(fixture ACCEPTED)* |
-| T-X058 | Third automatic repair attempt | Escalate *(fixture ACCEPTED)* |
+| T-X058 | Third automatic repair attempt | Escalate *(fixture ACCEPTED — attempt-limit escalate; CMS NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X059 | Duplicate platform attribution | One booking; separate claims *(fixture ACCEPTED — duplicate platform attribution one-booking proof; not sandbox/prod VERIFIED)* |
 | T-X060 | Currency/timezone mismatch | No silent sum *(fixture ACCEPTED — currency/timezone mismatch no silent sum proof; not sandbox/prod VERIFIED)* |
 | T-X061 | Keyboard review and focus restore | A11y *(fixture ACCEPTED — keyboard focus restore after dialog proof; not sandbox/prod VERIFIED)* |
