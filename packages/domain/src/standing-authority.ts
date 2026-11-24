@@ -188,6 +188,14 @@ export function findMatchingGrant(
     return null;
   }
 
+  // Supervisor lease fence — missing/mismatched generation fails closed.
+  if (
+    request.requireSupervisorLeaseFence === true &&
+    request.supervisorLeaseHeld !== true
+  ) {
+    return null;
+  }
+
   const channelId = normalizeAuthorityObjectId(request.channelId);
   const targetAccountId = normalizeAuthorityObjectId(request.targetAccountId);
   const assetId = normalizeAuthorityObjectId(request.assetId);

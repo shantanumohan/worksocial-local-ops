@@ -27,6 +27,16 @@ describe("proofCrossWorkspaceReferenceDenied", () => {
         d.includes("Write-gate padded foreign channel denied without leaking"),
       ),
     ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Supervisor lease fence missing → GRANT_MISSING"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Supervisor lease fence held → in-workspace publish allowed"),
+      ),
+    ).toBe(true);
     expect(proof.details.some((d) => d.includes("honesty NOT_WIRED/NONE"))).toBe(
       true,
     );
