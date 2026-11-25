@@ -129,6 +129,29 @@ describe("proofIdempotencyKeyPayloadMismatch (T-X022)", () => {
       ),
     ).toBe(true);
     expect(
+      proof.details.some((d) =>
+        d.includes("CR-only-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("PS-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("mid-NUL payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("same-operationId digest-B race") &&
+          d.includes("all Conflict") &&
+          d.includes("applyCount=1"),
+      ),
+    ).toBe(true);
+    expect(
       proof.details.some(
         (d) =>
           d.includes("Interleaved concurrent mix") &&

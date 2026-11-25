@@ -423,6 +423,48 @@ export async function proofIdempotencyKeyPayloadMismatch(
   );
   if (!lsConflict) passed = false;
 
+  const crOnlyConflict = await expectMismatchConflict(
+    "acceptPending CR-only-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}\r`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!crOnlyConflict) passed = false;
+
+  const psConflict = await expectMismatchConflict(
+    "acceptPending PS-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}\u2029`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!psConflict) passed = false;
+
+  const midNulConflict = await expectMismatchConflict(
+    "acceptPending mid-NUL payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA.slice(0, Math.max(1, digestA.length - 1))}\0${digestA.slice(-1)}`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!midNulConflict) passed = false;
+
   // Concurrent multi-alt digest-B barrage — all Conflict; no orphans; applyCount=1.
   const barrageN = 8;
   const barrageIds = Array.from(
@@ -457,6 +499,44 @@ export async function proofIdempotencyKeyPayloadMismatch(
   } else {
     details.push(
       `Concurrent ${barrageN}-way digest-B accepts → all Conflict; no orphan intents; applyCount stays 1`,
+    );
+  }
+
+  // Concurrent same-operationId digest-B race — all Conflict; applyCount stays 1.
+  const sameOpRaceN = 6;
+  const sameOpRaceResults = await Promise.all(
+    Array.from({ length: sameOpRaceN }, (_, i) =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: digestB,
+        idem,
+        nowIso,
+      })
+        .then(() => ({ ok: false as const, i }))
+        .catch((err) => ({
+          ok: isIdempotencyPayloadMismatchError(err) as boolean,
+          i,
+        })),
+    ),
+  );
+  const sameOpRaceAllConflict = sameOpRaceResults.every((r) => r.ok);
+  const afterSameOpRace = await svc.stores.fakeProvider.getByBusinessKey(bizKey);
+  const decisionAfterSameOpRace = await svc.stores.decisions.get(operationId);
+  if (
+    !sameOpRaceAllConflict ||
+    afterSameOpRace?.applyCount !== 1 ||
+    afterSameOpRace.payloadDigest !== digestA ||
+    decisionAfterSameOpRace?.outcome !== "ACCEPTED_PENDING" ||
+    decisionAfterSameOpRace.payloadDigest !== digestA
+  ) {
+    passed = false;
+    details.push(
+      `Concurrent same-operationId digest-B race failed: conflicts=${sameOpRaceResults.filter((r) => r.ok).length}/${sameOpRaceN} applyCount=${afterSameOpRace?.applyCount} outcome=${decisionAfterSameOpRace?.outcome}`,
+    );
+  } else {
+    details.push(
+      `Concurrent ${sameOpRaceN}-way same-operationId digest-B race → all Conflict; applyCount=1; ACCEPTED_PENDING retains digest A`,
     );
   }
 
@@ -955,8 +1035,12 @@ export async function proofIdempotencyKeyPayloadMismatch(
       vtConflict &&
       ffConflict &&
       lsConflict &&
+      crOnlyConflict &&
+      psConflict &&
+      midNulConflict &&
       barrageAllConflict &&
       !barrageOrphans &&
+      sameOpRaceAllConflict &&
       sameDigestAllOk &&
       mixOk &&
       !mixOrphans &&
