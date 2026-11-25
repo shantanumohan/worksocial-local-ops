@@ -287,6 +287,20 @@ export type GroundedEvalAdjudication = {
 };
 
 /**
+ * Fail-closed grounding-used flag (T-X038). Only boolean `true` or the
+ * exact literal string `"true"` counts — no trim/case folding, so
+ * `"TRUE"` / `" true "` never invent grounding use.
+ */
+export function normalizeGroundingUsed(value: unknown): boolean {
+  return value === true || value === "true";
+}
+
+/** Live eval transport stays NOT_WIRED for fixture evidence (T-X038). */
+export function evalLiveWiringStatus(): "NOT_WIRED" {
+  return "NOT_WIRED";
+}
+
+/**
  * Adjudicate a fixture answer. Grounding configured but unused → no grounded
  * pass (T-X038). Only SUPPORTED facts count as grounding.
  */
@@ -295,15 +309,21 @@ export function adjudicateGroundedEvalCase(input: {
   citedFactIds: string[];
   factLabels: ReadonlyMap<string, SupportLabelValue>;
   /** When false, model produced an answer without consulting grounding. */
-  groundingUsed: boolean;
+  groundingUsed: boolean | string | number | null | undefined;
+  /**
+   * Optional claimed verdict — PASS while grounding is unmet is refused
+   * (still returns NO_GROUNDING; never invents a grounded pass).
+   */
+  claimedVerdict?: EvalCaseVerdictValue;
 }): GroundedEvalAdjudication {
+  const groundingUsed = normalizeGroundingUsed(input.groundingUsed);
   const supportedCited = input.citedFactIds.filter(
     (id) => input.factLabels.get(id) === SupportLabel.SUPPORTED,
   );
   const reasons: string[] = [];
 
-  if (input.caseDef.requiresGrounding && !input.groundingUsed) {
-    return {
+  if (input.caseDef.requiresGrounding && !groundingUsed) {
+    const result: GroundedEvalAdjudication = {
       verdict: EvalCaseVerdict.NO_GROUNDING,
       citedFactIds: input.citedFactIds,
       supportedCitedFactIds: supportedCited,
@@ -312,18 +332,35 @@ export function adjudicateGroundedEvalCase(input: {
         "Grounding configured but unused — no grounded pass (T-X038)",
       ],
     };
+    if (input.claimedVerdict === EvalCaseVerdict.PASS) {
+      result.reasons.push(
+        "FALSE_GROUNDED_PASS_REFUSED — claimed PASS while grounding unused",
+      );
+    }
+    return result;
   }
 
-  if (input.caseDef.requiresGrounding && supportedCited.length === 0) {
-    return {
+  if (
+    input.caseDef.requiresGrounding &&
+    (supportedCited.length === 0 || input.citedFactIds.length === 0)
+  ) {
+    const result: GroundedEvalAdjudication = {
       verdict: EvalCaseVerdict.NO_GROUNDING,
       citedFactIds: input.citedFactIds,
       supportedCitedFactIds: [],
-      groundingUsed: input.groundingUsed,
+      groundingUsed,
       reasons: [
-        "No SUPPORTED fact citations — cannot claim grounded answer; UNKNOWN/HYPOTHESIS citations do not count",
+        input.citedFactIds.length === 0
+          ? "Empty citations — cannot claim grounded answer (T-X038)"
+          : "No SUPPORTED fact citations — cannot claim grounded answer; UNKNOWN/HYPOTHESIS/missing labels do not count",
       ],
     };
+    if (input.claimedVerdict === EvalCaseVerdict.PASS) {
+      result.reasons.push(
+        "FALSE_GROUNDED_PASS_REFUSED — claimed PASS without SUPPORTED grounding",
+      );
+    }
+    return result;
   }
 
   const missingExpected = input.caseDef.expectedFactIds.filter(
@@ -337,7 +374,7 @@ export function adjudicateGroundedEvalCase(input: {
       verdict: EvalCaseVerdict.FAIL,
       citedFactIds: input.citedFactIds,
       supportedCitedFactIds: supportedCited,
-      groundingUsed: input.groundingUsed,
+      groundingUsed,
       reasons,
     };
   }
@@ -347,7 +384,7 @@ export function adjudicateGroundedEvalCase(input: {
     verdict: EvalCaseVerdict.PASS,
     citedFactIds: input.citedFactIds,
     supportedCitedFactIds: supportedCited,
-    groundingUsed: input.groundingUsed,
+    groundingUsed,
     reasons,
   };
 }
