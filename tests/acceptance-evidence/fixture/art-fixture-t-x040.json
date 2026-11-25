@@ -3,13 +3,13 @@
   "caseId": "T-X040",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X040 (Low-sample trend spike stays insufficient evidence (research only))\nproof=low_sample_trend_spike_insufficient_evidence applyCount=1 :: Apparent 9× spike with sampleSize=2 → INSUFFICIENT_EVIDENCE; researchTaskOnly; allowPublishTrigger=false | Null sampleSize → INSUFFICIENT_EVIDENCE (not invent measured) | Adequate sample + 4× lift → MEASURED_SPIKE; still allowPublishTrigger=false | Adequate sample + flat lift → NO_SPIKE | Non-finite sampleSize → INSUFFICIENT_EVIDENCE | Zero baseline (uncomputable lift) → INSUFFICIENT_EVIDENCE; researchTaskOnly | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X040 (Low-sample trend spike stays insufficient evidence (research only))\nproof=low_sample_trend_spike_insufficient_evidence applyCount=1 :: Apparent 9× spike with sampleSize=2 → INSUFFICIENT_EVIDENCE; researchTaskOnly; allowPublishTrigger=false; NOT_WIRED/NONE | Null sampleSize → INSUFFICIENT_EVIDENCE (not invent measured) | Adequate sample + 4× lift → MEASURED_SPIKE; still allowPublishTrigger=false | evaluateTrendSpikePublishHonesty(MEASURED_SPIKE) → never publish; NOT_WIRED/NONE | Adequate sample + flat lift → NO_SPIKE | Non-finite sampleSize → INSUFFICIENT_EVIDENCE | Zero baseline (uncomputable lift) → INSUFFICIENT_EVIDENCE; researchTaskOnly | Boundary sampleSize=9 insufficient; sampleSize=10 measured (still no publish) | sampleSize=0 → missing (not low-but-present); INSUFFICIENT_EVIDENCE | liveTrendProviderWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "low_sample_trend_spike_insufficient_evidence"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x040.json",
-  "createdAtIso": "2026-11-25T00:08:51.162Z",
+  "createdAtIso": "2026-11-25T00:14:06.099Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x040-9b65dfaa6f99"
+  "uniqueSourceArtifactId": "art-fixture-t-x040-fdaf9cc5c64d"
 }

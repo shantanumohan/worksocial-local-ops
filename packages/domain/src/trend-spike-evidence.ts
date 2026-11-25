@@ -4,7 +4,7 @@
  * An apparent keyword/trend spike with too-small a sample must stay
  * research-only: never a publish trigger and never "measured" demand.
  * Pure domain — no network I/O. Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
- * External effects: NONE.
+ * External effects: NONE. Live trend provider: NOT_WIRED.
  */
 
 /** Default minimum sample for treating a trend delta as measured. */
@@ -44,21 +44,36 @@ export type AssessTrendSpikeEvidenceResult = {
   liftRatio: number | null;
   /** True only for MEASURED_SPIKE — still never auto-authorizes publish. */
   measuredSpike: boolean;
-  /** Always false for INSUFFICIENT_EVIDENCE; never true from this gate alone. */
-  allowPublishTrigger: boolean;
+  /** Always false for this gate alone — never auto-authorizes publish. */
+  allowPublishTrigger: false;
   /** Research task (not publish) when evidence is insufficient. */
   researchTaskOnly: boolean;
   reason: string;
+  liveTrendProviderWiring: "NOT_WIRED";
+  liveProviderSuccessClaimed: false;
+  externalEffects: "NONE";
 };
 
 function isUsableSampleCount(sample: number, minSample: number): boolean {
   return Number.isFinite(sample) && sample >= minSample;
 }
 
+function honestyFields(): Pick<
+  AssessTrendSpikeEvidenceResult,
+  "liveTrendProviderWiring" | "liveProviderSuccessClaimed" | "externalEffects" | "allowPublishTrigger"
+> {
+  return {
+    allowPublishTrigger: false,
+    liveTrendProviderWiring: "NOT_WIRED",
+    liveProviderSuccessClaimed: false,
+    externalEffects: "NONE",
+  };
+}
+
 /**
  * Classify a trend observation that appears to spike.
  * Low/missing/invalid sample or uncomputable lift → INSUFFICIENT_EVIDENCE
- * (research task, not publish).
+ * (research task, not publish). This gate never sets allowPublishTrigger.
  */
 export function assessTrendSpikeEvidence(
   input: AssessTrendSpikeEvidenceInput,
@@ -66,6 +81,7 @@ export function assessTrendSpikeEvidence(
   const minSample = input.minSample ?? DEFAULT_MIN_TREND_SAMPLE;
   const spikeRatio = input.spikeRatio ?? DEFAULT_SPIKE_RATIO;
   const sample = input.sampleSize;
+  const honesty = honestyFields();
   const liftRatio =
     Number.isFinite(input.baselineValue) &&
     input.baselineValue > 0 &&
@@ -82,10 +98,10 @@ export function assessTrendSpikeEvidence(
       code: TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE,
       liftRatio,
       measuredSpike: false,
-      allowPublishTrigger: false,
       researchTaskOnly: true,
       reason:
         "Low-sample, missing, or non-finite trend sample — insufficient evidence; research task only, not a publish trigger",
+      ...honesty,
     };
   }
 
@@ -94,10 +110,10 @@ export function assessTrendSpikeEvidence(
       code: TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE,
       liftRatio: null,
       measuredSpike: false,
-      allowPublishTrigger: false,
       researchTaskOnly: true,
       reason:
         "Baseline/current cannot yield a finite lift ratio — insufficient evidence; research task only, not a publish trigger",
+      ...honesty,
     };
   }
 
@@ -106,10 +122,10 @@ export function assessTrendSpikeEvidence(
       code: TrendSpikeDecisionCode.MEASURED_SPIKE,
       liftRatio,
       measuredSpike: true,
-      allowPublishTrigger: false,
       researchTaskOnly: false,
       reason:
         "Sample sufficient and lift meets spike ratio — measured spike; still not an auto publish trigger",
+      ...honesty,
     };
   }
 
@@ -117,8 +133,48 @@ export function assessTrendSpikeEvidence(
     code: TrendSpikeDecisionCode.NO_SPIKE,
     liftRatio,
     measuredSpike: false,
-    allowPublishTrigger: false,
     researchTaskOnly: false,
     reason: "Sample sufficient but lift below spike ratio — no measured spike",
+    ...honesty,
   };
 }
+
+/**
+ * Honesty wrapper: this gate alone never authorizes publish, regardless of code.
+ */
+export function evaluateTrendSpikePublishHonesty(
+  result: AssessTrendSpikeEvidenceResult,
+): {
+  allowPublishTrigger: false;
+  measuredSpikeImpliesPublish: false;
+  liveTrendProviderWiring: "NOT_WIRED";
+  externalEffects: "NONE";
+  code: TrendSpikeDecisionCodeValue;
+} {
+  return {
+    allowPublishTrigger: false,
+    measuredSpikeImpliesPublish: false,
+    liveTrendProviderWiring: "NOT_WIRED",
+    externalEffects: "NONE",
+    code: result.code,
+  };
+}
+
+/**
+ * True when sample is a positive count strictly below minSample
+ * (finite but inadequate). Zero observations are missing, not present —
+ * distinct from null/undefined/non-finite as well.
+ */
+export function isLowButPresentTrendSample(
+  sampleSize: number | null | undefined,
+  minSample: number = DEFAULT_MIN_TREND_SAMPLE,
+): boolean {
+  return (
+    typeof sampleSize === "number" &&
+    Number.isFinite(sampleSize) &&
+    sampleSize > 0 &&
+    sampleSize < minSample
+  );
+}
+
+export const TREND_SPIKE_RELATED_CASE_IDS = ["T-X040"] as const;
