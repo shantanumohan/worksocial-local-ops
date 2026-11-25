@@ -10,6 +10,8 @@ import { randomUUID } from "node:crypto";
 import {
   SoakProofKind,
   RoomLayout,
+  SearchAnswerStatus,
+  filterByLayoutCapacity,
   parseSearchConstraints,
   runSemanticSearch,
   type SemanticSearchIndex,
@@ -27,7 +29,9 @@ function fixtureIndex(nowIso: string): SemanticSearchIndex {
         entryId: "hudson-fixture",
         name: "Hudson Boardroom",
         category: "Meeting",
-        capacity: 40,
+        // Default/marketing 20 < theater 40 so theatre-30 admission cannot
+        // pass via the default-capacity path (Codex P2).
+        capacity: 20,
         location: "Jersey City",
         amenities: ["display", "whiteboard"],
         sourcePageId: "page-hudson",
@@ -130,7 +134,7 @@ export function proofLayoutSpecificCapacityMismatchFilters(
     (index.entries[0]!.layoutCapacities?.[RoomLayout.CLASSROOM] ?? 0) < 20
   ) {
     details.push(
-      "Counterfactual: marketing capacity 40 would wrongly allow classroom 20",
+      "Counterfactual: marketing capacity 20 would wrongly allow classroom 20",
     );
   } else {
     passed = false;
@@ -150,7 +154,87 @@ export function proofLayoutSpecificCapacityMismatchFilters(
     details.push(`Ambiguous parse unexpectedly ${JSON.stringify(amb)}`);
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  const boardroomQuery =
+    "Meeting room in boardroom seating for 20 people in Jersey City with display";
+  const boardConstraints = parseSearchConstraints(boardroomQuery);
+  const boardFilter = filterByLayoutCapacity({
+    entryId: "hudson-fixture",
+    defaultCapacity: index.entries[0]!.capacity,
+    layoutCapacities: index.entries[0]!.layoutCapacities ?? null,
+    requestedLayout: RoomLayout.BOARDROOM,
+    people: 20,
+  });
+  const boardroomOver = runSemanticSearch({
+    queryId: "q-layout-boardroom-over",
+    rawQuery: boardroomQuery,
+    index,
+    createdAtIso: nowIso,
+  });
+  if (
+    boardConstraints.layout === RoomLayout.BOARDROOM &&
+    boardConstraints.people === 20 &&
+    boardFilter.allowed === false &&
+    boardFilter.effectiveCapacity === 8 &&
+    boardFilter.defaultWouldAllowMismatch === true &&
+    boardFilter.source === "layout_specific" &&
+    !boardroomOver.hits.some((h) => h.entryId === "hudson-fixture") &&
+    // Capacity filter isolates the claim; reject only clarify (ambiguous path).
+    // Fixture searches commonly land answerStatus=unknown when price is unknown.
+    boardroomOver.answerStatus !== SearchAnswerStatus.CLARIFY
+  ) {
+    details.push(
+      "boardroom seating 20 → hudson excluded (boardroom capacity 8; marketing max would wrongly allow); filter=layout_specific",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Boardroom over-cap unexpectedly parse=${JSON.stringify(boardConstraints)} filter=${JSON.stringify(boardFilter)} hits=${boardroomOver.hits.map((h) => h.entryId).join(",")} status=${boardroomOver.answerStatus}`,
+    );
+  }
+
+  const theaterQuery =
+    "Meeting room in theatre seating for 30 people in Jersey City with display";
+  const theaterConstraints = parseSearchConstraints(theaterQuery);
+  const theaterFilter = filterByLayoutCapacity({
+    entryId: "hudson-fixture",
+    defaultCapacity: index.entries[0]!.capacity,
+    layoutCapacities: index.entries[0]!.layoutCapacities ?? null,
+    requestedLayout: RoomLayout.THEATER,
+    people: 30,
+  });
+  const theaterFit = runSemanticSearch({
+    queryId: "q-layout-theater-fit",
+    rawQuery: theaterQuery,
+    index,
+    createdAtIso: nowIso,
+  });
+  // Default capacity 20 cannot admit 30 — only theater layout capacity 40 can.
+  if (
+    theaterConstraints.layout === RoomLayout.THEATER &&
+    theaterConstraints.people === 30 &&
+    index.entries[0]!.capacity < 30 &&
+    theaterFilter.allowed === true &&
+    theaterFilter.effectiveCapacity === 40 &&
+    theaterFilter.source === "layout_specific" &&
+    theaterFit.hits.some((h) => h.entryId === "hudson-fixture") &&
+    theaterFit.answerStatus !== SearchAnswerStatus.CLARIFY
+  ) {
+    details.push(
+      "theatre seating 30 → hudson admitted (theater layout capacity 40; default 20 would exclude); filter=layout_specific",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Theater fit unexpectedly parse=${JSON.stringify(theaterConstraints)} filter=${JSON.stringify(theaterFilter)} hits=${theaterFit.hits.map((h) => h.entryId).join(",")} status=${theaterFit.answerStatus}`,
+    );
+  }
+
+  details.push(
+    "liveSearchProvider=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE",
+  );
+  details.push(
+    "Distinct from HARD_SEARCH_CONSTRAINTS_NO_INVENTION (T-US-046/T-X048) and SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON (T-US-045)",
+  );
 
   return {
     proofId: `proof-layout-capacity-${randomUUID()}`,

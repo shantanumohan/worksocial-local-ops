@@ -3,13 +3,13 @@
   "caseId": "T-X047",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X047 (Layout-specific capacity mismatch — filter correctly)\nproof=layout_specific_capacity_mismatch_filters applyCount=1 :: parseSearchConstraints retains layout=classroom people=20 category=Meeting | runSemanticSearch classroom seating 20 → exchange only (hudson layout mismatch); status=unknown | classroom seating 10 → hudson admitted (layout capacity 12) | Counterfactual: marketing capacity 40 would wrongly allow classroom 20 | Ambiguous layout phrases → unresolved clarify (no silent pick) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X047 (Layout-specific capacity mismatch — filter correctly)\nproof=layout_specific_capacity_mismatch_filters applyCount=1 :: parseSearchConstraints retains layout=classroom people=20 category=Meeting | runSemanticSearch classroom seating 20 → exchange only (hudson layout mismatch); status=unknown | classroom seating 10 → hudson admitted (layout capacity 12) | Counterfactual: marketing capacity 20 would wrongly allow classroom 20 | Ambiguous layout phrases → unresolved clarify (no silent pick) | boardroom seating 20 → hudson excluded (boardroom capacity 8; marketing max would wrongly allow); filter=layout_specific | theatre seating 30 → hudson admitted (theater layout capacity 40; default 20 would exclude); filter=layout_specific | liveSearchProvider=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE | Distinct from HARD_SEARCH_CONSTRAINTS_NO_INVENTION (T-US-046/T-X048) and SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON (T-US-045)\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "layout_specific_capacity_mismatch_filters"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x047.json",
-  "createdAtIso": "2026-11-24T23:53:47.823Z",
+  "createdAtIso": "2026-11-24T23:58:47.066Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x047-6b90b612d733"
+  "uniqueSourceArtifactId": "art-fixture-t-x047-d9e8cc40c3c5"
 }

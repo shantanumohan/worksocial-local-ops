@@ -2394,7 +2394,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x047",
-      "evidenceNote": "Fixture layout-specific capacity mismatch filter proof only — not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture layout-specific capacity mismatch filter proof only — not sandbox or production-canary VERIFIED; not hard-search / not semantic-search-no-result; not live VERIFIED"
     },
     {
       "id": "T-X048",
