@@ -23,6 +23,8 @@
  * self-reclaim-before-foreign side path; recoverEffectPending unfenced honesty.
  * Hillclimb O8: ChatGPT Ads ACCESS_BLOCKED / soft-skip trio gates;
  * active-holder operation mismatch distinct from fenceCause.
+ * Hillclimb O9: RELATED_CASES_OK / CATALOG_CEILING_REFUSED; post-succeed
+ * lease clear → fenceCause=no_holder; claimLease refused on terminal.
  */
 
 import { randomUUID } from "node:crypto";
@@ -36,9 +38,11 @@ import {
   createMemoryMissionWorkflowStore,
   evaluateFixtureTemporalWiring,
   evaluateOldFenceAcceptanceLabel,
+  evaluateOldFenceCatalogCaseId,
   evaluateOldFenceChatgptAdsAccess,
   evaluateOldFenceExternalEffects,
   evaluateOldFenceLiveProviderSuccess,
+  evaluateOldFenceRelatedCaseIds,
   evaluateOldFenceSoftSkipAdsCase,
   formatOldFenceHonestyDetail,
   isMissionLeaseActive,
@@ -86,6 +90,12 @@ export async function proofOldFenceAfterReassignment(
   const softSkipUs013 = evaluateOldFenceSoftSkipAdsCase("T-US-013");
   const softSkipUs014 = evaluateOldFenceSoftSkipAdsCase("T-US-014");
   const softSkipSelf = evaluateOldFenceSoftSkipAdsCase("T-X024");
+  const relatedOk = evaluateOldFenceRelatedCaseIds(
+    OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
+  );
+  const relatedRefuse = evaluateOldFenceRelatedCaseIds(["T-X024", "T-X074"]);
+  const catalogOk = evaluateOldFenceCatalogCaseId("T-X024");
+  const catalogCeilingRefuse = evaluateOldFenceCatalogCaseId("T-X074");
   if (
     liveTemporalRefuse.code === "LIVE_TEMPORAL_CLAIM_REFUSED" &&
     liveTemporalRefuse.allowed === false &&
@@ -145,6 +155,19 @@ export async function proofOldFenceAfterReassignment(
   } else {
     passed = false;
     details.push("Fixture ChatGPT Ads soft-skip honesty gate unexpected");
+  }
+  if (
+    relatedOk.code === "RELATED_CASES_OK" &&
+    relatedRefuse.code === "RELATED_CASES_CLAIM_REFUSED" &&
+    catalogOk.code === "CATALOG_CASE_OK" &&
+    catalogCeilingRefuse.code === "CATALOG_CEILING_REFUSED"
+  ) {
+    details.push(
+      "RELATED_CASES_OK for T-X024 only; CATALOG_CEILING_REFUSED for invent past T-X073 (T-X074)",
+    );
+  } else {
+    passed = false;
+    details.push("Fixture relatedCases/catalog ceiling honesty gate unexpected");
   }
 
   const enqueued = await store.enqueue({
@@ -580,6 +603,45 @@ export async function proofOldFenceAfterReassignment(
   if (!postCommitMarkDenied) {
     passed = false;
     details.push("Post-commit old A mark unexpectedly succeeded");
+  }
+
+  // 5d. Terminal succeed clears lease → fenceCause=no_holder; claimLease refused.
+  let succeeded;
+  try {
+    succeeded = await store.succeed(workflowId, tAfterExpiry);
+  } catch (err) {
+    passed = false;
+    details.push(
+      `succeed unexpected fail: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+  if (
+    succeeded?.phase === "succeeded" &&
+    succeeded.leaseHolder == null &&
+    classifyMissionLeaseFence(succeeded, workerA, tAfterExpiry) ===
+      "no_holder" &&
+    classifyMissionLeaseFence(succeeded, workerB, tAfterExpiry) === "no_holder"
+  ) {
+    details.push(
+      "Post-succeed lease cleared fenceCause=no_holder for A and B",
+    );
+  } else if (passed) {
+    passed = false;
+    details.push(
+      `Post-succeed no_holder unexpected phase=${succeeded?.phase} holder=${succeeded?.leaseHolder}`,
+    );
+  }
+  const claimAfterSucceed = await store.claimLease({
+    workflowId,
+    holder: workerA,
+    leaseExpiresAtIso: new Date(Date.parse(tAfterExpiry) + 30_000).toISOString(),
+    nowIso: tAfterExpiry,
+  });
+  if (claimAfterSucceed === null) {
+    details.push("Post-succeed claimLease refused (terminal phase)");
+  } else {
+    passed = false;
+    details.push("Post-succeed claimLease unexpectedly succeeded");
   }
 
   // 6. Side workflow: original holder self-reclaim after own expiry (before foreign).

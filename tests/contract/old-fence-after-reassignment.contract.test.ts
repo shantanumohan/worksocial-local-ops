@@ -15,9 +15,11 @@ import {
 import {
   evaluateFixtureTemporalWiring,
   evaluateOldFenceAcceptanceLabel,
+  evaluateOldFenceCatalogCaseId,
   evaluateOldFenceChatgptAdsAccess,
   evaluateOldFenceExternalEffects,
   evaluateOldFenceLiveProviderSuccess,
+  evaluateOldFenceRelatedCaseIds,
   evaluateOldFenceSoftSkipAdsCase,
   missionLeaseFenceFailedMessage,
   parseMissionLeaseFenceCause,
@@ -89,6 +91,12 @@ describe("contract: T-X024 old fence after reassignment", () => {
     expect(evaluateOldFenceSoftSkipAdsCase("T-X024").code).toBe(
       "NOT_SOFT_SKIP_ADS_CASE",
     );
+    expect(evaluateOldFenceRelatedCaseIds(["T-X024"]).code).toBe(
+      "RELATED_CASES_OK",
+    );
+    expect(evaluateOldFenceCatalogCaseId("T-X074").code).toBe(
+      "CATALOG_CEILING_REFUSED",
+    );
     expect(
       parseMissionLeaseFenceCause(
         missionLeaseFenceFailedMessage("wf-c", "wrong_holder"),
@@ -103,7 +111,11 @@ describe("contract: T-X024 old fence after reassignment", () => {
     expect(art.summary).toMatch(/LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED/);
     expect(art.summary).toMatch(/CHATGPT_ADS_ACCESS_CLAIM_REFUSED/);
     expect(art.summary).toMatch(/SOFT_SKIP_ADS_OK/);
+    expect(art.summary).toMatch(/RELATED_CASES_OK/);
+    expect(art.summary).toMatch(/CATALOG_CEILING_REFUSED/);
     expect(art.summary).toMatch(/Active holder operation mismatch/);
+    expect(art.summary).toMatch(/Post-succeed lease cleared fenceCause=no_holder/);
+    expect(art.summary).toMatch(/Post-succeed claimLease refused/);
     expect(art.summary).toMatch(/1ms-before-expiry boundary/);
     expect(art.summary).toMatch(/fenceCause=expired/);
     expect(art.summary).toMatch(/fenceCause=wrong_holder/);

@@ -9,15 +9,18 @@ import {
   createMemoryMissionWorkflowStore,
   evaluateFixtureTemporalWiring,
   evaluateOldFenceAcceptanceLabel,
+  evaluateOldFenceCatalogCaseId,
   evaluateOldFenceChatgptAdsAccess,
   evaluateOldFenceExternalEffects,
   evaluateOldFenceLiveProviderSuccess,
+  evaluateOldFenceRelatedCaseIds,
   evaluateOldFenceSoftSkipAdsCase,
   formatOldFenceHonestyDetail,
   isMissionLeaseActive,
   missionLeaseFenceFailedMessage,
   parseMissionLeaseFenceCause,
   OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
+  OLD_FENCE_CATALOG_CEILING,
   OLD_FENCE_HONESTY,
   type MissionWorkflowRecord,
 } from "./mission-workflow-store.js";
@@ -207,6 +210,23 @@ describe("classifyMissionLeaseFence / isMissionLeaseActive (T-X024)", () => {
     expect(evaluateOldFenceSoftSkipAdsCase("T-US-014").softSkip).toBe(true);
     expect(evaluateOldFenceSoftSkipAdsCase("T-X024").code).toBe(
       "NOT_SOFT_SKIP_ADS_CASE",
+    );
+  });
+
+  it("allows only T-X024 related cases and refuses invent past T-X073", () => {
+    expect(OLD_FENCE_CATALOG_CEILING).toBe(73);
+    expect(
+      evaluateOldFenceRelatedCaseIds(["T-X024"]).code,
+    ).toBe("RELATED_CASES_OK");
+    expect(
+      evaluateOldFenceRelatedCaseIds(["T-X024", "T-X025"]).code,
+    ).toBe("RELATED_CASES_CLAIM_REFUSED");
+    expect(evaluateOldFenceCatalogCaseId("T-X024").code).toBe("CATALOG_CASE_OK");
+    expect(evaluateOldFenceCatalogCaseId("T-X074").code).toBe(
+      "CATALOG_CEILING_REFUSED",
+    );
+    expect(evaluateOldFenceCatalogCaseId("T-X073").code).toBe(
+      "CATALOG_CASE_REFUSED",
     );
   });
 });

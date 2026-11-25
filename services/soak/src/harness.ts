@@ -1141,7 +1141,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X031 fixture ACCEPTED via ga4_wrong_property_kind_refused only — not live VERIFIED",
       "T-US-040/T-X049 fixture ACCEPTED via thank_you_without_crm_fails_delivery only — not live VERIFIED",
       "T-X017 fixture ACCEPTED via stop_after_dispatch_reconcile only — not live VERIFIED",
-      "T-X024 fixture ACCEPTED via old_fence_after_reassignment only (OLD_FENCE_HONESTY; LIVE_TEMPORAL_CLAIM_REFUSED; VERIFIED_CLAIM_REFUSED; EXTERNAL_EFFECTS_CLAIM_REFUSED; CHATGPT_ADS_ACCESS_CLAIM_REFUSED; SOFT_SKIP_ADS; UNFENCED_RECOVERY_NOT_FENCE_PROOF; Temporal NOT_WIRED) — not live VERIFIED",
+      "T-X024 fixture ACCEPTED via old_fence_after_reassignment only (OLD_FENCE_HONESTY; LIVE_TEMPORAL_CLAIM_REFUSED; VERIFIED_CLAIM_REFUSED; EXTERNAL_EFFECTS_CLAIM_REFUSED; CHATGPT_ADS_ACCESS_CLAIM_REFUSED; SOFT_SKIP_ADS; CATALOG_CEILING_REFUSED; UNFENCED_RECOVERY_NOT_FENCE_PROOF; Temporal NOT_WIRED) — not live VERIFIED",
       "T-X011 fixture ACCEPTED via output_bomb_bounded_quarantined only — not live VERIFIED",
       "T-X003 fixture ACCEPTED via symlink_escape_after_root_verification only — not live VERIFIED",
       "T-X050 fixture ACCEPTED via public_synthetic_flag_requires_server_grant only — OR dual-field / whitespace; not live VERIFIED",

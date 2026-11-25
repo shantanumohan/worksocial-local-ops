@@ -32,6 +32,8 @@ describe("proofOldFenceAfterReassignment (T-X024)", () => {
     expect(joined).toMatch(/CHATGPT_ADS_ACCESS_CLAIM_REFUSED/);
     expect(joined).toMatch(/SOFT_SKIP_ADS_OK for T-F07,T-US-013,T-US-014/);
     expect(joined).toMatch(/NOT_SOFT_SKIP_ADS_CASE/);
+    expect(joined).toMatch(/RELATED_CASES_OK for T-X024 only/);
+    expect(joined).toMatch(/CATALOG_CEILING_REFUSED/);
     expect(joined).toMatch(/Worker A self-renew while live ok/);
     expect(joined).toMatch(
       /Self-reclaim after own expiry before foreign ok attemptCount=2/,
@@ -40,6 +42,10 @@ describe("proofOldFenceAfterReassignment (T-X024)", () => {
     expect(joined).toMatch(
       /Active holder operation mismatch \(not fenceCause\)/,
     );
+    expect(joined).toMatch(
+      /Post-succeed lease cleared fenceCause=no_holder for A and B/,
+    );
+    expect(joined).toMatch(/Post-succeed claimLease refused/);
     expect(joined).toMatch(
       /1ms-before-expiry boundary: fenceCause=active isMissionLeaseActive=true/,
     );

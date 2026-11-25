@@ -445,7 +445,78 @@ export function evaluateOldFenceSoftSkipAdsCase(
   };
 }
 
-/** Stable honesty detail line for soak evidence (O4–O8). */
+/** Catalog ceiling for T-X* invent guard (never invent past T-X073). */
+export const OLD_FENCE_CATALOG_CEILING = 73 as const;
+
+/**
+ * Related-case gate (T-X024 O9).
+ * Exactly `["T-X024"]` → RELATED_CASES_OK; any other set → RELATED_CASES_CLAIM_REFUSED.
+ */
+export type OldFenceRelatedCaseIdsDecision = {
+  allowed: boolean;
+  code: "RELATED_CASES_OK" | "RELATED_CASES_CLAIM_REFUSED";
+  relatedCaseIds: readonly string[];
+};
+
+export function evaluateOldFenceRelatedCaseIds(
+  relatedCaseIds: readonly string[],
+): OldFenceRelatedCaseIdsDecision {
+  const expected = [...OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS];
+  const ok =
+    relatedCaseIds.length === expected.length &&
+    relatedCaseIds.every((id, i) => id === expected[i]);
+  return {
+    allowed: ok,
+    code: ok ? "RELATED_CASES_OK" : "RELATED_CASES_CLAIM_REFUSED",
+    relatedCaseIds,
+  };
+}
+
+/**
+ * Catalog case-id gate (T-X024 O9).
+ * T-X024 → CATALOG_CASE_OK; invent past T-X073 → CATALOG_CEILING_REFUSED;
+ * other IDs → CATALOG_CASE_REFUSED.
+ */
+export type OldFenceCatalogCaseDecision = {
+  allowed: boolean;
+  code: "CATALOG_CASE_OK" | "CATALOG_CEILING_REFUSED" | "CATALOG_CASE_REFUSED";
+  caseId: string;
+  catalogCeiling: typeof OLD_FENCE_CATALOG_CEILING;
+};
+
+export function evaluateOldFenceCatalogCaseId(
+  caseId: string,
+): OldFenceCatalogCaseDecision {
+  const ceiling = OLD_FENCE_CATALOG_CEILING;
+  const match = /^T-X(\d+)$/.exec(caseId);
+  if (match) {
+    const n = Number(match[1]);
+    if (n > ceiling) {
+      return {
+        allowed: false,
+        code: "CATALOG_CEILING_REFUSED",
+        caseId,
+        catalogCeiling: ceiling,
+      };
+    }
+  }
+  if (caseId === "T-X024") {
+    return {
+      allowed: true,
+      code: "CATALOG_CASE_OK",
+      caseId,
+      catalogCeiling: ceiling,
+    };
+  }
+  return {
+    allowed: false,
+    code: "CATALOG_CASE_REFUSED",
+    caseId,
+    catalogCeiling: ceiling,
+  };
+}
+
+/** Stable honesty detail line for soak evidence (O4–O9). */
 export function formatOldFenceHonestyDetail(
   relatedCaseIds: readonly string[] = OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
 ): string {
