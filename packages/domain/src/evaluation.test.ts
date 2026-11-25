@@ -11,7 +11,9 @@ import {
   assertEvaluationWorkerIsolation,
   createEvalConnection,
   emptyEvaluationState,
+  evalLiveWiringStatus,
   evaluateEvalToolAttempt,
+  normalizeGroundingUsed,
   reserveEvalBudget,
   settleEvalBudget,
 } from "./evaluation.js";
@@ -135,5 +137,62 @@ describe("evaluation — grounded adjudication", () => {
       groundingUsed: true,
     });
     expect(result.verdict).toBe(EvalCaseVerdict.PASS);
+  });
+
+  it("fails closed on empty citations, UNKNOWN labels, and claimed PASS (T-X038)", () => {
+    const empty = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-empty",
+        prompt: "Hours?",
+        expectedFactIds: ["fixture-fact-hours"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: [],
+      factLabels: labels,
+      groundingUsed: true,
+    });
+    expect(empty.verdict).toBe(EvalCaseVerdict.NO_GROUNDING);
+
+    const unknownLabels = new Map([
+      ["fixture-fact-unknown", SupportLabel.UNKNOWN],
+    ]);
+    const unk = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-unk",
+        prompt: "Hours?",
+        expectedFactIds: [],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: ["fixture-fact-unknown"],
+      factLabels: unknownLabels,
+      groundingUsed: true,
+    });
+    expect(unk.verdict).toBe(EvalCaseVerdict.NO_GROUNDING);
+
+    const claimed = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-claim",
+        prompt: "Hours?",
+        expectedFactIds: ["fixture-fact-hours"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: ["fixture-fact-hours"],
+      factLabels: labels,
+      groundingUsed: false,
+      claimedVerdict: EvalCaseVerdict.PASS,
+    });
+    expect(claimed.verdict).toBe(EvalCaseVerdict.NO_GROUNDING);
+    expect(claimed.reasons.join(" ")).toMatch(/FALSE_GROUNDED_PASS_REFUSED/);
+
+    expect(normalizeGroundingUsed(true)).toBe(true);
+    expect(normalizeGroundingUsed("true")).toBe(true);
+    expect(normalizeGroundingUsed(1)).toBe(false);
+    expect(normalizeGroundingUsed("yes")).toBe(false);
+    expect(normalizeGroundingUsed("TRUE")).toBe(false);
+    expect(normalizeGroundingUsed(" true ")).toBe(false);
+    expect(evalLiveWiringStatus()).toBe("NOT_WIRED");
   });
 });

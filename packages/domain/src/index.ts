@@ -567,6 +567,8 @@ export {
   isEvalToolAllowed,
   evaluateEvalToolAttempt,
   adjudicateGroundedEvalCase,
+  evalLiveWiringStatus,
+  normalizeGroundingUsed,
   reserveEvalBudget,
   settleEvalBudget,
   evalChatGptAdsProbe,
