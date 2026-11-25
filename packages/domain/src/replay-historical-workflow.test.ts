@@ -290,4 +290,69 @@ describe("replay historical workflow (T-X013)", () => {
     expect(result.outcome).toBe("FAILED");
     expect(summary().scheduledFromHistory).toBe(3);
   });
+
+  it("fails closed on blank claim operationId (edge)", () => {
+    const history = sampleHistory();
+    const claim = history.events[1];
+    if (claim && claim.activity === "claimAndAccept") {
+      claim.operationId = "   ";
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_activity_operationId_blank"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed on blank verify operationId (edge)", () => {
+    const history = sampleHistory();
+    const verify = history.events[2];
+    if (verify && verify.activity === "verify") {
+      verify.operationId = "";
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_activity_operationId_blank"),
+      ),
+    ).toBe(true);
+  });
+
+  it("accepts whitespace-padded claim/verify opIds that trim to terminal (edge)", () => {
+    const history = sampleHistory();
+    const claim = history.events[1];
+    const verify = history.events[2];
+    if (claim && claim.activity === "claimAndAccept") {
+      claim.operationId = "  op-1  ";
+    }
+    if (verify && verify.activity === "verify") {
+      verify.operationId = " op-1 ";
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("VERIFIED");
+    expect(summary().forbiddenLiveIo).toBe(0);
+  });
+
+  it("fails closed on non-integer terminal applyAttemptCount (edge)", () => {
+    const history = sampleHistory();
+    history.terminal = {
+      outcome: "VERIFIED",
+      applyAttemptCount: 1.5,
+      operationId: "op-1",
+    };
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_terminal_missing_or_incomplete"),
+      ),
+    ).toBe(true);
+  });
 });

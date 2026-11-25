@@ -145,6 +145,22 @@ export function replayMissionWorkflowHistory(
         operationId: "mismatch",
       };
     }
+    // Edge — blank claim/verify operationId must fail closed (no invented bind).
+    if (
+      (recorded.activity === "claimAndAccept" ||
+        recorded.activity === "verify") &&
+      (!recorded.operationId || recorded.operationId.trim().length === 0)
+    ) {
+      hooks.onForbiddenLiveIo("history_activity_operationId_blank");
+      return {
+        activity: "verify",
+        phase: "succeeded",
+        outcome: "VERIFIED",
+        applyAttemptCount: -1,
+        matched: false,
+        operationId: "mismatch",
+      };
+    }
     return hooks.onScheduleActivity(expected, recorded);
   };
 
@@ -179,29 +195,40 @@ export function replayMissionWorkflowHistory(
     hooks.onForbiddenLiveIo("history_terminal_missing_or_incomplete");
     return { ...result, outcome: "FAILED" };
   }
+  const resultOpId =
+    typeof result.operationId === "string" ? result.operationId.trim() : "";
   if (
     result.outcome === "VERIFIED" &&
     (terminalApply !== result.applyAttemptCount ||
-      terminalOpId !== result.operationId)
+      terminalOpId !== resultOpId)
   ) {
     hooks.onForbiddenLiveIo(
-      `history_terminal_mismatch op=${terminalOpId}≠${result.operationId} apply=${terminalApply}≠${result.applyAttemptCount}`,
+      `history_terminal_mismatch op=${terminalOpId}≠${resultOpId} apply=${terminalApply}≠${result.applyAttemptCount}`,
     );
     return { ...result, outcome: "FAILED" };
   }
 
   // Codex harden — cross-bind claim/verify activity opIds + applyAttemptCount
-  // to terminal when the full three-event chain was scheduled.
+  // to terminal when the full three-event chain was scheduled. Trim activity
+  // opIds so whitespace-padded tokens match terminal the same way.
   if (result.outcome === "VERIFIED" && history.events.length === 3) {
     const claim = history.events[1];
     const verify = history.events[2];
+    const claimOpId =
+      claim && claim.activity === "claimAndAccept"
+        ? claim.operationId.trim()
+        : "";
+    const verifyOpId =
+      verify && verify.activity === "verify" ? verify.operationId.trim() : "";
     if (
       !claim ||
       claim.activity !== "claimAndAccept" ||
       !verify ||
       verify.activity !== "verify" ||
-      claim.operationId !== terminalOpId ||
-      verify.operationId !== terminalOpId ||
+      claimOpId.length === 0 ||
+      verifyOpId.length === 0 ||
+      claimOpId !== terminalOpId ||
+      verifyOpId !== terminalOpId ||
       claim.applyAttemptCount !== terminalApply ||
       verify.applyAttemptCount !== terminalApply
     ) {

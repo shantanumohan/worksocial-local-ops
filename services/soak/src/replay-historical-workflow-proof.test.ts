@@ -82,6 +82,26 @@ describe("proofReplayHistoricalNoRepeatIo", () => {
       ),
     ).toBe(true);
     expect(
+      proof.details.some((d) =>
+        d.includes("Blank claim operationId → FAILED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Blank verify operationId → FAILED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Whitespace-padded claim/verify opIds trim → VERIFIED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Non-integer terminal applyAttemptCount → FAILED"),
+      ),
+    ).toBe(true);
+    expect(
       proof.details.some((d) => d.includes("honesty NOT_WIRED/NONE")),
     ).toBe(true);
     expect(
