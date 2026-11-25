@@ -1,11 +1,11 @@
 /**
  * Fixture proof for T-X073 — offboarding retains active provider token residual.
- * Hillclimb deepen I16: blank-id force → LIVE_CLAIM_REFUSED; invent
- * BACKUP_COPY closed remotely / secrets exported live / ACCEPTED=VERIFIED /
- * liveProviderRevoke WIRED dishonest.
- * I15: blank-id claim; invent QUEUED_WORK / offboarding-complete / AUDIT.
- * I14 force-on-padded; I12 claim-on-padded; I9 reclaim; NOT_WIRED;
- * ACCEPTED≠VERIFIED; secrets never leak. External effects: NONE.
+ * Hillclimb deepen I17: blank-ref force → LIVE_CLAIM_REFUSED; invent
+ * externalEffects APPLIED / production activated live / sandbox VERIFIED /
+ * revokedLocally=false dishonest.
+ * I16: blank-id force; invent BACKUP_COPY / secrets / ACCEPTED=VERIFIED.
+ * I15–I9 prior edges retained; NOT_WIRED; ACCEPTED≠VERIFIED;
+ * secrets never leak. External effects: NONE.
  * Does not touch rebind / #43 lane.
  */
 
@@ -481,6 +481,47 @@ export async function proofOffboardActiveTokenResidual(
     passed = false;
     details.push(
       `I16 edges unexpectedly forceBlank=${JSON.stringify(forceOnBlank)} backup=${JSON.stringify(inventBackup)} secrets=${JSON.stringify(inventSecrets)} eq=${JSON.stringify(inventEqualsVerified)} wired=${JSON.stringify(inventWired)}`,
+    );
+  }
+
+  // I17: blank-ref force; invent externalEffects APPLIED / production activated / sandbox VERIFIED / revokedLocally=false.
+  const forceOnBlankRef = attemptLiveProviderRevoke({
+    connectionId: seeded.connection.connectionId,
+    referenceId: "",
+    forceCompleteRemoteRevoke: true,
+  });
+  const inventEffects = assertOffboardActiveTokenResidualHonest({
+    ...manifest,
+    summary: "externalEffects=APPLIED after remote revoke",
+  });
+  const inventProd = assertOffboardActiveTokenResidualHonest({
+    ...manifest,
+    summary: "production was activated live after offboard",
+  });
+  const inventSandbox = assertOffboardActiveTokenResidualHonest({
+    ...manifest,
+    summary: "sandbox VERIFIED completion invented",
+  });
+  const inventNotRevoked = assertOffboardActiveTokenResidualHonest({
+    ...manifest,
+    summary: "revokedLocally=false after offboard",
+  });
+  if (
+    forceOnBlankRef.code === "LIVE_CLAIM_REFUSED" &&
+    forceOnBlankRef.liveProviderSuccessClaimed === false &&
+    !inventEffects.ok &&
+    inventEffects.code === "OFFBOARD_RESIDUAL_DISHONEST" &&
+    !inventProd.ok &&
+    !inventSandbox.ok &&
+    !inventNotRevoked.ok
+  ) {
+    details.push(
+      "I17 edges: blank-ref force LIVE_CLAIM_REFUSED; invent externalEffects APPLIED / production activated live / sandbox VERIFIED / revokedLocally=false dishonest",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `I17 edges unexpectedly forceRef=${JSON.stringify(forceOnBlankRef)} effects=${JSON.stringify(inventEffects)} prod=${JSON.stringify(inventProd)} sandbox=${JSON.stringify(inventSandbox)} notRev=${JSON.stringify(inventNotRevoked)}`,
     );
   }
 

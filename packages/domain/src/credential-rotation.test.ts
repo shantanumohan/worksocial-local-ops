@@ -602,6 +602,41 @@ describe("credential rotation / revoke honesty", () => {
     });
     expect(inventWired.ok).toBe(false);
 
+    // I17: blank-ref force refuse; invent externalEffects APPLIED /
+    // production activated live / sandbox VERIFIED / revokedLocally=false.
+    const forceOnBlankRef = attemptLiveProviderRevoke({
+      connectionId: "conn-1",
+      referenceId: "",
+      forceCompleteRemoteRevoke: true,
+    });
+    expect(forceOnBlankRef.code).toBe("LIVE_CLAIM_REFUSED");
+    expect(forceOnBlankRef.liveProviderSuccessClaimed).toBe(false);
+
+    const inventEffects = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "externalEffects=APPLIED after remote revoke",
+    });
+    expect(inventEffects.ok).toBe(false);
+    expect(inventEffects.code).toBe("OFFBOARD_RESIDUAL_DISHONEST");
+
+    const inventProd = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "production was activated live after offboard",
+    });
+    expect(inventProd.ok).toBe(false);
+
+    const inventSandbox = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "sandbox VERIFIED completion invented",
+    });
+    expect(inventSandbox.ok).toBe(false);
+
+    const inventNotRevoked = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "revokedLocally=false after offboard",
+    });
+    expect(inventNotRevoked.ok).toBe(false);
+
     const audit = createAuditEntry({
       entryId: "aud-1",
       kind: CredentialAuditKind.OFFBOARDED,

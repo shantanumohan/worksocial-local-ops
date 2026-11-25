@@ -932,7 +932,12 @@ export function assertOffboardActiveTokenResidualHonest(
     ) ||
     /\bsecrets?\s+(were\s+)?exported\s+(live|remotely)\b/i.test(scrubbed) ||
     /\bACCEPTED\s*=\s*VERIFIED\b/i.test(scrubbed) ||
-    /\bliveProviderRevoke\s+is\s+now\s+WIRED\b/i.test(scrubbed)
+    /\bliveProviderRevoke\s+is\s+now\s+WIRED\b/i.test(scrubbed) ||
+    // I17: inventing externalEffects APPLIED / production activated / sandbox VERIFIED is dishonest.
+    /\bexternalEffects\s*(=|:)?\s*APPLIED\b/i.test(scrubbed) ||
+    /\bproduction\s+(was\s+)?activated\s+(live|remotely)\b/i.test(scrubbed) ||
+    /\bsandbox\s+VERIFIED\b/i.test(scrubbed) ||
+    /\brevokedLocally\s*(=|:)?\s*false\b/i.test(scrubbed)
   ) {
     reasons.push("Manifest must not invent live VERIFIED or remote revoke success");
   }
