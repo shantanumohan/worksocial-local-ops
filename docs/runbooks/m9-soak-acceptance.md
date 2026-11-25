@@ -97,7 +97,7 @@ Suggested owner Windows flow (state off OneDrive):
 | T-US-060 | Fixture ACCEPTED via emergency stop at commit only |
 | T-X069 | Fixture ACCEPTED via imported doc quarantined as data only |
 | T-X038 | Fixture ACCEPTED via eval no-grounding fail closed only |
-| T-X039 / T-US-058 | Fixture ACCEPTED via metric denominators honest only |
+| T-X039 / T-US-058 | Fixture ACCEPTED via metric denominators honest only (liveMetricsWiring NOT_WIRED; LIVE/unavailable-as-zero refused; externalEffects NONE) |
 | T-US-046 / T-X048 | Fixture ACCEPTED via hard search constraints no invention only |
 | T-US-010 / T-X033 | Fixture ACCEPTED via GSC omitted rows unknown not zero only |
 | T-US-008 / T-X032 | Fixture ACCEPTED via GA4 debug not delivered conversion only |
@@ -128,7 +128,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X038** maps only to `EVAL_NO_GROUNDING_FAIL_CLOSED`.
 
-**T-X039** / **T-US-058** map only to `METRIC_DENOMINATORS_HONEST`.
+**T-X039** / **T-US-058** map only to `METRIC_DENOMINATORS_HONEST` (provider_error unavailable; synthetic excluded; measured-only denominator; liveMetricsWiring NOT_WIRED; live VERIFIED / live metrics wire / unavailable-as-zero refused; externalEffects NONE; not live VERIFIED).
 
 **T-US-046** / **T-X048** map only to `HARD_SEARCH_CONSTRAINTS_NO_INVENTION`.
 
