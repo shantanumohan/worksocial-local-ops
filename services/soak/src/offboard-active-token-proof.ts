@@ -1,12 +1,12 @@
 /**
  * Fixture proof for T-X073 — offboarding retains active provider token residual.
- * Hillclimb deepen I14: force/dual-on-padded → LIVE_CLAIM_REFUSED; invent
- * all-residuals-closed / SCHEDULE re-enabled live dishonest; forged
- * priorLiveRevokeInvented reclaim DRIFT.
- * I12: claim-on-padded; invent ACTIVE_TOKEN closed; reclaim DRIFT;
- * I11 padded ids / dual claim; I9 reclaim; blank-id revoke;
- * re-offboard / double live-revoke stay NOT_WIRED; ACCEPTED≠VERIFIED;
- * secrets never leak. External effects: NONE. Never invents live VERIFIED.
+ * Hillclimb deepen I15: blank-id claim → LIVE_CLAIM_REFUSED; invent
+ * QUEUED_WORK live-delivered / offboarding-complete / AUDIT purged /
+ * catalogClaim ACCEPTED dishonest.
+ * I14: force/dual-on-padded; invent all-closed / SCHEDULE re-enabled;
+ * priorLiveRevoke invent DRIFT. I12 claim-on-padded; I11 dual/padded;
+ * I9 reclaim; re-offboard / double live-revoke stay NOT_WIRED;
+ * ACCEPTED≠VERIFIED; secrets never leak. External effects: NONE.
  * Does not touch rebind / #43 lane.
  */
 
@@ -400,6 +400,47 @@ export async function proofOffboardActiveTokenResidual(
     passed = false;
     details.push(
       `I14 edges unexpectedly force=${JSON.stringify(forceOnPadded)} dual=${JSON.stringify(dualOnPadded)} allClosed=${JSON.stringify(inventAllClosed)} sched=${JSON.stringify(inventScheduleLive)} prior=${JSON.stringify(priorDrift)}`,
+    );
+  }
+
+  // I15: blank-id claim; invent QUEUED_WORK live-delivered / complete / audit purged / catalog ACCEPTED.
+  const claimOnBlank = attemptLiveProviderRevoke({
+    connectionId: "",
+    referenceId: "fixture-ref",
+    claimLiveVerified: true,
+  });
+  const inventQueuedLive = assertOffboardActiveTokenResidualHonest({
+    ...manifest,
+    summary: "QUEUED_WORK residual delivered live after offboard",
+  });
+  const inventComplete = assertOffboardActiveTokenResidualHonest({
+    ...manifest,
+    summary: "offboarding is now complete; residual is cleared",
+  });
+  const inventAuditPurged = assertOffboardActiveTokenResidualHonest({
+    ...manifest,
+    summary: "AUDIT_RETENTION residual purged live",
+  });
+  const inventCatalogAccepted = assertOffboardActiveTokenResidualHonest({
+    ...manifest,
+    catalogClaim: "ACCEPTED" as "NOT_RUN",
+  });
+  if (
+    claimOnBlank.code === "LIVE_CLAIM_REFUSED" &&
+    claimOnBlank.liveProviderSuccessClaimed === false &&
+    !inventQueuedLive.ok &&
+    inventQueuedLive.code === "OFFBOARD_RESIDUAL_DISHONEST" &&
+    !inventComplete.ok &&
+    !inventAuditPurged.ok &&
+    !inventCatalogAccepted.ok
+  ) {
+    details.push(
+      "I15 edges: blank-id claim LIVE_CLAIM_REFUSED; invent QUEUED_WORK live-delivered / offboarding-complete / AUDIT purged / catalogClaim ACCEPTED dishonest",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `I15 edges unexpectedly blank=${JSON.stringify(claimOnBlank)} queued=${JSON.stringify(inventQueuedLive)} complete=${JSON.stringify(inventComplete)} audit=${JSON.stringify(inventAuditPurged)} catalog=${JSON.stringify(inventCatalogAccepted)}`,
     );
   }
 

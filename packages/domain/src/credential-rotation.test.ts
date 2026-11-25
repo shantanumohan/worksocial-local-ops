@@ -532,6 +532,41 @@ describe("credential rotation / revoke honesty", () => {
     expect(priorDrift.ok).toBe(false);
     expect(priorDrift.code).toBe("OFFBOARD_RECLAIM_DRIFT");
 
+    // I15: blank-id claim refuse; invent QUEUED_WORK live-delivered /
+    // offboarding-complete / AUDIT purged; catalogClaim ACCEPTED dishonest.
+    const claimOnBlank = attemptLiveProviderRevoke({
+      connectionId: "",
+      referenceId: "cred-aaa",
+      claimLiveVerified: true,
+    });
+    expect(claimOnBlank.code).toBe("LIVE_CLAIM_REFUSED");
+    expect(claimOnBlank.liveProviderSuccessClaimed).toBe(false);
+
+    const inventQueuedLive = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "QUEUED_WORK residual delivered live after offboard",
+    });
+    expect(inventQueuedLive.ok).toBe(false);
+    expect(inventQueuedLive.code).toBe("OFFBOARD_RESIDUAL_DISHONEST");
+
+    const inventComplete = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "offboarding is now complete; residual is cleared",
+    });
+    expect(inventComplete.ok).toBe(false);
+
+    const inventAuditPurged = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "AUDIT_RETENTION residual purged live",
+    });
+    expect(inventAuditPurged.ok).toBe(false);
+
+    const inventCatalogAccepted = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      catalogClaim: "ACCEPTED" as "NOT_RUN",
+    });
+    expect(inventCatalogAccepted.ok).toBe(false);
+
     const audit = createAuditEntry({
       entryId: "aud-1",
       kind: CredentialAuditKind.OFFBOARDED,
