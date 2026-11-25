@@ -690,12 +690,84 @@ export async function proofReplayHistoricalNoRepeatIo(
   if (
     zeroApplyReplay.outcome === "FAILED" &&
     zeroApplyHooks.summary().liveIoLabels.some((l) =>
-      l.includes("history_terminal_missing_or_incomplete"),
+      l.includes("history_claim_shape_invalid"),
     )
   ) {
-    details.push("Zero terminal applyAttemptCount → FAILED (edge)");
+    details.push("Zero claim/terminal applyAttemptCount → FAILED (edge)");
   } else {
-    details.push("Zero terminal apply unexpectedly passed");
+    details.push("Zero claim/terminal apply unexpectedly passed");
+  }
+
+  // Edge deepen — zero verify apply; Infinity claim apply; wrong claim outcome.
+  const zeroVerifyHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) =>
+      e.activity === "verify" ? { ...e, applyAttemptCount: 0 } : e,
+    ),
+    terminal: { ...history.terminal },
+  };
+  const zeroVerifyHooks = createHistoryOnlyReplayHooks();
+  const zeroVerifyReplay = replayMissionWorkflowHistory(
+    zeroVerifyHistory,
+    zeroVerifyHooks.hooks,
+  );
+  if (
+    zeroVerifyReplay.outcome === "FAILED" &&
+    zeroVerifyHooks.summary().liveIoLabels.some((l) =>
+      l.includes("history_verify_shape_invalid"),
+    )
+  ) {
+    details.push("Zero verify applyAttemptCount → FAILED (edge)");
+  } else {
+    details.push("Zero verify apply unexpectedly passed");
+  }
+
+  const infClaimHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) =>
+      e.activity === "claimAndAccept"
+        ? { ...e, applyAttemptCount: Number.POSITIVE_INFINITY }
+        : e,
+    ),
+    terminal: { ...history.terminal },
+  };
+  const infClaimHooks = createHistoryOnlyReplayHooks();
+  const infClaimReplay = replayMissionWorkflowHistory(
+    infClaimHistory,
+    infClaimHooks.hooks,
+  );
+  if (
+    infClaimReplay.outcome === "FAILED" &&
+    infClaimHooks.summary().liveIoLabels.some((l) =>
+      l.includes("history_claim_shape_invalid"),
+    )
+  ) {
+    details.push("Infinity claim applyAttemptCount → FAILED (edge)");
+  } else {
+    details.push("Infinity claim apply unexpectedly passed");
+  }
+
+  const wrongClaimOutcomeHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) => {
+      if (e.activity === "claimAndAccept") {
+        return { ...e, outcome: "VERIFIED" as "ACCEPTED_PENDING" };
+      }
+      return e;
+    }),
+    terminal: { ...history.terminal },
+  };
+  const wrongClaimHooks = createHistoryOnlyReplayHooks();
+  const wrongClaimReplay = replayMissionWorkflowHistory(
+    wrongClaimOutcomeHistory,
+    wrongClaimHooks.hooks,
+  );
+  if (
+    wrongClaimReplay.outcome === "FAILED" &&
+    wrongClaimHooks.summary().liveIoLabels.some((l) =>
+      l.includes("history_claim_shape_invalid"),
+    )
+  ) {
+    details.push("Wrong claim outcome → FAILED (edge)");
+  } else {
+    details.push("Wrong claim outcome unexpectedly passed");
   }
 
   const rehydrateSvc = openService(stateDir);
@@ -763,6 +835,9 @@ export async function proofReplayHistoricalNoRepeatIo(
     badEnqReplay.outcome === "FAILED" &&
     noProviderReplay.outcome === "FAILED" &&
     zeroApplyReplay.outcome === "FAILED" &&
+    zeroVerifyReplay.outcome === "FAILED" &&
+    infClaimReplay.outcome === "FAILED" &&
+    wrongClaimReplay.outcome === "FAILED" &&
     applyBeforeReplay === 1 &&
     applyAfterReplay === 1 &&
     thisOpBefore === 1 &&

@@ -467,9 +467,74 @@ describe("replay historical workflow (T-X013)", () => {
     const { hooks, summary } = createHistoryOnlyReplayHooks();
     const result = replayMissionWorkflowHistory(history, hooks);
     expect(result.outcome).toBe("FAILED");
+    // Claim apply < 1 fails closed at activity shape before terminal.
     expect(
       summary().liveIoLabels.some((l) =>
-        l.includes("history_terminal_missing_or_incomplete"),
+        l.includes("history_claim_shape_invalid"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed on zero claim applyAttemptCount (edge)", () => {
+    const history = sampleHistory();
+    const claim = history.events[1];
+    if (claim && claim.activity === "claimAndAccept") {
+      claim.applyAttemptCount = 0;
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_claim_shape_invalid"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed on zero verify applyAttemptCount (edge)", () => {
+    const history = sampleHistory();
+    const verify = history.events[2];
+    if (verify && verify.activity === "verify") {
+      verify.applyAttemptCount = 0;
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_verify_shape_invalid"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed on Infinity claim applyAttemptCount (edge)", () => {
+    const history = sampleHistory();
+    const claim = history.events[1];
+    if (claim && claim.activity === "claimAndAccept") {
+      claim.applyAttemptCount = Number.POSITIVE_INFINITY;
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_claim_shape_invalid"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed on wrong claim outcome (edge)", () => {
+    const history = sampleHistory();
+    const claim = history.events[1];
+    if (claim && claim.activity === "claimAndAccept") {
+      (claim as { outcome: string }).outcome = "VERIFIED";
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_claim_shape_invalid"),
       ),
     ).toBe(true);
   });
