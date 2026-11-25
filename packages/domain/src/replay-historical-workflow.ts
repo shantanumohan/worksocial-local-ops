@@ -145,6 +145,18 @@ export function replayMissionWorkflowHistory(
         operationId: "mismatch",
       };
     }
+    // Edge — enqueue phase must be queued (no invented queue progress).
+    if (recorded.activity === "enqueue" && recorded.phase !== "queued") {
+      hooks.onForbiddenLiveIo("history_enqueue_phase_invalid");
+      return {
+        activity: "verify",
+        phase: "succeeded",
+        outcome: "VERIFIED",
+        applyAttemptCount: -1,
+        matched: false,
+        operationId: "mismatch",
+      };
+    }
     // Edge — blank claim/verify operationId must fail closed (no invented bind).
     if (
       (recorded.activity === "claimAndAccept" ||
@@ -162,12 +174,14 @@ export function replayMissionWorkflowHistory(
       };
     }
     // Edge — claim shape must be ACCEPTED_PENDING / effect_pending with
-    // finite non-negative integer applyAttemptCount (no invented pending).
+    // finite non-negative integer applyAttemptCount and providerCreated
+    // (no invented pending without a recorded provider create).
     if (recorded.activity === "claimAndAccept") {
       const apply = recorded.applyAttemptCount;
       if (
         recorded.phase !== "effect_pending" ||
         recorded.outcome !== "ACCEPTED_PENDING" ||
+        recorded.providerCreated !== true ||
         typeof apply !== "number" ||
         !Number.isFinite(apply) ||
         !Number.isInteger(apply) ||
@@ -234,7 +248,7 @@ export function replayMissionWorkflowHistory(
     typeof terminalApply !== "number" ||
     !Number.isFinite(terminalApply) ||
     !Number.isInteger(terminalApply) ||
-    terminalApply < 0 ||
+    terminalApply < 1 ||
     terminalOpId.length === 0
   ) {
     hooks.onForbiddenLiveIo("history_terminal_missing_or_incomplete");
