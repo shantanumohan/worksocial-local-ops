@@ -912,7 +912,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X038** is fixture ACCEPTED only via the eval no-grounding fail closed proof (`EVAL_NO_GROUNDING_FAIL_CLOSED`). Not sandbox/prod VERIFIED.
 
-**T-X039** / **T-US-058** are fixture ACCEPTED only via the metric denominators honest proof (`METRIC_DENOMINATORS_HONEST`). Not sandbox/prod VERIFIED.
+**T-X039** / **T-US-058** are fixture ACCEPTED only via the metric denominators honest proof (`METRIC_DENOMINATORS_HONEST`) — provider_error → unavailable (not measured/zero); synthetic excluded from commerce denominators; non-finite value/sampleSize rejected; pass-rate denominator = sum of measured `sampleSize`; `claimLiveVerified` / `requestLiveMetricsWire` / `treatUnavailableAsZero` → refused; `liveMetricsWiring` stays NOT_WIRED; ChatGPT Ads ACCESS_BLOCKED; externalEffects NONE. Not sandbox/prod VERIFIED.
 
 **T-US-046** / **T-X048** are fixture ACCEPTED only via the hard search constraints no invention proof (`HARD_SEARCH_CONSTRAINTS_NO_INVENTION`). Not sandbox/prod VERIFIED.
 
@@ -1067,7 +1067,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X036 | Recent Ads conversion blank | Pending; no false zero *(fixture ACCEPTED — recent Ads conversion blank PENDING proof; not sandbox/prod VERIFIED)* |
 | T-X037 | Gemini tries operational tool | No effect *(fixture ACCEPTED)* |
 | T-X038 | Grounding configured but unused | No grounded pass *(fixture ACCEPTED)* |
-| T-X039 | Provider error vs answer failure | Separate denominators *(fixture ACCEPTED)* |
+| T-X039 | Provider error vs answer failure | Separate denominators *(fixture ACCEPTED — metric denominators honest; liveMetricsWiring NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X040 | Low-sample trend spike | Insufficient evidence *(fixture ACCEPTED — low-sample trend spike insufficient-evidence proof; not sandbox/prod VERIFIED)* |
 | T-X041 | Incomparable trend indices | Reject/label *(fixture ACCEPTED — incomparable trend indices reject/label proof; not sandbox/prod VERIFIED)* |
 | T-X042 | Schema differs from page | Gate fails *(fixture ACCEPTED — schema differs from page gate fails proof; not sandbox/prod VERIFIED)* |

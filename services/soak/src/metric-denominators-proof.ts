@@ -1,7 +1,10 @@
 /**
  * Fixture proof for T-X039 / T-US-058 — metric denominators stay honest:
  * provider errors are unavailable (not zero/pass); synthetics are excluded
- * from business/commerce denominators. External effects: NONE.
+ * from business/commerce denominators. Hillclimb: liveMetricsWiring NOT_WIRED;
+ * refuse live VERIFIED / live metrics wire; refuse unavailable-as-zero;
+ * measured-only pass-rate denominator. External effects: NONE.
+ * Never invents live VERIFIED.
  */
 
 import { randomUUID } from "node:crypto";
@@ -12,7 +15,9 @@ import {
   createSyntheticLead,
   emptyLeadCaptureState,
   appendCommerceLead,
+  evaluateMetricForHonestDenominator,
   projectCommerceTotals,
+  summarizeHonestMetricDenominator,
   type SoakProofRecord,
 } from "@worksocial/domain";
 
@@ -143,7 +148,143 @@ export function proofMetricDenominatorsHonest(nowIso: string): SoakProofRecord {
     details.push("appendCommerceLead unexpectedly accepted synthetic countedInCommerce");
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  // Honest evaluator: provider_error out of denom; refuse unavailable-as-zero.
+  const honestProvider = evaluateMetricForHonestDenominator({
+    observation: {
+      metricId: "fixture-eval-pass-rate",
+      value: 0,
+      sampleSize: 10,
+      sourceStatus: "provider_error",
+    },
+  });
+  if (
+    honestProvider.allowed &&
+    honestProvider.code === "UNAVAILABLE_PROVIDER_ERROR" &&
+    honestProvider.countsInDenominator === false &&
+    honestProvider.liveMetricsWiring === "NOT_WIRED" &&
+    honestProvider.chatgptAdsAccess === "ACCESS_BLOCKED"
+  ) {
+    details.push(
+      "evaluateMetricForHonestDenominator provider_error → UNAVAILABLE_PROVIDER_ERROR; liveMetricsWiring=NOT_WIRED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `honest provider_error unexpectedly ${JSON.stringify(honestProvider)}`,
+    );
+  }
+
+  const asZero = evaluateMetricForHonestDenominator({
+    observation: {
+      metricId: "fixture-eval-pass-rate",
+      value: 0,
+      sampleSize: 10,
+      sourceStatus: "provider_error",
+    },
+    treatUnavailableAsZero: true,
+  });
+  if (
+    !asZero.allowed &&
+    asZero.code === "UNAVAILABLE_AS_ZERO_REFUSED" &&
+    asZero.countsInDenominator === false
+  ) {
+    details.push(
+      "treatUnavailableAsZero → UNAVAILABLE_AS_ZERO_REFUSED (not measured zero)",
+    );
+  } else {
+    passed = false;
+    details.push(`unavailable-as-zero unexpectedly ${JSON.stringify(asZero)}`);
+  }
+
+  // Live VERIFIED / live metrics wire refused.
+  const liveVerified = evaluateMetricForHonestDenominator({
+    observation: {
+      metricId: "fixture-eval-pass-rate",
+      value: 0.9,
+      sampleSize: 10,
+      sourceStatus: "ok",
+    },
+    claimLiveVerified: true,
+  });
+  const liveWire = evaluateMetricForHonestDenominator({
+    observation: {
+      metricId: "fixture-eval-pass-rate",
+      value: 0.9,
+      sampleSize: 10,
+      sourceStatus: "ok",
+    },
+    requestLiveMetricsWire: true,
+  });
+  if (
+    !liveVerified.allowed &&
+    liveVerified.code === "LIVE_METRICS_CLAIM_REFUSED" &&
+    !liveWire.allowed &&
+    liveWire.code === "LIVE_METRICS_CLAIM_REFUSED" &&
+    liveWire.liveMetricsWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "claimLiveVerified / requestLiveMetricsWire → LIVE_METRICS_CLAIM_REFUSED (NOT_WIRED)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `live claims unexpectedly verified=${JSON.stringify(liveVerified)} wire=${JSON.stringify(liveWire)}`,
+    );
+  }
+
+  // Measured sampleSize-sum pass-rate denominator (batches weighted).
+  const summary = summarizeHonestMetricDenominator([
+    {
+      metricId: "ok-a",
+      value: 1,
+      sampleSize: 100,
+      sourceStatus: "ok",
+    },
+    {
+      metricId: "ok-b",
+      value: 0,
+      sampleSize: 1,
+      sourceStatus: "ok",
+    },
+    {
+      metricId: "err",
+      value: 0,
+      sampleSize: 10,
+      sourceStatus: "provider_error",
+    },
+    {
+      metricId: "syn",
+      value: 1,
+      sampleSize: 1,
+      sourceStatus: "synthetic",
+    },
+    {
+      metricId: "nan",
+      value: Number.NaN,
+      sampleSize: 5,
+      sourceStatus: "ok",
+    },
+  ]);
+  if (
+    summary.measuredCount === 2 &&
+    summary.unavailableCount === 1 &&
+    summary.excludedCount === 1 &&
+    summary.missingCount === 1 &&
+    summary.denominator === 101 &&
+    summary.liveMetricsWiring === "NOT_WIRED" &&
+    summary.externalEffects === "NONE"
+  ) {
+    details.push(
+      "summarizeHonestMetricDenominator → sampleSize-sum denominator=101 (provider_error+synthetic+non_finite excluded)",
+    );
+  } else {
+    passed = false;
+    details.push(`honest summary unexpectedly ${JSON.stringify(summary)}`);
+  }
+
+  details.push(
+    "liveProviderSuccessClaimed=false liveMetricsWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE ACCEPTED≠VERIFIED",
+  );
 
   return {
     proofId: `proof-metric-denom-${randomUUID()}`,

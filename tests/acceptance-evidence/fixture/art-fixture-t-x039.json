@@ -3,13 +3,13 @@
   "caseId": "T-X039",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X039 (Provider error vs answer failure — separate denominators)\nproof=metric_denominators_honest applyCount=1 :: provider_error → unavailable (not measured/zero pass) | ok observation → measured | synthetic metric → excluded | createSyntheticLead synthetic=true + assertCommercial exclusion | projectCommerceTotals excludes synthetic (leadCount=1, revenue=2500, syntheticExcluded=1) | appendCommerceLead refuses synthetic && countedInCommerce | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X039 (Provider error vs answer failure — separate denominators)\nproof=metric_denominators_honest applyCount=1 :: provider_error → unavailable (not measured/zero pass) | ok observation → measured | synthetic metric → excluded | createSyntheticLead synthetic=true + assertCommercial exclusion | projectCommerceTotals excludes synthetic (leadCount=1, revenue=2500, syntheticExcluded=1) | appendCommerceLead refuses synthetic && countedInCommerce | evaluateMetricForHonestDenominator provider_error → UNAVAILABLE_PROVIDER_ERROR; liveMetricsWiring=NOT_WIRED | treatUnavailableAsZero → UNAVAILABLE_AS_ZERO_REFUSED (not measured zero) | claimLiveVerified / requestLiveMetricsWire → LIVE_METRICS_CLAIM_REFUSED (NOT_WIRED) | summarizeHonestMetricDenominator → sampleSize-sum denominator=101 (provider_error+synthetic+non_finite excluded) | liveProviderSuccessClaimed=false liveMetricsWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "metric_denominators_honest"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x039.json",
-  "createdAtIso": "2026-11-25T00:14:06.099Z",
+  "createdAtIso": "2026-11-25T00:18:05.307Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x039-fdaf9cc5c64d"
+  "uniqueSourceArtifactId": "art-fixture-t-x039-70b2e7a3787a"
 }

@@ -36,8 +36,15 @@ export {
 } from "./budget-accounting.js";
 export {
   classifyMetric,
+  evaluateMetricForHonestDenominator,
+  summarizeHonestMetricDenominator,
+  METRIC_LIVE_WIRING,
   type MetricObservation,
   type MetricClassification,
+  type MetricDenominatorCode,
+  type MetricDenominatorDecision,
+  type MetricLiveWiring,
+  type HonestPassRateSummary,
 } from "./metric-missingness.js";
 export {
   LocalRole,
