@@ -423,6 +423,97 @@ export async function proofReplayHistoricalNoRepeatIo(
     details.push("Verify matched=false unexpectedly passed");
   }
 
+  // Edge deepen — blank claim/verify opId refuse; padded claim/verify trim;
+  // non-integer terminal apply refuse.
+  const blankClaimHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) =>
+      e.activity === "claimAndAccept" ? { ...e, operationId: "   " } : e,
+    ),
+    terminal: { ...history.terminal },
+  };
+  const blankClaimHooks = createHistoryOnlyReplayHooks();
+  const blankClaimReplay = replayMissionWorkflowHistory(
+    blankClaimHistory,
+    blankClaimHooks.hooks,
+  );
+  if (
+    blankClaimReplay.outcome === "FAILED" &&
+    blankClaimHooks.summary().liveIoLabels.some((l) =>
+      l.includes("history_activity_operationId_blank"),
+    )
+  ) {
+    details.push("Blank claim operationId → FAILED (edge)");
+  } else {
+    details.push("Blank claim operationId unexpectedly passed");
+  }
+
+  const blankVerifyHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) =>
+      e.activity === "verify" ? { ...e, operationId: "" } : e,
+    ),
+    terminal: { ...history.terminal },
+  };
+  const blankVerifyHooks = createHistoryOnlyReplayHooks();
+  const blankVerifyReplay = replayMissionWorkflowHistory(
+    blankVerifyHistory,
+    blankVerifyHooks.hooks,
+  );
+  if (
+    blankVerifyReplay.outcome === "FAILED" &&
+    blankVerifyHooks.summary().liveIoLabels.some((l) =>
+      l.includes("history_activity_operationId_blank"),
+    )
+  ) {
+    details.push("Blank verify operationId → FAILED (edge)");
+  } else {
+    details.push("Blank verify operationId unexpectedly passed");
+  }
+
+  const paddedActsHooks = createHistoryOnlyReplayHooks();
+  const paddedActsReplay = replayMissionWorkflowHistory(
+    {
+      events: history.events.map((e) => {
+        if (e.activity === "claimAndAccept" || e.activity === "verify") {
+          return { ...e, operationId: `  ${e.operationId}  ` };
+        }
+        return e;
+      }),
+      terminal: { ...history.terminal },
+    },
+    paddedActsHooks.hooks,
+  );
+  if (
+    paddedActsReplay.outcome === "VERIFIED" &&
+    paddedActsHooks.summary().forbiddenLiveIo === 0
+  ) {
+    details.push("Whitespace-padded claim/verify opIds trim → VERIFIED (edge)");
+  } else {
+    details.push("Padded claim/verify opIds unexpectedly failed");
+  }
+
+  const floatTerminalHooks = createHistoryOnlyReplayHooks();
+  const floatTerminal = replayMissionWorkflowHistory(
+    {
+      events: history.events,
+      terminal: {
+        outcome: "VERIFIED",
+        applyAttemptCount: 1.5,
+        operationId,
+      },
+    },
+    floatTerminalHooks.hooks,
+  );
+  if (
+    floatTerminal.outcome === "FAILED" &&
+    floatTerminalHooks.summary().liveIoLabels.some((l) =>
+      l.includes("history_terminal_missing_or_incomplete"),
+    )
+  ) {
+    details.push("Non-integer terminal applyAttemptCount → FAILED (edge)");
+  } else {
+    details.push("Non-integer terminal apply unexpectedly passed");
+  }
+
   const rehydrateSvc = openService(stateDir);
   const decisionAfter = await rehydrateSvc.getDecision(operationId);
   const providersAfterReplay = await rehydrateSvc.stores.fakeProvider.list();
@@ -477,6 +568,10 @@ export async function proofReplayHistoricalNoRepeatIo(
     paddedTerminal.outcome === "VERIFIED" &&
     infTerminal.outcome === "FAILED" &&
     unmatchedReplay.outcome === "FAILED" &&
+    blankClaimReplay.outcome === "FAILED" &&
+    blankVerifyReplay.outcome === "FAILED" &&
+    paddedActsReplay.outcome === "VERIFIED" &&
+    floatTerminal.outcome === "FAILED" &&
     applyBeforeReplay === 1 &&
     applyAfterReplay === 1 &&
     thisOpBefore === 1 &&
