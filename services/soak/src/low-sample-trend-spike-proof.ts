@@ -1,14 +1,20 @@
 /**
  * Fixture proof for T-X040 — low-sample trend spike → insufficient evidence.
  * Domain gate only: apparent spike with tiny/missing sample stays research-only
- * (not a publish trigger). External effects: NONE. Never invents live VERIFIED.
+ * (not a publish trigger). External effects: NONE. Live trend provider NOT_WIRED.
+ * Never invents live VERIFIED.
+ *
+ * Hillclimb: honesty fields, publish-gate wrapper, boundary sample edges.
  */
 
 import { randomUUID } from "node:crypto";
 import {
+  DEFAULT_MIN_TREND_SAMPLE,
   SoakProofKind,
   TrendSpikeDecisionCode,
   assessTrendSpikeEvidence,
+  evaluateTrendSpikePublishHonesty,
+  isLowButPresentTrendSample,
   type SoakProofRecord,
 } from "@worksocial/domain";
 
@@ -31,10 +37,13 @@ export function proofLowSampleTrendSpikeInsufficientEvidence(
     lowSample.allowPublishTrigger === false &&
     lowSample.researchTaskOnly === true &&
     lowSample.measuredSpike === false &&
-    lowSample.liftRatio === 9
+    lowSample.liftRatio === 9 &&
+    lowSample.liveTrendProviderWiring === "NOT_WIRED" &&
+    lowSample.externalEffects === "NONE" &&
+    lowSample.liveProviderSuccessClaimed === false
   ) {
     details.push(
-      "Apparent 9× spike with sampleSize=2 → INSUFFICIENT_EVIDENCE; researchTaskOnly; allowPublishTrigger=false",
+      "Apparent 9× spike with sampleSize=2 → INSUFFICIENT_EVIDENCE; researchTaskOnly; allowPublishTrigger=false; NOT_WIRED/NONE",
     );
   } else {
     passed = false;
@@ -72,6 +81,24 @@ export function proofLowSampleTrendSpikeInsufficientEvidence(
   } else {
     passed = false;
     details.push(`Measured spike unexpectedly ${JSON.stringify(measured)}`);
+  }
+
+  const publishHonesty = evaluateTrendSpikePublishHonesty(measured);
+  if (
+    publishHonesty.allowPublishTrigger === false &&
+    publishHonesty.measuredSpikeImpliesPublish === false &&
+    publishHonesty.code === TrendSpikeDecisionCode.MEASURED_SPIKE &&
+    publishHonesty.liveTrendProviderWiring === "NOT_WIRED" &&
+    publishHonesty.externalEffects === "NONE"
+  ) {
+    details.push(
+      "evaluateTrendSpikePublishHonesty(MEASURED_SPIKE) → never publish; NOT_WIRED/NONE",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Publish honesty unexpectedly ${JSON.stringify(publishHonesty)}`,
+    );
   }
 
   const flat = assessTrendSpikeEvidence({
@@ -126,7 +153,54 @@ export function proofLowSampleTrendSpikeInsufficientEvidence(
     );
   }
 
-  details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
+  // Boundary: minSample-1 vs exact minSample
+  const justBelow = assessTrendSpikeEvidence({
+    currentValue: 100,
+    baselineValue: 10,
+    sampleSize: DEFAULT_MIN_TREND_SAMPLE - 1,
+  });
+  const atMin = assessTrendSpikeEvidence({
+    currentValue: 40,
+    baselineValue: 10,
+    sampleSize: DEFAULT_MIN_TREND_SAMPLE,
+  });
+  if (
+    justBelow.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    isLowButPresentTrendSample(DEFAULT_MIN_TREND_SAMPLE - 1) &&
+    atMin.code === TrendSpikeDecisionCode.MEASURED_SPIKE &&
+    atMin.allowPublishTrigger === false &&
+    !isLowButPresentTrendSample(DEFAULT_MIN_TREND_SAMPLE)
+  ) {
+    details.push(
+      `Boundary sampleSize=${DEFAULT_MIN_TREND_SAMPLE - 1} insufficient; sampleSize=${DEFAULT_MIN_TREND_SAMPLE} measured (still no publish)`,
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Boundary unexpectedly below=${JSON.stringify(justBelow)} atMin=${JSON.stringify(atMin)}`,
+    );
+  }
+
+  // Zero observations are missing, not low-but-present.
+  if (
+    isLowButPresentTrendSample(0) === false &&
+    assessTrendSpikeEvidence({
+      currentValue: 90,
+      baselineValue: 10,
+      sampleSize: 0,
+    }).code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE
+  ) {
+    details.push(
+      "sampleSize=0 → missing (not low-but-present); INSUFFICIENT_EVIDENCE",
+    );
+  } else {
+    passed = false;
+    details.push("Expected sampleSize=0 to be missing, not low-but-present");
+  }
+
+  details.push(
+    "liveTrendProviderWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE",
+  );
 
   return {
     proofId: `proof-low-sample-trend-${randomUUID()}`,

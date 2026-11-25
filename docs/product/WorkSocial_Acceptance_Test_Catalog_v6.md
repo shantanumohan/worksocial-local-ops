@@ -969,7 +969,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 **T-US-056** is fixture ACCEPTED only via the honest outage durable hosted contact path proof (`HONEST_OUTAGE_HOSTED_CONTACT_PATH`) — host OFFLINE makes public chat UNAVAILABLE; hosted form path stays fail-closed durable; pretend local receipt refused. Not sandbox/prod VERIFIED.
 
 **T-X030** is fixture ACCEPTED only via the rate-limit bounded backoff preserves deadline proof (`RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE`) — respect Retry-After / capped exponential backoff, stop before the job deadline, surface delayed/unavailable data, never spawn agents to bypass quotas. Not sandbox/prod VERIFIED.
-**T-X040** is fixture ACCEPTED only via the low-sample trend spike insufficient-evidence proof (`LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE`) — research task only; never a publish trigger from this gate alone. Not sandbox/prod VERIFIED.
+**T-X040** is fixture ACCEPTED only via the low-sample trend spike insufficient-evidence proof (`LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE`) — research task only; `assessTrendSpikeEvidence` / `evaluateTrendSpikePublishHonesty` never set `allowPublishTrigger` from this gate alone (including MEASURED_SPIKE); sampleSize=0 treated as missing not low-present; `liveTrendProviderWiring=NOT_WIRED`, `liveProviderSuccessClaimed=false`, `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 
 **T-X041** is fixture ACCEPTED only via the incomparable trend indices reject/label proof (`INCOMPARABLE_TREND_INDICES_REJECTED`) — never divides arbitrary indices from different data extracts; mismatched or missing comparability group/unit/source is rejected and labeled. Not sandbox/prod VERIFIED.
 

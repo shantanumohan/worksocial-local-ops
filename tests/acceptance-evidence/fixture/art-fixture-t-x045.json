@@ -8,8 +8,8 @@
     "partial_campaign_destinations_per_state"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x045.json",
-  "createdAtIso": "2026-11-25T00:08:51.162Z",
+  "createdAtIso": "2026-11-25T00:14:06.099Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x045-9b65dfaa6f99"
+  "uniqueSourceArtifactId": "art-fixture-t-x045-fdaf9cc5c64d"
 }

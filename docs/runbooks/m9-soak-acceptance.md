@@ -196,7 +196,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X030** maps only to `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (bounded backoff preserves deadline; not live VERIFIED).
 
-**T-X040** maps only to `LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE` (research-only; never a publish trigger; not live VERIFIED).
+**T-X040** maps only to `LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE` (research-only; never a publish trigger from this gate; live trend provider NOT_WIRED; externalEffects NONE; not live VERIFIED).
 
 **T-US-012** maps only to `GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED` (Google Ads TEST vs PRODUCTION credential/customer separation; LIVE NOT_WIRED; not live VERIFIED).
 

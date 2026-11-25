@@ -8,8 +8,8 @@
     "create_and_distribute_original_campaign"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-f15.json",
-  "createdAtIso": "2026-11-25T00:08:51.162Z",
+  "createdAtIso": "2026-11-25T00:14:06.099Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-f15-9b65dfaa6f99"
+  "uniqueSourceArtifactId": "art-fixture-t-f15-fdaf9cc5c64d"
 }
