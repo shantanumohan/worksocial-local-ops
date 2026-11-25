@@ -755,6 +755,108 @@ export async function proofReplayHistoricalNoRepeatIo(
     details.push("Non-integer terminal apply unexpectedly passed");
   }
 
+  // Edge deepen — claim/verify activity shape fences; padded enqueue wfId.
+  const badClaimPhaseHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) => {
+      if (e.activity === "claimAndAccept") {
+        return {
+          ...e,
+          phase: "queued" as "effect_pending",
+        };
+      }
+      return e;
+    }),
+    terminal: { ...history.terminal },
+  };
+  const badClaimHooks = createHistoryOnlyReplayHooks();
+  const badClaimReplay = replayMissionWorkflowHistory(
+    badClaimPhaseHistory,
+    badClaimHooks.hooks,
+  );
+  if (
+    badClaimReplay.outcome === "FAILED" &&
+    badClaimHooks.summary().liveIoLabels.some((l) =>
+      l.includes("history_claim_shape_invalid"),
+    )
+  ) {
+    details.push("Invalid claim phase shape → FAILED (edge)");
+  } else {
+    details.push("Invalid claim phase unexpectedly passed");
+  }
+
+  const badClaimApplyHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) =>
+      e.activity === "claimAndAccept"
+        ? { ...e, applyAttemptCount: 1.25 }
+        : e,
+    ),
+    terminal: { ...history.terminal },
+  };
+  const badClaimApplyHooks = createHistoryOnlyReplayHooks();
+  const badClaimApplyReplay = replayMissionWorkflowHistory(
+    badClaimApplyHistory,
+    badClaimApplyHooks.hooks,
+  );
+  if (
+    badClaimApplyReplay.outcome === "FAILED" &&
+    badClaimApplyHooks.summary().liveIoLabels.some((l) =>
+      l.includes("history_claim_shape_invalid"),
+    )
+  ) {
+    details.push("Non-integer claim applyAttemptCount → FAILED (edge)");
+  } else {
+    details.push("Non-integer claim apply unexpectedly passed");
+  }
+
+  const badVerifyOutcomeHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) => {
+      if (e.activity === "verify") {
+        return {
+          ...e,
+          outcome: "FAILED" as "VERIFIED",
+        };
+      }
+      return e;
+    }),
+    terminal: { ...history.terminal },
+  };
+  const badVerifyHooks = createHistoryOnlyReplayHooks();
+  const badVerifyReplay = replayMissionWorkflowHistory(
+    badVerifyOutcomeHistory,
+    badVerifyHooks.hooks,
+  );
+  if (
+    badVerifyReplay.outcome === "FAILED" &&
+    badVerifyHooks.summary().liveIoLabels.some((l) =>
+      l.includes("history_verify_shape_invalid"),
+    )
+  ) {
+    details.push("Invalid verify outcome shape → FAILED (edge)");
+  } else {
+    details.push("Invalid verify outcome unexpectedly passed");
+  }
+
+  const paddedWfHooks = createHistoryOnlyReplayHooks();
+  const paddedWfReplay = replayMissionWorkflowHistory(
+    {
+      events: history.events.map((e) =>
+        e.activity === "enqueue"
+          ? { ...e, workflowId: `  ${e.workflowId}  ` }
+          : e,
+      ),
+      terminal: { ...history.terminal },
+    },
+    paddedWfHooks.hooks,
+  );
+  if (
+    paddedWfReplay.outcome === "VERIFIED" &&
+    paddedWfHooks.summary().forbiddenLiveIo === 0
+  ) {
+    details.push("Whitespace-padded enqueue workflowId trims → VERIFIED (edge)");
+  } else {
+    details.push("Padded enqueue workflowId unexpectedly failed");
+  }
+
   const rehydrateSvc = openService(stateDir);
   const decisionAfter = await rehydrateSvc.getDecision(operationId);
   const providersAfterReplay = await rehydrateSvc.stores.fakeProvider.list();
@@ -813,6 +915,10 @@ export async function proofReplayHistoricalNoRepeatIo(
     blankVerifyReplay.outcome === "FAILED" &&
     paddedActsReplay.outcome === "VERIFIED" &&
     floatTerminal.outcome === "FAILED" &&
+    badClaimReplay.outcome === "FAILED" &&
+    badClaimApplyReplay.outcome === "FAILED" &&
+    badVerifyReplay.outcome === "FAILED" &&
+    paddedWfReplay.outcome === "VERIFIED" &&
     applyBeforeReplay === 1 &&
     applyAfterReplay === 1 &&
     thisOpBefore === 1 &&
