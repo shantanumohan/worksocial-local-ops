@@ -1071,7 +1071,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X040 | Low-sample trend spike | Insufficient evidence *(fixture ACCEPTED — low-sample trend spike insufficient-evidence proof; not sandbox/prod VERIFIED)* |
 | T-X041 | Incomparable trend indices | Reject/label *(fixture ACCEPTED — incomparable trend indices reject/label proof; not sandbox/prod VERIFIED)* |
 | T-X042 | Schema differs from page | Gate fails *(fixture ACCEPTED — schema differs from page gate fails proof; not sandbox/prod VERIFIED)* |
-| T-X043 | Optimization breaks CTA | Journey regression fails *(fixture ACCEPTED — optimization breaks CTA journey fails proof; not sandbox/prod VERIFIED)* |
+| T-X043 | Optimization breaks CTA | Journey regression fails *(fixture ACCEPTED — optimization breaks CTA journey fails proof; href-only / empty-steps / NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X044 | Unlicensed venue media | Publish blocked *(fixture ACCEPTED — unlicensed venue media publish-blocked proof; not sandbox/prod VERIFIED)* |
 | T-X045 | Partial campaign destinations | Per-destination states *(fixture ACCEPTED — partial destinations / NOT_WIRED attack suite; not sandbox/prod VERIFIED)* |
 | T-X046 | Unsupported blog destination | No fake publication *(fixture ACCEPTED — unsupported blog destination no fake publication proof; not sandbox/prod VERIFIED)* |

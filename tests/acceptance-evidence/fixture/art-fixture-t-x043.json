@@ -3,13 +3,13 @@
   "caseId": "T-X043",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X043 (Optimization breaks CTA — journey regression fails)\nproof=optimization_breaks_cta_journey_fails applyCount=1 :: Baseline healthy page CTA journey SUCCESS — gate allowed | SEO content optimization rewrote CTA → journey FAILURE; gate JOURNEY_REGRESSION_FAILED | Positive control: metadata-only optimization preserves CTA → journey SUCCESS + gate allowed | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X043 (Optimization breaks CTA — journey regression fails)\nproof=optimization_breaks_cta_journey_fails applyCount=1 :: Baseline healthy page CTA journey SUCCESS — gate allowed; liveProviderWiring=NOT_WIRED | SEO content optimization rewrote CTA → journey FAILURE; gate JOURNEY_REGRESSION_FAILED | Href-only CTA break (text preserved) → JOURNEY_REGRESSION_FAILED | Decoy footer href=/tour cannot mask Book a tour CTA → /pricing; JOURNEY_REGRESSION_FAILED | Positive control: metadata-only optimization preserves CTA → journey SUCCESS + gate allowed | Empty journey steps → JOURNEY_STEPS_REQUIRED (no silent allow) | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "optimization_breaks_cta_journey_fails"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x043.json",
-  "createdAtIso": "2026-11-25T00:03:23.669Z",
+  "createdAtIso": "2026-11-25T00:08:51.162Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x043-cee61fd0d8ed"
+  "uniqueSourceArtifactId": "art-fixture-t-x043-9b65dfaa6f99"
 }

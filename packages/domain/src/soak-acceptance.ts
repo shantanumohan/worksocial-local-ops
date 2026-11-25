@@ -249,6 +249,8 @@ export const SoakProofKind = {
   EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED: "external_human_edit_conflict_retained",
   /**
    * Optimization breaks CTA → journey regression fails (T-X043).
+   * Href-only breaks blocked; empty journey steps refused; live NOT_WIRED.
+   * ACCEPTED ≠ VERIFIED.
    */
   OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS:
     "optimization_breaks_cta_journey_fails",
