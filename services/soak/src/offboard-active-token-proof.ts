@@ -1,11 +1,10 @@
 /**
  * Fixture proof for T-X073 — offboarding retains active provider token residual.
- * Hillclimb deepen I15: blank-id claim → LIVE_CLAIM_REFUSED; invent
- * QUEUED_WORK live-delivered / offboarding-complete / AUDIT purged /
- * catalogClaim ACCEPTED dishonest.
- * I14: force/dual-on-padded; invent all-closed / SCHEDULE re-enabled;
- * priorLiveRevoke invent DRIFT. I12 claim-on-padded; I11 dual/padded;
- * I9 reclaim; re-offboard / double live-revoke stay NOT_WIRED;
+ * Hillclimb deepen I16: blank-id force → LIVE_CLAIM_REFUSED; invent
+ * BACKUP_COPY closed remotely / secrets exported live / ACCEPTED=VERIFIED /
+ * liveProviderRevoke WIRED dishonest.
+ * I15: blank-id claim; invent QUEUED_WORK / offboarding-complete / AUDIT.
+ * I14 force-on-padded; I12 claim-on-padded; I9 reclaim; NOT_WIRED;
  * ACCEPTED≠VERIFIED; secrets never leak. External effects: NONE.
  * Does not touch rebind / #43 lane.
  */
@@ -441,6 +440,47 @@ export async function proofOffboardActiveTokenResidual(
     passed = false;
     details.push(
       `I15 edges unexpectedly blank=${JSON.stringify(claimOnBlank)} queued=${JSON.stringify(inventQueuedLive)} complete=${JSON.stringify(inventComplete)} audit=${JSON.stringify(inventAuditPurged)} catalog=${JSON.stringify(inventCatalogAccepted)}`,
+    );
+  }
+
+  // I16: blank-id force; invent BACKUP_COPY / secrets exported / ACCEPTED=VERIFIED / WIRED.
+  const forceOnBlank = attemptLiveProviderRevoke({
+    connectionId: "",
+    referenceId: "fixture-ref",
+    forceCompleteRemoteRevoke: true,
+  });
+  const inventBackup = assertOffboardActiveTokenResidualHonest({
+    ...manifest,
+    summary: "BACKUP_COPY residual completed remotely",
+  });
+  const inventSecrets = assertOffboardActiveTokenResidualHonest({
+    ...manifest,
+    summary: "secrets were exported live after offboard",
+  });
+  const inventEqualsVerified = assertOffboardActiveTokenResidualHonest({
+    ...manifest,
+    summary: "catalogClaim ACCEPTED=VERIFIED after remote revoke",
+  });
+  const inventWired = assertOffboardActiveTokenResidualHonest({
+    ...manifest,
+    summary: "liveProviderRevoke is now WIRED",
+  });
+  if (
+    forceOnBlank.code === "LIVE_CLAIM_REFUSED" &&
+    forceOnBlank.liveProviderSuccessClaimed === false &&
+    !inventBackup.ok &&
+    inventBackup.code === "OFFBOARD_RESIDUAL_DISHONEST" &&
+    !inventSecrets.ok &&
+    !inventEqualsVerified.ok &&
+    !inventWired.ok
+  ) {
+    details.push(
+      "I16 edges: blank-id force LIVE_CLAIM_REFUSED; invent BACKUP_COPY closed remotely / secrets exported live / ACCEPTED=VERIFIED / liveProviderRevoke WIRED dishonest",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `I16 edges unexpectedly forceBlank=${JSON.stringify(forceOnBlank)} backup=${JSON.stringify(inventBackup)} secrets=${JSON.stringify(inventSecrets)} eq=${JSON.stringify(inventEqualsVerified)} wired=${JSON.stringify(inventWired)}`,
     );
   }
 

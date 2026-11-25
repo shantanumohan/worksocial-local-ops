@@ -567,6 +567,41 @@ describe("credential rotation / revoke honesty", () => {
     });
     expect(inventCatalogAccepted.ok).toBe(false);
 
+    // I16: blank-id force refuse; invent BACKUP_COPY closed live /
+    // secrets exported live / ACCEPTED=VERIFIED / liveProviderRevoke WIRED.
+    const forceOnBlank = attemptLiveProviderRevoke({
+      connectionId: "",
+      referenceId: "cred-aaa",
+      forceCompleteRemoteRevoke: true,
+    });
+    expect(forceOnBlank.code).toBe("LIVE_CLAIM_REFUSED");
+    expect(forceOnBlank.liveProviderSuccessClaimed).toBe(false);
+
+    const inventBackup = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "BACKUP_COPY residual completed remotely",
+    });
+    expect(inventBackup.ok).toBe(false);
+    expect(inventBackup.code).toBe("OFFBOARD_RESIDUAL_DISHONEST");
+
+    const inventSecrets = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "secrets were exported live after offboard",
+    });
+    expect(inventSecrets.ok).toBe(false);
+
+    const inventEqualsVerified = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "catalogClaim ACCEPTED=VERIFIED after remote revoke",
+    });
+    expect(inventEqualsVerified.ok).toBe(false);
+
+    const inventWired = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "liveProviderRevoke is now WIRED",
+    });
+    expect(inventWired.ok).toBe(false);
+
     const audit = createAuditEntry({
       entryId: "aud-1",
       kind: CredentialAuditKind.OFFBOARDED,

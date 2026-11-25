@@ -925,7 +925,14 @@ export function assertOffboardActiveTokenResidualHonest(
     /\bresidual\s+(is\s+)?cleared\b/i.test(scrubbed) ||
     /\bAUDIT_RETENTION\b[\s\S]{0,80}\b(purged\s+(live|remotely)|deleted\s+live)\b/i.test(
       scrubbed,
-    )
+    ) ||
+    // I16: inventing BACKUP_COPY closed / secrets exported live / ACCEPTED=VERIFIED is dishonest.
+    /\bBACKUP_COPY\b[\s\S]{0,80}\b(satisfied|completed|closed)\s+(live|remotely)\b/i.test(
+      scrubbed,
+    ) ||
+    /\bsecrets?\s+(were\s+)?exported\s+(live|remotely)\b/i.test(scrubbed) ||
+    /\bACCEPTED\s*=\s*VERIFIED\b/i.test(scrubbed) ||
+    /\bliveProviderRevoke\s+is\s+now\s+WIRED\b/i.test(scrubbed)
   ) {
     reasons.push("Manifest must not invent live VERIFIED or remote revoke success");
   }

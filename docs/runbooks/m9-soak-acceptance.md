@@ -93,7 +93,7 @@ Suggested owner Windows flow (state off OneDrive):
 | T-F24 / T-US-047 | Fixture ACCEPTED via recover/rotate/reconcile proof only |
 | T-US-002 / T-X002 | Fixture ACCEPTED via competing-supervisor / host-lease proof only |
 | T-X018 / T-US-054 | Fixture ACCEPTED via self-approval rejected / independent A25 proof only |
-| T-X073 | Fixture ACCEPTED via offboard ACTIVE_TOKEN residual only (blank-id claim refuse; invent QUEUED_WORK live-delivered / offboarding-complete / AUDIT purged dishonest; ACCEPTED≠VERIFIED) |
+| T-X073 | Fixture ACCEPTED via offboard ACTIVE_TOKEN residual only (blank-id force refuse; invent BACKUP_COPY / secrets-exported live / ACCEPTED=VERIFIED dishonest; ACCEPTED≠VERIFIED) |
 | T-US-060 | Fixture ACCEPTED via emergency stop at commit only |
 | T-X069 | Fixture ACCEPTED via imported doc quarantined as data only |
 | T-X038 | Fixture ACCEPTED via eval no-grounding fail closed only |
