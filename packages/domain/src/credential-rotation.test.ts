@@ -490,6 +490,48 @@ describe("credential rotation / revoke honesty", () => {
     expect(reclaimDrift.ok).toBe(false);
     expect(reclaimDrift.code).toBe("OFFBOARD_RECLAIM_DRIFT");
 
+    // I14: force-on-padded refuse; invent all-residuals-closed / SCHEDULE re-enabled;
+    // reclaim priorLiveRevokeInvented forge → DRIFT.
+    const forceOnPadded = attemptLiveProviderRevoke({
+      connectionId: "conn-1",
+      referenceId: "  cred-aaa  ",
+      forceCompleteRemoteRevoke: true,
+    });
+    expect(forceOnPadded.code).toBe("LIVE_CLAIM_REFUSED");
+    expect(forceOnPadded.liveProviderSuccessClaimed).toBe(false);
+
+    const dualOnPadded = attemptLiveProviderRevoke({
+      connectionId: "  conn-1  ",
+      referenceId: "  cred-aaa  ",
+      claimLiveVerified: true,
+      forceCompleteRemoteRevoke: true,
+    });
+    expect(dualOnPadded.code).toBe("LIVE_CLAIM_REFUSED");
+
+    const inventAllClosed = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "all residuals are now closed after remote revoke",
+    });
+    expect(inventAllClosed.ok).toBe(false);
+    expect(inventAllClosed.code).toBe("OFFBOARD_RESIDUAL_DISHONEST");
+
+    const inventScheduleLive = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "SCHEDULE residual re-enabled live after offboard",
+    });
+    expect(inventScheduleLive.ok).toBe(false);
+
+    const inventPrior = {
+      ...r1,
+      priorLiveRevokeInvented: true as false,
+    };
+    const priorDrift = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: inventPrior,
+    });
+    expect(priorDrift.ok).toBe(false);
+    expect(priorDrift.code).toBe("OFFBOARD_RECLAIM_DRIFT");
+
     const audit = createAuditEntry({
       entryId: "aud-1",
       kind: CredentialAuditKind.OFFBOARDED,

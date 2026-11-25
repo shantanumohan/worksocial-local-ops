@@ -1,7 +1,9 @@
 /**
  * Fixture proof for T-X073 — offboarding retains active provider token residual.
- * Hillclimb deepen I12: claim-on-padded → LIVE_CLAIM_REFUSED; invent
- * ACTIVE_TOKEN closed dishonest; honest+dishonest reclaim → DRIFT;
+ * Hillclimb deepen I14: force/dual-on-padded → LIVE_CLAIM_REFUSED; invent
+ * all-residuals-closed / SCHEDULE re-enabled live dishonest; forged
+ * priorLiveRevokeInvented reclaim DRIFT.
+ * I12: claim-on-padded; invent ACTIVE_TOKEN closed; reclaim DRIFT;
  * I11 padded ids / dual claim; I9 reclaim; blank-id revoke;
  * re-offboard / double live-revoke stay NOT_WIRED; ACCEPTED≠VERIFIED;
  * secrets never leak. External effects: NONE. Never invents live VERIFIED.
@@ -350,6 +352,54 @@ export async function proofOffboardActiveTokenResidual(
     passed = false;
     details.push(
       `I12 edges unexpectedly claimPad=${JSON.stringify(claimOnPadded)} invent=${JSON.stringify(inventClosed)} sat=${JSON.stringify(providerSatisfied)} drift=${JSON.stringify(reclaimDrift)}`,
+    );
+  }
+
+  // I14: force-on-padded / dual-on-padded; invent all-closed / SCHEDULE re-enabled; prior invent DRIFT.
+  const forceOnPadded = attemptLiveProviderRevoke({
+    connectionId: seeded.connection.connectionId,
+    referenceId: "  fixture-ref  ",
+    forceCompleteRemoteRevoke: true,
+  });
+  const dualOnPadded = attemptLiveProviderRevoke({
+    connectionId: `  ${seeded.connection.connectionId}  `,
+    referenceId: "  fixture-ref  ",
+    claimLiveVerified: true,
+    forceCompleteRemoteRevoke: true,
+  });
+  const inventAllClosed = assertOffboardActiveTokenResidualHonest({
+    ...manifest,
+    summary: "all residuals are now closed after remote revoke",
+  });
+  const inventScheduleLive = assertOffboardActiveTokenResidualHonest({
+    ...manifest,
+    summary: "SCHEDULE residual re-enabled live after offboard",
+  });
+  const inventPrior = {
+    ...reclaim1,
+    priorLiveRevokeInvented: true as false,
+  };
+  const priorDrift = assertOffboardActiveTokenResidualReclaimIdempotent({
+    first: reclaim1,
+    second: inventPrior,
+  });
+  if (
+    forceOnPadded.code === "LIVE_CLAIM_REFUSED" &&
+    forceOnPadded.liveProviderSuccessClaimed === false &&
+    dualOnPadded.code === "LIVE_CLAIM_REFUSED" &&
+    !inventAllClosed.ok &&
+    inventAllClosed.code === "OFFBOARD_RESIDUAL_DISHONEST" &&
+    !inventScheduleLive.ok &&
+    !priorDrift.ok &&
+    priorDrift.code === "OFFBOARD_RECLAIM_DRIFT"
+  ) {
+    details.push(
+      "I14 edges: force/dual-on-padded LIVE_CLAIM_REFUSED; invent all-residuals-closed / SCHEDULE re-enabled dishonest; forged priorLiveRevoke invent DRIFT",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `I14 edges unexpectedly force=${JSON.stringify(forceOnPadded)} dual=${JSON.stringify(dualOnPadded)} allClosed=${JSON.stringify(inventAllClosed)} sched=${JSON.stringify(inventScheduleLive)} prior=${JSON.stringify(priorDrift)}`,
     );
   }
 
