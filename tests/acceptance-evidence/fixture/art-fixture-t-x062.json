@@ -3,13 +3,13 @@
   "caseId": "T-X062",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X062 (SSE gap after offline UI — full-state resync)\nproof=sse_gap_full_state_resync applyCount=1 :: Online contiguous seq=101 → INCREMENTAL_APPLY; lastAppliedSeq=101; stateDigest advanced; liveProviderWiring=NOT_WIRED | After offline, seq=108 gap → SSE_GAP_FULL_RESYNC_REQUIRED; minResyncThroughSeq=108; incremental refused; stateDigest unchanged | Outstanding gap blocks contiguous seq=102 invent — lastApplied stays 101; minResyncThroughSeq=108 | Online gap seq=60 (no offline mark) → SSE_GAP_FULL_RESYNC_REQUIRED; missed events not invented | seq=0 → INVALID_SEQ; liveProviderWiring=NOT_WIRED | coversThroughSeq=107 < minResyncThroughSeq=108 → SNAPSHOT_INSUFFICIENT_COVERAGE; prior state retained | Whitespace stateDigest → SNAPSHOT_INSUFFICIENT_COVERAGE | FULL_STATE_RESYNC revision=9001 coversThroughSeq=110 (≥108); stateDigest replaced (digest-event-101-p-de1e1bf8 → digest-snap-9001-a0d4f571); missed SSE events not invented; liveProviderWiring=NOT_WIRED | Post-resync contiguous seq=111 → INCREMENTAL_APPLY (stream resumes) | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X062 (SSE gap after offline UI — full-state resync)\nproof=sse_gap_full_state_resync applyCount=1 :: Online contiguous seq=101 → INCREMENTAL_APPLY; lastAppliedSeq=101; stateDigest advanced; liveProviderWiring=NOT_WIRED | After offline, seq=108 gap → SSE_GAP_FULL_RESYNC_REQUIRED; minResyncThroughSeq=108; incremental refused; stateDigest unchanged | Outstanding gap blocks contiguous seq=102 invent — lastApplied stays 101; minResyncThroughSeq=108 | Online gap seq=60 (no offline mark) → SSE_GAP_FULL_RESYNC_REQUIRED; missed events not invented | seq=0 → INVALID_SEQ; liveProviderWiring=NOT_WIRED | coversThroughSeq=107 < minResyncThroughSeq=108 → SNAPSHOT_INSUFFICIENT_COVERAGE; prior state retained | Whitespace stateDigest → SNAPSHOT_INSUFFICIENT_COVERAGE | FULL_STATE_RESYNC revision=9001 coversThroughSeq=110 (≥108); stateDigest replaced (digest-event-101-p-66fdc34d → digest-snap-9001-06c1f821); missed SSE events not invented; liveProviderWiring=NOT_WIRED | Post-resync contiguous seq=111 → INCREMENTAL_APPLY (stream resumes) | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "sse_gap_full_state_resync"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x062.json",
-  "createdAtIso": "2026-11-24T23:58:47.066Z",
+  "createdAtIso": "2026-11-25T00:03:23.669Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x062-d9e8cc40c3c5"
+  "uniqueSourceArtifactId": "art-fixture-t-x062-cee61fd0d8ed"
 }

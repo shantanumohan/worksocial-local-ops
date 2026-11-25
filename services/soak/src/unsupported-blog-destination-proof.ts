@@ -5,8 +5,12 @@
  * (not dest-cms / dest-gbp / dest-linkedin). Orchestration must persist
  * FAILED + UNSUPPORTED_ACTION with null receipt/remote — never invent
  * PUBLISHED_VERIFIED. Secondary domain checks: fixtureAvailable=false release
- * gate; ChatGPT Hub full-blog format rejected. External effects: NONE.
+ * gate; ChatGPT Hub full-blog format rejected. Domain classifier honesty
+ * fields on every path. External effects: NONE.
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
+ * Hillclimb: classifyUnsupportedBlogDestination + preferLive refuse + Hub edge;
+ * DST civil schedule gaps still refuse fake OTHER_BLOG publication (G11);
+ * blank/padded destinationId + format mismatch + preferLive-on-schedule (G15).
  */
 
 import { randomUUID } from "node:crypto";
@@ -26,11 +30,14 @@ import {
   PublicationOutcome,
   SoakProofKind,
   SupportLabel,
+  classifyUnsupportedBlogDestination,
+  classifyUnsupportedBlogScheduledPublish,
   createCanonicalArticle,
   createDestinationVariant,
   evaluateVariantReleaseGate,
   type DestinationRegistryEntry,
   type SoakProofRecord,
+  type UnsupportedBlogDestinationDecision,
 } from "@worksocial/domain";
 import {
   createDemoContentDistributionGrants,
@@ -38,6 +45,18 @@ import {
   createFileContentStore,
   createMemoryDurableStores,
 } from "@worksocial/persistence";
+
+function honestyOk(
+  decision: UnsupportedBlogDestinationDecision,
+  expectedWiring: "NOT_WIRED" | "FIXTURE" = "NOT_WIRED",
+): boolean {
+  return (
+    decision.liveProviderWiring === expectedWiring &&
+    decision.chatgptAdsAccess === "ACCESS_BLOCKED" &&
+    decision.externalEffects === "NONE" &&
+    decision.inventPublishedVerified === false
+  );
+}
 
 const UNSUPPORTED_DEST_ID = "dest-other-blog-unsupported";
 
@@ -265,6 +284,53 @@ export async function proofUnsupportedBlogDestinationNoFakePublication(
 
     // Secondary domain: fixtureAvailable=false blocks release gate.
     const otherBlog = unsupportedOtherBlog();
+    const otherClassified = classifyUnsupportedBlogDestination({
+      destination: otherBlog,
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    if (
+      !otherClassified.allowed &&
+      otherClassified.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED" &&
+      otherClassified.outcome === PublicationOutcome.UNSUPPORTED_ACTION &&
+      honestyOk(otherClassified)
+    ) {
+      details.push(
+        "classifyUnsupportedBlogDestination OTHER_BLOG (no adapter) → UNSUPPORTED_ACTION with honesty fields",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `OTHER_BLOG classifier unexpected: ${JSON.stringify(otherClassified)}`,
+      );
+    }
+
+    // Fixture-backed OTHER_BLOG is allowed in fixture mode (not a live claim).
+    const fixtureOtherBlog: DestinationRegistryEntry = {
+      ...otherBlog,
+      destinationId: "dest-other-blog-fixture",
+      fixtureAvailable: true,
+      liveWiring: AdapterLiveStatus.FIXTURE,
+      notes: "Additional owned blog with tested fixture adapter only.",
+    };
+    const fixtureOtherClassified = classifyUnsupportedBlogDestination({
+      destination: fixtureOtherBlog,
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    if (
+      fixtureOtherClassified.allowed &&
+      fixtureOtherClassified.code === "OTHER_BLOG_FIXTURE_ALLOWED" &&
+      honestyOk(fixtureOtherClassified, AdapterLiveStatus.FIXTURE)
+    ) {
+      details.push(
+        "classifyUnsupportedBlogDestination OTHER_BLOG fixture adapter → OTHER_BLOG_FIXTURE_ALLOWED (FIXTURE≠live claim)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `Fixture OTHER_BLOG classifier unexpected: ${JSON.stringify(fixtureOtherClassified)}`,
+      );
+    }
+
     const drafted = createDestinationVariant({
       variantId: `var-other-${operationId.slice(-8)}`,
       campaignId: approved.article.campaignId,
@@ -299,11 +365,32 @@ export async function proofUnsupportedBlogDestinationNoFakePublication(
     }
 
     // Secondary: ChatGPT Hub full-blog format rejected (no invented blog-post API).
+    const hub = chatgptHubDestination();
+    const hubClassified = classifyUnsupportedBlogDestination({
+      destination: hub,
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    if (
+      !hubClassified.allowed &&
+      hubClassified.code === "HUB_FULL_BLOG_UNSUPPORTED" &&
+      hubClassified.outcome === PublicationOutcome.UNSUPPORTED_ACTION &&
+      honestyOk(hubClassified)
+    ) {
+      details.push(
+        "classifyUnsupportedBlogDestination Hub FULL_ARTICLE → HUB_FULL_BLOG_UNSUPPORTED",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `Hub classifier unexpected: ${JSON.stringify(hubClassified)}`,
+      );
+    }
+
     const hubBlog = createDestinationVariant({
       variantId: `var-hub-${operationId.slice(-8)}`,
       campaignId: approved.article.campaignId,
       article: approved.article,
-      destination: chatgptHubDestination(),
+      destination: hub,
       format: ContentFormat.FULL_ARTICLE,
       fixtureOnly: true,
       createdAtIso: nowIso,
@@ -317,20 +404,8 @@ export async function proofUnsupportedBlogDestinationNoFakePublication(
       details.push(`ChatGPT Hub full-blog unexpectedly ${JSON.stringify(hubBlog)}`);
     }
 
-    // Positive control: owned CMS draft still allowed.
-    const cmsDraft = createDestinationVariant({
-      variantId: `var-cms-${operationId.slice(-8)}`,
-      campaignId: approved.article.campaignId,
-      article: createCanonicalArticle({
-        articleId: `art-cms-ctrl-${operationId.slice(-6)}`,
-        campaignId: approved.article.campaignId,
-        authorId: approved.article.authorId,
-        title: "CMS positive control",
-        body: "Owned site fixture draft remains allowed.",
-        citedFactIds: ["fixture-fact-hours"],
-        fixtureOnly: true,
-        createdAtIso: nowIso,
-      }),
+    // Prefer-live claim refused while adapters remain NOT_WIRED.
+    const liveClaim = classifyUnsupportedBlogDestination({
       destination: {
         destinationId: "dest-cms",
         kind: DestinationKind.CMS,
@@ -345,6 +420,67 @@ export async function proofUnsupportedBlogDestinationNoFakePublication(
         notes: "Canonical owned-site article; fixture release + read-back only.",
       },
       format: ContentFormat.FULL_ARTICLE,
+      preferLive: true,
+    });
+    if (
+      !liveClaim.allowed &&
+      liveClaim.code === "LIVE_WIRE_CLAIM_REFUSED" &&
+      honestyOk(liveClaim)
+    ) {
+      details.push(
+        "preferLive claim refused — LIVE_WIRE_CLAIM_REFUSED with honesty fields",
+      );
+    } else {
+      passed = false;
+      details.push(`preferLive unexpected: ${JSON.stringify(liveClaim)}`);
+    }
+
+    // Positive control: owned CMS draft still allowed.
+    const cmsDest: DestinationRegistryEntry = {
+      destinationId: "dest-cms",
+      kind: DestinationKind.CMS,
+      displayName: "Owned CMS / blog",
+      channelId: "owned-site",
+      allowedFormats: [ContentFormat.FULL_ARTICLE],
+      maxBodyChars: null,
+      requiresCanonicalUrl: false,
+      liveWiring: AdapterLiveStatus.NOT_WIRED,
+      fixtureAvailable: true,
+      locationRelevant: false,
+      notes: "Canonical owned-site article; fixture release + read-back only.",
+    };
+    const cmsClassified = classifyUnsupportedBlogDestination({
+      destination: cmsDest,
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    if (
+      cmsClassified.allowed &&
+      cmsClassified.code === "OWNED_CMS_ALLOWED" &&
+      honestyOk(cmsClassified)
+    ) {
+      details.push(
+        "Positive control: classifyUnsupportedBlogDestination OWNED_CMS_ALLOWED",
+      );
+    } else {
+      passed = false;
+      details.push(`CMS classifier unexpected: ${JSON.stringify(cmsClassified)}`);
+    }
+
+    const cmsDraft = createDestinationVariant({
+      variantId: `var-cms-${operationId.slice(-8)}`,
+      campaignId: approved.article.campaignId,
+      article: createCanonicalArticle({
+        articleId: `art-cms-ctrl-${operationId.slice(-6)}`,
+        campaignId: approved.article.campaignId,
+        authorId: approved.article.authorId,
+        title: "CMS positive control",
+        body: "Owned site fixture draft remains allowed.",
+        citedFactIds: ["fixture-fact-hours"],
+        fixtureOnly: true,
+        createdAtIso: nowIso,
+      }),
+      destination: cmsDest,
+      format: ContentFormat.FULL_ARTICLE,
       fixtureOnly: true,
       createdAtIso: nowIso,
     });
@@ -355,8 +491,143 @@ export async function proofUnsupportedBlogDestinationNoFakePublication(
       details.push(`CMS positive control failed: ${JSON.stringify(cmsDraft)}`);
     }
 
+    // G11: DST spring gap schedule + unsupported OTHER_BLOG — no fake publish.
+    const springGap = classifyUnsupportedBlogScheduledPublish({
+      destination: otherBlog,
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-03-09",
+      hour: 2,
+      minute: 30,
+    });
+    if (
+      !springGap.scheduleOk &&
+      springGap.scheduleCode === "NONEXISTENT_LOCAL_TIME" &&
+      !springGap.allowed &&
+      springGap.inventPublishedVerified === false &&
+      springGap.publish.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED" &&
+      springGap.externalEffects === "NONE" &&
+      springGap.chatgptAdsAccess === "ACCESS_BLOCKED"
+    ) {
+      details.push(
+        "DST spring-gap schedule → NONEXISTENT_LOCAL_TIME; OTHER_BLOG still UNSUPPORTED; never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`DST spring schedule unexpected: ${JSON.stringify(springGap)}`);
+    }
+
+    // G11: fall-back resolves once; unsupported OTHER_BLOG still refused.
+    const fallBack = classifyUnsupportedBlogScheduledPublish({
+      destination: otherBlog,
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-11-02",
+      hour: 1,
+      minute: 30,
+    });
+    if (
+      fallBack.scheduleOk &&
+      fallBack.scheduleCode === "SCHEDULE_RESOLVED" &&
+      fallBack.ambiguous === true &&
+      !fallBack.allowed &&
+      fallBack.publish.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED" &&
+      fallBack.inventPublishedVerified === false
+    ) {
+      details.push(
+        "DST fall-back schedule resolves once; OTHER_BLOG still UNSUPPORTED — never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`DST fall schedule unexpected: ${JSON.stringify(fallBack)}`);
+    }
+
+    // G15: whitespace-padded destinationId refuses even with fixture adapter.
+    const paddedId = classifyUnsupportedBlogDestination({
+      destination: {
+        ...otherBlog,
+        destinationId: "  dest-other-blog-unsupported  ",
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      },
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    if (
+      !paddedId.allowed &&
+      paddedId.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED" &&
+      paddedId.inventPublishedVerified === false &&
+      paddedId.externalEffects === "NONE"
+    ) {
+      details.push(
+        "Whitespace-padded destinationId → OTHER_BLOG_NO_ADAPTER_UNSUPPORTED; never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`Padded destinationId unexpected: ${JSON.stringify(paddedId)}`);
+    }
+
+    // G15: fixture OTHER_BLOG with disallowed format still refuses.
+    const formatMismatch = classifyUnsupportedBlogDestination({
+      destination: {
+        ...otherBlog,
+        destinationId: "dest-other-blog-format-mismatch",
+        fixtureAvailable: true,
+        allowedFormats: [ContentFormat.PROFILE_FACT],
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      },
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    if (
+      !formatMismatch.allowed &&
+      formatMismatch.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED" &&
+      formatMismatch.outcome === PublicationOutcome.UNSUPPORTED_ACTION &&
+      formatMismatch.inventPublishedVerified === false
+    ) {
+      details.push(
+        "Fixture OTHER_BLOG format mismatch → OTHER_BLOG_NO_ADAPTER_UNSUPPORTED; never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`Format mismatch unexpected: ${JSON.stringify(formatMismatch)}`);
+    }
+
+    // G15: fall-back schedule resolves but preferLive still refused.
+    const preferLiveSchedule = classifyUnsupportedBlogScheduledPublish({
+      destination: {
+        ...otherBlog,
+        destinationId: "dest-other-blog-fixture-schedule",
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      },
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-11-02",
+      hour: 1,
+      minute: 30,
+      preferLive: true,
+    });
+    if (
+      preferLiveSchedule.scheduleOk &&
+      preferLiveSchedule.scheduleCode === "SCHEDULE_RESOLVED" &&
+      preferLiveSchedule.ambiguous === true &&
+      !preferLiveSchedule.allowed &&
+      preferLiveSchedule.publish.code === "LIVE_WIRE_CLAIM_REFUSED" &&
+      preferLiveSchedule.inventPublishedVerified === false &&
+      preferLiveSchedule.externalEffects === "NONE" &&
+      preferLiveSchedule.chatgptAdsAccess === "ACCESS_BLOCKED"
+    ) {
+      details.push(
+        "DST fall-back + preferLive → LIVE_WIRE_CLAIM_REFUSED; schedule resolve does not unlock live invent",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `preferLive schedule unexpected: ${JSON.stringify(preferLiveSchedule)}`,
+      );
+    }
+
     details.push(
-      "liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED",
+      "liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED deepen=G15 hillclimb=classify+preferLive+Hub+DST-schedule+paddedId+formatMismatch",
     );
     return finish(passed, details, nowIso, operationId);
   } finally {
