@@ -103,6 +103,23 @@ describe("contract: T-X027 unknown usage cancel holds residual", () => {
     }
     const scrubbed = normalizeBudgetHolds(corrupt);
     expect(scrubbed.heldReservations).toEqual({ "req-hold": 600 });
+
+    const reuse = reserveBudget(
+      {
+        ...createBudgetAccount({
+          dayKey: "2026-11-22",
+          currency: "USD",
+          limitMinor: 1000,
+        }),
+        heldReservations: { "ghost-reuse": 0 },
+      },
+      "ghost-reuse",
+      50,
+    );
+    expect(reuse.ok).toBe(true);
+    if (!reuse.ok) return;
+    expect(reuse.account.openReservations["ghost-reuse"]).toBe(50);
+    expect(reuse.account.heldReservations["ghost-reuse"]).toBeUndefined();
   });
 
   it("maps T-X027 only to UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL", () => {

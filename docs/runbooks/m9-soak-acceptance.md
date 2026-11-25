@@ -179,7 +179,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X060** maps only to `CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM` (whitespace-normalized match; blank → INVALID_DIMENSION; heterogeneous refuse silent sum; live NOT_WIRED; not live VERIFIED).
 
-**T-X027** maps only to `UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL` (hold residual ≠ zero; map-sum heldMinor + replay/settle normalize; scrub 0/NaN ghost holds; liveBudgetProvider NOT_WIRED; not live VERIFIED).
+**T-X027** maps only to `UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL` (hold residual ≠ zero; map-sum heldMinor; scrub 0/NaN ghost holds on reserve/cancel/normalize; liveBudgetProvider NOT_WIRED; not live VERIFIED).
 
 **T-X028** maps only to `ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE`.
 

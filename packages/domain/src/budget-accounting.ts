@@ -188,11 +188,11 @@ export function reserveBudget(
   if (amountMinor <= 0) {
     throw new Error("Reservation amount must be positive");
   }
-  const held = account.heldReservations ?? {};
+  // Ghost 0/NaN held keys are not honest holds — do not block id reuse (T-X027).
   if (
     reservationId in account.openReservations ||
     reservationId in account.settledReservations ||
-    reservationId in held
+    isUnknownUsageHold(account, reservationId)
   ) {
     throw new Error(`Reservation ${reservationId} already exists`);
   }
@@ -200,7 +200,7 @@ export function reserveBudget(
   if (amountMinor > avail) {
     return { ok: false, code: "BUDGET_EXHAUSTED", availableMinor: avail };
   }
-  // Normalize heldMinor so stale field cannot leak on reserve path (T-X027).
+  // Normalize/scrub so stale heldMinor and ghost keys cannot leak (T-X027).
   return {
     ok: true,
     reservationId,
@@ -378,15 +378,11 @@ export function cancelBudgetReservation(
 
   if (!usage.known) {
     // Hold residual — available budget does not increase; cost is not zero.
-    // Recompute heldMinor from map (stale field must not under-count holds).
+    // Normalize/scrub so sibling ghost keys cannot linger (T-X027).
     const nextHeld = {
       ...account.heldReservations,
       [reservationId]: reservedMinor,
     };
-    const nextHeldMinor = heldReservationsTotalMinor({
-      ...account,
-      heldReservations: nextHeld,
-    });
     return {
       ok: true,
       reservationId,
@@ -396,13 +392,12 @@ export function cancelBudgetReservation(
       actualMinor: null,
       costKind: "unknown_hold",
       replayed: false,
-      account: {
+      account: normalizeBudgetHolds({
         ...account,
         reservedMinor: account.reservedMinor - reservedMinor,
-        heldMinor: nextHeldMinor,
         openReservations: remainingOpen,
         heldReservations: nextHeld,
-      },
+      }),
       ...honesty,
     };
   }
@@ -420,7 +415,7 @@ export function cancelBudgetReservation(
     actualMinor: usage.actualMinor,
     costKind: usage.actualMinor === 0 ? "zero_release" : "actual",
     replayed: false,
-    account: {
+    account: normalizeBudgetHolds({
       ...account,
       reservedMinor: account.reservedMinor - reservedMinor,
       settledMinor: account.settledMinor + usage.actualMinor,
@@ -432,7 +427,7 @@ export function cancelBudgetReservation(
           actualMinor: usage.actualMinor,
         },
       },
-    },
+    }),
     ...honesty,
   };
 }

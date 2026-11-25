@@ -633,4 +633,38 @@ describe("budget accounting", () => {
     expect(scrubbed.heldReservations).toEqual({ "r-keep": 250 });
     expect(listUnknownUsageHoldIds(scrubbed)).toEqual(["r-keep"]);
   });
+
+  it("reserve reuses ghost-zero id; open cancel scrubs sibling ghosts", () => {
+    const withGhost = {
+      ...account(),
+      heldMinor: 0,
+      heldReservations: { "ghost-reuse": 0 as number },
+    };
+    const reserved = reserveBudget(withGhost, "ghost-reuse", 120);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    expect(reserved.account.openReservations["ghost-reuse"]).toBe(120);
+    expect(reserved.account.heldReservations["ghost-reuse"]).toBeUndefined();
+    expect(reserved.account.heldMinor).toBe(0);
+
+    const siblingGhost = {
+      ...reserved.account,
+      heldReservations: {
+        ...reserved.account.heldReservations,
+        "ghost-sib": 0,
+        "ghost-nan": Number.NaN,
+      },
+    };
+    const cancelled = cancelBudgetReservation(siblingGhost, "ghost-reuse", {
+      known: false,
+    });
+    expect(cancelled.ok).toBe(true);
+    if (!cancelled.ok) return;
+    expect(cancelled.costKind).toBe("unknown_hold");
+    expect(cancelled.account.heldReservations).toEqual({ "ghost-reuse": 120 });
+    expect(cancelled.account.heldMinor).toBe(120);
+    expect(listUnknownUsageHoldIds(cancelled.account)).toEqual([
+      "ghost-reuse",
+    ]);
+  });
 });

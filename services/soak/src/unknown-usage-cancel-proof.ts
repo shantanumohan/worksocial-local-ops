@@ -476,6 +476,53 @@ export function proofUnknownUsageCancelHoldsResidual(
     );
   }
 
+  // 16. Reserve may reuse ghost-zero id; open cancel scrubs sibling ghosts.
+  const ghostReuseBase = {
+    ...createBudgetAccount({
+      dayKey: "2026-11-22",
+      currency: "USD",
+      limitMinor: 1000,
+    }),
+    heldReservations: { "ghost-reuse": 0 },
+  };
+  const reuse = reserveBudget(ghostReuseBase, "ghost-reuse", 90);
+  if (!reuse.ok) {
+    passed = false;
+    details.push(`Ghost-reuse reserve failed: ${JSON.stringify(reuse)}`);
+    return finish(passed, details, nowIso);
+  }
+  const withSibGhost = {
+    ...reuse.account,
+    heldReservations: {
+      ...reuse.account.heldReservations,
+      "ghost-sib": 0,
+      "ghost-nan": Number.NaN,
+    },
+  };
+  const reuseHold = cancelBudgetReservation(withSibGhost, "ghost-reuse", {
+    known: false,
+  });
+  if (
+    reuse.account.heldReservations["ghost-reuse"] === undefined &&
+    reuse.account.openReservations["ghost-reuse"] === 90 &&
+    reuseHold.ok &&
+    reuseHold.costKind === "unknown_hold" &&
+    reuseHold.account.heldMinor === 90 &&
+    reuseHold.account.heldReservations["ghost-sib"] === undefined &&
+    reuseHold.account.heldReservations["ghost-nan"] === undefined &&
+    listUnknownUsageHoldIds(reuseHold.account).includes("ghost-reuse") &&
+    reuseHold.liveBudgetProviderWiring === BUDGET_LIVE_PROVIDER_WIRING
+  ) {
+    details.push(
+      "Reserve reuses ghost-zero id; open unknown-cancel scrubs sibling ghosts → held=90 NOT_WIRED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Ghost-reuse/scrub-open-cancel failed reuse=${JSON.stringify(reuse)} hold=${JSON.stringify(reuseHold)}`,
+    );
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false externalEffects=NONE liveBudgetProviderWiring=NOT_WIRED ACCEPTED≠VERIFIED",
   );
