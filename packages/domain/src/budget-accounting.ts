@@ -123,15 +123,35 @@ export function isUnknownUsageHold(
 }
 
 /**
- * Sync `heldMinor` to the hold-map sum. Map is source of truth — stale
- * heldMinor must not invent available capacity (T-X027).
+ * Sync `heldMinor` to the hold-map sum and drop non-positive / non-finite
+ * map keys. Map is source of truth — stale heldMinor must not invent
+ * available capacity; ghost keys must not look like holds (T-X027).
  */
 export function normalizeBudgetHolds(account: BudgetAccount): BudgetAccount {
-  const heldMinor = heldReservationsTotalMinor(account);
-  if (account.heldMinor === heldMinor) {
+  const raw = account.heldReservations ?? {};
+  const scrubbed: Record<string, number> = {};
+  let mapChanged = false;
+  for (const [id, amount] of Object.entries(raw)) {
+    const n = Number(amount);
+    if (Number.isFinite(n) && n > 0) {
+      scrubbed[id] = n;
+      if (n !== amount) mapChanged = true;
+    } else {
+      mapChanged = true;
+    }
+  }
+  const heldMinor = heldReservationsTotalMinor({
+    ...account,
+    heldReservations: scrubbed,
+  });
+  if (!mapChanged && account.heldMinor === heldMinor) {
     return account;
   }
-  return { ...account, heldMinor };
+  return {
+    ...account,
+    heldMinor,
+    heldReservations: mapChanged ? scrubbed : account.heldReservations,
+  };
 }
 
 /** Reservation ids currently held for unknown usage (T-X027). */
@@ -272,8 +292,9 @@ export function cancelBudgetReservation(
   // Already held for unknown usage: unknown replay is idempotent; known
   // usage may resolve the hold after provider reconcile (never invent zero
   // at the initial unknown cancel — that path is above via open reservation).
-  const priorHeld = account.heldReservations[reservationId];
-  if (priorHeld !== undefined) {
+  // Gate on positive-finite hold — ghost 0/NaN keys must not stamp unknown_hold.
+  if (isUnknownUsageHold(account, reservationId)) {
+    const priorHeld = Number(account.heldReservations[reservationId]);
     if (!usage.known) {
       // Idempotent replay — return normalized account so stale heldMinor
       // cannot leak through (T-X027 map is source of truth).
@@ -296,10 +317,6 @@ export function cancelBudgetReservation(
     const { [reservationId]: _held, ...remainingHeld } = account.heldReservations;
     // Recompute heldMinor from remaining map — never field±delta (stale
     // heldMinor=0 must not yield negative heldMinor after resolve).
-    const nextHeldMinor = heldReservationsTotalMinor({
-      ...account,
-      heldReservations: remainingHeld,
-    });
     return {
       ok: true,
       reservationId,
@@ -309,9 +326,8 @@ export function cancelBudgetReservation(
       actualMinor: usage.actualMinor,
       costKind: usage.actualMinor === 0 ? "zero_release" : "actual",
       replayed: false,
-      account: {
+      account: normalizeBudgetHolds({
         ...account,
-        heldMinor: nextHeldMinor,
         settledMinor: account.settledMinor + usage.actualMinor,
         heldReservations: remainingHeld,
         settledReservations: {
@@ -321,7 +337,7 @@ export function cancelBudgetReservation(
             actualMinor: usage.actualMinor,
           },
         },
-      },
+      }),
       ...honesty,
     };
   }
@@ -340,7 +356,7 @@ export function cancelBudgetReservation(
     }
     return {
       ok: true,
-      account,
+      account: normalizeBudgetHolds(account),
       reservationId,
       reservedMinor: priorSettled.reservedMinor,
       heldMinor: 0,

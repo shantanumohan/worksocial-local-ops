@@ -187,6 +187,45 @@ describe("evaluation store (memory/file)", () => {
     }
   });
 
+  it("parseBudget drops 0/NaN ghost hold keys (T-X027)", async () => {
+    const evalDir = join(dir, "evaluation");
+    mkdirSync(evalDir, { recursive: true });
+    const statePath = join(evalDir, "evaluation-state.json");
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        version: 1,
+        updatedAtIso: now,
+        connections: [],
+        suites: [],
+        runs: [],
+        budget: {
+          dayKey: "2026-11-21",
+          currency: "USD",
+          limitMinor: 1000,
+          reservedMinor: 0,
+          settledMinor: 0,
+          heldMinor: 0,
+          openReservations: {},
+          heldReservations: {
+            "real-hold": 200,
+            "ghost-zero": 0,
+            "ghost-nan": null,
+          },
+          settledReservations: {},
+        },
+        liveEvalWiring: "NOT_WIRED",
+        chatgptAdsWiring: "NOT_WIRED",
+      }),
+      "utf8",
+    );
+    const store = createFileEvaluationStore(dir);
+    const state = await store.read();
+    expect(state.budget.heldReservations).toEqual({ "real-hold": 200 });
+    expect(state.budget.heldMinor).toBe(200);
+    expect(availableBudgetMinor(state.budget)).toBe(800);
+  });
+
   it("openEvaluationStore forceMemory ignores DATABASE_URL", () => {
     const opened = openEvaluationStore({
       stateDir: dir,

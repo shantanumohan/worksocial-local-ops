@@ -443,6 +443,39 @@ export function proofUnknownUsageCancelHoldsResidual(
     );
   }
 
+  // 15. Ghost-zero cancel must not stamp unknown_hold; normalize scrubs ghosts.
+  const ghostAccount = {
+    ...cancelled.account,
+    heldMinor: 999,
+    heldReservations: {
+      ...cancelled.account.heldReservations,
+      "ghost-zero": 0,
+      "ghost-nan": Number.NaN,
+    },
+  };
+  const ghostCancel = cancelBudgetReservation(ghostAccount, "ghost-zero", {
+    known: false,
+  });
+  const scrubbed = normalizeBudgetHolds(ghostAccount);
+  if (
+    !ghostCancel.ok &&
+    ghostCancel.code === "UNKNOWN_RESERVATION" &&
+    scrubbed.heldMinor === 700 &&
+    scrubbed.heldReservations["ghost-zero"] === undefined &&
+    scrubbed.heldReservations["ghost-nan"] === undefined &&
+    isUnknownUsageHold(scrubbed, "req-cancel-unknown") &&
+    listUnknownUsageHoldIds(scrubbed).includes("req-cancel-unknown")
+  ) {
+    details.push(
+      "Ghost-zero cancel → UNKNOWN_RESERVATION (not zero hold); normalizeBudgetHolds scrubs corrupt keys",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Ghost scrub failed cancel=${JSON.stringify(ghostCancel)} scrub=${JSON.stringify(scrubbed.heldReservations)}`,
+    );
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false externalEffects=NONE liveBudgetProviderWiring=NOT_WIRED ACCEPTED≠VERIFIED",
   );

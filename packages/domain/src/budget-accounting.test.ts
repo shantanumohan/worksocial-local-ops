@@ -602,4 +602,35 @@ describe("budget accounting", () => {
     expect(settled.account.heldMinor).toBe(300);
     expect(availableBudgetMinor(settled.account)).toBe(660);
   });
+
+  it("ghost-zero cancel is UNKNOWN_RESERVATION; normalize scrubs corrupt keys", () => {
+    const reserved = reserveBudget(account(), "r-keep", 250);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-keep", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const corrupt = {
+      ...held.account,
+      heldMinor: 999,
+      heldReservations: {
+        ...held.account.heldReservations,
+        "ghost-zero": 0,
+        "ghost-nan": Number.NaN,
+      },
+    };
+    const ghostCancel = cancelBudgetReservation(corrupt, "ghost-zero", {
+      known: false,
+    });
+    expect(ghostCancel.ok).toBe(false);
+    if (ghostCancel.ok) return;
+    expect(ghostCancel.code).toBe("UNKNOWN_RESERVATION");
+
+    const scrubbed = normalizeBudgetHolds(corrupt);
+    expect(scrubbed.heldMinor).toBe(250);
+    expect(scrubbed.heldReservations).toEqual({ "r-keep": 250 });
+    expect(listUnknownUsageHoldIds(scrubbed)).toEqual(["r-keep"]);
+  });
 });

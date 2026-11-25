@@ -252,17 +252,19 @@ function parseBudget(raw: unknown, fallbackIso: string): BudgetAccount {
   const empty = emptyEvaluationState(fallbackIso).budget;
   if (!raw || typeof raw !== "object") return empty;
   const row = raw as Record<string, unknown>;
-  const heldReservations =
+  const rawHeld =
     typeof row.heldReservations === "object" && row.heldReservations !== null
       ? (row.heldReservations as Record<string, number>)
       : {};
   // T-X027: heldMinor must match map sum. Legacy files may omit heldMinor or
   // leave it stale — derive from per-reservation holds (never invent zero).
-  // Non-finite / non-positive map values do not invent capacity.
+  // Drop non-finite / non-positive ghost keys so cancel cannot stamp zero holds.
+  const heldReservations: Record<string, number> = {};
   let heldMinor = 0;
-  for (const amount of Object.values(heldReservations)) {
+  for (const [id, amount] of Object.entries(rawHeld)) {
     const n = Number(amount);
     if (Number.isFinite(n) && n > 0) {
+      heldReservations[id] = n;
       heldMinor += n;
     }
   }

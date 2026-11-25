@@ -94,6 +94,15 @@ describe("contract: T-X027 unknown usage cancel holds residual", () => {
     };
     expect(isUnknownUsageHold(corrupt, "ghost-zero")).toBe(false);
     expect(listUnknownUsageHoldIds(corrupt)).toEqual(["req-hold"]);
+    const ghostCancel = cancelBudgetReservation(corrupt, "ghost-zero", {
+      known: false,
+    });
+    expect(ghostCancel.ok).toBe(false);
+    if (!ghostCancel.ok) {
+      expect(ghostCancel.code).toBe("UNKNOWN_RESERVATION");
+    }
+    const scrubbed = normalizeBudgetHolds(corrupt);
+    expect(scrubbed.heldReservations).toEqual({ "req-hold": 600 });
   });
 
   it("maps T-X027 only to UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL", () => {
