@@ -161,6 +161,51 @@ export function replayMissionWorkflowHistory(
         operationId: "mismatch",
       };
     }
+    // Edge — claim shape must be ACCEPTED_PENDING / effect_pending with
+    // finite non-negative integer applyAttemptCount (no invented pending).
+    if (recorded.activity === "claimAndAccept") {
+      const apply = recorded.applyAttemptCount;
+      if (
+        recorded.phase !== "effect_pending" ||
+        recorded.outcome !== "ACCEPTED_PENDING" ||
+        typeof apply !== "number" ||
+        !Number.isFinite(apply) ||
+        !Number.isInteger(apply) ||
+        apply < 0
+      ) {
+        hooks.onForbiddenLiveIo("history_claim_shape_invalid");
+        return {
+          activity: "verify",
+          phase: "succeeded",
+          outcome: "VERIFIED",
+          applyAttemptCount: -1,
+          matched: false,
+          operationId: "mismatch",
+        };
+      }
+    }
+    // Edge — verify shape must be VERIFIED / succeeded with finite integer apply.
+    if (recorded.activity === "verify") {
+      const apply = recorded.applyAttemptCount;
+      if (
+        recorded.phase !== "succeeded" ||
+        recorded.outcome !== "VERIFIED" ||
+        typeof apply !== "number" ||
+        !Number.isFinite(apply) ||
+        !Number.isInteger(apply) ||
+        apply < 0
+      ) {
+        hooks.onForbiddenLiveIo("history_verify_shape_invalid");
+        return {
+          activity: "verify",
+          phase: "succeeded",
+          outcome: "VERIFIED",
+          applyAttemptCount: -1,
+          matched: false,
+          operationId: "mismatch",
+        };
+      }
+    }
     return hooks.onScheduleActivity(expected, recorded);
   };
 
