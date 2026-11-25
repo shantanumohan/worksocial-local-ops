@@ -21,6 +21,8 @@
  * still active; VERIFIED_CLAIM_REFUSED; post-commit mark phase fence.
  * Hillclimb O7: EXTERNAL_EFFECTS_CLAIM_REFUSED; LIVE_PROVIDER_SUCCESS refuse;
  * self-reclaim-before-foreign side path; recoverEffectPending unfenced honesty.
+ * Hillclimb O8: ChatGPT Ads ACCESS_BLOCKED / soft-skip trio gates;
+ * active-holder operation mismatch distinct from fenceCause.
  */
 
 import { randomUUID } from "node:crypto";
@@ -34,8 +36,10 @@ import {
   createMemoryMissionWorkflowStore,
   evaluateFixtureTemporalWiring,
   evaluateOldFenceAcceptanceLabel,
+  evaluateOldFenceChatgptAdsAccess,
   evaluateOldFenceExternalEffects,
   evaluateOldFenceLiveProviderSuccess,
+  evaluateOldFenceSoftSkipAdsCase,
   formatOldFenceHonestyDetail,
   isMissionLeaseActive,
   OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
@@ -76,6 +80,12 @@ export async function proofOldFenceAfterReassignment(
   const effectsRefuse = evaluateOldFenceExternalEffects("LIVE_APPLY");
   const liveProviderNoneOk = evaluateOldFenceLiveProviderSuccess(false);
   const liveProviderRefuse = evaluateOldFenceLiveProviderSuccess(true);
+  const adsBlockedOk = evaluateOldFenceChatgptAdsAccess("ACCESS_BLOCKED");
+  const adsAccessRefuse = evaluateOldFenceChatgptAdsAccess("LIVE");
+  const softSkipF07 = evaluateOldFenceSoftSkipAdsCase("T-F07");
+  const softSkipUs013 = evaluateOldFenceSoftSkipAdsCase("T-US-013");
+  const softSkipUs014 = evaluateOldFenceSoftSkipAdsCase("T-US-014");
+  const softSkipSelf = evaluateOldFenceSoftSkipAdsCase("T-X024");
   if (
     liveTemporalRefuse.code === "LIVE_TEMPORAL_CLAIM_REFUSED" &&
     liveTemporalRefuse.allowed === false &&
@@ -119,6 +129,22 @@ export async function proofOldFenceAfterReassignment(
   } else {
     passed = false;
     details.push("Fixture externalEffects/liveProvider honesty gate unexpected");
+  }
+  if (
+    adsBlockedOk.code === "CHATGPT_ADS_ACCESS_BLOCKED_OK" &&
+    adsAccessRefuse.code === "CHATGPT_ADS_ACCESS_CLAIM_REFUSED" &&
+    softSkipF07.code === "SOFT_SKIP_ADS_OK" &&
+    softSkipUs013.code === "SOFT_SKIP_ADS_OK" &&
+    softSkipUs014.code === "SOFT_SKIP_ADS_OK" &&
+    softSkipSelf.code === "NOT_SOFT_SKIP_ADS_CASE" &&
+    OLD_FENCE_HONESTY.chatgptAdsAccess === "ACCESS_BLOCKED"
+  ) {
+    details.push(
+      "CHATGPT_ADS_ACCESS_CLAIM_REFUSED for non-blocked; SOFT_SKIP_ADS_OK for T-F07,T-US-013,T-US-014; T-X024 NOT_SOFT_SKIP_ADS_CASE",
+    );
+  } else {
+    passed = false;
+    details.push("Fixture ChatGPT Ads soft-skip honesty gate unexpected");
   }
 
   const enqueued = await store.enqueue({
@@ -447,6 +473,35 @@ export async function proofOldFenceAfterReassignment(
   if (!postBindOldMarkDenied) {
     passed = false;
     details.push("Post-bind old A mark unexpectedly succeeded");
+  }
+
+  // 5a. Active holder B with wrong operationId → Operation mismatch (≠ fenceCause).
+  let opMismatchDenied = false;
+  try {
+    await store.markEffectPending({
+      workflowId,
+      operationId: `${operationId}-mismatch`,
+      holder: workerB,
+      nowIso: tAfterExpiry,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (
+      /Operation mismatch/i.test(msg) &&
+      parseMissionLeaseFenceCause(msg) === null
+    ) {
+      opMismatchDenied = true;
+      details.push(
+        `Active holder operation mismatch (not fenceCause): ${msg}`,
+      );
+    } else {
+      passed = false;
+      details.push(`Active holder operation mismatch unexpected: ${msg}`);
+    }
+  }
+  if (!opMismatchDenied) {
+    passed = false;
+    details.push("Active holder operation mismatch unexpectedly succeeded");
   }
 
   try {

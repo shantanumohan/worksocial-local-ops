@@ -382,7 +382,70 @@ export function evaluateOldFenceLiveProviderSuccess(
   };
 }
 
-/** Stable honesty detail line for soak evidence (O4–O7). */
+/**
+ * Fixture ChatGPT Ads access gate (T-X024 O8).
+ * Only `ACCESS_BLOCKED` is allowed — any open/live claim → CHATGPT_ADS_ACCESS_CLAIM_REFUSED.
+ */
+export type OldFenceChatgptAdsAccessDecision = {
+  allowed: boolean;
+  code:
+    | "CHATGPT_ADS_ACCESS_BLOCKED_OK"
+    | "CHATGPT_ADS_ACCESS_CLAIM_REFUSED";
+  access: string;
+  chatgptAdsAccess: typeof OLD_FENCE_HONESTY.chatgptAdsAccess;
+  softSkipAdsCases: typeof OLD_FENCE_HONESTY.softSkipAdsCases;
+};
+
+export function evaluateOldFenceChatgptAdsAccess(
+  access: string,
+): OldFenceChatgptAdsAccessDecision {
+  const honesty = {
+    chatgptAdsAccess: OLD_FENCE_HONESTY.chatgptAdsAccess,
+    softSkipAdsCases: OLD_FENCE_HONESTY.softSkipAdsCases,
+  } as const;
+  if (access === "ACCESS_BLOCKED") {
+    return {
+      allowed: true,
+      code: "CHATGPT_ADS_ACCESS_BLOCKED_OK",
+      access,
+      ...honesty,
+    };
+  }
+  return {
+    allowed: false,
+    code: "CHATGPT_ADS_ACCESS_CLAIM_REFUSED",
+    access,
+    ...honesty,
+  };
+}
+
+/**
+ * Soft-skip Ads case gate (T-X024 O8).
+ * T-F07 / T-US-013 / T-US-014 → SOFT_SKIP_ADS_OK (do not build).
+ * Any other caseId → NOT_SOFT_SKIP_ADS_CASE.
+ */
+export type OldFenceSoftSkipAdsCaseDecision = {
+  softSkip: boolean;
+  code: "SOFT_SKIP_ADS_OK" | "NOT_SOFT_SKIP_ADS_CASE";
+  caseId: string;
+  softSkipAdsCases: typeof OLD_FENCE_HONESTY.softSkipAdsCases;
+};
+
+export function evaluateOldFenceSoftSkipAdsCase(
+  caseId: string,
+): OldFenceSoftSkipAdsCaseDecision {
+  const softSkip = (
+    OLD_FENCE_HONESTY.softSkipAdsCases as readonly string[]
+  ).includes(caseId);
+  return {
+    softSkip,
+    code: softSkip ? "SOFT_SKIP_ADS_OK" : "NOT_SOFT_SKIP_ADS_CASE",
+    caseId,
+    softSkipAdsCases: OLD_FENCE_HONESTY.softSkipAdsCases,
+  };
+}
+
+/** Stable honesty detail line for soak evidence (O4–O8). */
 export function formatOldFenceHonestyDetail(
   relatedCaseIds: readonly string[] = OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
 ): string {

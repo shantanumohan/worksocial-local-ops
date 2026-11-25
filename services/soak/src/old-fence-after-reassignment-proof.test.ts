@@ -29,11 +29,17 @@ describe("proofOldFenceAfterReassignment (T-X024)", () => {
     expect(joined).toMatch(/ACCEPTED_OK only/);
     expect(joined).toMatch(/EXTERNAL_EFFECTS_CLAIM_REFUSED/);
     expect(joined).toMatch(/LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED/);
+    expect(joined).toMatch(/CHATGPT_ADS_ACCESS_CLAIM_REFUSED/);
+    expect(joined).toMatch(/SOFT_SKIP_ADS_OK for T-F07,T-US-013,T-US-014/);
+    expect(joined).toMatch(/NOT_SOFT_SKIP_ADS_CASE/);
     expect(joined).toMatch(/Worker A self-renew while live ok/);
     expect(joined).toMatch(
       /Self-reclaim after own expiry before foreign ok attemptCount=2/,
     );
     expect(joined).toMatch(/UNFENCED_RECOVERY_NOT_FENCE_PROOF/);
+    expect(joined).toMatch(
+      /Active holder operation mismatch \(not fenceCause\)/,
+    );
     expect(joined).toMatch(
       /1ms-before-expiry boundary: fenceCause=active isMissionLeaseActive=true/,
     );

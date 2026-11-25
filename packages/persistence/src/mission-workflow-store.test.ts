@@ -9,8 +9,10 @@ import {
   createMemoryMissionWorkflowStore,
   evaluateFixtureTemporalWiring,
   evaluateOldFenceAcceptanceLabel,
+  evaluateOldFenceChatgptAdsAccess,
   evaluateOldFenceExternalEffects,
   evaluateOldFenceLiveProviderSuccess,
+  evaluateOldFenceSoftSkipAdsCase,
   formatOldFenceHonestyDetail,
   isMissionLeaseActive,
   missionLeaseFenceFailedMessage,
@@ -190,6 +192,21 @@ describe("classifyMissionLeaseFence / isMissionLeaseActive (T-X024)", () => {
     );
     expect(evaluateOldFenceLiveProviderSuccess(true).code).toBe(
       "LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED",
+    );
+  });
+
+  it("keeps ChatGPT Ads ACCESS_BLOCKED and soft-skips Ads trio only", () => {
+    expect(evaluateOldFenceChatgptAdsAccess("ACCESS_BLOCKED").code).toBe(
+      "CHATGPT_ADS_ACCESS_BLOCKED_OK",
+    );
+    expect(evaluateOldFenceChatgptAdsAccess("LIVE").code).toBe(
+      "CHATGPT_ADS_ACCESS_CLAIM_REFUSED",
+    );
+    expect(evaluateOldFenceSoftSkipAdsCase("T-F07").code).toBe("SOFT_SKIP_ADS_OK");
+    expect(evaluateOldFenceSoftSkipAdsCase("T-US-013").softSkip).toBe(true);
+    expect(evaluateOldFenceSoftSkipAdsCase("T-US-014").softSkip).toBe(true);
+    expect(evaluateOldFenceSoftSkipAdsCase("T-X024").code).toBe(
+      "NOT_SOFT_SKIP_ADS_CASE",
     );
   });
 });
