@@ -465,6 +465,48 @@ export async function proofIdempotencyKeyPayloadMismatch(
   );
   if (!midNulConflict) passed = false;
 
+  const softHyphenConflict = await expectMismatchConflict(
+    "acceptPending soft-hyphen-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}\u00ad`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!softHyphenConflict) passed = false;
+
+  const lrmConflict = await expectMismatchConflict(
+    "acceptPending LRM-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `\u200e${digestA}`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!lrmConflict) passed = false;
+
+  const rlmConflict = await expectMismatchConflict(
+    "acceptPending RLM-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}\u200f`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!rlmConflict) passed = false;
+
   // Concurrent multi-alt digest-B barrage — all Conflict; no orphans; applyCount=1.
   const barrageN = 8;
   const barrageIds = Array.from(
@@ -981,6 +1023,45 @@ export async function proofIdempotencyKeyPayloadMismatch(
     );
   }
 
+  // Post-FAILED concurrent digest-B race — all Conflict; FAILED + applyCount=1 retained.
+  const failedRaceN = 6;
+  const failedRaceResults = await Promise.all(
+    Array.from({ length: failedRaceN }, () =>
+      accept(svc, {
+        operationId: wrongVerifyOp,
+        bizKey: wrongVerifyBiz,
+        digest: digestB,
+        idem: `${idem}-wrong-verify-race`,
+        nowIso,
+      })
+        .then(() => ({ ok: false as const }))
+        .catch((err) => ({
+          ok: isIdempotencyPayloadMismatchError(err) as boolean,
+        })),
+    ),
+  );
+  const failedRaceAllConflict = failedRaceResults.every((r) => r.ok);
+  const afterFailedRace = await svc.stores.fakeProvider.getByBusinessKey(
+    wrongVerifyBiz,
+  );
+  const decisionAfterFailedRace = await svc.stores.decisions.get(wrongVerifyOp);
+  let failedRaceOk =
+    failedRaceAllConflict &&
+    afterFailedRace?.applyCount === 1 &&
+    afterFailedRace.payloadDigest === digestA &&
+    afterFailedRace.remoteRef === wrongVerifyAccept.provider.remoteRef &&
+    decisionAfterFailedRace?.outcome === "FAILED";
+  if (!failedRaceOk) {
+    passed = false;
+    details.push(
+      `Post-FAILED concurrent digest-B race failed: conflicts=${failedRaceResults.filter((r) => r.ok).length}/${failedRaceN} applyCount=${afterFailedRace?.applyCount} outcome=${decisionAfterFailedRace?.outcome}`,
+    );
+  } else {
+    details.push(
+      `Post-FAILED concurrent ${failedRaceN}-way digest-B race → all Conflict; applyCount=1; outcome stays FAILED`,
+    );
+  }
+
   // Explicit effects.countApplyAttempts agrees with provider applyCount=1.
   const applyAttemptsMain = await svc.stores.effects.countApplyAttempts(
     operationId,
@@ -1001,6 +1082,30 @@ export async function proofIdempotencyKeyPayloadMismatch(
   } else {
     details.push(
       "effects.countApplyAttempts=1 for main + FAILED ops; provider applyCount=1 (no second remote effect)",
+    );
+  }
+
+  // Final integrity snapshot: main remoteRef + digests never rematched to B.
+  const finalMain = await svc.stores.fakeProvider.getByBusinessKey(bizKey);
+  const finalDecision = await svc.stores.decisions.get(operationId);
+  const finalEffect = await svc.stores.effects.get(operationId);
+  const finalReceipts = await svc.stores.receipts.listForOperation(operationId);
+  let finalIntegrityOk =
+    finalMain?.applyCount === 1 &&
+    finalMain.payloadDigest === digestA &&
+    finalMain.remoteRef === first.provider.remoteRef &&
+    finalDecision?.payloadDigest === digestA &&
+    finalDecision.outcome === "VERIFIED" &&
+    finalEffect?.payloadDigest === digestA &&
+    !finalReceipts.some((r) => r.observedDigest === digestB);
+  if (!finalIntegrityOk) {
+    passed = false;
+    details.push(
+      `Final integrity snapshot failed: applyCount=${finalMain?.applyCount} digest=${finalMain?.payloadDigest} remoteRefMatch=${finalMain?.remoteRef === first.provider.remoteRef} outcome=${finalDecision?.outcome} receiptB=${finalReceipts.some((r) => r.observedDigest === digestB)}`,
+    );
+  } else {
+    details.push(
+      "Final integrity snapshot: remoteRef unchanged; decision/effect/provider digest A; outcome VERIFIED; no digest-B receipts",
     );
   }
 
@@ -1038,6 +1143,9 @@ export async function proofIdempotencyKeyPayloadMismatch(
       crOnlyConflict &&
       psConflict &&
       midNulConflict &&
+      softHyphenConflict &&
+      lrmConflict &&
+      rlmConflict &&
       barrageAllConflict &&
       !barrageOrphans &&
       sameOpRaceAllConflict &&
@@ -1051,7 +1159,9 @@ export async function proofIdempotencyKeyPayloadMismatch(
       verifiedSameAllOk &&
       wrongVerifyOk &&
       postFailedOk &&
-      applyAttemptsOk,
+      failedRaceOk &&
+      applyAttemptsOk &&
+      finalIntegrityOk,
     details,
     applyAttemptCount: afterVerified?.applyCount ?? first.applyAttemptCount,
     operationId,

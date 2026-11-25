@@ -144,11 +144,42 @@ describe("proofIdempotencyKeyPayloadMismatch (T-X022)", () => {
       ),
     ).toBe(true);
     expect(
+      proof.details.some((d) =>
+        d.includes("soft-hyphen-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("LRM-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("RLM-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
       proof.details.some(
         (d) =>
           d.includes("same-operationId digest-B race") &&
           d.includes("all Conflict") &&
           d.includes("applyCount=1"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Post-FAILED concurrent") &&
+          d.includes("all Conflict") &&
+          d.includes("FAILED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Final integrity snapshot") &&
+          d.includes("remoteRef unchanged") &&
+          d.includes("digest A"),
       ),
     ).toBe(true);
     expect(
