@@ -2298,7 +2298,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x041",
-      "evidenceNote": "Fixture incomparable-trend-indices-rejected proof only — not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture ACCEPTED via INCOMPARABLE_TREND_INDICES_REJECTED only — case/whitespace-normalized unit/source; blank group / zero baseline / non-trend / missing value rejected; ACCEPTED ≠ sandbox/prod VERIFIED; externalEffects=NONE."
     },
     {
       "id": "T-X042",

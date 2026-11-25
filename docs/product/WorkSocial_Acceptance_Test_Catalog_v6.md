@@ -971,7 +971,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 **T-X030** is fixture ACCEPTED only via the rate-limit bounded backoff preserves deadline proof (`RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE`) — respect Retry-After / capped exponential backoff, stop before the job deadline, surface delayed/unavailable data, never spawn agents to bypass quotas. Not sandbox/prod VERIFIED.
 **T-X040** is fixture ACCEPTED only via the low-sample trend spike insufficient-evidence proof (`LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE`) — research task only; `assessTrendSpikeEvidence` / `evaluateTrendSpikePublishHonesty` never set `allowPublishTrigger` from this gate alone (including MEASURED_SPIKE); sampleSize=0 treated as missing not low-present; `liveTrendProviderWiring=NOT_WIRED`, `liveProviderSuccessClaimed=false`, `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 
-**T-X041** is fixture ACCEPTED only via the incomparable trend indices reject/label proof (`INCOMPARABLE_TREND_INDICES_REJECTED`) — never divides arbitrary indices from different data extracts; mismatched or missing comparability group/unit/source is rejected and labeled. Not sandbox/prod VERIFIED.
+**T-X041** is fixture ACCEPTED only via the incomparable trend indices reject/label proof (`INCOMPARABLE_TREND_INDICES_REJECTED`) — never divides arbitrary indices from different data extracts; mismatched or missing comparability group/unit/source is rejected and labeled; unit/source matching is trim + case-insensitive; whitespace-only group, zero baseline, non-trend, and missing value are rejected; live wiring stays **NOT_WIRED**; `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 
 **T-X042** is fixture ACCEPTED only via the schema differs from page gate fails proof (`SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS`) — schema.org property values absent from visible page content yield `SCHEMA_VISIBLE_MISMATCH` / PARTIAL; persisted SEO `approveProposal`/`releasePilotPage` reject with no gateway decision. Not sandbox/prod VERIFIED.
 
@@ -1069,7 +1069,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X038 | Grounding configured but unused | No grounded pass *(fixture ACCEPTED)* |
 | T-X039 | Provider error vs answer failure | Separate denominators *(fixture ACCEPTED — metric denominators honest; liveMetricsWiring NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X040 | Low-sample trend spike | Insufficient evidence *(fixture ACCEPTED — low-sample trend spike insufficient-evidence proof; not sandbox/prod VERIFIED)* |
-| T-X041 | Incomparable trend indices | Reject/label *(fixture ACCEPTED — incomparable trend indices reject/label proof; not sandbox/prod VERIFIED)* |
+| T-X041 | Incomparable trend indices | Reject/label *(fixture ACCEPTED — incomparable trend indices reject/label proof; case-normalized unit/source; not sandbox/prod VERIFIED)* |
 | T-X042 | Schema differs from page | Gate fails *(fixture ACCEPTED — schema differs from page gate fails proof; not sandbox/prod VERIFIED)* |
 | T-X043 | Optimization breaks CTA | Journey regression fails *(fixture ACCEPTED — optimization breaks CTA journey fails proof; href-only / empty-steps / NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X044 | Unlicensed venue media | Publish blocked *(fixture ACCEPTED — unlicensed venue media publish-blocked proof; not sandbox/prod VERIFIED)* |

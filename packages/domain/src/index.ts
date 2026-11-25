@@ -398,6 +398,7 @@ export {
   createInstructionIngestion,
   registerDemandObservation,
   compareTrendIndices,
+  normalizeTrendComparabilityToken,
   buildFactVerificationOutcome,
   applyFactVerification,
   listFactOutcomesForLearning,

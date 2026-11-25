@@ -1233,7 +1233,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-009 fixture ACCEPTED via connect_gsc_schedule_watermark only — not live VERIFIED",
       "T-US-011 fixture ACCEPTED via connect_google_ads_analyze_only only — not live VERIFIED",
       "T-US-045 fixture ACCEPTED via semantic_search_no_result_eval_comparison only — not live VERIFIED",
-      "T-X041 fixture ACCEPTED via incomparable_trend_indices_rejected only — not live VERIFIED",
+      "T-X041 fixture ACCEPTED via incomparable_trend_indices_rejected only — case-normalized unit/source; not live VERIFIED",
       "T-X042 fixture ACCEPTED via schema_differs_from_page_gate_fails only — not live VERIFIED",
       "T-X046 fixture ACCEPTED via unsupported_blog_destination_no_fake_publication only — not live VERIFIED",
       "T-X047 fixture ACCEPTED via layout_specific_capacity_mismatch_filters only — every hop: parse layout+people → layout-capacity filter vs marketing max → fit admit → ambiguous clarify → boardroom/theatre edges; distinct from hard-search/semantic-no-result; live NOT_WIRED — not live VERIFIED",

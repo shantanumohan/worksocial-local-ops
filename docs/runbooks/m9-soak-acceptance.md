@@ -198,6 +198,8 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X040** maps only to `LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE` (research-only; never a publish trigger from this gate; live trend provider NOT_WIRED; externalEffects NONE; not live VERIFIED).
 
+**T-X041** maps only to `INCOMPARABLE_TREND_INDICES_REJECTED` (case/whitespace-normalized unit/source; blank group / zero baseline / non-trend / missing value rejected; not live VERIFIED).
+
 **T-US-012** maps only to `GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED` (Google Ads TEST vs PRODUCTION credential/customer separation; LIVE NOT_WIRED; not live VERIFIED).
 
 **T-X034** maps only to `ADS_TEST_PROJECT_PRODUCTION_BLOCKED` (test-only/sandbox Ads project cannot bind production/LIVE; bind call count 0; distinct from T-US-012; not live VERIFIED).
