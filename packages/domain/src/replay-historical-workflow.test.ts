@@ -416,4 +416,61 @@ describe("replay historical workflow (T-X013)", () => {
     expect(result.outcome).toBe("VERIFIED");
     expect(summary().forbiddenLiveIo).toBe(0);
   });
+
+  it("fails closed on invalid enqueue phase (edge)", () => {
+    const history = sampleHistory();
+    const enq = history.events[0];
+    if (enq && enq.activity === "enqueue") {
+      (enq as { phase: string }).phase = "succeeded";
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_enqueue_phase_invalid"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed when claim providerCreated is false (edge)", () => {
+    const history = sampleHistory();
+    const claim = history.events[1];
+    if (claim && claim.activity === "claimAndAccept") {
+      claim.providerCreated = false;
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_claim_shape_invalid"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed on zero terminal applyAttemptCount (edge)", () => {
+    const history = sampleHistory();
+    const claim = history.events[1];
+    const verify = history.events[2];
+    if (claim && claim.activity === "claimAndAccept") {
+      claim.applyAttemptCount = 0;
+    }
+    if (verify && verify.activity === "verify") {
+      verify.applyAttemptCount = 0;
+    }
+    history.terminal = {
+      outcome: "VERIFIED",
+      applyAttemptCount: 0,
+      operationId: "op-1",
+    };
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_terminal_missing_or_incomplete"),
+      ),
+    ).toBe(true);
+  });
 });
