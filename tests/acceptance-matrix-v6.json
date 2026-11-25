@@ -2330,7 +2330,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x043",
-      "evidenceNote": "Fixture optimization-breaks-CTA journey-fails proof only — not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture ACCEPTED via OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS only — href-only CTA break blocked; empty steps → JOURNEY_STEPS_REQUIRED; live NOT_WIRED. ACCEPTED ≠ sandbox/prod VERIFIED. externalEffects=NONE."
     },
     {
       "id": "T-X044",

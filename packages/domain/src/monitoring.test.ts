@@ -236,6 +236,10 @@ describe("monitoring domain", () => {
     expect(healthy.allowed).toBe(true);
     expect(healthy.code).toBeNull();
     expect(healthy.journeyVerdict).toBe(ProbeVerdict.SUCCESS);
+    expect(healthy.passedStepIds).toEqual(["cta-visible", "tour-href"]);
+    expect(healthy.liveProviderWiring).toBe("NOT_WIRED");
+    expect(healthy.externalEffects).toBe("NONE");
+    expect(healthy.fixtureOnly).toBe(true);
     const broken = evaluateOptimizationCtaJourneyGate({
       optimizedHtml: '<a href="/broken-cta">Learn more</a><form id="contact"><button>Submit</button></form>',
       journeySteps: ctaSteps,
@@ -244,6 +248,66 @@ describe("monitoring domain", () => {
     expect(broken.code).toBe("JOURNEY_REGRESSION_FAILED");
     expect(broken.journeyVerdict).toBe(ProbeVerdict.FAILURE);
     expect(broken.failedStepDetails.length).toBeGreaterThan(0);
+    expect(broken.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("blocks href-only CTA break even when link text still matches (T-X043)", () => {
+    const ctaSteps = [
+      { stepId: "cta-visible", target: "Book a tour", action: "assert_text" as const, expected: "Book a tour" },
+      { stepId: "tour-href", target: 'href="/tour"', action: "assert_href" as const, expected: "/tour" },
+    ];
+    const hrefOnly = evaluateOptimizationCtaJourneyGate({
+      optimizedHtml:
+        '<a href="/pricing">Book a tour</a><form id="contact"><button>Submit</button></form>',
+      journeySteps: ctaSteps,
+    });
+    expect(hrefOnly.allowed).toBe(false);
+    expect(hrefOnly.code).toBe("JOURNEY_REGRESSION_FAILED");
+    expect(hrefOnly.passedStepIds).toContain("cta-visible");
+    expect(hrefOnly.failedStepDetails.some((d) => /tour-href/i.test(d))).toBe(
+      true,
+    );
+  });
+
+  it("refuses empty journey steps (no silent allow)", () => {
+    const empty = evaluateOptimizationCtaJourneyGate({
+      optimizedHtml: '<a href="/tour">Book a tour</a>',
+      journeySteps: [],
+    });
+    expect(empty.allowed).toBe(false);
+    expect(empty.code).toBe("JOURNEY_STEPS_REQUIRED");
+    expect(empty.journeyVerdict).toBeNull();
+    expect(empty.externalEffects).toBe("NONE");
+  });
+
+  it("blocks decoy footer /tour when Book a tour CTA points elsewhere (T-X043)", () => {
+    const ctaSteps = [
+      {
+        stepId: "cta-visible",
+        target: "Book a tour",
+        action: "assert_text" as const,
+        expected: "Book a tour",
+      },
+      {
+        stepId: "tour-href",
+        target: 'href="/tour"',
+        action: "assert_href" as const,
+        expected: "/tour",
+      },
+    ];
+    const decoy = evaluateOptimizationCtaJourneyGate({
+      optimizedHtml: `
+        <a href="/pricing">Book a tour</a>
+        <footer><a href="/tour">Visit our locations</a></footer>
+        <form id="contact"><button>Submit</button></form>
+      `,
+      journeySteps: ctaSteps,
+    });
+    expect(decoy.allowed).toBe(false);
+    expect(decoy.code).toBe("JOURNEY_REGRESSION_FAILED");
+    expect(
+      decoy.failedStepDetails.some((d) => /same <a>|decoy/i.test(d)),
+    ).toBe(true);
   });
 
   it("builds fixtureOnly learning outcomes for SUCCESS/FAILURE only", () => {

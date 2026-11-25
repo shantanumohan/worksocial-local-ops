@@ -523,44 +523,140 @@ export function evaluateDomJourneyFixture(input: {
   };
 }
 
+export type OptimizationCtaJourneyGateCode =
+  | "JOURNEY_REGRESSION_FAILED"
+  | "JOURNEY_STEPS_REQUIRED";
+
+export type OptimizationCtaJourneyGateResult = {
+  allowed: boolean;
+  code: OptimizationCtaJourneyGateCode | null;
+  reasons: string[];
+  journeyVerdict: ProbeVerdictValue | null;
+  failedStepDetails: string[];
+  passedStepIds: string[];
+  liveProviderWiring: "NOT_WIRED";
+  externalEffects: "NONE";
+  fixtureOnly: true;
+};
+
+const optimizationCtaHonesty = {
+  liveProviderWiring: "NOT_WIRED" as const,
+  externalEffects: "NONE" as const,
+  fixtureOnly: true as const,
+};
+
+/**
+ * True when some `<a>` element carries both the CTA text and the expected href
+ * on the same anchor (decoy footer `/tour` links must not mask a broken CTA).
+ */
+export function ctaTextAndHrefBoundOnSameAnchor(
+  html: string,
+  ctaText: string,
+  href: string,
+): boolean {
+  const anchorRe = /<a\b[^>]*>[\s\S]*?<\/a>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = anchorRe.exec(html)) !== null) {
+    const tag = match[0]!;
+    const openEnd = tag.indexOf(">");
+    if (openEnd < 0) continue;
+    const open = tag.slice(0, openEnd + 1);
+    const inner = tag.slice(openEnd + 1, tag.lastIndexOf("</"));
+    const hrefOk =
+      open.includes(`href="${href}"`) || open.includes(`href='${href}'`);
+    if (hrefOk && inner.includes(ctaText)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function extractCtaBinding(steps: readonly DomJourneyStep[]): {
+  text: string;
+  href: string;
+} | null {
+  const textStep = steps.find((s) => s.action === "assert_text");
+  const hrefStep = steps.find((s) => s.action === "assert_href");
+  if (!textStep || !hrefStep) return null;
+  const text = textStep.expected ?? textStep.target;
+  const href = hrefStep.expected ?? "";
+  if (!text || !href) return null;
+  return { text, href };
+}
+
 /**
  * Gate an SEO/content optimization against CTA journey regression (T-X043).
  * When post-optimization HTML fails the CTA journey, release is blocked —
- * journey regression fails; never silently allowed.
+ * journey regression fails; never silently allowed. Empty journey step lists
+ * are refused (no silent allow). When text+href steps are present, both must
+ * bind on the same `<a>` (decoy links cannot mask a broken CTA). Live NOT_WIRED.
  */
 export function evaluateOptimizationCtaJourneyGate(input: {
   /** Rendered page HTML after the proposed optimization. */
   optimizedHtml: string;
   journeySteps: readonly DomJourneyStep[];
-}): {
-  allowed: boolean;
-  code: "JOURNEY_REGRESSION_FAILED" | null;
-  reasons: string[];
-  journeyVerdict: ProbeVerdictValue;
-  failedStepDetails: string[];
-} {
+}): OptimizationCtaJourneyGateResult {
+  if (input.journeySteps.length === 0) {
+    return {
+      allowed: false,
+      code: "JOURNEY_STEPS_REQUIRED",
+      reasons: [
+        "CTA journey steps required — refuse silent allow with empty probe (T-X043)",
+      ],
+      journeyVerdict: null,
+      failedStepDetails: [],
+      passedStepIds: [],
+      ...optimizationCtaHonesty,
+    };
+  }
+
   const journey = evaluateDomJourneyFixture({
     html: input.optimizedHtml,
     steps: input.journeySteps,
   });
-  if (journey.verdict === ProbeVerdict.SUCCESS) {
+  const binding = extractCtaBinding(input.journeySteps);
+  const boundOk =
+    binding == null ||
+    ctaTextAndHrefBoundOnSameAnchor(
+      input.optimizedHtml,
+      binding.text,
+      binding.href,
+    );
+
+  if (journey.verdict === ProbeVerdict.SUCCESS && boundOk) {
     return {
       allowed: true,
       code: null,
       reasons: ["CTA journey regression passed"],
       journeyVerdict: journey.verdict,
       failedStepDetails: [],
+      passedStepIds: [...journey.passedStepIds],
+      ...optimizationCtaHonesty,
     };
   }
+
+  const decoyDetails =
+    journey.verdict === ProbeVerdict.SUCCESS && !boundOk && binding
+      ? [
+          `CTA text "${binding.text}" not bound to href="${binding.href}" on the same <a> (decoy link cannot mask broken CTA)`,
+        ]
+      : [];
+
   return {
     allowed: false,
     code: "JOURNEY_REGRESSION_FAILED",
     reasons: [
       "Optimization breaks CTA — journey regression failed",
       ...journey.details,
+      ...decoyDetails,
     ],
-    journeyVerdict: journey.verdict,
-    failedStepDetails: [...journey.details],
+    journeyVerdict:
+      journey.verdict === ProbeVerdict.SUCCESS
+        ? ProbeVerdict.FAILURE
+        : journey.verdict,
+    failedStepDetails: [...journey.details, ...decoyDetails],
+    passedStepIds: [...journey.passedStepIds],
+    ...optimizationCtaHonesty,
   };
 }
 

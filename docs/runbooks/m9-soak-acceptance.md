@@ -165,7 +165,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X004** maps only to `DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED`.
 
-**T-X043** maps only to `OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS` (SEO/content optimization that breaks CTA → journey regression fails / release blocked; not live VERIFIED).
+**T-X043** maps only to `OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS` (SEO/content optimization that breaks CTA → journey regression fails / release blocked; href-only break blocked; empty journey steps → JOURNEY_STEPS_REQUIRED; live NOT_WIRED; not live VERIFIED).
 
 **T-X054** maps only to `REPLY_SENT_CRM_RECONCILES_NO_RESEND` (reply SENT/DELIVERED + CRM fail → CRM reconcile; no outbound resend; inbound/QUEUED gated; fixtureOnly required; liveCrmWiring NOT_WIRED; live VERIFIED / live CRM wire / non-fixture → LIVE_CRM_CLAIM_REFUSED; externalEffects NONE; not live VERIFIED).
 
