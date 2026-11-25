@@ -133,7 +133,22 @@ describe("proofReplayHistoricalNoRepeatIo", () => {
     ).toBe(true);
     expect(
       proof.details.some((d) =>
-        d.includes("Zero terminal applyAttemptCount → FAILED"),
+        d.includes("Zero claim/terminal applyAttemptCount → FAILED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Zero verify applyAttemptCount → FAILED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Infinity claim applyAttemptCount → FAILED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Wrong claim outcome → FAILED"),
       ),
     ).toBe(true);
     expect(

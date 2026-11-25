@@ -174,7 +174,7 @@ export function replayMissionWorkflowHistory(
       };
     }
     // Edge — claim shape must be ACCEPTED_PENDING / effect_pending with
-    // finite non-negative integer applyAttemptCount and providerCreated
+    // finite integer applyAttemptCount ≥ 1 and providerCreated
     // (no invented pending without a recorded provider create).
     if (recorded.activity === "claimAndAccept") {
       const apply = recorded.applyAttemptCount;
@@ -185,7 +185,7 @@ export function replayMissionWorkflowHistory(
         typeof apply !== "number" ||
         !Number.isFinite(apply) ||
         !Number.isInteger(apply) ||
-        apply < 0
+        apply < 1
       ) {
         hooks.onForbiddenLiveIo("history_claim_shape_invalid");
         return {
@@ -198,7 +198,7 @@ export function replayMissionWorkflowHistory(
         };
       }
     }
-    // Edge — verify shape must be VERIFIED / succeeded with finite integer apply.
+    // Edge — verify shape must be VERIFIED / succeeded with finite integer apply ≥ 1.
     if (recorded.activity === "verify") {
       const apply = recorded.applyAttemptCount;
       if (
@@ -207,7 +207,7 @@ export function replayMissionWorkflowHistory(
         typeof apply !== "number" ||
         !Number.isFinite(apply) ||
         !Number.isInteger(apply) ||
-        apply < 0
+        apply < 1
       ) {
         hooks.onForbiddenLiveIo("history_verify_shape_invalid");
         return {
