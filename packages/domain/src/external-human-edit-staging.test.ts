@@ -566,6 +566,74 @@ describe("external human edit during staging (T-X025)", () => {
     expect(noConflictClear.code).toBe("NO_CONFLICT");
   });
 
+  it("whitespace pageId/revision throw; live verify literal true refuses; MATCHED then claimed refuse", () => {
+    const t0 = "2026-11-22T21:00:00.000Z";
+    expect(() =>
+      createExternalEditStagingState({
+        pageId: "   ",
+        fields: baseFields,
+        revision: "rev-1",
+        nowIso: t0,
+      }),
+    ).toThrow(/pageId is required/);
+    expect(() =>
+      createExternalEditStagingState({
+        pageId: "page-ws",
+        fields: baseFields,
+        revision: "   ",
+        nowIso: t0,
+      }),
+    ).toThrow(/revision is required/);
+
+    let state = createExternalEditStagingState({
+      pageId: "page-n8",
+      fields: baseFields,
+      revision: "rev-1",
+      nowIso: t0,
+    });
+    const staged = stageAgentChangeAgainstBase(state, {
+      changeId: "chg-n8",
+      expectedBaseRevision: "rev-1",
+      desiredFields: agentDesired,
+      nowIso: t0,
+    });
+    expect(staged.ok).toBe(true);
+    if (!staged.ok) return;
+    state = staged.state;
+
+    const liveLiteralVerify = independentVerifyStagingChange(state, {
+      nowIso: "2026-11-22T21:01:00.000Z",
+      requestLiveTemporalWiring: "true",
+    });
+    expect(liveLiteralVerify.matched).toBe(false);
+    expect(liveLiteralVerify.refusedLiveTemporalWiring).toBe(true);
+    expect(liveLiteralVerify.verifiedClaimed).toBe(false);
+    expect(liveLiteralVerify.details.join(" ")).toMatch(/LIVE_TEMPORAL_WIRING_NOT_WIRED/);
+    expect(liveLiteralVerify.liveTemporalWiring).toBe("NOT_WIRED");
+
+    const aliasLiveVerify = independentVerifyStagingChange(state, {
+      nowIso: "2026-11-22T21:02:00.000Z",
+      requestLiveTemporalWiring: "TRUE",
+    });
+    expect(aliasLiveVerify.refusedLiveTemporalWiring).toBeUndefined();
+    expect(aliasLiveVerify.outcome).toBe(StagingVerifyOutcome.MATCHED_PENDING_ONLY);
+    expect(aliasLiveVerify.verifiedClaimed).toBe(false);
+
+    const matched = independentVerifyStagingChange(state, {
+      nowIso: "2026-11-22T21:03:00.000Z",
+    });
+    expect(matched.outcome).toBe(StagingVerifyOutcome.MATCHED_PENDING_ONLY);
+    const claimedAfterMatch = refuseClaimedVerifiedStaging(matched.state, {
+      claimedVerified: true,
+      nowIso: "2026-11-22T21:04:00.000Z",
+    });
+    expect(claimedAfterMatch.code).toBe("CLAIMED_VERIFIED_REFUSED");
+    expect(claimedAfterMatch.verifiedClaimed).toBe(false);
+    expect(claimedAfterMatch.reason).toMatch(/fixture ACCEPTED only, not VERIFIED/);
+    expect(claimedAfterMatch.liveTemporalWiring).toBe("NOT_WIRED");
+    expect(claimedAfterMatch.externalEffects).toBe("NONE");
+  });
+
   it("convergent human edit retains CONFLICT; verify refuses claimedVerified", () => {
     const t0 = "2026-11-22T20:00:00.000Z";
     let state = createExternalEditStagingState({

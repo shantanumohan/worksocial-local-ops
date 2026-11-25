@@ -553,6 +553,87 @@ export function proofExternalHumanEditConflictRetained(
     );
   }
 
+  // N8: whitespace create throw; live verify literal "true"; MATCHED then claimed refuse.
+  let whitespaceThrows = false;
+  try {
+    createExternalEditStagingState({
+      pageId: "   ",
+      fields: baseFields,
+      revision: "rev-1",
+      nowIso,
+    });
+  } catch (e) {
+    whitespaceThrows = /pageId is required/.test(
+      e instanceof Error ? e.message : String(e),
+    );
+  }
+  let revisionThrows = false;
+  try {
+    createExternalEditStagingState({
+      pageId: "page-n8",
+      fields: baseFields,
+      revision: "   ",
+      nowIso,
+    });
+  } catch (e) {
+    revisionThrows = /revision is required/.test(
+      e instanceof Error ? e.message : String(e),
+    );
+  }
+  let n8State = createExternalEditStagingState({
+    pageId: `page-n8-${randomUUID().slice(0, 8)}`,
+    fields: baseFields,
+    revision: "rev-1",
+    nowIso,
+  });
+  const n8Staged = stageAgentChangeAgainstBase(n8State, {
+    changeId: `chg-n8-${randomUUID().slice(0, 8)}`,
+    expectedBaseRevision: "rev-1",
+    desiredFields: agentDesired,
+    nowIso,
+  });
+  if (n8Staged.ok) {
+    n8State = n8Staged.state;
+  }
+  const liveLiteralVerify = independentVerifyStagingChange(n8State, {
+    nowIso: tHuman,
+    requestLiveTemporalWiring: "true",
+  });
+  const aliasLiveVerify = independentVerifyStagingChange(n8State, {
+    nowIso: tHuman,
+    requestLiveTemporalWiring: "TRUE",
+  });
+  const matchedN8 = independentVerifyStagingChange(n8State, { nowIso: tHuman });
+  const claimedAfterMatch = refuseClaimedVerifiedStaging(matchedN8.state, {
+    claimedVerified: true,
+    nowIso: tHuman,
+  });
+  if (
+    whitespaceThrows &&
+    revisionThrows &&
+    n8Staged.ok &&
+    liveLiteralVerify.refusedLiveTemporalWiring === true &&
+    liveLiteralVerify.verifiedClaimed === false &&
+    liveLiteralVerify.details.some((d) => /LIVE_TEMPORAL_WIRING_NOT_WIRED/.test(d)) &&
+    aliasLiveVerify.refusedLiveTemporalWiring === undefined &&
+    aliasLiveVerify.outcome === StagingVerifyOutcome.MATCHED_PENDING_ONLY &&
+    matchedN8.outcome === StagingVerifyOutcome.MATCHED_PENDING_ONLY &&
+    claimedAfterMatch.code === "CLAIMED_VERIFIED_REFUSED" &&
+    claimedAfterMatch.verifiedClaimed === false &&
+    /fixture ACCEPTED only, not VERIFIED/.test(claimedAfterMatch.reason) &&
+    claimedAfterMatch.liveTemporalWiring === "NOT_WIRED" &&
+    claimedAfterMatch.externalEffects === "NONE"
+  ) {
+    details.push(
+      "N8 whitespace pageId/revision throw; live verify literal true → NOT_WIRED; alias TRUE invents no live refuse; MATCHED then CLAIMED_VERIFIED_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `N8 edges unexpectedly ws=${whitespaceThrows}/${revisionThrows} live=${liveLiteralVerify.refusedLiveTemporalWiring} alias=${aliasLiveVerify.outcome} claimed=${claimedAfterMatch.code}`,
+    );
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE",
   );

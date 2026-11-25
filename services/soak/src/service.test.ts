@@ -318,6 +318,13 @@ describe("soak service (M9)", () => {
       ),
     ).toBe(true);
     expect(
+      extHumanEditProof?.details.some((d) =>
+        /N8 whitespace pageId\/revision throw|live verify literal true → NOT_WIRED/.test(
+          d,
+        ),
+      ),
+    ).toBe(true);
+    expect(
       result.proofs.some(
         (p) => p.kind === SoakProofKind.OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS,
       ),
