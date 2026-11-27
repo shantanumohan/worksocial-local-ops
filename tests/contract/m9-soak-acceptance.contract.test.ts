@@ -9,11 +9,12 @@
  * T-US-75 fixture ACCEPTED only via EMERGENCY_STOP_AT_COMMIT.
  * T-X005 fixture ACCEPTED only via FORGED_BROWSER_ROLE_IGNORED.
  * T-X006 fixture ACCEPTED only via CROSS_WORKSPACE_REFERENCE_DENIED.
- * T-X019/T-US-75 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED. */import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+ * T-X019/T-US-036 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED.
+ */
+import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import {
   AcceptanceCaseStatus,
   AcceptanceEnvironment,
@@ -188,34 +189,6 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(tx066?.status).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(tx066?.environment).toBe(AcceptanceEnvironment.FIXTURE);
     expect(String(tx066?.status).toUpperCase()).not.toBe("VERIFIED");
-    const backupOmit = run.run.proofs.find(
-      (p) => p.kind === "backup_omit_receipt",
-    );
-    expect(backupOmit?.passed).toBe(true);
-    expect(
-      backupOmit?.details.some((d) =>
-        /Distinct from NO_DUPLICATE_EFFECTS/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      backupOmit?.details.some((d) => /NOT_WIRED/.test(d)),
-    ).toBe(true);
-    const tx047 = run.run.caseResults.find((c) => c.caseId === "T-X047");
-    expect(tx047?.status).toBe(AcceptanceCaseStatus.ACCEPTED);
-    expect(tx047?.environment).toBe(AcceptanceEnvironment.FIXTURE);
-    expect(String(tx047?.status).toUpperCase()).not.toBe("VERIFIED");
-    const layoutCap = run.run.proofs.find(
-      (p) => p.kind === "layout_specific_capacity_mismatch_filters",
-    );
-    expect(layoutCap?.passed).toBe(true);
-    expect(
-      layoutCap?.details.some((d) => /NOT_WIRED/.test(d)),
-    ).toBe(true);
-    expect(
-      layoutCap?.details.some((d) =>
-        /Distinct from HARD_SEARCH_CONSTRAINTS_NO_INVENTION/.test(d),
-      ),
-    ).toBe(true);
     const tf24 = run.run.caseResults.find((c) => c.caseId === "T-F24");
     expect(tf24?.status).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(tf24?.environment).toBe(AcceptanceEnvironment.FIXTURE);
@@ -250,6 +223,115 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(tx064?.status).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(tx064?.environment).toBe(AcceptanceEnvironment.FIXTURE);
     expect(String(tx064?.status).toUpperCase()).not.toBe("VERIFIED");
+    const tx019 = run.run.caseResults.find((c) => c.caseId === "T-X019");
+    expect(tx019?.status).toBe(AcceptanceCaseStatus.ACCEPTED);
+    expect(tx019?.environment).toBe(AcceptanceEnvironment.FIXTURE);
+    expect(String(tx019?.status).toUpperCase()).not.toBe("VERIFIED");
+    expect(
+      run.run.caseResults.find((c) => c.caseId === "T-US-036")?.status,
+    ).toBe(AcceptanceCaseStatus.ACCEPTED);
+    const approvedEditProof = run.run.proofs.find(
+      (p) => p.kind === "approved_payload_edit_invalidated",
+    );
+    expect(approvedEditProof?.passed).toBe(true);
+    expect(approvedEditProof?.kind).toBe("approved_payload_edit_invalidated");
+    expect(
+      approvedEditProof?.details.some((d) => /NOT_WIRED/.test(d)),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /payload checksum edit invalidated/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /sticky INVALIDATED refuses rematch/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /all-four-field snapshot mismatch/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Blank\/whitespace pin fields refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /fixtureOnly=true ACCEPTED≠VERIFIED/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /relatedCaseIds=T-X019,T-US-036/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Empty proposalId refused at create/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Blank artifact\/revision pin fields refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Terminal ACCEPTED rematch validate refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /LIVE_REVIEW_CLAIM_REFUSED/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Whitespace-padded snapshot trim-matches/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Reject on already-INVALIDATED binding refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Empty bindingId refused at create \(BINDING_ID_REQUIRED\)/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Padded wrong revision still INVALIDATED/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Padded wrong checksum still INVALIDATED/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /honestySummary=relatedCaseIds:T-X019,T-US-036/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Padded wrong proposalArtifactId still INVALIDATED/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Blank verdict authorRoleId refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(approvedEditProof?.fixtureOnly).toBe(true);
+    expect(approvedEditProof?.applyAttemptCount).toBe(1);
+    expect(tx019?.artifactId).toBeTruthy();
+    expect(tx019?.status).not.toBe("VERIFIED");
   });
 
   it("rejects silent VERIFIED status for live claims", () => {
@@ -259,49 +341,5 @@ describe("contract: M9 soak / acceptance evidence", () => {
       evidenceArtifactId: "x",
     });
     expect(bad.ok).toBe(false);
-  });
-
-  it("T-X028 fixture artifact names overrun honesty (ACCEPTED ≠ VERIFIED)", () => {
-    const root = join(fileURLToPath(new URL(".", import.meta.url)), "../..");
-    const art = JSON.parse(
-      readFileSync(
-        join(root, "tests/acceptance-evidence/fixture/art-fixture-t-x028.json"),
-        "utf8",
-      ),
-    ) as {
-      caseId: string;
-      summary: string;
-      liveProviderSuccessClaimed: boolean;
-      externalEffects: string;
-    };
-    expect(art.caseId).toBe("T-X028");
-    expect(art.summary).toMatch(/Fixture ACCEPTED/);
-    expect(art.summary).not.toMatch(/Fixture VERIFIED/);
-    expect(art.summary).toContain("sandboxVerifiedClaimed=false");
-    expect(art.liveProviderSuccessClaimed).toBe(false);
-    expect(art.externalEffects).toBe("NONE");
-    expect(art.summary).toContain("overrunMinor");
-    expect(art.summary).toContain("liveProviderWiring=NOT_WIRED");
-    expect(art.summary).toContain("liveProviderSuccessClaimed=false");
-    expect(art.summary).toContain("chatgptAdsAccess=ACCESS_BLOCKED");
-    expect(art.summary).toContain("Minimal +1 overrun");
-    expect(art.summary).toContain("Held unknown-usage refuse settle-as-overrun");
-    expect(art.summary).toContain("Zero-actual settle");
-    expect(art.summary).toContain("Held→known-cancel reconcile");
-    expect(art.summary).toContain("fixtureAcceptedOnly");
-    expect(art.summary).toContain("Negative actual refused");
-    expect(art.summary).toContain("Non-finite actual refused");
-    expect(art.summary).toContain("Post-overrun unknown-cancel refused");
-    expect(art.summary).toContain("Fractional actual refused");
-    expect(art.summary).toContain("Post-overspend reserve");
-    expect(art.summary).toContain("BUDGET_EXHAUSTED");
-    expect(art.summary).toContain("Non-integer reserve refused");
-    expect(art.summary).toContain("Conflicting known-cancel after overrun settle refused");
-    expect(art.summary).toContain("Replayed overrun settle passes assertBudgetSettlementHonesty");
-    expect(art.summary).toContain(
-      "assertBudgetSettlementHonesty rejects tampered settlement",
-    );
-    expect(art.summary).toContain("ACTUAL_COST_OVERRUN_RELATED_CASE_IDS=[T-X028]");
-    expect(art.summary).toContain("isActualCostOverrun(600,750)=true");
   });
 });

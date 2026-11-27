@@ -15,7 +15,7 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 | T-US-060 emergency stop at commit | Fixture **ACCEPTED** via `EMERGENCY_STOP_AT_COMMIT` (outbound stop at commit; not live VERIFIED) |
 | T-X005 forged browser role ignored | Fixture **ACCEPTED** via `FORGED_BROWSER_ROLE_IGNORED` (payload role ignored; not live VERIFIED) |
 | T-X006 cross-workspace reference denied | Fixture **ACCEPTED** via `CROSS_WORKSPACE_REFERENCE_DENIED` (deny without leak; not live VERIFIED) |
-| T-X019 / T-US-036 approved payload edit | Fixture **ACCEPTED** via `APPROVED_PAYLOAD_EDIT_INVALIDATED` (digest/revision invalidate; not live VERIFIED) |
+| T-X019 / T-US-036 approved payload edit | Fixture **ACCEPTED** via `APPROVED_PAYLOAD_EDIT_INVALIDATED` (checksum/revision/evidence/artifact; live NOT_WIRED; not live VERIFIED) |
 | T-X029 explicit account rebind | Fixture **ACCEPTED** via `EXPLICIT_ACCOUNT_REBIND` (not same-account rotate; not live VERIFIED) |
 | T-US-057 cross-workspace resource substitution | Fixture **ACCEPTED** via `CROSS_WORKSPACE_RESOURCE_SUBSTITUTION` (not live VERIFIED) |
 | T-US-024 agent cannot widen grant | Fixture **ACCEPTED** via `AGENT_CANNOT_WIDEN_GRANT` (not live VERIFIED) |
@@ -44,7 +44,7 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 
 | T-X044 unlicensed venue media | Fixture **ACCEPTED** via `UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED` (not live VERIFIED) |
 
-| T-X023 eventual consistency false not-found | Fixture **ACCEPTED** via `EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND` (lagging CRM read; LIVE_CLAIM_REFUSED; durable observedAtIso; CRM_EXTERNAL_EFFECTS=NONE; live Zoho NOT_WIRED; Ads ACCESS_BLOCKED; liveProviderSuccessClaimed=false; ACCEPTED ≠ VERIFIED) |
+| T-X023 eventual consistency false not-found | Fixture **ACCEPTED** via `EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND` (lagging CRM read; no unsafe create; not live VERIFIED) |
 | T-US-006 unbound write path fail closed | Fixture **ACCEPTED** via `UNBOUND_WRITE_PATH_FAIL_CLOSED` (applyAttemptCount=0; not live VERIFIED) |
 | T-US-052 mocked connector not production-ready | Fixture **ACCEPTED** via `MOCKED_CONNECTOR_NOT_PRODUCTION_READY` (not live VERIFIED) |
 | T-X040 low-sample trend spike | Fixture **ACCEPTED** via `LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE` (not live VERIFIED) |
