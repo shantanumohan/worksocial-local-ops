@@ -132,6 +132,12 @@ export function settledReservationsActualTotalMinor(
   account: BudgetAccount,
 ): number {
   const settled = account.settledReservations ?? {};
+  // Legacy eval budgets may track settledMinor without settledReservations
+  // snapshots — keep scalar only when the map is empty (T-X027 vs M8 eval).
+  if (Object.keys(settled).length === 0) {
+    const field = Number(account.settledMinor);
+    return Number.isFinite(field) && field >= 0 ? field : 0;
+  }
   let total = 0;
   for (const snap of Object.values(settled)) {
     const n = Number(snap?.actualMinor);
