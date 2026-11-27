@@ -14,6 +14,7 @@ import {
   evaluateOldFenceExternalEffects,
   evaluateOldFenceLiveProviderSuccess,
   evaluateOldFenceAcceptedNotVerified,
+  evaluateOldFenceAssignedCaseId,
   evaluateOldFenceRelatedCaseIds,
   evaluateOldFenceLiveTemporalNotWired,
   evaluateOldFenceSoftSkipAdsCase,
@@ -229,6 +230,16 @@ describe("classifyMissionLeaseFence / isMissionLeaseActive (T-X024)", () => {
     );
     expect(evaluateOldFenceCatalogCaseId("T-X073").code).toBe(
       "CATALOG_CASE_REFUSED",
+    );
+  });
+
+  it("allows only T-X024 as assigned case id for slot O", () => {
+    expect(evaluateOldFenceAssignedCaseId("T-X024").code).toBe("ASSIGNED_CASE_OK");
+    expect(evaluateOldFenceAssignedCaseId("T-X025").code).toBe(
+      "ASSIGNED_CASE_REFUSED",
+    );
+    expect(evaluateOldFenceAssignedCaseId("T-X074").code).toBe(
+      "ASSIGNED_CASE_REFUSED",
     );
   });
 

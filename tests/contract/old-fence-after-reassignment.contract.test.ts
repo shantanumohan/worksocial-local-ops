@@ -16,6 +16,7 @@ import {
   evaluateFixtureTemporalWiring,
   evaluateOldFenceAcceptanceLabel,
   evaluateOldFenceAcceptedNotVerified,
+  evaluateOldFenceAssignedCaseId,
   evaluateOldFenceCatalogCaseId,
   evaluateOldFenceChatgptAdsAccess,
   evaluateOldFenceExternalEffects,
@@ -111,6 +112,12 @@ describe("contract: T-X024 old fence after reassignment", () => {
     expect(evaluateOldFenceLiveTemporalNotWired("TEMPORAL").code).toBe(
       "LIVE_TEMPORAL_WIRED_CLAIM_REFUSED",
     );
+    expect(evaluateOldFenceAssignedCaseId("T-X024").code).toBe(
+      "ASSIGNED_CASE_OK",
+    );
+    expect(evaluateOldFenceAssignedCaseId("T-X025").code).toBe(
+      "ASSIGNED_CASE_REFUSED",
+    );
     expect(
       parseMissionLeaseFenceCause(
         missionLeaseFenceFailedMessage("wf-c", "wrong_holder"),
@@ -131,6 +138,9 @@ describe("contract: T-X024 old fence after reassignment", () => {
     expect(art.summary).toMatch(/ACCEPTED_EQUALS_VERIFIED_CLAIM_REFUSED/);
     expect(art.summary).toMatch(/LIVE_TEMPORAL_NOT_WIRED_OK/);
     expect(art.summary).toMatch(/LIVE_TEMPORAL_WIRED_CLAIM_REFUSED/);
+    expect(art.summary).toMatch(/ASSIGNED_CASE_OK/);
+    expect(art.summary).toMatch(/ASSIGNED_CASE_REFUSED/);
+    expect(art.summary).toMatch(/Post-succeed old A bind denied phase fence/);
     expect(art.summary).toMatch(/Active holder operation mismatch/);
     expect(art.summary).toMatch(/Post-succeed lease cleared fenceCause=no_holder/);
     expect(art.summary).toMatch(/Post-succeed claimLease refused/);

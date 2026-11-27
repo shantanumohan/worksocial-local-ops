@@ -27,6 +27,7 @@
  * lease clear → fenceCause=no_holder; claimLease refused on terminal.
  * Hillclimb O10: ACCEPTED_NOT_VERIFIED_OK / LIVE_TEMPORAL_NOT_WIRED_OK;
  * post-fail lease clear → fenceCause=no_holder; claimLease refused.
+ * Hillclimb O11: ASSIGNED_CASE_OK only T-X024; post-succeed bind phase fence.
  */
 
 import { randomUUID } from "node:crypto";
@@ -41,6 +42,7 @@ import {
   evaluateFixtureTemporalWiring,
   evaluateOldFenceAcceptanceLabel,
   evaluateOldFenceAcceptedNotVerified,
+  evaluateOldFenceAssignedCaseId,
   evaluateOldFenceCatalogCaseId,
   evaluateOldFenceChatgptAdsAccess,
   evaluateOldFenceExternalEffects,
@@ -106,6 +108,8 @@ export async function proofOldFenceAfterReassignment(
   );
   const liveNotWiredOk = evaluateOldFenceLiveTemporalNotWired("NOT_WIRED");
   const liveWiredRefuse = evaluateOldFenceLiveTemporalNotWired("TEMPORAL");
+  const assignedOk = evaluateOldFenceAssignedCaseId("T-X024");
+  const assignedRefuse = evaluateOldFenceAssignedCaseId("T-X025");
   if (
     liveTemporalRefuse.code === "LIVE_TEMPORAL_CLAIM_REFUSED" &&
     liveTemporalRefuse.allowed === false &&
@@ -197,6 +201,18 @@ export async function proofOldFenceAfterReassignment(
     details.push(
       "Fixture acceptedNotVerified/liveTemporal NOT_WIRED honesty gate unexpected",
     );
+  }
+  if (
+    assignedOk.code === "ASSIGNED_CASE_OK" &&
+    assignedRefuse.code === "ASSIGNED_CASE_REFUSED" &&
+    evaluateOldFenceCatalogCaseId("T-X025").code === "CATALOG_CASE_REFUSED"
+  ) {
+    details.push(
+      "ASSIGNED_CASE_OK for T-X024 only; ASSIGNED_CASE_REFUSED for T-X025 (≠ catalog ceiling)",
+    );
+  } else {
+    passed = false;
+    details.push("Fixture assigned case-id honesty gate unexpected");
   }
 
   const enqueued = await store.enqueue({
@@ -671,6 +687,30 @@ export async function proofOldFenceAfterReassignment(
   } else {
     passed = false;
     details.push("Post-succeed claimLease unexpectedly succeeded");
+  }
+  let postSucceedBindDenied = false;
+  try {
+    await store.bindOperationWhileLeased({
+      workflowId,
+      operationId: `${operationId}-post-succeed`,
+      holder: workerA,
+      nowIso: tAfterExpiry,
+      payloadDigest: "digest-terminal",
+      businessIdempotencyKey: "biz-terminal",
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/must be leased/i.test(msg)) {
+      postSucceedBindDenied = true;
+      details.push(`Post-succeed old A bind denied phase fence: ${msg}`);
+    } else {
+      passed = false;
+      details.push(`Post-succeed bind unexpected error: ${msg}`);
+    }
+  }
+  if (!postSucceedBindDenied) {
+    passed = false;
+    details.push("Post-succeed old A bind unexpectedly succeeded");
   }
 
   // 6. Side workflow: original holder self-reclaim after own expiry (before foreign).

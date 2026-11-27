@@ -81,6 +81,9 @@ describe("proofOldFenceAfterReassignment (T-X024)", () => {
     expect(joined).toMatch(/LIVE_TEMPORAL_WIRED_CLAIM_REFUSED/);
     expect(joined).toMatch(/Post-fail lease cleared fenceCause=no_holder/);
     expect(joined).toMatch(/Post-fail claimLease refused/);
+    expect(joined).toMatch(/ASSIGNED_CASE_OK/);
+    expect(joined).toMatch(/ASSIGNED_CASE_REFUSED/);
+    expect(joined).toMatch(/Post-succeed old A bind denied phase fence/);
     expect(joined).not.toMatch(/\bVERIFIED\b/);
     expect(OLD_FENCE_TEMPORAL_WIRING).toBe("NOT_WIRED");
   });

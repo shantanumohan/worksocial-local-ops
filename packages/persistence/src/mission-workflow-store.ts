@@ -587,7 +587,32 @@ export function evaluateOldFenceLiveTemporalNotWired(
   };
 }
 
-/** Stable honesty detail line for soak evidence (O4–O10). */
+/**
+ * Assigned case-id gate (T-X024 O11).
+ * Only `T-X024` is allowed for slot-O hillclimb — other IDs (even ≤T-X073)
+ * → `ASSIGNED_CASE_REFUSED` (distinct from catalog ceiling).
+ */
+export type OldFenceAssignedCaseDecision = {
+  allowed: boolean;
+  code: "ASSIGNED_CASE_OK" | "ASSIGNED_CASE_REFUSED";
+  caseId: string;
+  assignedCaseId: "T-X024";
+};
+
+export function evaluateOldFenceAssignedCaseId(
+  caseId: string,
+): OldFenceAssignedCaseDecision {
+  const assignedCaseId = "T-X024" as const;
+  const ok = caseId === assignedCaseId;
+  return {
+    allowed: ok,
+    code: ok ? "ASSIGNED_CASE_OK" : "ASSIGNED_CASE_REFUSED",
+    caseId,
+    assignedCaseId,
+  };
+}
+
+/** Stable honesty detail line for soak evidence (O4–O11). */
 export function formatOldFenceHonestyDetail(
   relatedCaseIds: readonly string[] = OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
 ): string {
