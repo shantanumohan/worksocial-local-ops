@@ -40,6 +40,29 @@ describe("keyboard focus restore (T-X061)", () => {
     expect(again.session.overlayOpen).toBe(true);
   });
 
+  it("traps Tab between adjacent focusables without closing the overlay", () => {
+    const three = ["dlg-close", "dlg-primary", "dlg-secondary"] as const;
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-review",
+      dialogFocusables: three,
+    });
+    const mid = cycleDialogFocus({
+      session: opened.session,
+      direction: "forward",
+    });
+    expect(mid.code).toBe("TRAP_CYCLE");
+    expect(mid.session.activeFocusId).toBe("dlg-primary");
+    expect(mid.session.overlayOpen).toBe(true);
+    expect(mid.session.savedTriggerId).toBe("btn-review");
+    const back = cycleDialogFocus({
+      session: mid.session,
+      direction: "backward",
+    });
+    expect(back.session.activeFocusId).toBe("dlg-close");
+    expect(back.session.overlayOpen).toBe(true);
+  });
+
   it("traps Tab wrap at both dialog boundaries", () => {
     const opened = openOverlayFocus({
       session: emptyFocusSession(),

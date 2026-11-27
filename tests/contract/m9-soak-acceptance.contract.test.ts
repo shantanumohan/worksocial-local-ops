@@ -18,6 +18,7 @@
  * T-X022 fixture ACCEPTED only via IDEMPOTENCY_KEY_PAYLOAD_MISMATCH.
  * T-X057 fixture ACCEPTED only via REPAIR_WEAKEN_TEST_REJECTED.
  * T-X059 fixture ACCEPTED only via DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING.
+ * T-X061 fixture ACCEPTED only via KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG.
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -735,6 +736,35 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).toMatch(
       /liveProviderSuccessClaimed=false externalEffects=NONE$/,
     );
+  });
+
+  it("T-X061 fixture artifact names keyboard focus restore (ACCEPTED ≠ VERIFIED)", () => {
+    const artPath = resolve(
+      repoRoot,
+      "tests/acceptance-evidence/fixture/art-fixture-t-x061.json",
+    );
+    const art = JSON.parse(readFileSync(artPath, "utf8")) as {
+      artifactId: string;
+      caseId: string;
+      environment: string;
+      summary: string;
+      liveProviderSuccessClaimed: boolean;
+      externalEffects: string;
+      proofKinds: string[];
+    };
+    expect(art.artifactId).toBe("art-fixture-t-x061");
+    expect(art.caseId).toBe("T-X061");
+    expect(art.environment).toBe("fixture");
+    expect(art.proofKinds).toEqual(["keyboard_focus_restore_after_dialog"]);
+    expect(art.summary).toMatch(/Fixture ACCEPTED for T-X061/);
+    expect(art.summary).not.toMatch(/Fixture VERIFIED/);
+    expect(art.liveProviderSuccessClaimed).toBe(false);
+    expect(art.externalEffects).toBe("NONE");
+    expect(art.summary).toContain(
+      "proof=keyboard_focus_restore_after_dialog",
+    );
+    expect(art.summary).toMatch(/liveProviderSuccessClaimed=false/);
+    expect(art.proofKinds).not.toContain("VERIFIED");
   });
 
   it("T-X022 fixture artifact names idempotency payload mismatch (ACCEPTED ≠ VERIFIED)", () => {
