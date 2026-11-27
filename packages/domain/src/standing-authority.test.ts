@@ -400,4 +400,18 @@ describe("evaluateStandingAuthority", () => {
     });
     expect(denied.match).toBeNull();
   });
+
+  it("fence on treats null held as deny (T-X006 wipe15 321b71b2)", () => {
+    const denied = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: null as unknown as boolean,
+      }),
+    );
+    expect(denied.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(denied.match).toBeNull();
+  });
 });
