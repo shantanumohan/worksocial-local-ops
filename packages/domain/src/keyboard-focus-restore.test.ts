@@ -217,6 +217,37 @@ describe("keyboard focus restore (T-X061)", () => {
     expect(tab.session.overlayOpen).toBe(false);
   });
 
+  it("fails closed FOCUS_LOST when overlay open but savedTrigger cleared (T44)", () => {
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-review",
+      dialogFocusables: dialog,
+    });
+    const corrupt = { ...opened.session, savedTriggerId: null };
+    const closed = closeOverlayRestoreFocus({ session: corrupt });
+    expect(closed.ok).toBe(false);
+    expect(closed.code).toBe("FOCUS_LOST");
+    expect(closed.session.overlayOpen).toBe(false);
+    expect(closed.session.activeFocusId).toBeNull();
+  });
+
+  it("re-anchors backward trap when activeFocusId is stale (T44)", () => {
+    const three = ["dlg-close", "dlg-primary", "dlg-secondary"] as const;
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-review",
+      dialogFocusables: three,
+    });
+    const step = cycleDialogFocus({
+      session: { ...opened.session, activeFocusId: "dlg-removed" },
+      direction: "backward",
+    });
+    expect(step.ok).toBe(true);
+    expect(step.code).toBe("TRAP_CYCLE");
+    expect(step.session.activeFocusId).toBe("dlg-secondary");
+    expect(step.session.savedTriggerId).toBe("btn-review");
+  });
+
   it("allows fresh open after restore resets overlay session (T43)", () => {
     const opened = openOverlayFocus({
       session: emptyFocusSession(),
