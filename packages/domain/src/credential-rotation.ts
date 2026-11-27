@@ -23,6 +23,7 @@ import {
 import {
   EffectState,
   canTransition,
+  isPostApplyPhase,
   type EffectStateValue,
 } from "./effect-state-machine.js";
 
@@ -153,6 +154,8 @@ export type QueuedWorkCancelResult = {
   cancelled: boolean;
   retainedForReconcile: boolean;
   reason: string;
+  liveProviderWiring: "NOT_WIRED";
+  externalEffects: "NONE";
 };
 
 export type CredentialAuditEntry = {
@@ -400,13 +403,9 @@ export function evaluateSendTimeEffect(input: {
 export function cancelEligibleQueuedWork(
   items: readonly CredentialQueuedWorkItem[],
 ): QueuedWorkCancelResult[] {
+  const honesty = { liveProviderWiring: "NOT_WIRED" as const, externalEffects: "NONE" as const };
   return items.map((item) => {
-    if (
-      item.effectState === EffectState.APPLYING ||
-      item.effectState === EffectState.VERIFYING ||
-      item.effectState === EffectState.UNKNOWN_REMOTE_OUTCOME ||
-      item.effectState === EffectState.COMPLETE
-    ) {
+    if (isPostApplyPhase(item.effectState)) {
       return {
         workId: item.workId,
         fromState: item.effectState,
@@ -414,7 +413,8 @@ export function cancelEligibleQueuedWork(
         cancelled: false,
         retainedForReconcile: true,
         reason:
-          "Post-apply work retained for reconcile — revoke does not cancel ambiguous remote outcomes",
+          "Post-apply work retained for reconcile — revoke/stop does not cancel ambiguous remote outcomes (T-X017)",
+        ...honesty,
       };
     }
     if (
@@ -428,6 +428,7 @@ export function cancelEligibleQueuedWork(
         cancelled: false,
         retainedForReconcile: false,
         reason: `Already terminal (${item.effectState})`,
+        ...honesty,
       };
     }
     if (!canTransition(item.effectState, EffectState.CANCELLED)) {
@@ -438,6 +439,7 @@ export function cancelEligibleQueuedWork(
         cancelled: false,
         retainedForReconcile: true,
         reason: `Cannot cancel from ${item.effectState} — retained`,
+        ...honesty,
       };
     }
     return {
@@ -447,6 +449,7 @@ export function cancelEligibleQueuedWork(
       cancelled: true,
       retainedForReconcile: false,
       reason: "Eligible queued work cancelled after local revoke",
+      ...honesty,
     };
   });
 }
@@ -461,6 +464,7 @@ export function applyQueuedCancelResults(
     if (!result || !result.cancelled || result.toState === null) {
       return item;
     }
+    if (isPostApplyPhase(item.effectState)) return item;
     return { ...item, effectState: result.toState };
   });
 }
