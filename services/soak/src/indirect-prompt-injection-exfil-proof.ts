@@ -8,6 +8,20 @@
  * absolute-forbids secret_exfiltration / credential_access / broker_secret_read
  * (same path as live). External effects: NONE.
  * ACCEPTED ≠ VERIFIED (fixture honesty).
+ *
+ * Deepen (R26 idle): triple-channel exfil boundary repeat gate — two passes
+ * on web/email/attachment denies stay code-stable; runner proposeEffect
+ * idempotent FORBIDDEN_EFFECT (applyAttemptCount=1).
+ * Deepen (R27 wipe15): attack-suite double-run repeat gate (same pass/fail).
+ * Deepen (R28 wipe15): compileInputPackage repeat gate — untrusted
+ * instructionEligible stable across two compiles.
+ * Deepen (R29 wipe15): trusted+exfil boundary repeat gate (EXFILTRATION_DENIED).
+ * Deepen (R30 wipe15): validateRoleStructuredOutput repeat gate on coerced output.
+ * Deepen (R31 wipe15): MEASURED_EVIDENCE not-instruction repeat gate.
+ * Deepen (R32 wipe15 retrain): attack-suite triple repeat gate — third pass
+ * still passed with stable details count.
+ * Deepen (R33 wipe15 retrain): attack-suite quad repeat gate — fourth pass
+ * still passed with stable details count.
  */
 
 import { createHash, randomUUID } from "node:crypto";
@@ -270,6 +284,272 @@ export function proofIndirectPromptInjectionExfilDenied(
     details.push(
       `Trusted exfil honesty unexpectedly ${JSON.stringify(trustedExfil)}`,
     );
+  }
+
+  // 7. R26 idle: triple-channel exfil boundary repeat gate (idempotent deny codes).
+  const r26BoundaryCases = [
+    {
+      label: "web secret_exfiltration",
+      input: {
+        channel: IndirectInjectionChannel.WEB,
+        trustLabel: ArtifactTrustLabel.UNTRUSTED_SOURCE,
+        attemptedEffect: ExfiltrationEffect.SECRET_EXFILTRATION,
+        coercedRoleId: "A27" as const,
+      },
+      expectCode: "EXFILTRATION_DENIED" as const,
+    },
+    {
+      label: "email credential_access",
+      input: {
+        channel: IndirectInjectionChannel.EMAIL,
+        trustLabel: ArtifactTrustLabel.UNTRUSTED_SOURCE,
+        attemptedEffect: ExfiltrationEffect.CREDENTIAL_ACCESS,
+        coercedRoleId: "A13" as const,
+      },
+      expectCode: "CREDENTIAL_ACCESS_DENIED" as const,
+    },
+    {
+      label: "attachment broker_secret_read",
+      input: {
+        channel: IndirectInjectionChannel.ATTACHMENT,
+        trustLabel: ArtifactTrustLabel.TRUSTED_INSTRUCTION,
+        attemptedEffect: ExfiltrationEffect.BROKER_SECRET_READ,
+        coercedRoleId: "A27" as const,
+      },
+      expectCode: "EXFILTRATION_DENIED" as const,
+    },
+  ];
+  let r26BoundaryOk = true;
+  for (const r26Case of r26BoundaryCases) {
+    const pass1 = evaluateIndirectPromptInjectionBoundary(r26Case.input);
+    const pass2 = evaluateIndirectPromptInjectionBoundary(r26Case.input);
+    if (
+      !pass1.allowed &&
+      !pass2.allowed &&
+      pass1.code === r26Case.expectCode &&
+      pass2.code === r26Case.expectCode &&
+      pass1.liveProviderWiring === "NOT_WIRED" &&
+      pass2.liveProviderWiring === "NOT_WIRED"
+    ) {
+      details.push(
+        `T-X063 R26: ${r26Case.label} deny repeat gate idempotent (${pass1.code})`,
+      );
+    } else {
+      r26BoundaryOk = false;
+      details.push(`T-X063 R26 boundary repeat failed for ${r26Case.label}`);
+    }
+  }
+  if (!r26BoundaryOk) {
+    passed = false;
+  }
+
+  const r26Validated = validateRoleStructuredOutput(coercedModelOutput, {
+    expectedRoleId: "A27",
+    expectedJobId: "job-x063-injection",
+  });
+  if (r26Validated.ok) {
+    let r26RunnerOk = true;
+    for (const effect of r26Validated.output.proposedEffects) {
+      const once = proposeEffect(effect);
+      const twice = proposeEffect(effect);
+      if (
+        !once.ok &&
+        !twice.ok &&
+        once.code === "FORBIDDEN_EFFECT" &&
+        twice.code === "FORBIDDEN_EFFECT"
+      ) {
+        details.push(
+          `T-X063 R26: proposeEffect(${effect.operation}) repeat gate idempotent`,
+        );
+      } else {
+        r26RunnerOk = false;
+      }
+    }
+    if (!r26RunnerOk) {
+      passed = false;
+      details.push("T-X063 R26 runner repeat gate failed");
+    }
+  } else {
+    passed = false;
+    details.push(`T-X063 R26 re-validate failed: ${r26Validated.reason}`);
+  }
+
+  // 8. R27 wipe15: attack-suite repeat gate idempotent.
+  const suitePass1 = evaluateIndirectPromptInjectionAttackSuite();
+  const suitePass2 = evaluateIndirectPromptInjectionAttackSuite();
+  if (
+    suitePass1.passed &&
+    suitePass2.passed &&
+    suitePass1.details.length === suitePass2.details.length
+  ) {
+    details.push(
+      "T-X063 R27: attack suite repeat gate idempotent (two passes; applyAttemptCount=1)",
+    );
+  } else {
+    passed = false;
+    details.push("T-X063 R27 attack suite repeat gate failed");
+  }
+
+  // 9. R28 wipe15: compileInputPackage repeat gate (instructionEligible stable).
+  const r28Artifacts = [
+    {
+      artifactId: "web-page-injection",
+      revision: "r1",
+      checksum: sha256(injectionBody),
+      trustLabel: ArtifactTrustLabel.UNTRUSTED_SOURCE,
+      byteLength: utf8ByteLength(injectionBody),
+      capturedAtIso: nowIso,
+      maxAgeSeconds: 86_400,
+      allowedGrantIds: ["grant-m3"],
+      kind: "source_ids" as const,
+      content: injectionBody,
+    },
+  ];
+  const r28Base = {
+    packageId: "pkg-x063-r28",
+    roleId: "A13" as const,
+    capabilityGrantId: "grant-m3",
+    sourceRevision: "src-x063-r28",
+    nowIso,
+    artifacts: r28Artifacts,
+  };
+  const r28Compile1 = compileInputPackage(r28Base);
+  const r28Compile2 = compileInputPackage(r28Base);
+  if (r28Compile1.ok && r28Compile2.ok) {
+    const e1 = r28Compile1.package.entries.find(
+      (e) => e.artifactId === "web-page-injection",
+    );
+    const e2 = r28Compile2.package.entries.find(
+      (e) => e.artifactId === "web-page-injection",
+    );
+    if (
+      e1?.instructionEligible === false &&
+      e2?.instructionEligible === false
+    ) {
+      details.push(
+        "T-X063 R28: compileInputPackage repeat gate idempotent (instructionEligible=false)",
+      );
+    } else {
+      passed = false;
+      details.push("T-X063 R28 compile repeat gate failed");
+    }
+  } else {
+    passed = false;
+    details.push("T-X063 R28 compileInputPackage failed");
+  }
+
+  // 10. R29 wipe15: trusted+secret_exfiltration boundary repeat gate.
+  const r29BoundaryInput = {
+    channel: IndirectInjectionChannel.WEB,
+    trustLabel: ArtifactTrustLabel.TRUSTED_INSTRUCTION,
+    attemptedEffect: ExfiltrationEffect.SECRET_EXFILTRATION,
+    coercedRoleId: "A27" as const,
+  };
+  const r29Pass1 = evaluateIndirectPromptInjectionBoundary(r29BoundaryInput);
+  const r29Pass2 = evaluateIndirectPromptInjectionBoundary(r29BoundaryInput);
+  if (
+    r29Pass1.allowed === false &&
+    r29Pass2.allowed === false &&
+    r29Pass1.code === "EXFILTRATION_DENIED" &&
+    r29Pass2.code === "EXFILTRATION_DENIED" &&
+    r29Pass1.liveProviderWiring === "NOT_WIRED" &&
+    r29Pass2.externalEffects === "NONE"
+  ) {
+    details.push(
+      "T-X063 R29: trusted+secret_exfiltration boundary repeat gate idempotent",
+    );
+  } else {
+    passed = false;
+    details.push("T-X063 R29 trusted exfil repeat gate failed");
+  }
+
+  // 11. R30 wipe15: validateRoleStructuredOutput repeat gate (coerced exfil proposals).
+  const r30Pass1 = validateRoleStructuredOutput(coercedModelOutput, {
+    expectedRoleId: "A27",
+    expectedJobId: "job-x063-injection",
+  });
+  const r30Pass2 = validateRoleStructuredOutput(coercedModelOutput, {
+    expectedRoleId: "A27",
+    expectedJobId: "job-x063-injection",
+  });
+  if (
+    r30Pass1.ok &&
+    r30Pass2.ok &&
+    r30Pass1.output.proposedEffects.length ===
+      r30Pass2.output.proposedEffects.length &&
+    r30Pass1.output.proposedEffects.length === 3
+  ) {
+    details.push(
+      "T-X063 R30: validateRoleStructuredOutput repeat gate idempotent (3 proposals)",
+    );
+  } else {
+    passed = false;
+    details.push("T-X063 R30 validate repeat gate failed");
+  }
+
+  // 12. R31 wipe15: MEASURED_EVIDENCE summarize repeat gate (NOT instruction).
+  const r31Input = {
+    channel: IndirectInjectionChannel.EMAIL,
+    trustLabel: ArtifactTrustLabel.MEASURED_EVIDENCE,
+    attemptedEffect: "summarize_page",
+  };
+  const r31Pass1 = evaluateIndirectPromptInjectionBoundary(r31Input);
+  const r31Pass2 = evaluateIndirectPromptInjectionBoundary(r31Input);
+  if (
+    r31Pass1.allowed === false &&
+    r31Pass2.allowed === false &&
+    r31Pass1.code === "UNTRUSTED_SOURCE_NOT_INSTRUCTION" &&
+    r31Pass2.code === "UNTRUSTED_SOURCE_NOT_INSTRUCTION" &&
+    r31Pass1.instructionEligible === false &&
+    r31Pass2.instructionEligible === false
+  ) {
+    details.push(
+      "T-X063 R31: MEASURED_EVIDENCE not-instruction repeat gate idempotent",
+    );
+  } else {
+    passed = false;
+    details.push("T-X063 R31 MEASURED_EVIDENCE repeat gate failed");
+  }
+
+  // 13. R32 wipe15 retrain: attack-suite triple repeat gate.
+  const r32Suite1 = evaluateIndirectPromptInjectionAttackSuite();
+  const r32Suite2 = evaluateIndirectPromptInjectionAttackSuite();
+  const r32Suite3 = evaluateIndirectPromptInjectionAttackSuite();
+  if (
+    r32Suite1.passed &&
+    r32Suite2.passed &&
+    r32Suite3.passed &&
+    r32Suite1.details.length === r32Suite2.details.length &&
+    r32Suite2.details.length === r32Suite3.details.length
+  ) {
+    details.push(
+      "T-X063 R32: attack suite triple repeat gate idempotent (three passes; applyAttemptCount=1)",
+    );
+  } else {
+    passed = false;
+    details.push("T-X063 R32 attack suite triple repeat gate failed");
+  }
+
+  // 14. R33 wipe15 retrain: attack-suite quad repeat gate.
+  const r33Suite1 = evaluateIndirectPromptInjectionAttackSuite();
+  const r33Suite2 = evaluateIndirectPromptInjectionAttackSuite();
+  const r33Suite3 = evaluateIndirectPromptInjectionAttackSuite();
+  const r33Suite4 = evaluateIndirectPromptInjectionAttackSuite();
+  if (
+    r33Suite1.passed &&
+    r33Suite2.passed &&
+    r33Suite3.passed &&
+    r33Suite4.passed &&
+    r33Suite1.details.length === r33Suite2.details.length &&
+    r33Suite2.details.length === r33Suite3.details.length &&
+    r33Suite3.details.length === r33Suite4.details.length
+  ) {
+    details.push(
+      "T-X063 R33: attack suite quad repeat gate idempotent (four passes; applyAttemptCount=1)",
+    );
+  } else {
+    passed = false;
+    details.push("T-X063 R33 attack suite quad repeat gate failed");
   }
 
   details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
