@@ -8,8 +8,8 @@
     "run_claude_gemini_evaluation_suites"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-f17.json",
-  "createdAtIso": "2026-11-27T20:14:18.020Z",
+  "createdAtIso": "2026-11-27T21:23:58.352Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-f17-d9d278942186"
+  "uniqueSourceArtifactId": "art-fixture-t-f17-1548a009b543"
 }
