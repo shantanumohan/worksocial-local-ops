@@ -215,8 +215,16 @@ export function prepareCustomerDataForEvaluation(input: {
   mirrorRawFieldsInRedactedPayload?: boolean;
   /** Forbidden — eval may not treat customer redaction as optional. */
   claimRedactionOptional?: boolean;
+  /** Forbidden — cannot trust raw source as already eval-safe. */
+  trustUnredactedSourceAsSafe?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.trustUnredactedSourceAsSafe === true) {
+    return blockedLeak([
+      "Trust unredacted customer source as eval-safe refused — T-X072",
+    ]);
+  }
 
   if (input.claimRedactionOptional === true) {
     return blockedLeak([

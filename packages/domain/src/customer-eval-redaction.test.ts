@@ -145,6 +145,16 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses trustUnredactedSourceAsSafe", () => {
+    const trust = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      trustUnredactedSourceAsSafe: true,
+    });
+    expect(trust.allowed).toBe(false);
+    expect(trust.reasons.some((r) => /Trust unredacted/.test(r))).toBe(true);
+  });
+
   it("refuses claimRedactionOptional", () => {
     const optional = prepareCustomerDataForEvaluation({
       source,
