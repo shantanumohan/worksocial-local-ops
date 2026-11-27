@@ -119,6 +119,245 @@ export function proofHostOfflinePublicDiscoveryUnavailable(
     );
   }
 
+  // Greenfield I63 BIND @ 18ffa6c1 — claimed AVAILABLE while ONLINE without prior stays fail-closed.
+  const onlineClaimNoPrior = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i63-claim-noprior-${randomUUID().slice(0, 8)}`,
+    hostLiveness: HostDiscoveryLiveness.ONLINE,
+    nowIso,
+    claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+  });
+  if (
+    onlineClaimNoPrior.code ===
+      PublicDiscoveryDecisionCode.HOST_ONLINE_NO_PRIOR_UNAVAILABLE &&
+    onlineClaimNoPrior.availability ===
+      PublicDiscoveryAvailability.UNAVAILABLE &&
+    onlineClaimNoPrior.activeCoverageClaimed === false &&
+    onlineClaimNoPrior.inventedDiscoveryRank === null
+  ) {
+    details.push(
+      "I63 BIND: claimed AVAILABLE while ONLINE w/o prior → HOST_ONLINE_NO_PRIOR_UNAVAILABLE (not exclusive #297)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `I63 online-claim-no-prior unexpectedly ${JSON.stringify(onlineClaimNoPrior)}`,
+    );
+  }
+
+  // wipe15 I64 TIMER ON_TIP e7226169 — OFFLINE + empty prior; ONLINE null prior + claim.
+  const offlineEmptyPrior = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i64-empty-${randomUUID().slice(0, 8)}`,
+    surface: "chatgpt_business",
+    hostLiveness: HostDiscoveryLiveness.OFFLINE,
+    nowIso,
+    lastSuccessfulDiscoveryAtIso: "",
+  });
+  const onlineNullPriorClaim = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i64-null-${randomUUID().slice(0, 8)}`,
+    hostLiveness: HostDiscoveryLiveness.ONLINE,
+    nowIso,
+    claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+    lastSuccessfulDiscoveryAtIso: null,
+  });
+  if (
+    offlineEmptyPrior.code ===
+      PublicDiscoveryDecisionCode.HOST_OFFLINE_UNAVAILABLE &&
+    offlineEmptyPrior.activeCoverageClaimed === false &&
+    onlineNullPriorClaim.code ===
+      PublicDiscoveryDecisionCode.HOST_ONLINE_NO_PRIOR_UNAVAILABLE &&
+    onlineNullPriorClaim.inventedDiscoveryRank === null
+  ) {
+    details.push(
+      "wipe15 I64 TIMER: OFFLINE+empty prior → HOST_OFFLINE_UNAVAILABLE; ONLINE null prior+claim → NO_PRIOR (exclusive #298 Slot O)",
+    );
+  } else {
+    passed = false;
+    details.push("I64 empty-prior/null-prior unexpectedly failed");
+  }
+
+  // wipe15 I65 TIMER ON_TIP 63d2c0e0 — honest ONLINE claim + OFFLINE geo refuse.
+  const onlineHonestUnavail = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i65-honest-${randomUUID().slice(0, 8)}`,
+    hostLiveness: HostDiscoveryLiveness.ONLINE,
+    nowIso,
+    claimedAvailability: PublicDiscoveryAvailability.UNAVAILABLE,
+  });
+  const offlineGeoRefuse = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i65-geo-${randomUUID().slice(0, 8)}`,
+    surface: "geo_presence",
+    hostLiveness: HostDiscoveryLiveness.OFFLINE,
+    nowIso,
+    claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+  });
+  if (
+    onlineHonestUnavail.code ===
+      PublicDiscoveryDecisionCode.HOST_ONLINE_NO_PRIOR_UNAVAILABLE &&
+    onlineHonestUnavail.activeCoverageClaimed === false &&
+    offlineGeoRefuse.code ===
+      PublicDiscoveryDecisionCode.CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED &&
+    offlineGeoRefuse.inventedDiscoveryRank === null
+  ) {
+    details.push(
+      "wipe15 I65 TIMER: ONLINE honest UNAVAILABLE claim → NO_PRIOR; OFFLINE geo+AVAILABLE claim refused (exclusive #300)",
+    );
+  } else {
+    passed = false;
+    details.push("I65 honest-claim/geo-refuse unexpectedly failed");
+  }
+
+  // wipe15 I66 TIMER ON_TIP d6731fcd
+  const offlineHonestClaim = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i66-honest-${randomUUID().slice(0, 8)}`,
+    surface: "public_visibility",
+    hostLiveness: HostDiscoveryLiveness.OFFLINE,
+    nowIso,
+    claimedAvailability: PublicDiscoveryAvailability.UNAVAILABLE,
+  });
+  const onlineUndefPrior = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i66-undef-${randomUUID().slice(0, 8)}`,
+    hostLiveness: HostDiscoveryLiveness.ONLINE,
+    nowIso,
+    claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+  });
+  if (
+    offlineHonestClaim.code ===
+      PublicDiscoveryDecisionCode.HOST_OFFLINE_UNAVAILABLE &&
+    offlineHonestClaim.externalEffects === "NONE" &&
+    onlineUndefPrior.code ===
+      PublicDiscoveryDecisionCode.HOST_ONLINE_NO_PRIOR_UNAVAILABLE
+  ) {
+    details.push(
+      "wipe15 I66 TIMER: OFFLINE honest UNAVAILABLE claim; ONLINE no prior+claim (exclusive #302)",
+    );
+  } else {
+    passed = false;
+    details.push("I66 offline-honest/undef-prior unexpectedly failed");
+  }
+
+  // wipe15 I67 TIMER ON_TIP 1fb05770
+  const chatgptOfflineClaim = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i67-chatgpt-${randomUUID().slice(0, 8)}`,
+    surface: "chatgpt_business",
+    hostLiveness: HostDiscoveryLiveness.OFFLINE,
+    nowIso,
+    claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+    lastSuccessfulDiscoveryAtIso: "2026-11-22T12:00:00.000Z",
+  });
+  const onlineEmptyPrior = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i67-empty-${randomUUID().slice(0, 8)}`,
+    hostLiveness: HostDiscoveryLiveness.ONLINE,
+    nowIso,
+    lastSuccessfulDiscoveryAtIso: "",
+  });
+  if (
+    chatgptOfflineClaim.code ===
+      PublicDiscoveryDecisionCode.CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED &&
+    chatgptOfflineClaim.chatgptAdsAccess === "ACCESS_BLOCKED" &&
+    onlineEmptyPrior.code ===
+      PublicDiscoveryDecisionCode.HOST_ONLINE_NO_PRIOR_UNAVAILABLE
+  ) {
+    details.push(
+      "wipe15 I67 TIMER: chatgpt_business OFFLINE AVAILABLE refused; ONLINE empty prior → NO_PRIOR (exclusive #304 Slot F)",
+    );
+  } else {
+    passed = false;
+    details.push("I67 chatgpt-offline/empty-prior unexpectedly failed");
+  }
+
+  // wipe15 I68 TIMER ON_TIP 64829602
+  const geoOnlinePrior = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i68-geo-${randomUUID().slice(0, 8)}`,
+    surface: "geo_presence",
+    hostLiveness: HostDiscoveryLiveness.ONLINE,
+    nowIso,
+    lastSuccessfulDiscoveryAtIso: "2026-11-22T11:00:00.000Z",
+    claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+  });
+  const publicOfflineNullPrior = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i68-null-${randomUUID().slice(0, 8)}`,
+    surface: "public_visibility",
+    hostLiveness: HostDiscoveryLiveness.OFFLINE,
+    nowIso,
+    claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+    lastSuccessfulDiscoveryAtIso: null,
+  });
+  if (
+    geoOnlinePrior.code === PublicDiscoveryDecisionCode.HOST_ONLINE_AVAILABLE &&
+    geoOnlinePrior.surface === "geo_presence" &&
+    geoOnlinePrior.chatgptAdsAccess === "ACCESS_BLOCKED" &&
+    publicOfflineNullPrior.code ===
+      PublicDiscoveryDecisionCode.CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED &&
+    publicOfflineNullPrior.activeCoverageClaimed === false
+  ) {
+    details.push(
+      "wipe15 I68 TIMER: geo_presence ONLINE+prior AVAILABLE; public_visibility OFFLINE null prior claim refused (exclusive #307 Slot M)",
+    );
+  } else {
+    passed = false;
+    details.push("I68 geo-prior/null-prior-offline unexpectedly failed");
+  }
+
+  // wipe15 I69 TIMER ON_TIP 5ed3d15d
+  const chatgptOnlinePrior = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i69-chatgpt-${randomUUID().slice(0, 8)}`,
+    surface: "chatgpt_business",
+    hostLiveness: HostDiscoveryLiveness.ONLINE,
+    nowIso,
+    lastSuccessfulDiscoveryAtIso: "2026-11-22T12:30:00.000Z",
+  });
+  const publicHonestNoPrior = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i69-public-${randomUUID().slice(0, 8)}`,
+    surface: "public_visibility",
+    hostLiveness: HostDiscoveryLiveness.ONLINE,
+    nowIso,
+    claimedAvailability: PublicDiscoveryAvailability.UNAVAILABLE,
+  });
+  if (
+    chatgptOnlinePrior.code === PublicDiscoveryDecisionCode.HOST_ONLINE_AVAILABLE &&
+    chatgptOnlinePrior.chatgptAdsAccess === "ACCESS_BLOCKED" &&
+    publicHonestNoPrior.code ===
+      PublicDiscoveryDecisionCode.HOST_ONLINE_NO_PRIOR_UNAVAILABLE &&
+    publicHonestNoPrior.surface === "public_visibility"
+  ) {
+    details.push(
+      "wipe15 I69 TIMER: chatgpt_business ONLINE+prior; public_visibility honest UNAVAILABLE claim → NO_PRIOR (exclusive #309 Slot S)",
+    );
+  } else {
+    passed = false;
+    details.push("I69 chatgpt-prior/public-honest unexpectedly failed");
+  }
+
+  // wipe15 I70 TIMER ON_TIP 7a9be9a1
+  const geoOfflinePrior = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i70-geo-off-${randomUUID().slice(0, 8)}`,
+    surface: "geo_presence",
+    hostLiveness: HostDiscoveryLiveness.OFFLINE,
+    nowIso,
+    lastSuccessfulDiscoveryAtIso: "2026-11-22T09:00:00.000Z",
+  });
+  const geoClaimNoPrior = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i70-geo-claim-${randomUUID().slice(0, 8)}`,
+    surface: "geo_presence",
+    hostLiveness: HostDiscoveryLiveness.ONLINE,
+    nowIso,
+    claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+  });
+  if (
+    geoOfflinePrior.code ===
+      PublicDiscoveryDecisionCode.HOST_OFFLINE_UNAVAILABLE &&
+    geoOfflinePrior.activeCoverageClaimed === false &&
+    geoClaimNoPrior.code ===
+      PublicDiscoveryDecisionCode.HOST_ONLINE_NO_PRIOR_UNAVAILABLE &&
+    geoClaimNoPrior.externalEffects === "NONE"
+  ) {
+    details.push(
+      "wipe15 I70 TIMER: OFFLINE geo+prior ignored; ONLINE geo claim NO_PRIOR (exclusive #311 Slot A)",
+    );
+  } else {
+    passed = false;
+    details.push("I70 geo-offline-prior/geo-claim unexpectedly failed");
+  }
+
   // Claimed AVAILABLE while offline is refused.
   const refused = evaluateHostOfflinePublicDiscovery({
     observationId: `obs-refuse-${randomUUID().slice(0, 8)}`,

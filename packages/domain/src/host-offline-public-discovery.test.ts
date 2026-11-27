@@ -103,6 +103,253 @@ describe("host offline public discovery (T-X071)", () => {
     expect(obs.externalEffects).toBe("NONE");
   });
 
+  it("greenfield I63 BIND: claimed AVAILABLE while ONLINE without prior stays honest UNAVAILABLE (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i63-claim-online-no-prior",
+      hostLiveness: HostDiscoveryLiveness.ONLINE,
+      nowIso: now,
+      claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+    });
+    expect(obs.code).toBe(
+      PublicDiscoveryDecisionCode.HOST_ONLINE_NO_PRIOR_UNAVAILABLE,
+    );
+    expect(obs.availability).toBe(PublicDiscoveryAvailability.UNAVAILABLE);
+    expect(obs.activeCoverageClaimed).toBe(false);
+    expect(obs.inventedDiscoveryRank).toBeNull();
+    expect(obs.liveProviderWiring).toBe("NOT_WIRED");
+    expect(obs.externalEffects).toBe("NONE");
+  });
+
+  it("greenfield I63 BIND: ONLINE with prior still AVAILABLE even if claim is UNAVAILABLE (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i63-honest-claim-with-prior",
+      hostLiveness: HostDiscoveryLiveness.ONLINE,
+      nowIso: now,
+      claimedAvailability: PublicDiscoveryAvailability.UNAVAILABLE,
+      lastSuccessfulDiscoveryAtIso: "2026-11-22T08:00:00.000Z",
+    });
+    expect(obs.code).toBe(PublicDiscoveryDecisionCode.HOST_ONLINE_AVAILABLE);
+    expect(obs.availability).toBe(PublicDiscoveryAvailability.AVAILABLE);
+    expect(obs.activeCoverageClaimed).toBe(true);
+    expect(obs.inventedDiscoveryRank).toBeNull();
+  });
+
+  it("wipe15 I64 TIMER ON_TIP: OFFLINE with empty prior timestamp stays honest (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i64-empty-prior-offline",
+      surface: "chatgpt_business",
+      hostLiveness: HostDiscoveryLiveness.OFFLINE,
+      nowIso: now,
+      lastSuccessfulDiscoveryAtIso: "",
+    });
+    expect(obs.code).toBe(
+      PublicDiscoveryDecisionCode.HOST_OFFLINE_UNAVAILABLE,
+    );
+    expect(obs.activeCoverageClaimed).toBe(false);
+    expect(obs.inventedDiscoveryRank).toBeNull();
+    expect(obs.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("wipe15 I64: ONLINE with null prior and claimed AVAILABLE → NO_PRIOR (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i64-null-prior-claim",
+      hostLiveness: HostDiscoveryLiveness.ONLINE,
+      nowIso: now,
+      claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+      lastSuccessfulDiscoveryAtIso: null,
+    });
+    expect(obs.code).toBe(
+      PublicDiscoveryDecisionCode.HOST_ONLINE_NO_PRIOR_UNAVAILABLE,
+    );
+    expect(obs.inventedDiscoveryRank).toBeNull();
+  });
+
+  it("wipe15 I65 TIMER ON_TIP: ONLINE no prior + honest UNAVAILABLE claim (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i65-honest-unavail-claim",
+      hostLiveness: HostDiscoveryLiveness.ONLINE,
+      nowIso: now,
+      claimedAvailability: PublicDiscoveryAvailability.UNAVAILABLE,
+    });
+    expect(obs.code).toBe(
+      PublicDiscoveryDecisionCode.HOST_ONLINE_NO_PRIOR_UNAVAILABLE,
+    );
+    expect(obs.availability).toBe(PublicDiscoveryAvailability.UNAVAILABLE);
+    expect(obs.activeCoverageClaimed).toBe(false);
+    expect(obs.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("wipe15 I65: OFFLINE geo_presence refuses claimed AVAILABLE (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i65-offline-geo-claim",
+      surface: "geo_presence",
+      hostLiveness: HostDiscoveryLiveness.OFFLINE,
+      nowIso: now,
+      claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+    });
+    expect(obs.code).toBe(
+      PublicDiscoveryDecisionCode.CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED,
+    );
+    expect(obs.unavailableReason).toBe(
+      PublicDiscoveryUnavailableReason.HOST_OFFLINE,
+    );
+    expect(obs.inventedDiscoveryRank).toBeNull();
+  });
+
+  it("wipe15 I66 TIMER ON_TIP: OFFLINE public_visibility honest UNAVAILABLE claim (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i66-offline-honest",
+      surface: "public_visibility",
+      hostLiveness: HostDiscoveryLiveness.OFFLINE,
+      nowIso: now,
+      claimedAvailability: PublicDiscoveryAvailability.UNAVAILABLE,
+    });
+    expect(obs.code).toBe(
+      PublicDiscoveryDecisionCode.HOST_OFFLINE_UNAVAILABLE,
+    );
+    expect(obs.liveProviderWiring).toBe("NOT_WIRED");
+    expect(obs.externalEffects).toBe("NONE");
+  });
+
+  it("wipe15 I66: ONLINE undefined prior + claim AVAILABLE → NO_PRIOR (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i66-undef-prior",
+      hostLiveness: HostDiscoveryLiveness.ONLINE,
+      nowIso: now,
+      claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+    });
+    expect(obs.code).toBe(
+      PublicDiscoveryDecisionCode.HOST_ONLINE_NO_PRIOR_UNAVAILABLE,
+    );
+    expect(obs.activeCoverageClaimed).toBe(false);
+  });
+
+  it("wipe15 I67 TIMER ON_TIP: OFFLINE chatgpt_business refuses AVAILABLE claim (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i67-chatgpt-offline-claim",
+      surface: "chatgpt_business",
+      hostLiveness: HostDiscoveryLiveness.OFFLINE,
+      nowIso: now,
+      claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+      lastSuccessfulDiscoveryAtIso: "2026-11-22T10:00:00.000Z",
+    });
+    expect(obs.code).toBe(
+      PublicDiscoveryDecisionCode.CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED,
+    );
+    expect(obs.activeCoverageClaimed).toBe(false);
+    expect(obs.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("wipe15 I67: ONLINE with empty-string prior → NO_PRIOR unavailable (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i67-empty-string-prior",
+      hostLiveness: HostDiscoveryLiveness.ONLINE,
+      nowIso: now,
+      lastSuccessfulDiscoveryAtIso: "",
+    });
+    expect(obs.code).toBe(
+      PublicDiscoveryDecisionCode.HOST_ONLINE_NO_PRIOR_UNAVAILABLE,
+    );
+    expect(obs.inventedDiscoveryRank).toBeNull();
+  });
+
+  it("wipe15 I68 TIMER ON_TIP: ONLINE geo_presence with prior stays AVAILABLE (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i68-geo-prior",
+      surface: "geo_presence",
+      hostLiveness: HostDiscoveryLiveness.ONLINE,
+      nowIso: now,
+      lastSuccessfulDiscoveryAtIso: "2026-11-22T11:00:00.000Z",
+      claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+    });
+    expect(obs.surface).toBe("geo_presence");
+    expect(obs.code).toBe(PublicDiscoveryDecisionCode.HOST_ONLINE_AVAILABLE);
+    expect(obs.activeCoverageClaimed).toBe(true);
+    expect(obs.inventedDiscoveryRank).toBeNull();
+    expect(obs.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(obs.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("wipe15 I68: OFFLINE public_visibility null prior refuses AVAILABLE claim (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i68-null-prior-offline-claim",
+      surface: "public_visibility",
+      hostLiveness: HostDiscoveryLiveness.OFFLINE,
+      nowIso: now,
+      claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+      lastSuccessfulDiscoveryAtIso: null,
+    });
+    expect(obs.code).toBe(
+      PublicDiscoveryDecisionCode.CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED,
+    );
+    expect(obs.activeCoverageClaimed).toBe(false);
+    expect(obs.inventedDiscoveryRank).toBeNull();
+    expect(obs.externalEffects).toBe("NONE");
+  });
+
+  it("wipe15 I69 TIMER ON_TIP: ONLINE chatgpt_business with prior stays AVAILABLE (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i69-chatgpt-prior",
+      surface: "chatgpt_business",
+      hostLiveness: HostDiscoveryLiveness.ONLINE,
+      nowIso: now,
+      lastSuccessfulDiscoveryAtIso: "2026-11-22T12:30:00.000Z",
+    });
+    expect(obs.surface).toBe("chatgpt_business");
+    expect(obs.code).toBe(PublicDiscoveryDecisionCode.HOST_ONLINE_AVAILABLE);
+    expect(obs.activeCoverageClaimed).toBe(true);
+    expect(obs.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(obs.externalEffects).toBe("NONE");
+  });
+
+  it("wipe15 I69: ONLINE public_visibility honest UNAVAILABLE claim → NO_PRIOR (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i69-public-honest-claim",
+      surface: "public_visibility",
+      hostLiveness: HostDiscoveryLiveness.ONLINE,
+      nowIso: now,
+      claimedAvailability: PublicDiscoveryAvailability.UNAVAILABLE,
+    });
+    expect(obs.surface).toBe("public_visibility");
+    expect(obs.code).toBe(
+      PublicDiscoveryDecisionCode.HOST_ONLINE_NO_PRIOR_UNAVAILABLE,
+    );
+    expect(obs.activeCoverageClaimed).toBe(false);
+    expect(obs.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("wipe15 I70 TIMER ON_TIP: OFFLINE geo_presence ignores prior success (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i70-geo-offline-prior",
+      surface: "geo_presence",
+      hostLiveness: HostDiscoveryLiveness.OFFLINE,
+      nowIso: now,
+      lastSuccessfulDiscoveryAtIso: "2026-11-22T09:00:00.000Z",
+    });
+    expect(obs.code).toBe(
+      PublicDiscoveryDecisionCode.HOST_OFFLINE_UNAVAILABLE,
+    );
+    expect(obs.activeCoverageClaimed).toBe(false);
+    expect(obs.reasons.some((r) => r.includes("Prior success ignored"))).toBe(
+      true,
+    );
+  });
+
+  it("wipe15 I70: ONLINE geo_presence no prior + AVAILABLE claim → NO_PRIOR (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i70-geo-claim-noprior",
+      surface: "geo_presence",
+      hostLiveness: HostDiscoveryLiveness.ONLINE,
+      nowIso: now,
+      claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+    });
+    expect(obs.code).toBe(
+      PublicDiscoveryDecisionCode.HOST_ONLINE_NO_PRIOR_UNAVAILABLE,
+    );
+    expect(obs.inventedDiscoveryRank).toBeNull();
+    expect(obs.externalEffects).toBe("NONE");
+  });
+
   it("applies HOST_OFFLINE honestly across all public-discovery surfaces", () => {
     const surfaces = [
       "geo_presence",
