@@ -302,6 +302,20 @@ export {
   type ReviewBindingHonestySummary,
 } from "./review-binding.js";
 export {
+  SELF_APPROVAL_RELATED_CASE_IDS,
+  assertSelfApprovalRefusedAcrossSurfaces,
+  evaluateSelfApprovalHonesty,
+  isAuthorActingAsReviewer,
+  createSelfApprovalDecisionLedger,
+  appendSelfApprovalLedgerEntry,
+  type SelfApprovalDecisionCode,
+  type SelfApprovalHonestyDecision,
+  type SelfApprovalDecisionLedger,
+  type SelfApprovalLedgerAppendResult,
+  type SelfApprovalLedgerEntry,
+  type SelfApprovalLedgerOutcome,
+} from "./self-approval.js";
+export {
   ProbeKind,
   ProbeMode,
   ProbeVerdict,

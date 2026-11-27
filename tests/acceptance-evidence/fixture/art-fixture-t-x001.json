@@ -3,13 +3,13 @@
   "caseId": "T-X001",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X001 (Host sleeps during scheduled monitoring — coverage gap honest; coalesce)\nproof=host_sleep_monitoring_coverage_gap applyCount=1 :: Pre-sleep SUCCESS recorded at 2026-11-21T19:06:00.000Z | Derived 3 missed slots from cadence=60000ms | Host sleep → 3 COVERAGE_GAP slots; lastVerifiedSuccess unchanged; probeApplyCount=1 | Burst replay refused: Missed monitoring slots must coalesce on wake — burst per-slot replay forbidden | Catch-up without probe refused: Catch-up coalesce requires an actual fixture probe result before counting an apply | Wake coalesce catchup=probe-host-sleep-9867ae4e:2026-11-21T19:09:30.000Z gaps=3 probeAppliesThisWake=1 totalApplies=2 fixtureProbe=2026-11-21T19:09:30.000Z | liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X001 (Host sleeps during scheduled monitoring — coverage gap honest; coalesce)\nproof=host_sleep_monitoring_coverage_gap applyCount=1 :: Pre-sleep SUCCESS recorded at 2026-11-21T19:06:00.000Z | Derived 3 missed slots from cadence=60000ms | Host sleep → 3 COVERAGE_GAP slots; lastVerifiedSuccess unchanged; probeApplyCount=1 | Burst replay refused: Missed monitoring slots must coalesce on wake — burst per-slot replay forbidden | Catch-up without probe refused: Catch-up coalesce requires an actual fixture probe result before counting an apply | Wake coalesce catchup=probe-host-sleep-6aa1f4ac:2026-11-21T19:09:30.000Z gaps=3 probeAppliesThisWake=1 totalApplies=2 fixtureProbe=2026-11-21T19:09:30.000Z | liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "host_sleep_monitoring_coverage_gap"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x001.json",
-  "createdAtIso": "2026-11-27T12:04:44.143Z",
+  "createdAtIso": "2026-11-27T12:09:43.945Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x001-568e2db8dfd3"
+  "uniqueSourceArtifactId": "art-fixture-t-x001-2c4dd07e6ffb"
 }
