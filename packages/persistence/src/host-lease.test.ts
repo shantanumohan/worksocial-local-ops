@@ -518,4 +518,22 @@ describe("host-lease", () => {
       expect(bad.message).not.toBe(HOST_LEASE_HELD_MESSAGE);
     }
   });
+
+  it("edge: negative holderPid fails INVALID_INPUT without LEASE_HELD (T-X002)", () => {
+    const bad = acquireHostLease(
+      null,
+      {
+        hostId: "host-neg",
+        holderPid: -1,
+        generationId: "gen-neg",
+        ttlMs: 5_000,
+      },
+      clockAt(1_000),
+    );
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) {
+      expect(bad.reason).toBe("INVALID_INPUT");
+      expect(bad.message).not.toBe(HOST_LEASE_HELD_MESSAGE);
+    }
+  });
 });
