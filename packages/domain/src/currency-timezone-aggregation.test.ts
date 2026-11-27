@@ -244,4 +244,210 @@ describe("currency-timezone aggregation (T-X060)", () => {
       })?.code,
     ).toBe(CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED);
   });
+
+  it("G39: refuses negative totalMinor on claimed AGGREGATED PASS", () => {
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+        totalMinor: -1,
+        expectedTotalMinor: -1,
+      })?.code,
+    ).toBe(CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED);
+  });
+
+  it("G41: refuses negative expectedTotalMinor on claimed AGGREGATED PASS", () => {
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+        totalMinor: 100,
+        expectedTotalMinor: -1,
+      })?.code,
+    ).toBe(CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED);
+  });
+
+  it("G40: refuses unsafe-integer totalMinor on claimed AGGREGATED PASS", () => {
+    const unsafe = Number.MAX_SAFE_INTEGER + 1;
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+        totalMinor: unsafe,
+        expectedTotalMinor: unsafe,
+      })?.code,
+    ).toBe(CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED);
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+        totalMinor: 100,
+        expectedTotalMinor: unsafe,
+      })?.code,
+    ).toBe(CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED);
+  });
+
+  it("G38: refuses negative amountMinor as INVALID_DIMENSION", () => {
+    const result = aggregateCurrencyTimezoneSeries([
+      {
+        observationId: "a",
+        amountMinor: 100,
+        currency: "USD",
+        reportingTimezone: "America/New_York",
+      },
+      {
+        observationId: "b",
+        amountMinor: -1,
+        currency: "USD",
+        reportingTimezone: "America/New_York",
+      },
+    ]);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("INVALID_DIMENSION");
+      expect(result.totalMinor).toBeNull();
+    }
+  });
+
+  it("G37: refuses aggregate when total exceeds safe integer", () => {
+    const huge = Number.MAX_SAFE_INTEGER - 100;
+    const result = aggregateCurrencyTimezoneSeries([
+      {
+        observationId: "a",
+        amountMinor: huge,
+        currency: "USD",
+        reportingTimezone: "America/New_York",
+      },
+      {
+        observationId: "b",
+        amountMinor: 200,
+        currency: "USD",
+        reportingTimezone: "America/New_York",
+      },
+    ]);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("INVALID_DIMENSION");
+      expect(result.totalMinor).toBeNull();
+    }
+  });
+
+  it("G36: refuses false PASS when claimed dimensions ≠ measured", () => {
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+        totalMinor: 550,
+        expectedTotalMinor: 550,
+        measuredCurrency: "USD",
+        measuredReportingTimezone: "America/New_York",
+        claimedCurrency: "EUR",
+        claimedReportingTimezone: "America/New_York",
+      })?.code,
+    ).toBe(
+      CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_DIMENSION_MISMATCH_REFUSED,
+    );
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+        totalMinor: 550,
+        expectedTotalMinor: 550,
+        measuredCurrency: "USD",
+        measuredReportingTimezone: "America/New_York",
+        claimedCurrency: " usd ",
+        claimedReportingTimezone: "UTC",
+      })?.code,
+    ).toBe(
+      CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_DIMENSION_MISMATCH_REFUSED,
+    );
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+        totalMinor: 550,
+        expectedTotalMinor: 550,
+        measuredCurrency: "USD",
+        measuredReportingTimezone: "America/New_York",
+        claimedCurrency: " USD ",
+        claimedReportingTimezone: " America/New_York ",
+      }),
+    ).toBeNull();
+  });
+
+  it("G42: refuses blank-after-normalize dimensions on claimed AGGREGATED PASS", () => {
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+        totalMinor: 100,
+        expectedTotalMinor: 100,
+        measuredCurrency: "USD",
+        measuredReportingTimezone: "America/New_York",
+        claimedCurrency: "   ",
+        claimedReportingTimezone: "America/New_York",
+      })?.code,
+    ).toBe(CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED);
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+        totalMinor: 100,
+        expectedTotalMinor: 100,
+        measuredCurrency: "  ",
+        measuredReportingTimezone: "  ",
+        claimedCurrency: "  ",
+        claimedReportingTimezone: "  ",
+      })?.code,
+    ).toBe(CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED);
+  });
+
+  it("G43: refuses blank observationId as INVALID_DIMENSION", () => {
+    const result = aggregateCurrencyTimezoneSeries([
+      {
+        observationId: "   ",
+        amountMinor: 100,
+        currency: "USD",
+        reportingTimezone: "America/New_York",
+      },
+    ]);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("INVALID_DIMENSION");
+      expect(result.totalMinor).toBeNull();
+    }
+  });
+
+  it("G44: refuses signed-zero (-0) amountMinor and claim totals", () => {
+    const signedZero = -0;
+    const agg = aggregateCurrencyTimezoneSeries([
+      {
+        observationId: "a",
+        amountMinor: signedZero,
+        currency: "USD",
+        reportingTimezone: "America/New_York",
+      },
+    ]);
+    expect(agg.ok).toBe(false);
+    if (!agg.ok) {
+      expect(agg.code).toBe("INVALID_DIMENSION");
+      expect(agg.totalMinor).toBeNull();
+    }
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+        totalMinor: signedZero,
+        expectedTotalMinor: 0,
+      })?.code,
+    ).toBe(CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED);
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+        totalMinor: 0,
+        expectedTotalMinor: signedZero,
+      })?.code,
+    ).toBe(CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED);
+  });
 });
