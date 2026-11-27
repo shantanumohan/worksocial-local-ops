@@ -10,7 +10,8 @@
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  * Hillclimb: classifyUnsupportedBlogDestination + preferLive refuse + Hub edge;
  * DST civil schedule gaps still refuse fake OTHER_BLOG publication (G11);
- * blank/padded destinationId + format mismatch + preferLive-on-schedule (G15).
+ * blank/padded destinationId + format mismatch + preferLive-on-schedule (G15);
+ * INVALID_SCHEDULE_INPUT civil refuse (G16/G18–G20); empty destinationId refuse (G17); spring-gap blocks fixture schedule (G21); fixture CMS schedule (G22/G23); Hub scheduled civil resolve still unsupported (G24); fixture OTHER_BLOG fall-back allowed (G25); scheduled format mismatch refuse (G26); scheduled padded destinationId refuse (G27); scheduled empty destinationId refuse (G28); fixture OTHER_BLOG normal schedule allowed (G29); preferLive-on-normal-OTHER_BLOG-schedule refuse (G30); unsupported OTHER_BLOG normal schedule still refuse (G31); preferLive-on-Hub-schedule refuse (G32); fixture CMS fall-back schedule allowed (G33).
  */
 
 import { randomUUID } from "node:crypto";
@@ -591,6 +592,579 @@ export async function proofUnsupportedBlogDestinationNoFakePublication(
       details.push(`Format mismatch unexpected: ${JSON.stringify(formatMismatch)}`);
     }
 
+    // G17: empty destinationId refuses before format/adapter paths.
+    const emptyId = classifyUnsupportedBlogDestination({
+      destination: {
+        ...otherBlog,
+        destinationId: "",
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      },
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    if (
+      !emptyId.allowed &&
+      emptyId.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED" &&
+      emptyId.inventPublishedVerified === false &&
+      emptyId.externalEffects === "NONE"
+    ) {
+      details.push(
+        "Empty destinationId → OTHER_BLOG_NO_ADAPTER_UNSUPPORTED; never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`Empty destinationId unexpected: ${JSON.stringify(emptyId)}`);
+    }
+
+    // G22: fixture CMS schedule resolves — allowed without invent PUBLISHED_VERIFIED.
+    const cmsSchedule = classifyUnsupportedBlogScheduledPublish({
+      destination: {
+        destinationId: "dest-cms",
+        kind: DestinationKind.CMS,
+        displayName: "Owned CMS",
+        channelId: "owned-site",
+        allowedFormats: [ContentFormat.FULL_ARTICLE],
+        maxBodyChars: null,
+        requiresCanonicalUrl: false,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+        fixtureAvailable: true,
+        locationRelevant: false,
+        notes: "fixture",
+      },
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+    });
+    if (
+      cmsSchedule.scheduleOk &&
+      cmsSchedule.scheduleCode === "SCHEDULE_RESOLVED" &&
+      cmsSchedule.allowed &&
+      cmsSchedule.publish.code === "OWNED_CMS_ALLOWED" &&
+      cmsSchedule.inventPublishedVerified === false &&
+      cmsSchedule.externalEffects === "NONE"
+    ) {
+      details.push(
+        "Fixture CMS civil schedule resolves — OWNED_CMS_ALLOWED; inventPublishedVerified=false",
+      );
+    } else {
+      passed = false;
+      details.push(`CMS schedule unexpected: ${JSON.stringify(cmsSchedule)}`);
+    }
+
+    // G23: resolved CMS schedule + preferLive still refused.
+    const cmsPreferLive = classifyUnsupportedBlogScheduledPublish({
+      destination: {
+        destinationId: "dest-cms",
+        kind: DestinationKind.CMS,
+        displayName: "Owned CMS",
+        channelId: "owned-site",
+        allowedFormats: [ContentFormat.FULL_ARTICLE],
+        maxBodyChars: null,
+        requiresCanonicalUrl: false,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+        fixtureAvailable: true,
+        locationRelevant: false,
+        notes: "fixture",
+      },
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+      preferLive: true,
+    });
+    if (
+      cmsPreferLive.scheduleOk &&
+      cmsPreferLive.scheduleCode === "SCHEDULE_RESOLVED" &&
+      !cmsPreferLive.allowed &&
+      cmsPreferLive.publish.code === "LIVE_WIRE_CLAIM_REFUSED" &&
+      cmsPreferLive.inventPublishedVerified === false
+    ) {
+      details.push(
+        "CMS schedule resolve + preferLive → LIVE_WIRE_CLAIM_REFUSED; never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`CMS preferLive schedule unexpected: ${JSON.stringify(cmsPreferLive)}`);
+    }
+
+    // G21: spring-gap blocks schedule even when fixture OTHER_BLOG publish would classify allowed.
+    const springFixture = classifyUnsupportedBlogScheduledPublish({
+      destination: {
+        ...otherBlog,
+        destinationId: "dest-other-blog-fixture-spring",
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      },
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-03-09",
+      hour: 2,
+      minute: 30,
+    });
+    if (
+      !springFixture.scheduleOk &&
+      springFixture.scheduleCode === "NONEXISTENT_LOCAL_TIME" &&
+      !springFixture.allowed &&
+      springFixture.inventPublishedVerified === false &&
+      springFixture.publish.code === "OTHER_BLOG_FIXTURE_ALLOWED"
+    ) {
+      details.push(
+        "Spring-gap NONEXISTENT_LOCAL_TIME blocks fixture OTHER_BLOG schedule — never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`Spring fixture schedule unexpected: ${JSON.stringify(springFixture)}`);
+    }
+
+    // G20: out-of-range civil minute → INVALID_SCHEDULE_INPUT.
+    const badMinute = classifyUnsupportedBlogScheduledPublish({
+      destination: otherBlog,
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 60,
+    });
+    if (
+      !badMinute.scheduleOk &&
+      badMinute.scheduleCode === "INVALID_SCHEDULE_INPUT" &&
+      !badMinute.allowed &&
+      badMinute.inventPublishedVerified === false
+    ) {
+      details.push(
+        "Out-of-range civil minute INVALID_SCHEDULE_INPUT; never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`Bad minute schedule unexpected: ${JSON.stringify(badMinute)}`);
+    }
+
+    // G19: out-of-range civil hour → INVALID_SCHEDULE_INPUT.
+    const badHour = classifyUnsupportedBlogScheduledPublish({
+      destination: otherBlog,
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 25,
+      minute: 0,
+    });
+    if (
+      !badHour.scheduleOk &&
+      badHour.scheduleCode === "INVALID_SCHEDULE_INPUT" &&
+      !badHour.allowed &&
+      badHour.inventPublishedVerified === false &&
+      badHour.publish.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED"
+    ) {
+      details.push(
+        "Out-of-range civil hour INVALID_SCHEDULE_INPUT; never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`Bad hour schedule unexpected: ${JSON.stringify(badHour)}`);
+    }
+
+    // G18: malformed localDate → INVALID_SCHEDULE_INPUT; publish still unsupported.
+    const malformedDate = classifyUnsupportedBlogScheduledPublish({
+      destination: otherBlog,
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-13-01",
+      hour: 9,
+      minute: 0,
+    });
+    if (
+      !malformedDate.scheduleOk &&
+      malformedDate.scheduleCode === "INVALID_SCHEDULE_INPUT" &&
+      !malformedDate.allowed &&
+      malformedDate.inventPublishedVerified === false &&
+      malformedDate.publish.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED"
+    ) {
+      details.push(
+        "Malformed localDate INVALID_SCHEDULE_INPUT; OTHER_BLOG never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`Malformed localDate unexpected: ${JSON.stringify(malformedDate)}`);
+    }
+
+    // G16: invalid civil schedule (bad zone) → INVALID_SCHEDULE_INPUT; no fake publish.
+    const invalidCivil = classifyUnsupportedBlogScheduledPublish({
+      destination: otherBlog,
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "Not/A_Valid_Zone",
+      localDate: "2025-11-02",
+      hour: 9,
+      minute: 0,
+    });
+    if (
+      !invalidCivil.scheduleOk &&
+      invalidCivil.scheduleCode === "INVALID_SCHEDULE_INPUT" &&
+      invalidCivil.fireAtIso === null &&
+      !invalidCivil.allowed &&
+      invalidCivil.inventPublishedVerified === false &&
+      invalidCivil.publish.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED" &&
+      invalidCivil.externalEffects === "NONE"
+    ) {
+      details.push(
+        "INVALID_SCHEDULE_INPUT civil refuse; OTHER_BLOG still UNSUPPORTED — never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`Invalid civil schedule unexpected: ${JSON.stringify(invalidCivil)}`);
+    }
+
+    // G24: Hub FULL_ARTICLE — civil schedule resolves but still unsupported.
+    const hubScheduled = classifyUnsupportedBlogScheduledPublish({
+      destination: {
+        destinationId: "dest-chatgpt-hub",
+        kind: DestinationKind.CHATGPT_HUB,
+        displayName: "ChatGPT Hub",
+        channelId: "chatgpt-hub",
+        allowedFormats: [ContentFormat.FULL_ARTICLE],
+        maxBodyChars: null,
+        requiresCanonicalUrl: false,
+        liveWiring: AdapterLiveStatus.NOT_WIRED,
+        fixtureAvailable: false,
+        locationRelevant: false,
+        notes: "Hub has no invented full-blog API",
+      },
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+    });
+    if (
+      hubScheduled.scheduleOk &&
+      hubScheduled.scheduleCode === "SCHEDULE_RESOLVED" &&
+      hubScheduled.fireAtIso !== null &&
+      !hubScheduled.allowed &&
+      hubScheduled.publish.code === "HUB_FULL_BLOG_UNSUPPORTED" &&
+      hubScheduled.publish.outcome === PublicationOutcome.UNSUPPORTED_ACTION &&
+      hubScheduled.inventPublishedVerified === false &&
+      hubScheduled.externalEffects === "NONE" &&
+      hubScheduled.chatgptAdsAccess === "ACCESS_BLOCKED"
+    ) {
+      details.push(
+        "Hub FULL_ARTICLE civil schedule resolves; publish still HUB_FULL_BLOG_UNSUPPORTED — never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`Hub scheduled unexpected: ${JSON.stringify(hubScheduled)}`);
+    }
+
+    // G25: fall-back ambiguous schedule + fixture OTHER_BLOG allowed — still no invent VERIFIED.
+    const fallBackFixture = classifyUnsupportedBlogScheduledPublish({
+      destination: {
+        ...otherBlog,
+        destinationId: "dest-other-blog-fixture-fallback",
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      },
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-11-02",
+      hour: 1,
+      minute: 30,
+    });
+    if (
+      fallBackFixture.scheduleOk &&
+      fallBackFixture.scheduleCode === "SCHEDULE_RESOLVED" &&
+      fallBackFixture.ambiguous === true &&
+      fallBackFixture.allowed === true &&
+      fallBackFixture.publish.code === "OTHER_BLOG_FIXTURE_ALLOWED" &&
+      fallBackFixture.inventPublishedVerified === false &&
+      fallBackFixture.liveProviderWiring === AdapterLiveStatus.FIXTURE &&
+      fallBackFixture.externalEffects === "NONE" &&
+      fallBackFixture.chatgptAdsAccess === "ACCESS_BLOCKED"
+    ) {
+      details.push(
+        "DST fall-back + fixture OTHER_BLOG → SCHEDULE_RESOLVED allowed; inventPublishedVerified=false",
+      );
+    } else {
+      passed = false;
+      details.push(`Fall-back fixture OTHER_BLOG unexpected: ${JSON.stringify(fallBackFixture)}`);
+    }
+
+    // G26: civil schedule resolves but format mismatch still refuses publish.
+    const scheduledFormatMismatch = classifyUnsupportedBlogScheduledPublish({
+      destination: {
+        ...otherBlog,
+        destinationId: "dest-other-blog-format-scheduled",
+        fixtureAvailable: true,
+        allowedFormats: [ContentFormat.PROFILE_FACT],
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      },
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+    });
+    if (
+      scheduledFormatMismatch.scheduleOk &&
+      scheduledFormatMismatch.scheduleCode === "SCHEDULE_RESOLVED" &&
+      scheduledFormatMismatch.fireAtIso !== null &&
+      !scheduledFormatMismatch.allowed &&
+      scheduledFormatMismatch.publish.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED" &&
+      scheduledFormatMismatch.inventPublishedVerified === false &&
+      scheduledFormatMismatch.externalEffects === "NONE"
+    ) {
+      details.push(
+        "SCHEDULE_RESOLVED but format mismatch → OTHER_BLOG_NO_ADAPTER_UNSUPPORTED; never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `Scheduled format mismatch unexpected: ${JSON.stringify(scheduledFormatMismatch)}`,
+      );
+    }
+
+    // G27: civil schedule resolves but whitespace-padded destinationId still refuses.
+    const scheduledPaddedId = classifyUnsupportedBlogScheduledPublish({
+      destination: {
+        ...otherBlog,
+        destinationId: "  dest-other-blog-padded-schedule  ",
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      },
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+    });
+    if (
+      scheduledPaddedId.scheduleOk &&
+      scheduledPaddedId.scheduleCode === "SCHEDULE_RESOLVED" &&
+      scheduledPaddedId.fireAtIso !== null &&
+      !scheduledPaddedId.allowed &&
+      scheduledPaddedId.publish.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED" &&
+      scheduledPaddedId.inventPublishedVerified === false &&
+      scheduledPaddedId.externalEffects === "NONE" &&
+      scheduledPaddedId.chatgptAdsAccess === "ACCESS_BLOCKED"
+    ) {
+      details.push(
+        "SCHEDULE_RESOLVED but padded destinationId → OTHER_BLOG_NO_ADAPTER_UNSUPPORTED; never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`Scheduled padded id unexpected: ${JSON.stringify(scheduledPaddedId)}`);
+    }
+
+      // G33: fall-back ambiguous schedule + fixture CMS allowed — still no invent VERIFIED.
+    const cmsFallBackSchedule = classifyUnsupportedBlogScheduledPublish({
+      destination: {
+        destinationId: "dest-cms",
+        kind: DestinationKind.CMS,
+        displayName: "Owned CMS",
+        channelId: "owned-site",
+        allowedFormats: [ContentFormat.FULL_ARTICLE],
+        maxBodyChars: null,
+        requiresCanonicalUrl: false,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+        fixtureAvailable: true,
+        locationRelevant: false,
+        notes: "fixture",
+      },
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-11-02",
+      hour: 1,
+      minute: 30,
+    });
+    if (
+      cmsFallBackSchedule.scheduleOk &&
+      cmsFallBackSchedule.scheduleCode === "SCHEDULE_RESOLVED" &&
+      cmsFallBackSchedule.ambiguous === true &&
+      cmsFallBackSchedule.allowed === true &&
+      cmsFallBackSchedule.publish.code === "OWNED_CMS_ALLOWED" &&
+      cmsFallBackSchedule.inventPublishedVerified === false &&
+      cmsFallBackSchedule.liveProviderWiring === AdapterLiveStatus.FIXTURE &&
+      cmsFallBackSchedule.externalEffects === "NONE" &&
+      cmsFallBackSchedule.chatgptAdsAccess === "ACCESS_BLOCKED"
+    ) {
+      details.push(
+        "DST fall-back + fixture CMS → OWNED_CMS_ALLOWED; inventPublishedVerified=false",
+      );
+    } else {
+      passed = false;
+      details.push(`CMS fall-back schedule unexpected: ${JSON.stringify(cmsFallBackSchedule)}`);
+    }
+
+    // G32: Hub schedule resolves but preferLive still refused.
+    const hubPreferLiveSchedule = classifyUnsupportedBlogScheduledPublish({
+      destination: {
+        destinationId: "dest-chatgpt-hub-preferlive",
+        kind: DestinationKind.CHATGPT_HUB,
+        displayName: "ChatGPT Hub",
+        channelId: "chatgpt-hub",
+        allowedFormats: [ContentFormat.FULL_ARTICLE],
+        maxBodyChars: null,
+        requiresCanonicalUrl: false,
+        liveWiring: AdapterLiveStatus.NOT_WIRED,
+        fixtureAvailable: false,
+        locationRelevant: false,
+        notes: "Hub scheduled preferLive refuse",
+      },
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+      preferLive: true,
+    });
+    if (
+      hubPreferLiveSchedule.scheduleOk &&
+      hubPreferLiveSchedule.scheduleCode === "SCHEDULE_RESOLVED" &&
+      !hubPreferLiveSchedule.allowed &&
+      hubPreferLiveSchedule.publish.code === "LIVE_WIRE_CLAIM_REFUSED" &&
+      hubPreferLiveSchedule.inventPublishedVerified === false &&
+      hubPreferLiveSchedule.externalEffects === "NONE" &&
+      hubPreferLiveSchedule.chatgptAdsAccess === "ACCESS_BLOCKED"
+    ) {
+      details.push(
+        "Hub scheduled preferLive → LIVE_WIRE_CLAIM_REFUSED; never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`Hub preferLive schedule unexpected: ${JSON.stringify(hubPreferLiveSchedule)}`);
+    }
+
+    // G31: normal schedule resolves but unsupported OTHER_BLOG still refused.
+    const unsupportedNormalSchedule = classifyUnsupportedBlogScheduledPublish({
+      destination: otherBlog,
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+    });
+    if (
+      unsupportedNormalSchedule.scheduleOk &&
+      unsupportedNormalSchedule.scheduleCode === "SCHEDULE_RESOLVED" &&
+      unsupportedNormalSchedule.fireAtIso !== null &&
+      !unsupportedNormalSchedule.allowed &&
+      unsupportedNormalSchedule.publish.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED" &&
+      unsupportedNormalSchedule.inventPublishedVerified === false &&
+      unsupportedNormalSchedule.externalEffects === "NONE" &&
+      unsupportedNormalSchedule.chatgptAdsAccess === "ACCESS_BLOCKED"
+    ) {
+      details.push(
+        "Normal SCHEDULE_RESOLVED but unsupported OTHER_BLOG → OTHER_BLOG_NO_ADAPTER_UNSUPPORTED; never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `Unsupported normal schedule unexpected: ${JSON.stringify(unsupportedNormalSchedule)}`,
+      );
+    }
+
+    // G30: normal schedule resolves but preferLive on fixture OTHER_BLOG still refused.
+    const preferLiveNormalSchedule = classifyUnsupportedBlogScheduledPublish({
+      destination: {
+        ...otherBlog,
+        destinationId: "dest-other-blog-fixture-preferlive-normal",
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      },
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+      preferLive: true,
+    });
+    if (
+      preferLiveNormalSchedule.scheduleOk &&
+      preferLiveNormalSchedule.scheduleCode === "SCHEDULE_RESOLVED" &&
+      preferLiveNormalSchedule.ambiguous === false &&
+      !preferLiveNormalSchedule.allowed &&
+      preferLiveNormalSchedule.publish.code === "LIVE_WIRE_CLAIM_REFUSED" &&
+      preferLiveNormalSchedule.inventPublishedVerified === false &&
+      preferLiveNormalSchedule.externalEffects === "NONE" &&
+      preferLiveNormalSchedule.chatgptAdsAccess === "ACCESS_BLOCKED"
+    ) {
+      details.push(
+        "Normal schedule + preferLive on fixture OTHER_BLOG → LIVE_WIRE_CLAIM_REFUSED; never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `preferLive normal OTHER_BLOG schedule unexpected: ${JSON.stringify(preferLiveNormalSchedule)}`,
+      );
+    }
+
+    // G29: normal civil schedule + fixture OTHER_BLOG allowed — still no invent VERIFIED.
+    const normalFixtureSchedule = classifyUnsupportedBlogScheduledPublish({
+      destination: {
+        ...otherBlog,
+        destinationId: "dest-other-blog-fixture-normal-schedule",
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      },
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+    });
+    if (
+      normalFixtureSchedule.scheduleOk &&
+      normalFixtureSchedule.scheduleCode === "SCHEDULE_RESOLVED" &&
+      normalFixtureSchedule.ambiguous === false &&
+      normalFixtureSchedule.allowed === true &&
+      normalFixtureSchedule.publish.code === "OTHER_BLOG_FIXTURE_ALLOWED" &&
+      normalFixtureSchedule.inventPublishedVerified === false &&
+      normalFixtureSchedule.liveProviderWiring === AdapterLiveStatus.FIXTURE &&
+      normalFixtureSchedule.externalEffects === "NONE" &&
+      normalFixtureSchedule.chatgptAdsAccess === "ACCESS_BLOCKED"
+    ) {
+      details.push(
+        "Normal civil schedule + fixture OTHER_BLOG → OTHER_BLOG_FIXTURE_ALLOWED; inventPublishedVerified=false",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `Normal fixture OTHER_BLOG schedule unexpected: ${JSON.stringify(normalFixtureSchedule)}`,
+      );
+    }
+
+    // G28: civil schedule resolves but empty destinationId still refuses.
+    const scheduledEmptyId = classifyUnsupportedBlogScheduledPublish({
+      destination: {
+        ...otherBlog,
+        destinationId: "",
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      },
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+    });
+    if (
+      scheduledEmptyId.scheduleOk &&
+      scheduledEmptyId.scheduleCode === "SCHEDULE_RESOLVED" &&
+      scheduledEmptyId.fireAtIso !== null &&
+      !scheduledEmptyId.allowed &&
+      scheduledEmptyId.publish.code === "OTHER_BLOG_NO_ADAPTER_UNSUPPORTED" &&
+      scheduledEmptyId.inventPublishedVerified === false &&
+      scheduledEmptyId.externalEffects === "NONE" &&
+      scheduledEmptyId.chatgptAdsAccess === "ACCESS_BLOCKED"
+    ) {
+      details.push(
+        "SCHEDULE_RESOLVED but empty destinationId → OTHER_BLOG_NO_ADAPTER_UNSUPPORTED; never invent PUBLISHED_VERIFIED",
+      );
+    } else {
+      passed = false;
+      details.push(`Scheduled empty id unexpected: ${JSON.stringify(scheduledEmptyId)}`);
+    }
+
     // G15: fall-back schedule resolves but preferLive still refused.
     const preferLiveSchedule = classifyUnsupportedBlogScheduledPublish({
       destination: {
@@ -627,7 +1201,7 @@ export async function proofUnsupportedBlogDestinationNoFakePublication(
     }
 
     details.push(
-      "liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED deepen=G15 hillclimb=classify+preferLive+Hub+DST-schedule+paddedId+formatMismatch",
+      "liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED deepen=G33 hillclimb=classify+preferLive+Hub+DST-schedule+paddedId+formatMismatch+invalidCivil+emptyId+malformedDate+badHour+badMinute+springFixture+cmsSchedule+cmsPreferLive+hubScheduled+fixtureOtherBlogFallBack+scheduledFormatMismatch+scheduledPaddedId+scheduledEmptyId+fixtureOtherBlogNormalSchedule+preferLiveNormalOtherBlogSchedule+unsupportedNormalSchedule+hubPreferLiveSchedule+cmsFallBackSchedule",
     );
     return finish(passed, details, nowIso, operationId);
   } finally {
