@@ -904,7 +904,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-US-044** / **T-X053** are fixture ACCEPTED only via the takeover cancels unsent replies proof (`TAKEOVER_CANCELS_UNSENT_REPLIES`) — human takeover increments conversation version, cancels multi-queue unsent rows (`BLOCKED_TAKEOVER`), and preserves already-SENT messages; replies prepared before takeover see `VERSION_MISMATCH` through the real takeover transition (T-X053 race); matching-version queue/send after ownership flip is `CONVERSATION_TAKEOVER`; live wiring stays **NOT_WIRED**; `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 
-**T-US-018** / **T-X037** are fixture ACCEPTED only via the EVAL_ONLY operational tool forbidden proof (`EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN`). Not sandbox/prod VERIFIED.
+**T-US-018** / **T-X037** are fixture ACCEPTED only via the EVAL_ONLY operational tool forbidden proof (`EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN`) — retry fence + effect/capability/attempt-envelope/outcome/side-effect/receipt honesty (ACCEPTED ≠ VERIFIED; Ads soft-skip `NOT_WIRED`). Not sandbox/prod VERIFIED.
 
 **T-X058** is fixture ACCEPTED only via the repair attempt limit escalated proof (`REPAIR_ATTEMPT_LIMIT_ESCALATED`) — `MAX_REPAIR_ATTEMPTS=2`; after two failed automatic attempts (`TESTS_FAILED` or `GATE_DENIED`) the ticket is `ESCALATED` and a third start is denied (`ATTEMPT_LIMIT`); SUCCESS/`RELEASED` within limit does not premature-escalate; CMS repair stays **NOT_WIRED**; `externalEffects: NONE`. Distinct from T-F21 / T-US-041 / T-US-042/T-X057. Not sandbox/prod VERIFIED.
 
@@ -916,7 +916,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-US-046** / **T-X048** are fixture ACCEPTED only via the hard search constraints no invention proof (`HARD_SEARCH_CONSTRAINTS_NO_INVENTION`). Not sandbox/prod VERIFIED.
 
-**T-US-010** / **T-X033** are fixture ACCEPTED only via the GSC omitted rows unknown not zero proof (`GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO`) — omitted/incomplete → UNKNOWN ≠ zero; blank/invisible-only/soft-hyphen-only query → `INVALID_GSC_QUERY`; non-finite/negative/signed −0 → `INVALID_GSC_COUNTS`; non-integer/unsafe/impossible counts refused; wrong/truncated/corrupt/missing wait-manifest refused (`WRONG_GSC_ROW_SCHEMA` / `INVENT_FROM_CORRUPT_MANIFEST`); invent CTR (incl. zero-impression)/position/aggregate/measured-from-unknown/fixture/sandbox refused; `liveGscWiring` NOT_WIRED; ChatGPT Ads ACCESS_BLOCKED; externalEffects NONE. Not sandbox/prod VERIFIED.
+**T-US-010** / **T-X033** are fixture ACCEPTED only via the GSC omitted rows unknown not zero proof (`GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO`). Not sandbox/prod VERIFIED.
 
 **T-US-008** / **T-X032** are fixture ACCEPTED only via the GA4 debug not delivered conversion proof (`GA4_DEBUG_NOT_DELIVERED_CONVERSION`). Not sandbox/prod VERIFIED.
 

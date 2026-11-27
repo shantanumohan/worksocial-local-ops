@@ -60,6 +60,22 @@ describe("evaluation-worker service", () => {
     expect(svc.chatgptAdsStatus().wiring).toBe("NOT_WIRED");
     expect(svc.attemptTool("publish").allowed).toBe(false);
     expect(svc.attemptTool("judge_answer").allowed).toBe(true);
+    const compare = svc.attemptTool("compare-golden");
+    expect(compare.allowed).toBe(true);
+    const reply = svc.attemptTool("customer_reply");
+    expect(reply.allowed).toBe(false);
+    if (!reply.allowed) {
+      expect(reply.tool).toBe(EvalToolClass.CUSTOMER_MESSAGE);
+      expect(reply.code).toBe("EVAL_TOOL_FORBIDDEN");
+      expect(reply.externalEffects).toBe("NONE");
+    }
+    const unknown = svc.attemptTool("shell_exec");
+    expect(unknown.allowed).toBe(false);
+    if (!unknown.allowed) {
+      expect(unknown.tool).toBe("unknown");
+      expect(unknown.code).toBe("EVAL_TOOL_UNKNOWN_FORBIDDEN");
+      expect(unknown.externalEffects).toBe("NONE");
+    }
     const status = await svc.status();
     expect(status.backend).toBe("file");
     expect(status.liveEvalWiring).toBe("NOT_WIRED");

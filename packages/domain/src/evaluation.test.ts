@@ -8,14 +8,26 @@ import {
   EVALUATION_WORKER_PRINCIPAL,
   FIXED_EVALUATION_ISOLATION,
   adjudicateGroundedEvalCase,
+  normalizeGroundingUsed,
+  evalLiveWiringStatus,
   assertEvaluationWorkerIsolation,
   createEvalConnection,
   emptyEvaluationState,
-  evalLiveWiringStatus,
+  DEFAULT_EVAL_TOOL_RETRY_MAX_ATTEMPTS,
   evaluateEvalToolAttempt,
-  normalizeGroundingUsed,
+  evaluateEvalToolAttemptRaw,
+  evaluateEvalToolRetryBudget,
+  isEvalToolForbidden,
+  normalizeEvalToolClass,
   reserveEvalBudget,
+  resolveEvalToolAttemptEnvelope,
+  resolveEvalToolCapabilityClaim,
+  resolveEvalToolOperationalEffect,
+  resolveEvalToolOutcomeClaim,
+  resolveEvalToolSideEffectClaim,
+  resolveEvalToolReceiptClaim,
   settleEvalBudget,
+  shouldRecordEvalToolAttemptOnBudgetDenial,
 } from "./evaluation.js";
 
 const now = "2026-11-21T18:00:00.000Z";
@@ -64,10 +76,332 @@ describe("evaluation — EVAL_ONLY isolation", () => {
     ] as const) {
       const gate = evaluateEvalToolAttempt(tool);
       expect(gate.allowed).toBe(false);
+      if (!gate.allowed) {
+        expect(gate.code).toBe("EVAL_TOOL_FORBIDDEN");
+        expect(gate.externalEffects).toBe("NONE");
+        expect(gate.cmsRepairWiring).toBe("NOT_WIRED");
+        expect(gate.liveEvalWiring).toBe("NOT_WIRED");
+      }
     }
-    expect(evaluateEvalToolAttempt(EvalToolClass.JUDGE_ANSWER).allowed).toBe(
-      true,
+    const judge = evaluateEvalToolAttempt(EvalToolClass.JUDGE_ANSWER);
+    expect(judge.allowed).toBe(true);
+    expect(judge.externalEffects).toBe("NONE");
+    expect(judge.cmsRepairWiring).toBe("NOT_WIRED");
+    expect(judge.liveEvalWiring).toBe("NOT_WIRED");
+  });
+
+  it("forbids aliases and unknown tools fail-closed (T-X037)", () => {
+    const publishAlias = evaluateEvalToolAttemptRaw("Publish-Page");
+    expect(publishAlias.allowed).toBe(false);
+    if (!publishAlias.allowed) {
+      expect(publishAlias.tool).toBe(EvalToolClass.PUBLISH);
+      expect(publishAlias.code).toBe("EVAL_TOOL_FORBIDDEN");
+      expect(publishAlias.externalEffects).toBe("NONE");
+      expect(publishAlias.cmsRepairWiring).toBe("NOT_WIRED");
+      expect(publishAlias.liveEvalWiring).toBe("NOT_WIRED");
+    }
+    const replyAlias = evaluateEvalToolAttemptRaw("customer_reply");
+    expect(replyAlias.allowed).toBe(false);
+    if (!replyAlias.allowed) {
+      expect(replyAlias.tool).toBe(EvalToolClass.CUSTOMER_MESSAGE);
+    }
+    const unknown = evaluateEvalToolAttemptRaw("shell_exec");
+    expect(unknown.allowed).toBe(false);
+    if (!unknown.allowed) {
+      expect(unknown.tool).toBe("unknown");
+      expect(unknown.code).toBe("EVAL_TOOL_UNKNOWN_FORBIDDEN");
+      expect(unknown.externalEffects).toBe("NONE");
+      expect(unknown.cmsRepairWiring).toBe("NOT_WIRED");
+      expect(unknown.liveEvalWiring).toBe("NOT_WIRED");
+    }
+    expect(normalizeEvalToolClass("compare-golden")).toBe(
+      EvalToolClass.COMPARE_GOLDEN,
     );
+    expect(evaluateEvalToolAttemptRaw("compare-golden").allowed).toBe(true);
+    expect(isEvalToolForbidden(EvalToolClass.ADS_MUTATION)).toBe(true);
+    expect(normalizeEvalToolClass("not-a-tool")).toBeNull();
+    expect(normalizeEvalToolClass("constructor")).toBeNull();
+    expect(normalizeEvalToolClass("__proto__")).toBeNull();
+    const bigintGate = evaluateEvalToolAttemptRaw(1n);
+    expect(bigintGate.allowed).toBe(false);
+    if (!bigintGate.allowed) {
+      expect(bigintGate.code).toBe("EVAL_TOOL_UNKNOWN_FORBIDDEN");
+      expect(bigintGate.reasons[0]).toContain("1");
+    }
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    const circularGate = evaluateEvalToolAttemptRaw(circular);
+    expect(circularGate.allowed).toBe(false);
+    if (!circularGate.allowed) {
+      expect(circularGate.code).toBe("EVAL_TOOL_UNKNOWN_FORBIDDEN");
+      expect(circularGate.reasons[0]).toContain("unserializable");
+    }
+  });
+
+  it("retry fence: forbidden attempts consume budget; past max exhausts (T-X037)", () => {
+    expect(DEFAULT_EVAL_TOOL_RETRY_MAX_ATTEMPTS).toBe(1);
+    const forbid = evaluateEvalToolAttempt(EvalToolClass.PUBLISH);
+    const first = evaluateEvalToolRetryBudget({
+      gate: forbid,
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    expect(first.allowed).toBe(true);
+    expect(first.recordAttempt).toBe(true);
+    expect(first.consumesBudget).toBe(true);
+    expect(first.externalEffects).toBe("NONE");
+    expect(first.cmsRepairWiring).toBe("NOT_WIRED");
+    expect(first.liveEvalWiring).toBe("NOT_WIRED");
+
+    const second = evaluateEvalToolRetryBudget({
+      gate: forbid,
+      attemptCount: 1,
+      startingNewAttempt: true,
+    });
+    expect(second.allowed).toBe(false);
+    expect(second.code).toBe("RETRY_BUDGET_EXHAUSTED");
+    expect(second.recordAttempt).toBe(false);
+    expect(shouldRecordEvalToolAttemptOnBudgetDenial(second.code)).toBe(false);
+
+    const unknown = evaluateEvalToolAttemptRaw("shell_exec");
+    const unknownExhausted = evaluateEvalToolRetryBudget({
+      gate: unknown,
+      attemptCount: 1,
+      startingNewAttempt: true,
+    });
+    expect(unknownExhausted.code).toBe("RETRY_BUDGET_EXHAUSTED");
+
+    const allowed = evaluateEvalToolRetryBudget({
+      gate: evaluateEvalToolAttempt(EvalToolClass.JUDGE_ANSWER),
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    expect(allowed.allowed).toBe(true);
+    expect(allowed.consumesBudget).toBe(false);
+    expect(allowed.recordAttempt).toBe(false);
+    expect(shouldRecordEvalToolAttemptOnBudgetDenial(null)).toBe(true);
+  });
+
+  it("operational-effect honesty under retry fence (T-X037 E15)", () => {
+    const forbid = evaluateEvalToolAttempt(EvalToolClass.PUBLISH);
+    const exhaustedBudget = evaluateEvalToolRetryBudget({
+      gate: forbid,
+      attemptCount: 1,
+      startingNewAttempt: true,
+    });
+    const exhausted = resolveEvalToolOperationalEffect({
+      gate: forbid,
+      retryBudget: exhaustedBudget,
+    });
+    expect(exhausted.mayExecute).toBe(false);
+    expect(exhausted.code).toBe("RETRY_BUDGET_EXHAUSTED");
+    expect(exhausted.externalEffects).toBe("NONE");
+    expect(exhausted.cmsRepairWiring).toBe("NOT_WIRED");
+    expect(exhausted.liveEvalWiring).toBe("NOT_WIRED");
+
+    const within = evaluateEvalToolRetryBudget({
+      gate: forbid,
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const forbidden = resolveEvalToolOperationalEffect({
+      gate: forbid,
+      retryBudget: within,
+    });
+    expect(forbidden.mayExecute).toBe(false);
+    expect(forbidden.code).toBe("EVAL_TOOL_FORBIDDEN");
+
+    const unknown = evaluateEvalToolAttemptRaw("shell_exec");
+    const unknownEffect = resolveEvalToolOperationalEffect({
+      gate: unknown,
+      retryBudget: evaluateEvalToolRetryBudget({
+        gate: unknown,
+        attemptCount: 0,
+        startingNewAttempt: true,
+      }),
+    });
+    expect(unknownEffect.mayExecute).toBe(false);
+    expect(unknownEffect.code).toBe("EVAL_TOOL_UNKNOWN_FORBIDDEN");
+
+    const judge = evaluateEvalToolAttempt(EvalToolClass.JUDGE_ANSWER);
+    const allowed = resolveEvalToolOperationalEffect({
+      gate: judge,
+      retryBudget: evaluateEvalToolRetryBudget({
+        gate: judge,
+        attemptCount: 0,
+        startingNewAttempt: true,
+      }),
+    });
+    expect(allowed.mayExecute).toBe(true);
+    expect(allowed.code).toBeNull();
+    expect(allowed.externalEffects).toBe("NONE");
+  });
+
+  it("capability claim stays EVAL_ONLY under retry fence (T-X037 E17)", () => {
+    const forbid = evaluateEvalToolAttempt(EvalToolClass.PUBLISH);
+    const exhaustedEffect = resolveEvalToolOperationalEffect({
+      gate: forbid,
+      retryBudget: evaluateEvalToolRetryBudget({
+        gate: forbid,
+        attemptCount: 1,
+        startingNewAttempt: true,
+      }),
+    });
+    const exhaustedCap = resolveEvalToolCapabilityClaim({
+      effect: exhaustedEffect,
+    });
+    expect(exhaustedCap.mayExecute).toBe(false);
+    expect(exhaustedCap.capability).toBe(EvalCapability.EVAL_ONLY);
+    expect(exhaustedCap.operationalFallback).toBe(false);
+    expect(exhaustedCap.inventedOperationalCapability).toBe(false);
+    expect(exhaustedCap.code).toBe("RETRY_BUDGET_EXHAUSTED");
+    expect(exhaustedCap.liveEvalWiring).toBe("NOT_WIRED");
+
+    const judge = evaluateEvalToolAttempt(EvalToolClass.JUDGE_ANSWER);
+    const allowedCap = resolveEvalToolCapabilityClaim({
+      effect: resolveEvalToolOperationalEffect({
+        gate: judge,
+        retryBudget: evaluateEvalToolRetryBudget({
+          gate: judge,
+          attemptCount: 0,
+          startingNewAttempt: true,
+        }),
+      }),
+    });
+    expect(allowedCap.mayExecute).toBe(true);
+    expect(allowedCap.capability).toBe(EvalCapability.EVAL_ONLY);
+    expect(allowedCap.operationalFallback).toBe(false);
+    expect(allowedCap.inventedOperationalCapability).toBe(false);
+    expect(allowedCap.externalEffects).toBe("NONE");
+  });
+
+  it("attempt envelope seals honesty without live invent (T-X037 E18)", () => {
+    const refused = resolveEvalToolAttemptEnvelope({
+      rawTool: EvalToolClass.PUBLISH,
+      attemptCount: 1,
+      startingNewAttempt: true,
+    });
+    expect(refused.mayExecute).toBe(false);
+    expect(refused.liveVerifiedClaimed).toBe(false);
+    expect(refused.operationalSuccessClaimed).toBe(false);
+    expect(refused.chatgptAdsWiring).toBe("NOT_WIRED");
+    expect(refused.capability.capability).toBe(EvalCapability.EVAL_ONLY);
+    expect(refused.retryBudget.code).toBe("RETRY_BUDGET_EXHAUSTED");
+
+    const allowed = resolveEvalToolAttemptEnvelope({
+      rawTool: EvalToolClass.JUDGE_ANSWER,
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    expect(allowed.mayExecute).toBe(true);
+    expect(allowed.liveVerifiedClaimed).toBe(false);
+    expect(allowed.operationalSuccessClaimed).toBe(false);
+    expect(allowed.externalEffects).toBe("NONE");
+    expect(allowed.liveEvalWiring).toBe("NOT_WIRED");
+    expect(allowed.cmsRepairWiring).toBe("NOT_WIRED");
+    expect(allowed.chatgptAdsWiring).toBe("NOT_WIRED");
+  });
+
+  it("outcome claim refuses VERIFIED invent from envelope (T-X037 E19)", () => {
+    const refusedEnv = resolveEvalToolAttemptEnvelope({
+      rawTool: EvalToolClass.PUBLISH,
+      attemptCount: 1,
+      startingNewAttempt: true,
+    });
+    const refused = resolveEvalToolOutcomeClaim({ envelope: refusedEnv });
+    expect(refused.outcome).toBe("REFUSED");
+    expect(refused.inventedSuccess).toBe(false);
+    expect(refused.verifiedClaimed).toBe(false);
+    expect(refused.sandboxVerifiedClaimed).toBe(false);
+    expect(refused.liveVerifiedClaimed).toBe(false);
+    expect(refused.acceptedIsNotVerified).toBe(true);
+    expect(refused.chatgptAdsWiring).toBe("NOT_WIRED");
+
+    const allowedEnv = resolveEvalToolAttemptEnvelope({
+      rawTool: EvalToolClass.JUDGE_ANSWER,
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const allowed = resolveEvalToolOutcomeClaim({ envelope: allowedEnv });
+    expect(allowed.outcome).toBe("EXECUTE_EVAL_ONLY");
+    expect(allowed.inventedLivePass).toBe(false);
+    expect(allowed.verifiedClaimed).toBe(false);
+    expect(allowed.acceptedIsNotVerified).toBe(true);
+    expect(allowed.externalEffects).toBe("NONE");
+    expect(allowed.liveEvalWiring).toBe("NOT_WIRED");
+  });
+
+  it("side-effect claim never invents mutations (T-X037 E20)", () => {
+    const refusedEnv = resolveEvalToolAttemptEnvelope({
+      rawTool: EvalToolClass.PUBLISH,
+      attemptCount: 1,
+      startingNewAttempt: true,
+    });
+    const refusedOut = resolveEvalToolOutcomeClaim({ envelope: refusedEnv });
+    const refused = resolveEvalToolSideEffectClaim({ outcome: refusedOut });
+    expect(refused.sideEffects).toBe("NONE");
+    expect(refused.inventedSideEffect).toBe(false);
+    expect(refused.publishAttempted).toBe(false);
+    expect(refused.crmWriteAttempted).toBe(false);
+    expect(refused.customerMessageAttempted).toBe(false);
+    expect(refused.adsMutationAttempted).toBe(false);
+    expect(refused.chatgptAdsWiring).toBe("NOT_WIRED");
+
+    const allowedEnv = resolveEvalToolAttemptEnvelope({
+      rawTool: EvalToolClass.JUDGE_ANSWER,
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const allowedOut = resolveEvalToolOutcomeClaim({ envelope: allowedEnv });
+    const allowed = resolveEvalToolSideEffectClaim({ outcome: allowedOut });
+    expect(allowedOut.outcome).toBe("EXECUTE_EVAL_ONLY");
+    expect(allowed.sideEffects).toBe("NONE");
+    expect(allowed.publishAttempted).toBe(false);
+    expect(allowed.adsMutationAttempted).toBe(false);
+    expect(allowed.verifiedClaimed).toBe(false);
+    expect(allowed.acceptedIsNotVerified).toBe(true);
+    expect(allowed.externalEffects).toBe("NONE");
+  });
+
+  it("receipt claim never invents live or measured receipts (T-X037 E21)", () => {
+    const refusedEnv = resolveEvalToolAttemptEnvelope({
+      rawTool: EvalToolClass.PUBLISH,
+      attemptCount: 1,
+      startingNewAttempt: true,
+    });
+    const refusedOut = resolveEvalToolOutcomeClaim({ envelope: refusedEnv });
+    const refusedSide = resolveEvalToolSideEffectClaim({ outcome: refusedOut });
+    const refusedReceipt = resolveEvalToolReceiptClaim({
+      sideEffect: refusedSide,
+    });
+    expect(refusedReceipt.receipt).toBe("NONE");
+    expect(refusedReceipt.inventedReceipt).toBe(false);
+    expect(refusedReceipt.providerReceiptClaimed).toBe(false);
+    expect(refusedReceipt.liveVerifiedClaimed).toBe(false);
+    expect(refusedReceipt.acceptedIsNotVerified).toBe(true);
+
+    const allowedEnv = resolveEvalToolAttemptEnvelope({
+      rawTool: EvalToolClass.JUDGE_ANSWER,
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const allowedOut = resolveEvalToolOutcomeClaim({ envelope: allowedEnv });
+    const allowedSide = resolveEvalToolSideEffectClaim({ outcome: allowedOut });
+    const allowedReceipt = resolveEvalToolReceiptClaim({
+      sideEffect: allowedSide,
+    });
+    expect(allowedReceipt.receipt).toBe("FIXTURE_ACCEPTED");
+    expect(allowedReceipt.measuredReceiptClaimed).toBe(false);
+    expect(allowedReceipt.verifiedClaimed).toBe(false);
+    expect(allowedReceipt.chatgptAdsWiring).toBe("NOT_WIRED");
+
+    const falseLive = resolveEvalToolReceiptClaim({
+      sideEffect: allowedSide,
+      claimLiveVerifiedReceipt: true,
+    });
+    expect(falseLive.receipt).toBe("NONE");
+    expect(falseLive.inventedLiveReceipt).toBe(false);
+    expect(falseLive.liveReceiptClaimed).toBe(false);
   });
 
   it("uses a separate eval budget account", () => {
