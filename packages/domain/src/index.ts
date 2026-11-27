@@ -1122,6 +1122,7 @@ export {
   type AcceptanceStatusCounts,
 } from "./acceptance-matrix-honesty.js";
 export {
+  ORPHAN_WORKER_DEADLINE_RELATED_CASE_IDS,
   createWorkerProcessTree,
   workerDeadlineExceeded,
   alivePids,

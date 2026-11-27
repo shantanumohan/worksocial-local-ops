@@ -1019,7 +1019,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X007** is fixture ACCEPTED only via the wrong CMS environment no production op proof (`WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP`) — bound≠intended / unrecognized / production mutate refused with providerMutateCount=0. Not sandbox/prod VERIFIED.
 
-**T-X012** is fixture ACCEPTED only via `ORPHAN_WORKER_DEADLINE_TREE_STOPPED`. Not sandbox/prod VERIFIED.
+**T-X012** is fixture ACCEPTED only via `ORPHAN_WORKER_DEADLINE_TREE_STOPPED` — pre-deadline refuse; inclusive exact-boundary stop; post-deadline owned tree + transitive grandchildren stop (domain + OS); foreign/sibling skipped (incl. foreign parentPid-sharing extras); blank generationId → `GENERATION_REQUIRED`; missing worker root → `TREE_REQUIRED`; empty tree → `TREE_REQUIRED`; duplicate-PID extras ignored; invalid-PID extras dropped; parentPid-cycle extras skipped; non-finite/non-positive clock fields → `INVALID_CLOCK`; clock-skew and start-instant refuse inventing kill; idempotent re-stop; partial timed_out_stopped still clears orphans; duplicate PID refuse on create; worker-dead still clears orphan children; fixture+`WIRED` refuse (`LIVE_TRANSPORT_NOT_WIRED`); `liveProviderWiring=NOT_WIRED`; `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 
 **T-X008** is fixture ACCEPTED only via the fact changes after review stale / no publish proof (`FACT_CHANGES_AFTER_REVIEW_STALE`) — cited-fact set change after A25 bind invalidates review and blocks fixture publish; support-label flip fails article/approval gates (binding not claimed invalidated by label alone). Not sandbox/prod VERIFIED.
 
@@ -1038,7 +1038,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X009 | CLI error despite exit 0 | Job fails *(fixture ACCEPTED — CLI error despite exit 0 proof; not sandbox/prod VERIFIED)* |
 | T-X010 | Malicious prompt interpolation | No shell injection *(fixture ACCEPTED)* |
 | T-X011 | Output bomb | Bounded/quarantined *(fixture ACCEPTED — OUTPUT_TOO_LARGE quarantine; non-finite max refused; close-path quarantine; idempotent reclaim+code drift; dual live-claim refuse; ACCEPTED≠VERIFIED; not sandbox/prod VERIFIED)* |
-| T-X012 | Orphan worker on deadline | Process tree stopped *(fixture ACCEPTED)* |
+| T-X012 | Orphan worker on deadline | Process tree stopped *(fixture ACCEPTED — orphan-worker deadline tree-stopped proof; GENERATION_REQUIRED + TREE_REQUIRED + INVALID_CLOCK + clock-skew/start-instant + partial orphan clear + foreign/dup-PID skip; WIRED refuse; liveProviderWiring NOT_WIRED; externalEffects NONE; not sandbox/prod VERIFIED)* |
 | T-X013 | Replay historical workflow | No repeated external I/O *(fixture ACCEPTED — replay historical no-repeat-I/O proof; second replay + empty-history fail-closed; not sandbox/prod VERIFIED)* |
 | T-X014 | Approval wait survives restart | Resume wait; no slot hold *(fixture ACCEPTED)* |
 | T-X015 | DST recurring schedule | No unintended duplicates *(fixture ACCEPTED — DST recurring schedule no-duplicates proof; not sandbox/prod VERIFIED)* |

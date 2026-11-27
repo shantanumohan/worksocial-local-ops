@@ -1834,7 +1834,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x012",
-      "evidenceNote": "Fixture orphan-worker-deadline process-tree-stopped proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture ACCEPTED via ORPHAN_WORKER_DEADLINE_TREE_STOPPED (pre-deadline refuse; inclusive exact-boundary stop; post-deadline tree+OS grandchild stop; foreign/sibling skip; GENERATION_REQUIRED; TREE_REQUIRED; empty tree; INVALID_CLOCK incl. zero/NaN deadline/nowMs/startedAtMs; clock-skew/start-instant; partial orphan clear; dup-PID/invalid-PID/cycle extras; WIRED refuse LIVE_TRANSPORT_NOT_WIRED; liveProviderWiring=NOT_WIRED; externalEffects=NONE) \u2014 not sandbox/prod VERIFIED"
     },
     {
       "id": "T-X013",
