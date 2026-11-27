@@ -145,6 +145,16 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses skipEvalPromptPiiScan", () => {
+    const skip = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      skipEvalPromptPiiScan: true,
+    });
+    expect(skip.allowed).toBe(false);
+    expect(skip.reasons.some((r) => /PII scan/.test(r))).toBe(true);
+  });
+
   it("refuses trustUnredactedSourceAsSafe", () => {
     const trust = prepareCustomerDataForEvaluation({
       source,

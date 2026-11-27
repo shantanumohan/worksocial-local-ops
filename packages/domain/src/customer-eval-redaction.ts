@@ -217,8 +217,16 @@ export function prepareCustomerDataForEvaluation(input: {
   claimRedactionOptional?: boolean;
   /** Forbidden — cannot trust raw source as already eval-safe. */
   trustUnredactedSourceAsSafe?: boolean;
+  /** Forbidden — eval prompts must stay PII-scanned. */
+  skipEvalPromptPiiScan?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.skipEvalPromptPiiScan === true) {
+    return blockedLeak([
+      "Skip eval prompt PII scan refused — fixture gate (T-X072)",
+    ]);
+  }
 
   if (input.trustUnredactedSourceAsSafe === true) {
     return blockedLeak([
