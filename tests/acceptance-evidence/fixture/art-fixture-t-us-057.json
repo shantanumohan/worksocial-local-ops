@@ -8,8 +8,8 @@
     "cross_workspace_resource_substitution"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-057.json",
-  "createdAtIso": "2026-11-27T17:13:04.504Z",
+  "createdAtIso": "2026-11-27T17:20:16.628Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-057-45cc22bec692"
+  "uniqueSourceArtifactId": "art-fixture-t-us-057-5a25f423920f"
 }
