@@ -578,6 +578,7 @@ export type CreatePaidProposalResult =
         | "SHARED_BUDGET_UNKNOWN"
         | "SHARED_BUDGET_SNAPSHOT_REQUIRED"
         | "SNAPSHOT_BUDGET_MISMATCH"
+        | "PARTIAL_PROVIDER_LEDGER"
         | "PARTIAL_SPEND"
         | "INCOMPLETE_PROPOSAL";
       reasons: string[];
@@ -648,6 +649,23 @@ export function createPaidMediaProposal(
       ],
       proposal: null,
     };
+  }
+
+  if (input.boundProviderSnapshot) {
+    const completeness = assessPaidProviderBudgetLedgerCompleteness(
+      input.boundProviderSnapshot,
+    );
+    if (!completeness.complete) {
+      return {
+        ok: false,
+        code: "PARTIAL_PROVIDER_LEDGER",
+        reasons: [
+          "Bound provider budget ledger is partial/incomplete — refuse create (T-X035)",
+          ...completeness.reasons,
+        ],
+        proposal: null,
+      };
+    }
   }
 
   if (
@@ -908,14 +926,27 @@ export type ReReadPaidProviderBudgetInput = {
   readAtIso: string;
 };
 
+/** Honesty fields on every T-X035 re-read path (hillclimb). */
+export type ReReadPaidProviderBudgetHonesty = {
+  liveProviderWiring: "NOT_WIRED";
+  chatgptAdsAccess: "ACCESS_BLOCKED";
+  externalEffects: "NONE";
+  mutationAttempted: false;
+};
+
+const RE_READ_HONESTY: ReReadPaidProviderBudgetHonesty = {
+  liveProviderWiring: "NOT_WIRED",
+  chatgptAdsAccess: "ACCESS_BLOCKED",
+  externalEffects: "NONE",
+  mutationAttempted: false,
+};
+
 export type ReReadPaidProviderBudgetResult =
   | {
       ok: true;
       code: "PROVIDER_STATE_MATCHES";
       proposal: PaidMediaProposal;
-      externalEffects: "NONE";
-      mutationAttempted: false;
-    }
+    } & ReReadPaidProviderBudgetHonesty
   | {
       ok: false;
       code:
@@ -923,23 +954,89 @@ export type ReReadPaidProviderBudgetResult =
         | "PROVIDER_REVISION_CHANGED"
         | "CAMPAIGN_BUDGET_CHANGED_EXTERNALLY"
         | "MISSING_BOUND_SNAPSHOT"
+        | "PARTIAL_PROVIDER_LEDGER"
+        | "PROPOSAL_ALREADY_INVALIDATED"
         | "ACCOUNT_MISMATCH"
         | "STALE_PROVIDER_SNAPSHOT";
       proposal: PaidMediaProposal;
       reasons: string[];
-      externalEffects: "NONE";
-      mutationAttempted: false;
-    };
+    } & ReReadPaidProviderBudgetHonesty;
+
+/**
+ * Fail-closed completeness check for a provider budget ledger row (T-X035).
+ * Blank / whitespace-padded ids / revision, non-finite shared budget, or
+ * unparseable readAt → partial (never invent MATCHES).
+ */
+export function assessPaidProviderBudgetLedgerCompleteness(
+  snap: PaidProviderBudgetSnapshot,
+): { complete: true } | { complete: false; reasons: string[] } {
+  const reasons: string[] = [];
+  const checkPadded = (label: string, value: string) => {
+    if (!value.trim()) {
+      reasons.push(`blank ${label}`);
+    } else if (value !== value.trim()) {
+      reasons.push(`${label} has surrounding whitespace`);
+    }
+  };
+  checkPadded("accountId", snap.accountId);
+  checkPadded("campaignId", snap.campaignId);
+  checkPadded("sharedBudgetId", snap.sharedBudgetId);
+  checkPadded("entityRevision", snap.entityRevision);
+  if (!Number.isFinite(snap.sharedBudgetDailyMinor)) {
+    reasons.push("non-finite sharedBudgetDailyMinor");
+  } else if (snap.sharedBudgetDailyMinor < 0) {
+    reasons.push("negative sharedBudgetDailyMinor");
+  }
+  if (
+    snap.dailyBudgetMinor !== null &&
+    !Number.isFinite(snap.dailyBudgetMinor)
+  ) {
+    reasons.push("non-finite dailyBudgetMinor");
+  } else if (
+    snap.dailyBudgetMinor !== null &&
+    snap.dailyBudgetMinor < 0
+  ) {
+    reasons.push("negative dailyBudgetMinor");
+  }
+  if (!Number.isFinite(Date.parse(snap.readAtIso))) {
+    reasons.push("unparseable readAtIso");
+  }
+  return reasons.length === 0
+    ? { complete: true }
+    : { complete: false, reasons };
+}
 
 /**
  * F16 re-read before mutation: if shared ad budget changed externally,
  * invalidate the proposal and refuse mutation (T-X035). External effects: NONE.
+ * Hillclimb: honesty fields; campaign/identity drift; partial ledger fail-closed;
+ * already-INVALIDATED never invents MATCHES; zero shared-budget drift invalidates;
+ * whitespace-padded ledger ids refuse; null↔number campaign budget drift (both
+ * directions); unparseable readAtIso fail-closed (G16); padded accountId /
+ * non-finite shared budget / stale snapshot fail-closed (G17); padded
+ * campaignId / Infinity shared / negative campaign daily fail-closed (G18);
+ * blank campaignId / -Infinity shared / NaN campaign daily fail-closed (G19);
+ * blank accountId / blank entityRevision / Infinity campaign daily fail-closed (G20).
  */
 export function reReadPaidProviderBudgetBeforeMutation(
   input: ReReadPaidProviderBudgetInput,
 ): ReReadPaidProviderBudgetResult {
   const bound = input.proposal.boundProviderSnapshot;
   const stampIso = input.current.readAtIso || input.readAtIso;
+
+  // Already invalidated — refuse MATCHES; new decision required (G12).
+  if (input.proposal.status === PaidProposalStatus.INVALIDATED) {
+    return {
+      ok: false,
+      code: "PROPOSAL_ALREADY_INVALIDATED",
+      proposal: input.proposal,
+      reasons: [
+        "Proposal already INVALIDATED — re-read must not invent PROVIDER_STATE_MATCHES; new decision required (T-X035)",
+      ],
+      ...RE_READ_HONESTY,
+    };
+  }
+
   if (!bound) {
     return {
       ok: false,
@@ -948,8 +1045,30 @@ export function reReadPaidProviderBudgetBeforeMutation(
       reasons: [
         "No bound provider budget snapshot — cannot re-read before mutation",
       ],
-      externalEffects: "NONE",
-      mutationAttempted: false,
+      ...RE_READ_HONESTY,
+    };
+  }
+
+  const boundComplete = assessPaidProviderBudgetLedgerCompleteness(bound);
+  const currentComplete = assessPaidProviderBudgetLedgerCompleteness(
+    input.current,
+  );
+  if (!boundComplete.complete || !currentComplete.complete) {
+    const invalidated: PaidMediaProposal = {
+      ...input.proposal,
+      status: PaidProposalStatus.INVALIDATED,
+      updatedAtIso: stampIso,
+    };
+    return {
+      ok: false,
+      code: "PARTIAL_PROVIDER_LEDGER",
+      proposal: invalidated,
+      reasons: [
+        "Provider budget ledger row is partial/incomplete — invalidate; never invent MATCHES (T-X035)",
+        ...(!boundComplete.complete ? boundComplete.reasons : []),
+        ...(!currentComplete.complete ? currentComplete.reasons : []),
+      ],
+      ...RE_READ_HONESTY,
     };
   }
 
@@ -971,8 +1090,7 @@ export function reReadPaidProviderBudgetBeforeMutation(
       reasons: [
         "Bound/current snapshot account/campaign does not match the proposal — invalidated",
       ],
-      externalEffects: "NONE",
-      mutationAttempted: false,
+      ...RE_READ_HONESTY,
     };
   }
 
@@ -993,8 +1111,7 @@ export function reReadPaidProviderBudgetBeforeMutation(
       reasons: [
         "Provider account/campaign/shared-budget identity drifted — proposal invalidated",
       ],
-      externalEffects: "NONE",
-      mutationAttempted: false,
+      ...RE_READ_HONESTY,
     };
   }
 
@@ -1014,8 +1131,7 @@ export function reReadPaidProviderBudgetBeforeMutation(
           ? "Provider re-read or proposal.updatedAtIso is not a parseable instant — refuse"
           : "Provider re-read snapshot is older than proposal.updatedAtIso — refuse stale cache",
       ],
-      externalEffects: "NONE",
-      mutationAttempted: false,
+      ...RE_READ_HONESTY,
     };
   }
 
@@ -1047,8 +1163,7 @@ export function reReadPaidProviderBudgetBeforeMutation(
             ? `Campaign daily budget changed externally (${bound.dailyBudgetMinor} → ${input.current.dailyBudgetMinor}) — proposal invalidated`
             : `Provider entity revision changed (${bound.entityRevision} → ${input.current.entityRevision}) — proposal invalidated; new decision required`,
       ],
-      externalEffects: "NONE",
-      mutationAttempted: false,
+      ...RE_READ_HONESTY,
     };
   }
 
@@ -1056,8 +1171,7 @@ export function reReadPaidProviderBudgetBeforeMutation(
     ok: true,
     code: "PROVIDER_STATE_MATCHES",
     proposal: input.proposal,
-    externalEffects: "NONE",
-    mutationAttempted: false,
+    ...RE_READ_HONESTY,
   };
 }
 

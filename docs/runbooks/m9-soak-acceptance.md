@@ -206,6 +206,8 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X034** maps only to `ADS_TEST_PROJECT_PRODUCTION_BLOCKED` (test-only/sandbox Ads project cannot bind production/LIVE; bind call count 0; distinct from T-US-012; not live VERIFIED).
 
+**T-X035** maps only to `SHARED_AD_BUDGET_EXTERNAL_CHANGE_INVALIDATES` (shared/campaign/identity/revision drift INVALIDATES; zero shared-budget; null↔number campaign budget both directions; partial/negative/whitespace-padded ledger fail-closed incl. blank/padded accountId/campaignId/sharedBudgetId/entityRevision + unparseable readAtIso + non-finite ±Infinity shared + negative/NaN/Infinity campaign daily; stale snapshot refuse; already-INVALIDATED never MATCHES; equal-instant MATCHES; honesty fields on every re-read path; live NOT_WIRED; ChatGPT Ads ACCESS_BLOCKED; distinct from SHARED_BUDGET_UNKNOWN; not live VERIFIED).
+
 **T-US-015** maps only to `CONNECT_CLAUDE_CODE_TEST_API_EVAL_ONLY` (Claude Code runtime + test API EVAL_ONLY connect; readiness separated; live NOT_WIRED; not live VERIFIED).
 
 **T-US-017** maps only to `CONNECT_GEMINI_EVALUATION_EVAL_ONLY` (Gemini Evaluation EVAL_ONLY connect; data-use decision, broker credential, model snapshot, test mode; live NOT_WIRED; cannot publish/respond; not live VERIFIED).
@@ -315,7 +317,7 @@ Suggested owner Windows flow (state off OneDrive):
 **T-X052** maps only to `SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED` (synthetic conversion contaminants projected out; syntheticExcludedRevenueMinor tracked; defense-in-depth; live NOT_WIRED; not live VERIFIED).
 
 
-**T-X062** maps only to `SSE_GAP_FULL_STATE_RESYNC` (offline/online SSE gap → full-state resync; pending gap blocks invent; STILL_OFFLINE/regressive refuse; liveProviderWiring NOT_WIRED; LIVE_SSE_CLAIM_REFUSED; Ads ACCESS_BLOCKED; not live VERIFIED).
+**T-X062** maps only to `SSE_GAP_FULL_STATE_RESYNC` (offline/online SSE gap → full-state resync; pending gap blocks invent; liveProviderWiring NOT_WIRED; not live VERIFIED).
 
 **T-X061** maps only to `KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG` (dialog open/trap/restore or FOCUS_LOST; not live VERIFIED).
 
