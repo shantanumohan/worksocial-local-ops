@@ -3,13 +3,13 @@
   "caseId": "T-X015",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X015 (DST recurring schedule — no unintended duplicates)\nproof=dst_recurring_schedule_no_duplicates applyCount=1 :: Spring-forward 02:30 America/New_York → NONEXISTENT_LOCAL_TIME | Spring plan skips gap day; one key per existing local day | Fall-back 01:30 America/New_York marked ambiguous | Fall-back day plans exactly one occurrence (no unintended duplicate) | Fall-back wall ticks share one occurrenceKey | Durable claim ledger: first tick CLAIMED; reloaded worker second tick → DUPLICATE_OCCURRENCE | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X015 (DST recurring schedule — no unintended duplicates)\nproof=dst_recurring_schedule_no_duplicates applyCount=1 :: Spring-forward 02:30 America/New_York → NONEXISTENT_LOCAL_TIME; liveProviderWiring=NOT_WIRED | Spring plan skips gap day; one key per existing local day | Fall-back 01:30 America/New_York marked ambiguous | Fall-back day plans exactly one occurrence (no unintended duplicate) | Australia/Lord_Howe ±30m fall-back selects earlier instant with honesty fields | Fall-back wall ticks share one occurrenceKey | Durable claim ledger: first tick CLAIMED; reloaded worker second tick → DUPLICATE_OCCURRENCE | Third durable reload claim still DUPLICATE_OCCURRENCE (no unbounded retries) | Europe/London spring-forward 01:30 → NONEXISTENT_LOCAL_TIME with honesty fields | London spring plan skips gap day; one key per existing local day | Blank occurrence key fail-closed → DUPLICATE; subsequent valid key CLAIMED | Inverted from/to window → empty plan (no silent invent) | America/Los_Angeles spring-forward 02:15 → NONEXISTENT_LOCAL_TIME with honesty fields | Europe/London fall-back 01:30 ambiguous; plan has exactly one occurrence | Unsupported zone occurrenceKeyFromInstant → null (fail closed) | America/Phoenix no-DST: one occurrence per day across US spring-forward weekend | Partial primary write recovers prior keys (DUPLICATE); no-prior truncates → empty then CLAIMED | Wrong durable version → CORRUPT; prior recover keys (never invent) | Dual-corrupt durable primary+prior → RECOVERED_EMPTY; never invent keys | Non-array claimedKeys → CORRUPT_OR_PARTIAL; never invent keys | Null primary + good prior → RECOVERED_FROM_PRIOR | Missing durable version → CORRUPT_OR_PARTIAL; never invent keys | Whitespace-only primary + good prior → RECOVERED_FROM_PRIOR | Array-root durable JSON → CORRUPT_OR_PARTIAL | String durable version field → CORRUPT_OR_PARTIAL | Durable version 0 → CORRUPT_OR_PARTIAL | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE deepen=G15\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "dst_recurring_schedule_no_duplicates"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x015.json",
-  "createdAtIso": "2026-11-27T11:34:26.509Z",
+  "createdAtIso": "2026-11-27T11:43:32.636Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x015-89a298cda951"
+  "uniqueSourceArtifactId": "art-fixture-t-x015-d4a7d140bc3c"
 }

@@ -8,8 +8,8 @@
     "paid_media_recommendation_mutation_or_failure"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-031.json",
-  "createdAtIso": "2026-11-27T11:34:26.509Z",
+  "createdAtIso": "2026-11-27T11:43:32.636Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-031-89a298cda951"
+  "uniqueSourceArtifactId": "art-fixture-t-us-031-d4a7d140bc3c"
 }
