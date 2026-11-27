@@ -1859,6 +1859,9 @@ export {
   evaluateSilentRotateAllowed,
   evaluateExplicitRebind,
   attemptLiveProviderRevoke,
+  assertOffboardActiveTokenResidualHonest,
+  reclaimOffboardActiveTokenResidual,
+  assertOffboardActiveTokenResidualReclaimIdempotent,
   buildOffboardingManifest,
   createAuditEntry,
   seedFixtureConnection,
@@ -1877,6 +1880,7 @@ export {
   type CredentialRebindRecord,
   type ResidualObligation,
   type OffboardingManifest,
+  type OffboardResidualReclaimResult,
   type CredentialRotationState,
 } from "./credential-rotation.js";
 export {

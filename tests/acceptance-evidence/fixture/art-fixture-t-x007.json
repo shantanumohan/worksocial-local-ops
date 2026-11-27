@@ -8,8 +8,8 @@
     "wrong_cms_environment_no_production_op"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x007.json",
-  "createdAtIso": "2026-11-25T00:18:05.307Z",
+  "createdAtIso": "2026-11-27T09:52:01.024Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x007-70b2e7a3787a"
+  "uniqueSourceArtifactId": "art-fixture-t-x007-73adbe178643"
 }

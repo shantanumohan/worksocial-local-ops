@@ -3,13 +3,13 @@
   "caseId": "T-X041",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X041 (Incomparable trend indices — reject/label)\nproof=incomparable_trend_indices_rejected applyCount=1 :: same comparability group + unit + source → comparable ratio=1.5 | different comparability groups → rejected/labeled incomparable (no ratio) | missing comparability group → rejected/labeled unlabeled | unit mismatch → rejected/labeled incomparable | sourceSystem mismatch → rejected/labeled incomparable | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X041 (Incomparable trend indices — reject/label)\nproof=incomparable_trend_indices_rejected applyCount=1 :: same comparability group + unit + source → comparable ratio=1.5 (honesty NOT_WIRED/NONE) | case/whitespace-normalized unit+source → comparable ratio=2 | different comparability groups → rejected/labeled incomparable (no ratio) | missing comparability group → rejected/labeled unlabeled | whitespace-only comparability group → rejected/labeled unlabeled | unit mismatch → rejected/labeled incomparable | sourceSystem mismatch → rejected/labeled incomparable | zero baseline → rejected/labeled invalid (no ratio) | non-trend kind → rejected/labeled invalid | missing rawValue → rejected/labeled invalid | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "incomparable_trend_indices_rejected"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x041.json",
-  "createdAtIso": "2026-11-25T00:18:05.307Z",
+  "createdAtIso": "2026-11-27T09:52:01.024Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x041-70b2e7a3787a"
+  "uniqueSourceArtifactId": "art-fixture-t-x041-73adbe178643"
 }

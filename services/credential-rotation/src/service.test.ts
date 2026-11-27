@@ -213,5 +213,13 @@ describe("credential-rotation service", () => {
       connectionId: seeded.connection.connectionId,
     });
     expect(live.code).toBe("LIVE_PROVIDER_REVOKE_NOT_WIRED");
+    expect(live.liveProviderSuccessClaimed).toBe(false);
+    expect(live.externalEffects).toBe("NONE");
+
+    const liveAgain = await svc.liveProviderRevoke({
+      connectionId: seeded.connection.connectionId,
+    });
+    expect(liveAgain.code).toBe("LIVE_PROVIDER_REVOKE_NOT_WIRED");
+    expect(liveAgain.liveProviderSuccessClaimed).toBe(false);
   });
 });

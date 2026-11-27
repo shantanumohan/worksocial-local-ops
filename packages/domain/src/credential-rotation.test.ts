@@ -3,6 +3,9 @@ import { EffectState } from "./effect-state-machine.js";
 import { ConnectionState, WriteReadiness } from "./connection-status.js";
 import {
   attemptLiveProviderRevoke,
+  assertOffboardActiveTokenResidualHonest,
+  assertOffboardActiveTokenResidualReclaimIdempotent,
+  reclaimOffboardActiveTokenResidual,
   buildOffboardingManifest,
   buildRebindRecord,
   buildRotationRecord,
@@ -165,7 +168,10 @@ describe("credential rotation / revoke honesty", () => {
     });
     expect(live.ok).toBe(false);
     expect(live.code).toBe("LIVE_PROVIDER_REVOKE_NOT_WIRED");
+    expect(live.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(live.liveProviderSuccessClaimed).toBe(false);
     expect(live.externalEffects).toBe("NONE");
+    expect(live.reason).toMatch(/ACCEPTED≠VERIFIED/);
   });
 
   it("T-X029: different-account token requires explicit rebind; silent rotate denied", () => {
@@ -315,6 +321,321 @@ describe("credential rotation / revoke honesty", () => {
       (o) => o.kind === "ACTIVE_TOKEN",
     );
     expect(tokenObl?.status).toBe(ResidualObligationStatus.BLOCKED_NOT_WIRED);
+    expect(tokenObl?.summary).toMatch(/ACCEPTED≠VERIFIED/);
+    expect(manifest.summary).toMatch(/ACCEPTED≠VERIFIED/);
+
+    const honesty = assertOffboardActiveTokenResidualHonest(manifest);
+    expect(honesty.ok).toBe(true);
+    expect(honesty.code).toBe("OFFBOARD_RESIDUAL_HONEST");
+    expect(honesty.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(honesty.externalEffects).toBe("NONE");
+
+    const dishonest = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      liveProviderRevoke: "WIRED" as "NOT_WIRED",
+    });
+    expect(dishonest.ok).toBe(false);
+    expect(dishonest.code).toBe("OFFBOARD_RESIDUAL_DISHONEST");
+
+    const inventLive = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "Offboarding is now live VERIFIED",
+    });
+    expect(inventLive.ok).toBe(false);
+    expect(inventLive.code).toBe("OFFBOARD_RESIDUAL_DISHONEST");
+
+    const inventRevoke = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "Live provider revoke completed",
+    });
+    expect(inventRevoke.ok).toBe(false);
+    expect(inventRevoke.code).toBe("OFFBOARD_RESIDUAL_DISHONEST");
+
+    const doubleLive = attemptLiveProviderRevoke({
+      connectionId: "conn-1",
+      referenceId: "cred-aaa",
+    });
+    expect(doubleLive.liveProviderSuccessClaimed).toBe(false);
+    expect(doubleLive.liveProviderRevoke).toBe("NOT_WIRED");
+
+    const blankConn = attemptLiveProviderRevoke({
+      connectionId: "   ",
+      referenceId: "",
+    });
+    expect(blankConn.ok).toBe(false);
+    expect(blankConn.code).toBe("LIVE_PROVIDER_REVOKE_NOT_WIRED");
+    expect(blankConn.liveProviderSuccessClaimed).toBe(false);
+
+    const claimLive = attemptLiveProviderRevoke({
+      connectionId: "conn-1",
+      referenceId: "cred-aaa",
+      claimLiveVerified: true,
+    });
+    expect(claimLive.ok).toBe(false);
+    expect(claimLive.code).toBe("LIVE_CLAIM_REFUSED");
+    expect(claimLive.liveProviderRevoke).toBe("NOT_WIRED");
+
+    const forceComplete = attemptLiveProviderRevoke({
+      connectionId: "conn-1",
+      referenceId: "cred-aaa",
+      forceCompleteRemoteRevoke: true,
+    });
+    expect(forceComplete.code).toBe("LIVE_CLAIM_REFUSED");
+
+    const dualClaim = attemptLiveProviderRevoke({
+      connectionId: "conn-1",
+      referenceId: "cred-aaa",
+      claimLiveVerified: true,
+      forceCompleteRemoteRevoke: true,
+    });
+    expect(dualClaim.code).toBe("LIVE_CLAIM_REFUSED");
+    expect(dualClaim.liveProviderSuccessClaimed).toBe(false);
+
+    const paddedConn = attemptLiveProviderRevoke({
+      connectionId: "  conn-1  ",
+      referenceId: "cred-aaa",
+    });
+    expect(paddedConn.code).toBe("LIVE_PROVIDER_REVOKE_NOT_WIRED");
+    expect(paddedConn.liveProviderSuccessClaimed).toBe(false);
+
+    const paddedRef = attemptLiveProviderRevoke({
+      connectionId: "conn-1",
+      referenceId: "  cred-aaa  ",
+    });
+    expect(paddedRef.code).toBe("LIVE_PROVIDER_REVOKE_NOT_WIRED");
+
+    const satisfiedToken = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      residualObligations: manifest.residualObligations.map((o) =>
+        o.kind === "ACTIVE_TOKEN"
+          ? { ...o, status: ResidualObligationStatus.SATISFIED }
+          : o,
+      ),
+    });
+    expect(satisfiedToken.ok).toBe(false);
+
+    const prodOn = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      productionActivated: true,
+    });
+    expect(prodOn.ok).toBe(false);
+
+    const noLocalRevoke = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      revokedLocally: false as true,
+    });
+    expect(noLocalRevoke.ok).toBe(false);
+
+    const missingToken = assertOffboardActiveTokenResidualHonest(
+      buildOffboardingManifest({
+        manifestId: "ob-no-token",
+        connectionId: "conn-1",
+        cancelResults,
+        hasActiveTokenResidual: false,
+        nowIso: NOW,
+      }),
+    );
+    expect(missingToken.ok).toBe(false);
+
+    const r1 = reclaimOffboardActiveTokenResidual(manifest);
+    const r2 = reclaimOffboardActiveTokenResidual(manifest);
+    const r3 = reclaimOffboardActiveTokenResidual(manifest);
+    const reclaimIdem = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: r2,
+    });
+    const reclaimTrip = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: r3,
+    });
+    expect(reclaimIdem.ok).toBe(true);
+    expect(reclaimIdem.code).toBe("OFFBOARD_RECLAIM_IDEMPOTENT");
+    expect(reclaimTrip.ok).toBe(true);
+    expect(r1.priorLiveRevokeInvented).toBe(false);
+
+    // I12: claim wins over padded id; PROVIDER_REVOKE SATISFIED dishonest;
+    // invent ACTIVE_TOKEN closed; honest+dishonest reclaim → DRIFT.
+    const claimOnPadded = attemptLiveProviderRevoke({
+      connectionId: "  conn-1  ",
+      referenceId: "cred-aaa",
+      claimLiveVerified: true,
+    });
+    expect(claimOnPadded.code).toBe("LIVE_CLAIM_REFUSED");
+    expect(claimOnPadded.liveProviderSuccessClaimed).toBe(false);
+
+    const providerSatisfied = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      residualObligations: manifest.residualObligations.map((o) =>
+        o.kind === "PROVIDER_REVOKE"
+          ? { ...o, status: ResidualObligationStatus.SATISFIED }
+          : o,
+      ),
+    });
+    expect(providerSatisfied.ok).toBe(false);
+
+    const inventTokenClosed = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "ACTIVE_TOKEN residual satisfied after remote revoke",
+    });
+    expect(inventTokenClosed.ok).toBe(false);
+
+    const dishonestReclaim = reclaimOffboardActiveTokenResidual({
+      ...manifest,
+      liveProviderRevoke: "WIRED" as "NOT_WIRED",
+    });
+    const reclaimDrift = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: dishonestReclaim,
+    });
+    expect(reclaimDrift.ok).toBe(false);
+    expect(reclaimDrift.code).toBe("OFFBOARD_RECLAIM_DRIFT");
+
+    // I14: force-on-padded refuse; invent all-residuals-closed / SCHEDULE re-enabled;
+    // reclaim priorLiveRevokeInvented forge → DRIFT.
+    const forceOnPadded = attemptLiveProviderRevoke({
+      connectionId: "conn-1",
+      referenceId: "  cred-aaa  ",
+      forceCompleteRemoteRevoke: true,
+    });
+    expect(forceOnPadded.code).toBe("LIVE_CLAIM_REFUSED");
+    expect(forceOnPadded.liveProviderSuccessClaimed).toBe(false);
+
+    const dualOnPadded = attemptLiveProviderRevoke({
+      connectionId: "  conn-1  ",
+      referenceId: "  cred-aaa  ",
+      claimLiveVerified: true,
+      forceCompleteRemoteRevoke: true,
+    });
+    expect(dualOnPadded.code).toBe("LIVE_CLAIM_REFUSED");
+
+    const inventAllClosed = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "all residuals are now closed after remote revoke",
+    });
+    expect(inventAllClosed.ok).toBe(false);
+    expect(inventAllClosed.code).toBe("OFFBOARD_RESIDUAL_DISHONEST");
+
+    const inventScheduleLive = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "SCHEDULE residual re-enabled live after offboard",
+    });
+    expect(inventScheduleLive.ok).toBe(false);
+
+    const inventPrior = {
+      ...r1,
+      priorLiveRevokeInvented: true as false,
+    };
+    const priorDrift = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: inventPrior,
+    });
+    expect(priorDrift.ok).toBe(false);
+    expect(priorDrift.code).toBe("OFFBOARD_RECLAIM_DRIFT");
+
+    // I15: blank-id claim refuse; invent QUEUED_WORK live-delivered /
+    // offboarding-complete / AUDIT purged; catalogClaim ACCEPTED dishonest.
+    const claimOnBlank = attemptLiveProviderRevoke({
+      connectionId: "",
+      referenceId: "cred-aaa",
+      claimLiveVerified: true,
+    });
+    expect(claimOnBlank.code).toBe("LIVE_CLAIM_REFUSED");
+    expect(claimOnBlank.liveProviderSuccessClaimed).toBe(false);
+
+    const inventQueuedLive = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "QUEUED_WORK residual delivered live after offboard",
+    });
+    expect(inventQueuedLive.ok).toBe(false);
+    expect(inventQueuedLive.code).toBe("OFFBOARD_RESIDUAL_DISHONEST");
+
+    const inventComplete = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "offboarding is now complete; residual is cleared",
+    });
+    expect(inventComplete.ok).toBe(false);
+
+    const inventAuditPurged = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "AUDIT_RETENTION residual purged live",
+    });
+    expect(inventAuditPurged.ok).toBe(false);
+
+    const inventCatalogAccepted = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      catalogClaim: "ACCEPTED" as "NOT_RUN",
+    });
+    expect(inventCatalogAccepted.ok).toBe(false);
+
+    // I16: blank-id force refuse; invent BACKUP_COPY closed live /
+    // secrets exported live / ACCEPTED=VERIFIED / liveProviderRevoke WIRED.
+    const forceOnBlank = attemptLiveProviderRevoke({
+      connectionId: "",
+      referenceId: "cred-aaa",
+      forceCompleteRemoteRevoke: true,
+    });
+    expect(forceOnBlank.code).toBe("LIVE_CLAIM_REFUSED");
+    expect(forceOnBlank.liveProviderSuccessClaimed).toBe(false);
+
+    const inventBackup = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "BACKUP_COPY residual completed remotely",
+    });
+    expect(inventBackup.ok).toBe(false);
+    expect(inventBackup.code).toBe("OFFBOARD_RESIDUAL_DISHONEST");
+
+    const inventSecrets = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "secrets were exported live after offboard",
+    });
+    expect(inventSecrets.ok).toBe(false);
+
+    const inventEqualsVerified = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "catalogClaim ACCEPTED=VERIFIED after remote revoke",
+    });
+    expect(inventEqualsVerified.ok).toBe(false);
+
+    const inventWired = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "liveProviderRevoke is now WIRED",
+    });
+    expect(inventWired.ok).toBe(false);
+
+    // I17: blank-ref force refuse; invent externalEffects APPLIED /
+    // production activated live / sandbox VERIFIED / revokedLocally=false.
+    const forceOnBlankRef = attemptLiveProviderRevoke({
+      connectionId: "conn-1",
+      referenceId: "",
+      forceCompleteRemoteRevoke: true,
+    });
+    expect(forceOnBlankRef.code).toBe("LIVE_CLAIM_REFUSED");
+    expect(forceOnBlankRef.liveProviderSuccessClaimed).toBe(false);
+
+    const inventEffects = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "externalEffects=APPLIED after remote revoke",
+    });
+    expect(inventEffects.ok).toBe(false);
+    expect(inventEffects.code).toBe("OFFBOARD_RESIDUAL_DISHONEST");
+
+    const inventProd = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "production was activated live after offboard",
+    });
+    expect(inventProd.ok).toBe(false);
+
+    const inventSandbox = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "sandbox VERIFIED completion invented",
+    });
+    expect(inventSandbox.ok).toBe(false);
+
+    const inventNotRevoked = assertOffboardActiveTokenResidualHonest({
+      ...manifest,
+      summary: "revokedLocally=false after offboard",
+    });
+    expect(inventNotRevoked.ok).toBe(false);
 
     const audit = createAuditEntry({
       entryId: "aud-1",

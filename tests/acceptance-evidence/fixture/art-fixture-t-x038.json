@@ -3,13 +3,13 @@
   "caseId": "T-X038",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X038 (Grounded eval without grounding \u2014 fail closed)\nproof=eval_no_grounding_fail_closed applyCount=1 :: Grounding required but unused \u2192 NO_GROUNDING | HYPOTHESIS-only citations \u2192 NO_GROUNDING | SUPPORTED citations with grounding \u2192 PASS | Empty citations \u2192 NO_GROUNDING | UNKNOWN-only citations \u2192 NO_GROUNDING | Claimed PASS while unused \u2192 FALSE_GROUNDED_PASS_REFUSED | normalizeGroundingUsed literal-only fail-closed; evalLiveWiringStatus=NOT_WIRED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X038 (Grounded eval without grounding — fail closed)\nproof=eval_no_grounding_fail_closed applyCount=1 :: Grounding required but unused → NO_GROUNDING | HYPOTHESIS-only citations → NO_GROUNDING | SUPPORTED citations with grounding → PASS | Empty citations → NO_GROUNDING | UNKNOWN-only citations → NO_GROUNDING | Claimed PASS while unused → FALSE_GROUNDED_PASS_REFUSED | normalizeGroundingUsed literal-only fail-closed; evalLiveWiringStatus=NOT_WIRED | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "eval_no_grounding_fail_closed"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x038.json",
-  "createdAtIso": "2026-11-25T00:29:18.606Z",
+  "createdAtIso": "2026-11-27T09:52:01.024Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x038-d0293b55f8a1"
+  "uniqueSourceArtifactId": "art-fixture-t-x038-73adbe178643"
 }
