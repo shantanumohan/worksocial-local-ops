@@ -233,8 +233,16 @@ export function prepareCustomerDataForEvaluation(input: {
   useUnredactedMessageBodyInEval?: boolean;
   /** Forbidden — eval must not consume unredacted intentLabel from customer source. */
   useUnredactedIntentLabelInEval?: boolean;
+  /** Forbidden — eval must not echo raw conversationId from customer source. */
+  useUnredactedConversationIdInEval?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.useUnredactedConversationIdInEval === true) {
+    return blockedLeak([
+      "Unredacted customer conversationId in eval refused — T-X072",
+    ]);
+  }
 
   if (input.useUnredactedIntentLabelInEval === true) {
     return blockedLeak([
