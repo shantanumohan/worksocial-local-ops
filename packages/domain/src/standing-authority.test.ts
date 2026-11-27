@@ -264,4 +264,14 @@ describe("evaluateStandingAuthority", () => {
     );
     expect(allowed.decision).toEqual({ allowed: true });
   });
+
+  it("held true allowed when supervisor lease fence off (T-X006 edge)", () => {
+    const allowed = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: false,
+        supervisorLeaseHeld: true,
+      }),
+    );
+    expect(allowed.decision).toEqual({ allowed: true });
+  });
 });
