@@ -119,45 +119,290 @@ export function stopProcessTree(
 }
 
 export type StdoutBoundAssessment =
-  | { withinBound: true; byteLength: number }
+  | {
+      withinBound: true;
+      byteLength: number;
+      liveProviderSuccessClaimed: false;
+      externalEffects: "NONE";
+    }
   | {
       withinBound: false;
       code: "OUTPUT_TOO_LARGE";
       reason: string;
       byteLength: number;
+      liveProviderSuccessClaimed: false;
+      externalEffects: "NONE";
     };
 
+const OUTPUT_BOMB_HONESTY = {
+  liveProviderSuccessClaimed: false as const,
+  externalEffects: "NONE" as const,
+};
+
+/**
+ * Byte-length stdout bound (T-X011). Counts UTF-8 bytes, not characters.
+ * Never invents live VERIFIED; ACCEPTED≠VERIFIED for fixture soak.
+ */
 export function assessStdoutBound(
   stdoutUtf8: string,
   maxOutputBytes: number,
 ): StdoutBoundAssessment {
   const byteLength = Buffer.byteLength(stdoutUtf8, "utf8");
+  // Refuse non-finite / non-positive bounds (NaN, ±Infinity, ≤0) — T-X011 deepen.
+  if (!Number.isFinite(maxOutputBytes) || !(maxOutputBytes > 0)) {
+    return {
+      withinBound: false,
+      code: "OUTPUT_TOO_LARGE",
+      reason:
+        "maxOutputBytes must be a finite positive bound (T-X011); ACCEPTED≠VERIFIED",
+      byteLength,
+      ...OUTPUT_BOMB_HONESTY,
+    };
+  }
   if (byteLength > maxOutputBytes) {
     return {
       withinBound: false,
       code: "OUTPUT_TOO_LARGE",
-      reason: `stdout exceeded ${maxOutputBytes} bytes`,
+      reason: `stdout exceeded ${maxOutputBytes} bytes (T-X011); ACCEPTED≠VERIFIED`,
       byteLength,
+      ...OUTPUT_BOMB_HONESTY,
     };
   }
-  return { withinBound: true, byteLength };
+  return { withinBound: true, byteLength, ...OUTPUT_BOMB_HONESTY };
 }
+
+export type StdoutQuarantineDecision =
+  | {
+      deliver: true;
+      liveProviderSuccessClaimed: false;
+      externalEffects: "NONE";
+    }
+  | {
+      deliver: false;
+      code: "OUTPUT_TOO_LARGE" | "LIVE_CLAIM_REFUSED";
+      reason: string;
+      liveProviderSuccessClaimed: false;
+      externalEffects: "NONE";
+      /** Bomb body never included — quarantine has no payload. */
+      quarantinedStdout: null;
+    };
 
 /**
  * Quarantine decision for oversized CLI stdout — bomb content is not delivered.
+ * Live VERIFIED / force-deliver claims refused (T-X011 hillclimb).
  */
 export function quarantineStdoutDelivery(
   assessment: StdoutBoundAssessment,
-):
-  | { deliver: true }
-  | { deliver: false; code: "OUTPUT_TOO_LARGE"; reason: string } {
+  opts?: {
+    claimLiveVerified?: boolean;
+    forceDeliverDespiteBomb?: boolean;
+  },
+): StdoutQuarantineDecision {
+  if (opts?.claimLiveVerified === true || opts?.forceDeliverDespiteBomb === true) {
+    return {
+      deliver: false,
+      code: "LIVE_CLAIM_REFUSED",
+      reason:
+        "Live VERIFIED / force-deliver of bomb stdout refused — fixture ACCEPTED≠VERIFIED; externalEffects=NONE",
+      quarantinedStdout: null,
+      ...OUTPUT_BOMB_HONESTY,
+    };
+  }
   if (assessment.withinBound) {
-    return { deliver: true };
+    return { deliver: true, ...OUTPUT_BOMB_HONESTY };
   }
   return {
     deliver: false,
     code: assessment.code,
     reason: assessment.reason,
+    quarantinedStdout: null,
+    ...OUTPUT_BOMB_HONESTY,
+  };
+}
+
+export type OutputBombReclaimResult = {
+  assessment: StdoutBoundAssessment;
+  quarantine: StdoutQuarantineDecision;
+  /** Pure reclaim — never invents prior delivery. */
+  priorDeliverInvented: false;
+  liveProviderSuccessClaimed: false;
+  externalEffects: "NONE";
+};
+
+/**
+ * Idempotent reclaim of a bound+quarantine decision (T-X011 deepen I7).
+ * Re-running on the same stdout must not invent delivery after a prior refuse.
+ */
+export function reclaimOutputBombDecision(
+  stdoutUtf8: string,
+  maxOutputBytes: number,
+  opts?: {
+    claimLiveVerified?: boolean;
+    forceDeliverDespiteBomb?: boolean;
+  },
+): OutputBombReclaimResult {
+  const assessment = assessStdoutBound(stdoutUtf8, maxOutputBytes);
+  const quarantine = quarantineStdoutDelivery(assessment, opts);
+  return {
+    assessment,
+    quarantine,
+    priorDeliverInvented: false,
+    ...OUTPUT_BOMB_HONESTY,
+  };
+}
+
+/**
+ * Fail-closed: two reclaim passes over the same bomb must agree — no invent deliver.
+ */
+export function assertOutputBombReclaimIdempotent(input: {
+  first: OutputBombReclaimResult;
+  second: OutputBombReclaimResult;
+}): {
+  ok: boolean;
+  code: "OUTPUT_BOMB_RECLAIM_IDEMPOTENT" | "OUTPUT_BOMB_RECLAIM_DRIFT";
+  reasons: string[];
+  externalEffects: "NONE";
+} {
+  const reasons: string[] = [];
+  const { first, second } = input;
+  if (first.priorDeliverInvented !== false || second.priorDeliverInvented !== false) {
+    reasons.push("priorDeliverInvented must be false on both reclaim passes");
+  }
+  if (
+    first.liveProviderSuccessClaimed !== false ||
+    second.liveProviderSuccessClaimed !== false
+  ) {
+    reasons.push("liveProviderSuccessClaimed must be false on reclaim");
+  }
+  if (first.externalEffects !== "NONE" || second.externalEffects !== "NONE") {
+    reasons.push("externalEffects must be NONE on reclaim");
+  }
+  if (first.assessment.withinBound !== second.assessment.withinBound) {
+    reasons.push("reclaim assessment.withinBound drifted");
+  }
+  if (first.assessment.byteLength !== second.assessment.byteLength) {
+    reasons.push("reclaim assessment.byteLength drifted");
+  }
+  if (
+    !first.assessment.withinBound &&
+    !second.assessment.withinBound &&
+    first.assessment.code !== second.assessment.code
+  ) {
+    reasons.push("reclaim assessment.code drifted on over-bound");
+  }
+  if (first.quarantine.deliver !== second.quarantine.deliver) {
+    reasons.push("reclaim quarantine.deliver drifted");
+  }
+  if (
+    !first.assessment.withinBound &&
+    (first.quarantine.deliver === true || second.quarantine.deliver === true)
+  ) {
+    reasons.push("idempotent reclaim must not deliver oversized stdout");
+  }
+  if (
+    first.quarantine.deliver === false &&
+    second.quarantine.deliver === false
+  ) {
+    if (first.quarantine.code !== second.quarantine.code) {
+      reasons.push("reclaim quarantine.code drifted");
+    }
+    if (
+      first.quarantine.reason !== second.quarantine.reason &&
+      first.quarantine.code === second.quarantine.code
+    ) {
+      reasons.push("reclaim quarantine.reason drifted");
+    }
+    if (
+      first.quarantine.quarantinedStdout !== null ||
+      second.quarantine.quarantinedStdout !== null
+    ) {
+      reasons.push("reclaim must not retain bomb payload");
+    }
+  }
+  if (reasons.length > 0) {
+    return {
+      ok: false,
+      code: "OUTPUT_BOMB_RECLAIM_DRIFT",
+      reasons,
+      externalEffects: "NONE",
+    };
+  }
+  return {
+    ok: true,
+    code: "OUTPUT_BOMB_RECLAIM_IDEMPOTENT",
+    reasons: [
+      "idempotent reclaim: same bound/quarantine; no invent deliver; ACCEPTED≠VERIFIED",
+    ],
+    externalEffects: "NONE",
+  };
+}
+
+/**
+ * Fail-closed honesty check for T-X011 bound/quarantine decisions.
+ */
+export function assertOutputBombBoundedHonest(input: {
+  assessment: StdoutBoundAssessment;
+  quarantine: StdoutQuarantineDecision;
+}): {
+  ok: boolean;
+  code: "OUTPUT_BOMB_HONEST" | "OUTPUT_BOMB_DISHONEST";
+  reasons: string[];
+  externalEffects: "NONE";
+} {
+  const reasons: string[] = [];
+  const { assessment, quarantine } = input;
+  if (assessment.liveProviderSuccessClaimed !== false) {
+    reasons.push("assessment.liveProviderSuccessClaimed must be false");
+  }
+  if (assessment.externalEffects !== "NONE") {
+    reasons.push("assessment.externalEffects must be NONE");
+  }
+  if (quarantine.liveProviderSuccessClaimed !== false) {
+    reasons.push("quarantine.liveProviderSuccessClaimed must be false");
+  }
+  if (quarantine.externalEffects !== "NONE") {
+    reasons.push("quarantine.externalEffects must be NONE");
+  }
+  if (!assessment.withinBound && quarantine.deliver === true) {
+    reasons.push("Oversized stdout must not be delivered");
+  }
+  if (!assessment.withinBound && quarantine.deliver === false) {
+    if (quarantine.quarantinedStdout !== null) {
+      reasons.push("Quarantine must not retain bomb stdout payload");
+    }
+  }
+  if (quarantine.deliver === true && !assessment.withinBound) {
+    reasons.push("Cannot deliver when assessment is over bound");
+  }
+  // Reject mismatched pairs: OUTPUT_TOO_LARGE quarantine requires over-bound assessment.
+  if (
+    quarantine.deliver === false &&
+    quarantine.code === "OUTPUT_TOO_LARGE" &&
+    assessment.withinBound
+  ) {
+    reasons.push(
+      "OUTPUT_TOO_LARGE quarantine requires over-bound assessment (mismatched pair)",
+    );
+  }
+  // LIVE_CLAIM_REFUSED / any non-deliver must never retain bomb payload (T-X011 deepen).
+  if (quarantine.deliver === false && quarantine.quarantinedStdout !== null) {
+    reasons.push("Non-deliver quarantine must not retain bomb stdout payload");
+  }
+  if (reasons.length > 0) {
+    return {
+      ok: false,
+      code: "OUTPUT_BOMB_DISHONEST",
+      reasons,
+      externalEffects: "NONE",
+    };
+  }
+  return {
+    ok: true,
+    code: "OUTPUT_BOMB_HONEST",
+    reasons: [
+      "liveProviderSuccessClaimed=false externalEffects=NONE ACCEPTED≠VERIFIED; bomb not delivered",
+    ],
+    externalEffects: "NONE",
   };
 }
 
@@ -412,6 +657,20 @@ function readCliVersion(
 export function invokeClaudeCli(
   request: ClaudeCliInvokeRequest,
 ): Promise<ClaudeCliInvokeResult> {
+  // Fail closed before spawn when the bound itself is invalid (T-X011).
+  // Otherwise a quiet child with maxOutputBytes≤0 / Infinity could return ok:true.
+  if (
+    !Number.isFinite(request.maxOutputBytes) ||
+    !(request.maxOutputBytes > 0)
+  ) {
+    return Promise.resolve({
+      ok: false,
+      code: "OUTPUT_TOO_LARGE",
+      reason:
+        "maxOutputBytes must be a finite positive bound before spawn (T-X011); ACCEPTED≠VERIFIED",
+    });
+  }
+
   const plan = planClaudeCliInvocation({
     agentName: request.agentName,
     modelId: request.modelId,
@@ -512,6 +771,18 @@ export function invokeClaudeCli(
     child.on("close", (code) => {
       clearTimeout(timer);
       const durationMs = Date.now() - started;
+      // Close-path bound re-check (T-X011 deepen): race-safe quarantine if the
+      // last chunk arrived as the process exited before the data handler settled.
+      const closeBound = assessStdoutBound(stdout, request.maxOutputBytes);
+      if (!closeBound.withinBound) {
+        finish({
+          ok: false,
+          code: closeBound.code,
+          reason: closeBound.reason,
+          durationMs,
+        });
+        return;
+      }
       const classified = classifyClaudeCliCompletion({
         exitCode: code,
         stdout,

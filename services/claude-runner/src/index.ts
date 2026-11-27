@@ -13,12 +13,17 @@ export {
   stopProcessTree,
   assessStdoutBound,
   quarantineStdoutDelivery,
+  reclaimOutputBombDecision,
+  assertOutputBombBoundedHonest,
+  assertOutputBombReclaimIdempotent,
   type ClaudeCliDetection,
   type ClaudeCliInvokeRequest,
   type ClaudeCliInvokeResult,
   type ClaudeCliInvocationPlan,
   type PlanClaudeCliInvocationInput,
   type StdoutBoundAssessment,
+  type StdoutQuarantineDecision,
+  type OutputBombReclaimResult,
 } from "./cli-adapter.js";
 
 export {

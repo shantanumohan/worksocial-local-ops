@@ -14,8 +14,13 @@ import {
   isRegisteredAgentName,
   DEFAULT_LIVE_CLI_TOOLS,
   assessStdoutBound,
+  assertOutputBombBoundedHonest,
+  assertOutputBombReclaimIdempotent,
   quarantineStdoutDelivery,
+  reclaimOutputBombDecision,
   planClaudeCliInvocation,
+  invokeClaudeCli,
+  type OutputBombReclaimResult,
 } from "./cli-adapter.js";
 import { createClaudeRunner } from "./runner.js";
 import { runAllRoleFixtureEvaluations } from "./fixture-runner.js";
@@ -69,10 +74,170 @@ describe("claude-runner (R1-04)", () => {
     if (!over.withinBound) {
       expect(over.code).toBe("OUTPUT_TOO_LARGE");
     }
-    expect(quarantineStdoutDelivery(over).deliver).toBe(false);
+    expect(over.liveProviderSuccessClaimed).toBe(false);
+    expect(over.externalEffects).toBe("NONE");
+    const overQ = quarantineStdoutDelivery(over);
+    expect(overQ.deliver).toBe(false);
+    if (!overQ.deliver) {
+      expect(overQ.quarantinedStdout).toBeNull();
+    }
+    expect(
+      assertOutputBombBoundedHonest({ assessment: over, quarantine: overQ }).ok,
+    ).toBe(true);
+
     const under = assessStdoutBound("ok", 50);
     expect(under.withinBound).toBe(true);
     expect(quarantineStdoutDelivery(under).deliver).toBe(true);
+
+    const atBound = assessStdoutBound("A".repeat(50), 50);
+    expect(atBound.withinBound).toBe(true);
+
+    const zeroMax = assessStdoutBound("x", 0);
+    expect(zeroMax.withinBound).toBe(false);
+    expect(assessStdoutBound("x", -1).withinBound).toBe(false);
+    expect(assessStdoutBound("x", Number.POSITIVE_INFINITY).withinBound).toBe(
+      false,
+    );
+    expect(assessStdoutBound("x", Number.NaN).withinBound).toBe(false);
+
+    const liveClaim = quarantineStdoutDelivery(under, {
+      claimLiveVerified: true,
+    });
+    expect(liveClaim.deliver).toBe(false);
+    if (!liveClaim.deliver) {
+      expect(liveClaim.code).toBe("LIVE_CLAIM_REFUSED");
+    }
+
+    const force = quarantineStdoutDelivery(over, {
+      forceDeliverDespiteBomb: true,
+    });
+    expect(force.deliver).toBe(false);
+    if (!force.deliver) {
+      expect(force.code).toBe("LIVE_CLAIM_REFUSED");
+    }
+
+    // Mismatched pair: under-bound assessment + OUTPUT_TOO_LARGE quarantine.
+    const mismatched = assertOutputBombBoundedHonest({
+      assessment: under,
+      quarantine: overQ,
+    });
+    expect(mismatched.ok).toBe(false);
+    expect(mismatched.code).toBe("OUTPUT_BOMB_DISHONEST");
+
+    expect(
+      assertOutputBombBoundedHonest({
+        assessment: under,
+        quarantine: liveClaim,
+      }).ok,
+    ).toBe(true);
+
+    const emoji = assessStdoutBound("🔥".repeat(20), 40);
+    expect(emoji.withinBound).toBe(false);
+
+    // Idempotent reclaim (I7): double reclaim of bomb agrees; no invent deliver.
+    const bomb = "B".repeat(100);
+    const r1 = reclaimOutputBombDecision(bomb, 50);
+    const r2 = reclaimOutputBombDecision(bomb, 50);
+    const idem = assertOutputBombReclaimIdempotent({ first: r1, second: r2 });
+    expect(idem.ok).toBe(true);
+    expect(idem.code).toBe("OUTPUT_BOMB_RECLAIM_IDEMPOTENT");
+    expect(r1.quarantine.deliver).toBe(false);
+    expect(r1.priorDeliverInvented).toBe(false);
+
+    const forced = reclaimOutputBombDecision(bomb, 50, {
+      forceDeliverDespiteBomb: true,
+    });
+    expect(forced.quarantine.deliver).toBe(false);
+    if (!forced.quarantine.deliver) {
+      expect(forced.quarantine.code).toBe("LIVE_CLAIM_REFUSED");
+    }
+    const afterForce = reclaimOutputBombDecision(bomb, 50);
+    expect(afterForce.quarantine.deliver).toBe(false);
+    if (!afterForce.quarantine.deliver) {
+      expect(afterForce.quarantine.code).toBe("OUTPUT_TOO_LARGE");
+    }
+
+    const dualClaim = quarantineStdoutDelivery(over, {
+      claimLiveVerified: true,
+      forceDeliverDespiteBomb: true,
+    });
+    expect(dualClaim.deliver).toBe(false);
+    if (!dualClaim.deliver) {
+      expect(dualClaim.code).toBe("LIVE_CLAIM_REFUSED");
+    }
+    expect(
+      assertOutputBombBoundedHonest({
+        assessment: over,
+        quarantine: dualClaim,
+      }).ok,
+    ).toBe(true);
+
+    const tamperedSecond: OutputBombReclaimResult = { ...r2 };
+    if (
+      !r1.assessment.withinBound &&
+      !tamperedSecond.assessment.withinBound
+    ) {
+      (tamperedSecond.assessment as { code: string }).code = "INVENTED_CODE";
+      const codeDrift = assertOutputBombReclaimIdempotent({
+        first: r1,
+        second: tamperedSecond,
+      });
+      expect(codeDrift.ok).toBe(false);
+      expect(codeDrift.code).toBe("OUTPUT_BOMB_RECLAIM_DRIFT");
+    }
+
+    const reasonTampered: OutputBombReclaimResult = { ...r2 };
+    if (
+      !r1.quarantine.deliver &&
+      !reasonTampered.quarantine.deliver &&
+      r1.quarantine.code === reasonTampered.quarantine.code
+    ) {
+      reasonTampered.quarantine = {
+        ...reasonTampered.quarantine,
+        reason: `${reasonTampered.quarantine.reason} (invent drift)`,
+      };
+      const reasonDrift = assertOutputBombReclaimIdempotent({
+        first: r1,
+        second: reasonTampered,
+      });
+      expect(reasonDrift.ok).toBe(false);
+      expect(reasonDrift.reasons).toContain("reclaim quarantine.reason drifted");
+    }
+
+    expect(assessStdoutBound("", 64).withinBound).toBe(true);
+  });
+
+  it("refuses invokeClaudeCli when maxOutputBytes is nonpositive or non-finite (T-X011)", async () => {
+    const { mkdtempSync, writeFileSync, chmodSync, rmSync } = await import(
+      "node:fs"
+    );
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const dir = mkdtempSync(join(tmpdir(), "ws-bound-"));
+    try {
+      const script = join(dir, "quiet.mjs");
+      writeFileSync(
+        script,
+        "#!/usr/bin/env node\nprocess.exit(0);\n",
+        "utf8",
+      );
+      chmodSync(script, 0o755);
+      for (const maxOutputBytes of [0, -1, Number.POSITIVE_INFINITY, Number.NaN]) {
+        const result = await invokeClaudeCli({
+          executablePath: script,
+          agentName: "A01",
+          cwd: dir,
+          modelId: "fixture-model",
+          prompt: "quiet",
+          timeoutMs: 2_000,
+          maxOutputBytes,
+        });
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.code).toBe("OUTPUT_TOO_LARGE");
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it("plans CLI with prompt on stdin only — no shell interpolation (T-X010)", () => {

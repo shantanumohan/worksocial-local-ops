@@ -3,13 +3,13 @@
   "caseId": "T-X011",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X011 (Output bomb — bounded/quarantined)\nproof=output_bomb_bounded_quarantined applyCount=1 :: Oversized stdout (2112B > 2048) → OUTPUT_TOO_LARGE quarantined | Under-bound stdout remains deliverable | UTF-8 multi-byte bomb counted by bytes (4096B) | invokeClaudeCli bomb → OUTPUT_TOO_LARGE; bomb stdout quarantined (not delivered) | Under-bound invokeClaudeCli stdout delivered | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X011 (Output bomb — bounded/quarantined)\nproof=output_bomb_bounded_quarantined applyCount=1 :: Oversized stdout (2112B > 2048) → OUTPUT_TOO_LARGE quarantined | Under-bound stdout remains deliverable | Exact-at-bound deliverable; maxOutputBytes≤0/∞/NaN → OUTPUT_TOO_LARGE | Empty stdout under finite bound remains deliverable | UTF-8 multi-byte bomb counted by bytes (2B=4096; 4B=4096) | claimLiveVerified / forceDeliverDespiteBomb → LIVE_CLAIM_REFUSED | simultaneous claimLiveVerified+forceDeliverDespiteBomb → LIVE_CLAIM_REFUSED | assertOutputBombBoundedHonest → honest over/quarantine; mismatched DISHONEST; LIVE_CLAIM honest; ACCEPTED≠VERIFIED | invokeClaudeCli bomb → OUTPUT_TOO_LARGE; bomb stdout quarantined (not delivered) | double invokeClaudeCli bomb → OUTPUT_TOO_LARGE twice (no invent delivery) | maxOutputBytes≤0/-/∞ invokeClaudeCli → OUTPUT_TOO_LARGE before spawn | one-shot bomb → OUTPUT_TOO_LARGE on close-path; bomb stdout quarantined | Under-bound invokeClaudeCli stdout delivered | idempotent reclaim: double bomb reclaim agrees; post-force reclaim still OUTPUT_TOO_LARGE (no invent deliver) | empty stdout within bound; reclaim quarantine.reason drift refused | liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "output_bomb_bounded_quarantined"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x011.json",
-  "createdAtIso": "2026-11-27T10:48:07.120Z",
+  "createdAtIso": "2026-11-27T10:53:24.568Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x011-135e5b91c19f"
+  "uniqueSourceArtifactId": "art-fixture-t-x011-8e7ff569e667"
 }
