@@ -331,6 +331,50 @@ describe("analytics — GA4 debug ≠ receipt", () => {
     expect(rejected.deliveredConversionClaimed).toBe(false);
     expect(rejected.measuredReceiptClaimed).toBe(false);
   });
+
+  it("triple repeat delivered-conversion claim stays refused (A20 tip-moved-293 train)", () => {
+    for (let i = 0; i < 3; i++) {
+      const repeat = interpretGa4DebugValidation({
+        debugEndpointAccepted: true,
+        claimDeliveredConversion: true,
+      });
+      expect(repeat.code).toBe("DELIVERED_CONVERSION_CLAIM_REFUSED");
+      expect(repeat.deliveredConversionClaimed).toBe(false);
+      expect(repeat.measuredReceiptClaimed).toBe(false);
+      expect(repeat.liveProviderWiring).toBe("NOT_WIRED");
+      expect(repeat.externalEffects).toBe("NONE");
+    }
+  });
+
+  it("triple repeat delivered-conversion claim on rejected debug stays refused (A20 tip-moved-293 edge)", () => {
+    for (let i = 0; i < 3; i++) {
+      const repeat = interpretGa4DebugValidation({
+        debugEndpointAccepted: false,
+        claimDeliveredConversion: true,
+      });
+      expect(repeat.debugOk).toBe(false);
+      expect(repeat.code).toBe("DELIVERED_CONVERSION_CLAIM_REFUSED");
+      expect(repeat.deliveredConversionClaimed).toBe(false);
+      expect(repeat.measuredReceiptClaimed).toBe(false);
+      expect(repeat.liveProviderWiring).toBe("NOT_WIRED");
+      expect(repeat.externalEffects).toBe("NONE");
+    }
+  });
+
+  it("triple repeat measured-receipt claim stays refused (A20 tip-moved-293 edge measured-receipt)", () => {
+    for (let i = 0; i < 3; i++) {
+      const repeat = interpretGa4DebugValidation({
+        debugEndpointAccepted: true,
+        claimMeasuredReceipt: true,
+      });
+      expect(repeat.debugOk).toBe(true);
+      expect(repeat.code).toBe("MEASURED_RECEIPT_CLAIM_REFUSED");
+      expect(repeat.measuredReceiptClaimed).toBe(false);
+      expect(repeat.deliveredConversionClaimed).toBe(false);
+      expect(repeat.liveProviderWiring).toBe("NOT_WIRED");
+      expect(repeat.externalEffects).toBe("NONE");
+    }
+  });
 });
 
 describe("analytics — GSC omitted rows", () => {
