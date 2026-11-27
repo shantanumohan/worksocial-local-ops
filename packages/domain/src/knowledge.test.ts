@@ -250,6 +250,168 @@ describe("instruction ingestion", () => {
     });
     expect(ingested.instructionVersion).toBe("playbook-v3");
   });
+
+  it("triple repeat instructionVersion claim while pending stays refused (A21 tip-moved-306 train)", () => {
+    for (let i = 0; i < 3; i++) {
+      const repeat = createInstructionIngestion({
+        ingestionId: `ing-a21-${i}`,
+        sourcePath: `incoming/spoof-${i}.md`,
+        checksum: `sha256:spoof-${i}`,
+        status: InstructionIngestionStatus.PENDING_CLASSIFICATION,
+        instructionVersion: "v-spoof",
+        fixtureOnly: true,
+        createdAtIso: now,
+      });
+      expect(repeat.instructionVersion).toBeNull();
+      expect(repeat.classifierNotes.join(" ")).toMatch(
+        /Refused instructionVersion/i,
+      );
+    }
+  });
+
+  it("triple repeat instructionVersion claim while rejected stays refused (A21 tip-moved-306 edge)", () => {
+    for (let i = 0; i < 3; i++) {
+      const repeat = createInstructionIngestion({
+        ingestionId: `ing-a21-rej-${i}`,
+        sourcePath: `incoming/reject-${i}.md`,
+        checksum: `sha256:reject-${i}`,
+        status: InstructionIngestionStatus.REJECTED,
+        instructionVersion: "v-reject",
+        fixtureOnly: true,
+        createdAtIso: now,
+      });
+      expect(repeat.instructionVersion).toBeNull();
+      expect(repeat.classifierNotes.join(" ")).toMatch(
+        /Refused instructionVersion/i,
+      );
+    }
+  });
+
+  it("triple repeat instructionVersion claim while quarantined stays refused (A21 tip-moved-306 quarantine edge)", () => {
+    for (let i = 0; i < 3; i++) {
+      const repeat = createInstructionIngestion({
+        ingestionId: `ing-a21-q-${i}`,
+        sourcePath: `incoming/quarantine-${i}.md`,
+        checksum: `sha256:quarantine-${i}`,
+        status: InstructionIngestionStatus.QUARANTINED,
+        instructionVersion: "v-quarantine",
+        fixtureOnly: true,
+        createdAtIso: now,
+      });
+      expect(repeat.instructionVersion).toBeNull();
+      expect(repeat.classifierNotes.join(" ")).toMatch(
+        /Refused instructionVersion/i,
+      );
+    }
+  });
+
+  it("quad repeat instructionVersion claim while pending stays refused (A21 tip-moved-306 quad edge)", () => {
+    for (let i = 0; i < 4; i++) {
+      const repeat = createInstructionIngestion({
+        ingestionId: `ing-a21-w15-${i}`,
+        sourcePath: `incoming/w15-${i}.md`,
+        checksum: `sha256:w15-${i}`,
+        status: InstructionIngestionStatus.PENDING_CLASSIFICATION,
+        instructionVersion: "v-w15",
+        fixtureOnly: true,
+        createdAtIso: now,
+      });
+      expect(repeat.instructionVersion).toBeNull();
+      expect(repeat.classifierNotes.join(" ")).toMatch(
+        /Refused instructionVersion/i,
+      );
+    }
+  });
+
+  it("quad repeat instructionVersion claim while rejected stays refused (A21 tip-moved-306 quad-rejected edge)", () => {
+    for (let i = 0; i < 4; i++) {
+      const repeat = createInstructionIngestion({
+        ingestionId: `ing-a21-w15r-${i}`,
+        sourcePath: `incoming/w15r-${i}.md`,
+        checksum: `sha256:w15r-${i}`,
+        status: InstructionIngestionStatus.REJECTED,
+        instructionVersion: "v-w15r",
+        fixtureOnly: true,
+        createdAtIso: now,
+      });
+      expect(repeat.instructionVersion).toBeNull();
+      expect(repeat.classifierNotes.join(" ")).toMatch(
+        /Refused instructionVersion/i,
+      );
+    }
+  });
+
+  it("quad repeat instructionVersion claim while quarantined stays refused (A21 tip-moved-306 quad-quarantine edge)", () => {
+    for (let i = 0; i < 4; i++) {
+      const repeat = createInstructionIngestion({
+        ingestionId: `ing-a21-w15q-${i}`,
+        sourcePath: `incoming/w15q-${i}.md`,
+        checksum: `sha256:w15q-${i}`,
+        status: InstructionIngestionStatus.QUARANTINED,
+        instructionVersion: "v-w15q",
+        fixtureOnly: true,
+        createdAtIso: now,
+      });
+      expect(repeat.instructionVersion).toBeNull();
+      expect(repeat.classifierNotes.join(" ")).toMatch(
+        /Refused instructionVersion/i,
+      );
+    }
+  });
+
+  it("quint repeat instructionVersion claim while pending stays refused (A21 wipe15-64829602 edge)", () => {
+    for (let i = 0; i < 5; i++) {
+      const repeat = createInstructionIngestion({
+        ingestionId: `ing-a21-w15p-${i}`,
+        sourcePath: `incoming/w15p-${i}.md`,
+        checksum: `sha256:w15p-${i}`,
+        status: InstructionIngestionStatus.PENDING_CLASSIFICATION,
+        instructionVersion: "v-w15p",
+        fixtureOnly: true,
+        createdAtIso: now,
+      });
+      expect(repeat.instructionVersion).toBeNull();
+      expect(repeat.classifierNotes.join(" ")).toMatch(
+        /Refused instructionVersion/i,
+      );
+    }
+  });
+
+  it("quint repeat instructionVersion claim while rejected stays refused (A21 wipe15-5ed3d15d edge)", () => {
+    for (let i = 0; i < 5; i++) {
+      const repeat = createInstructionIngestion({
+        ingestionId: `ing-a21-w15r5-${i}`,
+        sourcePath: `incoming/w15r5-${i}.md`,
+        checksum: `sha256:w15r5-${i}`,
+        status: InstructionIngestionStatus.REJECTED,
+        instructionVersion: "v-w15r5",
+        fixtureOnly: true,
+        createdAtIso: now,
+      });
+      expect(repeat.instructionVersion).toBeNull();
+      expect(repeat.classifierNotes.join(" ")).toMatch(
+        /Refused instructionVersion/i,
+      );
+    }
+  });
+
+  it("quint repeat instructionVersion claim while quarantined stays refused (A21 wipe15-5ed3d15d quarantine edge)", () => {
+    for (let i = 0; i < 5; i++) {
+      const repeat = createInstructionIngestion({
+        ingestionId: `ing-a21-w15q5-${i}`,
+        sourcePath: `incoming/w15q5-${i}.md`,
+        checksum: `sha256:w15q5-${i}`,
+        status: InstructionIngestionStatus.QUARANTINED,
+        instructionVersion: "v-w15q5",
+        fixtureOnly: true,
+        createdAtIso: now,
+      });
+      expect(repeat.instructionVersion).toBeNull();
+      expect(repeat.classifierNotes.join(" ")).toMatch(
+        /Refused instructionVersion/i,
+      );
+    }
+  });
 });
 
 describe("demand observations", () => {

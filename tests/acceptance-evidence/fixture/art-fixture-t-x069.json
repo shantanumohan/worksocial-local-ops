@@ -3,13 +3,13 @@
   "caseId": "T-X069",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X069 (Imported document quarantined as data)\nproof=imported_doc_quarantined_as_data applyCount=1 :: Incoming import pending_classification; evidence not executable instruction | Quarantined import has null instructionVersion | Claimed instructionVersion while QUARANTINED refused; remains null (data only) | INGESTED status may pin instructionVersion (positive control) | TRUSTED_INSTRUCTION entry instructionEligible=true | UNTRUSTED_SOURCE imported doc instructionEligible=false (quarantined as data) | Untrusted attachment → UNTRUSTED_SOURCE_NOT_INSTRUCTION; externalEffects=NONE | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X069 (Imported document quarantined as data)\nproof=imported_doc_quarantined_as_data applyCount=1 :: Incoming import pending_classification; evidence not executable instruction | Quarantined import has null instructionVersion | Claimed instructionVersion while QUARANTINED refused; remains null (data only) | INGESTED status may pin instructionVersion (positive control) | TRUSTED_INSTRUCTION entry instructionEligible=true | UNTRUSTED_SOURCE imported doc instructionEligible=false (quarantined as data) | Untrusted attachment → UNTRUSTED_SOURCE_NOT_INSTRUCTION; externalEffects=NONE | A21 tip-moved-306 train: triple pending claim instructionVersion → refused; remains null | A21 tip-moved-306 edge: triple REJECTED claim instructionVersion → refused; remains null | A21 tip-moved-306 quarantine edge: triple QUARANTINED claim instructionVersion → refused; remains null | A21 tip-moved-306 quad edge: quad PENDING claim instructionVersion → refused; remains null | A21 tip-moved-306 quad-rejected edge: quad REJECTED claim instructionVersion → refused; remains null | A21 tip-moved-306 quad-quarantine edge: quad QUARANTINED claim instructionVersion → refused; remains null | A21 wipe15-64829602 edge: quint PENDING claim instructionVersion → refused; remains null | A21 wipe15-5ed3d15d edge: quint REJECTED claim instructionVersion → refused; remains null | A21 wipe15-5ed3d15d quarantine edge: quint QUARANTINED claim instructionVersion → refused; remains null | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "imported_doc_quarantined_as_data"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x069.json",
-  "createdAtIso": "2026-11-27T21:38:44.146Z",
+  "createdAtIso": "2026-11-27T21:45:35.084Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x069-244c07ec3fcc"
+  "uniqueSourceArtifactId": "art-fixture-t-x069-4ceba78fdfc6"
 }

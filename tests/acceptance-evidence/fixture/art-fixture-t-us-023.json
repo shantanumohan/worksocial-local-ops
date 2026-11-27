@@ -8,8 +8,8 @@
     "standing_autonomy_grant_control_receipts"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-023.json",
-  "createdAtIso": "2026-11-27T21:38:44.146Z",
+  "createdAtIso": "2026-11-27T21:45:35.084Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-023-244c07ec3fcc"
+  "uniqueSourceArtifactId": "art-fixture-t-us-023-4ceba78fdfc6"
 }
