@@ -555,6 +555,26 @@ describe("write-root-policy", () => {
     }
   });
 
+  it("refuses four-per-em-space-only asOfInstantIso (B38)", () => {
+    const fourPerEmAsOf = evaluateWriteWithinRoot("/var/ws/root", "/var/ws/root/x", {
+      resolveCanonical: false,
+      rootVerification: {
+        timeZone: "America/New_York",
+        year: 2026,
+        month: 3,
+        day: 8,
+        hour: 1,
+        minute: 30,
+        asOfInstantIso: "\u2005",
+      },
+    });
+    expect(fourPerEmAsOf.ok).toBe(false);
+    if (!fourPerEmAsOf.ok) {
+      expect(fourPerEmAsOf.reason).toBe("INVALID_AS_OF_INSTANT");
+      expect(fourPerEmAsOf.externalEffects).toBe("NONE");
+    }
+  });
+
   it("refuses carriage-return-only asOfInstantIso (B24)", () => {
     const crAsOf = evaluateWriteWithinRoot("/var/ws/root", "/var/ws/root/x", {
       resolveCanonical: false,
