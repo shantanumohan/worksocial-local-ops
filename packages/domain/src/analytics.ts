@@ -481,7 +481,35 @@ export type GscRowObservation = {
   impressions: number | null;
   omitted: boolean;
   environment: AnalyticsEnvironmentValue;
+  /**
+   * Optional durable wait-manifest schema. When present and not
+   * `gsc-row-v1`, demand stays UNKNOWN — never invent measured zeros.
+   * Absent schema is allowed for legacy fixture callers (implicit OK).
+   */
+  schema?: string;
 };
+
+/** Live GSC query transport — always NOT_WIRED for fixture proofs (T-X033). */
+export const GSC_LIVE_WIRING = "NOT_WIRED" as const;
+
+export type GscLiveWiring = typeof GSC_LIVE_WIRING;
+
+/**
+ * Durable GSC row wait-manifest schema id. Wrong/missing schema → UNKNOWN
+ * demand — never invent measured zeros (T-X033 deepen).
+ */
+export const GSC_ROW_MANIFEST_SCHEMA = "gsc-row-v1" as const;
+
+export const GscRowManifestIntegrity = {
+  OK: "OK",
+  CORRUPT_JSON: "CORRUPT_JSON",
+  TRUNCATED: "TRUNCATED",
+  MISSING_REQUIRED_FIELDS: "MISSING_REQUIRED_FIELDS",
+  WRONG_SCHEMA: "WRONG_SCHEMA",
+} as const;
+
+export type GscRowManifestIntegrityValue =
+  (typeof GscRowManifestIntegrity)[keyof typeof GscRowManifestIntegrity];
 
 export type GscDemandClassification = {
   query: string;
@@ -490,10 +518,169 @@ export type GscDemandClassification = {
   /** Honest demand label when rows are omitted. */
   demandLabel: "measured" | "unknown" | "unavailable" | "fixture";
   reasons: string[];
+  liveGscWiring: GscLiveWiring;
+  liveProviderSuccessClaimed: false;
+  externalEffects: "NONE";
+  chatgptAdsAccess: "ACCESS_BLOCKED";
 };
+
+function gscHonesty(): Pick<
+  GscDemandClassification,
+  | "liveGscWiring"
+  | "liveProviderSuccessClaimed"
+  | "externalEffects"
+  | "chatgptAdsAccess"
+> {
+  return {
+    liveGscWiring: GSC_LIVE_WIRING,
+    liveProviderSuccessClaimed: false,
+    externalEffects: "NONE",
+    chatgptAdsAccess: "ACCESS_BLOCKED",
+  };
+}
+
+function missingGscMetrics(query: string): {
+  clicks: MetricClassification;
+  impressions: MetricClassification;
+} {
+  return {
+    clicks: classifyMetric({
+      metricId: `gsc-clicks:${query}`,
+      value: null,
+      sampleSize: null,
+      sourceStatus: "missing",
+    }),
+    impressions: classifyMetric({
+      metricId: `gsc-impressions:${query}`,
+      value: null,
+      sampleSize: null,
+      sourceStatus: "missing",
+    }),
+  };
+}
+
+/**
+ * Inspect raw durable GSC row wait-manifest bytes. Truncated / unparseable /
+ * incomplete / wrong-schema payloads are not measured demand — UNKNOWN.
+ */
+export function inspectGscRowManifest(input: {
+  raw: string | null | undefined;
+}): {
+  integrity: GscRowManifestIntegrityValue;
+  row: GscRowObservation | null;
+  reasons: string[];
+} {
+  const raw = input.raw;
+  if (raw === null || raw === undefined || !String(raw).trim()) {
+    return {
+      integrity:
+        raw === null || raw === undefined
+          ? GscRowManifestIntegrity.MISSING_REQUIRED_FIELDS
+          : GscRowManifestIntegrity.TRUNCATED,
+      row: null,
+      reasons: ["GSC row wait-manifest missing/empty"],
+    };
+  }
+  const trimmed = String(raw);
+  const openBraces = (trimmed.match(/\{/g) ?? []).length;
+  const closeBraces = (trimmed.match(/\}/g) ?? []).length;
+  const unbalanced = openBraces !== closeBraces;
+
+  let parsedUnknown: unknown;
+  try {
+    parsedUnknown = JSON.parse(trimmed) as unknown;
+  } catch {
+    if (unbalanced || !trimmed.trimEnd().endsWith("}")) {
+      return {
+        integrity: GscRowManifestIntegrity.TRUNCATED,
+        row: null,
+        reasons: ["GSC row wait-manifest truncated/incomplete JSON"],
+      };
+    }
+    return {
+      integrity: GscRowManifestIntegrity.CORRUPT_JSON,
+      row: null,
+      reasons: ["GSC row wait-manifest JSON.parse failed"],
+    };
+  }
+
+  if (
+    parsedUnknown === null ||
+    typeof parsedUnknown !== "object" ||
+    Array.isArray(parsedUnknown)
+  ) {
+    return {
+      integrity: GscRowManifestIntegrity.CORRUPT_JSON,
+      row: null,
+      reasons: ["GSC row wait-manifest root must be a JSON object"],
+    };
+  }
+
+  const obj = parsedUnknown as Record<string, unknown>;
+  if (obj.schema !== GSC_ROW_MANIFEST_SCHEMA) {
+    return {
+      integrity: GscRowManifestIntegrity.WRONG_SCHEMA,
+      row: null,
+      reasons: [
+        `GSC row wait-manifest schema must be ${GSC_ROW_MANIFEST_SCHEMA}; got ${String(obj.schema)}`,
+      ],
+    };
+  }
+
+  const query = String(obj.query ?? "").trim();
+  const environment = obj.environment;
+  const omitted = obj.omitted === true;
+  const clicks =
+    obj.clicks === null
+      ? null
+      : typeof obj.clicks === "number"
+        ? obj.clicks
+        : undefined;
+  const impressions =
+    obj.impressions === null
+      ? null
+      : typeof obj.impressions === "number"
+        ? obj.impressions
+        : undefined;
+
+  if (
+    !query ||
+    clicks === undefined ||
+    impressions === undefined ||
+    (environment !== AnalyticsEnvironment.FIXTURE &&
+      environment !== AnalyticsEnvironment.SANDBOX &&
+      environment !== AnalyticsEnvironment.LIVE &&
+      environment !== AnalyticsEnvironment.NOT_WIRED &&
+      environment !== AnalyticsEnvironment.UNAVAILABLE)
+  ) {
+    return {
+      integrity: GscRowManifestIntegrity.MISSING_REQUIRED_FIELDS,
+      row: null,
+      reasons: [
+        "GSC row wait-manifest missing required fields (query/clicks/impressions/environment)",
+      ],
+    };
+  }
+
+  return {
+    integrity: GscRowManifestIntegrity.OK,
+    row: {
+      query,
+      clicks,
+      impressions,
+      omitted,
+      environment: environment as AnalyticsEnvironmentValue,
+      schema: GSC_ROW_MANIFEST_SCHEMA,
+    },
+    reasons: ["GSC row wait-manifest integrity OK"],
+  };
+}
 
 /**
  * Omitted GSC rows are UNKNOWN demand — never zero (T-US-010 / T-X033).
+ * Non-finite clicks/impressions and invented zeros on omitted rows stay
+ * UNKNOWN. Wrong wait-manifest schema stays UNKNOWN. Live GSC wiring
+ * remains NOT_WIRED.
  */
 export function classifyGscDemand(
   row: GscRowObservation,
@@ -505,31 +692,171 @@ export function classifyGscDemand(
       impressions: { kind: "unavailable", reason: "unsupported" },
       demandLabel: "unavailable",
       reasons: ["GSC live adapter NOT_WIRED — no demand claim"],
+      ...gscHonesty(),
     };
   }
-  if (row.omitted || row.clicks === null || row.impressions === null) {
-    const clicks = classifyMetric({
-      metricId: `gsc-clicks:${row.query}`,
-      value: null,
-      sampleSize: null,
-      sourceStatus: "missing",
-    });
-    const impressions = classifyMetric({
-      metricId: `gsc-impressions:${row.query}`,
-      value: null,
-      sampleSize: null,
-      sourceStatus: "missing",
-    });
+
+  // Blank / whitespace query cannot become measured demand.
+  const queryTrimmed = String(row.query ?? "").trim();
+  if (!queryTrimmed) {
+    const missing = missingGscMetrics(row.query || "(blank)");
     return {
       query: row.query,
-      clicks,
-      impressions,
+      ...missing,
+      demandLabel: "unknown",
+      reasons: [
+        "Blank/whitespace GSC query — UNKNOWN demand, inventing measured zeros refused (T-X033)",
+      ],
+      ...gscHonesty(),
+    };
+  }
+
+  // Invisible-only query (ZWSP/ZWNJ/ZWJ/BOM/word-joiner) after trim — UNKNOWN.
+  // String.trim does not strip these; they must not invent measured demand.
+  if (isInvisibleOnlyGscQuery(queryTrimmed)) {
+    const missing = missingGscMetrics(row.query || "(invisible)");
+    return {
+      query: row.query,
+      ...missing,
+      demandLabel: "unknown",
+      reasons: [
+        "Invisible-only GSC query (zero-width/BOM/soft-hyphen) — UNKNOWN demand, inventing measured zeros refused (T-X033)",
+      ],
+      ...gscHonesty(),
+    };
+  }
+
+  // Wrong wait-manifest schema → UNKNOWN (never invent measured zeros).
+  if (
+    row.schema !== undefined &&
+    row.schema !== GSC_ROW_MANIFEST_SCHEMA
+  ) {
+    const missing = missingGscMetrics(row.query);
+    return {
+      query: row.query,
+      ...missing,
+      demandLabel: "unknown",
+      reasons: [
+        `GSC row wait-manifest schema=${row.schema} ≠ ${GSC_ROW_MANIFEST_SCHEMA} — UNKNOWN demand, inventing zero refused (T-X033)`,
+      ],
+      ...gscHonesty(),
+    };
+  }
+
+  // Omitted row carrying invented zeros still UNKNOWN — never treat as measured 0.
+  if (
+    row.omitted &&
+    row.clicks !== null &&
+    row.impressions !== null &&
+    row.clicks === 0 &&
+    row.impressions === 0
+  ) {
+    const missing = missingGscMetrics(row.query);
+    return {
+      query: row.query,
+      ...missing,
+      demandLabel: "unknown",
+      reasons: [
+        "Omitted GSC row carried invented zeros — UNKNOWN demand, inventing zero refused (T-US-010 / T-X033)",
+      ],
+      ...gscHonesty(),
+    };
+  }
+
+  if (row.omitted || row.clicks === null || row.impressions === null) {
+    const missing = missingGscMetrics(row.query);
+    return {
+      query: row.query,
+      ...missing,
       demandLabel: "unknown",
       reasons: [
         "GSC row omitted or incomplete — UNKNOWN demand, not zero (T-US-010 / T-X033)",
       ],
+      ...gscHonesty(),
     };
   }
+
+  // Malformed numeric payloads must not invent measured zero / negative demand.
+  // Signed −0 is also refused — it is not an honest measured zero.
+  if (
+    !Number.isFinite(row.clicks) ||
+    !Number.isFinite(row.impressions) ||
+    row.clicks < 0 ||
+    row.impressions < 0 ||
+    Object.is(row.clicks, -0) ||
+    Object.is(row.impressions, -0)
+  ) {
+    const missing = missingGscMetrics(row.query);
+    return {
+      query: row.query,
+      ...missing,
+      demandLabel: "unknown",
+      reasons: [
+        "GSC clicks/impressions non-finite, negative, or signed −0 — UNKNOWN demand, not invented zero (T-X033)",
+      ],
+      ...gscHonesty(),
+    };
+  }
+
+  // Non-integer counts must not invent measured demand (no float CTR invent).
+  if (!Number.isInteger(row.clicks) || !Number.isInteger(row.impressions)) {
+    const missing = missingGscMetrics(row.query);
+    return {
+      query: row.query,
+      ...missing,
+      demandLabel: "unknown",
+      reasons: [
+        `GSC clicks/impressions non-integer (${row.clicks}/${row.impressions}) — UNKNOWN demand, inventing measured refused (T-X033)`,
+      ],
+      ...gscHonesty(),
+    };
+  }
+
+  // Unsafe integers (beyond Number.MAX_SAFE_INTEGER) must not invent measured demand.
+  if (
+    !Number.isSafeInteger(row.clicks) ||
+    !Number.isSafeInteger(row.impressions)
+  ) {
+    const missing = missingGscMetrics(row.query);
+    return {
+      query: row.query,
+      ...missing,
+      demandLabel: "unknown",
+      reasons: [
+        `GSC clicks/impressions not safe integers (${row.clicks}/${row.impressions}) — UNKNOWN demand, inventing measured refused (T-X033)`,
+      ],
+      ...gscHonesty(),
+    };
+  }
+
+  // Impossible counts: clicks cannot exceed impressions — stay UNKNOWN.
+  if (row.clicks > row.impressions) {
+    const missing = missingGscMetrics(row.query);
+    return {
+      query: row.query,
+      ...missing,
+      demandLabel: "unknown",
+      reasons: [
+        `GSC clicks (${row.clicks}) > impressions (${row.impressions}) — impossible; UNKNOWN demand, inventing CTR refused (T-X033)`,
+      ],
+      ...gscHonesty(),
+    };
+  }
+
+  // LIVE rows cannot become measured while live GSC wiring stays NOT_WIRED.
+  if (row.environment === AnalyticsEnvironment.LIVE) {
+    return {
+      query: row.query,
+      clicks: { kind: "unavailable", reason: "unsupported" },
+      impressions: { kind: "unavailable", reason: "unsupported" },
+      demandLabel: "unavailable",
+      reasons: [
+        "LIVE GSC row refused — liveGscWiring=NOT_WIRED; no measured demand (T-X033)",
+      ],
+      ...gscHonesty(),
+    };
+  }
+
   const clicks = classifyMetric({
     metricId: `gsc-clicks:${row.query}`,
     value: row.clicks,
@@ -542,6 +869,35 @@ export function classifyGscDemand(
     sampleSize: row.impressions,
     sourceStatus: "ok",
   });
+
+  // If metric classification failed (insufficient sample / non-finite), stay UNKNOWN.
+  if (clicks.kind !== "measured" || impressions.kind !== "measured") {
+    return {
+      query: row.query,
+      clicks,
+      impressions,
+      demandLabel: "unknown",
+      reasons: [
+        "GSC metrics not measured — UNKNOWN demand, not invented zero (T-X033)",
+      ],
+      ...gscHonesty(),
+    };
+  }
+
+  // SANDBOX ≠ LIVE measured — keep sandbox samples on the fixture side of honesty.
+  if (row.environment === AnalyticsEnvironment.SANDBOX) {
+    return {
+      query: row.query,
+      clicks,
+      impressions,
+      demandLabel: "fixture",
+      reasons: [
+        "SANDBOX GSC sample — not live property data; inventing live measured refused (T-X033)",
+      ],
+      ...gscHonesty(),
+    };
+  }
+
   return {
     query: row.query,
     clicks,
@@ -553,6 +909,505 @@ export function classifyGscDemand(
         ? "FIXTURE GSC sample — not live property data"
         : "Measured GSC row",
     ],
+    ...gscHonesty(),
+  };
+}
+
+/**
+ * True when query is only invisible / format-control Unicode
+ * (ZWSP/ZWNJ/ZWJ/BOM/word-joiner/soft-hyphen/invisible math operators).
+ */
+export function isInvisibleOnlyGscQuery(query: string): boolean {
+  const stripped = String(query).replace(
+    /[\u00AD\u200B-\u200D\uFEFF\u2060-\u2064]/g,
+    "",
+  );
+  return stripped.length === 0;
+}
+
+export type GscDemandHonestyCode =
+  | "MEASURED"
+  | "FIXTURE"
+  | "UNKNOWN_OMITTED"
+  | "UNAVAILABLE_NOT_WIRED"
+  | "OMITTED_AS_ZERO_REFUSED"
+  | "WRONG_GSC_ROW_SCHEMA"
+  | "INVALID_GSC_QUERY"
+  | "INVALID_GSC_COUNTS"
+  | "NON_INTEGER_GSC_COUNTS"
+  | "UNSAFE_GSC_COUNTS"
+  | "IMPOSSIBLE_GSC_COUNTS"
+  | "INVENT_CTR_REFUSED"
+  | "INVENT_POSITION_REFUSED"
+  | "INVENT_MEASURED_DESPITE_UNKNOWN"
+  | "INVENT_AGGREGATE_FROM_UNKNOWN"
+  | "INVENT_MEASURED_FROM_FIXTURE"
+  | "INVENT_MEASURED_FROM_SANDBOX"
+  | "INVENT_FROM_CORRUPT_MANIFEST"
+  | "INVENT_CTR_FROM_ZERO_IMPRESSIONS"
+  | "LIVE_GSC_CLAIM_REFUSED";
+
+export type GscDemandHonestyDecision = {
+  allowed: boolean;
+  code: GscDemandHonestyCode;
+  classification: GscDemandClassification | null;
+  /** True only when demand may enter measured demand totals. */
+  countsAsMeasuredDemand: boolean;
+  reasons: string[];
+  liveGscWiring: GscLiveWiring;
+  liveProviderSuccessClaimed: false;
+  externalEffects: "NONE";
+  chatgptAdsAccess: "ACCESS_BLOCKED";
+};
+
+/**
+ * Evaluate one GSC row for honest demand (T-US-010 / T-X033).
+ * Refuses live VERIFIED / live GSC wire claims and refuses treating
+ * omitted/unknown/wrong-schema rows as measured zero demand.
+ */
+export function evaluateGscDemandHonesty(input: {
+  row: GscRowObservation;
+  /** Forbidden — fixture proofs never claim live VERIFIED. */
+  claimLiveVerified?: boolean;
+  /** Forbidden — live GSC transport stays NOT_WIRED. */
+  requestLiveGscWire?: boolean;
+  /** Forbidden — treat omitted/unknown as measured zero demand. */
+  treatOmittedAsZero?: boolean;
+  /** Forbidden — invent measured demand from wrong wait-manifest schema. */
+  inventMeasuredFromWrongSchema?: boolean;
+  /** Forbidden — invent CTR/rate from omitted/unknown/impossible rows. */
+  inventCtrFromOmitted?: boolean;
+  /** Forbidden — promote unknown/unavailable to measured despite honesty. */
+  inventMeasuredDespiteUnknown?: boolean;
+  /** Forbidden — fold unknown/unavailable rows into measured demand aggregates. */
+  inventAggregateFromUnknown?: boolean;
+  /** Forbidden — invent avg position / rank from unknown/unavailable rows. */
+  inventPositionFromUnknown?: boolean;
+  /** Forbidden — promote fixture ACCEPTED rows as live measured demand. */
+  inventMeasuredFromFixture?: boolean;
+  /** Forbidden — promote SANDBOX rows as live measured demand. */
+  inventMeasuredFromSandbox?: boolean;
+  /** Forbidden — invent measured demand from corrupt/missing wait-manifest. */
+  inventMeasuredFromCorruptManifest?: boolean;
+  /** Integrity from inspectGscRowManifest when inventMeasuredFromCorruptManifest. */
+  corruptManifestIntegrity?: GscRowManifestIntegrityValue;
+  /** Forbidden — invent CTR/rate when impressions are zero (division-by-zero invent). */
+  inventCtrFromZeroImpressions?: boolean;
+}): GscDemandHonestyDecision {
+  const honesty = gscHonesty();
+  if (
+    input.claimLiveVerified === true ||
+    input.requestLiveGscWire === true ||
+    input.row.environment === AnalyticsEnvironment.LIVE
+  ) {
+    const classification =
+      input.row.environment === AnalyticsEnvironment.LIVE
+        ? classifyGscDemand(input.row)
+        : null;
+    return {
+      allowed: false,
+      code: "LIVE_GSC_CLAIM_REFUSED",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        input.row.environment === AnalyticsEnvironment.LIVE
+          ? "LIVE GSC environment refused — liveGscWiring=NOT_WIRED; no measured demand (T-X033)"
+          : input.claimLiveVerified === true
+            ? "Live VERIFIED GSC claims are forbidden — fixture ACCEPTED only (T-X033)"
+            : "Live GSC wiring remains NOT_WIRED — refuse live GSC wire (T-X033)",
+        "liveGscWiring=NOT_WIRED ACCEPTED≠VERIFIED chatgptAdsAccess=ACCESS_BLOCKED",
+      ],
+      ...honesty,
+    };
+  }
+
+  const classification = classifyGscDemand(input.row);
+
+  const schemaMismatch =
+    input.row.schema !== undefined &&
+    input.row.schema !== GSC_ROW_MANIFEST_SCHEMA;
+
+  if (
+    schemaMismatch &&
+    (input.inventMeasuredFromWrongSchema === true ||
+      input.treatOmittedAsZero === true)
+  ) {
+    return {
+      allowed: false,
+      code: "WRONG_GSC_ROW_SCHEMA",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        `Refuse inventing measured/zero demand from wrong GSC row wait-manifest schema=${input.row.schema} (T-X033)`,
+        `required=${GSC_ROW_MANIFEST_SCHEMA}`,
+        "liveGscWiring=NOT_WIRED ACCEPTED≠VERIFIED",
+      ],
+      ...honesty,
+    };
+  }
+
+  if (schemaMismatch) {
+    return {
+      allowed: false,
+      code: "WRONG_GSC_ROW_SCHEMA",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        `GSC row wait-manifest schema mismatch — UNKNOWN, not measured (T-X033)`,
+        ...classification.reasons,
+      ],
+      ...honesty,
+    };
+  }
+
+  const queryTrimmedForHonesty = String(input.row.query ?? "").trim();
+  if (
+    !queryTrimmedForHonesty ||
+    isInvisibleOnlyGscQuery(queryTrimmedForHonesty)
+  ) {
+    return {
+      allowed: false,
+      code: "INVALID_GSC_QUERY",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        !queryTrimmedForHonesty
+          ? "Blank/whitespace GSC query refused — UNKNOWN, not measured (T-X033)"
+          : "Invisible-only GSC query (zero-width/BOM/soft-hyphen) refused — UNKNOWN, not measured (T-X033)",
+        ...classification.reasons,
+      ],
+      ...honesty,
+    };
+  }
+
+  if (
+    input.inventMeasuredFromCorruptManifest === true &&
+    input.corruptManifestIntegrity !== undefined &&
+    input.corruptManifestIntegrity !== GscRowManifestIntegrity.OK
+  ) {
+    return {
+      allowed: false,
+      code: "INVENT_FROM_CORRUPT_MANIFEST",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        `Refuse inventing measured demand from corrupt/missing GSC wait-manifest integrity=${input.corruptManifestIntegrity} (T-X033)`,
+        "liveGscWiring=NOT_WIRED ACCEPTED≠VERIFIED",
+      ],
+      ...honesty,
+    };
+  }
+
+  if (
+    input.row.clicks !== null &&
+    input.row.impressions !== null &&
+    (!Number.isFinite(input.row.clicks) ||
+      !Number.isFinite(input.row.impressions) ||
+      input.row.clicks < 0 ||
+      input.row.impressions < 0 ||
+      Object.is(input.row.clicks, -0) ||
+      Object.is(input.row.impressions, -0))
+  ) {
+    return {
+      allowed: false,
+      code: "INVALID_GSC_COUNTS",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        "Non-finite, negative, or signed −0 GSC clicks/impressions refused — UNKNOWN, not measured (T-X033)",
+        ...classification.reasons,
+      ],
+      ...honesty,
+    };
+  }
+
+  if (
+    input.row.clicks !== null &&
+    input.row.impressions !== null &&
+    Number.isFinite(input.row.clicks) &&
+    Number.isFinite(input.row.impressions) &&
+    (!Number.isInteger(input.row.clicks) ||
+      !Number.isInteger(input.row.impressions))
+  ) {
+    return {
+      allowed: false,
+      code: "NON_INTEGER_GSC_COUNTS",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        "Non-integer GSC clicks/impressions refused — UNKNOWN, inventing measured refused (T-X033)",
+        ...classification.reasons,
+      ],
+      ...honesty,
+    };
+  }
+
+  if (
+    input.row.clicks !== null &&
+    input.row.impressions !== null &&
+    Number.isInteger(input.row.clicks) &&
+    Number.isInteger(input.row.impressions) &&
+    (!Number.isSafeInteger(input.row.clicks) ||
+      !Number.isSafeInteger(input.row.impressions))
+  ) {
+    return {
+      allowed: false,
+      code: "UNSAFE_GSC_COUNTS",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        "Unsafe (non-safe-integer) GSC clicks/impressions refused — UNKNOWN, inventing measured refused (T-X033)",
+        ...classification.reasons,
+      ],
+      ...honesty,
+    };
+  }
+
+  if (
+    input.row.clicks !== null &&
+    input.row.impressions !== null &&
+    Number.isFinite(input.row.clicks) &&
+    Number.isFinite(input.row.impressions) &&
+    input.row.clicks > input.row.impressions
+  ) {
+    return {
+      allowed: false,
+      code: "IMPOSSIBLE_GSC_COUNTS",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        "Impossible GSC clicks>impressions — UNKNOWN; inventing CTR refused (T-X033)",
+        ...classification.reasons,
+      ],
+      ...honesty,
+    };
+  }
+
+  if (
+    input.treatOmittedAsZero === true &&
+    (classification.demandLabel === "unknown" ||
+      classification.demandLabel === "unavailable")
+  ) {
+    return {
+      allowed: false,
+      code: "OMITTED_AS_ZERO_REFUSED",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        `Refuse treating ${classification.demandLabel} GSC demand as measured zero (T-US-010 / T-X033)`,
+        "liveGscWiring=NOT_WIRED ACCEPTED≠VERIFIED",
+      ],
+      ...honesty,
+    };
+  }
+
+  if (
+    input.inventCtrFromOmitted === true &&
+    (classification.demandLabel === "unknown" ||
+      classification.demandLabel === "unavailable")
+  ) {
+    return {
+      allowed: false,
+      code: "INVENT_CTR_REFUSED",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        `Refuse inventing CTR/rate from ${classification.demandLabel} GSC row (T-X033)`,
+        "liveGscWiring=NOT_WIRED ACCEPTED≠VERIFIED",
+      ],
+      ...honesty,
+    };
+  }
+
+  if (
+    input.inventCtrFromZeroImpressions === true &&
+    input.row.impressions !== null &&
+    Number.isFinite(input.row.impressions) &&
+    input.row.impressions === 0
+  ) {
+    return {
+      allowed: false,
+      code: "INVENT_CTR_FROM_ZERO_IMPRESSIONS",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        "Refuse inventing CTR/rate from zero-impression GSC row (division-by-zero invent) (T-X033)",
+        "liveGscWiring=NOT_WIRED ACCEPTED≠VERIFIED",
+      ],
+      ...honesty,
+    };
+  }
+
+  if (
+    input.inventMeasuredDespiteUnknown === true &&
+    (classification.demandLabel === "unknown" ||
+      classification.demandLabel === "unavailable")
+  ) {
+    return {
+      allowed: false,
+      code: "INVENT_MEASURED_DESPITE_UNKNOWN",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        `Refuse inventing measured demand despite ${classification.demandLabel} GSC honesty (T-X033)`,
+        "liveGscWiring=NOT_WIRED ACCEPTED≠VERIFIED",
+      ],
+      ...honesty,
+    };
+  }
+
+  if (
+    input.inventAggregateFromUnknown === true &&
+    (classification.demandLabel === "unknown" ||
+      classification.demandLabel === "unavailable")
+  ) {
+    return {
+      allowed: false,
+      code: "INVENT_AGGREGATE_FROM_UNKNOWN",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        `Refuse folding ${classification.demandLabel} GSC rows into measured demand aggregates (T-X033)`,
+        "liveGscWiring=NOT_WIRED ACCEPTED≠VERIFIED",
+      ],
+      ...honesty,
+    };
+  }
+
+  if (
+    input.inventPositionFromUnknown === true &&
+    (classification.demandLabel === "unknown" ||
+      classification.demandLabel === "unavailable")
+  ) {
+    return {
+      allowed: false,
+      code: "INVENT_POSITION_REFUSED",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        `Refuse inventing avg position/rank from ${classification.demandLabel} GSC row (T-X033)`,
+        "liveGscWiring=NOT_WIRED ACCEPTED≠VERIFIED",
+      ],
+      ...honesty,
+    };
+  }
+
+  if (
+    input.inventMeasuredFromFixture === true &&
+    classification.demandLabel === "fixture" &&
+    input.row.environment === AnalyticsEnvironment.FIXTURE
+  ) {
+    return {
+      allowed: false,
+      code: "INVENT_MEASURED_FROM_FIXTURE",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        "Refuse promoting fixture ACCEPTED GSC rows as live measured demand (T-X033)",
+        "ACCEPTED≠VERIFIED liveGscWiring=NOT_WIRED",
+      ],
+      ...honesty,
+    };
+  }
+
+  if (
+    input.inventMeasuredFromSandbox === true &&
+    input.row.environment === AnalyticsEnvironment.SANDBOX
+  ) {
+    return {
+      allowed: false,
+      code: "INVENT_MEASURED_FROM_SANDBOX",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: [
+        "Refuse promoting SANDBOX GSC rows as live measured demand (T-X033)",
+        "SANDBOX≠LIVE ACCEPTED≠VERIFIED liveGscWiring=NOT_WIRED",
+      ],
+      ...honesty,
+    };
+  }
+
+  if (classification.demandLabel === "unavailable") {
+    return {
+      allowed: true,
+      code: "UNAVAILABLE_NOT_WIRED",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: classification.reasons,
+      ...honesty,
+    };
+  }
+
+  if (classification.demandLabel === "unknown") {
+    return {
+      allowed: true,
+      code: "UNKNOWN_OMITTED",
+      classification,
+      countsAsMeasuredDemand: false,
+      reasons: classification.reasons,
+      ...honesty,
+    };
+  }
+
+  if (classification.demandLabel === "fixture") {
+    return {
+      allowed: true,
+      code: "FIXTURE",
+      classification,
+      countsAsMeasuredDemand: true,
+      reasons: classification.reasons,
+      ...honesty,
+    };
+  }
+
+  return {
+    allowed: true,
+    code: "MEASURED",
+    classification,
+    countsAsMeasuredDemand: true,
+    reasons: classification.reasons,
+    ...honesty,
+  };
+}
+
+export type HonestGscDemandSummary = {
+  measuredOrFixtureCount: number;
+  unknownCount: number;
+  unavailableCount: number;
+  /** Measured demand clicks sum — never includes omitted/unknown as zero. */
+  measuredClicksSum: number;
+  liveGscWiring: GscLiveWiring;
+  liveProviderSuccessClaimed: false;
+  externalEffects: "NONE";
+  chatgptAdsAccess: "ACCESS_BLOCKED";
+};
+
+/**
+ * Aggregate GSC rows into honest demand totals.
+ * Omitted/unknown/unavailable never contribute invented zeros to measuredClicksSum.
+ */
+export function summarizeHonestGscDemand(
+  rows: readonly GscRowObservation[],
+): HonestGscDemandSummary {
+  let measuredOrFixtureCount = 0;
+  let unknownCount = 0;
+  let unavailableCount = 0;
+  let measuredClicksSum = 0;
+  for (const row of rows) {
+    const c = classifyGscDemand(row);
+    if (c.demandLabel === "unknown") unknownCount += 1;
+    else if (c.demandLabel === "unavailable") unavailableCount += 1;
+    else {
+      measuredOrFixtureCount += 1;
+      if (c.clicks.kind === "measured") measuredClicksSum += c.clicks.value;
+    }
+  }
+  return {
+    measuredOrFixtureCount,
+    unknownCount,
+    unavailableCount,
+    measuredClicksSum,
+    ...gscHonesty(),
   };
 }
 

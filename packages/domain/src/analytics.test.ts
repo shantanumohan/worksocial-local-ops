@@ -7,6 +7,11 @@ import {
   attemptGuardedChatGptAdsProductionBind,
   classifyGscDemand,
   evaluateChatGptAdsAccess,
+  evaluateGscDemandHonesty,
+  inspectGscRowManifest,
+  summarizeHonestGscDemand,
+  GSC_ROW_MANIFEST_SCHEMA,
+  GscRowManifestIntegrity,
   interpretGa4DebugValidation,
   reclaimGa4WrongPropertyKindDecision,
   validateGa4PropertyBinding,
@@ -339,7 +344,151 @@ describe("analytics — GSC omitted rows", () => {
     });
     expect(classified.demandLabel).toBe("unknown");
     expect(classified.clicks.kind).toBe("missing");
+    expect(classified.liveGscWiring).toBe("NOT_WIRED");
+    expect(classified.externalEffects).toBe("NONE");
+    expect(classified.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
     expect(classified.reasons.join(" ")).toMatch(/UNKNOWN|not zero/i);
+  });
+
+  it("keeps invented zeros on omitted rows as UNKNOWN (not measured)", () => {
+    const invented = classifyGscDemand({
+      query: "omitted-but-zeroed",
+      clicks: 0,
+      impressions: 0,
+      omitted: true,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(invented.demandLabel).toBe("unknown");
+    expect(invented.clicks.kind).toBe("missing");
+    expect(invented.reasons.join(" ")).toMatch(/invented zero/i);
+  });
+
+  it("rejects non-finite or negative clicks/impressions as UNKNOWN (not zero)", () => {
+    const nanRow = classifyGscDemand({
+      query: "nan-clicks",
+      clicks: Number.NaN,
+      impressions: 10,
+      omitted: false,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(nanRow.demandLabel).toBe("unknown");
+    expect(nanRow.liveProviderSuccessClaimed).toBe(false);
+
+    const negative = classifyGscDemand({
+      query: "neg-clicks",
+      clicks: -1,
+      impressions: 10,
+      omitted: false,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(negative.demandLabel).toBe("unknown");
+    expect(negative.clicks.kind).toBe("missing");
+  });
+
+  it("refuses LIVE environment rows as unavailable (not measured)", () => {
+    const live = classifyGscDemand({
+      query: "day pass",
+      clicks: 42,
+      impressions: 910,
+      omitted: false,
+      environment: AnalyticsEnvironment.LIVE,
+    });
+    expect(live.demandLabel).toBe("unavailable");
+    expect(live.liveGscWiring).toBe("NOT_WIRED");
+
+    const decision = evaluateGscDemandHonesty({
+      row: {
+        query: "day pass",
+        clicks: 42,
+        impressions: 910,
+        omitted: false,
+        environment: AnalyticsEnvironment.LIVE,
+      },
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("LIVE_GSC_CLAIM_REFUSED");
+    expect(decision.countsAsMeasuredDemand).toBe(false);
+  });
+
+  it("refuses treatOmittedAsZero / live claims (T-X033)", () => {
+    const omittedAsZero = evaluateGscDemandHonesty({
+      row: {
+        query: "quiet desks",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      treatOmittedAsZero: true,
+    });
+    expect(omittedAsZero.allowed).toBe(false);
+    expect(omittedAsZero.code).toBe("OMITTED_AS_ZERO_REFUSED");
+    expect(omittedAsZero.countsAsMeasuredDemand).toBe(false);
+
+    const live = evaluateGscDemandHonesty({
+      row: {
+        query: "day pass",
+        clicks: 1,
+        impressions: 10,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      claimLiveVerified: true,
+    });
+    expect(live.allowed).toBe(false);
+    expect(live.code).toBe("LIVE_GSC_CLAIM_REFUSED");
+
+    const wire = evaluateGscDemandHonesty({
+      row: {
+        query: "day pass",
+        clicks: 1,
+        impressions: 10,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      requestLiveGscWire: true,
+    });
+    expect(wire.allowed).toBe(false);
+    expect(wire.code).toBe("LIVE_GSC_CLAIM_REFUSED");
+  });
+
+  it("summarizes honest GSC demand without inventing zeros for omitted", () => {
+    const summary = summarizeHonestGscDemand([
+      {
+        query: "measured",
+        clicks: 42,
+        impressions: 910,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      {
+        query: "omitted",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      {
+        query: "invented-zero",
+        clicks: 0,
+        impressions: 0,
+        omitted: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      {
+        query: "not-wired",
+        clicks: 0,
+        impressions: 0,
+        omitted: false,
+        environment: AnalyticsEnvironment.NOT_WIRED,
+      },
+    ]);
+    expect(summary.measuredOrFixtureCount).toBe(1);
+    expect(summary.unknownCount).toBe(2);
+    expect(summary.unavailableCount).toBe(1);
+    expect(summary.measuredClicksSum).toBe(42);
+    expect(summary.liveGscWiring).toBe("NOT_WIRED");
+    expect(summary.externalEffects).toBe("NONE");
   });
 
   it("keeps fixture ≠ sandbox ≠ live labels distinct", () => {
@@ -351,6 +500,16 @@ describe("analytics — GSC omitted rows", () => {
       environment: AnalyticsEnvironment.FIXTURE,
     });
     expect(fixture.demandLabel).toBe("fixture");
+    expect(fixture.liveGscWiring).toBe("NOT_WIRED");
+    const sandbox = classifyGscDemand({
+      query: "day pass",
+      clicks: 42,
+      impressions: 910,
+      omitted: false,
+      environment: AnalyticsEnvironment.SANDBOX,
+    });
+    expect(sandbox.demandLabel).toBe("fixture");
+    expect(sandbox.reasons.join(" ")).toMatch(/SANDBOX|not live/i);
     const notWired = classifyGscDemand({
       query: "day pass",
       clicks: 0,
@@ -359,6 +518,391 @@ describe("analytics — GSC omitted rows", () => {
       environment: AnalyticsEnvironment.NOT_WIRED,
     });
     expect(notWired.demandLabel).toBe("unavailable");
+  });
+
+  it("refuses invisible query, signed −0, sandbox invent, corrupt manifest (T-X033 J17)", () => {
+    const zwsp = "\u200B\u200C";
+    const invisible = classifyGscDemand({
+      query: zwsp,
+      clicks: 3,
+      impressions: 40,
+      omitted: false,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(invisible.demandLabel).toBe("unknown");
+    const invisibleDecision = evaluateGscDemandHonesty({
+      row: {
+        query: zwsp,
+        clicks: 3,
+        impressions: 40,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+    });
+    expect(invisibleDecision.allowed).toBe(false);
+    expect(invisibleDecision.code).toBe("INVALID_GSC_QUERY");
+
+    const signedZero = evaluateGscDemandHonesty({
+      row: {
+        query: "day pass",
+        clicks: -0,
+        impressions: 10,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+    });
+    expect(signedZero.allowed).toBe(false);
+    expect(signedZero.code).toBe("INVALID_GSC_COUNTS");
+
+    const inventSandbox = evaluateGscDemandHonesty({
+      row: {
+        query: "day pass",
+        clicks: 3,
+        impressions: 40,
+        omitted: false,
+        environment: AnalyticsEnvironment.SANDBOX,
+      },
+      inventMeasuredFromSandbox: true,
+    });
+    expect(inventSandbox.allowed).toBe(false);
+    expect(inventSandbox.code).toBe("INVENT_MEASURED_FROM_SANDBOX");
+
+    const corrupt = inspectGscRowManifest({ raw: "[]" });
+    expect(corrupt.integrity).toBe(GscRowManifestIntegrity.CORRUPT_JSON);
+    const inventCorrupt = evaluateGscDemandHonesty({
+      row: {
+        query: "day pass",
+        clicks: 3,
+        impressions: 40,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      inventMeasuredFromCorruptManifest: true,
+      corruptManifestIntegrity: corrupt.integrity,
+    });
+    expect(inventCorrupt.allowed).toBe(false);
+    expect(inventCorrupt.code).toBe("INVENT_FROM_CORRUPT_MANIFEST");
+  });
+
+  it("refuses truncated-manifest invent and NaN counts (T-X033 J19)", () => {
+    const truncated = inspectGscRowManifest({
+      raw: `{"schema":"${GSC_ROW_MANIFEST_SCHEMA}","query":"day`,
+    });
+    expect(truncated.integrity).toBe(GscRowManifestIntegrity.TRUNCATED);
+    const inventTrunc = evaluateGscDemandHonesty({
+      row: {
+        query: "day pass",
+        clicks: 3,
+        impressions: 40,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      inventMeasuredFromCorruptManifest: true,
+      corruptManifestIntegrity: truncated.integrity,
+    });
+    expect(inventTrunc.allowed).toBe(false);
+    expect(inventTrunc.code).toBe("INVENT_FROM_CORRUPT_MANIFEST");
+
+    const nanCounts = evaluateGscDemandHonesty({
+      row: {
+        query: "day pass",
+        clicks: Number.NaN,
+        impressions: 10,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+    });
+    expect(nanCounts.allowed).toBe(false);
+    expect(nanCounts.code).toBe("INVALID_GSC_COUNTS");
+  });
+
+  it("refuses soft-hyphen-only query, zero-impression CTR invent, missing manifest invent (T-X033 J18)", () => {
+    const softHyphen = "\u00AD\u00AD";
+    const softOnly = classifyGscDemand({
+      query: softHyphen,
+      clicks: 1,
+      impressions: 10,
+      omitted: false,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(softOnly.demandLabel).toBe("unknown");
+    const softDecision = evaluateGscDemandHonesty({
+      row: {
+        query: softHyphen,
+        clicks: 1,
+        impressions: 10,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+    });
+    expect(softDecision.allowed).toBe(false);
+    expect(softDecision.code).toBe("INVALID_GSC_QUERY");
+
+    const inventZeroCtr = evaluateGscDemandHonesty({
+      row: {
+        query: "day pass",
+        clicks: 0,
+        impressions: 0,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      inventCtrFromZeroImpressions: true,
+    });
+    expect(inventZeroCtr.allowed).toBe(false);
+    expect(inventZeroCtr.code).toBe("INVENT_CTR_FROM_ZERO_IMPRESSIONS");
+
+    const missing = inspectGscRowManifest({ raw: null });
+    expect(missing.integrity).toBe(
+      GscRowManifestIntegrity.MISSING_REQUIRED_FIELDS,
+    );
+    const inventMissing = evaluateGscDemandHonesty({
+      row: {
+        query: "day pass",
+        clicks: 3,
+        impressions: 40,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      inventMeasuredFromCorruptManifest: true,
+      corruptManifestIntegrity: missing.integrity,
+    });
+    expect(inventMissing.allowed).toBe(false);
+    expect(inventMissing.code).toBe("INVENT_FROM_CORRUPT_MANIFEST");
+  });
+
+  it("refuses blank query, clicks>impressions, and invent CTR/measured (T-X033)", () => {
+    const blank = classifyGscDemand({
+      query: "   ",
+      clicks: 1,
+      impressions: 10,
+      omitted: false,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(blank.demandLabel).toBe("unknown");
+    expect(blank.clicks.kind).toBe("missing");
+
+    const blankDecision = evaluateGscDemandHonesty({
+      row: {
+        query: "",
+        clicks: 1,
+        impressions: 10,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+    });
+    expect(blankDecision.allowed).toBe(false);
+    expect(blankDecision.code).toBe("INVALID_GSC_QUERY");
+
+    const impossible = classifyGscDemand({
+      query: "day pass",
+      clicks: 50,
+      impressions: 10,
+      omitted: false,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(impossible.demandLabel).toBe("unknown");
+    expect(impossible.reasons.join(" ")).toMatch(/impossible|CTR/i);
+
+    const impossibleDecision = evaluateGscDemandHonesty({
+      row: {
+        query: "day pass",
+        clicks: 50,
+        impressions: 10,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+    });
+    expect(impossibleDecision.allowed).toBe(false);
+    expect(impossibleDecision.code).toBe("IMPOSSIBLE_GSC_COUNTS");
+
+    const inventCtr = evaluateGscDemandHonesty({
+      row: {
+        query: "quiet desks",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      inventCtrFromOmitted: true,
+    });
+    expect(inventCtr.allowed).toBe(false);
+    expect(inventCtr.code).toBe("INVENT_CTR_REFUSED");
+
+    const inventMeasured = evaluateGscDemandHonesty({
+      row: {
+        query: "quiet desks",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      inventMeasuredDespiteUnknown: true,
+    });
+    expect(inventMeasured.allowed).toBe(false);
+    expect(inventMeasured.code).toBe("INVENT_MEASURED_DESPITE_UNKNOWN");
+  });
+
+  it("refuses non-integer counts, negative honesty, invent-aggregate (T-X033 J15)", () => {
+    const nonInt = classifyGscDemand({
+      query: "day pass",
+      clicks: 1.5,
+      impressions: 10,
+      omitted: false,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(nonInt.demandLabel).toBe("unknown");
+    expect(nonInt.reasons.join(" ")).toMatch(/non-integer/i);
+
+    const nonIntDecision = evaluateGscDemandHonesty({
+      row: {
+        query: "day pass",
+        clicks: 1.5,
+        impressions: 10,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+    });
+    expect(nonIntDecision.allowed).toBe(false);
+    expect(nonIntDecision.code).toBe("NON_INTEGER_GSC_COUNTS");
+    expect(nonIntDecision.countsAsMeasuredDemand).toBe(false);
+
+    const negativeDecision = evaluateGscDemandHonesty({
+      row: {
+        query: "day pass",
+        clicks: -1,
+        impressions: 10,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+    });
+    expect(negativeDecision.allowed).toBe(false);
+    expect(negativeDecision.code).toBe("INVALID_GSC_COUNTS");
+
+    const inventAgg = evaluateGscDemandHonesty({
+      row: {
+        query: "quiet desks",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      inventAggregateFromUnknown: true,
+    });
+    expect(inventAgg.allowed).toBe(false);
+    expect(inventAgg.code).toBe("INVENT_AGGREGATE_FROM_UNKNOWN");
+  });
+
+  it("refuses unsafe counts, invent-position, invent-measured-from-fixture (T-X033 J16)", () => {
+    const unsafeClicks = Number.MAX_SAFE_INTEGER + 1;
+    const unsafe = classifyGscDemand({
+      query: "day pass",
+      clicks: unsafeClicks,
+      impressions: unsafeClicks,
+      omitted: false,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(unsafe.demandLabel).toBe("unknown");
+    expect(unsafe.reasons.join(" ")).toMatch(/safe integer/i);
+
+    const unsafeDecision = evaluateGscDemandHonesty({
+      row: {
+        query: "day pass",
+        clicks: unsafeClicks,
+        impressions: unsafeClicks,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+    });
+    expect(unsafeDecision.allowed).toBe(false);
+    expect(unsafeDecision.code).toBe("UNSAFE_GSC_COUNTS");
+
+    const inventPos = evaluateGscDemandHonesty({
+      row: {
+        query: "quiet desks",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      inventPositionFromUnknown: true,
+    });
+    expect(inventPos.allowed).toBe(false);
+    expect(inventPos.code).toBe("INVENT_POSITION_REFUSED");
+
+    const inventFromFixture = evaluateGscDemandHonesty({
+      row: {
+        query: "day pass",
+        clicks: 3,
+        impressions: 40,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      inventMeasuredFromFixture: true,
+    });
+    expect(inventFromFixture.allowed).toBe(false);
+    expect(inventFromFixture.code).toBe("INVENT_MEASURED_FROM_FIXTURE");
+    expect(inventFromFixture.countsAsMeasuredDemand).toBe(false);
+  });
+
+  it("refuses wrong/truncated GSC row wait-manifest schema (T-X033)", () => {
+    const wrong = classifyGscDemand({
+      query: "day pass",
+      clicks: 42,
+      impressions: 910,
+      omitted: false,
+      environment: AnalyticsEnvironment.FIXTURE,
+      schema: "gsc-row-v0",
+    });
+    expect(wrong.demandLabel).toBe("unknown");
+    expect(wrong.clicks.kind).toBe("missing");
+    expect(wrong.reasons.join(" ")).toMatch(/schema/i);
+
+    const invent = evaluateGscDemandHonesty({
+      row: {
+        query: "day pass",
+        clicks: 42,
+        impressions: 910,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+        schema: "gsc-row-v0",
+      },
+      inventMeasuredFromWrongSchema: true,
+    });
+    expect(invent.allowed).toBe(false);
+    expect(invent.code).toBe("WRONG_GSC_ROW_SCHEMA");
+    expect(invent.countsAsMeasuredDemand).toBe(false);
+
+    const truncated = inspectGscRowManifest({
+      raw: `{"schema":"${GSC_ROW_MANIFEST_SCHEMA}","query":"day`,
+    });
+    expect(truncated.integrity).toBe(GscRowManifestIntegrity.TRUNCATED);
+
+    const ok = inspectGscRowManifest({
+      raw: JSON.stringify({
+        schema: GSC_ROW_MANIFEST_SCHEMA,
+        query: "day pass",
+        clicks: 42,
+        impressions: 910,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      }),
+    });
+    expect(ok.integrity).toBe(GscRowManifestIntegrity.OK);
+    expect(ok.row?.schema).toBe(GSC_ROW_MANIFEST_SCHEMA);
+
+    const wrongSchemaInspect = inspectGscRowManifest({
+      raw: JSON.stringify({
+        schema: "gsc-row-v0",
+        query: "day pass",
+        clicks: 42,
+        impressions: 910,
+        omitted: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      }),
+    });
+    expect(wrongSchemaInspect.integrity).toBe(
+      GscRowManifestIntegrity.WRONG_SCHEMA,
+    );
   });
 });
 

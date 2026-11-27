@@ -3,13 +3,13 @@
   "caseId": "T-X033",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X033 (Omitted GSC rows — Unknown ≠ zero)\nproof=gsc_omitted_rows_unknown_not_zero applyCount=1 :: Omitted GSC row → UNKNOWN demand (not zero) | Incomplete GSC clicks → UNKNOWN (not invented zero) | Complete fixture row → fixture demandLabel with measured clicks | NOT_WIRED GSC → unavailable (distinct from omitted UNKNOWN) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X033 (Omitted GSC rows — Unknown ≠ zero)\nproof=gsc_omitted_rows_unknown_not_zero applyCount=1 :: Omitted GSC row → UNKNOWN demand (not zero) | Incomplete GSC clicks → UNKNOWN (not invented zero) | Omitted row with invented zeros → UNKNOWN (inventing zero refused) | Non-finite/negative GSC clicks → UNKNOWN (not invented zero) | LIVE GSC row → unavailable + LIVE_GSC_CLAIM_REFUSED (no measured bypass) | Complete fixture row → fixture demandLabel with measured clicks | NOT_WIRED GSC → unavailable (distinct from omitted UNKNOWN) | evaluateGscDemandHonesty → OMITTED_AS_ZERO_REFUSED + LIVE_GSC_CLAIM_REFUSED | Blank query / clicks>impressions / invent CTR|measured → INVALID_GSC_QUERY + IMPOSSIBLE_GSC_COUNTS + INVENT_CTR_REFUSED + INVENT_MEASURED_DESPITE_UNKNOWN | Domain J15: non-integer / negative / invent-aggregate → NON_INTEGER_GSC_COUNTS + INVALID_GSC_COUNTS + INVENT_AGGREGATE_FROM_UNKNOWN | Domain J16: unsafe counts / invent-position / invent-from-fixture → UNSAFE_GSC_COUNTS + INVENT_POSITION_REFUSED + INVENT_MEASURED_FROM_FIXTURE | Domain J17: invisible / signed−0 / invent-sandbox / invent-corrupt-manifest → INVALID_GSC_QUERY + INVALID_GSC_COUNTS + INVENT_MEASURED_FROM_SANDBOX + INVENT_FROM_CORRUPT_MANIFEST | Domain J18: soft-hyphen / zero-impression CTR / missing-manifest invent → INVALID_GSC_QUERY + INVENT_CTR_FROM_ZERO_IMPRESSIONS + INVENT_FROM_CORRUPT_MANIFEST | Domain J19: truncated-manifest invent / NaN counts → INVENT_FROM_CORRUPT_MANIFEST + INVALID_GSC_COUNTS | Wrong/truncated GSC row wait-manifest schema → UNKNOWN + WRONG_GSC_ROW_SCHEMA (no invent measured) | summarizeHonestGscDemand → measuredClicksSum=42 (omitted/invented-zero/unavailable excluded) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "gsc_omitted_rows_unknown_not_zero"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x033.json",
-  "createdAtIso": "2026-11-27T10:30:38.258Z",
+  "createdAtIso": "2026-11-27T10:35:06.468Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x033-fc72a3d18ff3"
+  "uniqueSourceArtifactId": "art-fixture-t-x033-8607621d70e6"
 }
