@@ -429,6 +429,25 @@ describe("rate-limit-backoff (T-X030)", () => {
     ).toEqual({ waitSeconds: 3, source: "retry_after" });
   });
 
+  it("floors negative attempt index to 1 for backoff (Q34 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: -1,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 1, source: "exponential" });
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 0,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 1, source: "exponential" });
+  });
+
   it("floors fractional maxAttempts=1.1 → STOP on first 429 (Q31 wipe15)", () => {
     const step = evaluateRateLimitWithDeadline(
       {

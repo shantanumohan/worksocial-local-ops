@@ -23,6 +23,7 @@
  * Deepen (Q24): fractional attempt floors before exponential index.
  * Deepen (Q28): fractional maxAttempts floors (2.9 → cap at attempt 2 STOP).
  * Deepen (Q31): maxAttempts=1.1 → first 429 STOP (no WAIT invent).
+ * Deepen (Q34): negative/zero attempt floors to 1 for exponential index.
  */
 
 import { randomUUID } from "node:crypto";
@@ -551,6 +552,25 @@ export function proofRateLimitBoundedBackoffPreservesDeadline(
     details.push(
       `maxAttempts=1 STOP honesty failed: ${JSON.stringify(oneShot)}`,
     );
+  }
+
+  // Scenario P8 (Q34): attempt -1 floors to exponential attempt 1 (wait 1s).
+  const negAttempt = computeBackoffWaitSeconds({
+    attempt: -1,
+    retryAfterSeconds: null,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 2,
+  });
+  if (
+    negAttempt.source === "exponential" &&
+    negAttempt.waitSeconds === 1
+  ) {
+    details.push(
+      "Negative attempt=-1 floors to exponential attempt 1 (waitSeconds=1; no invent)",
+    );
+  } else {
+    passed = false;
+    details.push(`Negative attempt floor failed: ${JSON.stringify(negAttempt)}`);
   }
 
   // Scenario P7 (Q31): maxAttempts=1.1 → attempt 1 STOP (no WAIT despite Retry-After).
