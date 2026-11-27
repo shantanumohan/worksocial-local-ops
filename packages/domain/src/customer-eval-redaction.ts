@@ -199,8 +199,16 @@ export function prepareCustomerDataForEvaluation(input: {
   exportToLiveProvider?: boolean;
   /** Forbidden — must not waive residual-PII post-check. */
   allowResidualPiiInPayload?: boolean;
+  /** Forbidden — conversationId must stay redacted when it carries identifiers. */
+  bypassConversationIdRedaction?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.bypassConversationIdRedaction === true) {
+    return blockedLeak([
+      "Bypass conversationId redaction refused — eval gate (T-X072)",
+    ]);
+  }
 
   if (input.allowResidualPiiInPayload === true) {
     return blockedLeak([

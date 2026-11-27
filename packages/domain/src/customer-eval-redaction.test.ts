@@ -145,6 +145,16 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses bypassConversationIdRedaction", () => {
+    const bypass = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      bypassConversationIdRedaction: true,
+    });
+    expect(bypass.allowed).toBe(false);
+    expect(bypass.reasons.some((r) => /conversationId/.test(r))).toBe(true);
+  });
+
   it("refuses allowResidualPiiInPayload", () => {
     const waive = prepareCustomerDataForEvaluation({
       source,
