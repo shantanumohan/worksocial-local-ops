@@ -646,4 +646,34 @@ describe("recurring-schedule (T-X015 DST)", () => {
     expect(parsed.keys).toEqual([]);
     expectHonesty(parsed);
   });
+
+  it("rejects boolean durable version field (T-X015 wipe15 2c533c34)", () => {
+    const key = occurrenceKeyFor("sched-boolver", "2025-11-13", 9, 0);
+    const parsed = parseOccurrenceClaimDurableBody(
+      JSON.stringify({ version: true, claimedKeys: [key] }),
+    );
+    expect(parsed.status).toBe(DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL);
+    expect(parsed.keys).toEqual([]);
+    expectHonesty(parsed);
+  });
+
+  it("rejects array durable version field (T-X015 wipe15 2c533c34)", () => {
+    const key = occurrenceKeyFor("sched-arrver", "2025-11-14", 9, 0);
+    const parsed = parseOccurrenceClaimDurableBody(
+      JSON.stringify({ version: [1], claimedKeys: [key] }),
+    );
+    expect(parsed.status).toBe(DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL);
+    expect(parsed.keys).toEqual([]);
+    expectHonesty(parsed);
+  });
+
+  it("rejects durable body missing version key (T-X015 wipe15 2c533c34)", () => {
+    const key = occurrenceKeyFor("sched-nover", "2025-11-15", 9, 0);
+    const parsed = parseOccurrenceClaimDurableBody(
+      JSON.stringify({ claimedKeys: [key] }),
+    );
+    expect(parsed.status).toBe(DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL);
+    expect(parsed.keys).toEqual([]);
+    expectHonesty(parsed);
+  });
 });
