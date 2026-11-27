@@ -134,7 +134,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-US-010** / **T-X033** map only to `GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO`.
 
-**T-US-008** / **T-X032** map only to `GA4_DEBUG_NOT_DELIVERED_CONVERSION`.
+**T-US-008** / **T-X032** map only to `GA4_DEBUG_NOT_DELIVERED_CONVERSION` (debug≠delivered/measured receipt; LIVE debug / claimDeliveredConversion refused; live NOT_WIRED; not live VERIFIED).
 
 **T-X031** maps only to `GA4_WRONG_PROPERTY_KIND_REFUSED`.
 

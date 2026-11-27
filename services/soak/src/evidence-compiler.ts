@@ -356,7 +356,7 @@ export function compileAcceptanceEvidence(
     "T-X039/T-US-058 fixture ACCEPTED only via METRIC_DENOMINATORS_HONEST",
     "T-US-046/T-X048 fixture ACCEPTED only via HARD_SEARCH_CONSTRAINTS_NO_INVENTION",
     "T-US-010/T-X033 fixture ACCEPTED only via GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO",
-    "T-US-008/T-X032 fixture ACCEPTED only via GA4_DEBUG_NOT_DELIVERED_CONVERSION",
+    "T-US-008/T-X032 fixture ACCEPTED only via GA4_DEBUG_NOT_DELIVERED_CONVERSION (debug≠delivered; LIVE/claim refused; NOT_WIRED)",
     "T-X031 fixture ACCEPTED only via GA4_WRONG_PROPERTY_KIND_REFUSED",
     "T-US-040/T-X049 fixture ACCEPTED only via THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY (DOM≠CRM; MISSING_REMOTE fails delivery; live Zoho NOT_WIRED)",
     "T-X017 fixture ACCEPTED only via STOP_AFTER_DISPATCH_RECONCILE (no fake cancel)",

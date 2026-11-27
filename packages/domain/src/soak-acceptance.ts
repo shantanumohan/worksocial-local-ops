@@ -135,6 +135,8 @@ export const SoakProofKind = {
   GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO: "gsc_omitted_rows_unknown_not_zero",
   /**
    * GA4 debug validation is not a delivered conversion (T-US-008 / T-X032).
+   * LIVE debug / claimDeliveredConversion refused; live NOT_WIRED.
+   * ACCEPTED ≠ VERIFIED.
    */
   GA4_DEBUG_NOT_DELIVERED_CONVERSION: "ga4_debug_not_delivered_conversion",
   /**

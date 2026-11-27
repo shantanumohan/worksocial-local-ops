@@ -106,29 +106,107 @@ export type Ga4DebugValidationResult = {
   kind: Ga4ValidationKindValue;
   debugOk: boolean;
   /** Never true from debug validation alone (T-US-008 / T-X032). */
-  deliveredConversionClaimed: boolean;
+  deliveredConversionClaimed: false;
+  /** Debug success is never a measured receipt either. */
+  measuredReceiptClaimed: false;
+  liveProviderWiring: "NOT_WIRED";
+  externalEffects: "NONE";
+  /**
+   * True only for FIXTURE (or omitted env defaulting to FIXTURE).
+   * SANDBOX debug is allowed but never labeled fixture-only.
+   */
+  fixtureOnly: boolean;
+  /** Environment used for evidence labeling (defaults to FIXTURE). */
+  environment: AnalyticsEnvironmentValue;
+  /** Set when a LIVE debug / delivered-conversion claim was refused. */
+  code: "LIVE_DEBUG_WIRING_NOT_WIRED" | "DELIVERED_CONVERSION_CLAIM_REFUSED" | null;
   reasons: string[];
 };
 
-/** Debug validation success must not claim a delivered conversion. */
+const ga4DebugHonestyBase = {
+  deliveredConversionClaimed: false as const,
+  measuredReceiptClaimed: false as const,
+  liveProviderWiring: "NOT_WIRED" as const,
+  externalEffects: "NONE" as const,
+};
+
+function ga4DebugEvidenceLabel(
+  environment: AnalyticsEnvironmentValue | undefined,
+): {
+  environment: AnalyticsEnvironmentValue;
+  fixtureOnly: boolean;
+} {
+  const resolved = environment ?? AnalyticsEnvironment.FIXTURE;
+  return {
+    environment: resolved,
+    // SANDBOX must not collapse into fixture evidence.
+    fixtureOnly: resolved === AnalyticsEnvironment.FIXTURE,
+  };
+}
+
+/**
+ * Debug validation success must not claim a delivered conversion (T-US-008 /
+ * T-X032). LIVE debug transport stays NOT_WIRED; claimDeliveredConversion is
+ * always refused. ACCEPTED ≠ VERIFIED.
+ */
 export function interpretGa4DebugValidation(input: {
   debugEndpointAccepted: boolean;
+  /** Attempt to elevate debug success into a delivered conversion — refused. */
+  claimDeliveredConversion?: boolean;
+  /**
+   * Canonical analytics environment. LIVE stays NOT_WIRED.
+   * Omitted defaults to FIXTURE (fixtureOnly=true). SANDBOX is allowed
+   * with fixtureOnly=false.
+   */
+  environment?: AnalyticsEnvironmentValue;
 }): Ga4DebugValidationResult {
+  const evidence = ga4DebugEvidenceLabel(input.environment);
+
+  if (input.environment === AnalyticsEnvironment.LIVE) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: false,
+      code: "LIVE_DEBUG_WIRING_NOT_WIRED",
+      reasons: [
+        "LIVE GA4 debug validation refused — liveProviderWiring=NOT_WIRED (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimDeliveredConversion === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "DELIVERED_CONVERSION_CLAIM_REFUSED",
+      reasons: [
+        "Delivered-conversion claim from GA4 debug refused — debug≠delivered (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
   if (!input.debugEndpointAccepted) {
     return {
       kind: Ga4ValidationKind.DEBUG_VALIDATION,
       debugOk: false,
-      deliveredConversionClaimed: false,
+      code: null,
       reasons: ["GA4 debug validation rejected payload"],
+      ...ga4DebugHonestyBase,
+      ...evidence,
     };
   }
   return {
     kind: Ga4ValidationKind.DEBUG_VALIDATION,
     debugOk: true,
-    deliveredConversionClaimed: false,
+    code: null,
     reasons: [
       "GA4 debug validation succeeded — payload shape only; not a measured receipt or delivered conversion (T-US-008 / T-X032)",
     ],
+    ...ga4DebugHonestyBase,
+    ...evidence,
   };
 }
 
