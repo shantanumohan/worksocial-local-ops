@@ -209,8 +209,16 @@ export function prepareCustomerDataForEvaluation(input: {
   bypassStructuredFieldRedaction?: boolean;
   /** Forbidden — prompts must come from redacted payload builder only. */
   buildPromptFromRawSource?: boolean;
+  /** Forbidden — must not downgrade redact mode into raw passthrough. */
+  degradeToRawPassthrough?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.degradeToRawPassthrough === true) {
+    return blockedLeak([
+      "Degrade redact mode to raw passthrough refused — T-X072",
+    ]);
+  }
 
   if (input.buildPromptFromRawSource === true) {
     return blockedLeak([

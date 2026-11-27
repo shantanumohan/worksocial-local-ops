@@ -145,6 +145,16 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses degradeToRawPassthrough", () => {
+    const degrade = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      degradeToRawPassthrough: true,
+    });
+    expect(degrade.allowed).toBe(false);
+    expect(degrade.reasons.some((r) => /Degrade redact/.test(r))).toBe(true);
+  });
+
   it("refuses buildPromptFromRawSource", () => {
     const rawPrompt = prepareCustomerDataForEvaluation({
       source,

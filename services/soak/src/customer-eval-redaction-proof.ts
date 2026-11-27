@@ -133,6 +133,21 @@ export function proofCustomerDataEvalRedactionBlocks(
     details.push(`raw passthrough unexpectedly ${JSON.stringify(raw)}`);
   }
 
+  const degradeRaw = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    degradeToRawPassthrough: true,
+  });
+  if (
+    !degradeRaw.allowed &&
+    degradeRaw.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("degradeToRawPassthrough → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`degradeRaw unexpectedly ${JSON.stringify(degradeRaw)}`);
+  }
+
   const rawPromptPath = prepareCustomerDataForEvaluation({
     source,
     mode: "redact",
