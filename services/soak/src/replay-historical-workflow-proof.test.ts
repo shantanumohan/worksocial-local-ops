@@ -152,6 +152,26 @@ describe("proofReplayHistoricalNoRepeatIo", () => {
       ),
     ).toBe(true);
     expect(
+      proof.details.some((d) =>
+        d.includes("Non-number claim applyAttemptCount → FAILED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("NaN verify applyAttemptCount → FAILED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Invalid verify phase → FAILED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Terminal outcome not VERIFIED → FAILED"),
+      ),
+    ).toBe(true);
+    expect(
       proof.details.some((d) => d.includes("honesty NOT_WIRED/NONE")),
     ).toBe(true);
     expect(

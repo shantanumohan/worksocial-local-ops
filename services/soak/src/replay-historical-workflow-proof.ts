@@ -770,6 +770,108 @@ export async function proofReplayHistoricalNoRepeatIo(
     details.push("Wrong claim outcome unexpectedly passed");
   }
 
+  // Edge deepen — non-number claim apply; NaN verify apply; bad verify phase;
+  // terminal outcome not VERIFIED.
+  const stringApplyHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) => {
+      if (e.activity === "claimAndAccept") {
+        return {
+          ...e,
+          applyAttemptCount: "1" as unknown as number,
+        };
+      }
+      return e;
+    }),
+    terminal: { ...history.terminal },
+  };
+  const stringApplyHooks = createHistoryOnlyReplayHooks();
+  const stringApplyReplay = replayMissionWorkflowHistory(
+    stringApplyHistory,
+    stringApplyHooks.hooks,
+  );
+  if (
+    stringApplyReplay.outcome === "FAILED" &&
+    stringApplyHooks.summary().liveIoLabels.some((l) =>
+      l.includes("history_claim_shape_invalid"),
+    )
+  ) {
+    details.push("Non-number claim applyAttemptCount → FAILED (edge)");
+  } else {
+    details.push("Non-number claim apply unexpectedly passed");
+  }
+
+  const nanVerifyHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) =>
+      e.activity === "verify"
+        ? { ...e, applyAttemptCount: Number.NaN }
+        : e,
+    ),
+    terminal: { ...history.terminal },
+  };
+  const nanVerifyHooks = createHistoryOnlyReplayHooks();
+  const nanVerifyReplay = replayMissionWorkflowHistory(
+    nanVerifyHistory,
+    nanVerifyHooks.hooks,
+  );
+  if (
+    nanVerifyReplay.outcome === "FAILED" &&
+    nanVerifyHooks.summary().liveIoLabels.some((l) =>
+      l.includes("history_verify_shape_invalid"),
+    )
+  ) {
+    details.push("NaN verify applyAttemptCount → FAILED (edge)");
+  } else {
+    details.push("NaN verify apply unexpectedly passed");
+  }
+
+  const badVerifyPhaseHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) => {
+      if (e.activity === "verify") {
+        return { ...e, phase: "effect_pending" as "succeeded" };
+      }
+      return e;
+    }),
+    terminal: { ...history.terminal },
+  };
+  const badVerifyPhaseHooks = createHistoryOnlyReplayHooks();
+  const badVerifyPhaseReplay = replayMissionWorkflowHistory(
+    badVerifyPhaseHistory,
+    badVerifyPhaseHooks.hooks,
+  );
+  if (
+    badVerifyPhaseReplay.outcome === "FAILED" &&
+    badVerifyPhaseHooks.summary().liveIoLabels.some((l) =>
+      l.includes("history_verify_shape_invalid"),
+    )
+  ) {
+    details.push("Invalid verify phase → FAILED (edge)");
+  } else {
+    details.push("Invalid verify phase unexpectedly passed");
+  }
+
+  const badTerminalOutcomeHooks = createHistoryOnlyReplayHooks();
+  const badTerminalOutcomeReplay = replayMissionWorkflowHistory(
+    {
+      events: history.events,
+      terminal: {
+        outcome: "FAILED" as "VERIFIED",
+        applyAttemptCount: history.terminal.applyAttemptCount,
+        operationId,
+      },
+    },
+    badTerminalOutcomeHooks.hooks,
+  );
+  if (
+    badTerminalOutcomeReplay.outcome === "FAILED" &&
+    badTerminalOutcomeHooks.summary().liveIoLabels.some((l) =>
+      l.includes("history_terminal_missing_or_incomplete"),
+    )
+  ) {
+    details.push("Terminal outcome not VERIFIED → FAILED (edge)");
+  } else {
+    details.push("Terminal outcome not VERIFIED unexpectedly passed");
+  }
+
   const rehydrateSvc = openService(stateDir);
   const decisionAfter = await rehydrateSvc.getDecision(operationId);
   const providersAfterReplay = await rehydrateSvc.stores.fakeProvider.list();
@@ -838,6 +940,10 @@ export async function proofReplayHistoricalNoRepeatIo(
     zeroVerifyReplay.outcome === "FAILED" &&
     infClaimReplay.outcome === "FAILED" &&
     wrongClaimReplay.outcome === "FAILED" &&
+    stringApplyReplay.outcome === "FAILED" &&
+    nanVerifyReplay.outcome === "FAILED" &&
+    badVerifyPhaseReplay.outcome === "FAILED" &&
+    badTerminalOutcomeReplay.outcome === "FAILED" &&
     applyBeforeReplay === 1 &&
     applyAfterReplay === 1 &&
     thisOpBefore === 1 &&

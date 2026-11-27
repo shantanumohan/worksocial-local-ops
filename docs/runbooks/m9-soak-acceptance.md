@@ -163,7 +163,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X065** maps only to `WORKER_BROWSER_AUTH_STATE_OS_DENIED` (workers / browser-pool / host-admin OS-denied from system Chrome, OS profile, and OAuth callback cookies; workspace partition needs browser-pool + consent; vault intact on deny; live browser-auth NOT_WIRED; externalEffects NONE; not live VERIFIED).
 
-**T-X013** maps only to `REPLAY_HISTORICAL_NO_REPEAT_IO` (history replay; second replay history-only; empty/partial/two-event fail-closed; terminal + claim/verify opId/apply cross-bind; blank workflowId/opId / enqueue+claim+verify shape / apply≥1 / providerCreated / matched=false refuse; padded trim; not live VERIFIED).
+**T-X013** maps only to `REPLAY_HISTORICAL_NO_REPEAT_IO` (history replay; second replay history-only; empty/partial/two-event fail-closed; terminal + claim/verify opId/apply cross-bind; blank workflowId/opId / enqueue+claim+verify shape / apply≥1+typed / providerCreated / terminal outcome / matched=false refuse; padded trim; not live VERIFIED).
 
 **T-X004** maps only to `DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED`.
 
