@@ -81,6 +81,328 @@ export function proofGa4DebugNotDeliveredConversion(
     );
   }
 
+  const externalFxRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimExternalEffects: true,
+  });
+  if (
+    externalFxRefused.code === "EXTERNAL_EFFECTS_CLAIM_REFUSED" &&
+    externalFxRefused.externalEffects === "NONE"
+  ) {
+    details.push(
+      "claimExternalEffects=true → EXTERNAL_EFFECTS_CLAIM_REFUSED; externalEffects=NONE",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `External-effects claim unexpectedly ${JSON.stringify(externalFxRefused)}`,
+    );
+  }
+
+  const fixtureVerifiedRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimFixtureVerified: true,
+  });
+  if (
+    fixtureVerifiedRefused.code === "FIXTURE_VERIFIED_CLAIM_REFUSED" &&
+    fixtureVerifiedRefused.deliveredConversionClaimed === false &&
+    fixtureVerifiedRefused.measuredReceiptClaimed === false
+  ) {
+    details.push(
+      "claimFixtureVerified=true → FIXTURE_VERIFIED_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Fixture VERIFIED claim unexpectedly ${JSON.stringify(fixtureVerifiedRefused)}`,
+    );
+  }
+
+  const sandboxClaimRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimSandboxVerified: true,
+  });
+  if (
+    sandboxClaimRefused.code === "SANDBOX_VERIFIED_CLAIM_REFUSED" &&
+    sandboxClaimRefused.deliveredConversionClaimed === false &&
+    sandboxClaimRefused.measuredReceiptClaimed === false
+  ) {
+    details.push(
+      "claimSandboxVerified=true → SANDBOX_VERIFIED_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Sandbox VERIFIED claim unexpectedly ${JSON.stringify(sandboxClaimRefused)}`,
+    );
+  }
+
+  const integrationVerifiedRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimIntegrationVerified: true,
+  });
+  if (
+    integrationVerifiedRefused.code === "INTEGRATION_VERIFIED_CLAIM_REFUSED" &&
+    integrationVerifiedRefused.externalEffects === "NONE"
+  ) {
+    details.push(
+      "claimIntegrationVerified=true → INTEGRATION_VERIFIED_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Integration VERIFIED claim unexpectedly ${JSON.stringify(integrationVerifiedRefused)}`,
+    );
+  }
+
+  const measurementProtocolRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimMeasurementProtocolVerified: true,
+  });
+  if (
+    measurementProtocolRefused.code ===
+      "MEASUREMENT_PROTOCOL_VERIFIED_CLAIM_REFUSED" &&
+    measurementProtocolRefused.deliveredConversionClaimed === false &&
+    measurementProtocolRefused.measuredReceiptClaimed === false
+  ) {
+    details.push(
+      "claimMeasurementProtocolVerified=true → MEASUREMENT_PROTOCOL_VERIFIED_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Measurement Protocol VERIFIED claim unexpectedly ${JSON.stringify(measurementProtocolRefused)}`,
+    );
+  }
+
+  const reportingAccessRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimReportingAccessVerified: true,
+  });
+  if (
+    reportingAccessRefused.code === "REPORTING_ACCESS_VERIFIED_CLAIM_REFUSED" &&
+    reportingAccessRefused.externalEffects === "NONE"
+  ) {
+    details.push(
+      "claimReportingAccessVerified=true → REPORTING_ACCESS_VERIFIED_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Reporting-access VERIFIED claim unexpectedly ${JSON.stringify(reportingAccessRefused)}`,
+    );
+  }
+
+  const dataIngestRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimDataIngestVerified: true,
+  });
+  if (
+    dataIngestRefused.code === "DATA_INGEST_VERIFIED_CLAIM_REFUSED" &&
+    dataIngestRefused.measuredReceiptClaimed === false &&
+    dataIngestRefused.liveProviderWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "claimDataIngestVerified=true → DATA_INGEST_VERIFIED_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Data-ingest VERIFIED claim unexpectedly ${JSON.stringify(dataIngestRefused)}`,
+    );
+  }
+
+  const payloadShapeRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimPayloadShapeVerified: true,
+  });
+  if (
+    payloadShapeRefused.code === "PAYLOAD_SHAPE_VERIFIED_CLAIM_REFUSED" &&
+    payloadShapeRefused.deliveredConversionClaimed === false &&
+    payloadShapeRefused.externalEffects === "NONE"
+  ) {
+    details.push(
+      "claimPayloadShapeVerified=true → PAYLOAD_SHAPE_VERIFIED_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Payload-shape VERIFIED claim unexpectedly ${JSON.stringify(payloadShapeRefused)}`,
+    );
+  }
+
+  const eventDeliveryRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimEventDeliveryVerified: true,
+  });
+  if (
+    eventDeliveryRefused.code === "EVENT_DELIVERY_VERIFIED_CLAIM_REFUSED" &&
+    eventDeliveryRefused.measuredReceiptClaimed === false &&
+    eventDeliveryRefused.externalEffects === "NONE"
+  ) {
+    details.push(
+      "claimEventDeliveryVerified=true → EVENT_DELIVERY_VERIFIED_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Event-delivery VERIFIED claim unexpectedly ${JSON.stringify(eventDeliveryRefused)}`,
+    );
+  }
+
+  const hitCollectionRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimHitCollectionVerified: true,
+  });
+  if (
+    hitCollectionRefused.code === "HIT_COLLECTION_VERIFIED_CLAIM_REFUSED" &&
+    hitCollectionRefused.deliveredConversionClaimed === false &&
+    hitCollectionRefused.liveProviderWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "claimHitCollectionVerified=true → HIT_COLLECTION_VERIFIED_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Hit-collection VERIFIED claim unexpectedly ${JSON.stringify(hitCollectionRefused)}`,
+    );
+  }
+
+  const batchExportRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimBatchExportVerified: true,
+  });
+  if (
+    batchExportRefused.code === "BATCH_EXPORT_VERIFIED_CLAIM_REFUSED" &&
+    batchExportRefused.measuredReceiptClaimed === false &&
+    batchExportRefused.externalEffects === "NONE"
+  ) {
+    details.push(
+      "claimBatchExportVerified=true → BATCH_EXPORT_VERIFIED_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Batch-export VERIFIED claim unexpectedly ${JSON.stringify(batchExportRefused)}`,
+    );
+  }
+
+  const realtimeIngestRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimRealtimeIngestVerified: true,
+  });
+  if (
+    realtimeIngestRefused.code === "REALTIME_INGEST_VERIFIED_CLAIM_REFUSED" &&
+    realtimeIngestRefused.liveProviderWiring === "NOT_WIRED" &&
+    realtimeIngestRefused.externalEffects === "NONE"
+  ) {
+    details.push(
+      "claimRealtimeIngestVerified=true → REALTIME_INGEST_VERIFIED_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Realtime-ingest VERIFIED claim unexpectedly ${JSON.stringify(realtimeIngestRefused)}`,
+    );
+  }
+
+  const streamingExportRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimStreamingExportVerified: true,
+  });
+  if (
+    streamingExportRefused.code === "STREAMING_EXPORT_VERIFIED_CLAIM_REFUSED" &&
+    streamingExportRefused.deliveredConversionClaimed === false &&
+    streamingExportRefused.fixtureOnly === true
+  ) {
+    details.push(
+      "claimStreamingExportVerified=true → STREAMING_EXPORT_VERIFIED_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Streaming-export VERIFIED claim unexpectedly ${JSON.stringify(streamingExportRefused)}`,
+    );
+  }
+
+  const audienceExportRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimAudienceExportVerified: true,
+  });
+  if (
+    audienceExportRefused.code === "AUDIENCE_EXPORT_VERIFIED_CLAIM_REFUSED" &&
+    audienceExportRefused.measuredReceiptClaimed === false &&
+    audienceExportRefused.liveProviderWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "claimAudienceExportVerified=true → AUDIENCE_EXPORT_VERIFIED_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Audience-export VERIFIED claim unexpectedly ${JSON.stringify(audienceExportRefused)}`,
+    );
+  }
+
+  const debugVerifiedRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimDebugVerified: true,
+  });
+  if (
+    debugVerifiedRefused.code === "DEBUG_VERIFIED_CLAIM_REFUSED" &&
+    debugVerifiedRefused.deliveredConversionClaimed === false &&
+    debugVerifiedRefused.measuredReceiptClaimed === false
+  ) {
+    details.push(
+      "claimDebugVerified=true → DEBUG_VERIFIED_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Debug VERIFIED claim unexpectedly ${JSON.stringify(debugVerifiedRefused)}`,
+    );
+  }
+
+  const liveClaimRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimLiveProviderSuccess: true,
+  });
+  if (
+    liveClaimRefused.code === "LIVE_CLAIM_REFUSED" &&
+    liveClaimRefused.deliveredConversionClaimed === false &&
+    liveClaimRefused.measuredReceiptClaimed === false &&
+    liveClaimRefused.liveProviderWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "claimLiveProviderSuccess=true → LIVE_CLAIM_REFUSED; liveProviderSuccessClaimed=false",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Live provider claim unexpectedly ${JSON.stringify(liveClaimRefused)}`,
+    );
+  }
+
+  const receiptRefused = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimMeasuredReceipt: true,
+  });
+  if (
+    receiptRefused.code === "MEASURED_RECEIPT_CLAIM_REFUSED" &&
+    receiptRefused.measuredReceiptClaimed === false &&
+    receiptRefused.deliveredConversionClaimed === false
+  ) {
+    details.push(
+      "claimMeasuredReceipt=true → MEASURED_RECEIPT_CLAIM_REFUSED; measuredReceiptClaimed=false",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Measured-receipt claim unexpectedly ${JSON.stringify(receiptRefused)}`,
+    );
+  }
+
   const liveRefused = interpretGa4DebugValidation({
     debugEndpointAccepted: true,
     environment: AnalyticsEnvironment.LIVE,

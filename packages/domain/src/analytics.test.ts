@@ -299,6 +299,354 @@ describe("analytics — GA4 debug ≠ receipt", () => {
     expect(claimed.code).toBe("DELIVERED_CONVERSION_CLAIM_REFUSED");
   });
 
+  it("refuses claimSandboxVerified on fixture debug (T-X032 P5)", () => {
+    const sandbox = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimSandboxVerified: true,
+    });
+    expect(sandbox.code).toBe("SANDBOX_VERIFIED_CLAIM_REFUSED");
+    expect(sandbox.debugOk).toBe(true);
+    expect(sandbox.deliveredConversionClaimed).toBe(false);
+    expect(sandbox.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("delivered-conversion claim wins over measured-receipt when both set (P5)", () => {
+    const dual = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimDeliveredConversion: true,
+      claimMeasuredReceipt: true,
+    });
+    expect(dual.code).toBe("DELIVERED_CONVERSION_CLAIM_REFUSED");
+  });
+
+  it("refuses claimLiveProviderSuccess without inventing VERIFIED (T-X032 P3)", () => {
+    const liveClaim = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimLiveProviderSuccess: true,
+    });
+    expect(liveClaim.debugOk).toBe(true);
+    expect(liveClaim.code).toBe("LIVE_CLAIM_REFUSED");
+    expect(liveClaim.deliveredConversionClaimed).toBe(false);
+    expect(liveClaim.measuredReceiptClaimed).toBe(false);
+    expect(liveClaim.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("ignores non-boolean claimSandboxVerified literals (P9)", () => {
+    const padded = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimSandboxVerified: "true" as unknown as boolean,
+    });
+    expect(padded.code).toBeNull();
+    expect(padded.debugOk).toBe(true);
+  });
+
+  it("refuses claimExternalEffects from debug (T-X032 P9)", () => {
+    const fx = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimExternalEffects: true,
+    });
+    expect(fx.code).toBe("EXTERNAL_EFFECTS_CLAIM_REFUSED");
+    expect(fx.externalEffects).toBe("NONE");
+  });
+
+  it("refuses claimDebugVerified on fixture debug (T-X032 P12)", () => {
+    const verified = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimDebugVerified: true,
+    });
+    expect(verified.code).toBe("DEBUG_VERIFIED_CLAIM_REFUSED");
+    expect(verified.debugOk).toBe(true);
+    expect(verified.deliveredConversionClaimed).toBe(false);
+    expect(verified.measuredReceiptClaimed).toBe(false);
+  });
+
+  it("live-provider claim wins over debug-verified when both set (P12)", () => {
+    const dual = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimLiveProviderSuccess: true,
+      claimDebugVerified: true,
+    });
+    expect(dual.code).toBe("LIVE_CLAIM_REFUSED");
+  });
+
+  it("refuses claimIntegrationVerified on fixture debug (T-X032 P13)", () => {
+    const integration = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimIntegrationVerified: true,
+    });
+    expect(integration.code).toBe("INTEGRATION_VERIFIED_CLAIM_REFUSED");
+    expect(integration.externalEffects).toBe("NONE");
+  });
+
+  it("refuses claimMeasurementProtocolVerified on fixture debug (T-X032 P14)", () => {
+    const protocol = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimMeasurementProtocolVerified: true,
+    });
+    expect(protocol.code).toBe("MEASUREMENT_PROTOCOL_VERIFIED_CLAIM_REFUSED");
+    expect(protocol.debugOk).toBe(true);
+    expect(protocol.deliveredConversionClaimed).toBe(false);
+    expect(protocol.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("integration-verified claim wins over measurement-protocol when both set (P14)", () => {
+    const dual = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimIntegrationVerified: true,
+      claimMeasurementProtocolVerified: true,
+    });
+    expect(dual.code).toBe("INTEGRATION_VERIFIED_CLAIM_REFUSED");
+  });
+
+  it("refuses claimReportingAccessVerified on fixture debug (T-X032 P15)", () => {
+    const reporting = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimReportingAccessVerified: true,
+    });
+    expect(reporting.code).toBe("REPORTING_ACCESS_VERIFIED_CLAIM_REFUSED");
+    expect(reporting.measuredReceiptClaimed).toBe(false);
+    expect(reporting.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("measurement-protocol claim wins over reporting-access when both set (P15)", () => {
+    const dual = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimMeasurementProtocolVerified: true,
+      claimReportingAccessVerified: true,
+    });
+    expect(dual.code).toBe("MEASUREMENT_PROTOCOL_VERIFIED_CLAIM_REFUSED");
+  });
+
+  it("refuses claimDataIngestVerified on fixture debug (T-X032 P16)", () => {
+    const ingest = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimDataIngestVerified: true,
+    });
+    expect(ingest.code).toBe("DATA_INGEST_VERIFIED_CLAIM_REFUSED");
+    expect(ingest.externalEffects).toBe("NONE");
+    expect(ingest.deliveredConversionClaimed).toBe(false);
+  });
+
+  it("reporting-access claim wins over data-ingest when both set (P16)", () => {
+    const dual = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimReportingAccessVerified: true,
+      claimDataIngestVerified: true,
+    });
+    expect(dual.code).toBe("REPORTING_ACCESS_VERIFIED_CLAIM_REFUSED");
+  });
+
+  it("refuses claimPayloadShapeVerified on fixture debug (T-X032 P17)", () => {
+    const shape = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimPayloadShapeVerified: true,
+    });
+    expect(shape.code).toBe("PAYLOAD_SHAPE_VERIFIED_CLAIM_REFUSED");
+    expect(shape.debugOk).toBe(true);
+    expect(shape.fixtureOnly).toBe(true);
+  });
+
+  it("data-ingest claim wins over payload-shape when both set (P17)", () => {
+    const dual = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimDataIngestVerified: true,
+      claimPayloadShapeVerified: true,
+    });
+    expect(dual.code).toBe("DATA_INGEST_VERIFIED_CLAIM_REFUSED");
+  });
+
+  it("refuses claimEventDeliveryVerified on fixture debug (T-X032 P18)", () => {
+    const delivery = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimEventDeliveryVerified: true,
+    });
+    expect(delivery.code).toBe("EVENT_DELIVERY_VERIFIED_CLAIM_REFUSED");
+    expect(delivery.deliveredConversionClaimed).toBe(false);
+    expect(delivery.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("payload-shape claim wins over event-delivery when both set (P18)", () => {
+    const dual = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimPayloadShapeVerified: true,
+      claimEventDeliveryVerified: true,
+    });
+    expect(dual.code).toBe("PAYLOAD_SHAPE_VERIFIED_CLAIM_REFUSED");
+  });
+
+  it("refuses claimHitCollectionVerified on fixture debug (T-X032 P19)", () => {
+    const hits = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimHitCollectionVerified: true,
+    });
+    expect(hits.code).toBe("HIT_COLLECTION_VERIFIED_CLAIM_REFUSED");
+    expect(hits.measuredReceiptClaimed).toBe(false);
+    expect(hits.externalEffects).toBe("NONE");
+  });
+
+  it("event-delivery claim wins over hit-collection when both set (P19)", () => {
+    const dual = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimEventDeliveryVerified: true,
+      claimHitCollectionVerified: true,
+    });
+    expect(dual.code).toBe("EVENT_DELIVERY_VERIFIED_CLAIM_REFUSED");
+  });
+
+  it("refuses claimBatchExportVerified on fixture debug (T-X032 P20)", () => {
+    const batch = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimBatchExportVerified: true,
+    });
+    expect(batch.code).toBe("BATCH_EXPORT_VERIFIED_CLAIM_REFUSED");
+    expect(batch.externalEffects).toBe("NONE");
+    expect(batch.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("hit-collection claim wins over batch-export when both set (P20)", () => {
+    const dual = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimHitCollectionVerified: true,
+      claimBatchExportVerified: true,
+    });
+    expect(dual.code).toBe("HIT_COLLECTION_VERIFIED_CLAIM_REFUSED");
+  });
+
+  it("refuses claimRealtimeIngestVerified on fixture debug (T-X032 P21)", () => {
+    const realtime = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimRealtimeIngestVerified: true,
+    });
+    expect(realtime.code).toBe("REALTIME_INGEST_VERIFIED_CLAIM_REFUSED");
+    expect(realtime.debugOk).toBe(true);
+    expect(realtime.deliveredConversionClaimed).toBe(false);
+  });
+
+  it("batch-export claim wins over realtime-ingest when both set (P21)", () => {
+    const dual = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimBatchExportVerified: true,
+      claimRealtimeIngestVerified: true,
+    });
+    expect(dual.code).toBe("BATCH_EXPORT_VERIFIED_CLAIM_REFUSED");
+  });
+
+  it("refuses claimStreamingExportVerified on fixture debug (T-X032 P22)", () => {
+    const streaming = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimStreamingExportVerified: true,
+    });
+    expect(streaming.code).toBe("STREAMING_EXPORT_VERIFIED_CLAIM_REFUSED");
+    expect(streaming.debugOk).toBe(true);
+    expect(streaming.measuredReceiptClaimed).toBe(false);
+  });
+
+  it("realtime-ingest claim wins over streaming-export when both set (P22)", () => {
+    const dual = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimRealtimeIngestVerified: true,
+      claimStreamingExportVerified: true,
+    });
+    expect(dual.code).toBe("REALTIME_INGEST_VERIFIED_CLAIM_REFUSED");
+  });
+
+  it("refuses claimAudienceExportVerified on fixture debug (T-X032 P23)", () => {
+    const audience = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimAudienceExportVerified: true,
+    });
+    expect(audience.code).toBe("AUDIENCE_EXPORT_VERIFIED_CLAIM_REFUSED");
+    expect(audience.debugOk).toBe(true);
+    expect(audience.externalEffects).toBe("NONE");
+  });
+
+  it("streaming-export claim wins over audience-export when both set (P23)", () => {
+    const dual = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimStreamingExportVerified: true,
+      claimAudienceExportVerified: true,
+    });
+    expect(dual.code).toBe("STREAMING_EXPORT_VERIFIED_CLAIM_REFUSED");
+  });
+
+  it("debug-verified claim wins over integration-verified when both set (P13)", () => {
+    const dual = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimDebugVerified: true,
+      claimIntegrationVerified: true,
+    });
+    expect(dual.code).toBe("DEBUG_VERIFIED_CLAIM_REFUSED");
+  });
+
+  it("ignores non-boolean claimDebugVerified literals (P13)", () => {
+    const padded = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimDebugVerified: "true" as unknown as boolean,
+    });
+    expect(padded.code).toBeNull();
+    expect(padded.debugOk).toBe(true);
+  });
+
+  it("ignores non-boolean claimFixtureVerified literals (P11)", () => {
+    const paddedFixture = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimFixtureVerified: 1 as unknown as boolean,
+    });
+    expect(paddedFixture.code).toBeNull();
+    expect(paddedFixture.debugOk).toBe(true);
+  });
+
+  it("refuses claimFixtureVerified on fixture debug (T-X032 P11)", () => {
+    const fixture = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimFixtureVerified: true,
+    });
+    expect(fixture.code).toBe("FIXTURE_VERIFIED_CLAIM_REFUSED");
+    expect(fixture.debugOk).toBe(true);
+    expect(fixture.deliveredConversionClaimed).toBe(false);
+    expect(fixture.measuredReceiptClaimed).toBe(false);
+  });
+
+  it("sandbox-verified claim wins over fixture-verified when both set (P11)", () => {
+    const dual = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimSandboxVerified: true,
+      claimFixtureVerified: true,
+    });
+    expect(dual.code).toBe("SANDBOX_VERIFIED_CLAIM_REFUSED");
+  });
+
+  it("external-effects claim wins over delivered when both set (P11)", () => {
+    const dual = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimExternalEffects: true,
+      claimDeliveredConversion: true,
+    });
+    expect(dual.code).toBe("EXTERNAL_EFFECTS_CLAIM_REFUSED");
+  });
+
+  it("ignores non-boolean claimExternalEffects literals (P11)", () => {
+    const padded = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimExternalEffects: "true" as unknown as boolean,
+    });
+    expect(padded.code).toBeNull();
+    expect(padded.debugOk).toBe(true);
+  });
+
+  it("refuses claimMeasuredReceipt even when debug accepted (T-X032 P1)", () => {
+    const receipt = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimMeasuredReceipt: true,
+    });
+    expect(receipt.debugOk).toBe(true);
+    expect(receipt.measuredReceiptClaimed).toBe(false);
+    expect(receipt.deliveredConversionClaimed).toBe(false);
+    expect(receipt.code).toBe("MEASURED_RECEIPT_CLAIM_REFUSED");
+    expect(receipt.liveProviderWiring).toBe("NOT_WIRED");
+    expect(receipt.externalEffects).toBe("NONE");
+  });
+
   it("refuses LIVE debug wiring as NOT_WIRED", () => {
     const live = interpretGa4DebugValidation({
       debugEndpointAccepted: true,
