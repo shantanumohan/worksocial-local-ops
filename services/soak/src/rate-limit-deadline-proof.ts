@@ -15,12 +15,32 @@
  *
  * Deepen (F13): fractional Retry-After ceil; maxAttempts=1 immediate
  * STOP_MAX_ATTEMPTS; exponential capped at maxBackoff when Retry-After null.
+ *
+ * Deepen (Q16 idle): negative Retry-After is not honored — exponential only.
+ * Deepen (Q17 wipe15): NaN Retry-After → exponential (non-finite refuse).
+ * Deepen (Q19 wake): +Infinity Retry-After → exponential (non-finite refuse).
+ * Deepen (Q23): -0 Retry-After → WAIT 0; -1 → exponential (sign boundary).
+ * Deepen (Q24): fractional attempt floors before exponential index.
+ * Deepen (Q28): fractional maxAttempts floors (2.9 → cap at attempt 2 STOP).
+ * Deepen (Q31): maxAttempts=1.1 → first 429 STOP (no WAIT invent).
+ * Deepen (Q34): negative/zero attempt floors to 1 for exponential index.
+ * Deepen (Q35): subnormal Retry-After ceils to 1s (not exponential fallback).
+ * Deepen (Q38): -Infinity Retry-After → exponential (finite but < 0 refuse).
+ * Deepen (Q41): +Infinity attempt → STOP_MAX_ATTEMPTS (no WAIT invent).
+ * Deepen (Q44): -Infinity attempt floors to 1 → WAIT exponential (not STOP).
+ * Deepen (Q47): maxAttempts=0.9 floors to 0 → attempt 1 STOP (no WAIT invent).
+ * Deepen (Q49): fractional initialBackoffSeconds ceils (0.4 → WAIT 1s).
+ * Deepen (Q51): Retry-After=EPSILON ceils to 1s retry_after.
+ * Deepen (Q53): backoffMultiplier=1 → flat exponential wait (no growth invent).
+ * Deepen (Q56): fractional backoffMultiplier 1.5 ceils (attempt 2 → 2s).
+ * Deepen (Q58): Retry-After 0.001s ceils to 1s retry_after.
  */
 
 import { randomUUID } from "node:crypto";
 import {
   SoakProofKind,
   computeBackoffWaitSeconds,
+  evaluateRateLimitWithDeadline,
   planRateLimitRecovery,
   simulateRateLimitedProviderRecovery,
   type SoakProofRecord,
@@ -541,6 +561,404 @@ export function proofRateLimitBoundedBackoffPreservesDeadline(
     passed = false;
     details.push(
       `maxAttempts=1 STOP honesty failed: ${JSON.stringify(oneShot)}`,
+    );
+  }
+
+  // Scenario P18 (Q58): Retry-After 0.001s ceils to 1s retry_after.
+  const millisRetry = computeBackoffWaitSeconds({
+    attempt: 1,
+    retryAfterSeconds: 0.001,
+  });
+  if (
+    millisRetry.source === "retry_after" &&
+    millisRetry.waitSeconds === 1
+  ) {
+    details.push(
+      "Retry-After=0.001s ceiled to WAIT 1s retry_after (sub-millisecond honored)",
+    );
+  } else {
+    passed = false;
+    details.push(`Sub-ms Retry-After failed: ${JSON.stringify(millisRetry)}`);
+  }
+
+  // Scenario P17 (Q56): backoffMultiplier=1.5 attempt 2 → WAIT 2s exponential.
+  const fracMult = computeBackoffWaitSeconds({
+    attempt: 2,
+    retryAfterSeconds: null,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 1.5,
+  });
+  if (
+    fracMult.source === "exponential" &&
+    fracMult.waitSeconds === 2
+  ) {
+    details.push(
+      "backoffMultiplier=1.5 attempt 2 → exponential WAIT 2s (ceil 1.5; not truncate)",
+    );
+  } else {
+    passed = false;
+    details.push(`Fractional multiplier failed: ${JSON.stringify(fracMult)}`);
+  }
+
+  // Scenario P16 (Q53): backoffMultiplier=1 → flat exponential wait (attempt 5 still initial).
+  const flatMult = computeBackoffWaitSeconds({
+    attempt: 5,
+    retryAfterSeconds: null,
+    initialBackoffSeconds: 4,
+    backoffMultiplier: 1,
+  });
+  if (
+    flatMult.source === "exponential" &&
+    flatMult.waitSeconds === 4
+  ) {
+    details.push(
+      "backoffMultiplier=1 → flat exponential wait 4s at attempt 5 (no growth invent)",
+    );
+  } else {
+    passed = false;
+    details.push(`Flat multiplier failed: ${JSON.stringify(flatMult)}`);
+  }
+
+  // Scenario P15 (Q51): Retry-After=EPSILON ceils to 1s retry_after.
+  const epsilonRetry = computeBackoffWaitSeconds({
+    attempt: 1,
+    retryAfterSeconds: Number.EPSILON,
+  });
+  if (
+    epsilonRetry.source === "retry_after" &&
+    epsilonRetry.waitSeconds === 1
+  ) {
+    details.push(
+      "Retry-After=EPSILON ceiled to WAIT 1s retry_after (subnormal honored)",
+    );
+  } else {
+    passed = false;
+    details.push(`EPSILON Retry-After failed: ${JSON.stringify(epsilonRetry)}`);
+  }
+
+  // Scenario P14 (Q49): fractional initialBackoff 0.4s ceils to exponential WAIT 1s.
+  const fracInitial = computeBackoffWaitSeconds({
+    attempt: 1,
+    retryAfterSeconds: null,
+    initialBackoffSeconds: 0.4,
+    backoffMultiplier: 2,
+  });
+  if (
+    fracInitial.source === "exponential" &&
+    fracInitial.waitSeconds === 1
+  ) {
+    details.push(
+      "initialBackoffSeconds=0.4 ceils to exponential WAIT 1s (not zero-wait invent)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Fractional initialBackoff failed: ${JSON.stringify(fracInitial)}`,
+    );
+  }
+
+  // Scenario P13 (Q47): maxAttempts=0.9 floors to 0 → immediate STOP on attempt 1.
+  const zeroMax = evaluateRateLimitWithDeadline(
+    {
+      httpStatus: 429,
+      retryAfterSeconds: 8,
+      observedAtIso: "2026-11-22T12:00:00.000Z",
+    },
+    {
+      attempt: 1,
+      deadlineAtIso: "2026-11-22T13:00:00.000Z",
+      maxAttempts: 0.9,
+    },
+  );
+  if (
+    zeroMax.action === "STOP_MAX_ATTEMPTS" &&
+    zeroMax.attempt === 1 &&
+    zeroMax.reason === "MAX_ATTEMPTS"
+  ) {
+    details.push(
+      "maxAttempts=0.9 floors to 0 → attempt 1 STOP_MAX_ATTEMPTS (no WAIT invent)",
+    );
+  } else {
+    passed = false;
+    details.push(`maxAttempts=0.9 STOP failed: ${JSON.stringify(zeroMax)}`);
+  }
+
+  // Scenario P12 (Q44): -Infinity attempt floors to WAIT attempt 1 (exponential 1s).
+  const negInfAttempt = computeBackoffWaitSeconds({
+    attempt: Number.NEGATIVE_INFINITY,
+    retryAfterSeconds: null,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 2,
+  });
+  if (
+    negInfAttempt.source === "exponential" &&
+    negInfAttempt.waitSeconds === 1
+  ) {
+    details.push(
+      "-Infinity attempt floors to exponential attempt 1 (waitSeconds=1; not STOP invent)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `-Infinity attempt floor failed: ${JSON.stringify(negInfAttempt)}`,
+    );
+  }
+
+  // Scenario P11 (Q41): +Infinity attempt → STOP_MAX_ATTEMPTS before scheduling WAIT.
+  const infAttempt = evaluateRateLimitWithDeadline(
+    {
+      httpStatus: 429,
+      retryAfterSeconds: 30,
+      observedAtIso: "2026-11-22T12:00:00.000Z",
+    },
+    {
+      attempt: Number.POSITIVE_INFINITY,
+      deadlineAtIso: "2026-11-22T13:00:00.000Z",
+      maxAttempts: 5,
+    },
+  );
+  if (
+    infAttempt.action === "STOP_MAX_ATTEMPTS" &&
+    infAttempt.reason === "MAX_ATTEMPTS"
+  ) {
+    details.push(
+      "+Infinity attempt → STOP_MAX_ATTEMPTS (no WAIT despite Retry-After=30)",
+    );
+  } else {
+    passed = false;
+    details.push(`+Infinity attempt STOP failed: ${JSON.stringify(infAttempt)}`);
+  }
+
+  // Scenario P10 (Q38): -Infinity Retry-After → exponential (not honored Retry-After).
+  const negInfRetry = computeBackoffWaitSeconds({
+    attempt: 2,
+    retryAfterSeconds: Number.NEGATIVE_INFINITY,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 2,
+  });
+  if (
+    negInfRetry.source === "exponential" &&
+    negInfRetry.waitSeconds === 2
+  ) {
+    details.push(
+      "-Infinity Retry-After refused → exponential wait 2s (no invent retry_after)",
+    );
+  } else {
+    passed = false;
+    details.push(`-Infinity Retry-After failed: ${JSON.stringify(negInfRetry)}`);
+  }
+
+  // Scenario P9 (Q35): subnormal Retry-After ceils to WAIT 1s.
+  const subnormalRetry = computeBackoffWaitSeconds({
+    attempt: 1,
+    retryAfterSeconds: Number.MIN_VALUE,
+  });
+  if (
+    subnormalRetry.source === "retry_after" &&
+    subnormalRetry.waitSeconds === 1
+  ) {
+    details.push(
+      "Subnormal Retry-After ceiled to WAIT 1s retry_after (not exponential invent)",
+    );
+  } else {
+    passed = false;
+    details.push(`Subnormal Retry-After failed: ${JSON.stringify(subnormalRetry)}`);
+  }
+
+  // Scenario P8 (Q34): attempt -1 floors to exponential attempt 1 (wait 1s).
+  const negAttempt = computeBackoffWaitSeconds({
+    attempt: -1,
+    retryAfterSeconds: null,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 2,
+  });
+  if (
+    negAttempt.source === "exponential" &&
+    negAttempt.waitSeconds === 1
+  ) {
+    details.push(
+      "Negative attempt=-1 floors to exponential attempt 1 (waitSeconds=1; no invent)",
+    );
+  } else {
+    passed = false;
+    details.push(`Negative attempt floor failed: ${JSON.stringify(negAttempt)}`);
+  }
+
+  // Scenario P7 (Q31): maxAttempts=1.1 → attempt 1 STOP (no WAIT despite Retry-After).
+  const onePointOne = evaluateRateLimitWithDeadline(
+    {
+      httpStatus: 429,
+      retryAfterSeconds: 60,
+      observedAtIso: "2026-11-22T12:00:00.000Z",
+    },
+    {
+      attempt: 1,
+      deadlineAtIso: "2026-11-22T13:00:00.000Z",
+      maxAttempts: 1.1,
+    },
+  );
+  if (
+    onePointOne.action === "STOP_MAX_ATTEMPTS" &&
+    onePointOne.attempt === 1 &&
+    onePointOne.reason === "MAX_ATTEMPTS"
+  ) {
+    details.push(
+      "Fractional maxAttempts=1.1 → attempt 1 STOP_MAX_ATTEMPTS (no WAIT on first 429)",
+    );
+  } else {
+    passed = false;
+    details.push(`maxAttempts=1.1 STOP failed: ${JSON.stringify(onePointOne)}`);
+  }
+
+  // Scenario P6 (Q28): fractional maxAttempts=2.9 → attempt 2 STOP_MAX_ATTEMPTS.
+  const fracMax = evaluateRateLimitWithDeadline(
+    {
+      httpStatus: 429,
+      retryAfterSeconds: 1,
+      observedAtIso: "2026-11-22T12:00:00.000Z",
+    },
+    {
+      attempt: 2,
+      deadlineAtIso: "2026-11-22T13:00:00.000Z",
+      maxAttempts: 2.9,
+    },
+  );
+  if (
+    fracMax.action === "STOP_MAX_ATTEMPTS" &&
+    fracMax.attempt === 2 &&
+    fracMax.reason === "MAX_ATTEMPTS"
+  ) {
+    details.push(
+      "Fractional maxAttempts=2.9 floors → attempt 2 STOP_MAX_ATTEMPTS (no extra WAIT invent)",
+    );
+  } else {
+    passed = false;
+    details.push(`Fractional maxAttempts failed: ${JSON.stringify(fracMax)}`);
+  }
+
+  // Scenario P5 (Q24): fractional attempt floors (2.9 → attempt 2 wait).
+  const fracAttempt = computeBackoffWaitSeconds({
+    attempt: 2.9,
+    retryAfterSeconds: null,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 2,
+  });
+  if (
+    fracAttempt.source === "exponential" &&
+    fracAttempt.waitSeconds === 2
+  ) {
+    details.push(
+      "Fractional attempt=2.9 floors to exponential wait 2s (not attempt-3 wait 4s)",
+    );
+  } else {
+    passed = false;
+    details.push(`Fractional attempt floor failed: ${JSON.stringify(fracAttempt)}`);
+  }
+
+  // Scenario P4 (Q23): -0 vs -1 Retry-After sign boundary.
+  const negZero = computeBackoffWaitSeconds({
+    attempt: 1,
+    retryAfterSeconds: -0,
+  });
+  const negOne = computeBackoffWaitSeconds({
+    attempt: 1,
+    retryAfterSeconds: -1,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 2,
+  });
+  if (
+    negZero.source === "retry_after" &&
+    negZero.waitSeconds === -0 &&
+    negOne.source === "exponential" &&
+    negOne.waitSeconds === 1
+  ) {
+    details.push(
+      "Retry-After -0 → WAIT 0s (retry_after); -1 refused → exponential (sign boundary)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Retry-After sign boundary failed: negZero=${JSON.stringify(negZero)} negOne=${JSON.stringify(negOne)}`,
+    );
+  }
+
+  // Scenario P3 (Q19): +Infinity Retry-After → exponential.
+  const infRetry = computeBackoffWaitSeconds({
+    attempt: 2,
+    retryAfterSeconds: Number.POSITIVE_INFINITY,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 2,
+  });
+  if (
+    infRetry.source === "exponential" &&
+    infRetry.waitSeconds === 2
+  ) {
+    details.push(
+      "+Infinity Retry-After refused → exponential WAIT (non-finite provider header)",
+    );
+  } else {
+    passed = false;
+    details.push(`+Infinity Retry-After refuse failed: ${JSON.stringify(infRetry)}`);
+  }
+
+  // Scenario P2 (Q17): NaN Retry-After → exponential (non-finite refuse).
+  const nanRetry = computeBackoffWaitSeconds({
+    attempt: 3,
+    retryAfterSeconds: Number.NaN,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 2,
+  });
+  if (
+    nanRetry.source === "exponential" &&
+    nanRetry.waitSeconds === 4
+  ) {
+    details.push(
+      "NaN Retry-After refused → exponential WAIT attempt=3 (non-finite provider header)",
+    );
+  } else {
+    passed = false;
+    details.push(`NaN Retry-After refuse failed: ${JSON.stringify(nanRetry)}`);
+  }
+
+  // Scenario P (Q16): negative Retry-After ignored → exponential wait (no invent).
+  const negativeRetry = computeBackoffWaitSeconds({
+    attempt: 2,
+    retryAfterSeconds: -3,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 2,
+  });
+  const negativePlan = planRateLimitRecovery({
+    signals: [
+      {
+        httpStatus: 429,
+        retryAfterSeconds: -1,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+    ],
+    config: {
+      deadlineAtIso: "2026-11-22T12:01:00.000Z",
+      maxAttempts: 5,
+      initialBackoffSeconds: 1,
+      backoffMultiplier: 2,
+    },
+  });
+  const negStep = negativePlan.steps[0];
+  if (
+    negativeRetry.source === "exponential" &&
+    negativeRetry.waitSeconds === 2 &&
+    negStep?.action === "WAIT" &&
+    negStep.source === "exponential" &&
+    negStep.waitSeconds === 1 &&
+    negativePlan.liveProviderSuccessClaimed === false &&
+    negativePlan.externalEffects === "NONE"
+  ) {
+    details.push(
+      "Negative Retry-After refused → exponential WAIT (no honor of invalid provider seconds)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Negative Retry-After refuse failed compute=${JSON.stringify(negativeRetry)} plan=${JSON.stringify(negativePlan)}`,
     );
   }
 

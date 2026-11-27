@@ -429,6 +429,346 @@ describe("rate-limit-backoff (T-X030)", () => {
     ).toEqual({ waitSeconds: 3, source: "retry_after" });
   });
 
+  it("ceils subnormal Retry-After to 1s (Q35 wipe15)", () => {
+    const subnormal = computeBackoffWaitSeconds({
+      attempt: 1,
+      retryAfterSeconds: Number.MIN_VALUE,
+    });
+    expect(subnormal.source).toBe("retry_after");
+    expect(subnormal.waitSeconds).toBe(1);
+  });
+
+  it("floors negative attempt index to 1 for backoff (Q34 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: -1,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 1, source: "exponential" });
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 0,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 1, source: "exponential" });
+  });
+
+  it("ceils sub-millisecond Retry-After to 1s (Q58 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 1,
+        retryAfterSeconds: 0.001,
+      }),
+    ).toEqual({ waitSeconds: 1, source: "retry_after" });
+  });
+
+  it("ceils fractional backoffMultiplier growth (Q56 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 2,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 1.5,
+      }),
+    ).toEqual({ waitSeconds: 2, source: "exponential" });
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 3,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 1.5,
+      }),
+    ).toEqual({ waitSeconds: 3, source: "exponential" });
+  });
+
+  it("keeps flat exponential wait when backoffMultiplier is 1 (Q53 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 3,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 4,
+        backoffMultiplier: 1,
+      }),
+    ).toEqual({ waitSeconds: 4, source: "exponential" });
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 5,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 4,
+        backoffMultiplier: 1,
+        maxBackoffSeconds: 60,
+      }),
+    ).toEqual({ waitSeconds: 4, source: "exponential" });
+  });
+
+  it("ceils Number.EPSILON Retry-After to 1s (Q51 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 1,
+        retryAfterSeconds: Number.EPSILON,
+      }),
+    ).toEqual({ waitSeconds: 1, source: "retry_after" });
+  });
+
+  it("ceils fractional initialBackoffSeconds in exponential path (Q49 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 1,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 0.4,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 1, source: "exponential" });
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 2,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 0.4,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 1, source: "exponential" });
+  });
+
+  it("floors fractional maxAttempts=0.9 → STOP on first 429 (Q47 wipe15)", () => {
+    const step = evaluateRateLimitWithDeadline(
+      {
+        httpStatus: 429,
+        retryAfterSeconds: 10,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+      {
+        attempt: 1,
+        deadlineAtIso: "2026-11-22T13:00:00.000Z",
+        maxAttempts: 0.9,
+      },
+    );
+    expect(step).toEqual({
+      action: "STOP_MAX_ATTEMPTS",
+      attempt: 1,
+      reason: "MAX_ATTEMPTS",
+    });
+  });
+
+  it("floors fractional maxAttempts=1.1 → STOP on first 429 (Q31 wipe15)", () => {
+    const step = evaluateRateLimitWithDeadline(
+      {
+        httpStatus: 429,
+        retryAfterSeconds: 60,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+      {
+        attempt: 1,
+        deadlineAtIso: "2026-11-22T13:00:00.000Z",
+        maxAttempts: 1.1,
+      },
+    );
+    expect(step).toEqual({
+      action: "STOP_MAX_ATTEMPTS",
+      attempt: 1,
+      reason: "MAX_ATTEMPTS",
+    });
+  });
+
+  it("floors fractional maxAttempts before STOP gate (Q28 wipe15)", () => {
+    const step = evaluateRateLimitWithDeadline(
+      {
+        httpStatus: 429,
+        retryAfterSeconds: 1,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+      {
+        attempt: 2,
+        deadlineAtIso: "2026-11-22T13:00:00.000Z",
+        maxAttempts: 2.9,
+      },
+    );
+    expect(step).toEqual({
+      action: "STOP_MAX_ATTEMPTS",
+      attempt: 2,
+      reason: "MAX_ATTEMPTS",
+    });
+  });
+
+  it("floors fractional attempt index for exponential backoff (Q24 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 2.9,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 2, source: "exponential" });
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 3.1,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 4, source: "exponential" });
+  });
+
+  it("honors -0 Retry-After as WAIT 0s, not exponential (Q23 wipe15)", () => {
+    const negZero = computeBackoffWaitSeconds({
+      attempt: 1,
+      retryAfterSeconds: -0,
+    });
+    expect(negZero.source).toBe("retry_after");
+    expect(negZero.waitSeconds === 0).toBe(true);
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 1,
+        retryAfterSeconds: -1,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 1, source: "exponential" });
+  });
+
+  it("ignores +Infinity Retry-After and uses exponential (Q19 wipe15 wake)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 2,
+        retryAfterSeconds: Number.POSITIVE_INFINITY,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 2, source: "exponential" });
+  });
+
+  it("caps +Infinity attempt index at maxBackoff exponential (Q41 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: Number.POSITIVE_INFINITY,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+        maxBackoffSeconds: 60,
+      }),
+    ).toEqual({ waitSeconds: 60, source: "exponential" });
+    const step = evaluateRateLimitWithDeadline(
+      {
+        httpStatus: 429,
+        retryAfterSeconds: 5,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+      {
+        attempt: Number.POSITIVE_INFINITY,
+        deadlineAtIso: "2026-11-22T13:00:00.000Z",
+        maxAttempts: 5,
+      },
+    );
+    expect(step).toEqual({
+      action: "STOP_MAX_ATTEMPTS",
+      attempt: Number.POSITIVE_INFINITY,
+      reason: "MAX_ATTEMPTS",
+    });
+  });
+
+  it("floors -Infinity attempt index to 1 exponential (Q44 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: Number.NEGATIVE_INFINITY,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 1, source: "exponential" });
+    const step = evaluateRateLimitWithDeadline(
+      {
+        httpStatus: 429,
+        retryAfterSeconds: null,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+      {
+        attempt: Number.NEGATIVE_INFINITY,
+        deadlineAtIso: "2026-11-22T12:05:00.000Z",
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+        maxAttempts: 5,
+      },
+    );
+    expect(step).toMatchObject({
+      action: "WAIT",
+      attempt: 1,
+      waitSeconds: 1,
+      source: "exponential",
+    });
+  });
+
+  it("ignores -Infinity Retry-After and uses exponential (Q38 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 2,
+        retryAfterSeconds: Number.NEGATIVE_INFINITY,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 2, source: "exponential" });
+    const step = evaluateRateLimitWithDeadline(
+      {
+        httpStatus: 429,
+        retryAfterSeconds: Number.NEGATIVE_INFINITY,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+      {
+        attempt: 1,
+        deadlineAtIso: "2026-11-22T12:01:00.000Z",
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      },
+    );
+    expect(step).toMatchObject({
+      action: "WAIT",
+      waitSeconds: 1,
+      source: "exponential",
+    });
+  });
+
+  it("ignores NaN Retry-After and uses exponential (Q17 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 3,
+        retryAfterSeconds: Number.NaN,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 4, source: "exponential" });
+  });
+
+  it("ignores negative Retry-After and uses exponential (Q16 idle)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 2,
+        retryAfterSeconds: -5,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 2, source: "exponential" });
+    const step = evaluateRateLimitWithDeadline(
+      {
+        httpStatus: 429,
+        retryAfterSeconds: -1,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+      {
+        attempt: 1,
+        deadlineAtIso: "2026-11-22T12:01:00.000Z",
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      },
+    );
+    expect(step).toMatchObject({
+      action: "WAIT",
+      waitSeconds: 1,
+      source: "exponential",
+    });
+  });
+
   it("maxAttempts=1 stops immediately without WAIT (T-X030 F13)", () => {
     const loop = simulateRateLimitedProviderRecovery({
       startIso: "2026-11-22T12:00:00.000Z",
