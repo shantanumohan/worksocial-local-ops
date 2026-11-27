@@ -1017,7 +1017,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X009** is fixture ACCEPTED only via the CLI error despite exit 0 proof (`CLI_ERROR_DESPITE_EXIT_ZERO`) — Claude `--output-format json` may set `is_error` while exiting 0; the job must FAIL. Not sandbox/prod VERIFIED.
 
-**T-X007** is fixture ACCEPTED only via the wrong CMS environment no production op proof (`WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP`) — bound≠intended / unrecognized / production mutate refused with providerMutateCount=0. Not sandbox/prod VERIFIED.
+**T-X007** is fixture ACCEPTED only via the wrong CMS environment no production op proof (`WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP`) — bound≠intended / unrecognized aliases / missing / production mutate refused with providerMutateCount=0; unicode-whitespace normalized; lease-expire race at mutate time refuses apply; exact-boundary and invalid lease timestamps refuse; ZWSP-padded / BOM-prefixed ISO lease timestamps refuse; second mutate after expire refused; `fixtureOnly`; live `NOT_WIRED`; external effects `NONE`. Not sandbox/prod VERIFIED.
 
 **T-X012** is fixture ACCEPTED only via `ORPHAN_WORKER_DEADLINE_TREE_STOPPED` — pre-deadline refuse; inclusive exact-boundary stop; post-deadline owned tree + transitive grandchildren stop (domain + OS); foreign/sibling skipped (incl. foreign parentPid-sharing extras); blank generationId → `GENERATION_REQUIRED`; missing worker root → `TREE_REQUIRED`; empty tree → `TREE_REQUIRED`; duplicate-PID extras ignored; invalid-PID extras dropped; parentPid-cycle extras skipped; non-finite/non-positive clock fields → `INVALID_CLOCK`; clock-skew and start-instant refuse inventing kill; idempotent re-stop; partial timed_out_stopped still clears orphans; duplicate PID refuse on create; worker-dead still clears orphan children; fixture+`WIRED` refuse (`LIVE_TRANSPORT_NOT_WIRED`); `liveProviderWiring=NOT_WIRED`; `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 
@@ -1033,7 +1033,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X004 | Disk full during evidence write | No partial completed manifest *(fixture ACCEPTED — disk-full evidence no-partial-completed proof; not sandbox/prod VERIFIED)* |
 | T-X005 | Forged browser role | Payload role ignored *(fixture ACCEPTED — forged browser role ignored proof; not sandbox/prod VERIFIED)* |
 | T-X006 | Cross-workspace object reference | Deny without leak *(fixture ACCEPTED — cross-workspace reference denied proof; whitespace-normalized / dual foreign; not sandbox/prod VERIFIED)* |
-| T-X007 | Wrong CMS environment | No production op *(fixture ACCEPTED — wrong CMS environment no production op proof; not sandbox/prod VERIFIED)* |
+| T-X007 | Wrong CMS environment | No production op *(fixture ACCEPTED — wrong CMS / lease-expire boundary / NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X008 | Fact changes after review | Stale; no publish *(fixture ACCEPTED — fact changes after review stale / no publish proof; not approved-payload-edit / not imported-doc quarantine; not sandbox/prod VERIFIED)* |
 | T-X009 | CLI error despite exit 0 | Job fails *(fixture ACCEPTED — CLI error despite exit 0 proof; not sandbox/prod VERIFIED)* |
 | T-X010 | Malicious prompt interpolation | No shell injection *(fixture ACCEPTED — stdin-only; extraArgs shell-meta/NUL/permission-mode refused; NOT_WIRED; not sandbox/prod VERIFIED)* |

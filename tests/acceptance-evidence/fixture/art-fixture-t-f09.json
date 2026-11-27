@@ -8,8 +8,8 @@
     "connect_gemini_independent_testing"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-f09.json",
-  "createdAtIso": "2026-11-27T13:46:47.741Z",
+  "createdAtIso": "2026-11-27T13:57:19.631Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-f09-96033bb79ee2"
+  "uniqueSourceArtifactId": "art-fixture-t-f09-d104f6615042"
 }
