@@ -7,6 +7,7 @@ import {
   PaidMediaPlatform,
   PaidMediaWiring,
   PaidProposalStatus,
+  RECENT_ADS_CONVERSION_RELATED_CASE_IDS,
   attemptPaidMediaExecution,
   classifyRecentAdsConversion,
   createAnalysisDefinition,
@@ -14,6 +15,7 @@ import {
   createDecisionBrief,
   createPaidMediaProposal,
   diagnoseDelivery,
+  evaluateRecentAdsConversionAttackSuite,
   paidMediaChannelStatus,
   recordPaidMediaDecision,
   reReadPaidProviderBudgetBeforeMutation,
@@ -464,6 +466,8 @@ describe("paid-media — delivery diagnosis + proposals / F16", () => {
     expect(blank.freshness).toBe(AdsConversionFreshness.PENDING);
     expect(blank.displayValue).toBeNull();
     expect(blank.conversions.kind).toBe("missing");
+    expect(blank.liveProviderWiring).toBe("NOT_WIRED");
+    expect(blank.externalEffects).toBe("NONE");
     expect(blank.reasons.join(" ")).toMatch(/PENDING|not false zero/i);
 
     const unsettled = classifyRecentAdsConversion({
@@ -573,5 +577,23 @@ describe("paid-media — delivery diagnosis + proposals / F16", () => {
     if (!blockedZeroDelivery.ok) {
       expect(blockedZeroDelivery.code).toBe("PARTIAL_SPEND");
     }
+  });
+
+  it("recent-Ads-conversion attack suite covers blank/NaN/unsettled with NOT_WIRED", () => {
+    const suite = evaluateRecentAdsConversionAttackSuite();
+    expect(suite.passed).toBe(true);
+    expect(
+      suite.details.some((d) => /liveProviderWiring=NOT_WIRED/i.test(d)),
+    ).toBe(true);
+    expect(
+      suite.details.some((d) => /never expose displayValue=0/i.test(d)),
+    ).toBe(true);
+    expect([...RECENT_ADS_CONVERSION_RELATED_CASE_IDS]).toEqual(["T-X036"]);
+    expect(
+      suite.classifications.every(
+        (c) =>
+          c.liveProviderWiring === "NOT_WIRED" && c.externalEffects === "NONE",
+      ),
+    ).toBe(true);
   });
 });
