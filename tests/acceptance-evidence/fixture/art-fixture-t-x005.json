@@ -8,8 +8,8 @@
     "forged_browser_role_ignored"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x005.json",
-  "createdAtIso": "2026-11-27T11:03:16.193Z",
+  "createdAtIso": "2026-11-27T11:10:56.011Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x005-5a34956de627"
+  "uniqueSourceArtifactId": "art-fixture-t-x005-bfc92d94bfcc"
 }

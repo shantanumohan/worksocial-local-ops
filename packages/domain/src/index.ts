@@ -23,9 +23,15 @@ export {
   type EffectOutcome,
 } from "./simulated-effect-ledger.js";
 export {
+  ACTUAL_COST_OVERRUN_RELATED_CASE_IDS,
+  BUDGET_ACCOUNTING_LIVE_WIRING,
+  assertBudgetSettlementHonesty,
   availableBudgetMinor,
   cancelBudgetReservation,
   createBudgetAccount,
+  describeActualCostOverrunVisibility,
+  isActualCostOverrun,
+  overrunMinor,
   reserveBudget,
   settleBudget,
   type BudgetAccount,
@@ -33,6 +39,7 @@ export {
   type BudgetCancellation,
   type BudgetReservation,
   type BudgetSettlement,
+  type SettledReservationSnapshot,
 } from "./budget-accounting.js";
 export {
   classifyMetric,

@@ -9,12 +9,10 @@
  * T-US-75 fixture ACCEPTED only via EMERGENCY_STOP_AT_COMMIT.
  * T-X005 fixture ACCEPTED only via FORGED_BROWSER_ROLE_IGNORED.
  * T-X006 fixture ACCEPTED only via CROSS_WORKSPACE_REFERENCE_DENIED.
- * T-X019/T-US-75 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED.
- */
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
+ * T-X019/T-US-75 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED. */import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   AcceptanceCaseStatus,
@@ -29,8 +27,6 @@ import {
   createSoakService,
   runSoakRecoveryHarness,
 } from "@worksocial/soak";
-
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 describe("contract: M9 soak / acceptance evidence", () => {
   let dir: string;
@@ -265,43 +261,47 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(bad.ok).toBe(false);
   });
 
-  it("T-X025 fixture art keeps edge honesty (silent clear / NOT_WIRED / ACCEPTED≠VERIFIED)", () => {
-    const artPath = resolve(
-      repoRoot,
-      "tests/acceptance-evidence/fixture/art-fixture-t-x025.json",
-    );
-    const art = JSON.parse(readFileSync(artPath, "utf8")) as {
+  it("T-X028 fixture artifact names overrun honesty (ACCEPTED ≠ VERIFIED)", () => {
+    const root = join(fileURLToPath(new URL(".", import.meta.url)), "../..");
+    const art = JSON.parse(
+      readFileSync(
+        join(root, "tests/acceptance-evidence/fixture/art-fixture-t-x028.json"),
+        "utf8",
+      ),
+    ) as {
       caseId: string;
       summary: string;
       liveProviderSuccessClaimed: boolean;
       externalEffects: string;
     };
-    expect(art.caseId).toBe("T-X025");
+    expect(art.caseId).toBe("T-X028");
+    expect(art.summary).toMatch(/Fixture ACCEPTED/);
+    expect(art.summary).not.toMatch(/Fixture VERIFIED/);
+    expect(art.summary).toContain("sandboxVerifiedClaimed=false");
     expect(art.liveProviderSuccessClaimed).toBe(false);
     expect(art.externalEffects).toBe("NONE");
-    expect(art.summary).toMatch(/SILENT_CLEAR_FORBIDDEN/);
-    expect(art.summary).toMatch(/NOT_WIRED/);
-    expect(art.summary).toMatch(/CLAIMED_VERIFIED/);
-    expect(art.summary).toMatch(/ACCEPTED≠VERIFIED/);
-    expect(art.summary).toMatch(/Owner-ack literal-only/);
-    expect(art.summary).toMatch(/v1→v1-next|MATCHED_PENDING_ONLY refuses claimedVerified/);
-    expect(art.summary).toMatch(
-      /convergent human edit still CONFLICT_RETAINED|post-MATCHED overwrite OVERWRITE_FORBIDDEN/,
+    expect(art.summary).toContain("overrunMinor");
+    expect(art.summary).toContain("liveProviderWiring=NOT_WIRED");
+    expect(art.summary).toContain("liveProviderSuccessClaimed=false");
+    expect(art.summary).toContain("chatgptAdsAccess=ACCESS_BLOCKED");
+    expect(art.summary).toContain("Minimal +1 overrun");
+    expect(art.summary).toContain("Held unknown-usage refuse settle-as-overrun");
+    expect(art.summary).toContain("Zero-actual settle");
+    expect(art.summary).toContain("Held→known-cancel reconcile");
+    expect(art.summary).toContain("fixtureAcceptedOnly");
+    expect(art.summary).toContain("Negative actual refused");
+    expect(art.summary).toContain("Non-finite actual refused");
+    expect(art.summary).toContain("Post-overrun unknown-cancel refused");
+    expect(art.summary).toContain("Fractional actual refused");
+    expect(art.summary).toContain("Post-overspend reserve");
+    expect(art.summary).toContain("BUDGET_EXHAUSTED");
+    expect(art.summary).toContain("Non-integer reserve refused");
+    expect(art.summary).toContain("Conflicting known-cancel after overrun settle refused");
+    expect(art.summary).toContain("Replayed overrun settle passes assertBudgetSettlementHonesty");
+    expect(art.summary).toContain(
+      "assertBudgetSettlementHonesty rejects tampered settlement",
     );
-    expect(art.summary).toMatch(
-      /N8 whitespace pageId\/revision throw|live verify literal true → NOT_WIRED/,
-    );
-    expect(art.summary).toMatch(
-      /N9 dual live\+claimed verify refuse|post-MATCHED human edit → CONFLICT_RETAINED/,
-    );
-    expect(art.summary).toMatch(
-      /N10 alias TRUE live overwrite → OVERWRITE_FORBIDDEN|owner-ack then CLAIMED_VERIFIED_REFUSED/,
-    );
-    expect(art.summary).toMatch(
-      /N11 numeric live 1 → OVERWRITE_FORBIDDEN|convergent CONFLICT verify never elevates/,
-    );
-    expect(art.summary).toMatch(
-      /N12 live verify TRUE alias → MATCHED_PENDING_ONLY|post-ack OVERWRITE_FORBIDDEN/,
-    );
+    expect(art.summary).toContain("ACTUAL_COST_OVERRUN_RELATED_CASE_IDS=[T-X028]");
+    expect(art.summary).toContain("isActualCostOverrun(600,750)=true");
   });
 });

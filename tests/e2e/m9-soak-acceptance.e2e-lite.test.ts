@@ -6,7 +6,7 @@ import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { PilotGateStatus } from "@worksocial/domain";
+import { PilotGateStatus, SoakProofKind } from "@worksocial/domain";
 import { createFileSoakStore } from "@worksocial/persistence";
 import { createSoakService } from "@worksocial/soak";
 
@@ -69,6 +69,34 @@ describe("e2e-lite: M9 soak acceptance", () => {
     expect(report.acceptedCases.some((c) => c.caseId === "T-X060")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X070")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X028")).toBe(true);
+    const tx028 = result.run.caseResults.find((c) => c.caseId === "T-X028");
+    expect(tx028?.status).toBe("ACCEPTED");
+    expect(String(tx028?.status).toUpperCase()).not.toBe("VERIFIED");
+    const overrunProof = result.run.proofs.find(
+      (p) =>
+        p.kind === SoakProofKind.ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE,
+    );
+    expect(overrunProof?.passed).toBe(true);
+    expect(overrunProof?.fixtureOnly).toBe(true);
+    const detailBlob = (overrunProof?.details ?? []).join(" | ");
+    expect(detailBlob).toContain("overrunMinor");
+    expect(detailBlob).toContain("NOT_WIRED");
+    expect(detailBlob).toContain("ACCESS_BLOCKED");
+    expect(detailBlob).toContain("Zero-actual settle");
+    expect(detailBlob).toContain("Held→known-cancel reconcile");
+    expect(detailBlob).toContain("fixtureAcceptedOnly");
+    expect(detailBlob).toContain("Negative actual refused");
+    expect(detailBlob).toContain("Non-finite actual refused");
+    expect(detailBlob).toContain("Post-overrun unknown-cancel refused");
+    expect(detailBlob).toContain("Fractional actual refused");
+    expect(detailBlob).toContain("Post-overspend reserve");
+    expect(detailBlob).toContain("BUDGET_EXHAUSTED");
+    expect(detailBlob).toContain("Non-integer reserve refused");
+    expect(detailBlob).toContain("Conflicting known-cancel after overrun settle refused");
+    expect(detailBlob).toContain("ACTUAL_COST_OVERRUN_RELATED_CASE_IDS=[T-X028]");
+    expect(detailBlob).toContain("isActualCostOverrun(600,750)=true");
+    expect(detailBlob).toContain("Replayed overrun settle passes assertBudgetSettlementHonesty");
+    expect(detailBlob).toContain("assertBudgetSettlementHonesty");
     expect(report.acceptedCases.some((c) => c.caseId === "T-X044")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X045")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-US-006")).toBe(true);
@@ -174,12 +202,6 @@ describe("e2e-lite: M9 soak acceptance", () => {
     expect(report.acceptedCases.some((c) => c.caseId === "T-X017")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X024")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X025")).toBe(true);
-    {
-      const tx025 = report.acceptedCases.find((c) => c.caseId === "T-X025");
-      expect(tx025?.environment).toBe("fixture");
-      expect(String(tx025?.status).toUpperCase()).not.toBe("VERIFIED");
-      expect(String(tx025?.status).toUpperCase()).toBe("ACCEPTED");
-    }
     expect(report.acceptedCases.some((c) => c.caseId === "T-X011")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X003")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X050")).toBe(true);
