@@ -3,13 +3,13 @@
   "caseId": "T-US-011",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-US-011 (Connect Google Ads analyze-only — write disabled)\nproof=connect_google_ads_analyze_only applyCount=0 :: ANALYZE_ONLY READ_READY client=111-222-3333 manager=999-888-7777; tier=TEST (fixture analyze-only) | Inventory campaigns=2 conversions=2 mapped=1 discrepancies=1 | Read receipt=2026-11-21T19:21:20.000Z; sourceWatermark=fixture-ads-wm-b05f7a88 | Spending authority disabled; writeReadiness=NOT_AUTHORIZED; deny-write consent recorded | Persisted fixture binding reloaded connectionId=gads-conn-f7853bce | WRITE capability → WRITE_CAPABILITY_REFUSED (analyze-only only) | LIVE → LIVE_TRANSPORT_NOT_WIRED; NOT_WIRED → ENVIRONMENT_UNAVAILABLE | Missing deny-write → DENY_WRITE_CONSENT_REQUIRED; openid-only → MISSING_ADS_SCOPE | PRODUCTION on FIXTURE → PRODUCTION_TIER_ON_FIXTURE_REFUSED; incomplete mapping → MAPPING_INCOMPLETE | No gateway mutate — fixture store persist/reload only; applyAttemptCount=0 | Distinct from T-F06 CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS (complete F06 package) — T-US-011 is analyze-only save/reload summary | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-US-011 (Connect Google Ads analyze-only — write disabled)\nproof=connect_google_ads_analyze_only applyCount=0 :: ANALYZE_ONLY READ_READY client=111-222-3333 manager=999-888-7777; tier=TEST (fixture analyze-only) | Inventory campaigns=2 conversions=2 mapped=1 discrepancies=1 | Read receipt=2026-11-21T19:21:20.000Z; sourceWatermark=fixture-ads-wm-f48c0dbb | Spending authority disabled; writeReadiness=NOT_AUTHORIZED; deny-write consent recorded | Persisted fixture binding reloaded connectionId=gads-conn-196c0d07 | WRITE capability → WRITE_CAPABILITY_REFUSED (analyze-only only) | LIVE → LIVE_TRANSPORT_NOT_WIRED; NOT_WIRED → ENVIRONMENT_UNAVAILABLE | Missing deny-write → DENY_WRITE_CONSENT_REQUIRED; openid-only → MISSING_ADS_SCOPE | PRODUCTION on FIXTURE → PRODUCTION_TIER_ON_FIXTURE_REFUSED; incomplete mapping → MAPPING_INCOMPLETE | No gateway mutate — fixture store persist/reload only; applyAttemptCount=0 | Distinct from T-F06 CONNECT_GOOGLE_ADS_CONTROLLED_ANALYSIS (complete F06 package) — T-US-011 is analyze-only save/reload summary | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "connect_google_ads_analyze_only"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-011.json",
-  "createdAtIso": "2026-11-27T17:13:04.504Z",
+  "createdAtIso": "2026-11-27T17:20:16.628Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-011-45cc22bec692"
+  "uniqueSourceArtifactId": "art-fixture-t-us-011-5a25f423920f"
 }
