@@ -101,7 +101,7 @@ Suggested owner Windows flow (state off OneDrive):
 | T-US-046 / T-X048 | Fixture ACCEPTED via hard search constraints no invention only |
 | T-US-010 / T-X033 | Fixture ACCEPTED via GSC omitted rows unknown not zero only |
 | T-US-008 / T-X032 | Fixture ACCEPTED via GA4 debug not delivered conversion only |
-| T-X031 | Fixture ACCEPTED via GA4 wrong property kind refused only |
+| T-X031 | Fixture ACCEPTED via GA4 wrong property kind refused only (claim-on-padded refuse; invent live-transport closed dishonest; reclaim drift; ACCEPTED≠VERIFIED) |
 | T-US-040 / T-X049 | Fixture ACCEPTED via thank-you without CRM fails delivery only |
 | T-X017 | Fixture ACCEPTED via stop-after-dispatch reconcile / no fake cancel only |
 | T-X024 | Fixture ACCEPTED via old fence after reassignment only |

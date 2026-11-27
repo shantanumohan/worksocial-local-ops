@@ -3,13 +3,13 @@
   "caseId": "T-X031",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X031 (Wrong GA4 property kind — refuse bind)\nproof=ga4_wrong_property_kind_refused applyCount=1 :: UA property kind → WRONG_PROPERTY_KIND refuse | Fixture GA4 property accepted (not live metrics) | Live GA4 bind refused while transport NOT_WIRED | Empty property id → MISSING_PROPERTY | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X031 (Wrong GA4 property kind — refuse bind)\nproof=ga4_wrong_property_kind_refused applyCount=1 :: UA property kind → WRONG_PROPERTY_KIND refuse | measurement_id_only + unknown kinds → WRONG_PROPERTY_KIND refuse | Fixture GA4 property accepted (not live metrics) | Sandbox GA4 accepted as distinct label (≠ fixture ≠ live) | Live GA4 bind refused while transport NOT_WIRED | claimLiveVerified / requestLiveGa4Transport → LIVE_CLAIM_REFUSED (NOT_WIRED) | Empty property id → MISSING_PROPERTY | assertGa4WrongPropertyKindHonest → GA4_KIND_HONEST; ACCEPTED≠VERIFIED | UA-shaped id + UNAVAILABLE env → WRONG_PROPERTY_KIND refuse | idempotent reclaim: double UA refuse agrees; post-live-claim reclaim still WRONG_PROPERTY_KIND (no invent bind) | I10 edges: padded id + measurement-id-shaped property refuse; dual live-claim LIVE_CLAIM_REFUSED; triple reclaim idempotent | I13 edges: claim-on-padded/mid LIVE_CLAIM_REFUSED; invent live-transport closed dishonest; honest+dishonest reclaim DRIFT | liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "ga4_wrong_property_kind_refused"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x031.json",
-  "createdAtIso": "2026-11-27T10:22:19.717Z",
+  "createdAtIso": "2026-11-27T10:27:00.491Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x031-bce67a764c05"
+  "uniqueSourceArtifactId": "art-fixture-t-x031-493689cb7bed"
 }

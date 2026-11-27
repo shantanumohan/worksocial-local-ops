@@ -8,8 +8,8 @@
     "design_release_readiness_packet"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-051.json",
-  "createdAtIso": "2026-11-27T10:22:19.717Z",
+  "createdAtIso": "2026-11-27T10:27:00.491Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-051-bce67a764c05"
+  "uniqueSourceArtifactId": "art-fixture-t-us-051-493689cb7bed"
 }
