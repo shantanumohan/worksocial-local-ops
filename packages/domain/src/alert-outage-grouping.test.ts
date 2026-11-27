@@ -172,4 +172,171 @@ describe("alert outage grouping (T-X068)", () => {
       }),
     ).toThrow(/outageKey/);
   });
+
+  it("collapses ZWSP- and BOM-wrapped outageKey into one incident (T-X068 J28)", () => {
+    const key = "host:local-1";
+    expect(normalizeOutageKey(`\u200b${key}\u200b`)).toBe(key);
+    expect(normalizeOutageKey(`\ufeff${key}`)).toBe(key);
+    const alerts = [
+      alertAt(1, `\u200b${key}`, 0),
+      alertAt(2, key, 1000),
+      alertAt(3, `${key}\ufeff`, 2000, AlertSeverity.P0),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(key);
+    expect(incidents[0]!.alertCount).toBe(3);
+    expect(incidents[0]!.severity).toBe(AlertSeverity.P0);
+    expect(incidents[0]!.externalEffects).toBe("NONE");
+  });
+
+  it("collapses soft-hyphen-split outageKey into one incident (T-X068 J29)", () => {
+    const canonical = "provider:fixture-crm";
+    const withHyphen = `provider:fix\u00adture-crm`;
+    expect(normalizeOutageKey(withHyphen)).toBe(canonical);
+    const alerts = [
+      alertAt(1, canonical, 0),
+      alertAt(2, withHyphen, 1000, AlertSeverity.P2),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(canonical);
+    expect(incidents[0]!.alertCount).toBe(2);
+  });
+
+  it("collapses bidi-mark-wrapped outageKey into one incident (T-X068 J30)", () => {
+    const key = "host:local-1";
+    expect(normalizeOutageKey(`\u200e${key}\u200f`)).toBe(key);
+    const alerts = [
+      alertAt(1, `\u200e${key}`, 0),
+      alertAt(2, key, 1000),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.alertCount).toBe(2);
+  });
+
+  it("collapses line/paragraph separator splits in outageKey (T-X068 J31)", () => {
+    const key = "host:local-1";
+    const split = `host:local\u2028-\u20291`;
+    expect(normalizeOutageKey(split)).toBe(key);
+    const alerts = [
+      alertAt(1, split, 0),
+      alertAt(2, key, 1000),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(key);
+    expect(incidents[0]!.alertCount).toBe(2);
+  });
+
+  it("collapses word-joiner split outageKey into one incident (T-X068 J32)", () => {
+    const key = "capability:gsc-fetch";
+    const split = `capability:gsc\u2060-fetch`;
+    expect(normalizeOutageKey(split)).toBe(key);
+    const alerts = [
+      alertAt(1, split, 0),
+      alertAt(2, key, 1000, AlertSeverity.P0),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(key);
+    expect(incidents[0]!.severity).toBe(AlertSeverity.P0);
+  });
+
+  it("collapses narrow/figure space splits in outageKey (T-X068 J33)", () => {
+    const key = "provider:fixture-crm";
+    const split = `provider:\u202ffix\u2007ture-crm`;
+    expect(normalizeOutageKey(split)).toBe(key);
+    const alerts = [
+      alertAt(1, split, 0),
+      alertAt(2, key, 1000),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(key);
+    expect(incidents[0]!.alertCount).toBe(2);
+  });
+
+  it("collapses thin/hair/math space splits in outageKey (T-X068 J34)", () => {
+    const key = "host:local-1";
+    const split = `host:\u2009local\u200a-1`;
+    expect(normalizeOutageKey(split)).toBe(key);
+    const split2 = `ho\u205fst:local-1`;
+    expect(normalizeOutageKey(split2)).toBe(key);
+    const alerts = [
+      alertAt(1, split, 0),
+      alertAt(2, key, 1000, AlertSeverity.P0),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(key);
+    expect(incidents[0]!.severity).toBe(AlertSeverity.P0);
+  });
+
+  it("collapses en/em/ideographic space splits in outageKey (T-X068 J35)", () => {
+    const key = "capability:gsc-fetch";
+    const split = `capability:\u2002gsc\u2003-fetch`;
+    expect(normalizeOutageKey(split)).toBe(key);
+    const split2 = `capability:\u3000gsc-fetch`;
+    expect(normalizeOutageKey(split2)).toBe(key);
+    const alerts = [
+      alertAt(1, split, 0),
+      alertAt(2, key, 1000, AlertSeverity.P1),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(key);
+  });
+
+  it("does not case-fold distinct outageKeys into one incident (T-X068 J30)", () => {
+    const alerts = [
+      alertAt(1, "host:local-1", 0),
+      alertAt(2, "HOST:LOCAL-1", 1000),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(2);
+    expect(incidents[0]!.alertCount).toBe(1);
+    expect(incidents[1]!.alertCount).toBe(1);
+  });
+
+  it("refuses invisible-only outageKey after normalize (T-X068 J28)", () => {
+    expect(() =>
+      createProbeAlert({
+        alertId: "a1",
+        outageKey: "\u200b\u200b",
+        source: "probe",
+        raisedAtIso: now,
+        severity: AlertSeverity.P1,
+        message: "x",
+      }),
+    ).toThrow(/outageKey/);
+  });
 });

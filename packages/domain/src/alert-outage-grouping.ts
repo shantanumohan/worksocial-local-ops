@@ -59,7 +59,12 @@ export type GroupedIncidentRecord = {
 
 /** Normalize outage keys so padding cannot invent a parallel incident. */
 export function normalizeOutageKey(outageKey: string): string {
-  return outageKey.trim();
+  return outageKey
+    .trim()
+    .replace(
+      /[\u00a0\u2002\u2003\u2007\u2009\u200a\u202f\u205f\u3000\u200b\u200c\u200d\ufeff\u00ad\u200e\u200f\u2028\u2029\u2060]/g,
+      "",
+    );
 }
 
 export function createProbeAlert(input: {
