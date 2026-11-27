@@ -25,6 +25,7 @@
  * Deepen (Q31): maxAttempts=1.1 → first 429 STOP (no WAIT invent).
  * Deepen (Q34): negative/zero attempt floors to 1 for exponential index.
  * Deepen (Q35): subnormal Retry-After ceils to 1s (not exponential fallback).
+ * Deepen (Q38): -Infinity Retry-After → exponential (finite but < 0 refuse).
  */
 
 import { randomUUID } from "node:crypto";
@@ -553,6 +554,25 @@ export function proofRateLimitBoundedBackoffPreservesDeadline(
     details.push(
       `maxAttempts=1 STOP honesty failed: ${JSON.stringify(oneShot)}`,
     );
+  }
+
+  // Scenario P10 (Q38): -Infinity Retry-After → exponential (not honored Retry-After).
+  const negInfRetry = computeBackoffWaitSeconds({
+    attempt: 2,
+    retryAfterSeconds: Number.NEGATIVE_INFINITY,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 2,
+  });
+  if (
+    negInfRetry.source === "exponential" &&
+    negInfRetry.waitSeconds === 2
+  ) {
+    details.push(
+      "-Infinity Retry-After refused → exponential wait 2s (no invent retry_after)",
+    );
+  } else {
+    passed = false;
+    details.push(`-Infinity Retry-After failed: ${JSON.stringify(negInfRetry)}`);
   }
 
   // Scenario P9 (Q35): subnormal Retry-After ceils to WAIT 1s.
