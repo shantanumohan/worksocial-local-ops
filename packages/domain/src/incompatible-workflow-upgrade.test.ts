@@ -136,11 +136,12 @@ describe("incompatible workflow upgrade (T-X067)", () => {
     expect(decision.retainedPin.compatibilityEpoch).toBe("epoch-a");
   });
 
-  it("blocks breakingRevision-only mismatch on RUNNING", () => {
+  it("blocks RUNNING on breakingRevision mismatch only (T-X067 S36)", () => {
     const instance = baseInstance({
-      workflowId: "wf-rev",
+      workflowId: "wf-running-rev",
       breakingRevision: 0,
     });
+    expect(isWorkflowInFlight(instance.phase)).toBe(true);
     expect(
       classifyWorkflowIncompatibility(instance.pin, {
         definitionVersion: "1.1.0",
@@ -167,6 +168,7 @@ describe("incompatible workflow upgrade (T-X067)", () => {
     expect(decision.reasons.some((r) => r.includes("breakingRevision"))).toBe(
       true,
     );
+    expect(decision.temporalWiring).toBe("NOT_WIRED");
   });
 
   it("retains compatible definition when proposal matches pin", () => {
@@ -224,6 +226,118 @@ describe("incompatible workflow upgrade (T-X067)", () => {
     expect(decision.temporalWiring).toBe("NOT_WIRED");
   });
 
+  it("retains pin on IDLE epoch mismatch without breakingChange (T-X067 S37)", () => {
+    const instance = baseInstance({
+      workflowId: "wf-idle-epoch",
+      phase: WorkflowInstancePhase.IDLE,
+    });
+    expect(isWorkflowInFlight(instance.phase)).toBe(false);
+    const decision = evaluateWorkflowDefinitionUpgrade({
+      instance,
+      proposed: {
+        definitionVersion: "1.2.0",
+        compatibilityEpoch: "epoch-b",
+        breakingRevision: 0,
+        breakingChange: false,
+      },
+      nowIso: now,
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe(
+      WorkflowUpgradeCode.COMPATIBLE_DEFINITION_RETAINED,
+    );
+    expect(decision.retainedPin.compatibilityEpoch).toBe("epoch-a");
+    expect(decision.reasons.some((r) => r.includes("compatibilityEpoch"))).toBe(
+      true,
+    );
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.temporalWiring).toBe("NOT_WIRED");
+  });
+
+  it("retains pin on COMPLETE epoch mismatch without breakingChange (T-X067 S38)", () => {
+    const instance = baseInstance({
+      workflowId: "wf-complete-epoch",
+      phase: WorkflowInstancePhase.COMPLETE,
+    });
+    expect(isWorkflowInFlight(instance.phase)).toBe(false);
+    const decision = evaluateWorkflowDefinitionUpgrade({
+      instance,
+      proposed: {
+        definitionVersion: "2.0.0",
+        compatibilityEpoch: "epoch-b",
+        breakingRevision: 0,
+        breakingChange: false,
+      },
+      nowIso: now,
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe(
+      WorkflowUpgradeCode.COMPATIBLE_DEFINITION_RETAINED,
+    );
+    expect(decision.retainedPin.compatibilityEpoch).toBe("epoch-a");
+    expect(decision.reasons.some((r) => r.includes("compatibilityEpoch"))).toBe(
+      true,
+    );
+    expect(decision.upgradeApplied).toBe(false);
+    expect(decision.temporalWiring).toBe("NOT_WIRED");
+  });
+
+  it("refuses COMPLETE upgrade when breakingChange flag set (T-X067 S31)", () => {
+    const instance = baseInstance({
+      workflowId: "wf-complete-bc",
+      phase: WorkflowInstancePhase.COMPLETE,
+    });
+    expect(isWorkflowInFlight(instance.phase)).toBe(false);
+    const decision = evaluateWorkflowDefinitionUpgrade({
+      instance,
+      proposed: {
+        definitionVersion: "1.0.0",
+        compatibilityEpoch: "epoch-a",
+        breakingRevision: 0,
+        breakingChange: true,
+      },
+      nowIso: now,
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe(
+      WorkflowUpgradeCode.COMPATIBLE_DEFINITION_RETAINED,
+    );
+    expect(decision.upgradeApplied).toBe(false);
+    expect(decision.retainedPin.definitionVersion).toBe("1.0.0");
+    expect(decision.reasons.some((r) => r.includes("breakingChange"))).toBe(
+      true,
+    );
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.temporalWiring).toBe("NOT_WIRED");
+  });
+
+  it("refuses IDLE upgrade when breakingChange flag set on matching pin (T-X067 S32)", () => {
+    const instance = baseInstance({
+      workflowId: "wf-idle-bc",
+      phase: WorkflowInstancePhase.IDLE,
+    });
+    const decision = evaluateWorkflowDefinitionUpgrade({
+      instance,
+      proposed: {
+        definitionVersion: "1.0.0",
+        compatibilityEpoch: "epoch-a",
+        breakingRevision: 0,
+        breakingChange: true,
+      },
+      nowIso: now,
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe(
+      WorkflowUpgradeCode.COMPATIBLE_DEFINITION_RETAINED,
+    );
+    expect(decision.retainedPin.definitionVersion).toBe("1.0.0");
+    expect(decision.reasons.some((r) => r.includes("breakingChange"))).toBe(
+      true,
+    );
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.temporalWiring).toBe("NOT_WIRED");
+  });
+
   it("refuses incompatible rebind on COMPLETE and retains pin", () => {
     const instance = baseInstance({
       workflowId: "wf-complete",
@@ -246,8 +360,74 @@ describe("incompatible workflow upgrade (T-X067)", () => {
     expect(decision.retainedPin.definitionVersion).toBe("1.0.0");
   });
 
-  it("treats matching pin + breakingChange=true as incompatible while RUNNING", () => {
-    const instance = baseInstance({ workflowId: "wf-flag" });
+  it("blocks APPLYING when breakingChange set on matching pin (T-X067 S33)", () => {
+    const instance = baseInstance({
+      workflowId: "wf-applying-bc",
+      phase: WorkflowInstancePhase.APPLYING,
+    });
+    expect(isWorkflowInFlight(instance.phase)).toBe(true);
+    const decision = evaluateWorkflowDefinitionUpgrade({
+      instance,
+      proposed: {
+        definitionVersion: "1.0.0",
+        compatibilityEpoch: "epoch-a",
+        breakingRevision: 0,
+        breakingChange: true,
+      },
+      nowIso: now,
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe(
+      WorkflowUpgradeCode.INCOMPATIBLE_UPGRADE_BLOCKED,
+    );
+    expect(decision.retainedPin.definitionVersion).toBe("1.0.0");
+    expect(decision.reasons.some((r) => r.includes("breakingChange"))).toBe(
+      true,
+    );
+    expect(decision.temporalWiring).toBe("NOT_WIRED");
+  });
+
+  it("blocks APPLYING on epoch mismatch without breakingChange (T-X067 S35)", () => {
+    const instance = baseInstance({
+      workflowId: "wf-applying-epoch",
+      phase: WorkflowInstancePhase.APPLYING,
+    });
+    expect(isWorkflowInFlight(instance.phase)).toBe(true);
+    expect(
+      classifyWorkflowIncompatibility(instance.pin, {
+        definitionVersion: "1.2.0",
+        compatibilityEpoch: "epoch-b",
+        breakingRevision: 0,
+        breakingChange: false,
+      }),
+    ).toBe("compatibility_epoch_mismatch");
+    const decision = evaluateWorkflowDefinitionUpgrade({
+      instance,
+      proposed: {
+        definitionVersion: "1.2.0",
+        compatibilityEpoch: "epoch-b",
+        breakingRevision: 0,
+        breakingChange: false,
+      },
+      nowIso: now,
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe(
+      WorkflowUpgradeCode.INCOMPATIBLE_UPGRADE_BLOCKED,
+    );
+    expect(decision.retainedPin.compatibilityEpoch).toBe("epoch-a");
+    expect(decision.reasons.some((r) => r.includes("compatibilityEpoch"))).toBe(
+      true,
+    );
+    expect(decision.temporalWiring).toBe("NOT_WIRED");
+  });
+
+  it("blocks RUNNING when breakingChange set on matching pin (T-X067 S34)", () => {
+    const instance = baseInstance({
+      workflowId: "wf-running-bc",
+      phase: WorkflowInstancePhase.RUNNING,
+    });
+    expect(isWorkflowInFlight(instance.phase)).toBe(true);
     expect(
       workflowPinsMatchProposal(instance.pin, {
         definitionVersion: "1.0.0",
@@ -270,6 +450,11 @@ describe("incompatible workflow upgrade (T-X067)", () => {
     expect(decision.code).toBe(
       WorkflowUpgradeCode.INCOMPATIBLE_UPGRADE_BLOCKED,
     );
+    expect(decision.retainedPin.definitionVersion).toBe("1.0.0");
+    expect(decision.reasons.some((r) => r.includes("breakingChange"))).toBe(
+      true,
+    );
+    expect(decision.temporalWiring).toBe("NOT_WIRED");
   });
 
   it("rejects invalid createWorkflowInstance inputs", () => {

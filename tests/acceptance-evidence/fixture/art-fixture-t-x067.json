@@ -3,13 +3,13 @@
   "caseId": "T-X067",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X067 (Incompatible workflow upgrade — blocked or compatible retained)\nproof=incompatible_workflow_upgrade_blocked_or_retained applyCount=1 :: Compatible 1.0.0→1.1.0 within epoch-a → COMPATIBLE_UPGRADE_APPLIED; temporalWiring=NOT_WIRED | Incompatible 2.0.0/epoch-b on RUNNING → INCOMPATIBLE_UPGRADE_BLOCKED; compatible 1.0.0/epoch-a retained | Epoch-only mismatch on RUNNING → INCOMPATIBLE_UPGRADE_BLOCKED; epoch-a retained | breakingRevision-only mismatch on RUNNING → INCOMPATIBLE_UPGRADE_BLOCKED; rev 0 retained | Matching proposal → COMPATIBLE_DEFINITION_RETAINED (no silent rebind) | APPLYING + breakingChange → INCOMPATIBLE_UPGRADE_BLOCKED; pin retained | IDLE incompatible proposal → COMPATIBLE_DEFINITION_RETAINED; no silent rebind | COMPLETE incompatible proposal → COMPATIBLE_DEFINITION_RETAINED | liveProviderSuccessClaimed=false externalEffects=NONE temporalWiring=NOT_WIRED\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X067 (Incompatible workflow upgrade — blocked or compatible retained)\nproof=incompatible_workflow_upgrade_blocked_or_retained applyCount=1 :: Compatible 1.0.0→1.1.0 within epoch-a → COMPATIBLE_UPGRADE_APPLIED; temporalWiring=NOT_WIRED | Incompatible 2.0.0/epoch-b on RUNNING → INCOMPATIBLE_UPGRADE_BLOCKED; compatible 1.0.0/epoch-a retained | Epoch-only mismatch on RUNNING → INCOMPATIBLE_UPGRADE_BLOCKED; epoch-a retained | breakingRevision-only mismatch on RUNNING → INCOMPATIBLE_UPGRADE_BLOCKED; rev 0 retained | Matching proposal → COMPATIBLE_DEFINITION_RETAINED (no silent rebind) | APPLYING + breakingChange → INCOMPATIBLE_UPGRADE_BLOCKED; pin retained | IDLE incompatible proposal → COMPATIBLE_DEFINITION_RETAINED; no silent rebind | COMPLETE incompatible proposal → COMPATIBLE_DEFINITION_RETAINED | S31 COMPLETE+breakingChange → COMPATIBLE_DEFINITION_RETAINED; pin retained | S32 IDLE+breakingChange → COMPATIBLE_DEFINITION_RETAINED; pin retained | S33 APPLYING+breakingChange → INCOMPATIBLE_UPGRADE_BLOCKED; pin retained | S35 APPLYING+epoch mismatch → INCOMPATIBLE_UPGRADE_BLOCKED; pin retained | S36 RUNNING+breakingRevision mismatch → INCOMPATIBLE_UPGRADE_BLOCKED | S34 RUNNING+breakingChange → INCOMPATIBLE_UPGRADE_BLOCKED; pin retained | S37 IDLE+epoch mismatch → COMPATIBLE_DEFINITION_RETAINED; pin retained | S38 COMPLETE+epoch mismatch → COMPATIBLE_DEFINITION_RETAINED; pin retained | liveProviderSuccessClaimed=false externalEffects=NONE temporalWiring=NOT_WIRED\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "incompatible_workflow_upgrade_blocked_or_retained"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x067.json",
-  "createdAtIso": "2026-11-27T21:23:58.352Z",
+  "createdAtIso": "2026-11-27T21:31:40.612Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x067-1548a009b543"
+  "uniqueSourceArtifactId": "art-fixture-t-x067-9105b79f32ce"
 }
