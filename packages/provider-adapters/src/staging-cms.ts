@@ -8,9 +8,11 @@ import { randomBytes } from "node:crypto";
 import {
   StagingChangeStatus,
   digestFields,
+  evaluateCmsEnvironmentMutateWithLease,
   fieldsMatch,
   validateCmsEnvironmentOperation,
   type CmsEnvironmentGateResult,
+  type CmsEnvironmentMutateWithLeaseDecision,
   type CmsEnvironmentValue,
   type StagingChangeRecord,
   type StagingCmsPageRecord,
@@ -21,9 +23,11 @@ export type StagingCmsApplyResult = {
   change: StagingChangeRecord;
   page: StagingCmsPageRecord | null;
   note: string;
-  /** 0 when environment gate refuses mutate (T-X007). */
+  /** 0 when environment/lease gate refuses mutate (T-X007). */
   providerMutateCount: number;
   environmentGate: CmsEnvironmentGateResult;
+  /** Mutate-time env+lease decision when leaseExpiresAtIso is supplied. */
+  leaseGate: CmsEnvironmentMutateWithLeaseDecision | null;
 };
 
 export type StagingCmsSimulator = {
@@ -43,6 +47,11 @@ export type StagingCmsSimulator = {
     intendedEnvironment: CmsEnvironmentValue | string;
     /** Mutate kind for the environment gate (default publish). */
     operation?: "publish" | "repair";
+    /**
+     * Optional credential lease expiry (ISO). When set, mutate-time lease
+     * recheck runs (T-X007 lease-expire race) — expired → providerMutateCount=0.
+     */
+    leaseExpiresAtIso?: string | null;
     /** Simulate lost ack / unknown remote outcome. */
     forceUnknownRemote?: boolean;
   }): StagingCmsApplyResult;
@@ -96,12 +105,53 @@ export function createStagingCmsSimulator(
       return page;
     },
     applyChange(input) {
-      const environmentGate = validateCmsEnvironmentOperation({
+      const operation = input.operation ?? "publish";
+      let environmentGate = validateCmsEnvironmentOperation({
         boundEnvironment: input.boundEnvironment,
         intendedEnvironment: input.intendedEnvironment,
-        operation: input.operation ?? "publish",
+        operation,
       });
-      if (!environmentGate.ok) {
+      let leaseGate: CmsEnvironmentMutateWithLeaseDecision | null = null;
+
+      if (input.leaseExpiresAtIso !== undefined) {
+        leaseGate = evaluateCmsEnvironmentMutateWithLease({
+          boundEnvironment: input.boundEnvironment,
+          intendedEnvironment: input.intendedEnvironment,
+          operation,
+          leaseExpiresAtIso: input.leaseExpiresAtIso,
+          nowIso: input.nowIso,
+        });
+        if (!leaseGate.allowed) {
+          if (leaseGate.environmentGate) {
+            environmentGate = leaseGate.environmentGate;
+          }
+          const change: StagingChangeRecord = {
+            changeId: input.changeId,
+            missionId: input.missionId,
+            pageId: input.pageId,
+            desiredFields: input.desiredFields,
+            desiredDigest: digestFields(input.desiredFields),
+            status: StagingChangeStatus.MISMATCH,
+            appliedRevision: null,
+            observedDigest: null,
+            recoveryNote: leaseGate.reasons.join("; "),
+            createdAtIso: input.nowIso,
+            updatedAtIso: input.nowIso,
+          };
+          changes.set(change.changeId, change);
+          return {
+            change,
+            page: pages.get(input.pageId) ?? null,
+            note: `CMS env+lease gate refused mutate (${leaseGate.code}) — no production op; providerMutateCount=0`,
+            providerMutateCount: 0,
+            environmentGate,
+            leaseGate,
+          };
+        }
+        if (leaseGate.environmentGate) {
+          environmentGate = leaseGate.environmentGate;
+        }
+      } else if (!environmentGate.ok) {
         const change: StagingChangeRecord = {
           changeId: input.changeId,
           missionId: input.missionId,
@@ -122,6 +172,7 @@ export function createStagingCmsSimulator(
           note: `CMS environment gate refused mutate (${environmentGate.code}) — no production op; providerMutateCount=0`,
           providerMutateCount: 0,
           environmentGate,
+          leaseGate: null,
         };
       }
 
@@ -147,6 +198,7 @@ export function createStagingCmsSimulator(
           note: "Staging apply failed — page missing in simulator.",
           providerMutateCount: 0,
           environmentGate,
+          leaseGate,
         };
       }
 
@@ -173,6 +225,7 @@ export function createStagingCmsSimulator(
             "UNKNOWN_REMOTE_OUTCOME — do not treat as verified. Use recovery path.",
           providerMutateCount: 0,
           environmentGate,
+          leaseGate,
         };
       }
 
@@ -207,6 +260,7 @@ export function createStagingCmsSimulator(
           "Staging CMS simulator accepted apply (ACCEPTED_PENDING). Independent read-back required — acceptance ≠ verified.",
         providerMutateCount: 1,
         environmentGate,
+        leaseGate,
       };
     },
     independentRead(input) {
