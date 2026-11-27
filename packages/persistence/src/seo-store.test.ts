@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -7,6 +7,8 @@ import {
   AuditSeverity,
   createPageAudit,
   createSeoProposal,
+  emptySeoState,
+  SchemaValidationVerdict,
   SeoChangeKind,
 } from "@worksocial/domain";
 import { createFileSeoStore } from "./seo-store.js";
@@ -14,6 +16,46 @@ import { createFileSeoStore } from "./seo-store.js";
 const now = "2026-11-18T15:30:00.000Z";
 
 describe("seo file store", () => {
+  it("backfills honesty fields on legacy schema validations", () => {
+    const dir = mkdtempSync(join(tmpdir(), "ws-seo-legacy-"));
+    try {
+      const seoDir = join(dir, "seo");
+      mkdirSync(seoDir, { recursive: true });
+      const legacy = emptySeoState(now);
+      // Simulate pre-hillclimb persisted validation missing honesty fields.
+      const withoutHonesty = {
+        validationId: "val-legacy",
+        pageAssetId: "page-home",
+        proposalId: null,
+        nodes: [],
+        payloadDigest: "digest",
+        verdict: SchemaValidationVerdict.PASS,
+        issues: [],
+        agreesWithVisibleContent: true,
+        fixtureOnly: true,
+        createdAtIso: now,
+      };
+      writeFileSync(
+        join(seoDir, "seo-state.json"),
+        JSON.stringify(
+          {
+            ...legacy,
+            schemaValidations: [withoutHonesty],
+          },
+          null,
+          2,
+        ),
+        "utf8",
+      );
+      const store = createFileSeoStore(dir);
+      const [v] = store.listSchemaValidations();
+      expect(v?.externalEffects).toBe("NONE");
+      expect(v?.liveProviderWiring).toBe("NOT_WIRED");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it("persists audits and proposals", () => {
     const dir = mkdtempSync(join(tmpdir(), "ws-seo-store-"));
     try {

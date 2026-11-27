@@ -116,6 +116,8 @@ export type SeoService = {
     visibleContent?: string;
     factLabels?: FactSupportLookup;
     fixtureOnly?: boolean;
+    /** Live CMS publish wiring — fixture proofs keep NOT_WIRED. */
+    liveCmsWiring?: "NOT_WIRED" | "WIRED";
     nowIso?: string;
   }):
     | { ok: true; validation: SchemaValidationResult }
@@ -401,6 +403,7 @@ export function createSeoService(
         visibleContent: input.visibleContent ?? SEO_GOLDEN_VISIBLE_CONTENT,
         factLabels: input.factLabels,
         fixtureOnly: input.fixtureOnly !== false,
+        liveCmsWiring: input.liveCmsWiring ?? "NOT_WIRED",
         createdAtIso: nowIso,
       });
       store.addSchemaValidation(validation);
