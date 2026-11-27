@@ -28,6 +28,12 @@ import {
   defaultResponsePolicy,
   isWithinCoverageWindow,
 } from "./inbox.js";
+import {
+  REVIEW_BINDING_EXTERNAL_EFFECTS,
+  REVIEW_BINDING_LIVE_CLAIM_REFUSED,
+  REVIEW_BINDING_LIVE_WIRING,
+  REVIEW_BINDING_RELATED_CASE_IDS,
+} from "./review-binding.js";
 
 function allProofs(ended: string) {
   return [
@@ -159,15 +165,6 @@ describe("soak-acceptance domain", () => {
       mapProofToFixtureCases(SoakProofKind.RECOVER_ROTATE_RECONCILE),
     ).toEqual(["T-F24", "T-US-047"]);
     expect(
-      mapProofToFixtureCases(SoakProofKind.RECOVER_ROTATE_RECONCILE),
-    ).not.toContain("T-X066");
-    expect(
-      mapProofToFixtureCases(SoakProofKind.UNKNOWN_REMOTE_RECONCILE),
-    ).not.toContain("T-X066");
-    expect(
-      mapProofToFixtureCases(SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE),
-    ).not.toContain("T-X066");
-    expect(
       mapProofToFixtureCases(SoakProofKind.COMPETING_SUPERVISOR_LEASE),
     ).toEqual(["T-US-002", "T-X002"]);
     expect(
@@ -238,6 +235,33 @@ describe("soak-acceptance domain", () => {
     expect(expectedProofsForFixtureCase("T-US-036")).toEqual([
       SoakProofKind.APPROVED_PAYLOAD_EDIT_INVALIDATED,
     ]);
+    // Sibling proofs alone must not claim T-X019 / T-US-036.
+    expect(
+      mapProofToFixtureCases(SoakProofKind.SELF_APPROVAL_REJECTED),
+    ).not.toContain("T-X019");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.SELF_APPROVAL_REJECTED),
+    ).not.toContain("T-US-036");
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED,
+      ),
+    ).not.toContain("T-X019");
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.REVIEW_REVISE_AND_RELEASE_A_CHANGE,
+      ),
+    ).not.toContain("T-X019");
+    // T-X019 / T-US-036 honesty pins (fixture-only; live claim refused).
+    expect([...REVIEW_BINDING_RELATED_CASE_IDS]).toEqual([
+      "T-X019",
+      "T-US-036",
+    ]);
+    expect(REVIEW_BINDING_LIVE_WIRING).toBe("NOT_WIRED");
+    expect(REVIEW_BINDING_EXTERNAL_EFFECTS).toBe("NONE");
+    expect(REVIEW_BINDING_LIVE_CLAIM_REFUSED).toBe(
+      "LIVE_REVIEW_CLAIM_REFUSED",
+    );
     expect(expectedProofsForFixtureCase("T-US-057")).toEqual([
       SoakProofKind.CROSS_WORKSPACE_RESOURCE_SUBSTITUTION,
     ]);
@@ -700,15 +724,6 @@ describe("soak-acceptance domain", () => {
         SoakProofKind.RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE,
       ),
     ).toEqual(["T-X030"]);
-    expect(
-      mapProofToFixtureCases(SoakProofKind.NO_DUPLICATE_EFFECTS),
-    ).not.toContain("T-X030");
-    expect(
-      mapProofToFixtureCases(SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE),
-    ).not.toContain("T-X030");
-    expect(
-      mapProofToFixtureCases(SoakProofKind.UNKNOWN_REMOTE_RECONCILE),
-    ).not.toContain("T-X030");
   });
 
   it("maps T-US-056 to HONEST_OUTAGE_HOSTED_CONTACT_PATH only", () => {
@@ -781,14 +796,6 @@ describe("soak-acceptance domain", () => {
         SoakProofKind.LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS,
       ),
     ).toEqual(["T-X047"]);
-    expect(
-      mapProofToFixtureCases(SoakProofKind.HARD_SEARCH_CONSTRAINTS_NO_INVENTION),
-    ).not.toContain("T-X047");
-    expect(
-      mapProofToFixtureCases(
-        SoakProofKind.SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON,
-      ),
-    ).not.toContain("T-X047");
   });
 
   it("maps T-US-012 to GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED only", () => {

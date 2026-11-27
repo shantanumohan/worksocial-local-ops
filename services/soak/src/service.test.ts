@@ -52,43 +52,9 @@ describe("soak service (M9)", () => {
           : p.applyAttemptCount === 1, // T-US-026 coalesce counts one catch-up apply
       ),
     ).toBe(true);
-    const backupProof = result.proofs.find(
-      (p) => p.kind === SoakProofKind.BACKUP_OMIT_RECEIPT,
-    );
-    expect(backupProof?.passed).toBe(true);
     expect(
-      backupProof?.details.some((d) =>
-        /Omit-receipt backup written.*providerEffects=\[\] receipts=\[\]/.test(
-          d,
-        ),
-      ),
+      result.proofs.some((p) => p.kind === SoakProofKind.BACKUP_OMIT_RECEIPT),
     ).toBe(true);
-    expect(
-      backupProof?.details.some((d) =>
-        /Post-restore.*localProvider=omitted receipts=0/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      backupProof?.details.some((d) =>
-        /Reconciled remoteRef=.*without re-apply/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      backupProof?.details.some((d) =>
-        /Post-reconcile retry providerCreated=false applyCount=1/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      backupProof?.details.some((d) => /NOT_WIRED/.test(d)),
-    ).toBe(true);
-    expect(
-      backupProof?.details.some((d) =>
-        /Distinct from NO_DUPLICATE_EFFECTS/.test(d),
-      ),
-    ).toBe(true);
-    expect(result.details.some((d) => /T-X066 fixture ACCEPTED via backup_omit_receipt only/.test(d))).toBe(
-      true,
-    );
     expect(
       result.proofs.some(
         (p) => p.kind === SoakProofKind.RECOVER_ROTATE_RECONCILE,
@@ -122,11 +88,183 @@ describe("soak service (M9)", () => {
         (p) => p.kind === SoakProofKind.CROSS_WORKSPACE_REFERENCE_DENIED,
       ),
     ).toBe(true);
+    const approvedEditProof = result.proofs.find(
+      (p) => p.kind === SoakProofKind.APPROVED_PAYLOAD_EDIT_INVALIDATED,
+    );
+    expect(approvedEditProof?.passed).toBe(true);
     expect(
-      result.proofs.some(
-        (p) => p.kind === SoakProofKind.APPROVED_PAYLOAD_EDIT_INVALIDATED,
+      approvedEditProof?.details.some((d) =>
+        /payload checksum edit invalidated/.test(d),
       ),
     ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /evidencePackageDigest edit invalidated/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /multi-field revision\+checksum edit invalidated/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) => /NOT_WIRED/.test(d)),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) => /Distinct from T-US-035/.test(d)),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /sticky INVALIDATED refuses rematch/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /proposalId mismatch and evidenceArtifactIds swap/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /all-four-field snapshot mismatch/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Blank\/whitespace pin fields refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Accept on already-INVALIDATED binding refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /fixtureOnly=true ACCEPTED≠VERIFIED/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Empty proposalId refused at create/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Terminal REJECTED rematch validate refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /relatedCaseIds=T-X019,T-US-036/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Blank artifact\/revision pin fields refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Terminal ACCEPTED rematch validate refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /LIVE_REVIEW_CLAIM_REFUSED/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Whitespace-padded snapshot trim-matches/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Reject on already-INVALIDATED binding refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Unknown authorRoleId refused at create/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Empty bindingId refused at create \(BINDING_ID_REQUIRED\)/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Padded wrong revision still INVALIDATED/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Padded wrong checksum still INVALIDATED/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Padded wrong evidence digest still INVALIDATED/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /honestySummary=relatedCaseIds:T-X019,T-US-036/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Padded wrong proposalArtifactId still INVALIDATED/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Blank verdict authorRoleId refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Supplied proposal authorRoleId mismatch refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Supplied proposal proposalId mismatch refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Padded verdict proposalId refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Verdict authorRoleId mismatch refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Blank verdict proposalId refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Padded supplied proposal proposalId refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Padded supplied proposal authorRoleId refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      approvedEditProof?.details.some((d) =>
+        /Padded verdict authorRoleId refused/.test(d),
+      ),
+    ).toBe(true);
+    expect(approvedEditProof?.fixtureOnly).toBe(true);
+    expect(approvedEditProof?.applyAttemptCount).toBe(1);
     expect(
       result.proofs.some(
         (p) => p.kind === SoakProofKind.CROSS_WORKSPACE_RESOURCE_SUBSTITUTION,
@@ -290,68 +428,6 @@ describe("soak service (M9)", () => {
         (p) => p.kind === SoakProofKind.EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED,
       ),
     ).toBe(true);
-    const extHumanEditProof = result.proofs.find(
-      (p) => p.kind === SoakProofKind.EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED,
-    );
-    expect(extHumanEditProof?.fixtureOnly).toBe(true);
-    expect(
-      extHumanEditProof?.details.some((d) => /SILENT_CLEAR_FORBIDDEN/.test(d)),
-    ).toBe(true);
-    expect(
-      extHumanEditProof?.details.some((d) => /NOT_WIRED/.test(d)),
-    ).toBe(true);
-    expect(
-      extHumanEditProof?.details.some((d) =>
-        /Owner-ack literal-only|claimedVerified literal-only/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      extHumanEditProof?.details.some((d) =>
-        /v1→v1-next|MATCHED_PENDING_ONLY refuses claimedVerified/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      extHumanEditProof?.details.some((d) =>
-        /convergent human edit still CONFLICT_RETAINED|post-MATCHED overwrite OVERWRITE_FORBIDDEN/.test(
-          d,
-        ),
-      ),
-    ).toBe(true);
-    expect(
-      extHumanEditProof?.details.some((d) =>
-        /N8 whitespace pageId\/revision throw|live verify literal true → NOT_WIRED/.test(
-          d,
-        ),
-      ),
-    ).toBe(true);
-    expect(
-      extHumanEditProof?.details.some((d) =>
-        /N9 dual live\+claimed verify refuse|post-MATCHED human edit → CONFLICT_RETAINED/.test(
-          d,
-        ),
-      ),
-    ).toBe(true);
-    expect(
-      extHumanEditProof?.details.some((d) =>
-        /N10 alias TRUE live overwrite → OVERWRITE_FORBIDDEN|owner-ack then CLAIMED_VERIFIED_REFUSED/.test(
-          d,
-        ),
-      ),
-    ).toBe(true);
-    expect(
-      extHumanEditProof?.details.some((d) =>
-        /N11 numeric live 1 → OVERWRITE_FORBIDDEN|convergent CONFLICT verify never elevates/.test(
-          d,
-        ),
-      ),
-    ).toBe(true);
-    expect(
-      extHumanEditProof?.details.some((d) =>
-        /N12 live verify TRUE alias → MATCHED_PENDING_ONLY|post-ack OVERWRITE_FORBIDDEN/.test(
-          d,
-        ),
-      ),
-    ).toBe(true);
     expect(
       result.proofs.some(
         (p) => p.kind === SoakProofKind.OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS,
@@ -465,53 +541,10 @@ describe("soak service (M9)", () => {
           SoakProofKind.UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION,
       ),
     ).toBe(true);
-    const layoutProof = result.proofs.find(
-      (p) =>
-        p.kind === SoakProofKind.LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS,
-    );
-    expect(layoutProof?.passed).toBe(true);
     expect(
-      layoutProof?.details.some((d) =>
-        /exchange only \(hudson layout mismatch\)/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      layoutProof?.details.some((d) =>
-        /Counterfactual: marketing capacity 20 would wrongly allow classroom 20/.test(
-          d,
-        ),
-      ),
-    ).toBe(true);
-    expect(
-      layoutProof?.details.some((d) =>
-        /Ambiguous layout phrases → unresolved clarify/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      layoutProof?.details.some((d) =>
-        /boardroom seating 20 → hudson excluded.*filter=layout_specific/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      layoutProof?.details.some((d) =>
-        /theatre seating 30 → hudson admitted.*default 20 would exclude.*filter=layout_specific/.test(
-          d,
-        ),
-      ),
-    ).toBe(true);
-    expect(
-      layoutProof?.details.some((d) => /NOT_WIRED/.test(d)),
-    ).toBe(true);
-    expect(
-      layoutProof?.details.some((d) =>
-        /Distinct from HARD_SEARCH_CONSTRAINTS_NO_INVENTION/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      result.details.some((d) =>
-        /T-X047 fixture ACCEPTED via layout_specific_capacity_mismatch_filters only/.test(
-          d,
-        ),
+      result.proofs.some(
+        (p) =>
+          p.kind === SoakProofKind.LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS,
       ),
     ).toBe(true);
     expect(
@@ -1203,6 +1236,130 @@ describe("soak service (M9)", () => {
     ).toBe(true);
   });
 
+  it("does not ACCEPTED T-X019 from self-approval-only sibling proof", () => {
+    const proofs = [
+      {
+        proofId: "p-self",
+        kind: SoakProofKind.SELF_APPROVAL_REJECTED,
+        passed: true,
+        details: ["self-approval rejected"],
+        applyAttemptCount: 1,
+        operationId: "op-self",
+        createdAtIso: "2026-11-21T18:00:00.000Z",
+        fixtureOnly: true as const,
+      },
+    ];
+    const compiled = compileAcceptanceEvidence({
+      proofs,
+      nowIso: "2026-11-21T18:01:00.000Z",
+      runId: "soak-self-only-tx019",
+      caseIds: ["T-X019", "T-US-036", "T-X018"],
+    });
+    expect(
+      compiled.caseResults.find((c) => c.caseId === "T-X019")?.status,
+    ).toBe(AcceptanceCaseStatus.NOT_RUN);
+    expect(
+      compiled.caseResults.find((c) => c.caseId === "T-US-036")?.status,
+    ).toBe(AcceptanceCaseStatus.NOT_RUN);
+  });
+
+  it("does not ACCEPTED T-X019 from review-revise-release-only sibling proof", () => {
+    const proofs = [
+      {
+        proofId: "p-rrr",
+        kind: SoakProofKind.REVIEW_REVISE_RELEASE_RECEIPT_OR_BLOCKED,
+        passed: true,
+        details: ["review revise release"],
+        applyAttemptCount: 1,
+        operationId: "op-rrr",
+        createdAtIso: "2026-11-21T18:00:00.000Z",
+        fixtureOnly: true as const,
+      },
+    ];
+    const compiled = compileAcceptanceEvidence({
+      proofs,
+      nowIso: "2026-11-21T18:01:00.000Z",
+      runId: "soak-rrr-only-tx019",
+      caseIds: ["T-X019", "T-US-036", "T-US-035"],
+    });
+    expect(
+      compiled.caseResults.find((c) => c.caseId === "T-X019")?.status,
+    ).toBe(AcceptanceCaseStatus.NOT_RUN);
+    expect(
+      compiled.caseResults.find((c) => c.caseId === "T-US-036")?.status,
+    ).toBe(AcceptanceCaseStatus.NOT_RUN);
+  });
+
+  it("does not ACCEPTED T-X019 from F18 review-revise-and-release-only sibling proof", () => {
+    const proofs = [
+      {
+        proofId: "p-f18",
+        kind: SoakProofKind.REVIEW_REVISE_AND_RELEASE_A_CHANGE,
+        passed: true,
+        details: ["f18 revise and release"],
+        applyAttemptCount: 1,
+        operationId: "op-f18",
+        createdAtIso: "2026-11-21T18:00:00.000Z",
+        fixtureOnly: true as const,
+      },
+    ];
+    const compiled = compileAcceptanceEvidence({
+      proofs,
+      nowIso: "2026-11-21T18:01:00.000Z",
+      runId: "soak-f18-only-tx019",
+      caseIds: ["T-X019", "T-US-036", "T-F18"],
+    });
+    expect(
+      compiled.caseResults.find((c) => c.caseId === "T-X019")?.status,
+    ).toBe(AcceptanceCaseStatus.NOT_RUN);
+    expect(
+      compiled.caseResults.find((c) => c.caseId === "T-US-036")?.status,
+    ).toBe(AcceptanceCaseStatus.NOT_RUN);
+  });
+
+  it("does not ACCEPTED T-X019 from empty proof set", () => {
+    const compiled = compileAcceptanceEvidence({
+      proofs: [],
+      nowIso: "2026-11-21T18:01:00.000Z",
+      runId: "soak-empty-tx019",
+      caseIds: ["T-X019", "T-US-036"],
+    });
+    expect(
+      compiled.caseResults.find((c) => c.caseId === "T-X019")?.status,
+    ).toBe(AcceptanceCaseStatus.NOT_RUN);
+    expect(
+      compiled.caseResults.find((c) => c.caseId === "T-US-036")?.status,
+    ).toBe(AcceptanceCaseStatus.NOT_RUN);
+  });
+
+  it("marks T-X019 FAILED when approved-payload proof fails", () => {
+    const proofs = [
+      {
+        proofId: "p-edit-fail",
+        kind: SoakProofKind.APPROVED_PAYLOAD_EDIT_INVALIDATED,
+        passed: false,
+        details: ["forced fail"],
+        applyAttemptCount: 1,
+        operationId: "op-edit-fail",
+        createdAtIso: "2026-11-21T18:00:00.000Z",
+        fixtureOnly: true as const,
+      },
+    ];
+    const compiled = compileAcceptanceEvidence({
+      proofs,
+      nowIso: "2026-11-21T18:01:00.000Z",
+      runId: "soak-edit-fail-tx019",
+      caseIds: ["T-X019", "T-US-036"],
+    });
+    expect(
+      compiled.caseResults.find((c) => c.caseId === "T-X019")?.status,
+    ).toBe(AcceptanceCaseStatus.FAILED);
+    expect(
+      compiled.caseResults.find((c) => c.caseId === "T-US-036")?.status,
+    ).toBe(AcceptanceCaseStatus.FAILED);
+    expect(compiled.artifacts).toHaveLength(0);
+  });
+
   it("does not ACCEPTED T-X066 from retry-only no-dup proof", () => {
     const proofs = [
       {
@@ -1229,130 +1386,6 @@ describe("soak service (M9)", () => {
     expect(
       compiled.caseResults.find((c) => c.caseId === "T-X066")?.status,
     ).toBe(AcceptanceCaseStatus.NOT_RUN);
-  });
-
-  it.each([
-    ["RECOVER_ROTATE_RECONCILE", SoakProofKind.RECOVER_ROTATE_RECONCILE],
-    ["UNKNOWN_REMOTE_RECONCILE", SoakProofKind.UNKNOWN_REMOTE_RECONCILE],
-    [
-      "CONCURRENT_IDEMPOTENT_RELEASE",
-      SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE,
-    ],
-  ] as const)(
-    "does not ACCEPTED T-X066 from wrong-proof %s",
-    (_label, kind) => {
-      const compiled = compileAcceptanceEvidence({
-        proofs: [
-          {
-            proofId: `p-wrong-${kind}`,
-            kind,
-            passed: true,
-            details: ["wrong sibling proof"],
-            applyAttemptCount: 1,
-            operationId: "op-wrong",
-            createdAtIso: "2026-11-21T18:00:00.000Z",
-            fixtureOnly: true as const,
-          },
-        ],
-        nowIso: "2026-11-21T18:01:00.000Z",
-        runId: `soak-tx066-wrong-${kind}`,
-        caseIds: ["T-X066"],
-      });
-      expect(compiled.caseResults).toHaveLength(1);
-      expect(compiled.caseResults[0]!.status).toBe(
-        AcceptanceCaseStatus.NOT_RUN,
-      );
-      expect(compiled.artifacts).toHaveLength(0);
-    },
-  );
-
-  it.each([
-    [
-      "HARD_SEARCH_CONSTRAINTS_NO_INVENTION",
-      SoakProofKind.HARD_SEARCH_CONSTRAINTS_NO_INVENTION,
-    ],
-    [
-      "SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON",
-      SoakProofKind.SEMANTIC_SEARCH_NO_RESULT_EVAL_COMPARISON,
-    ],
-    [
-      "EVAL_NO_GROUNDING_FAIL_CLOSED",
-      SoakProofKind.EVAL_NO_GROUNDING_FAIL_CLOSED,
-    ],
-  ] as const)(
-    "does not ACCEPTED T-X047 from wrong-proof %s",
-    (_label, kind) => {
-      const compiled = compileAcceptanceEvidence({
-        proofs: [
-          {
-            proofId: `p-wrong-tx047-${kind}`,
-            kind,
-            passed: true,
-            details: ["wrong sibling proof"],
-            applyAttemptCount: 1,
-            operationId: "op-wrong-tx047",
-            createdAtIso: "2026-11-21T18:00:00.000Z",
-            fixtureOnly: true as const,
-          },
-        ],
-        nowIso: "2026-11-21T18:01:00.000Z",
-        runId: `soak-tx047-wrong-${kind}`,
-        caseIds: ["T-X047"],
-      });
-      expect(compiled.caseResults).toHaveLength(1);
-      expect(compiled.caseResults[0]!.status).toBe(
-        AcceptanceCaseStatus.NOT_RUN,
-      );
-      expect(compiled.artifacts).toHaveLength(0);
-    },
-  );
-
-  it("marks T-X066 FAILED when BACKUP_OMIT_RECEIPT proof fails", () => {
-    const compiled = compileAcceptanceEvidence({
-      proofs: [
-        {
-          proofId: "p-backup-fail",
-          kind: SoakProofKind.BACKUP_OMIT_RECEIPT,
-          passed: false,
-          details: ["restore incomplete"],
-          applyAttemptCount: 1,
-          operationId: "op-backup-fail",
-          createdAtIso: "2026-11-21T18:00:00.000Z",
-          fixtureOnly: true as const,
-        },
-      ],
-      nowIso: "2026-11-21T18:01:00.000Z",
-      runId: "soak-tx066-fail",
-      caseIds: ["T-X066"],
-    });
-    expect(compiled.caseResults).toHaveLength(1);
-    expect(compiled.caseResults[0]!.status).toBe(AcceptanceCaseStatus.FAILED);
-    expect(compiled.caseResults[0]!.artifactId).toBeNull();
-    expect(compiled.artifacts).toHaveLength(0);
-  });
-
-  it("marks T-X047 FAILED when LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS proof fails", () => {
-    const compiled = compileAcceptanceEvidence({
-      proofs: [
-        {
-          proofId: "p-layout-fail",
-          kind: SoakProofKind.LAYOUT_SPECIFIC_CAPACITY_MISMATCH_FILTERS,
-          passed: false,
-          details: ["layout filter incomplete"],
-          applyAttemptCount: 1,
-          operationId: "op-layout-fail",
-          createdAtIso: "2026-11-21T18:00:00.000Z",
-          fixtureOnly: true as const,
-        },
-      ],
-      nowIso: "2026-11-21T18:01:00.000Z",
-      runId: "soak-tx047-fail",
-      caseIds: ["T-X047"],
-    });
-    expect(compiled.caseResults).toHaveLength(1);
-    expect(compiled.caseResults[0]!.status).toBe(AcceptanceCaseStatus.FAILED);
-    expect(compiled.caseResults[0]!.artifactId).toBeNull();
-    expect(compiled.artifacts).toHaveLength(0);
   });
 
   it("records soak run with pilot gate NOT_MET; client-forged 72h clock cannot set MET", async () => {

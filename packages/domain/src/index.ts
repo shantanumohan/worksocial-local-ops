@@ -268,9 +268,18 @@ export {
   type UnsafeFoldersUnresolvedFactsDecision,
 } from "./unsafe-folders-unresolved-facts.js";
 export {
+  REVIEW_BINDING_RELATED_CASE_IDS,
+  REVIEW_BINDING_LIVE_WIRING,
+  REVIEW_BINDING_EXTERNAL_EFFECTS,
+  REVIEW_BINDING_LIVE_CLAIM_REFUSED,
   ReviewBindingStatus,
   ReviewBindingErrorCode,
   createReviewBinding,
+  classifyReviewBindingMismatch,
+  reviewBindingSnapshotMatches,
+  isReviewBindingTerminal,
+  assertReviewBindingFixtureHonesty,
+  summarizeReviewBindingHonesty,
   validateReviewBinding,
   acceptBoundReviewVerdict,
   type ReviewBindingStatusValue,
@@ -279,6 +288,11 @@ export {
   type CreateReviewBindingInput,
   type CreateReviewBindingResult,
   type CurrentProposalSnapshot,
+  type ReviewBindingMismatchField,
+  type ValidateReviewBindingFailure,
+  type ReviewBindingFixtureHonestyInput,
+  type ReviewBindingFixtureHonestyResult,
+  type ReviewBindingHonestySummary,
 } from "./review-binding.js";
 export {
   ProbeKind,
