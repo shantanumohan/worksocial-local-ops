@@ -179,6 +179,31 @@ describe("budget accounting", () => {
     expect(availableBudgetMinor(replay.account)).toBe(400);
   });
 
+  it("known reconcile from hold persists overrunMinor on snapshot (L18)", () => {
+    const reserved = reserveBudget(account(), "r-recon", 200);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-recon", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const reconciled = cancelBudgetReservation(held.account, "r-recon", {
+      known: true,
+      actualMinor: 280,
+    });
+    expect(reconciled.ok).toBe(true);
+    if (!reconciled.ok) return;
+    expect(reconciled.costKind).toBe("actual");
+    expect(reconciled.account.settledReservations["r-recon"]).toEqual({
+      reservedMinor: 200,
+      actualMinor: 280,
+      overrunMinor: 80,
+    });
+    expect(reconciled.account.heldMinor).toBe(0);
+    expect(availableBudgetMinor(reconciled.account)).toBe(720);
+  });
+
   it("refuses settle-as-zero after unknown-usage hold", () => {
     const reserved = reserveBudget(account(), "r-hold", 300);
     expect(reserved.ok).toBe(true);
