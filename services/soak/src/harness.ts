@@ -1115,7 +1115,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-F21 fixture ACCEPTED via diagnose_and_repair_permitted_defect only — not live VERIFIED",
       "T-F26 fixture ACCEPTED via calibrate_design_release_readiness only — not live VERIFIED",
       "T-X015 fixture ACCEPTED via dst_recurring_schedule_no_duplicates only — not live VERIFIED",
-      "T-X025 fixture ACCEPTED via external_human_edit_conflict_retained only — not live VERIFIED",
+      "T-X025 fixture ACCEPTED via external_human_edit_conflict_retained only — silent clear forbidden; live verify NOT_WIRED; not live VERIFIED",
       "T-X026 fixture ACCEPTED via concurrent_final_budget_reservation_cap only — not live VERIFIED",
       "Live CMS/GSC/GA4/Zoho/Temporal remain NOT_WIRED",
       "T-F24/T-US-047 fixture ACCEPTED via recover_rotate_reconcile only — not live VERIFIED",

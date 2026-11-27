@@ -59,8 +59,45 @@ export type ExternalEditStagingState = {
   page: StagingPageLedger;
   change: StagedAgentChange | null;
   agentOverwriteAttempts: number;
+  /** Live Temporal/CMS transport stays NOT_WIRED for fixture evidence (T-X025). */
+  liveTemporalWiring: "NOT_WIRED";
+  /** Never invent live provider success from fixture ACCEPTED. */
+  liveProviderSuccessClaimed: false;
   externalEffects: "NONE";
 };
+
+/** Live Temporal/CMS staging transport stays NOT_WIRED (T-X025). */
+export function externalHumanEditLiveWiringStatus(): "NOT_WIRED" {
+  return "NOT_WIRED";
+}
+
+/**
+ * Fail-closed live-wiring request flag (T-X025). Only boolean `true` or the
+ * exact literal string `"true"` counts — no trim/case folding, so `"TRUE"` /
+ * `" true "` / `1` never invent a live request that bypasses the refuse path
+ * when callers intended a request via non-literal aliases (those still refuse
+ * when passed through `attemptBlindAgentOverwrite` / stage with this helper
+ * returning true only for literal true).
+ */
+export function normalizeLiveTemporalWiringRequest(value: unknown): boolean {
+  return value === true || value === "true";
+}
+
+/**
+ * Fail-closed claimed-verified flag (T-X025). Only boolean `true` or the exact
+ * literal string `"true"` counts — no trim/case folding.
+ */
+export function normalizeClaimedVerified(value: unknown): boolean {
+  return value === true || value === "true";
+}
+
+/**
+ * Fail-closed owner-acknowledgment flag (T-X025). Only boolean `true` or the
+ * exact literal string `"true"` counts — no trim/case folding.
+ */
+export function normalizeOwnerAcknowledged(value: unknown): boolean {
+  return value === true || value === "true";
+}
 
 function nextRevision(prev: string): string {
   const n = Number.parseInt(prev.replace(/^rev-/, ""), 10);
@@ -84,15 +121,111 @@ export function createExternalEditStagingState(input: {
   }
   return {
     page: {
-      pageId: input.pageId,
+      pageId: input.pageId.trim(),
       fields: { ...input.fields },
-      revision: input.revision,
+      revision: input.revision.trim(),
       contentDigest: digestFields(input.fields),
       updatedAtIso: input.nowIso,
     },
     change: null,
     agentOverwriteAttempts: 0,
+    liveTemporalWiring: "NOT_WIRED",
+    liveProviderSuccessClaimed: false,
     externalEffects: "NONE",
+  };
+}
+
+/**
+ * Refuse silently clearing CONFLICT_RETAINED without an owner acknowledgment.
+ * Agent may not drop the conflict to invent a clean STAGED_PENDING / VERIFIED path.
+ */
+export function refuseSilentConflictClear(
+  state: ExternalEditStagingState,
+  input: {
+    ownerAcknowledged?: boolean | string | number | null;
+    nowIso: string;
+  },
+):
+  | {
+      ok: true;
+      code: "OWNER_ACK_RECORDED_CONFLICT_KEPT";
+      reason: string;
+      verifiedClaimed: false;
+      liveTemporalWiring: "NOT_WIRED";
+      liveProviderSuccessClaimed: false;
+      externalEffects: "NONE";
+      state: ExternalEditStagingState;
+    }
+  | {
+      ok: false;
+      code: "SILENT_CLEAR_FORBIDDEN" | "NO_CONFLICT";
+      reason: string;
+      verifiedClaimed: false;
+      liveTemporalWiring: "NOT_WIRED";
+      liveProviderSuccessClaimed: false;
+      externalEffects: "NONE";
+      state: ExternalEditStagingState;
+    } {
+  const honesty = {
+    verifiedClaimed: false as const,
+    liveTemporalWiring: "NOT_WIRED" as const,
+    liveProviderSuccessClaimed: false as const,
+    externalEffects: "NONE" as const,
+  };
+  const nextState: ExternalEditStagingState = {
+    ...state,
+    ...honesty,
+  };
+
+  if (state.change?.status !== StagingConflictStatus.CONFLICT_RETAINED) {
+    return {
+      ok: false,
+      code: "NO_CONFLICT",
+      reason: "No CONFLICT_RETAINED change to clear",
+      state: nextState,
+      ...honesty,
+    };
+  }
+
+  if (!normalizeOwnerAcknowledged(input.ownerAcknowledged)) {
+    return {
+      ok: false,
+      code: "SILENT_CLEAR_FORBIDDEN",
+      reason:
+        "Silent conflict clear forbidden — owner acknowledgment required; conflict retained (T-X025)",
+      state: {
+        ...nextState,
+        change: {
+          ...state.change,
+          status: StagingConflictStatus.CONFLICT_RETAINED,
+          recoveryNote:
+            state.change.recoveryNote ??
+            "Conflict retained — silent clear forbidden",
+          updatedAtIso: input.nowIso,
+        },
+      },
+      ...honesty,
+    };
+  }
+
+  // Owner ack recorded but conflict stays retained until a separate resolve path;
+  // never invents VERIFIED or clears to NONE.
+  return {
+    ok: true,
+    code: "OWNER_ACK_RECORDED_CONFLICT_KEPT",
+    reason:
+      "Owner acknowledgment recorded; CONFLICT_RETAINED kept (ACCEPTED≠VERIFIED)",
+    state: {
+      ...nextState,
+      change: {
+        ...state.change,
+        status: StagingConflictStatus.CONFLICT_RETAINED,
+        recoveryNote:
+          "Owner acknowledged external human edit — conflict still retained; not VERIFIED",
+        updatedAtIso: input.nowIso,
+      },
+    },
+    ...honesty,
   };
 }
 
@@ -108,37 +241,91 @@ export function stageAgentChangeAgainstBase(
     expectedBaseRevision: string;
     desiredFields: StagingPageFields;
     nowIso: string;
+    /** Request live Temporal apply — must stay NOT_WIRED offline. */
+    requestLiveTemporalWiring?: boolean | string | number | null;
   },
 ):
   | { ok: true; state: ExternalEditStagingState }
   | {
       ok: false;
-      code: "BASE_REVISION_MISMATCH" | "CHANGE_ALREADY_OPEN";
+      code:
+        | "BASE_REVISION_MISMATCH"
+        | "CHANGE_ALREADY_OPEN"
+        | "CHANGE_ID_REQUIRED"
+        | "LIVE_TEMPORAL_WIRING_NOT_WIRED";
       reason: string;
       state: ExternalEditStagingState;
+      liveTemporalWiring: "NOT_WIRED";
+      liveProviderSuccessClaimed: false;
+      externalEffects: "NONE";
     } {
+  const honesty = {
+    liveTemporalWiring: "NOT_WIRED" as const,
+    liveProviderSuccessClaimed: false as const,
+    externalEffects: "NONE" as const,
+  };
+
+  if (normalizeLiveTemporalWiringRequest(input.requestLiveTemporalWiring)) {
+    return {
+      ok: false,
+      code: "LIVE_TEMPORAL_WIRING_NOT_WIRED",
+      reason:
+        "Live Temporal/CMS staging remains NOT_WIRED — refuse live stage (T-X025)",
+      state: {
+        ...state,
+        ...honesty,
+      },
+      ...honesty,
+    };
+  }
+
+  if (!input.changeId.trim()) {
+    return {
+      ok: false,
+      code: "CHANGE_ID_REQUIRED",
+      reason: "changeId is required (blank/whitespace refused)",
+      state: {
+        ...state,
+        ...honesty,
+      },
+      ...honesty,
+    };
+  }
+
   if (state.change !== null) {
     return {
       ok: false,
       code: "CHANGE_ALREADY_OPEN",
       reason: "A staged change is already open — resolve conflict before restaging",
-      state,
+      state: {
+        ...state,
+        ...honesty,
+      },
+      ...honesty,
     };
   }
-  if (state.page.revision !== input.expectedBaseRevision) {
+
+  const expectedBase = input.expectedBaseRevision.trim();
+  const pageRevision = state.page.revision.trim();
+  if (!expectedBase || expectedBase !== pageRevision) {
     return {
       ok: false,
       code: "BASE_REVISION_MISMATCH",
       reason: `Expected base ${input.expectedBaseRevision}; page is ${state.page.revision}`,
-      state,
+      state: {
+        ...state,
+        ...honesty,
+      },
+      ...honesty,
     };
   }
+
   const desiredDigest = digestFields(input.desiredFields);
   const revision = nextRevision(state.page.revision);
   const change: StagedAgentChange = {
-    changeId: input.changeId,
+    changeId: input.changeId.trim(),
     pageId: state.page.pageId,
-    expectedBaseRevision: input.expectedBaseRevision,
+    expectedBaseRevision: expectedBase,
     desiredFields: { ...input.desiredFields },
     desiredDigest,
     status: StagingConflictStatus.STAGED_PENDING,
@@ -160,7 +347,7 @@ export function stageAgentChangeAgainstBase(
         updatedAtIso: input.nowIso,
       },
       change,
-      externalEffects: "NONE",
+      ...honesty,
     },
   };
 }
@@ -192,19 +379,25 @@ export function applyExternalHumanEdit(
     (state.change.status === StagingConflictStatus.STAGED_PENDING ||
       state.change.status === StagingConflictStatus.CONFLICT_RETAINED)
   ) {
+    // Convergent human fields (digest == desired) still retain conflict —
+    // never invent MATCHED_PENDING_ONLY / VERIFIED from a human edit path.
+    const convergent = humanDigest === state.change.desiredDigest;
     const change: StagedAgentChange = {
       ...state.change,
       status: StagingConflictStatus.CONFLICT_RETAINED,
       humanObservedDigest: humanDigest,
       humanObservedRevision: revision,
-      recoveryNote:
-        "External human edit during staging — conflict retained; do not overwrite",
+      recoveryNote: convergent
+        ? "External human edit during staging — convergent digest still CONFLICT_RETAINED; not VERIFIED"
+        : "External human edit during staging — conflict retained; do not overwrite",
       updatedAtIso: input.nowIso,
     };
     return {
       ...state,
       page,
       change,
+      liveTemporalWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
       externalEffects: "NONE",
     };
   }
@@ -212,6 +405,8 @@ export function applyExternalHumanEdit(
   return {
     ...state,
     page,
+    liveTemporalWiring: "NOT_WIRED",
+    liveProviderSuccessClaimed: false,
     externalEffects: "NONE",
   };
 }
@@ -222,21 +417,49 @@ export function applyExternalHumanEdit(
  */
 export function attemptBlindAgentOverwrite(
   state: ExternalEditStagingState,
-  input: { nowIso: string },
+  input: {
+    nowIso: string;
+    /** Request live Temporal apply — must stay NOT_WIRED offline. */
+    requestLiveTemporalWiring?: boolean | string | number | null;
+  },
 ):
   | { ok: true; state: ExternalEditStagingState }
   | {
       ok: false;
-      code: "OVERWRITE_FORBIDDEN" | "NO_OPEN_CHANGE";
+      code:
+        | "OVERWRITE_FORBIDDEN"
+        | "NO_OPEN_CHANGE"
+        | "LIVE_TEMPORAL_WIRING_NOT_WIRED";
       reason: string;
       state: ExternalEditStagingState;
+      liveTemporalWiring: "NOT_WIRED";
+      liveProviderSuccessClaimed: false;
+      externalEffects: "NONE";
     } {
   const attempts = state.agentOverwriteAttempts + 1;
   const nextState: ExternalEditStagingState = {
     ...state,
     agentOverwriteAttempts: attempts,
+    liveTemporalWiring: "NOT_WIRED",
+    liveProviderSuccessClaimed: false,
     externalEffects: "NONE",
   };
+  const honesty = {
+    liveTemporalWiring: "NOT_WIRED" as const,
+    liveProviderSuccessClaimed: false as const,
+    externalEffects: "NONE" as const,
+  };
+
+  if (normalizeLiveTemporalWiringRequest(input.requestLiveTemporalWiring)) {
+    return {
+      ok: false,
+      code: "LIVE_TEMPORAL_WIRING_NOT_WIRED",
+      reason:
+        "Live Temporal/CMS staging remains NOT_WIRED — refuse live overwrite (T-X025)",
+      state: nextState,
+      ...honesty,
+    };
+  }
 
   if (!state.change) {
     return {
@@ -244,6 +467,7 @@ export function attemptBlindAgentOverwrite(
       code: "NO_OPEN_CHANGE",
       reason: "No open staged change to overwrite",
       state: nextState,
+      ...honesty,
     };
   }
 
@@ -278,6 +502,7 @@ export function attemptBlindAgentOverwrite(
         // Page must still reflect human/drifted fields (not agent desired).
         page: state.page,
       },
+      ...honesty,
     };
   }
 
@@ -289,30 +514,123 @@ export function attemptBlindAgentOverwrite(
     reason:
       "Blind overwrite path forbidden — use independent verify, not force-apply",
     state: nextState,
+    ...honesty,
+  };
+}
+
+/**
+ * Refuse elevating MATCHED_PENDING_ONLY / CONFLICT_RETAINED to live VERIFIED.
+ * Fixture ACCEPTED never invents VERIFIED (T-X025).
+ */
+export function refuseClaimedVerifiedStaging(
+  state: ExternalEditStagingState,
+  input: {
+    claimedVerified: boolean | string | number | null | undefined;
+    nowIso: string;
+  },
+): {
+  ok: false;
+  code: "CLAIMED_VERIFIED_REFUSED";
+  reason: string;
+  verifiedClaimed: false;
+  liveTemporalWiring: "NOT_WIRED";
+  liveProviderSuccessClaimed: false;
+  externalEffects: "NONE";
+  state: ExternalEditStagingState;
+} {
+  const claimed = normalizeClaimedVerified(input.claimedVerified);
+  const reason = claimed
+    ? state.change?.status === StagingConflictStatus.CONFLICT_RETAINED
+      ? "CLAIMED_VERIFIED_REFUSED — CONFLICT_RETAINED cannot elevate to VERIFIED (ACCEPTED≠VERIFIED)"
+      : "CLAIMED_VERIFIED_REFUSED — STAGED_PENDING / MATCHED_PENDING_ONLY is fixture ACCEPTED only, not VERIFIED"
+    : "CLAIMED_VERIFIED_REFUSED — verifiedClaimed stays false; no live elevation path";
+  return {
+    ok: false,
+    code: "CLAIMED_VERIFIED_REFUSED",
+    reason,
+    verifiedClaimed: false,
+    liveTemporalWiring: "NOT_WIRED",
+    liveProviderSuccessClaimed: false,
+    externalEffects: "NONE",
+    state: {
+      ...state,
+      liveTemporalWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
+      externalEffects: "NONE",
+    },
   };
 }
 
 /**
  * Independent verify after staging / conflict.
  * Never invents VERIFIED when conflict is retained or digests diverge.
+ * Optional claimedVerified is always refused — MATCHED_PENDING_ONLY stays ACCEPTED≠VERIFIED.
  */
 export function independentVerifyStagingChange(
   state: ExternalEditStagingState,
-  input: { nowIso: string },
+  input: {
+    nowIso: string;
+    /** Request live Temporal verify — must stay NOT_WIRED offline. */
+    requestLiveTemporalWiring?: boolean | string | number | null;
+    /**
+     * Optional claimed-verified flag. Always stays false (T-X025).
+     * Literal true/"true" adds CLAIMED_VERIFIED_REFUSED detail; aliases do not invent a claim.
+     */
+    claimedVerified?: boolean | string | number | null;
+  },
 ): {
   outcome: StagingVerifyOutcomeValue;
   matched: boolean;
   verifiedClaimed: false;
+  liveTemporalWiring: "NOT_WIRED";
+  liveProviderSuccessClaimed: false;
+  externalEffects: "NONE";
   details: string[];
   state: ExternalEditStagingState;
+  refusedLiveTemporalWiring?: boolean;
+  refusedClaimedVerified?: boolean;
 } {
+  const honesty = {
+    verifiedClaimed: false as const,
+    liveTemporalWiring: "NOT_WIRED" as const,
+    liveProviderSuccessClaimed: false as const,
+    externalEffects: "NONE" as const,
+  };
+  const claimPresent = normalizeClaimedVerified(input.claimedVerified);
+  const claimRefuseDetail = claimPresent
+    ? "CLAIMED_VERIFIED_REFUSED — independent verify never elevates to VERIFIED (ACCEPTED≠VERIFIED)"
+    : null;
+
+  if (normalizeLiveTemporalWiringRequest(input.requestLiveTemporalWiring)) {
+    return {
+      outcome: StagingVerifyOutcome.MISMATCH,
+      matched: false,
+      details: [
+        "LIVE_TEMPORAL_WIRING_NOT_WIRED — refuse live independent verify (T-X025)",
+        "verifiedClaimed=false",
+        ...(claimRefuseDetail ? [claimRefuseDetail] : []),
+      ],
+      state: {
+        ...state,
+        ...honesty,
+      },
+      refusedLiveTemporalWiring: true,
+      ...(claimPresent ? { refusedClaimedVerified: true as const } : {}),
+      ...honesty,
+    };
+  }
+
   if (!state.change) {
     return {
       outcome: StagingVerifyOutcome.MISMATCH,
       matched: false,
-      verifiedClaimed: false,
-      details: ["No staged change to verify"],
+      details: [
+        "No staged change to verify",
+        ...(claimRefuseDetail ? [claimRefuseDetail] : []),
+      ],
       state,
+      ...(claimPresent ? { refusedClaimedVerified: true as const } : {}),
+      ...honesty,
     };
   }
 
@@ -323,6 +641,8 @@ export function independentVerifyStagingChange(
       `humanObservedDigest=${state.change.humanObservedDigest ?? state.page.contentDigest}`,
       `humanObservedRevision=${state.change.humanObservedRevision ?? state.page.revision}`,
       "verifiedClaimed=false",
+      "liveTemporalWiring=NOT_WIRED",
+      ...(claimRefuseDetail ? [claimRefuseDetail] : []),
     ];
     const change: StagedAgentChange = {
       ...state.change,
@@ -335,13 +655,16 @@ export function independentVerifyStagingChange(
     return {
       outcome: StagingVerifyOutcome.CONFLICT_RETAINED,
       matched: false,
-      verifiedClaimed: false,
       details,
       state: {
         ...state,
         change,
+        liveTemporalWiring: "NOT_WIRED",
+        liveProviderSuccessClaimed: false,
         externalEffects: "NONE",
       },
+      ...(claimPresent ? { refusedClaimedVerified: true as const } : {}),
+      ...honesty,
     };
   }
 
@@ -359,13 +682,21 @@ export function independentVerifyStagingChange(
     return {
       outcome: StagingVerifyOutcome.MISMATCH,
       matched: false,
-      verifiedClaimed: false,
       details: [
         "Independent verify mismatch",
         `desiredDigest=${state.change.desiredDigest}`,
         `observedDigest=${state.page.contentDigest}`,
+        ...(claimRefuseDetail ? [claimRefuseDetail] : []),
       ],
-      state: { ...state, change, externalEffects: "NONE" },
+      state: {
+        ...state,
+        change,
+        liveTemporalWiring: "NOT_WIRED",
+        liveProviderSuccessClaimed: false,
+        externalEffects: "NONE",
+      },
+      ...(claimPresent ? { refusedClaimedVerified: true as const } : {}),
+      ...honesty,
     };
   }
 
@@ -374,15 +705,20 @@ export function independentVerifyStagingChange(
   return {
     outcome: StagingVerifyOutcome.MATCHED_PENDING_ONLY,
     matched: true,
-    verifiedClaimed: false,
     details: [
       "Independent read matched desired fields while STAGED_PENDING",
       "verifiedClaimed=false (ACCEPTED ≠ VERIFIED)",
+      "liveTemporalWiring=NOT_WIRED",
+      ...(claimRefuseDetail ? [claimRefuseDetail] : []),
     ],
     state: {
       ...state,
       change: { ...state.change, updatedAtIso: input.nowIso },
+      liveTemporalWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
       externalEffects: "NONE",
     },
+    ...(claimPresent ? { refusedClaimedVerified: true as const } : {}),
+    ...honesty,
   };
 }
