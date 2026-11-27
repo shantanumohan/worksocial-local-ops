@@ -1,5 +1,5 @@
 /**
- * Contract: T-X071 host offline public discovery (O58 exclusive retip 81843978).
+ * Contract: T-X071 host offline public discovery (O59 exclusive wipe15 deepen).
  * Tip matrix/runbook preserved — #263 does not edit catalog docs.
  * ACCEPTED ≠ VERIFIED. External effects NONE. Live wiring NOT_WIRED. Soft-skip Ads.
  * Catalog ≤ T-X073.
@@ -243,6 +243,15 @@ describe("contract: T-X071 host offline public discovery", () => {
         SoakProofKind.APPROVED_PAYLOAD_EDIT_INVALIDATED,
       ),
     ).not.toContain("T-X071");
+    expect(expectedProofsForFixtureCase("T-X038")).toEqual([
+      SoakProofKind.EVAL_NO_GROUNDING_FAIL_CLOSED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.EVAL_NO_GROUNDING_FAIL_CLOSED),
+    ).toEqual(["T-X038"]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.EVAL_NO_GROUNDING_FAIL_CLOSED),
+    ).not.toContain("T-X071");
     expect(expectedProofsForFixtureCase("T-X072")).toEqual([
       SoakProofKind.CUSTOMER_DATA_EVAL_REDACTION_BLOCKS,
     ]);
@@ -359,6 +368,7 @@ describe("contract: T-X071 host offline public discovery", () => {
     expect(art.summary).not.toMatch(/ENOSPC/i);
     expect(art.summary).not.toMatch(/symlink_escape/i);
     expect(art.summary).not.toMatch(/customer_data_eval_redaction/i);
+    expect(art.summary).not.toMatch(/eval_no_grounding/i);
     expect(art.summary).not.toMatch(/\bsandbox\b.*\bVERIFIED\b/);
     if (art.status) {
       expect(art.status).not.toBe("VERIFIED");
