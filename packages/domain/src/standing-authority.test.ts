@@ -316,4 +316,32 @@ describe("evaluateStandingAuthority", () => {
     );
     expect(allowed.decision).toEqual({ allowed: true });
   });
+
+  it("explicit undefined fence allows without held lease (T-X006 edge)", () => {
+    const allowed = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: undefined,
+        supervisorLeaseHeld: false,
+      }),
+    );
+    expect(allowed.decision).toEqual({ allowed: true });
+  });
+
+  it("fence on denies without leaking host or generation (T-X006 edge)", () => {
+    const denied = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: false,
+      }),
+    );
+    expect(denied.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    const reason = String(
+      (denied.decision as { reason?: string }).reason ?? "",
+    ).toLowerCase();
+    expect(reason).not.toMatch(/host|generation|pid|lease/);
+    expect(denied.match).toBeNull();
+  });
 });
