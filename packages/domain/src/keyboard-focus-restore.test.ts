@@ -341,6 +341,53 @@ describe("keyboard focus restore (T-X061)", () => {
     expect(result.details.some((d) => /Re-open refused/i.test(d))).toBe(true);
   });
 
+  it("after FOCUS_LOST trap and close refuse until fresh open (T50)", () => {
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-review",
+      dialogFocusables: dialog,
+    });
+    const lost = closeOverlayRestoreFocus({
+      session: markTriggerUnrestorable(opened.session),
+    });
+    expect(lost.code).toBe("FOCUS_LOST");
+    expect(lost.session.overlayOpen).toBe(false);
+    expect(lost.session.activeFocusId).toBeNull();
+    expect(lost.session.savedTriggerId).toBeNull();
+    const tab = cycleDialogFocus({
+      session: lost.session,
+      direction: "forward",
+    });
+    expect(tab.ok).toBe(false);
+    expect(tab.reasons.join(" ")).toMatch(/not open/i);
+    const closedAgain = closeOverlayRestoreFocus({ session: lost.session });
+    expect(closedAgain.ok).toBe(false);
+    expect(closedAgain.reasons.join(" ")).toMatch(/not open/i);
+    const reopened = openOverlayFocus({
+      session: lost.session,
+      triggerId: "btn-other",
+      dialogFocusables: dialog,
+    });
+    expect(reopened.ok).toBe(true);
+    expect(reopened.code).toBe("OPENED");
+    expect(reopened.session.savedTriggerId).toBe("btn-other");
+    expect(reopened.session.triggerRestorable).toBe(true);
+  });
+
+  it("evaluateKeyboardFocusRestoreReview details pin Focus restored + FOCUS_LOST (T50)", () => {
+    const result = evaluateKeyboardFocusRestoreReview({
+      triggerId: "btn-review",
+      dialogFocusables: dialog,
+    });
+    expect(result.passed).toBe(true);
+    expect(result.details.some((d) => /Focus restored to trigger/i.test(d))).toBe(
+      true,
+    );
+    expect(result.details.some((d) => /unrestorable — FOCUS_LOST/i.test(d))).toBe(
+      true,
+    );
+  });
+
   it("evaluateKeyboardFocusRestoreReview passes open/trap/restore + lost control", () => {
     const result = evaluateKeyboardFocusRestoreReview({
       triggerId: "btn-review",

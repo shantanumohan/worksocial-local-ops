@@ -169,6 +169,47 @@ describe("contract: T-X061 keyboard focus restore", () => {
     expect(reopened.ok).toBe(true);
   });
 
+  it("after FOCUS_LOST trap and close refuse until fresh open (T50)", () => {
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-keyboard-review",
+      dialogFocusables: dialog,
+    });
+    const lost = closeOverlayRestoreFocus({
+      session: markTriggerUnrestorable(opened.session),
+    });
+    expect(lost.code).toBe("FOCUS_LOST");
+    expect(lost.session.activeFocusId).toBeNull();
+    const tab = cycleDialogFocus({
+      session: lost.session,
+      direction: "backward",
+    });
+    expect(tab.ok).toBe(false);
+    const closedAgain = closeOverlayRestoreFocus({ session: lost.session });
+    expect(closedAgain.ok).toBe(false);
+    const reopened = openOverlayFocus({
+      session: lost.session,
+      triggerId: "btn-other",
+      dialogFocusables: dialog,
+    });
+    expect(reopened.ok).toBe(true);
+    expect(reopened.session.savedTriggerId).toBe("btn-other");
+  });
+
+  it("evaluateKeyboardFocusRestoreReview details pin Focus restored + FOCUS_LOST (T50)", () => {
+    const review = evaluateKeyboardFocusRestoreReview({
+      triggerId: "btn-keyboard-review",
+      dialogFocusables: dialog,
+    });
+    expect(review.passed).toBe(true);
+    expect(review.details.some((d) => /Focus restored to trigger/i.test(d))).toBe(
+      true,
+    );
+    expect(review.details.some((d) => /unrestorable — FOCUS_LOST/i.test(d))).toBe(
+      true,
+    );
+  });
+
   it("cycleDialogFocus re-anchors from stale activeFocusId without losing savedTrigger", () => {
     const opened = openOverlayFocus({
       session: emptyFocusSession(),
