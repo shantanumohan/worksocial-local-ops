@@ -20,6 +20,7 @@ import {
   reclaimOutputBombDecision,
   planClaudeCliInvocation,
   invokeClaudeCli,
+  type OutputBombReclaimResult,
 } from "./cli-adapter.js";
 import { createClaudeRunner } from "./runner.js";
 import { runAllRoleFixtureEvaluations } from "./fixture-runner.js";
@@ -154,6 +155,35 @@ describe("claude-runner (R1-04)", () => {
     expect(afterForce.quarantine.deliver).toBe(false);
     if (!afterForce.quarantine.deliver) {
       expect(afterForce.quarantine.code).toBe("OUTPUT_TOO_LARGE");
+    }
+
+    const dualClaim = quarantineStdoutDelivery(over, {
+      claimLiveVerified: true,
+      forceDeliverDespiteBomb: true,
+    });
+    expect(dualClaim.deliver).toBe(false);
+    if (!dualClaim.deliver) {
+      expect(dualClaim.code).toBe("LIVE_CLAIM_REFUSED");
+    }
+    expect(
+      assertOutputBombBoundedHonest({
+        assessment: over,
+        quarantine: dualClaim,
+      }).ok,
+    ).toBe(true);
+
+    const tamperedSecond: OutputBombReclaimResult = { ...r2 };
+    if (
+      !r1.assessment.withinBound &&
+      !tamperedSecond.assessment.withinBound
+    ) {
+      (tamperedSecond.assessment as { code: string }).code = "INVENTED_CODE";
+      const codeDrift = assertOutputBombReclaimIdempotent({
+        first: r1,
+        second: tamperedSecond,
+      });
+      expect(codeDrift.ok).toBe(false);
+      expect(codeDrift.code).toBe("OUTPUT_BOMB_RECLAIM_DRIFT");
     }
   });
 

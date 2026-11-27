@@ -156,6 +156,23 @@ export async function proofOutputBombBoundedQuarantined(
       );
     }
 
+    const dualLive = quarantineStdoutDelivery(over, {
+      claimLiveVerified: true,
+      forceDeliverDespiteBomb: true,
+    });
+    if (
+      !dualLive.deliver &&
+      dualLive.code === "LIVE_CLAIM_REFUSED" &&
+      dualLive.quarantinedStdout === null
+    ) {
+      details.push(
+        "simultaneous claimLiveVerified+forceDeliverDespiteBomb → LIVE_CLAIM_REFUSED",
+      );
+    } else {
+      passed = false;
+      details.push(`dual live claim unexpectedly ${JSON.stringify(dualLive)}`);
+    }
+
     const honesty = assertOutputBombBoundedHonest({
       assessment: over,
       quarantine: overQ,

@@ -283,6 +283,13 @@ export function assertOutputBombReclaimIdempotent(input: {
   if (first.assessment.byteLength !== second.assessment.byteLength) {
     reasons.push("reclaim assessment.byteLength drifted");
   }
+  if (
+    !first.assessment.withinBound &&
+    !second.assessment.withinBound &&
+    first.assessment.code !== second.assessment.code
+  ) {
+    reasons.push("reclaim assessment.code drifted on over-bound");
+  }
   if (first.quarantine.deliver !== second.quarantine.deliver) {
     reasons.push("reclaim quarantine.deliver drifted");
   }
