@@ -162,6 +162,26 @@ describe("keyboard focus restore (T-X061)", () => {
     expect(closed.code).toBeNull();
   });
 
+  it("preserves savedTrigger across repeated trap cycles until close", () => {
+    const three = ["dlg-close", "dlg-primary", "dlg-secondary"] as const;
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-review",
+      dialogFocusables: three,
+    });
+    let session = opened.session;
+    for (let i = 0; i < 5; i++) {
+      const step = cycleDialogFocus({ session, direction: "forward" });
+      expect(step.ok).toBe(true);
+      session = step.session;
+      expect(session.savedTriggerId).toBe("btn-review");
+      expect(session.overlayOpen).toBe(true);
+    }
+    const closed = closeOverlayRestoreFocus({ session });
+    expect(closed.code).toBe("FOCUS_RESTORED");
+    expect(closed.session.activeFocusId).toBe("btn-review");
+  });
+
   it("evaluateKeyboardFocusRestoreReview fails closed when dialog has no focusables", () => {
     const result = evaluateKeyboardFocusRestoreReview({
       triggerId: "btn-review",
