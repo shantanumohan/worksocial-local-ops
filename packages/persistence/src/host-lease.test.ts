@@ -752,4 +752,35 @@ describe("host-lease", () => {
       expect(bad.message).not.toBe(HOST_LEASE_HELD_MESSAGE);
     }
   });
+
+  it("edge: dual empty hostId and generationId (T-X002 wipe15 2c533c34)", () => {
+    const bad = acquireHostLease(
+      null,
+      { hostId: "", holderPid: 1, generationId: "", ttlMs: 5_000 },
+      clockAt(1_000),
+    );
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) {
+      expect(bad.reason).toBe("INVALID_INPUT");
+      expect(bad.message).not.toBe(HOST_LEASE_HELD_MESSAGE);
+    }
+  });
+
+  it("edge: NBSP-only hostId fails INVALID_INPUT without LEASE_HELD (T-X002 wipe15 2c533c34)", () => {
+    const bad = acquireHostLease(
+      null,
+      {
+        hostId: "\u00a0\u00a0",
+        holderPid: 1,
+        generationId: "gen-nbsp",
+        ttlMs: 5_000,
+      },
+      clockAt(1_000),
+    );
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) {
+      expect(bad.reason).toBe("INVALID_INPUT");
+      expect(bad.message).not.toBe(HOST_LEASE_HELD_MESSAGE);
+    }
+  });
 });
