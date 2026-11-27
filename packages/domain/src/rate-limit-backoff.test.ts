@@ -457,6 +457,26 @@ describe("rate-limit-backoff (T-X030)", () => {
     ).toEqual({ waitSeconds: 1, source: "exponential" });
   });
 
+  it("keeps flat exponential wait when backoffMultiplier is 1 (Q53 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 3,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 4,
+        backoffMultiplier: 1,
+      }),
+    ).toEqual({ waitSeconds: 4, source: "exponential" });
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 5,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 4,
+        backoffMultiplier: 1,
+        maxBackoffSeconds: 60,
+      }),
+    ).toEqual({ waitSeconds: 4, source: "exponential" });
+  });
+
   it("ceils Number.EPSILON Retry-After to 1s (Q51 wipe15)", () => {
     expect(
       computeBackoffWaitSeconds({
