@@ -17,6 +17,7 @@
  * T-X020 fixture ACCEPTED only via UNKNOWN_REMOTE_RECONCILE.
  * T-X022 fixture ACCEPTED only via IDEMPOTENCY_KEY_PAYLOAD_MISMATCH.
  * T-X057 fixture ACCEPTED only via REPAIR_WEAKEN_TEST_REJECTED.
+ * T-X059 fixture ACCEPTED only via DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING.
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -886,5 +887,47 @@ describe("contract: M9 soak / acceptance evidence", () => {
     // K52: post-#298 tip — repair weaken not T-X043 optimization-breaks-CTA drift
     expect(art.proofKinds).not.toContain("optimization_breaks_cta_journey_fails");
     expect(art.summary).not.toMatch(/optimization_breaks_cta_journey_fails/);
+  });
+  it("T-X059 fixture artifact names duplicate platform attribution (ACCEPTED ≠ VERIFIED)", () => {
+    const artPath = resolve(
+      repoRoot,
+      "tests/acceptance-evidence/fixture/art-fixture-t-x059.json",
+    );
+    const art = JSON.parse(readFileSync(artPath, "utf8")) as {
+      artifactId: string;
+      caseId: string;
+      environment: string;
+      redacted: boolean;
+      summary: string;
+      liveProviderSuccessClaimed: boolean;
+      externalEffects: string;
+      proofKinds: string[];
+      evidenceRef: string;
+    };
+    expect(art.artifactId).toBe("art-fixture-t-x059");
+    expect(art.caseId).toBe("T-X059");
+    expect(art.environment).toBe("fixture");
+    expect(art.redacted).toBe(true);
+    expect(art.evidenceRef).toBe("soak/evidence/art-fixture-t-x059.json");
+    expect(art.proofKinds).toEqual([
+      "duplicate_platform_attribution_one_booking",
+    ]);
+    expect(art.summary).toMatch(/Fixture ACCEPTED/);
+    expect(art.summary).not.toMatch(/Fixture VERIFIED/);
+    expect(art.liveProviderSuccessClaimed).toBe(false);
+    expect(art.externalEffects).toBe("NONE");
+    expect(art.summary).toContain(
+      "proof=duplicate_platform_attribution_one_booking",
+    );
+    expect(art.summary).toContain("SILENT_PLATFORM_SUM_REFUSED");
+    expect(art.summary).toContain("INVALID_ATTRIBUTION_CLAIM");
+    expect(art.summary).toContain("liveProviderWiring=NOT_WIRED");
+    expect(art.summary).toMatch(
+      /Fixture ACCEPTED for T-X059 \(Duplicate platform attribution — one booking; separate claims\)/,
+    );
+    expect(art.proofKinds).not.toContain("VERIFIED");
+    expect(art.summary).toContain("ACCEPTED≠VERIFIED");
+    expect(art.summary).toMatch(/chronological/);
+    expect(art.summary).toMatch(/uniqueBookingCount=1/);
   });
 });
