@@ -232,4 +232,17 @@ describe("evaluateStandingAuthority", () => {
     );
     expect(allowed.decision).toEqual({ allowed: true });
   });
+
+  it("supervisor lease fence treats omitted held flag as deny (T-X006 edge)", () => {
+    const denied = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+      }),
+    );
+    expect(denied.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(denied.match).toBeNull();
+  });
 });
