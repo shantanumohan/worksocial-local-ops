@@ -393,5 +393,18 @@ describe("self-approval honesty (T-X018 / T-US-054)", () => {
     if (!thirteenth.ok) throw new Error("expected thirteenth idempotent REFUSED");
     expect(thirteenth.idempotent).toBe(true);
     expect(thirteenth.ledger.entries).toHaveLength(1);
+
+    const fourteenth = appendSelfApprovalLedgerEntry(thirteenth.ledger, {
+      entryId: "e-dup-14",
+      proposalId: "prop-dup",
+      honesty,
+      requestedOutcome: "REFUSED",
+      recordedAtIso: now,
+    });
+    expect(fourteenth.ok).toBe(true);
+    if (!fourteenth.ok) throw new Error("expected fourteenth idempotent REFUSED");
+    expect(fourteenth.idempotent).toBe(true);
+    expect(fourteenth.ledger.entries).toHaveLength(1);
+    expect(fourteenth.ledger.externalEffects).toBe("NONE");
   });
 });
