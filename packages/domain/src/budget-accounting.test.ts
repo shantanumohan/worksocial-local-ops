@@ -717,4 +717,25 @@ describe("budget accounting", () => {
     const normalized = normalizeBudgetHolds(stale);
     expect(normalized.settledMinor).toBe(180);
   });
+
+  it("legacy scalars when maps empty still constrain available", () => {
+    const legacy = createBudgetAccount({
+      dayKey: "2026-11-17",
+      currency: "USD",
+      limitMinor: 1000,
+    });
+  const withScalars = {
+      ...legacy,
+      reservedMinor: 200,
+      settledMinor: 100,
+      heldMinor: 150,
+      openReservations: {},
+      heldReservations: {},
+      settledReservations: {},
+    };
+    expect(openReservationsTotalMinor(withScalars)).toBe(200);
+    expect(heldReservationsTotalMinor(withScalars)).toBe(150);
+    expect(settledReservationsActualTotalMinor(withScalars)).toBe(100);
+    expect(availableBudgetMinor(withScalars)).toBe(550);
+  });
 });

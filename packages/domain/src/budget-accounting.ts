@@ -94,8 +94,20 @@ export function availableBudgetMinor(account: BudgetAccount): number {
  * Sum of open reservation amounts. Non-finite / non-positive map values
  * are ignored (never invent capacity) — T-X027 honesty twin of holds.
  */
+function isLegacyScalarOnlyBudget(account: BudgetAccount): boolean {
+  return (
+    Object.keys(account.openReservations ?? {}).length === 0 &&
+    Object.keys(account.heldReservations ?? {}).length === 0 &&
+    Object.keys(account.settledReservations ?? {}).length === 0
+  );
+}
+
 export function openReservationsTotalMinor(account: BudgetAccount): number {
   const open = account.openReservations ?? {};
+  if (Object.keys(open).length === 0 && isLegacyScalarOnlyBudget(account)) {
+    const field = Number(account.reservedMinor);
+    return Number.isFinite(field) && field >= 0 ? field : 0;
+  }
   let total = 0;
   for (const amount of Object.values(open)) {
     const n = Number(amount);
@@ -113,6 +125,10 @@ export function openReservationsTotalMinor(account: BudgetAccount): number {
  */
 export function heldReservationsTotalMinor(account: BudgetAccount): number {
   const held = account.heldReservations ?? {};
+  if (Object.keys(held).length === 0 && isLegacyScalarOnlyBudget(account)) {
+    const field = Number(account.heldMinor);
+    return Number.isFinite(field) && field >= 0 ? field : 0;
+  }
   let total = 0;
   for (const amount of Object.values(held)) {
     const n = Number(amount);
@@ -132,9 +148,11 @@ export function settledReservationsActualTotalMinor(
   account: BudgetAccount,
 ): number {
   const settled = account.settledReservations ?? {};
-  // Legacy eval budgets may track settledMinor without settledReservations
-  // snapshots — keep scalar only when the map is empty (T-X027 vs M8 eval).
-  if (Object.keys(settled).length === 0) {
+  // Legacy eval budgets track scalars without reservation maps (M8 / file load).
+  if (
+    Object.keys(settled).length === 0 &&
+    isLegacyScalarOnlyBudget(account)
+  ) {
     const field = Number(account.settledMinor);
     return Number.isFinite(field) && field >= 0 ? field : 0;
   }
