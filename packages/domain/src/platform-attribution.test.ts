@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS,
   projectUniqueOutcomes,
   refuseSilentPlatformSum,
 } from "./platform-attribution.js";
@@ -240,5 +241,91 @@ describe("platform-attribution (T-X059)", () => {
     expect(projection.hasInvalidClaims).toBe(false);
     expect(projection.externalEffects).toBe("NONE");
     expect(refuseSilentPlatformSum(projection).allowed).toBe(true);
+  });
+
+  it("pins T-X059 / T-US-038 related case ids (Q34)", () => {
+    expect([...DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS]).toEqual([
+      "T-X059",
+      "T-US-038",
+    ]);
+  });
+
+  it("refuses blank platformId as INVALID_ATTRIBUTION_CLAIM (Q34/S17)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-ok",
+        platformId: "   ",
+        bookingId: "booking-x",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(projection.hasInvalidClaims).toBe(true);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(false);
+    if (decision.allowed) return;
+    expect(decision.code).toBe("INVALID_ATTRIBUTION_CLAIM");
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("refuses blank bookingId — never invent unique bookings (Q34/S18)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-blank-booking",
+        platformId: "google_ads",
+        bookingId: "\t",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(projection.uniqueBookingCount).toBe(0);
+    expect(refuseSilentPlatformSum(projection).code).toBe(
+      "INVALID_ATTRIBUTION_CLAIM",
+    );
+  });
+
+  it("blocks naive platform sum when wouldDoubleCountIfSummed (Q34/S19)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-g",
+        platformId: "google_ads",
+        bookingId: "booking-one",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "c-m",
+        platformId: "meta_ads",
+        bookingId: "booking-one",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(projection.platformClaimCount).toBe(2);
+    expect(projection.uniqueBookingCount).toBe(1);
+    expect(projection.wouldDoubleCountIfSummed).toBe(true);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(false);
+    if (decision.allowed) return;
+    expect(decision.code).toBe("SILENT_PLATFORM_SUM_REFUSED");
+    expect(decision.uniqueBookingCount).toBe(1);
+    expect(decision.platformClaimCount).toBe(2);
+  });
+
+  it("allow path keeps NOT_WIRED and NONE on single-platform unique match (Q34/S20)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-single",
+        platformId: "google_ads",
+        bookingId: "booking-single",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(true);
+    if (!decision.allowed) return;
+    expect(decision.code).toBe(null);
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.liveProviderWiring).toBe("NOT_WIRED");
+    expect(projection.reasons.join(" ")).toContain(
+      "liveProviderWiring=NOT_WIRED externalEffects=NONE",
+    );
   });
 });
