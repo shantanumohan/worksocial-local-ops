@@ -120,7 +120,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-US-044** / **T-X053** map only to `TAKEOVER_CANCELS_UNSENT_REPLIES` (multi-queue cancel; SENT preserved; `VERSION_MISMATCH` via real takeover for stale prepare; `CONVERSATION_TAKEOVER` at matching post-takeover version; not live VERIFIED).
 
-**T-US-018** / **T-X037** map only to `EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN` (retry fence + effect/capability/attempt-envelope/outcome/side-effect/receipt honesty; B21/B22/B23 sandbox and combo receipt invent refuse; ACCEPTED ≠ VERIFIED; live + Ads NOT_WIRED).
+**T-US-018** / **T-X037** map only to `EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN` (retry fence + effect/capability/attempt-envelope/outcome/side-effect/receipt honesty; ACCEPTED ≠ VERIFIED; live + Ads NOT_WIRED).
 
 **T-X058** maps only to `REPAIR_ATTEMPT_LIMIT_ESCALATED` (MAX_REPAIR_ATTEMPTS=2; third automatic start ATTEMPT_LIMIT after ESCALATED; CMS repair NOT_WIRED; externalEffects NONE; not live VERIFIED).
 
@@ -177,7 +177,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X059** maps only to `DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING` (one booking; separate claims; liveProviderWiring NOT_WIRED; not live VERIFIED). Shared map with T-US-038.
 
-**T-X070** maps only to `VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES` (VALIDATION_FAILED ≠ COLLECTION_FAILED; B24–B31 sig-hex length edges; empty recordId → COLLECTION_FAILED; live NOT_WIRED; not live VERIFIED).
+**T-X070** maps only to `VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES` (VALIDATION_FAILED ≠ COLLECTION_FAILED; empty recordId → COLLECTION_FAILED; live NOT_WIRED; not live VERIFIED).
 
 **T-X060** maps only to `CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM` (whitespace-normalized match; blank → INVALID_DIMENSION; heterogeneous refuse silent sum; live NOT_WIRED; not live VERIFIED).
 
@@ -315,7 +315,7 @@ Suggested owner Windows flow (state off OneDrive):
 **T-X052** maps only to `SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED` (synthetic conversion contaminants projected out; syntheticExcludedRevenueMinor tracked; defense-in-depth; live NOT_WIRED; not live VERIFIED).
 
 
-**T-X062** maps only to `SSE_GAP_FULL_STATE_RESYNC` (offline/online SSE gap → full-state resync; pending gap blocks invent; liveProviderWiring NOT_WIRED; not live VERIFIED).
+**T-X062** maps only to `SSE_GAP_FULL_STATE_RESYNC` (offline/online SSE gap → full-state resync; pending gap blocks invent; STILL_OFFLINE/regressive refuse; NaN/+Infinity coversThroughSeq refuse; liveProviderWiring NOT_WIRED; LIVE_SSE_CLAIM_REFUSED; Ads ACCESS_BLOCKED; not live VERIFIED).
 
 **T-X061** maps only to `KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG` (dialog open/trap/restore or FOCUS_LOST; not live VERIFIED).
 

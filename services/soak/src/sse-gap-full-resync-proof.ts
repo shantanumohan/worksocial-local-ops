@@ -1,10 +1,10 @@
 /**
  * Fixture proof for T-X062 — SSE gap after offline UI → full-state resync.
- * Hillclimb F32–F38: liveProviderWiring=NOT_WIRED; chatgptAdsAccess=ACCESS_BLOCKED;
+ * Hillclimb F32–F44: liveProviderWiring=NOT_WIRED; chatgptAdsAccess=ACCESS_BLOCKED;
  * LIVE_SSE_CLAIM_REFUSED for live VERIFIED / live SSE wire; STILL_OFFLINE;
  * regressive snapshot refuse; online gap; pending-gap blocks invent;
- * covering-beyond; invalid seq refuse. External effects: NONE.
- * Never invents live VERIFIED.
+ * covering-beyond; invalid seq refuse; NaN/+Infinity coversThroughSeq refuse (F43/F44).
+ * External effects: NONE. Never invents live VERIFIED.
  */
 
 import { randomUUID } from "node:crypto";
@@ -283,6 +283,155 @@ export function proofSseGapFullStateResync(nowIso: string): SoakProofRecord {
   } else {
     passed = false;
     details.push(`F38 zero seq unexpectedly ${JSON.stringify(zeroSeq)}`);
+  }
+
+  // 2j. F39 — non-integer seq → INVALID_SEQ; gap floor unchanged.
+  const fracSeq = evaluateSseEventAfterOffline({
+    cursor: f38Gap.cursor,
+    event: { seq: 1.5, payloadId: "p-frac" },
+    reconnecting: false,
+  });
+  if (
+    fracSeq.code === "INVALID_SEQ" &&
+    fracSeq.allowedIncremental === false &&
+    fracSeq.fullStateResyncRequired === true &&
+    fracSeq.cursor.lastAppliedSeq === 8 &&
+    fracSeq.cursor.minResyncThroughSeq === 12 &&
+    fracSeq.liveProviderWiring === "NOT_WIRED"
+  ) {
+    details.push("F39 seq=1.5 → INVALID_SEQ; minResyncThroughSeq=12 unchanged");
+  } else {
+    passed = false;
+    details.push(`F39 fractional seq unexpectedly ${JSON.stringify(fracSeq)}`);
+  }
+
+  // 2k. F40 — non-finite seq (NaN) → INVALID_SEQ; gap floor unchanged.
+  const nanSeq = evaluateSseEventAfterOffline({
+    cursor: f38Gap.cursor,
+    event: { seq: Number.NaN, payloadId: "p-nan" },
+    reconnecting: false,
+  });
+  if (
+    nanSeq.code === "INVALID_SEQ" &&
+    nanSeq.allowedIncremental === false &&
+    nanSeq.fullStateResyncRequired === true &&
+    nanSeq.cursor.lastAppliedSeq === 8 &&
+    nanSeq.cursor.minResyncThroughSeq === 12 &&
+    nanSeq.liveProviderWiring === "NOT_WIRED" &&
+    nanSeq.externalEffects === "NONE"
+  ) {
+    details.push(
+      "F40 seq=NaN with minResync=12 → INVALID_SEQ; floor unchanged; fullStateResyncRequired",
+    );
+  } else {
+    passed = false;
+    details.push(`F40 NaN seq unexpectedly ${JSON.stringify(nanSeq)}`);
+  }
+
+  // 2l. F41 — +Infinity seq → INVALID_SEQ; gap floor unchanged.
+  const infSeq = evaluateSseEventAfterOffline({
+    cursor: f38Gap.cursor,
+    event: { seq: Number.POSITIVE_INFINITY, payloadId: "p-inf" },
+    reconnecting: false,
+  });
+  if (
+    infSeq.code === "INVALID_SEQ" &&
+    infSeq.allowedIncremental === false &&
+    infSeq.fullStateResyncRequired === true &&
+    infSeq.cursor.lastAppliedSeq === 8 &&
+    infSeq.cursor.minResyncThroughSeq === 12 &&
+    infSeq.liveProviderWiring === "NOT_WIRED" &&
+    infSeq.externalEffects === "NONE"
+  ) {
+    details.push(
+      "F41 seq=+Infinity with minResync=12 → INVALID_SEQ; floor unchanged; fullStateResyncRequired",
+    );
+  } else {
+    passed = false;
+    details.push(`F41 infinity seq unexpectedly ${JSON.stringify(infSeq)}`);
+  }
+
+  // 2m. F42 — -Infinity seq → INVALID_SEQ; gap floor unchanged.
+  const negInfSeq = evaluateSseEventAfterOffline({
+    cursor: f38Gap.cursor,
+    event: { seq: Number.NEGATIVE_INFINITY, payloadId: "p-neg-inf" },
+    reconnecting: false,
+  });
+  if (
+    negInfSeq.code === "INVALID_SEQ" &&
+    negInfSeq.allowedIncremental === false &&
+    negInfSeq.fullStateResyncRequired === true &&
+    negInfSeq.cursor.lastAppliedSeq === 8 &&
+    negInfSeq.cursor.minResyncThroughSeq === 12 &&
+    negInfSeq.liveProviderWiring === "NOT_WIRED" &&
+    negInfSeq.externalEffects === "NONE"
+  ) {
+    details.push(
+      "F42 seq=-Infinity with minResync=12 → INVALID_SEQ; floor unchanged; fullStateResyncRequired",
+    );
+  } else {
+    passed = false;
+    details.push(`F42 neg-infinity seq unexpectedly ${JSON.stringify(negInfSeq)}`);
+  }
+
+  // 2n. F43 — NaN coversThroughSeq → SNAPSHOT_INSUFFICIENT_COVERAGE; gap floor unchanged.
+  const nanCover = applySseFullStateResync({
+    cursor: f38Gap.cursor,
+    snapshot: {
+      revision: 7,
+      coversThroughSeq: Number.NaN,
+      entityCount: 3,
+      stateDigest: "digest-snap-nan-cover",
+    },
+  });
+  if (
+    nanCover.code === "SNAPSHOT_INSUFFICIENT_COVERAGE" &&
+    nanCover.allowedIncremental === false &&
+    nanCover.fullStateResyncRequired === true &&
+    nanCover.cursor.lastAppliedSeq === 8 &&
+    nanCover.cursor.minResyncThroughSeq === 12 &&
+    nanCover.cursor.stateDigest === "digest-seq-8" &&
+    nanCover.liveProviderWiring === "NOT_WIRED" &&
+    nanCover.externalEffects === "NONE" &&
+    nanCover.chatgptAdsAccess === "ACCESS_BLOCKED" &&
+    nanCover.liveProviderSuccessClaimed === false
+  ) {
+    details.push(
+      "F43 coversThroughSeq=NaN with minResync=12 → SNAPSHOT_INSUFFICIENT_COVERAGE; floor unchanged; stateDigest retained",
+    );
+  } else {
+    passed = false;
+    details.push(`F43 NaN coversThroughSeq unexpectedly ${JSON.stringify(nanCover)}`);
+  }
+
+  // 2o. F44 — +Infinity coversThroughSeq → SNAPSHOT_INSUFFICIENT_COVERAGE; gap floor unchanged.
+  const infCover = applySseFullStateResync({
+    cursor: f38Gap.cursor,
+    snapshot: {
+      revision: 8,
+      coversThroughSeq: Number.POSITIVE_INFINITY,
+      entityCount: 3,
+      stateDigest: "digest-snap-inf-cover",
+    },
+  });
+  if (
+    infCover.code === "SNAPSHOT_INSUFFICIENT_COVERAGE" &&
+    infCover.allowedIncremental === false &&
+    infCover.fullStateResyncRequired === true &&
+    infCover.cursor.lastAppliedSeq === 8 &&
+    infCover.cursor.minResyncThroughSeq === 12 &&
+    infCover.cursor.stateDigest === "digest-seq-8" &&
+    infCover.liveProviderWiring === "NOT_WIRED" &&
+    infCover.externalEffects === "NONE" &&
+    infCover.chatgptAdsAccess === "ACCESS_BLOCKED" &&
+    infCover.liveProviderSuccessClaimed === false
+  ) {
+    details.push(
+      "F44 coversThroughSeq=+Infinity with minResync=12 → SNAPSHOT_INSUFFICIENT_COVERAGE; floor unchanged; stateDigest retained",
+    );
+  } else {
+    passed = false;
+    details.push(`F44 +Infinity coversThroughSeq unexpectedly ${JSON.stringify(infCover)}`);
   }
 
   // 3. Snapshot below gap coverage must not clear the requirement.

@@ -311,6 +311,169 @@ describe("SSE gap after offline UI (T-X062)", () => {
     expect(zero.liveProviderWiring).toBe("NOT_WIRED");
   });
 
+  it("F39 refuses fractional seq while gap pending", () => {
+    let cursor = createSseUiCursor({
+      lastAppliedSeq: 8,
+      stateDigest: "digest-seq-8",
+    });
+    cursor = markSseUiOffline(cursor);
+    const gap = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 12, payloadId: "e-gap-12" },
+      reconnecting: true,
+    });
+    const frac = evaluateSseEventAfterOffline({
+      cursor: gap.cursor,
+      event: { seq: 1.5, payloadId: "e-frac" },
+      reconnecting: false,
+    });
+    expect(frac.code).toBe("INVALID_SEQ");
+    expect(frac.allowedIncremental).toBe(false);
+    expect(frac.fullStateResyncRequired).toBe(true);
+    expect(frac.cursor.minResyncThroughSeq).toBe(12);
+    expect(frac.cursor.lastAppliedSeq).toBe(8);
+  });
+
+  it("F40 refuses NaN seq while gap pending", () => {
+    let cursor = createSseUiCursor({
+      lastAppliedSeq: 8,
+      stateDigest: "digest-seq-8",
+    });
+    cursor = markSseUiOffline(cursor);
+    const gap = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 12, payloadId: "e-gap-12" },
+      reconnecting: true,
+    });
+    const nan = evaluateSseEventAfterOffline({
+      cursor: gap.cursor,
+      event: { seq: Number.NaN, payloadId: "e-nan" },
+      reconnecting: false,
+    });
+    expect(nan.code).toBe("INVALID_SEQ");
+    expect(nan.allowedIncremental).toBe(false);
+    expect(nan.fullStateResyncRequired).toBe(true);
+    expect(nan.cursor.minResyncThroughSeq).toBe(12);
+    expect(nan.cursor.lastAppliedSeq).toBe(8);
+    expect(nan.liveProviderWiring).toBe("NOT_WIRED");
+    expect(nan.externalEffects).toBe("NONE");
+  });
+
+  it("F41 refuses +Infinity seq while gap pending", () => {
+    let cursor = createSseUiCursor({
+      lastAppliedSeq: 8,
+      stateDigest: "digest-seq-8",
+    });
+    cursor = markSseUiOffline(cursor);
+    const gap = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 12, payloadId: "e-gap-12" },
+      reconnecting: true,
+    });
+    const inf = evaluateSseEventAfterOffline({
+      cursor: gap.cursor,
+      event: { seq: Number.POSITIVE_INFINITY, payloadId: "e-inf" },
+      reconnecting: false,
+    });
+    expect(inf.code).toBe("INVALID_SEQ");
+    expect(inf.allowedIncremental).toBe(false);
+    expect(inf.fullStateResyncRequired).toBe(true);
+    expect(inf.cursor.minResyncThroughSeq).toBe(12);
+    expect(inf.cursor.lastAppliedSeq).toBe(8);
+    expect(inf.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("F42 refuses -Infinity seq while gap pending", () => {
+    let cursor = createSseUiCursor({
+      lastAppliedSeq: 8,
+      stateDigest: "digest-seq-8",
+    });
+    cursor = markSseUiOffline(cursor);
+    const gap = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 12, payloadId: "e-gap-12" },
+      reconnecting: true,
+    });
+    const negInf = evaluateSseEventAfterOffline({
+      cursor: gap.cursor,
+      event: { seq: Number.NEGATIVE_INFINITY, payloadId: "e-neg-inf" },
+      reconnecting: false,
+    });
+    expect(negInf.code).toBe("INVALID_SEQ");
+    expect(negInf.fullStateResyncRequired).toBe(true);
+    expect(negInf.cursor.minResyncThroughSeq).toBe(12);
+    expect(negInf.cursor.lastAppliedSeq).toBe(8);
+    expect(negInf.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("F43 refuses NaN coversThroughSeq while gap pending without clearing floor", () => {
+    let cursor = createSseUiCursor({
+      lastAppliedSeq: 8,
+      stateDigest: "digest-seq-8",
+    });
+    cursor = markSseUiOffline(cursor);
+    const gap = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 12, payloadId: "e-gap-12" },
+      reconnecting: true,
+    });
+    expect(gap.cursor.minResyncThroughSeq).toBe(12);
+
+    const nanCover = applySseFullStateResync({
+      cursor: gap.cursor,
+      snapshot: {
+        revision: 7,
+        coversThroughSeq: Number.NaN,
+        entityCount: 3,
+        stateDigest: "digest-snap-nan-cover",
+      },
+    });
+    expect(nanCover.code).toBe("SNAPSHOT_INSUFFICIENT_COVERAGE");
+    expect(nanCover.allowedIncremental).toBe(false);
+    expect(nanCover.fullStateResyncRequired).toBe(true);
+    expect(nanCover.cursor.lastAppliedSeq).toBe(8);
+    expect(nanCover.cursor.minResyncThroughSeq).toBe(12);
+    expect(nanCover.cursor.stateDigest).toBe("digest-seq-8");
+    expect(nanCover.liveProviderWiring).toBe("NOT_WIRED");
+    expect(nanCover.externalEffects).toBe("NONE");
+    expect(nanCover.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(nanCover.liveProviderSuccessClaimed).toBe(false);
+  });
+
+  it("F44 refuses +Infinity coversThroughSeq while gap pending without clearing floor", () => {
+    let cursor = createSseUiCursor({
+      lastAppliedSeq: 8,
+      stateDigest: "digest-seq-8",
+    });
+    cursor = markSseUiOffline(cursor);
+    const gap = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 12, payloadId: "e-gap-12" },
+      reconnecting: true,
+    });
+    expect(gap.cursor.minResyncThroughSeq).toBe(12);
+
+    const infCover = applySseFullStateResync({
+      cursor: gap.cursor,
+      snapshot: {
+        revision: 8,
+        coversThroughSeq: Number.POSITIVE_INFINITY,
+        entityCount: 3,
+        stateDigest: "digest-snap-inf-cover",
+      },
+    });
+    expect(infCover.code).toBe("SNAPSHOT_INSUFFICIENT_COVERAGE");
+    expect(infCover.allowedIncremental).toBe(false);
+    expect(infCover.fullStateResyncRequired).toBe(true);
+    expect(infCover.cursor.lastAppliedSeq).toBe(8);
+    expect(infCover.cursor.minResyncThroughSeq).toBe(12);
+    expect(infCover.cursor.stateDigest).toBe("digest-seq-8");
+    expect(infCover.liveProviderWiring).toBe("NOT_WIRED");
+    expect(infCover.externalEffects).toBe("NONE");
+    expect(infCover.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(infCover.liveProviderSuccessClaimed).toBe(false);
+  });
+
   it("F37 refuses negative seq without mutating cursor", () => {
     const cursor = createSseUiCursor({
       lastAppliedSeq: 5,
