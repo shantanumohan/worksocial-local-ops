@@ -204,6 +204,44 @@ describe("budget accounting", () => {
     expect(availableBudgetMinor(reconciled.account)).toBe(720);
   });
 
+  it("multi-hold under-run reconcile posts zero overrunMinor; sibling hold intact (L20)", () => {
+    const a = reserveBudget(account(), "r-primary", 400);
+    expect(a.ok).toBe(true);
+    if (!a.ok) return;
+    const b = reserveBudget(a.account, "r-sibling", 120);
+    expect(b.ok).toBe(true);
+    if (!b.ok) return;
+    const holdPrimary = cancelBudgetReservation(b.account, "r-primary", {
+      known: false,
+    });
+    expect(holdPrimary.ok).toBe(true);
+    if (!holdPrimary.ok) return;
+    const holdSibling = cancelBudgetReservation(holdPrimary.account, "r-sibling", {
+      known: false,
+    });
+    expect(holdSibling.ok).toBe(true);
+    if (!holdSibling.ok) return;
+    expect(holdSibling.account.heldMinor).toBe(520);
+
+    const underRun = cancelBudgetReservation(holdSibling.account, "r-primary", {
+      known: true,
+      actualMinor: 250,
+    });
+    expect(underRun.ok).toBe(true);
+    if (!underRun.ok) return;
+    expect(underRun.costKind).toBe("actual");
+    expect(underRun.account.settledReservations["r-primary"]).toEqual({
+      reservedMinor: 400,
+      actualMinor: 250,
+      overrunMinor: 0,
+    });
+    expect(isUnknownUsageHold(underRun.account, "r-sibling")).toBe(true);
+    expect(underRun.account.heldMinor).toBe(120);
+    expect(underRun.account.settledMinor).toBe(250);
+    expect(availableBudgetMinor(underRun.account)).toBe(630);
+    expect(underRun.liveBudgetProviderWiring).toBe("NOT_WIRED");
+  });
+
   it("known-zero release after hold posts explicit zero settled snapshot (L19)", () => {
     const reserved = reserveBudget(account(), "r-zrelease", 180);
     expect(reserved.ok).toBe(true);

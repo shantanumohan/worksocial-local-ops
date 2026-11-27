@@ -609,6 +609,69 @@ export function proofUnknownUsageCancelHoldsResidual(
     );
   }
 
+  // 19. Multi-hold under-run reconcile posts overrunMinor=0 snapshot; sibling hold intact (L20).
+  const l20Base = createBudgetAccount({
+    dayKey: "2026-11-22",
+    currency: "USD",
+    limitMinor: 1000,
+  });
+  const l20A = reserveBudget(l20Base, "l20-primary", 400);
+  if (!l20A.ok) {
+    passed = false;
+    details.push(`L20 primary reserve failed: ${JSON.stringify(l20A)}`);
+    return finish(passed, details, nowIso);
+  }
+  const l20B = reserveBudget(l20A.account, "l20-sibling", 100);
+  if (!l20B.ok) {
+    passed = false;
+    details.push(`L20 sibling reserve failed: ${JSON.stringify(l20B)}`);
+    return finish(passed, details, nowIso);
+  }
+  const l20HoldA = cancelBudgetReservation(l20B.account, "l20-primary", {
+    known: false,
+  });
+  if (!l20HoldA.ok) {
+    passed = false;
+    details.push(`L20 primary hold failed: ${JSON.stringify(l20HoldA)}`);
+    return finish(passed, details, nowIso);
+  }
+  const l20HoldB = cancelBudgetReservation(l20HoldA.account, "l20-sibling", {
+    known: false,
+  });
+  if (!l20HoldB.ok) {
+    passed = false;
+    details.push(`L20 sibling hold failed: ${JSON.stringify(l20HoldB)}`);
+    return finish(passed, details, nowIso);
+  }
+  const l20Under = cancelBudgetReservation(l20HoldB.account, "l20-primary", {
+    known: true,
+    actualMinor: 250,
+  });
+  const snap = l20Under.ok
+    ? l20Under.account.settledReservations["l20-primary"]
+    : undefined;
+  if (
+    l20Under.ok &&
+    snap &&
+    snap.reservedMinor === 400 &&
+    snap.actualMinor === 250 &&
+    snap.overrunMinor === 0 &&
+    isUnknownUsageHold(l20Under.account, "l20-sibling") &&
+    l20Under.account.heldMinor === 100 &&
+    l20Under.account.settledMinor === 250 &&
+    availableBudgetMinor(l20Under.account) === 650 &&
+    l20Under.liveBudgetProviderWiring === BUDGET_LIVE_PROVIDER_WIRING
+  ) {
+    details.push(
+      "Multi-hold under-run reconcile → settled snapshot overrunMinor=0; sibling hold 100 intact; available=650",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `L20 under-run multi-hold failed: ${JSON.stringify(l20Under)} snap=${JSON.stringify(snap)}`,
+    );
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false externalEffects=NONE liveBudgetProviderWiring=NOT_WIRED ACCEPTED≠VERIFIED",
   );
