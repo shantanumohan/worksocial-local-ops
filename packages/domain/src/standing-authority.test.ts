@@ -255,4 +255,13 @@ describe("evaluateStandingAuthority", () => {
     );
     expect(allowed.decision).toEqual({ allowed: true });
   });
+
+  it("omitted held allowed when supervisor lease fence off (T-X006 edge)", () => {
+    const allowed = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: false,
+      }),
+    );
+    expect(allowed.decision).toEqual({ allowed: true });
+  });
 });
