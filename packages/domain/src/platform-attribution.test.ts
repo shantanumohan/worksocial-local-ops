@@ -515,6 +515,338 @@ describe("platform-attribution (T-X059)", () => {
     ]);
     expect(projection.hasInvalidClaims).toBe(false);
     expect(projection.platformClaimCount).toBe(1);
-    expect(refuseSilentPlatformSum(projection).code).toBe(null);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(true);
+    if (!decision.allowed) return;
+    expect(decision.code).toBe(null);
+  });
+
+  it("returns zero retained claims when every row is invalid (Q35/S21)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: " ",
+        platformId: "google_ads",
+        bookingId: "booking-x",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(projection.platformClaimCount).toBe(0);
+    expect(projection.uniqueBookingCount).toBe(0);
+    expect(projection.invalidClaimCount).toBe(1);
+    expect(refuseSilentPlatformSum(projection).code).toBe(
+      "INVALID_ATTRIBUTION_CLAIM",
+    );
+  });
+
+  it("exposes refused silent-sum platformClaimCount on double-count (Q35/S22)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-1",
+        platformId: "google_ads",
+        bookingId: "booking-dc",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "c-2",
+        platformId: "meta_ads",
+        bookingId: "booking-dc",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(false);
+    if (decision.allowed) return;
+    expect(decision.code).toBe("SILENT_PLATFORM_SUM_REFUSED");
+    expect(decision.platformClaimCount).toBe(2);
+    expect(decision.uniqueBookingCount).toBe(1);
+  });
+
+  it("collapses trim-identical bookingIds to one unique booking (Q35/S23)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-trim",
+        platformId: "google_ads",
+        bookingId: "  booking-trim-id ",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(projection.uniqueBookingIds).toEqual(["booking-trim-id"]);
+    expect(projection.uniqueBookingCount).toBe(1);
+  });
+
+  it("empty allow path still pins NOT_WIRED wiring (Q35/S24)", () => {
+    const projection = projectUniqueOutcomes([]);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(true);
+    if (!decision.allowed) return;
+    expect(decision.liveProviderWiring).toBe("NOT_WIRED");
+    expect(decision.externalEffects).toBe("NONE");
+  });
+
+  it("accepts explicit +00:00 UTC offset suffix (Q35 wipe15 @ d6731fcd)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-utc",
+        platformId: "google_ads",
+        bookingId: "booking-utc",
+        claimedAtIso: "2026-11-22T19:00:00.000+00:00",
+      },
+    ]);
+    expect(projection.hasInvalidClaims).toBe(false);
+    expect(projection.platformClaimCount).toBe(1);
+  });
+
+  it("records invalidClaimCount in reasons for malformed batch (Q35 wipe15 @ d6731fcd)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-bad",
+        platformId: "meta_ads",
+        bookingId: "booking-reasons",
+        claimedAtIso: "2026-11-22T19:00:00",
+      },
+    ]);
+    expect(projection.invalidClaimCount).toBe(1);
+    expect(projection.reasons.join(" ")).toContain("invalidClaimCount=1");
+  });
+
+  it("uses null-prototype claimsByPlatform map (Q35 wipe15 @ d6731fcd)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-constructor",
+        platformId: "constructor",
+        bookingId: "booking-proto",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(Object.prototype.hasOwnProperty.call(projection.claimsByPlatform, "constructor")).toBe(true);
+    expect(projection.claimsByPlatform["constructor"]).toBe(1);
+    expect(Object.getPrototypeOf(projection.claimsByPlatform)).toBeNull();
+  });
+
+  it("refuses silent sum for three platforms on one booking (Q35/S25 wipe15 @ 1fb05770)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-g",
+        platformId: "google_ads",
+        bookingId: "booking-triple",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "c-m",
+        platformId: "meta_ads",
+        bookingId: "booking-triple",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "c-l",
+        platformId: "linkedin_ads",
+        bookingId: "booking-triple",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(projection.uniqueBookingCount).toBe(1);
+    expect(projection.platformClaimCount).toBe(3);
+    expect(projection.distinctPlatformCount).toBe(3);
+    expect(projection.wouldDoubleCountIfSummed).toBe(true);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(false);
+    if (decision.allowed) return;
+    expect(decision.code).toBe("SILENT_PLATFORM_SUM_REFUSED");
+  });
+
+  it("sorts retainedClaims chronologically when same booking spans instants (Q35/S26 wipe15 @ 1fb05770)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-later",
+        platformId: "meta_ads",
+        bookingId: "booking-chrono",
+        claimedAtIso: "2026-11-22T20:00:00.000Z",
+      },
+      {
+        claimId: "c-earlier",
+        platformId: "google_ads",
+        bookingId: "booking-chrono",
+        claimedAtIso: "2026-11-22T18:00:00.000Z",
+      },
+    ]);
+    expect(projection.retainedClaims.map((c) => c.claimId)).toEqual([
+      "c-earlier",
+      "c-later",
+    ]);
+    expect(refuseSilentPlatformSum(projection).code).toBe(
+      "SILENT_PLATFORM_SUM_REFUSED",
+    );
+  });
+
+  it("pins DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS for acceptance wiring (Q35/S27 wipe15 @ 1fb05770)", () => {
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).toEqual([
+      "T-X059",
+      "T-US-038",
+    ]);
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X061",
+    );
+  });
+
+  it("allows silent-sum when each booking has one platform claim (Q35/S28 wipe15 @ 64829602)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-b1",
+        platformId: "google_ads",
+        bookingId: "booking-a",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "c-b2",
+        platformId: "meta_ads",
+        bookingId: "booking-b",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(projection.uniqueBookingCount).toBe(2);
+    expect(projection.platformClaimCount).toBe(2);
+    expect(projection.wouldDoubleCountIfSummed).toBe(false);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(true);
+  });
+
+  it("threads distinctPlatformCount in refusal reasons (Q35/S29 wipe15 @ 64829602)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-1",
+        platformId: "google_ads",
+        bookingId: "booking-reasons-dc",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "c-2",
+        platformId: "meta_ads",
+        bookingId: "booking-reasons-dc",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(false);
+    if (decision.allowed) return;
+    expect(decision.reasons.join(" ")).toMatch(/distinctPlatformCount=2/);
+  });
+
+  it("excludes T-X064 SSRF case from duplicate-attribution wiring (Q35/S30 wipe15 @ 64829602)", () => {
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X064",
+    );
+  });
+
+  it("excludes T-X066 backup-omit from duplicate-attribution wiring (Q35/S31 wipe15 @ 5ed3d15d)", () => {
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X066",
+    );
+  });
+
+  it("excludes T-X068 grouped-outage from attribution wiring (Q35/S32 wipe15 @ 7a9be9a1)", () => {
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X068",
+    );
+  });
+
+  it("excludes T-X070 payload-collection from attribution wiring (Q35/S33 wipe15 @ 579ffaf8)", () => {
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X070",
+    );
+  });
+
+  it("excludes T-X073 offboard from attribution wiring (Q35/S34 tip-moved-316 @ 60b4b782)", () => {
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X073",
+    );
+  });
+
+  it("excludes T-X057 repair-weaken from attribution wiring (Q35/S35 tip-moved-316 @ 60b4b782)", () => {
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X057",
+    );
+  });
+
+  it("collapses trim-identical platformIds under one claimsByPlatform key (Q35/S36)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-trim-plat-a",
+        platformId: "  google_ads  ",
+        bookingId: "booking-trim-plat",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "c-trim-plat-b",
+        platformId: "\tgoogle_ads\n",
+        bookingId: "booking-trim-plat-2",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(projection.distinctPlatformCount).toBe(1);
+    expect(projection.claimsByPlatform.google_ads).toBe(2);
+    expect(projection.wouldDoubleCountIfSummed).toBe(false);
+    expect(projection.externalEffects).toBe("NONE");
+    expect(projection.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("accepts fractional-second Z timestamps without inventing bookings (Q35/S37)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-frac",
+        platformId: "meta_ads",
+        bookingId: "booking-frac",
+        claimedAtIso: "2026-11-22T19:00:00.123Z",
+      },
+    ]);
+    expect(projection.hasInvalidClaims).toBe(false);
+    expect(projection.platformClaimCount).toBe(1);
+    expect(projection.uniqueBookingCount).toBe(1);
+    expect(projection.retainedClaims[0]?.claimedAtIso).toBe(
+      "2026-11-22T19:00:00.123Z",
+    );
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(true);
+    if (!decision.allowed) return;
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("refuse path keeps NONE/NOT_WIRED honesty on invalid batch (Q35/S38)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: " ",
+        platformId: "google_ads",
+        bookingId: "booking-honesty",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(false);
+    if (decision.allowed) return;
+    expect(decision.code).toBe("INVALID_ATTRIBUTION_CLAIM");
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.liveProviderWiring).toBe("NOT_WIRED");
+    expect(decision.reasons.join(" ")).toMatch(
+      /liveProviderWiring=NOT_WIRED externalEffects=NONE/,
+    );
+  });
+
+  it("excludes T-X071 host-offline from attribution wiring (Q35/S39)", () => {
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X071",
+    );
+  });
+
+  it("excludes T-X072 eval-redaction from attribution wiring (Q35/S40)", () => {
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X072",
+    );
+  });
+
+  it("excludes exclusive T-X058 repair-limit from attribution wiring (Q35/S41)", () => {
+    // Fence only — exclusive elsewhere is #317 Slot P; do not claim.
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X058",
+    );
   });
 });

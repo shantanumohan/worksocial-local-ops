@@ -1118,5 +1118,59 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).toContain("ACCEPTED≠VERIFIED");
     expect(art.summary).toMatch(/chronological/);
     expect(art.summary).toMatch(/uniqueBookingCount=1/);
+    // Q35/K53 @ d6731fcd — not T-X060 currency/timezone silent-sum drift
+    expect(art.proofKinds).not.toContain(
+      "currency_timezone_mismatch_no_silent_sum",
+    );
+    expect(art.summary).not.toMatch(/currency_timezone_mismatch_no_silent_sum/);
+    // Q35 wipe15 @ d6731fcd — sole duplicate-platform proof kind
+    expect(art.proofKinds).toHaveLength(1);
+    expect(art.summary).toMatch(
+      /Fixture ACCEPTED for T-X059 \(Duplicate platform attribution/,
+    );
+    // Q35 wipe15 @ 1fb05770 — not T-X061 keyboard-focus drift (#303)
+    expect(art.proofKinds).not.toContain("keyboard_focus_restore_after_dialog");
+    expect(art.summary).not.toMatch(/keyboard_focus_restore_after_dialog/);
+    // Q35 wipe15 @ 64829602 — not T-X064 SSRF drift (#306)
+    expect(art.proofKinds).not.toContain(
+      "ssrf_redirect_dns_rebind_blocked_every_hop",
+    );
+    expect(art.summary).not.toMatch(/ssrf_redirect_dns_rebind/);
+    // Q35 wipe15 @ 5ed3d15d — not T-X066 backup-omit drift (#308)
+    expect(art.proofKinds).not.toContain("backup_omit_receipt");
+    expect(art.summary).not.toMatch(/backup_omit_receipt/);
+    // Q35 wipe15 @ 7a9be9a1 — not T-X068 grouped-outage drift (#310)
+    expect(art.proofKinds).not.toContain("thirty_alerts_one_outage_grouped");
+    expect(art.summary).not.toMatch(/thirty_alerts_one_outage_grouped/);
+    // Q35 wipe15 @ 579ffaf8 — not T-X070 validated-payload drift (#312)
+    expect(art.proofKinds).not.toContain(
+      "validated_payload_not_collected_separate_states",
+    );
+    expect(art.summary).not.toMatch(
+      /validated_payload_not_collected_separate_states/,
+    );
+    // Q35 tip-moved-316 @ 60b4b782 — not T-X057 repair-weaken drift (#316)
+    expect(art.proofKinds).not.toContain("repair_weaken_test_rejected");
+    expect(art.summary).not.toMatch(/repair_weaken_test_rejected/);
+    // Q35 tip-moved-316 — not T-X073 offboard residual drift (#315 main)
+    expect(art.proofKinds).not.toContain("offboard_active_token_residual");
+    expect(art.summary).not.toMatch(/offboard_active_token_residual/);
+    // Q35/S39 FULL wipe @ 60b4b782 — not T-X071 host-offline drift (#313)
+    expect(art.proofKinds).not.toContain(
+      "host_offline_public_discovery_unavailable",
+    );
+    expect(art.summary).not.toMatch(/host_offline_public_discovery/);
+    // Q35/S40 — not T-X072 customer-eval redaction drift (#314)
+    expect(art.proofKinds).not.toContain("customer_data_eval_redaction_blocks");
+    expect(art.summary).not.toMatch(/customer_data_eval_redaction/);
+    // Q35/S41 — fence exclusive T-X058 (#317) without claiming it
+    expect(art.proofKinds).not.toContain("repair_attempt_limit_escalated");
+    expect(art.summary).not.toMatch(/repair_attempt_limit_escalated/);
+    // Honesty pins — ACCEPTED≠VERIFIED; NONE/NOT_WIRED
+    expect(art.summary).toContain("ACCEPTED≠VERIFIED");
+    expect(art.externalEffects).toBe("NONE");
+    expect(art.summary).toContain("liveProviderWiring=NOT_WIRED");
+    expect(art.liveProviderSuccessClaimed).toBe(false);
+    expect(art.proofKinds).not.toContain("VERIFIED");
   });
 });
