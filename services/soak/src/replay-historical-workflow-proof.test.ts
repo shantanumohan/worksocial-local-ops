@@ -172,6 +172,16 @@ describe("proofReplayHistoricalNoRepeatIo", () => {
       ),
     ).toBe(true);
     expect(
+      proof.details.some((d) =>
+        d.includes("Verify applyAttemptCount drift vs claim/terminal → FAILED (B19)"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Claim/verify operationId disagree → FAILED (B19)"),
+      ),
+    ).toBe(true);
+    expect(
       proof.details.some((d) => d.includes("honesty NOT_WIRED/NONE")),
     ).toBe(true);
     expect(

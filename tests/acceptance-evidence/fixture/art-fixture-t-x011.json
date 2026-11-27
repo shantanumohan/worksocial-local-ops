@@ -8,8 +8,8 @@
     "output_bomb_bounded_quarantined"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x011.json",
-  "createdAtIso": "2026-11-27T16:54:32.773Z",
+  "createdAtIso": "2026-11-27T16:59:09.193Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x011-b41e8392c26b"
+  "uniqueSourceArtifactId": "art-fixture-t-x011-f53cfba8a696"
 }

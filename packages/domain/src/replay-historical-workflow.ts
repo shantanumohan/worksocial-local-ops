@@ -236,6 +236,27 @@ export function replayMissionWorkflowHistory(
     return { ...result, outcome: "FAILED" };
   }
 
+  // B19 — claim and verify records must agree before terminal bind.
+  if (history.events.length === 3) {
+    const claimEvt = history.events[1];
+    const verifyEvt = history.events[2];
+    if (
+      claimEvt?.activity === "claimAndAccept" &&
+      verifyEvt?.activity === "verify"
+    ) {
+      const claimOp = claimEvt.operationId.trim();
+      const verifyOp = verifyEvt.operationId.trim();
+      if (claimOp.length === 0 || verifyOp.length === 0 || claimOp !== verifyOp) {
+        hooks.onForbiddenLiveIo("history_claim_verify_op_mismatch");
+        return { ...result, outcome: "FAILED" };
+      }
+      if (claimEvt.applyAttemptCount !== verifyEvt.applyAttemptCount) {
+        hooks.onForbiddenLiveIo("history_claim_verify_apply_mismatch");
+        return { ...result, outcome: "FAILED" };
+      }
+    }
+  }
+
   // Bind terminal record to the replayed outcome — missing or conflicting
   // terminal must fail closed (truncated / inconsistent history).
   const terminal = history.terminal;

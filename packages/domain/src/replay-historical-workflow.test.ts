@@ -159,8 +159,10 @@ describe("replay historical workflow (T-X013)", () => {
     const result = replayMissionWorkflowHistory(history, hooks);
     expect(result.outcome).toBe("FAILED");
     expect(
-      summary().liveIoLabels.some((l) =>
-        l.includes("history_activity_terminal_op_mismatch"),
+      summary().liveIoLabels.some(
+        (l) =>
+          l.includes("history_claim_verify_op_mismatch") ||
+          l.includes("history_activity_terminal_op_mismatch"),
       ),
     ).toBe(true);
   });
@@ -200,8 +202,10 @@ describe("replay historical workflow (T-X013)", () => {
     const result = replayMissionWorkflowHistory(history, hooks);
     expect(result.outcome).toBe("FAILED");
     expect(
-      summary().liveIoLabels.some((l) =>
-        l.includes("history_activity_terminal_op_mismatch"),
+      summary().liveIoLabels.some(
+        (l) =>
+          l.includes("history_claim_verify_apply_mismatch") ||
+          l.includes("history_activity_terminal_op_mismatch"),
       ),
     ).toBe(true);
   });
@@ -795,6 +799,62 @@ describe("replay historical workflow (T-X013)", () => {
     expect(
       summary().liveIoLabels.some((l) =>
         l.includes("history_terminal_missing_or_incomplete"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed when verify applyAttemptCount drifts from claim/terminal (B19)", () => {
+    const history = sampleHistory();
+    const verify = history.events[2];
+    if (verify && verify.activity === "verify") {
+      verify.applyAttemptCount = 2;
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_claim_verify_apply_mismatch"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed when history begins with claim not enqueue (B20)", () => {
+    const history = sampleHistory();
+    const claim = history.events[1];
+    if (!claim || claim.activity !== "claimAndAccept") {
+      throw new Error("expected claim event");
+    }
+    history.events[0] = { ...claim };
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) => l.includes("history_mismatch")),
+    ).toBe(true);
+  });
+
+  it("fails closed when claim and verify operationIds disagree (B19)", () => {
+    const history = sampleHistory();
+    const claim = history.events[1];
+    const verify = history.events[2];
+    if (claim && claim.activity === "claimAndAccept") {
+      claim.operationId = "op-claim";
+    }
+    if (verify && verify.activity === "verify") {
+      verify.operationId = "op-verify";
+    }
+    history.terminal = {
+      outcome: "VERIFIED",
+      applyAttemptCount: 1,
+      operationId: "op-claim",
+    };
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_claim_verify_op_mismatch"),
       ),
     ).toBe(true);
   });
