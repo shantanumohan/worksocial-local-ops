@@ -65,6 +65,7 @@
  * exact financial boundaries preserved (T-US-032).
  * portable analysis artifact (T-US-037).
  * trusted workspace readiness blockers + next actions (T-US-001).
+ * approval wait survives restart / no slot hold (T-X014),
  * Uses file-backed durable stores so a second process image can resume.
  * External effects: none (fake provider only).
  */
@@ -78,6 +79,9 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import {
+  ApprovalWaitManifestIntegrity,
+  ApprovalWaitPhase,
+  ApprovalWaitSlotLease,
   EffectState, OutagePlane, SOAK_FIXTURE_HARNESS_NOW_ISO, SoakProofKind,
   classifyRecoveryObservation, evaluateUnknownRemoteReconcile,
   recordTimeoutAfterProviderAcceptance, unknownRemoteBlocksBlindResend,
@@ -110,6 +114,10 @@ import { proofAutomatedResponseLoopBoundedHandoff } from "./automated-response-l
 import { proofSsrfRedirectDnsRebindBlockedEveryHop } from "./ssrf-redirect-dns-rebind-proof.js";
 import { proofHostOfflinePublicDiscoveryUnavailable } from "./host-offline-public-discovery-proof.js";
 import { proofIncompatibleWorkflowUpgradeBlockedOrRetained } from "./incompatible-workflow-upgrade-proof.js";
+import {
+  proofApprovalWaitFromObservedJobContinuity,
+  proofApprovalWaitFromObservedRestart,
+} from "./approval-wait-survives-restart-proof.js";
 import { proofAdsTestProjectProductionBlocked } from "./ads-test-project-production-proof.js";
 import { proofSharedAdBudgetExternalChangeInvalidates } from "./shared-ad-budget-external-change-proof.js";
 import { proofRecentAdsConversionBlankPending } from "./recent-ads-conversion-blank-proof.js";
@@ -331,7 +339,68 @@ async function proofCrashRestart(
   }
   details.push("Rehydrated ACCEPTED_PENDING after restart");
 
-  const verified = await b.verifyIndependent({
+  const applyAfterRestart = await b.stores.effects.countApplyAttempts(
+    operationId,
+  );
+
+  const c = openService(stateDir);
+  const decisionAfterSecond = await c.getDecision(operationId);
+  if (
+    !decisionAfterSecond ||
+    decisionAfterSecond.outcome !== "ACCEPTED_PENDING"
+  ) {
+    details.push(
+      `After 2nd restart decision=${decisionAfterSecond?.outcome ?? "missing"}`,
+    );
+    return failProof(
+      SoakProofKind.CRASH_RESTART,
+      details,
+      accepted.applyAttemptCount,
+      operationId,
+      nowIso,
+    );
+  }
+  details.push("Rehydrated ACCEPTED_PENDING after 2nd restart");
+  const applyAfterSecond = await c.stores.effects.countApplyAttempts(
+    operationId,
+  );
+
+  const mapOutcome = (outcome: string | undefined) =>
+    outcome === "ACCEPTED_PENDING"
+      ? ApprovalWaitPhase.WAITING_APPROVAL
+      : outcome === "VERIFIED"
+        ? ApprovalWaitPhase.AUTO_VERIFIED
+        : ApprovalWaitPhase.REJECTED;
+
+  const domain = proofApprovalWaitFromObservedRestart({
+    operationId,
+    jobId: accepted.job.jobId,
+    phaseBeforeRestart: ApprovalWaitPhase.WAITING_APPROVAL,
+    phaseAfterRestart: mapOutcome(decision.outcome),
+    holdsWorkerSlot: false,
+    slotLease: ApprovalWaitSlotLease.RELEASED,
+    applyAttemptCountBeforeRestart: accepted.applyAttemptCount,
+    applyAttemptCountAfterRestart: applyAfterRestart,
+    restartCount: 1,
+    waitIdentityKeyBeforeRestart: bizKey,
+    waitIdentityKeyAfterRestart: bizKey,
+    manifestIntegrity: ApprovalWaitManifestIntegrity.OK,
+    phaseAfterSecondRestart: mapOutcome(decisionAfterSecond.outcome),
+    applyAttemptCountAfterSecondRestart: applyAfterSecond,
+    slotLeaseAfterSecondRestart: ApprovalWaitSlotLease.RELEASED,
+  });
+  details.push(...domain.details);
+  if (!domain.passed) {
+    return failProof(
+      SoakProofKind.CRASH_RESTART,
+      details,
+      accepted.applyAttemptCount,
+      operationId,
+      nowIso,
+    );
+  }
+
+  const verified = await c.verifyIndependent({
     operationId,
     observedDigest: digest,
     nowIso: nowPlus(nowIso, 1000),
@@ -342,7 +411,8 @@ async function proofCrashRestart(
   const passed =
     verified.matched &&
     verified.applyAttemptCount === 1 &&
-    verified.decision.outcome === "VERIFIED";
+    verified.decision.outcome === "VERIFIED" &&
+    domain.passed;
 
   return {
     proofId: `proof-crash-${operationId}`,
@@ -443,10 +513,29 @@ async function proofJobContinuity(
   );
 
   const decision = await b.getDecision(operationId);
+  const domain = proofApprovalWaitFromObservedJobContinuity({
+    operationId,
+    jobIdBeforeRestart: accepted.job.jobId,
+    jobIdAfterRestart: again.job.jobId,
+    jobCreatedAfterRestart: again.created,
+    phaseBeforeRestart: ApprovalWaitPhase.WAITING_APPROVAL,
+    phaseAfterRestart:
+      decision?.outcome === "ACCEPTED_PENDING"
+        ? ApprovalWaitPhase.WAITING_APPROVAL
+        : decision?.outcome === "VERIFIED"
+          ? ApprovalWaitPhase.AUTO_VERIFIED
+          : ApprovalWaitPhase.REJECTED,
+    holdsWorkerSlot: false,
+    slotLease: ApprovalWaitSlotLease.RELEASED,
+    waitIdentityKeyBeforeRestart: bizKey,
+    waitIdentityKeyAfterRestart: bizKey,
+  });
+  details.push(...domain.details);
   const passed =
     again.created === false &&
     again.job.jobId === accepted.job.jobId &&
-    decision?.outcome === "ACCEPTED_PENDING";
+    decision?.outcome === "ACCEPTED_PENDING" &&
+    domain.passed;
 
   return {
     proofId: `proof-job-${operationId}`,

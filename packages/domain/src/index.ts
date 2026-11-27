@@ -1033,6 +1033,28 @@ export {
   type DecideCrmLeadRetryAfterEmptyReadResult,
 } from "./crm-eventual-consistency.js";
 export {
+  APPROVAL_WAIT_RELATED_CASE_IDS,
+  APPROVAL_WAIT_TEMPORAL_WIRING,
+  APPROVAL_WAIT_MANIFEST_SCHEMA,
+  ApprovalWaitPhase,
+  ApprovalWaitSlotLease,
+  ApprovalWaitManifestIntegrity,
+  inspectApprovalWaitDurableManifest,
+  evaluateApprovalWaitCorruptManifest,
+  evaluateApprovalWaitSurvivesRestart,
+  evaluateApprovalWaitAcrossRestarts,
+  evaluateApprovalWaitJobContinuity,
+  type ApprovalWaitTemporalWiring,
+  type ApprovalWaitPhaseValue,
+  type ApprovalWaitSlotLeaseValue,
+  type ApprovalWaitManifestIntegrityValue,
+  type ApprovalWaitDurableManifest,
+  type ApprovalWaitSnapshot,
+  type ApprovalWaitHonestyCode,
+  type ApprovalWaitHonestyDecision,
+} from "./approval-wait-survives-restart.js";
+
+export {
   AcceptanceEnvironment,
   AcceptanceCaseStatus,
   FORBIDDEN_SILENT_LIVE_STATUS,
