@@ -204,6 +204,33 @@ describe("budget accounting", () => {
     expect(availableBudgetMinor(reconciled.account)).toBe(720);
   });
 
+  it("known-zero release after hold posts explicit zero settled snapshot (L19)", () => {
+    const reserved = reserveBudget(account(), "r-zrelease", 180);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-zrelease", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    expect(held.account.heldMinor).toBe(180);
+    const released = cancelBudgetReservation(held.account, "r-zrelease", {
+      known: true,
+      actualMinor: 0,
+    });
+    expect(released.ok).toBe(true);
+    if (!released.ok) return;
+    expect(released.costKind).toBe("zero_release");
+    expect(released.account.settledReservations["r-zrelease"]).toEqual({
+      reservedMinor: 180,
+      actualMinor: 0,
+      overrunMinor: 0,
+    });
+    expect(released.account.settledMinor).toBe(0);
+    expect(released.account.heldMinor).toBe(0);
+    expect(availableBudgetMinor(released.account)).toBe(1000);
+  });
+
   it("refuses settle-as-zero after unknown-usage hold", () => {
     const reserved = reserveBudget(account(), "r-hold", 300);
     expect(reserved.ok).toBe(true);
