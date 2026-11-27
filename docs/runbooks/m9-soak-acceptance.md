@@ -93,7 +93,7 @@ Suggested owner Windows flow (state off OneDrive):
 | T-F24 / T-US-047 | Fixture ACCEPTED via recover/rotate/reconcile proof only |
 | T-US-002 / T-X002 | Fixture ACCEPTED via competing-supervisor / host-lease proof only |
 | T-X018 / T-US-054 | Fixture ACCEPTED via self-approval rejected / independent A25 proof only |
-| T-X073 | Fixture ACCEPTED via offboard ACTIVE_TOKEN residual only (blank-ref force refuse; invent externalEffects APPLIED / production-activated / sandbox VERIFIED dishonest; ACCEPTED≠VERIFIED) |
+| T-X073 | Fixture ACCEPTED via offboard ACTIVE_TOKEN residual only (live revoke NOT_WIRED) |
 | T-US-060 | Fixture ACCEPTED via emergency stop at commit only |
 | T-X069 | Fixture ACCEPTED via imported doc quarantined as data only |
 | T-X038 | Fixture ACCEPTED via eval no-grounding fail closed only |
@@ -101,7 +101,7 @@ Suggested owner Windows flow (state off OneDrive):
 | T-US-046 / T-X048 | Fixture ACCEPTED via hard search constraints no invention only |
 | T-US-010 / T-X033 | Fixture ACCEPTED via GSC omitted rows unknown not zero only |
 | T-US-008 / T-X032 | Fixture ACCEPTED via GA4 debug not delivered conversion only |
-| T-X031 | Fixture ACCEPTED via GA4 wrong property kind refused only (claim-on-padded refuse; invent live-transport closed dishonest; reclaim drift; ACCEPTED≠VERIFIED) |
+| T-X031 | Fixture ACCEPTED via GA4 wrong property kind refused only |
 | T-US-040 / T-X049 | Fixture ACCEPTED via thank-you without CRM fails delivery only |
 | T-X017 | Fixture ACCEPTED via stop-after-dispatch reconcile / no fake cancel only |
 | T-X024 | Fixture ACCEPTED via old fence after reassignment only |
@@ -120,7 +120,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-US-044** / **T-X053** map only to `TAKEOVER_CANCELS_UNSENT_REPLIES` (multi-queue cancel; SENT preserved; `VERSION_MISMATCH` via real takeover for stale prepare; `CONVERSATION_TAKEOVER` at matching post-takeover version; not live VERIFIED).
 
-**T-US-018** / **T-X037** map only to `EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN`.
+**T-US-018** / **T-X037** map only to `EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN` (retry fence + effect/capability/attempt-envelope/outcome/side-effect/receipt honesty; ACCEPTED ≠ VERIFIED; live + Ads NOT_WIRED).
 
 **T-X058** maps only to `REPAIR_ATTEMPT_LIMIT_ESCALATED` (MAX_REPAIR_ATTEMPTS=2; third automatic start ATTEMPT_LIMIT after ESCALATED; CMS repair NOT_WIRED; externalEffects NONE; not live VERIFIED).
 
@@ -134,7 +134,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-US-010** / **T-X033** map only to `GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO`.
 
-**T-US-008** / **T-X032** map only to `GA4_DEBUG_NOT_DELIVERED_CONVERSION` (debug≠delivered/measured receipt; LIVE debug / claimDeliveredConversion refused; live NOT_WIRED; not live VERIFIED).
+**T-US-008** / **T-X032** map only to `GA4_DEBUG_NOT_DELIVERED_CONVERSION`.
 
 **T-X031** maps only to `GA4_WRONG_PROPERTY_KIND_REFUSED`.
 
@@ -194,7 +194,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-US-056** maps only to `HONEST_OUTAGE_HOSTED_CONTACT_PATH` (honest outage; durable hosted contact path; not live VERIFIED).
 
-**T-X030** maps only to `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (Retry-After/exponential WAIT; STOP_DEADLINE on exact/overshoot/past-deadline; STOP_MAX_ATTEMPTS incl. maxAttempts=1; fractional Retry-After ceil; exponential maxBackoff cap; 429→200 recovery honesty; partial WAIT progress then STOP invents no COMPLETED write; Retry-After preferred over exponential; Retry-After=0 WAIT; partial body still no live VERIFIED). Grant hourly `RATE_LIMIT_EXCEEDED`, `NO_DUPLICATE_EFFECTS`, `CONCURRENT_IDEMPOTENT_RELEASE` (T-X021), `DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED` (T-X004), and `PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE` (T-X045) do not satisfy T-X030. Live providers NOT_WIRED; ACCEPTED ≠ VERIFIED.
+**T-X030** maps only to `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (bounded backoff preserves deadline; not live VERIFIED).
 
 **T-X040** maps only to `LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE` (research-only; never a publish trigger from this gate; live trend provider NOT_WIRED; externalEffects NONE; not live VERIFIED).
 
@@ -299,7 +299,7 @@ Suggested owner Windows flow (state off OneDrive):
 **T-US-041** maps only to `DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF` (verified resolution or acknowledged handoff; CMS repair NOT_WIRED; not live VERIFIED).
 
 
-**T-X042** maps only to `SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS` (visible mismatch/empty refuse; trim+case-fold; multi-prop; fixture+WIRED/non-fixture matched refuse; liveProviderWiring NOT_WIRED; externalEffects NONE; not live VERIFIED).
+**T-X042** maps only to `SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS`.
 
 **T-X046** maps only to `UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION` (unsupported blog destination; no fake publication; never invent PUBLISHED_VERIFIED; `classifyUnsupportedBlogDestination` honesty fields — FIXTURE≠live claim, preferLive-only live refuse, fixture OTHER_BLOG allowed; blank/padded destinationId + format mismatch fail closed; Hub FULL_ARTICLE unsupported; DST civil schedule spring-gap/fall-back still refuse invent (preferLive-on-schedule included); distinct from T-US-022/T-X045/T-X015; not live VERIFIED).
 

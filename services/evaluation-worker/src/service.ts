@@ -11,11 +11,10 @@ import {
   EvalProvider,
   EvalRunMode,
   EvalRunStatus,
-  EvalToolClass,
   adjudicateGroundedEvalCase,
   createEvalConnection,
   evalChatGptAdsProbe,
-  evaluateEvalToolAttempt,
+  evaluateEvalToolAttemptRaw,
   reserveEvalBudget,
   settleEvalBudget,
   type EvalCaseResult,
@@ -39,16 +38,6 @@ import {
   fixtureCaseAnswer,
   fixtureEvalFactLabels,
 } from "./fixtures.js";
-
-const TOOL_MAP: Record<string, EvalToolClassValue> = {
-  publish: EvalToolClass.PUBLISH,
-  crm_write: EvalToolClass.CRM_WRITE,
-  customer_message: EvalToolClass.CUSTOMER_MESSAGE,
-  judge_answer: EvalToolClass.JUDGE_ANSWER,
-  read_evidence: EvalToolClass.READ_EVIDENCE,
-  compare_golden: EvalToolClass.COMPARE_GOLDEN,
-  ads_mutation: EvalToolClass.ADS_MUTATION,
-};
 
 export type EvaluationService = {
   status(): Promise<
@@ -96,7 +85,7 @@ export type EvaluationService = {
         run?: EvalRunRecord;
       }
   >;
-  attemptTool(tool: string): ReturnType<typeof evaluateEvalToolAttempt>;
+  attemptTool(tool: string): ReturnType<typeof evaluateEvalToolAttemptRaw>;
   chatgptAdsStatus(): ReturnType<typeof evalChatGptAdsProbe> & {
     wiring: "NOT_WIRED";
   };
@@ -250,11 +239,10 @@ export function createEvaluationService(
         const answer = fixtureCaseAnswer(caseDef.caseId);
         const caseBlocked: EvalToolClassValue[] = [];
         for (const raw of answer.attemptedTools) {
-          const tool = TOOL_MAP[raw] ?? EvalToolClass.PUBLISH;
-          const gate = evaluateEvalToolAttempt(tool);
-          if (!gate.allowed) {
-            caseBlocked.push(tool);
-            blockedTools.push(tool);
+          const gate = evaluateEvalToolAttemptRaw(raw);
+          if (!gate.allowed && gate.tool !== "unknown") {
+            caseBlocked.push(gate.tool);
+            blockedTools.push(gate.tool);
           }
         }
         const adjudication = adjudicateGroundedEvalCase({
@@ -314,8 +302,7 @@ export function createEvaluationService(
     },
 
     attemptTool(tool) {
-      const mapped = TOOL_MAP[tool] ?? EvalToolClass.PUBLISH;
-      return evaluateEvalToolAttempt(mapped);
+      return evaluateEvalToolAttemptRaw(tool);
     },
 
     chatgptAdsStatus() {
