@@ -576,4 +576,104 @@ describe("recurring-schedule (T-X015 DST)", () => {
     expect(parsed.keys).toEqual([]);
     expectHonesty(parsed);
   });
+
+  it("rejects NaN durable version field (T-X015 idle C22 edge)", () => {
+    const key = occurrenceKeyFor("sched-nanver", "2025-11-06", 9, 0);
+    const parsed = parseOccurrenceClaimDurableBody(
+      JSON.stringify({ version: Number.NaN, claimedKeys: [key] }),
+    );
+    expect(parsed.status).toBe(DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL);
+    expect(parsed.keys).toEqual([]);
+    expectHonesty(parsed);
+  });
+
+  it("rejects +Infinity durable version field (T-X015 wipe15)", () => {
+    const key = occurrenceKeyFor("sched-posinf", "2025-11-07", 9, 0);
+    const parsed = parseOccurrenceClaimDurableBody(
+      JSON.stringify({ version: Number.POSITIVE_INFINITY, claimedKeys: [key] }),
+    );
+    expect(parsed.status).toBe(DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL);
+    expect(parsed.keys).toEqual([]);
+    expectHonesty(parsed);
+  });
+
+  it("rejects -Infinity durable version field (T-X015 wipe15)", () => {
+    const key = occurrenceKeyFor("sched-neginf", "2025-11-08", 9, 0);
+    const parsed = parseOccurrenceClaimDurableBody(
+      JSON.stringify({ version: Number.NEGATIVE_INFINITY, claimedKeys: [key] }),
+    );
+    expect(parsed.status).toBe(DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL);
+    expect(parsed.keys).toEqual([]);
+    expectHonesty(parsed);
+  });
+
+  it("rejects fractional durable version field (T-X015 wipe15 321b71b2)", () => {
+    const key = occurrenceKeyFor("sched-frac", "2025-11-09", 9, 0);
+    const parsed = parseOccurrenceClaimDurableBody(
+      JSON.stringify({ version: 1.5, claimedKeys: [key] }),
+    );
+    expect(parsed.status).toBe(DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL);
+    expect(parsed.keys).toEqual([]);
+    expectHonesty(parsed);
+  });
+
+  it("rejects durable version 2 (T-X015 wipe15 cbf3d6c5)", () => {
+    const key = occurrenceKeyFor("sched-v2", "2025-11-10", 9, 0);
+    const parsed = parseOccurrenceClaimDurableBody(
+      JSON.stringify({ version: 2, claimedKeys: [key] }),
+    );
+    expect(parsed.status).toBe(DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL);
+    expect(parsed.keys).toEqual([]);
+    expectHonesty(parsed);
+  });
+
+  it("rejects negative durable version field (T-X015 wipe15 cbf3d6c5)", () => {
+    const key = occurrenceKeyFor("sched-negver", "2025-11-11", 9, 0);
+    const parsed = parseOccurrenceClaimDurableBody(
+      JSON.stringify({ version: -1, claimedKeys: [key] }),
+    );
+    expect(parsed.status).toBe(DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL);
+    expect(parsed.keys).toEqual([]);
+    expectHonesty(parsed);
+  });
+
+  it("rejects null durable version field (T-X015 wipe15 cbf3d6c5)", () => {
+    const key = occurrenceKeyFor("sched-nullver", "2025-11-12", 9, 0);
+    const parsed = parseOccurrenceClaimDurableBody(
+      JSON.stringify({ version: null, claimedKeys: [key] }),
+    );
+    expect(parsed.status).toBe(DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL);
+    expect(parsed.keys).toEqual([]);
+    expectHonesty(parsed);
+  });
+
+  it("rejects boolean durable version field (T-X015 wipe15 2c533c34)", () => {
+    const key = occurrenceKeyFor("sched-boolver", "2025-11-13", 9, 0);
+    const parsed = parseOccurrenceClaimDurableBody(
+      JSON.stringify({ version: true, claimedKeys: [key] }),
+    );
+    expect(parsed.status).toBe(DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL);
+    expect(parsed.keys).toEqual([]);
+    expectHonesty(parsed);
+  });
+
+  it("rejects array durable version field (T-X015 wipe15 2c533c34)", () => {
+    const key = occurrenceKeyFor("sched-arrver", "2025-11-14", 9, 0);
+    const parsed = parseOccurrenceClaimDurableBody(
+      JSON.stringify({ version: [1], claimedKeys: [key] }),
+    );
+    expect(parsed.status).toBe(DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL);
+    expect(parsed.keys).toEqual([]);
+    expectHonesty(parsed);
+  });
+
+  it("rejects durable body missing version key (T-X015 wipe15 2c533c34)", () => {
+    const key = occurrenceKeyFor("sched-nover", "2025-11-15", 9, 0);
+    const parsed = parseOccurrenceClaimDurableBody(
+      JSON.stringify({ claimedKeys: [key] }),
+    );
+    expect(parsed.status).toBe(DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL);
+    expect(parsed.keys).toEqual([]);
+    expectHonesty(parsed);
+  });
 });
