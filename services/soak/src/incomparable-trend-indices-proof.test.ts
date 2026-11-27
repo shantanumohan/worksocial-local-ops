@@ -21,4 +21,14 @@ describe("proofIncomparableTrendIndicesRejected", () => {
     expect(proof.details.some((d) => d.includes("zero baseline"))).toBe(true);
     expect(proof.details.some((d) => d.includes("non-trend kind"))).toBe(true);
   });
+
+  it("retip N90: proof bundle still passes ON_TIP 18ffa6c1 (T-X041)", () => {
+    const proof = proofIncomparableTrendIndicesRejected(
+      "2026-11-27T19:06:00.000Z",
+    );
+    expect(proof.passed, proof.details.join(" | ")).toBe(true);
+    expect(proof.fixtureOnly).toBe(true);
+    expect(proof.applyAttemptCount).toBe(1);
+    expect(proof.details.at(-1)).toMatch(/externalEffects=NONE/);
+  });
 });

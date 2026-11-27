@@ -8,8 +8,8 @@
     "automated_response_loop_bounded_handoff"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x056.json",
-  "createdAtIso": "2026-11-27T18:59:32.123Z",
+  "createdAtIso": "2026-11-27T19:06:04.572Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x056-0f96e65856b9"
+  "uniqueSourceArtifactId": "art-fixture-t-x056-950171faeac6"
 }
