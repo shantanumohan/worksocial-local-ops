@@ -15,6 +15,7 @@
  * T-X031 fixture ACCEPTED only via GA4_WRONG_PROPERTY_KIND_REFUSED.
  * T-X020 fixture ACCEPTED only via UNKNOWN_REMOTE_RECONCILE.
  * T-X022 fixture ACCEPTED only via IDEMPOTENCY_KEY_PAYLOAD_MISMATCH.
+ * T-X057 fixture ACCEPTED only via REPAIR_WEAKEN_TEST_REJECTED.
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -699,5 +700,130 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).toContain("proof=idempotency_key_payload_mismatch");
     expect(art.summary).toMatch(/liveProviderWiring=NOT_WIRED/);
     expect(art.proofKinds).not.toContain("VERIFIED");
+  });
+
+  it("T-X057 fixture artifact names repair weaken-test rejection honesty (ACCEPTED ≠ VERIFIED)", () => {
+    const artPath = resolve(
+      repoRoot,
+      "tests/acceptance-evidence/fixture/art-fixture-t-x057.json",
+    );
+    const art = JSON.parse(readFileSync(artPath, "utf8")) as {
+      artifactId: string;
+      caseId: string;
+      environment: string;
+      redacted: boolean;
+      summary: string;
+      liveProviderSuccessClaimed: boolean;
+      externalEffects: string;
+      proofKinds: string[];
+      evidenceRef: string;
+      uniqueSourceArtifactId: string;
+      createdAtIso: string;
+    };
+    expect(art.artifactId).toBe("art-fixture-t-x057");
+    expect(art.createdAtIso).toMatch(/^2026-/);
+    expect(art.uniqueSourceArtifactId).toMatch(/^art-fixture-t-x057-/);
+    expect(art.evidenceRef).toBe("soak/evidence/art-fixture-t-x057.json");
+    expect(art.caseId).toBe("T-X057");
+    expect(art.environment).toBe("fixture");
+    expect(art.redacted).toBe(true);
+    expect(art.proofKinds).toEqual(["repair_weaken_test_rejected"]);
+    expect(art.summary).toMatch(/Fixture ACCEPTED/);
+    expect(art.summary).not.toMatch(/Fixture VERIFIED/);
+    expect(art.liveProviderSuccessClaimed).toBe(false);
+    expect(art.externalEffects).toBe("NONE");
+    expect(art.summary).toContain("proof=repair_weaken_test_rejected");
+    expect(art.summary).toContain("applyCount=1");
+    expect(art.summary).toContain("Healthy repair preserves test baseline");
+    expect(art.summary).toContain("TEST_INTEGRITY_VIOLATION");
+    expect(art.summary).toContain("DISABLE_TEST");
+    expect(art.summary).toContain("Disable-Test rejected");
+    expect(art.summary).toContain("tests/unit/cta.test.ts");
+    expect(art.summary).toContain("__tests__/cta.spec.ts");
+    expect(art.summary).toContain("PROTECTED_PATH");
+    expect(art.summary).toContain("Test baseline digest mutation rejected");
+    expect(art.summary).toContain("cmsRepairWiringStatus=NOT_WIRED");
+    expect(art.summary).toMatch(
+      /Fixture ACCEPTED for T-X057 \(Repair disables failing test — rejected\)/,
+    );
+    expect(art.summary).toMatch(
+      /All 7 WeakenTestOperation values rejected \(TEST_INTEGRITY_VIOLATION\)/,
+    );
+    expect(art.proofKinds).not.toContain("VERIFIED");
+    expect(art.summary).toMatch(
+      /liveProviderSuccessClaimed=false externalEffects=NONE/,
+    );
+    // K32: greenfield post-#282 — catalog disable-test edge + paired US-042 proof kind fence
+    expect(art.summary).toMatch(
+      /Hyphen\/casing alias Disable-Test rejected \(TEST_INTEGRITY_VIOLATION\)/,
+    );
+    expect(art.summary).toMatch(/__tests__\/ path patch rejected \(PROTECTED_PATH\)/);
+    expect(art.proofKinds).not.toContain("ga4_wrong_property_kind_refused");
+    // K33: post-#283 tip — protected CTA paths + unit test patch refuse
+    expect(art.summary).toMatch(
+      /tests\/unit\/cta\.test\.ts and __tests__\/cta\.spec\.ts are protected/,
+    );
+    expect(art.summary).toMatch(
+      /Protected test path patch rejected \(PROTECTED_PATH\)/,
+    );
+    // K34: post-#284 tip — DISABLE_TEST enumerated + live CMS repair stays NOT_WIRED
+    expect(art.summary).toMatch(/incl\. DISABLE_TEST/);
+    expect(art.summary).not.toMatch(/cmsRepairWiringStatus=WIRED/);
+    // K35: post-#285 tip — repair proof not concurrent-release / remote-reconcile drift
+    expect(art.proofKinds).not.toContain("concurrent_idempotent_release");
+    expect(art.proofKinds).not.toContain("unknown_remote_reconcile");
+    expect(art.summary).not.toMatch(/claimedOneDispatchPass/);
+    // K36: post-#286 tip — repair weaken not idempotency-key mismatch drift
+    expect(art.proofKinds).not.toContain("idempotency_key_payload_mismatch");
+    expect(art.summary).not.toMatch(/idempotency_key_payload_mismatch/);
+    // K37: post-#287 tip — repair weaken not T-X017 stop-after-dispatch drift
+    expect(art.proofKinds).not.toContain("stop_after_dispatch_reconcile");
+    expect(art.summary).not.toMatch(/stop_after_dispatch_reconcile/);
+    // K38: post-#288 tip — repair weaken not T-X019 approved-payload edit drift
+    expect(art.proofKinds).not.toContain("approved_payload_edit_invalidated");
+    expect(art.summary).not.toMatch(/approved_payload_edit_invalidated/);
+    // K39: post-#289 tip — repair weaken not T-X023 eventual-consistency CRM drift
+    expect(art.proofKinds).not.toContain("eventual_consistency_false_not_found");
+    expect(art.summary).not.toMatch(/eventual_consistency_false_not_found/);
+    // K40: post-#290 tip — repair weaken not T-X024 old-fence-after-reassignment drift
+    expect(art.proofKinds).not.toContain("old_fence_after_reassignment");
+    expect(art.summary).not.toMatch(/old_fence_after_reassignment/);
+    // K41: post-#291 tip — repair weaken not T-X025 external-human-edit staging drift
+    expect(art.proofKinds).not.toContain("external_human_edit_conflict_retained");
+    expect(art.summary).not.toMatch(/external_human_edit_conflict_retained/);
+    // K42: wipe15 timer c9b7bd66 — sole proof kind + no T-X029 account-rebind drift
+    expect(art.proofKinds).toHaveLength(1);
+    expect(art.proofKinds).not.toContain("explicit_account_rebind");
+    expect(art.summary).not.toMatch(/explicit_account_rebind/);
+    // K43: post-#292 tip — repair weaken not T-X026 budget-reservation drift
+    expect(art.proofKinds).not.toContain("concurrent_final_budget_reservation_cap");
+    expect(art.summary).not.toMatch(/concurrent_final_budget_reservation_cap/);
+    // K44: wipe15 timer 578b1a08 — repair weaken not T-X028 overrun-visible drift
+    expect(art.proofKinds).not.toContain("actual_cost_exceeds_estimate_overrun_visible");
+    expect(art.summary).not.toMatch(/actual_cost_exceeds_estimate_overrun_visible/);
+    // K45: post-#293 tip — repair weaken not T-X027 unknown-usage-cancel residual drift
+    expect(art.proofKinds).not.toContain("unknown_usage_cancel_holds_residual");
+    expect(art.summary).not.toMatch(/unknown_usage_cancel_holds_residual/);
+    // K46: post-#294 tip — repair weaken not T-X032 GA4 debug-not-delivered drift
+    expect(art.proofKinds).not.toContain("ga4_debug_not_delivered_conversion");
+    expect(art.summary).not.toMatch(/ga4_debug_not_delivered_conversion/);
+    // K47: post-#295 tip — repair weaken not T-X037 eval-only operational-tool drift
+    expect(art.proofKinds).not.toContain("eval_only_operational_tool_forbidden");
+    expect(art.summary).not.toMatch(/eval_only_operational_tool_forbidden/);
+    // K48: wipe15 @ e969eb6e — repair weaken summary not T-X031 GA4 wrong-property drift
+    expect(art.summary).not.toMatch(/ga4_wrong_property_kind_refused/);
+    expect(art.summary).not.toMatch(/GA4_WRONG_PROPERTY_KIND_REFUSED/);
+    // K49: post-#296 tip — repair weaken not T-X038 eval no-grounding drift
+    expect(art.proofKinds).not.toContain("eval_no_grounding_fail_closed");
+    expect(art.summary).not.toMatch(/eval_no_grounding_fail_closed/);
+    // K50: post-#297 tip — repair weaken not T-X041 incomparable-trend-indices drift
+    expect(art.proofKinds).not.toContain("incomparable_trend_indices_rejected");
+    expect(art.summary).not.toMatch(/incomparable_trend_indices_rejected/);
+    // K51: wipe15 @ e7226169 — repair weaken not T-X039 metric-denominator drift
+    expect(art.proofKinds).not.toContain("metric_denominators_honest");
+    expect(art.summary).not.toMatch(/metric_denominators_honest/);
+    // K52: post-#298 tip — repair weaken not T-X043 optimization-breaks-CTA drift
+    expect(art.proofKinds).not.toContain("optimization_breaks_cta_journey_fails");
+    expect(art.summary).not.toMatch(/optimization_breaks_cta_journey_fails/);
   });
 });
