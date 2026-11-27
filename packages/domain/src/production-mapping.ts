@@ -8,6 +8,7 @@
 
 import {
   ActionClass,
+  normalizeAuthorityObjectId,
   type ActionClassValue,
 } from "./standing-authority.js";
 import {
@@ -523,6 +524,13 @@ function findWritePath(
     operation: string;
   },
 ): PilotWritePath | null {
+  const channelId = normalizeAuthorityObjectId(input.channelId);
+  const assetId = normalizeAuthorityObjectId(input.assetId);
+  // Non-string / whitespace-only ids never match a mapped write path.
+  if (channelId === null || assetId === null) {
+    return null;
+  }
+
   if (input.writePathId) {
     const byId = mapping.writePaths.find(
       (p) => p.writePathId === input.writePathId,
@@ -532,8 +540,8 @@ function findWritePath(
     }
     // Explicit id must still match the submitted intent fields (fail closed).
     if (
-      byId.channelId !== input.channelId ||
-      byId.assetId !== input.assetId ||
+      normalizeAuthorityObjectId(byId.channelId) !== channelId ||
+      normalizeAuthorityObjectId(byId.assetId) !== assetId ||
       byId.operation !== input.operation
     ) {
       return null;
@@ -543,8 +551,8 @@ function findWritePath(
   return (
     mapping.writePaths.find(
       (p) =>
-        p.channelId === input.channelId &&
-        p.assetId === input.assetId &&
+        normalizeAuthorityObjectId(p.channelId) === channelId &&
+        normalizeAuthorityObjectId(p.assetId) === assetId &&
         p.operation === input.operation,
     ) ?? null
   );
@@ -716,9 +724,8 @@ export function resolvePilotWriteGates(input: {
       ownershipProven: false,
       readEvidencePresent: false,
       prerequisiteMissing: true,
-      details: [
-        `No pilot write path mapped for ${input.channelId}/${input.assetId}/${input.operation}`,
-      ],
+      // Generic — do not echo submitted channel/asset/operation (deny without leak).
+      details: ["No pilot write path mapped for this channel/asset/operation"],
       matchedWritePath: null,
       missingEvidenceKinds: [],
     };

@@ -4,6 +4,7 @@ import {
   ActionClass,
   OperatingMode,
   evaluateStandingAuthority,
+  normalizeAuthorityObjectId,
   type CapabilityGrant,
   type StandingPolicy,
 } from "./standing-authority.js";
@@ -132,5 +133,285 @@ describe("evaluateStandingAuthority", () => {
       allowed: false,
       code: "RATE_LIMIT_EXCEEDED",
     });
+  });
+
+  it("allows whitespace-padded in-workspace object ids (T-X006 hillclimb)", () => {
+    const result = evaluateStandingAuthority(
+      baseRequest({
+        channelId: "  owned-site  ",
+        targetAccountId: "\tacct-1\n",
+        assetId: " page-home ",
+      }),
+    );
+    expect(result.decision).toEqual({ allowed: true });
+    expect(result.match?.grant.grantId).toBe("grant-1");
+  });
+
+  it("denies whitespace-only object ids without leaking (T-X006 hillclimb)", () => {
+    const result = evaluateStandingAuthority(
+      baseRequest({ channelId: "   ", assetId: "\t" }),
+    );
+    expect(result.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+      reason: "No capability grant for this action",
+    });
+    expect(result.match).toBeNull();
+  });
+
+  it("denies foreign channel+asset dual substitution without leak (T-X006)", () => {
+    const foreignChannel = "ws-foreign-site";
+    const foreignAsset = "page-foreign-secret";
+    const result = evaluateStandingAuthority(
+      baseRequest({
+        channelId: `  ${foreignChannel}  `,
+        assetId: ` ${foreignAsset} `,
+      }),
+    );
+    expect(result.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+      reason: "No capability grant for this action",
+    });
+    expect(result.match).toBeNull();
+    expect(result.decision.allowed).toBe(false);
+    if (!result.decision.allowed) {
+      expect(result.decision.reason.includes(foreignChannel)).toBe(false);
+      expect(result.decision.reason.includes(foreignAsset)).toBe(false);
+    }
+  });
+
+  it("does not treat padded '*' as a wildcard (T-X006 Codex P2)", () => {
+    const result = evaluateStandingAuthority(
+      baseRequest({
+        policies: [{ ...policy, channelId: " * " }],
+        grants: [{ ...grant, targetAccountId: " * ", allowedAssetScope: [" * "] }],
+      }),
+    );
+    expect(result.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(result.match).toBeNull();
+  });
+
+  it("rejects non-string object ids instead of coercing (T-X006 Codex P2)", () => {
+    expect(normalizeAuthorityObjectId(["owned-site"] as unknown as string)).toBeNull();
+    expect(normalizeAuthorityObjectId(42 as unknown as string)).toBeNull();
+    const result = evaluateStandingAuthority(
+      baseRequest({
+        channelId: ["owned-site"] as unknown as string,
+      }),
+    );
+    expect(result.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(result.match).toBeNull();
+  });
+
+  it("supervisor lease fence denies without held lease (T-X006 deepen)", () => {
+    const denied = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: false,
+      }),
+    );
+    expect(denied.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+      reason: "No capability grant for this action",
+    });
+    expect(denied.match).toBeNull();
+
+    const allowed = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: true,
+      }),
+    );
+    expect(allowed.decision).toEqual({ allowed: true });
+  });
+
+  it("supervisor lease fence treats omitted held flag as deny (T-X006 edge)", () => {
+    const denied = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+      }),
+    );
+    expect(denied.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(denied.match).toBeNull();
+  });
+
+  it("skips supervisor lease fence when not required (T-X006 edge)", () => {
+    const allowed = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: false,
+        supervisorLeaseHeld: false,
+      }),
+    );
+    expect(allowed.decision).toEqual({ allowed: true });
+  });
+
+  it("omitted held allowed when supervisor lease fence off (T-X006 edge)", () => {
+    const allowed = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: false,
+      }),
+    );
+    expect(allowed.decision).toEqual({ allowed: true });
+  });
+
+  it("held true allowed when supervisor lease fence off (T-X006 edge)", () => {
+    const allowed = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: false,
+        supervisorLeaseHeld: true,
+      }),
+    );
+    expect(allowed.decision).toEqual({ allowed: true });
+  });
+
+  it("omitted fence flag allows without held lease (T-X006 edge)", () => {
+    const allowed = evaluateStandingAuthority(
+      baseRequest({
+        supervisorLeaseHeld: false,
+      }),
+    );
+    expect(allowed.decision).toEqual({ allowed: true });
+  });
+
+  it("explicit undefined held denied when fence on (T-X006 edge)", () => {
+    const denied = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: undefined,
+      }),
+    );
+    expect(denied.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(denied.match).toBeNull();
+  });
+
+  it("undefined held allowed when fence explicitly off (T-X006 edge)", () => {
+    const allowed = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: false,
+        supervisorLeaseHeld: undefined,
+      }),
+    );
+    expect(allowed.decision).toEqual({ allowed: true });
+  });
+
+  it("omitted fence with held true allows (T-X006 edge)", () => {
+    const allowed = evaluateStandingAuthority(
+      baseRequest({
+        supervisorLeaseHeld: true,
+      }),
+    );
+    expect(allowed.decision).toEqual({ allowed: true });
+  });
+
+  it("explicit undefined fence allows without held lease (T-X006 edge)", () => {
+    const allowed = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: undefined,
+        supervisorLeaseHeld: false,
+      }),
+    );
+    expect(allowed.decision).toEqual({ allowed: true });
+  });
+
+  it("fence on denies without leaking host or generation (T-X006 edge)", () => {
+    const denied = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: false,
+      }),
+    );
+    expect(denied.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    const reason = String(
+      (denied.decision as { reason?: string }).reason ?? "",
+    ).toLowerCase();
+    expect(reason).not.toMatch(/host|generation|pid|lease/);
+    expect(denied.match).toBeNull();
+  });
+
+  it("fence on treats truthy non-boolean held as deny (T-X006 edge)", () => {
+    const denied = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: "true" as unknown as boolean,
+      }),
+    );
+    expect(denied.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(denied.match).toBeNull();
+  });
+
+  it("fence on treats numeric 1 held as deny (T-X006 edge)", () => {
+    const denied = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: 1 as unknown as boolean,
+      }),
+    );
+    expect(denied.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(denied.match).toBeNull();
+  });
+
+  it("fence on treats numeric 0 held as deny (T-X006 edge)", () => {
+    const denied = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: 0 as unknown as boolean,
+      }),
+    );
+    expect(denied.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(denied.match).toBeNull();
+  });
+
+  it("fence on treats empty string held as deny (T-X006 wipe15)", () => {
+    const denied = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: "" as unknown as boolean,
+      }),
+    );
+    expect(denied.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(denied.match).toBeNull();
+  });
+
+  it("fence on treats null held as deny (T-X006 wipe15 321b71b2)", () => {
+    const denied = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: null as unknown as boolean,
+      }),
+    );
+    expect(denied.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(denied.match).toBeNull();
   });
 });

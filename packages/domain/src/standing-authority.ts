@@ -84,6 +84,17 @@ export type AuthorityRequest = {
    * Supplied by the gateway; unused grants pass 0.
    */
   grantUsesInLastHour?: number;
+  /**
+   * T-X006 deepen — supervisor singleton host-lease fence (opt-in).
+   * When true, `supervisorLeaseHeld` must be true or no grant matches
+   * (generic GRANT_MISSING; no host/generation leak in the reason).
+   */
+  requireSupervisorLeaseFence?: boolean;
+  /**
+   * True when the caller holds the local-singleton host lease for their generation.
+   * Computed outside domain (e.g. isLeaseHeldByGeneration); never trust client body.
+   */
+  supervisorLeaseHeld?: boolean;
 };
 
 export type AuthorityMatch = {
@@ -108,11 +119,46 @@ function isExpired(expiresAtIso: string | null, nowIso: string): boolean {
   return parseTime(expiresAtIso) <= parseTime(nowIso);
 }
 
-function scopeAllows(scope: string[], assetId: string): boolean {
-  if (scope.includes("*")) {
-    return true;
+/**
+ * Normalize channel/account/asset object ids for standing authority match.
+ * Strings only (no String() coercion of arrays/numbers); trim whitespace;
+ * empty / whitespace-only → null (fail closed).
+ * Authorization wildcards are NOT normalized — only exact raw `"*"` counts.
+ * T-X006 hillclimb: padded foreign ids must not confuse exact equality.
+ */
+export function normalizeAuthorityObjectId(
+  raw: string | null | undefined,
+): string | null {
+  if (typeof raw !== "string") {
+    return null;
   }
-  return scope.includes(assetId);
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+  return trimmed;
+}
+
+/** Exact raw `"*"` only — padded `" * "` is not a wildcard (fail closed). */
+function isExactWildcard(raw: string): boolean {
+  return raw === "*";
+}
+
+function scopeAllows(scope: string[], assetId: string): boolean {
+  const want = normalizeAuthorityObjectId(assetId);
+  if (want === null) {
+    return false;
+  }
+  for (const entry of scope) {
+    if (isExactWildcard(entry)) {
+      return true;
+    }
+    const normalized = normalizeAuthorityObjectId(entry);
+    if (normalized === want) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -142,15 +188,38 @@ export function findMatchingGrant(
     return null;
   }
 
+  // Supervisor lease fence — missing/mismatched generation fails closed.
+  if (
+    request.requireSupervisorLeaseFence === true &&
+    request.supervisorLeaseHeld !== true
+  ) {
+    return null;
+  }
+
+  const channelId = normalizeAuthorityObjectId(request.channelId);
+  const targetAccountId = normalizeAuthorityObjectId(request.targetAccountId);
+  const assetId = normalizeAuthorityObjectId(request.assetId);
+  // Whitespace-only / missing object ids never match a standing grant.
+  if (channelId === null || targetAccountId === null || assetId === null) {
+    return null;
+  }
+
   for (const policy of request.policies) {
     if (!policy.enabled) {
       continue;
     }
-    if (policy.actorRole !== request.actorRole && policy.actorRole !== "*") {
+    if (
+      policy.actorRole !== request.actorRole &&
+      !isExactWildcard(policy.actorRole)
+    ) {
       continue;
     }
-    if (policy.channelId !== request.channelId && policy.channelId !== "*") {
-      continue;
+    // Wildcard channel is exact raw "*" only — never normalize into wildcard.
+    if (!isExactWildcard(policy.channelId)) {
+      const policyChannel = normalizeAuthorityObjectId(policy.channelId);
+      if (policyChannel !== channelId) {
+        continue;
+      }
     }
     if (policy.actionClass !== request.actionClass) {
       continue;
@@ -158,7 +227,7 @@ export function findMatchingGrant(
     if (isExpired(policy.expiresAtIso, request.nowIso)) {
       continue;
     }
-    if (!scopeAllows(policy.allowedAssetScope, request.assetId)) {
+    if (!scopeAllows(policy.allowedAssetScope, assetId)) {
       continue;
     }
 
@@ -169,11 +238,11 @@ export function findMatchingGrant(
       if (grant.revoked) {
         continue;
       }
-      if (
-        grant.targetAccountId !== request.targetAccountId &&
-        grant.targetAccountId !== "*"
-      ) {
-        continue;
+      if (!isExactWildcard(grant.targetAccountId)) {
+        const grantAccount = normalizeAuthorityObjectId(grant.targetAccountId);
+        if (grantAccount !== targetAccountId) {
+          continue;
+        }
       }
       if (
         !grant.allowedOperations.includes(request.operation) &&
@@ -181,7 +250,7 @@ export function findMatchingGrant(
       ) {
         continue;
       }
-      if (!scopeAllows(grant.allowedAssetScope, request.assetId)) {
+      if (!scopeAllows(grant.allowedAssetScope, assetId)) {
         continue;
       }
       if (isExpired(grant.expiresAtIso, request.nowIso)) {
