@@ -145,6 +145,18 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses buildPromptFromRawSource", () => {
+    const rawPrompt = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      buildPromptFromRawSource: true,
+    });
+    expect(rawPrompt.allowed).toBe(false);
+    expect(rawPrompt.reasons.some((r) => /raw customer source/i.test(r))).toBe(
+      true,
+    );
+  });
+
   it("refuses bypassStructuredFieldRedaction", () => {
     const bypass = prepareCustomerDataForEvaluation({
       source,

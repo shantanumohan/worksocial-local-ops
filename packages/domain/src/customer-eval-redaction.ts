@@ -207,8 +207,16 @@ export function prepareCustomerDataForEvaluation(input: {
   bypassMessageBodyRedaction?: boolean;
   /** Forbidden — structured name/email/phone fields must stay tokenized. */
   bypassStructuredFieldRedaction?: boolean;
+  /** Forbidden — prompts must come from redacted payload builder only. */
+  buildPromptFromRawSource?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.buildPromptFromRawSource === true) {
+    return blockedLeak([
+      "Build eval prompt from raw customer source refused — T-X072",
+    ]);
+  }
 
   if (input.bypassStructuredFieldRedaction === true) {
     return blockedLeak([

@@ -133,6 +133,21 @@ export function proofCustomerDataEvalRedactionBlocks(
     details.push(`raw passthrough unexpectedly ${JSON.stringify(raw)}`);
   }
 
+  const rawPromptPath = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    buildPromptFromRawSource: true,
+  });
+  if (
+    !rawPromptPath.allowed &&
+    rawPromptPath.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("buildPromptFromRawSource → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`rawPromptPath unexpectedly ${JSON.stringify(rawPromptPath)}`);
+  }
+
   const bypassStructured = prepareCustomerDataForEvaluation({
     source,
     mode: "redact",
