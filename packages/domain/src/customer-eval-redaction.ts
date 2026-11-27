@@ -231,8 +231,16 @@ export function prepareCustomerDataForEvaluation(input: {
   stripRedactionTokensFromEvalPrompt?: boolean;
   /** Forbidden — eval must not consume unredacted messageBody from customer source. */
   useUnredactedMessageBodyInEval?: boolean;
+  /** Forbidden — eval must not consume unredacted intentLabel from customer source. */
+  useUnredactedIntentLabelInEval?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.useUnredactedIntentLabelInEval === true) {
+    return blockedLeak([
+      "Unredacted customer intentLabel in eval refused — T-X072",
+    ]);
+  }
 
   if (input.useUnredactedMessageBodyInEval === true) {
     return blockedLeak([
