@@ -93,6 +93,16 @@ describe("contract: T-X061 keyboard focus restore", () => {
     expect(lost.session.activeFocusId).toBeNull();
   });
 
+  it("openOverlayFocus fails closed on empty dialog (externalEffects NONE model)", () => {
+    const decision = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-keyboard-review",
+      dialogFocusables: [],
+    });
+    expect(decision.ok).toBe(false);
+    expect(decision.reasons.join(" ")).toMatch(/no focusable/i);
+  });
+
   it("evaluateKeyboardFocusRestoreReview passes and maps T-X061 only", () => {
     const review = evaluateKeyboardFocusRestoreReview({
       triggerId: "btn-keyboard-review",
