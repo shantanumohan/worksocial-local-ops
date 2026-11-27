@@ -370,4 +370,78 @@ describe("platform-attribution (T-X059)", () => {
       "liveProviderWiring=NOT_WIRED externalEffects=NONE",
     );
   });
+
+  it("refuses silent sum when one platform files two claims on one booking (Q34 wipe15 @ e969eb6e)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-a",
+        platformId: "google_ads",
+        bookingId: "booking-dup-platform",
+        claimedAtIso: "2026-11-22T19:00:01.000Z",
+      },
+      {
+        claimId: "c-b",
+        platformId: "google_ads",
+        bookingId: "booking-dup-platform",
+        claimedAtIso: "2026-11-22T19:00:02.000Z",
+      },
+    ]);
+    expect(projection.uniqueBookingCount).toBe(1);
+    expect(projection.distinctPlatformCount).toBe(1);
+    expect(projection.platformClaimCount).toBe(2);
+    expect(projection.wouldDoubleCountIfSummed).toBe(true);
+    expect(projection.retainedClaims.map((c) => c.claimId)).toEqual([
+      "c-a",
+      "c-b",
+    ]);
+    expect(refuseSilentPlatformSum(projection).code).toBe(
+      "SILENT_PLATFORM_SUM_REFUSED",
+    );
+  });
+
+  it("rejects numeric offset without colon in claimedAtIso (Q34 wipe15 @ e969eb6e)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-nocolon-offset",
+        platformId: "meta_ads",
+        bookingId: "booking-offset-nocolon",
+        claimedAtIso: "2026-11-22T19:00:00+0500",
+      },
+    ]);
+    expect(projection.hasInvalidClaims).toBe(true);
+    expect(projection.platformClaimCount).toBe(0);
+    expect(refuseSilentPlatformSum(projection).code).toBe(
+      "INVALID_ATTRIBUTION_CLAIM",
+    );
+  });
+
+  it("prefers INVALID_ATTRIBUTION_CLAIM over silent-sum when batch mixes invalid rows (Q34 wipe15 @ e969eb6e)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-g",
+        platformId: "google_ads",
+        bookingId: "booking-mixed",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "c-m",
+        platformId: "meta_ads",
+        bookingId: "booking-mixed",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "   ",
+        platformId: "linkedin_ads",
+        bookingId: "booking-mixed",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(projection.wouldDoubleCountIfSummed).toBe(true);
+    expect(projection.hasInvalidClaims).toBe(true);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(false);
+    if (decision.allowed) return;
+    expect(decision.code).toBe("INVALID_ATTRIBUTION_CLAIM");
+    expect(decision.platformClaimCount).toBe(2);
+  });
 });
