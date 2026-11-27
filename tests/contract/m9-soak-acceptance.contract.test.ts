@@ -13,6 +13,7 @@
  * T-X028 fixture ACCEPTED only via ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE.
  * T-X029 fixture ACCEPTED only via EXPLICIT_ACCOUNT_REBIND.
  * T-X031 fixture ACCEPTED only via GA4_WRONG_PROPERTY_KIND_REFUSED.
+ * T-X020 fixture ACCEPTED only via UNKNOWN_REMOTE_RECONCILE.
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -632,5 +633,43 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).toMatch(/unknown kinds/);
     // K52: post-#281 tip — assertGa4WrongPropertyKindHonest
     expect(art.summary).toMatch(/assertGa4WrongPropertyKindHonest/);
+  });
+
+  it("T-X020 fixture artifact names unknown-remote reconcile (ACCEPTED ≠ VERIFIED)", () => {
+    const artPath = resolve(
+      repoRoot,
+      "tests/acceptance-evidence/fixture/art-fixture-t-x020.json",
+    );
+    const art = JSON.parse(readFileSync(artPath, "utf8")) as {
+      artifactId: string;
+      caseId: string;
+      environment: string;
+      redacted: boolean;
+      summary: string;
+      liveProviderSuccessClaimed: boolean;
+      externalEffects: string;
+      proofKinds: string[];
+      evidenceRef: string;
+    };
+    expect(art.artifactId).toBe("art-fixture-t-x020");
+    expect(art.caseId).toBe("T-X020");
+    expect(art.environment).toBe("fixture");
+    expect(art.redacted).toBe(true);
+    expect(art.evidenceRef).toBe("soak/evidence/art-fixture-t-x020.json");
+    expect(art.proofKinds).toEqual(["unknown_remote_reconcile"]);
+    expect(art.summary).toMatch(/Fixture ACCEPTED/);
+    expect(art.summary).not.toMatch(/Fixture VERIFIED/);
+    expect(art.liveProviderSuccessClaimed).toBe(false);
+    expect(art.externalEffects).toBe("NONE");
+    expect(art.summary).toContain("proof=unknown_remote_reconcile");
+    expect(art.summary).toContain("RECONCILED_VERIFIED_NO_RESEND");
+    expect(art.summary).toContain("liveProviderWiring=NOT_WIRED");
+    expect(art.summary).toMatch(
+      /Fixture ACCEPTED for T-X020 \(Timeout after provider acceptance\)/,
+    );
+    expect(art.proofKinds).not.toContain("VERIFIED");
+    expect(art.summary).toMatch(
+      /liveProviderSuccessClaimed=false externalEffects=NONE$/,
+    );
   });
 });
