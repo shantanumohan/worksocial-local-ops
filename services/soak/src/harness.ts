@@ -78,10 +78,11 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import {
-  SOAK_FIXTURE_HARNESS_NOW_ISO,
-  SoakProofKind,
-  type SoakProofKindValue,
-  type SoakProofRecord,
+  EffectState, OutagePlane, SOAK_FIXTURE_HARNESS_NOW_ISO, SoakProofKind,
+  classifyRecoveryObservation, evaluateUnknownRemoteReconcile,
+  recordTimeoutAfterProviderAcceptance, unknownRemoteBlocksBlindResend,
+  unknownRemoteHonestyPins, isUnknownRemoteResumeAuthorized,
+  unknownRemoteDistinctFromUncertainPost, type SoakProofKindValue, type SoakProofRecord,
 } from "@worksocial/domain";
 import {
   createDurableExecutionService,
@@ -468,6 +469,378 @@ async function proofUnknownRemoteReconcile(
   const bizKey = `biz-soak-reconcile-${operationId}`;
   const digest = `digest-${operationId}`;
 
+  // Domain gate honesty: blind resend / false success / live wiring refused
+  // while unknown (T-X020 / T-US-048). Distinct from T-US-030 uncertain post.
+  const blind = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "ACCEPTED_PENDING",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 1,
+    requestBlindResend: true,
+    reconciledRemoteRef: null,
+    independentVerifyMatched: false,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const falseSuccess = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "ACCEPTED_PENDING",
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: null,
+    independentVerifyMatched: false,
+    claimProviderSuccessDespiteUnknown: true,
+    requestLiveProviderWiring: false,
+  });
+  const live = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "ACCEPTED_PENDING",
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: null,
+    independentVerifyMatched: false,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: true,
+  });
+  // Edge honesty (S4): ACCEPTED_PENDING phase cannot certify resume; sandbox
+  // VERIFIED promotion refused (ACCEPTED ≠ VERIFIED).
+  const phaseEdge = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "ACCEPTED_PENDING",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const sandboxVerified = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+    claimSandboxOrProdVerified: true,
+  });
+  // Edge honesty (S5): blank remoteRef vs verify-mismatch; applyCount=0.
+  const blankRef = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "  ",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const verifyMismatch = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: false,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const neverApplied = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 0,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  // Edge honesty (S6): negative apply; incoherent blind+reconcile; honesty pins.
+  const negativeApply = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: -1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const incoherentBlind = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 1,
+    requestBlindResend: true,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  // Edge honesty (S7): non-finite apply; already-terminal COMPLETE.
+  const nonFiniteApply = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: Number.NaN,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const terminalComplete = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.COMPLETE,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  // Edge honesty (S8): Infinity apply; FAILED_RETRYABLE; distinct-from T-US-030.
+  const infinityApply = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: Number.POSITIVE_INFINITY,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const retryableNotUro = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.FAILED_RETRYABLE,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  // Edge honesty (S9): CANCELLED/QUARANTINED terminal; -Infinity apply; expanded distinct pins.
+  const terminalCancelled = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.CANCELLED,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const terminalQuarantined = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.QUARANTINED,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const negInfinityApply = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: Number.NEGATIVE_INFINITY,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  // Edge honesty (S10): fractional apply; WAITING_HUMAN not URO.
+  const fractionalApply = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 1.5,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const waitingNotUro = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.WAITING_HUMAN,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  // Edge honesty (S11): RUNNING pre-apply not URO timeout path.
+  const preApplyNotUro = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.RUNNING,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  // Edge honesty (S12): APPLYING in-flight not URO timeout.
+  const applyingNotUro = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.APPLYING,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  // Edge honesty (S13): VERIFYING post-apply verify not URO timeout.
+  const verifyingNotUro = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.VERIFYING,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const pins = unknownRemoteHonestyPins();
+  const distinct = unknownRemoteDistinctFromUncertainPost();
+  const pinsOk =
+    pins.liveProviderWiring === "NOT_WIRED" &&
+    pins.externalEffects === "NONE" &&
+    pins.fixtureOnly === true &&
+    pins.acceptedEqualsVerified === false &&
+    pins.relatedCaseIds.includes("T-X020") &&
+    pins.relatedCaseIds.includes("T-US-048") &&
+    distinct.thisRecoveryPath === "UNKNOWN_REMOTE_RECONCILE" &&
+    distinct.distinctFromCaseIds.includes("T-US-030") &&
+    distinct.distinctFromCaseIds.includes("T-US-060") &&
+    distinct.distinctFromCaseIds.includes("T-X005") &&
+    distinct.distinctFromCaseIds.includes("T-X006") &&
+    distinct.distinctFromCaseIds.includes("T-X007") &&
+    distinct.distinctFromCaseIds.includes("T-X016") &&
+    distinct.distinctFromCaseIds.includes("T-X017") &&
+    distinct.distinctFromCaseIds.includes("T-X018") &&
+    distinct.distinctFromCaseIds.includes("T-X021") &&
+    distinct.distinctFromCaseIds.includes("T-X022") &&
+    distinct.distinctFromCaseIds.includes("T-X023") &&
+    distinct.distinctFromCaseIds.includes("T-X024") &&
+    distinct.distinctFromCaseIds.includes("T-X025") &&
+    distinct.distinctFromCaseIds.includes("T-X026") &&
+    distinct.distinctFromCaseIds.includes("T-X027") &&
+    distinct.distinctFromCaseIds.includes("T-X028") &&
+    distinct.distinctFromCaseIds.includes("T-X029") &&
+    distinct.distinctFromCaseIds.includes("T-X030") &&
+    distinct.distinctFromCaseIds.includes("T-X066") &&
+    distinct.distinctFromProofs.includes("EMERGENCY_STOP_AT_COMMIT") &&
+    distinct.distinctFromProofs.includes("FORGED_BROWSER_ROLE_IGNORED") &&
+    distinct.distinctFromProofs.includes("CROSS_WORKSPACE_REFERENCE_DENIED") &&
+    distinct.distinctFromProofs.includes("WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP") &&
+    distinct.distinctFromProofs.includes("STOP_BEFORE_DISPATCH_NO_MUTATION") &&
+    distinct.distinctFromProofs.includes("STOP_AFTER_DISPATCH_RECONCILE") &&
+    distinct.distinctFromProofs.includes("SELF_APPROVAL_REJECTED") &&
+    distinct.distinctFromProofs.includes("CONCURRENT_IDEMPOTENT_RELEASE") &&
+    distinct.distinctFromProofs.includes("IDEMPOTENCY_KEY_PAYLOAD_MISMATCH") &&
+    distinct.distinctFromProofs.includes(
+      "EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND",
+    ) &&
+    distinct.distinctFromProofs.includes("OLD_FENCE_AFTER_REASSIGNMENT") &&
+    distinct.distinctFromProofs.includes(
+      "EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED",
+    ) &&
+    distinct.distinctFromProofs.includes(
+      "ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE",
+    ) &&
+    distinct.distinctFromProofs.includes(
+      "CONCURRENT_FINAL_BUDGET_RESERVATION_CAP",
+    ) &&
+    distinct.distinctFromProofs.includes(
+      "UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL",
+    ) &&
+    distinct.distinctFromProofs.includes("EXPLICIT_ACCOUNT_REBIND") &&
+    distinct.distinctFromProofs.includes(
+      "RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE",
+    ) &&
+    distinct.distinctFromProofs.includes("BACKUP_OMIT_RECEIPT") &&
+    distinct.acceptedEqualsVerified === false;
+  const domainGatesOk =
+    blind.allowed === false &&
+    blind.code === "BLIND_RESEND_REFUSED" &&
+    falseSuccess.allowed === false &&
+    falseSuccess.code === "FALSE_SUCCESS_CLAIM_REFUSED" &&
+    live.allowed === false &&
+    live.code === "LIVE_PROVIDER_WIRING_NOT_WIRED" &&
+    live.liveProviderWiring === "NOT_WIRED" &&
+    phaseEdge.allowed === false &&
+    phaseEdge.code === "PHASE_ACCEPTED_PENDING_NOT_URO" &&
+    sandboxVerified.allowed === false &&
+    sandboxVerified.code === "SANDBOX_VERIFIED_CLAIM_REFUSED" &&
+    blankRef.allowed === false &&
+    blankRef.code === "REMOTE_REF_REQUIRED" &&
+    verifyMismatch.allowed === false &&
+    verifyMismatch.code === "INDEPENDENT_VERIFY_REQUIRED" &&
+    neverApplied.allowed === false &&
+    neverApplied.code === "APPLY_NEVER_HAPPENED" &&
+    negativeApply.allowed === false &&
+    negativeApply.code === "APPLY_COUNT_NEGATIVE" &&
+    incoherentBlind.allowed === false &&
+    incoherentBlind.code === "INCOHERENT_BLIND_WITH_RECONCILE" &&
+    nonFiniteApply.allowed === false &&
+    nonFiniteApply.code === "APPLY_COUNT_NON_FINITE" &&
+    infinityApply.allowed === false &&
+    infinityApply.code === "APPLY_COUNT_NON_FINITE" &&
+    terminalComplete.allowed === false &&
+    terminalComplete.code === "EFFECT_STATE_ALREADY_TERMINAL" &&
+    retryableNotUro.allowed === false &&
+    retryableNotUro.code === "EFFECT_STATE_RETRYABLE_NOT_URO" &&
+    terminalCancelled.allowed === false &&
+    terminalCancelled.code === "EFFECT_STATE_ALREADY_TERMINAL" &&
+    terminalQuarantined.allowed === false &&
+    terminalQuarantined.code === "EFFECT_STATE_ALREADY_TERMINAL" &&
+    negInfinityApply.allowed === false &&
+    negInfinityApply.code === "APPLY_COUNT_NON_FINITE" &&
+    fractionalApply.allowed === false &&
+    fractionalApply.code === "APPLY_COUNT_NON_INTEGER" &&
+    waitingNotUro.allowed === false &&
+    waitingNotUro.code === "EFFECT_STATE_WAITING_NOT_URO" &&
+    preApplyNotUro.allowed === false &&
+    preApplyNotUro.code === "EFFECT_STATE_PRE_APPLY_NOT_URO" &&
+    applyingNotUro.allowed === false &&
+    applyingNotUro.code === "EFFECT_STATE_IN_FLIGHT_NOT_URO" &&
+    verifyingNotUro.allowed === false &&
+    verifyingNotUro.code === "EFFECT_STATE_VERIFYING_NOT_URO" &&
+    pinsOk &&
+    unknownRemoteBlocksBlindResend(EffectState.UNKNOWN_REMOTE_OUTCOME);
+  if (domainGatesOk) {
+    details.push(
+      "Domain gate: blind/false/live/phase/sandbox/blankRef/verify/apply0/neg/incoherent/nonFinite/inf/terminal/retryable refused; distinct-from T-US-030/T-X017/T-X066; cancelled/quarantined/-inf/frac/waiting/preApply/applying/verifying; honesty pins OK (T-X020/T-US-048)",
+    );
+  } else {
+    details.push(
+      `Domain gate unexpected blind=${blind.code} falseSuccess=${falseSuccess.code} live=${live.code}`,
+    );
+  }
+
   const a = openService(stateDir);
   const accepted = await a.acceptPending({
     job: jobFields(operationId, newJobId(), `soak/reconcile/${operationId}`),
@@ -478,10 +851,83 @@ async function proofUnknownRemoteReconcile(
     nowIso,
   });
   details.push(
-    `Left ACCEPTED_PENDING (unknown until independent read) apply=${accepted.applyAttemptCount}`,
+    `Left ACCEPTED_PENDING after provider ack apply=${accepted.applyAttemptCount}`,
   );
 
+  // Simulate timeout after provider acceptance: drive persisted effect through
+  // UNKNOWN_REMOTE_OUTCOME before reconcile (T-X020). Do not re-apply.
+  const timeoutTargets = recordTimeoutAfterProviderAcceptance();
+  const timedOut = await a.stores.effects.settle(
+    operationId,
+    timeoutTargets.outcome,
+    timeoutTargets.effectState,
+  );
+  const decisionBefore = await a.getDecision(operationId);
+  if (decisionBefore) {
+    await a.stores.decisions.put({
+      ...decisionBefore,
+      // Keep ACCEPTED_PENDING outcome (provider ack); surface URO on effectState.
+      effectState: timeoutTargets.effectState,
+      reason: "Timeout after provider acceptance — unknown until independent read",
+    });
+  }
+  const applyAfterTimeout = await a.stores.effects.countApplyAttempts(
+    operationId,
+  );
+  const classified = classifyRecoveryObservation({
+    nowMs: Date.parse(nowIso),
+    lastObservedAtIso: nowIso,
+    confirmedOutage: false,
+    plane: OutagePlane.PROVIDER,
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+  });
+  const classificationOk =
+    classified.classification === "UNKNOWN_REMOTE_OUTCOME" &&
+    classified.blocksProviderRetry === true;
+  if (classificationOk) {
+    details.push(
+      "Recovery classification UNKNOWN_REMOTE_OUTCOME blocksProviderRetry=true",
+    );
+  } else {
+    details.push(
+      `Recovery classification unexpected class=${classified.classification} blocksRetry=${classified.blocksProviderRetry}`,
+    );
+  }
+  const persistedUro =
+    timedOut.outcome === "UNKNOWN_REMOTE_OUTCOME" &&
+    timedOut.effectState === EffectState.UNKNOWN_REMOTE_OUTCOME &&
+    applyAfterTimeout === 1 &&
+    timeoutTargets.liveProviderWiring === "NOT_WIRED" &&
+    timeoutTargets.externalEffects === "NONE" &&
+    classificationOk;
+  if (persistedUro) {
+    details.push(
+      `Persisted UNKNOWN_REMOTE_OUTCOME after timeout (effectState=${timedOut.effectState} applyCount=${applyAfterTimeout}) — reconcile before resume`,
+    );
+  } else {
+    details.push(
+      `Expected persisted UNKNOWN_REMOTE_OUTCOME applyCount=1; got outcome=${timedOut.outcome} effectState=${timedOut.effectState} apply=${applyAfterTimeout}`,
+    );
+  }
+
   const b = openService(stateDir);
+  const uroAfterRestart = await b.stores.effects.get(operationId);
+  const decisionAfterRestart = await b.getDecision(operationId);
+  const uroSurvivedRestart =
+    uroAfterRestart?.outcome === "UNKNOWN_REMOTE_OUTCOME" &&
+    uroAfterRestart.effectState === EffectState.UNKNOWN_REMOTE_OUTCOME &&
+    decisionAfterRestart?.effectState === EffectState.UNKNOWN_REMOTE_OUTCOME &&
+    decisionAfterRestart.outcome === "ACCEPTED_PENDING";
+  if (uroSurvivedRestart) {
+    details.push(
+      "UNKNOWN_REMOTE_OUTCOME survived restart (decision ACCEPTED_PENDING+URO effectState; no re-apply)",
+    );
+  } else {
+    details.push(
+      `URO did not survive restart outcome=${uroAfterRestart?.outcome} effectState=${uroAfterRestart?.effectState} decision=${decisionAfterRestart?.outcome}/${decisionAfterRestart?.effectState}`,
+    );
+  }
+
   const provider = await b.stores.fakeProvider.getByBusinessKey(bizKey);
   if (!provider) {
     details.push("Missing provider effect after restart — cannot reconcile");
@@ -504,7 +950,44 @@ async function proofUnknownRemoteReconcile(
     `Post-reconcile verified matched=${verified.matched} applyCount=${verified.applyAttemptCount}`,
   );
 
+  const gateAfter = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: verified.applyAttemptCount,
+    requestBlindResend: false,
+    reconciledRemoteRef: provider.remoteRef,
+    independentVerifyMatched: verified.matched,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const gateOk =
+    gateAfter.allowed &&
+    gateAfter.code === "RECONCILED_VERIFIED_NO_RESEND" &&
+    gateAfter.applyAttemptCount === 1 &&
+    gateAfter.externalEffects === "NONE" &&
+    gateAfter.fixtureOnly === true &&
+    gateAfter.liveProviderWiring === "NOT_WIRED" &&
+    isUnknownRemoteResumeAuthorized(gateAfter);
+  if (gateOk) {
+    details.push(
+      "Domain gate: RECONCILED_VERIFIED_NO_RESEND authorized helper fixtureOnly externalEffects=NONE live NOT_WIRED",
+    );
+  } else {
+    details.push(
+      `Domain gate post-reconcile unexpected allowed=${gateAfter.allowed} code=${gateAfter.code}`,
+    );
+  }
+
+  details.push(
+    "liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE",
+  );
+
   const passed =
+    domainGatesOk &&
+    persistedUro &&
+    uroSurvivedRestart &&
+    gateOk &&
     verified.matched &&
     verified.applyAttemptCount === 1 &&
     verified.decision.outcome === "VERIFIED";
@@ -1141,6 +1624,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X031 fixture ACCEPTED via ga4_wrong_property_kind_refused only — not live VERIFIED",
       "T-US-040/T-X049 fixture ACCEPTED via thank_you_without_crm_fails_delivery only — not live VERIFIED",
       "T-X017 fixture ACCEPTED via stop_after_dispatch_reconcile only — not live VERIFIED",
+      "T-X020 fixture ACCEPTED via unknown_remote_reconcile only — timeout→URO→reconcile+verify applyCount=1; distinct from T-US-030/T-X017/T-X066; live NOT_WIRED — not live VERIFIED",
       "T-X024 fixture ACCEPTED via old_fence_after_reassignment only (OLD_FENCE_HONESTY; LIVE_TEMPORAL_CLAIM_REFUSED; VERIFIED_CLAIM_REFUSED; EXTERNAL_EFFECTS_CLAIM_REFUSED; CHATGPT_ADS_ACCESS_CLAIM_REFUSED; SOFT_SKIP_ADS; CATALOG_CEILING_REFUSED; UNFENCED_RECOVERY_NOT_FENCE_PROOF; Temporal NOT_WIRED) — not live VERIFIED",
       "T-X011 fixture ACCEPTED via output_bomb_bounded_quarantined only — not live VERIFIED",
       "T-X003 fixture ACCEPTED via symlink_escape_after_root_verification only — not live VERIFIED",
