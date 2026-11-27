@@ -1004,7 +1004,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X045** is fixture ACCEPTED only via the partial campaign destinations / per-destination states proof (`PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE`) — mixed VERIFIED/FAILED/UNKNOWN_REMOTE yields PARTIAL; ACCEPTED_PENDING stays distinct from VERIFIED; recoverable destinations exclude verified peers; every DistributionRun carries `liveProviderWiring=NOT_WIRED` / `externalEffects=NONE`; attack suite covers mixed/pending/failed/blocked. Not sandbox/prod VERIFIED.
 
-**T-X028** is fixture ACCEPTED only via the actual cost exceeds estimate overrun visible proof (`ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE`) — `settleBudget` posts full `actualMinor` when it exceeds the reserved estimate; overrun visible in `settledMinor`; reservation released; `heldMinor` stays 0. Not sandbox/prod VERIFIED.
+**T-X028** is fixture ACCEPTED only via the actual cost exceeds estimate overrun visible proof (`ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE`) — `settleBudget` posts full `actualMinor` when it exceeds the reserved estimate; overrun visible as first-class `overrunMinor` and in `settledMinor`; reservation released; `heldMinor` stays 0; `liveProviderWiring=NOT_WIRED`; `chatgptAdsAccess=ACCESS_BLOCKED`; `externalEffects=NONE`; `fixtureAcceptedOnly` (never sandbox/prod VERIFIED).
 
 
 **T-X017** is fixture ACCEPTED only via the stop-after-dispatch reconcile / no fake cancel proof (`STOP_AFTER_DISPATCH_RECONCILE`) — once APPLYING has started, stop retains work for reconcile (APPLYING→CANCELLED forbidden). Not sandbox/prod VERIFIED.
@@ -1054,7 +1054,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X025 | External human edit during staging | Conflict retained *(fixture ACCEPTED — external human edit conflict retained; live Temporal NOT_WIRED; claimed VERIFIED refused; not sandbox/prod VERIFIED)* |
 | T-X026 | Concurrent final budget reservation | Cap enforced *(fixture ACCEPTED — concurrent final budget reservation cap proof; not sandbox/prod VERIFIED)* |
 | T-X027 | Unknown usage on cancelled request | Hold; not zero cost |
-| T-X028 | Actual cost exceeds estimate | Overrun visible *(fixture ACCEPTED — actual cost exceeds estimate overrun visible proof; not sandbox/prod VERIFIED)* |
+| T-X028 | Actual cost exceeds estimate | Overrun visible *(fixture ACCEPTED — overrunMinor first-class + snapshot; liveProviderWiring=NOT_WIRED; chatgptAdsAccess=ACCESS_BLOCKED; fixtureAcceptedOnly; not sandbox/prod VERIFIED)* |
 **T-X029** is fixture ACCEPTED only via the explicit different-account rebind proof (`EXPLICIT_ACCOUNT_REBIND`) — silent different-account rotate → `REBIND_REQUIRED`; blank/whitespace identity → `ACCOUNT_IDENTITY_REQUIRED`; blank rebind label refuse; trim+case-fold same-account match documented; fixture+`WIRED` refuse (`LIVE_TRANSPORT_NOT_WIRED`); `liveProviderRevoke`/`liveProviderWiring=NOT_WIRED`; `externalEffects=NONE`. Same-account local rotate does **not** satisfy this case. Not sandbox/prod VERIFIED.
 
 | T-X029 | Token rotates to different account | Explicit rebind *(fixture ACCEPTED — explicit account rebind proof; trim/blank/WIRED edges; liveProviderWiring NOT_WIRED; externalEffects NONE; not sandbox/prod VERIFIED)* |

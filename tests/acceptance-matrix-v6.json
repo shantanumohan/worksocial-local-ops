@@ -2090,7 +2090,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x028",
-      "evidenceNote": "Fixture actual-cost-exceeds-estimate overrun-visible proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture actual-cost-exceeds-estimate overrun-visible proof only (overrunMinor; liveProviderWiring=NOT_WIRED; chatgptAdsAccess=ACCESS_BLOCKED; fixtureAcceptedOnly; integer minors; post-overspend availableMinor honest; externalEffects=NONE) \u2014 not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X029",

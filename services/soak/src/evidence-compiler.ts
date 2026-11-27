@@ -377,7 +377,7 @@ export function compileAcceptanceEvidence(
     "T-X065 fixture ACCEPTED only via WORKER_BROWSER_AUTH_STATE_OS_DENIED",
     "T-X004 fixture ACCEPTED only via DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED (no partial COMPLETED manifest)",
     "T-X027 fixture ACCEPTED only via UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL",
-    "T-X028 fixture ACCEPTED only via ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE",
+    "T-X028 fixture ACCEPTED only via ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE (overrunMinor; liveProviderWiring=NOT_WIRED; chatgptAdsAccess=ACCESS_BLOCKED; fixtureAcceptedOnly; externalEffects=NONE)",
     "T-X063 fixture ACCEPTED only via INDIRECT_PROMPT_INJECTION_EXFIL_DENIED",
     "T-X013 fixture ACCEPTED only via REPLAY_HISTORICAL_NO_REPEAT_IO (history replay; no repeated I/O)",
     "T-X025 fixture ACCEPTED only via EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED (live Temporal NOT_WIRED; silent clear forbidden; claimed VERIFIED refused)",

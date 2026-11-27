@@ -2,7 +2,97 @@
  * Budget reservation and honest actual-cost settlement (pure arithmetic).
  * Settlement is reservation-aware: each reservationId settles at most once.
  * Cancel with unknown usage holds residual cost — never silently zero (T-X027).
+ * Actual > reserved posts full actual — overrun visible, never capped (T-X028).
+ *
+ * Pure domain. External effects: NONE. Live budget/provider wiring stays
+ * NOT_WIRED. Fixture ACCEPTED ≠ sandbox/prod VERIFIED. No invent past T-X073.
  */
+
+/** Live budget / billing-provider wiring — always NOT_WIRED offline. */
+export const BUDGET_ACCOUNTING_LIVE_WIRING = "NOT_WIRED" as const;
+
+/** Catalog cases owned by actual-cost overrun visibility. */
+export const ACTUAL_COST_OVERRUN_RELATED_CASE_IDS = ["T-X028"] as const;
+
+/**
+ * Positive delta when actual exceeds the reserved estimate; else 0.
+ * Overrun must be visible — never silently capped to the estimate (T-X028).
+ */
+export function overrunMinor(
+  reservedMinor: number,
+  actualMinor: number,
+): number {
+  return Math.max(0, actualMinor - reservedMinor);
+}
+
+/** True when actual cost exceeds the reserved estimate. */
+export function isActualCostOverrun(
+  reservedMinor: number,
+  actualMinor: number,
+): boolean {
+  return actualMinor > reservedMinor;
+}
+
+/** Structured overrun visibility — never claims estimate-cap or live success. */
+export function describeActualCostOverrunVisibility(
+  reservedMinor: number,
+  actualMinor: number,
+): {
+  overrunMinor: number;
+  overrunVisible: boolean;
+  cappedToEstimate: false;
+  liveProviderWiring: typeof BUDGET_ACCOUNTING_LIVE_WIRING;
+  liveProviderSuccessClaimed: false;
+  chatgptAdsAccess: "ACCESS_BLOCKED";
+  externalEffects: "NONE";
+  /** Fixture ACCEPTED only — never sandbox/prod VERIFIED. */
+  fixtureAcceptedOnly: true;
+  sandboxVerifiedClaimed: false;
+} {
+  const delta = overrunMinor(reservedMinor, actualMinor);
+  return {
+    overrunMinor: delta,
+    overrunVisible: delta > 0,
+    cappedToEstimate: false,
+    liveProviderWiring: BUDGET_ACCOUNTING_LIVE_WIRING,
+    liveProviderSuccessClaimed: false,
+    chatgptAdsAccess: "ACCESS_BLOCKED" as const,
+    externalEffects: "NONE",
+    fixtureAcceptedOnly: true,
+    sandboxVerifiedClaimed: false,
+  };
+}
+
+/**
+ * Fail-closed honesty check for successful settleBudget results (T-X028).
+ * Never treats fixture ACCEPTED as live VERIFIED; Ads stay ACCESS_BLOCKED.
+ */
+export function assertBudgetSettlementHonesty(
+  settlement: Extract<BudgetSettlement, { ok: true }>,
+): void {
+  if (settlement.externalEffects !== "NONE") {
+    throw new Error("budget settlement externalEffects must be NONE");
+  }
+  if (settlement.liveProviderWiring !== BUDGET_ACCOUNTING_LIVE_WIRING) {
+    throw new Error("budget settlement liveProviderWiring must be NOT_WIRED");
+  }
+  if (settlement.liveProviderSuccessClaimed !== false) {
+    throw new Error("budget settlement must not claim live provider success");
+  }
+  if (settlement.chatgptAdsAccess !== "ACCESS_BLOCKED") {
+    throw new Error("budget settlement chatgptAdsAccess must be ACCESS_BLOCKED");
+  }
+  if (settlement.overrunMinor !== overrunMinor(settlement.reservedMinor, settlement.actualMinor)) {
+    throw new Error("budget settlement overrunMinor mismatch");
+  }
+}
+
+export type SettledReservationSnapshot = {
+  reservedMinor: number;
+  actualMinor: number;
+  /** Persisted overrun delta so visibility survives after settle (T-X028). */
+  overrunMinor: number;
+};
 
 export type BudgetAccount = {
   dayKey: string;
@@ -17,9 +107,7 @@ export type BudgetAccount = {
   /** Held residuals keyed by reservationId (usage unknown; not zero cost). */
   heldReservations: Readonly<Record<string, number>>;
   /** Settled reservation snapshots keyed by reservationId (idempotent replay). */
-  settledReservations: Readonly<
-    Record<string, { reservedMinor: number; actualMinor: number }>
-  >;
+  settledReservations: Readonly<Record<string, SettledReservationSnapshot>>;
 };
 
 export type BudgetReservation =
@@ -33,7 +121,13 @@ export type BudgetSettlement =
       reservationId: string;
       reservedMinor: number;
       actualMinor: number;
+      /** max(0, actual − reserved); >0 means overrun visible (T-X028). */
+      overrunMinor: number;
       replayed: boolean;
+      externalEffects: "NONE";
+      liveProviderWiring: typeof BUDGET_ACCOUNTING_LIVE_WIRING;
+      liveProviderSuccessClaimed: false;
+      chatgptAdsAccess: "ACCESS_BLOCKED";
     }
   | { ok: false; code: "UNKNOWN_RESERVATION"; reservationId: string };
 
@@ -96,8 +190,12 @@ export function reserveBudget(
   reservationId: string,
   amountMinor: number,
 ): BudgetReservation {
-  if (amountMinor <= 0) {
-    throw new Error("Reservation amount must be positive");
+  if (
+    !Number.isFinite(amountMinor) ||
+    !Number.isInteger(amountMinor) ||
+    amountMinor <= 0
+  ) {
+    throw new Error("Reservation amount must be a positive integer");
   }
   const held = account.heldReservations ?? {};
   if (
@@ -136,8 +234,12 @@ export function settleBudget(
   reservationId: string,
   actualMinor: number,
 ): BudgetSettlement {
-  if (actualMinor < 0) {
-    throw new Error("Amounts must be non-negative");
+  if (
+    !Number.isFinite(actualMinor) ||
+    !Number.isInteger(actualMinor) ||
+    actualMinor < 0
+  ) {
+    throw new Error("Amounts must be non-negative integers");
   }
 
   const prior = account.settledReservations[reservationId];
@@ -153,7 +255,12 @@ export function settleBudget(
       reservationId,
       reservedMinor: prior.reservedMinor,
       actualMinor: prior.actualMinor,
+      overrunMinor: overrunMinor(prior.reservedMinor, prior.actualMinor),
       replayed: true,
+      externalEffects: "NONE",
+      liveProviderWiring: BUDGET_ACCOUNTING_LIVE_WIRING,
+      liveProviderSuccessClaimed: false,
+      chatgptAdsAccess: "ACCESS_BLOCKED",
     };
   }
 
@@ -174,7 +281,12 @@ export function settleBudget(
     reservationId,
     reservedMinor,
     actualMinor,
+    overrunMinor: overrunMinor(reservedMinor, actualMinor),
     replayed: false,
+    externalEffects: "NONE",
+    liveProviderWiring: BUDGET_ACCOUNTING_LIVE_WIRING,
+    liveProviderSuccessClaimed: false,
+    chatgptAdsAccess: "ACCESS_BLOCKED",
     account: {
       ...account,
       reservedMinor: account.reservedMinor - reservedMinor,
@@ -182,7 +294,11 @@ export function settleBudget(
       openReservations: remainingOpen,
       settledReservations: {
         ...account.settledReservations,
-        [reservationId]: { reservedMinor, actualMinor },
+        [reservationId]: {
+          reservedMinor,
+          actualMinor,
+          overrunMinor: overrunMinor(reservedMinor, actualMinor),
+        },
       },
     },
   };
@@ -217,8 +333,12 @@ export function cancelBudgetReservation(
         replayed: true,
       };
     }
-    if (usage.actualMinor < 0) {
-      throw new Error("Amounts must be non-negative");
+    if (
+      !Number.isFinite(usage.actualMinor) ||
+      !Number.isInteger(usage.actualMinor) ||
+      usage.actualMinor < 0
+    ) {
+      throw new Error("Amounts must be non-negative integers");
     }
     const { [reservationId]: _held, ...remainingHeld } = account.heldReservations;
     return {
@@ -240,6 +360,7 @@ export function cancelBudgetReservation(
           [reservationId]: {
             reservedMinor: priorHeld,
             actualMinor: usage.actualMinor,
+            overrunMinor: overrunMinor(priorHeld, usage.actualMinor),
           },
         },
       },
@@ -303,8 +424,12 @@ export function cancelBudgetReservation(
     };
   }
 
-  if (usage.actualMinor < 0) {
-    throw new Error("Amounts must be non-negative");
+  if (
+    !Number.isFinite(usage.actualMinor) ||
+    !Number.isInteger(usage.actualMinor) ||
+    usage.actualMinor < 0
+  ) {
+    throw new Error("Amounts must be non-negative integers");
   }
 
   return {
@@ -326,6 +451,7 @@ export function cancelBudgetReservation(
         [reservationId]: {
           reservedMinor,
           actualMinor: usage.actualMinor,
+          overrunMinor: overrunMinor(reservedMinor, usage.actualMinor),
         },
       },
     },
