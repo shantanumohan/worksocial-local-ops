@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   aggregateCurrencyTimezoneSeries,
+  CurrencyTimezoneLiveOutcome,
+  evaluateCurrencyTimezoneLiveClaim,
   normalizeCurrency,
   normalizeTimezone,
 } from "./currency-timezone-aggregation.js";
@@ -149,6 +151,28 @@ describe("currency-timezone aggregation (T-X060)", () => {
     }
   });
 
+  it("refuses fractional amountMinor as INVALID_DIMENSION", () => {
+    const result = aggregateCurrencyTimezoneSeries([
+      {
+        observationId: "a",
+        amountMinor: 100,
+        currency: "USD",
+        reportingTimezone: "America/New_York",
+      },
+      {
+        observationId: "b",
+        amountMinor: 50.5,
+        currency: "USD",
+        reportingTimezone: "America/New_York",
+      },
+    ]);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("INVALID_DIMENSION");
+      expect(result.totalMinor).toBeNull();
+    }
+  });
+
   it("refuses empty series as silent zero", () => {
     const result = aggregateCurrencyTimezoneSeries([]);
     expect(result.ok).toBe(false);
@@ -157,5 +181,67 @@ describe("currency-timezone aggregation (T-X060)", () => {
       expect(result.totalMinor).toBeNull();
       expect(result.externalEffects).toBe("NONE");
     }
+  });
+
+  it("G35: evaluateCurrencyTimezoneLiveClaim honesty gates", () => {
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+        totalMinor: 100,
+        expectedTotalMinor: 100,
+      }),
+    ).toBeNull();
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+        totalMinor: 100,
+      })?.code,
+    ).toBe(CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED);
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "CURRENCY_MISMATCH",
+        totalMinor: null,
+      })?.code,
+    ).toBe(CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED);
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+      })?.code,
+    ).toBe(CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED);
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({ claimSilentSumOnMismatch: true })
+        ?.code,
+    ).toBe(CurrencyTimezoneLiveOutcome.SILENT_SUM_ON_MISMATCH_REFUSED);
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({ claimLiveVerified: true })?.code,
+    ).toBe(CurrencyTimezoneLiveOutcome.LIVE_WIRING_CLAIM_REFUSED);
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+        totalMinor: 999,
+        expectedTotalMinor: 550,
+      })?.code,
+    ).toBe(CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_TOTAL_MISMATCH_REFUSED);
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+        totalMinor: 100.5,
+        expectedTotalMinor: 100.5,
+      })?.code,
+    ).toBe(CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED);
+    expect(
+      evaluateCurrencyTimezoneLiveClaim({
+        claimedAggregatedPass: true,
+        measuredCode: "AGGREGATED",
+        totalMinor: 100,
+        expectedTotalMinor: 100.25,
+      })?.code,
+    ).toBe(CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED);
   });
 });

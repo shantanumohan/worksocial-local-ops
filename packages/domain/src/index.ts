@@ -1314,10 +1314,13 @@ export {
   aggregateCurrencyTimezoneSeries,
   normalizeCurrency,
   normalizeTimezone,
+  evaluateCurrencyTimezoneLiveClaim,
+  CurrencyTimezoneLiveOutcome,
   CURRENCY_TIMEZONE_AGGREGATION_RELATED_CASE_IDS,
   type CurrencyTimezoneAggregateCode,
   type CurrencyTimezoneAggregateResult,
   type CurrencyTimezoneObservation,
+  type CurrencyTimezoneLiveClaimDecision,
 } from "./currency-timezone-aggregation.js";
 export {
   evaluateValidatedPayloadCollection,

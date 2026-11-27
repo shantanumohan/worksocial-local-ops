@@ -8,7 +8,9 @@
 import { randomUUID } from "node:crypto";
 import {
   SoakProofKind,
+  CurrencyTimezoneLiveOutcome,
   aggregateCurrencyTimezoneSeries,
+  evaluateCurrencyTimezoneLiveClaim,
   type SoakProofRecord,
 } from "@worksocial/domain";
 
@@ -166,6 +168,25 @@ export function proofCurrencyTimezoneMismatchNoSilentSum(
     details.push(`Blank dimension unexpectedly ${JSON.stringify(blank)}`);
   }
 
+  const fractionalMinor = aggregateCurrencyTimezoneSeries([
+    {
+      observationId: `obs-${randomUUID().slice(0, 8)}`,
+      amountMinor: 100.25,
+      currency: "USD",
+      reportingTimezone: "America/New_York",
+    },
+  ]);
+  if (
+    fractionalMinor.ok === false &&
+    fractionalMinor.code === "INVALID_DIMENSION" &&
+    fractionalMinor.totalMinor === null
+  ) {
+    details.push("Fractional amountMinor → INVALID_DIMENSION; totalMinor=null");
+  } else {
+    passed = false;
+    details.push(`Fractional minor unexpectedly ${JSON.stringify(fractionalMinor)}`);
+  }
+
   // Empty series → EMPTY_SERIES (not silent zero).
   const empty = aggregateCurrencyTimezoneSeries([]);
   if (
@@ -180,8 +201,76 @@ export function proofCurrencyTimezoneMismatchNoSilentSum(
     details.push(`Empty series unexpectedly ${JSON.stringify(empty)}`);
   }
 
+  const measuredTotal = matched.ok ? matched.totalMinor : -1;
+  const falseAggregatedPass = evaluateCurrencyTimezoneLiveClaim({
+    claimedAggregatedPass: true,
+    measuredCode: "CURRENCY_MISMATCH",
+    totalMinor: null,
+  });
+  const falseAggregatedUnmeasured = evaluateCurrencyTimezoneLiveClaim({
+    claimedAggregatedPass: true,
+  });
+  const falseExpectedUnmeasured = evaluateCurrencyTimezoneLiveClaim({
+    claimedAggregatedPass: true,
+    measuredCode: "AGGREGATED",
+    totalMinor: measuredTotal,
+  });
+  const silentSumClaim = evaluateCurrencyTimezoneLiveClaim({
+    claimSilentSumOnMismatch: true,
+  });
+  const aggregatedPassOk =
+    evaluateCurrencyTimezoneLiveClaim({
+      claimedAggregatedPass: true,
+      measuredCode: "AGGREGATED",
+      totalMinor: measuredTotal,
+      expectedTotalMinor: measuredTotal,
+    }) === null;
+  const falseTotalMismatch = evaluateCurrencyTimezoneLiveClaim({
+    claimedAggregatedPass: true,
+    measuredCode: "AGGREGATED",
+    totalMinor: measuredTotal + 1,
+    expectedTotalMinor: measuredTotal,
+  });
+  const falseFractionalMinor = evaluateCurrencyTimezoneLiveClaim({
+    claimedAggregatedPass: true,
+    measuredCode: "AGGREGATED",
+    totalMinor: measuredTotal + 0.5,
+    expectedTotalMinor: measuredTotal + 0.5,
+  });
+  const falseFractionalExpected = evaluateCurrencyTimezoneLiveClaim({
+    claimedAggregatedPass: true,
+    measuredCode: "AGGREGATED",
+    totalMinor: measuredTotal,
+    expectedTotalMinor: measuredTotal + 0.25,
+  });
+
+  if (
+    falseAggregatedPass?.code ===
+      CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED &&
+    falseAggregatedUnmeasured?.code ===
+      CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED &&
+    falseExpectedUnmeasured?.code ===
+      CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED &&
+    silentSumClaim?.code ===
+      CurrencyTimezoneLiveOutcome.SILENT_SUM_ON_MISMATCH_REFUSED &&
+    falseTotalMismatch?.code ===
+      CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_TOTAL_MISMATCH_REFUSED &&
+    falseFractionalMinor?.code ===
+      CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED &&
+    falseFractionalExpected?.code ===
+      CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED &&
+    aggregatedPassOk
+  ) {
+    details.push(
+      "G35 liveClaim: FALSE_AGGREGATED_PASS on mismatch/unmeasured/fractional expected; FALSE_AGGREGATED_TOTAL_MISMATCH; SILENT_SUM refused",
+    );
+  } else {
+    passed = false;
+    details.push("G35 liveClaim gates unexpectedly failed");
+  }
+
   details.push(
-    "liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE",
+    "liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE deepen=G35",
   );
 
   return {
