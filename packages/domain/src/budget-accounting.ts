@@ -10,8 +10,13 @@
  * NOT_WIRED. Fixture ACCEPTED ≠ sandbox/prod VERIFIED. No invent past T-X073.
  */
 
-/** Live budget / billing-provider wiring — always NOT_WIRED offline. */
-export const BUDGET_ACCOUNTING_LIVE_WIRING = "NOT_WIRED" as const;
+/** Live metered-usage / budget-provider wiring — always NOT_WIRED offline. */
+export const BUDGET_LIVE_PROVIDER_WIRING = "NOT_WIRED" as const;
+
+/** Alias on tip (#236) — T-X028 overrun honesty shares NOT_WIRED wiring. */
+export const BUDGET_ACCOUNTING_LIVE_WIRING = BUDGET_LIVE_PROVIDER_WIRING;
+
+export const UNKNOWN_USAGE_CANCEL_RELATED_CASE_IDS = ["T-X027"] as const;
 
 /** T-X026 concurrent compose uses the same NOT_WIRED reservation wiring label. */
 export const BUDGET_RESERVATION_LIVE_WIRING = BUDGET_ACCOUNTING_LIVE_WIRING;
@@ -20,10 +25,6 @@ export type BudgetReservationLiveWiring = typeof BUDGET_RESERVATION_LIVE_WIRING;
 /** Catalog cases owned by actual-cost overrun visibility. */
 export const ACTUAL_COST_OVERRUN_RELATED_CASE_IDS = ["T-X028"] as const;
 
-/**
- * Positive delta when actual exceeds the reserved estimate; else 0.
- * Overrun must be visible — never silently capped to the estimate (T-X028).
- */
 export function overrunMinor(
   reservedMinor: number,
   actualMinor: number,
@@ -31,7 +32,6 @@ export function overrunMinor(
   return Math.max(0, actualMinor - reservedMinor);
 }
 
-/** True when actual cost exceeds the reserved estimate. */
 export function isActualCostOverrun(
   reservedMinor: number,
   actualMinor: number,
@@ -39,7 +39,6 @@ export function isActualCostOverrun(
   return actualMinor > reservedMinor;
 }
 
-/** Structured overrun visibility — never claims estimate-cap or live success. */
 export function describeActualCostOverrunVisibility(
   reservedMinor: number,
   actualMinor: number,
@@ -51,7 +50,6 @@ export function describeActualCostOverrunVisibility(
   liveProviderSuccessClaimed: false;
   chatgptAdsAccess: "ACCESS_BLOCKED";
   externalEffects: "NONE";
-  /** Fixture ACCEPTED only — never sandbox/prod VERIFIED. */
   fixtureAcceptedOnly: true;
   sandboxVerifiedClaimed: false;
 } {
@@ -69,10 +67,6 @@ export function describeActualCostOverrunVisibility(
   };
 }
 
-/**
- * Fail-closed honesty check for successful settleBudget results (T-X028).
- * Never treats fixture ACCEPTED as live VERIFIED; Ads stay ACCESS_BLOCKED.
- */
 export function assertBudgetSettlementHonesty(
   settlement: Extract<BudgetSettlement, { ok: true }>,
 ): void {
@@ -88,7 +82,10 @@ export function assertBudgetSettlementHonesty(
   if (settlement.chatgptAdsAccess !== "ACCESS_BLOCKED") {
     throw new Error("budget settlement chatgptAdsAccess must be ACCESS_BLOCKED");
   }
-  if (settlement.overrunMinor !== overrunMinor(settlement.reservedMinor, settlement.actualMinor)) {
+  if (
+    settlement.overrunMinor !==
+    overrunMinor(settlement.reservedMinor, settlement.actualMinor)
+  ) {
     throw new Error("budget settlement overrunMinor mismatch");
   }
 }
@@ -96,7 +93,6 @@ export function assertBudgetSettlementHonesty(
 export type SettledReservationSnapshot = {
   reservedMinor: number;
   actualMinor: number;
-  /** Persisted overrun delta so visibility survives after settle (T-X028). */
   overrunMinor: number;
 };
 
@@ -127,7 +123,6 @@ export type BudgetSettlement =
       reservationId: string;
       reservedMinor: number;
       actualMinor: number;
-      /** max(0, actual − reserved); >0 means overrun visible (T-X028). */
       overrunMinor: number;
       replayed: boolean;
       externalEffects: "NONE";
@@ -157,20 +152,184 @@ export type BudgetCancellation =
       actualMinor: number | null;
       costKind: "unknown_hold" | "actual" | "zero_release";
       replayed: boolean;
+      externalEffects: "NONE";
+      liveBudgetProviderWiring: typeof BUDGET_LIVE_PROVIDER_WIRING;
     }
   | { ok: false; code: "UNKNOWN_RESERVATION"; reservationId: string };
 
+const honesty = {
+  externalEffects: "NONE" as const,
+  liveBudgetProviderWiring: BUDGET_LIVE_PROVIDER_WIRING,
+};
+
 function available(account: BudgetAccount): number {
+  // Open + hold maps are source of truth — ignore stale reservedMinor /
+  // heldMinor fields that would invent capacity (T-X027).
   return (
     account.limitMinor -
-    account.reservedMinor -
-    account.settledMinor -
-    (account.heldMinor ?? 0)
+    openReservationsTotalMinor(account) -
+    settledReservationsActualTotalMinor(account) -
+    heldReservationsTotalMinor(account)
   );
 }
 
 export function availableBudgetMinor(account: BudgetAccount): number {
   return available(account);
+}
+
+/**
+ * Sum of open reservation amounts. Non-finite / non-positive map values
+ * are ignored (never invent capacity) — T-X027 honesty twin of holds.
+ */
+function isLegacyScalarOnlyBudget(account: BudgetAccount): boolean {
+  return (
+    Object.keys(account.openReservations ?? {}).length === 0 &&
+    Object.keys(account.heldReservations ?? {}).length === 0 &&
+    Object.keys(account.settledReservations ?? {}).length === 0
+  );
+}
+
+export function openReservationsTotalMinor(account: BudgetAccount): number {
+  const open = account.openReservations ?? {};
+  if (Object.keys(open).length === 0 && isLegacyScalarOnlyBudget(account)) {
+    const field = Number(account.reservedMinor);
+    return Number.isFinite(field) && field >= 0 ? field : 0;
+  }
+  let total = 0;
+  for (const amount of Object.values(open)) {
+    const n = Number(amount);
+    if (Number.isFinite(n) && n > 0) {
+      total += n;
+    }
+  }
+  return total;
+}
+
+/**
+ * Sum of per-reservation held residuals. Must equal `heldMinor` after every
+ * honest cancel/resolve path (T-X027 invariant — never silent zero).
+ * Non-finite map values are ignored (never invent capacity).
+ */
+export function heldReservationsTotalMinor(account: BudgetAccount): number {
+  const held = account.heldReservations ?? {};
+  if (Object.keys(held).length === 0 && isLegacyScalarOnlyBudget(account)) {
+    const field = Number(account.heldMinor);
+    return Number.isFinite(field) && field >= 0 ? field : 0;
+  }
+  let total = 0;
+  for (const amount of Object.values(held)) {
+    const n = Number(amount);
+    if (Number.isFinite(n) && n > 0) {
+      total += n;
+    }
+  }
+  return total;
+}
+
+/**
+ * Sum of posted actuals from settled reservation snapshots. Non-finite /
+ * negative map values are ignored — stale `settledMinor` must not invent
+ * capacity (T-X027 twin of open/hold map honesty).
+ */
+export function settledReservationsActualTotalMinor(
+  account: BudgetAccount,
+): number {
+  const settled = account.settledReservations ?? {};
+  // Legacy eval budgets track scalars without reservation maps (M8 / file load).
+  if (
+    Object.keys(settled).length === 0 &&
+    isLegacyScalarOnlyBudget(account)
+  ) {
+    const field = Number(account.settledMinor);
+    return Number.isFinite(field) && field >= 0 ? field : 0;
+  }
+  let total = 0;
+  for (const snap of Object.values(settled)) {
+    const n = Number(snap?.actualMinor);
+    if (Number.isFinite(n) && n >= 0) {
+      total += n;
+    }
+  }
+  return total;
+}
+
+/** True when reservationId is held for unknown usage (not zero, not settled). */
+export function isUnknownUsageHold(
+  account: BudgetAccount,
+  reservationId: string,
+): boolean {
+  const held = account.heldReservations ?? {};
+  const amount = Number(held[reservationId]);
+  // Align with map-sum: zero / non-finite entries are not honest holds (T-X027).
+  return (
+    Number.isFinite(amount) &&
+    amount > 0 &&
+    !(reservationId in account.openReservations) &&
+    !(reservationId in account.settledReservations)
+  );
+}
+
+/**
+ * Sync `heldMinor` / `reservedMinor` to map sums and drop non-positive /
+ * non-finite map keys. Maps are source of truth — stale fields must not
+ * invent available capacity; ghost keys must not look like holds (T-X027).
+ */
+export function normalizeBudgetHolds(account: BudgetAccount): BudgetAccount {
+  const rawHeld = account.heldReservations ?? {};
+  const scrubbedHeld: Record<string, number> = {};
+  let heldMapChanged = false;
+  for (const [id, amount] of Object.entries(rawHeld)) {
+    const n = Number(amount);
+    if (Number.isFinite(n) && n > 0) {
+      scrubbedHeld[id] = n;
+      if (n !== amount) heldMapChanged = true;
+    } else {
+      heldMapChanged = true;
+    }
+  }
+  const rawOpen = account.openReservations ?? {};
+  const scrubbedOpen: Record<string, number> = {};
+  let openMapChanged = false;
+  for (const [id, amount] of Object.entries(rawOpen)) {
+    const n = Number(amount);
+    if (Number.isFinite(n) && n > 0) {
+      scrubbedOpen[id] = n;
+      if (n !== amount) openMapChanged = true;
+    } else {
+      openMapChanged = true;
+    }
+  }
+  const next = {
+    ...account,
+    heldReservations: heldMapChanged ? scrubbedHeld : account.heldReservations,
+    openReservations: openMapChanged ? scrubbedOpen : account.openReservations,
+  };
+  const heldMinor = heldReservationsTotalMinor(next);
+  const reservedMinor = openReservationsTotalMinor(next);
+  const settledMinor = settledReservationsActualTotalMinor(next);
+  if (
+    !heldMapChanged &&
+    !openMapChanged &&
+    account.heldMinor === heldMinor &&
+    account.reservedMinor === reservedMinor &&
+    account.settledMinor === settledMinor
+  ) {
+    return account;
+  }
+  return {
+    ...next,
+    heldMinor,
+    reservedMinor,
+    settledMinor,
+  };
+}
+
+/** Reservation ids currently held for unknown usage (T-X027). */
+export function listUnknownUsageHoldIds(
+  account: BudgetAccount,
+): readonly string[] {
+  const held = account.heldReservations ?? {};
+  return Object.keys(held).filter((id) => isUnknownUsageHold(account, id));
 }
 
 export function createBudgetAccount(input: {
@@ -203,11 +362,11 @@ export function reserveBudget(
   ) {
     throw new Error("Reservation amount must be a positive integer");
   }
-  const held = account.heldReservations ?? {};
+  // Ghost 0/NaN held keys are not honest holds — do not block id reuse (T-X027).
   if (
     reservationId in account.openReservations ||
     reservationId in account.settledReservations ||
-    reservationId in held
+    isUnknownUsageHold(account, reservationId)
   ) {
     throw new Error(`Reservation ${reservationId} already exists`);
   }
@@ -215,18 +374,19 @@ export function reserveBudget(
   if (amountMinor > avail) {
     return { ok: false, code: "BUDGET_EXHAUSTED", availableMinor: avail };
   }
+  // Normalize/scrub so stale heldMinor and ghost keys cannot leak (T-X027).
   return {
     ok: true,
     reservationId,
     amountMinor,
-    account: {
+    account: normalizeBudgetHolds({
       ...account,
       reservedMinor: account.reservedMinor + amountMinor,
       openReservations: {
         ...account.openReservations,
         [reservationId]: amountMinor,
       },
-    },
+    }),
   };
 }
 
@@ -445,7 +605,7 @@ export function settleBudget(
     }
     return {
       ok: true,
-      account,
+      account: normalizeBudgetHolds(account),
       reservationId,
       reservedMinor: prior.reservedMinor,
       actualMinor: prior.actualMinor,
@@ -458,7 +618,7 @@ export function settleBudget(
     };
   }
 
-  if (reservationId in account.heldReservations) {
+  if (isUnknownUsageHold(account, reservationId)) {
     throw new Error(
       `Reservation ${reservationId} is held for unknown usage — cannot settle as known actual without explicit known cancel`,
     );
@@ -470,31 +630,28 @@ export function settleBudget(
   }
 
   const { [reservationId]: _removed, ...remainingOpen } = account.openReservations;
+  const orun = overrunMinor(reservedMinor, actualMinor);
   return {
     ok: true,
     reservationId,
     reservedMinor,
     actualMinor,
-    overrunMinor: overrunMinor(reservedMinor, actualMinor),
+    overrunMinor: orun,
     replayed: false,
     externalEffects: "NONE",
     liveProviderWiring: BUDGET_ACCOUNTING_LIVE_WIRING,
     liveProviderSuccessClaimed: false,
     chatgptAdsAccess: "ACCESS_BLOCKED",
-    account: {
+    account: normalizeBudgetHolds({
       ...account,
       reservedMinor: account.reservedMinor - reservedMinor,
       settledMinor: account.settledMinor + actualMinor,
       openReservations: remainingOpen,
       settledReservations: {
         ...account.settledReservations,
-        [reservationId]: {
-          reservedMinor,
-          actualMinor,
-          overrunMinor: overrunMinor(reservedMinor, actualMinor),
-        },
+        [reservationId]: { reservedMinor, actualMinor, overrunMinor: orun },
       },
-    },
+    }),
   };
 }
 
@@ -512,12 +669,15 @@ export function cancelBudgetReservation(
   // Already held for unknown usage: unknown replay is idempotent; known
   // usage may resolve the hold after provider reconcile (never invent zero
   // at the initial unknown cancel — that path is above via open reservation).
-  const priorHeld = account.heldReservations[reservationId];
-  if (priorHeld !== undefined) {
+  // Gate on positive-finite hold — ghost 0/NaN keys must not stamp unknown_hold.
+  if (isUnknownUsageHold(account, reservationId)) {
+    const priorHeld = Number(account.heldReservations[reservationId]);
     if (!usage.known) {
+      // Idempotent replay — return normalized account so stale heldMinor
+      // cannot leak through (T-X027 map is source of truth).
       return {
         ok: true,
-        account,
+        account: normalizeBudgetHolds(account),
         reservationId,
         reservedMinor: priorHeld,
         heldMinor: priorHeld,
@@ -525,16 +685,15 @@ export function cancelBudgetReservation(
         actualMinor: null,
         costKind: "unknown_hold",
         replayed: true,
+        ...honesty,
       };
     }
-    if (
-      !Number.isFinite(usage.actualMinor) ||
-      !Number.isInteger(usage.actualMinor) ||
-      usage.actualMinor < 0
-    ) {
-      throw new Error("Amounts must be non-negative integers");
+    if (usage.actualMinor < 0) {
+      throw new Error("Amounts must be non-negative");
     }
     const { [reservationId]: _held, ...remainingHeld } = account.heldReservations;
+    // Recompute heldMinor from remaining map — never field±delta (stale
+    // heldMinor=0 must not yield negative heldMinor after resolve).
     return {
       ok: true,
       reservationId,
@@ -544,9 +703,8 @@ export function cancelBudgetReservation(
       actualMinor: usage.actualMinor,
       costKind: usage.actualMinor === 0 ? "zero_release" : "actual",
       replayed: false,
-      account: {
+      account: normalizeBudgetHolds({
         ...account,
-        heldMinor: account.heldMinor - priorHeld,
         settledMinor: account.settledMinor + usage.actualMinor,
         heldReservations: remainingHeld,
         settledReservations: {
@@ -557,7 +715,8 @@ export function cancelBudgetReservation(
             overrunMinor: overrunMinor(priorHeld, usage.actualMinor),
           },
         },
-      },
+      }),
+      ...honesty,
     };
   }
 
@@ -575,7 +734,7 @@ export function cancelBudgetReservation(
     }
     return {
       ok: true,
-      account,
+      account: normalizeBudgetHolds(account),
       reservationId,
       reservedMinor: priorSettled.reservedMinor,
       heldMinor: 0,
@@ -584,6 +743,7 @@ export function cancelBudgetReservation(
       costKind:
         priorSettled.actualMinor === 0 ? "zero_release" : "actual",
       replayed: true,
+      ...honesty,
     };
   }
 
@@ -596,6 +756,11 @@ export function cancelBudgetReservation(
 
   if (!usage.known) {
     // Hold residual — available budget does not increase; cost is not zero.
+    // Normalize/scrub so sibling ghost keys cannot linger (T-X027).
+    const nextHeld = {
+      ...account.heldReservations,
+      [reservationId]: reservedMinor,
+    };
     return {
       ok: true,
       reservationId,
@@ -605,25 +770,18 @@ export function cancelBudgetReservation(
       actualMinor: null,
       costKind: "unknown_hold",
       replayed: false,
-      account: {
+      account: normalizeBudgetHolds({
         ...account,
         reservedMinor: account.reservedMinor - reservedMinor,
-        heldMinor: account.heldMinor + reservedMinor,
         openReservations: remainingOpen,
-        heldReservations: {
-          ...account.heldReservations,
-          [reservationId]: reservedMinor,
-        },
-      },
+        heldReservations: nextHeld,
+      }),
+      ...honesty,
     };
   }
 
-  if (
-    !Number.isFinite(usage.actualMinor) ||
-    !Number.isInteger(usage.actualMinor) ||
-    usage.actualMinor < 0
-  ) {
-    throw new Error("Amounts must be non-negative integers");
+  if (usage.actualMinor < 0) {
+    throw new Error("Amounts must be non-negative");
   }
 
   return {
@@ -635,7 +793,7 @@ export function cancelBudgetReservation(
     actualMinor: usage.actualMinor,
     costKind: usage.actualMinor === 0 ? "zero_release" : "actual",
     replayed: false,
-    account: {
+    account: normalizeBudgetHolds({
       ...account,
       reservedMinor: account.reservedMinor - reservedMinor,
       settledMinor: account.settledMinor + usage.actualMinor,
@@ -648,6 +806,7 @@ export function cancelBudgetReservation(
           overrunMinor: overrunMinor(reservedMinor, usage.actualMinor),
         },
       },
-    },
+    }),
+    ...honesty,
   };
 }

@@ -22,6 +22,7 @@ import {
   type EvalRunRecord,
   type EvalSuite,
   type EvaluationState,
+  normalizeBudgetHolds,
 } from "@worksocial/domain";
 import {
   createPgPool,
@@ -252,27 +253,40 @@ function parseBudget(raw: unknown, fallbackIso: string): BudgetAccount {
   const empty = emptyEvaluationState(fallbackIso).budget;
   if (!raw || typeof raw !== "object") return empty;
   const row = raw as Record<string, unknown>;
-  return {
+  const rawHeld =
+    typeof row.heldReservations === "object" && row.heldReservations !== null
+      ? (row.heldReservations as Record<string, number>)
+      : {};
+  // T-X027: heldMinor must match map sum. Legacy files may omit heldMinor or
+  // leave it stale — derive from per-reservation holds (never invent zero).
+  // Drop non-finite / non-positive ghost keys so cancel cannot stamp zero holds.
+  const heldReservations: Record<string, number> = {};
+  let heldMinor = 0;
+  for (const [id, amount] of Object.entries(rawHeld)) {
+    const n = Number(amount);
+    if (Number.isFinite(n) && n > 0) {
+      heldReservations[id] = n;
+      heldMinor += n;
+    }
+  }
+  return normalizeBudgetHolds({
     dayKey: String(row.dayKey ?? empty.dayKey),
     currency: String(row.currency ?? empty.currency),
     limitMinor: Number(row.limitMinor ?? empty.limitMinor),
     reservedMinor: Number(row.reservedMinor ?? 0),
     settledMinor: Number(row.settledMinor ?? 0),
-    heldMinor: Number(row.heldMinor ?? 0),
+    heldMinor,
     openReservations:
       typeof row.openReservations === "object" && row.openReservations !== null
         ? (row.openReservations as Record<string, number>)
         : {},
-    heldReservations:
-      typeof row.heldReservations === "object" && row.heldReservations !== null
-        ? (row.heldReservations as Record<string, number>)
-        : {},
+    heldReservations,
     settledReservations:
       typeof row.settledReservations === "object" &&
       row.settledReservations !== null
         ? (row.settledReservations as BudgetAccount["settledReservations"])
         : {},
-  };
+  });
 }
 
 function rowToConnection(row: Record<string, unknown>): EvalConnectionRecord {

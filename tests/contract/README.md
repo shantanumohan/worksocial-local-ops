@@ -13,6 +13,7 @@ Focused offline contracts (no live providers):
 - `credential-rotation.contract.test.ts` — WP10 revoke → cancel queued → audit retained; live provider revoke NOT_WIRED; external effects NONE; catalog NOT_RUN
 - `keyboard-focus-restore.contract.test.ts` — T-X061 open/trap/restore + FOCUS_LOST; soak map; fixture ACCEPTED ≠ VERIFIED; external effects NONE
 - `indirect-prompt-injection-exfil.contract.test.ts` — T-X063 attack-suite deny + soak map; fixture ACCEPTED ≠ VERIFIED; external effects NONE
+- `unknown-usage-cancel.contract.test.ts` — T-X027 hold residual ≠ zero; liveBudgetProvider NOT_WIRED; soak map; ACCEPTED ≠ VERIFIED
 
 Run: `pnpm test:contract`
 - `unknown-policy-question.contract.test.ts` — T-X055 attack-suite escalate-without-promise + soak map; fixture ACCEPTED ≠ VERIFIED; external effects NONE
