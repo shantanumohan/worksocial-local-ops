@@ -2,6 +2,9 @@
  * Fixture proof for T-US-004 — unsafe folders / unresolved facts blocked;
  * safe facts usable.
  *
+ * Hillclimb: liveProviderWiring=NOT_WIRED; chatgptAdsAccess=ACCESS_BLOCKED;
+ * LIVE_FOLDER_CLAIM_REFUSED for live VERIFIED / live folder wire; temporal
+ * durable-on-sync refused; NO_USABLE_SAFE_FACTS / UNSAFE_FOLDER_LEAK edges.
  * Persistence sync-path policy refuses durable roots under OneDrive-style
  * paths; domain gate partitions SUPPORTED vs unresolved/conflict facts;
  * article + concierge gates admit only usable safe facts. External effects:
@@ -102,6 +105,11 @@ export function proofUnsafeFoldersUnresolvedFactsBlocked(
     "C:/Users/Owner/OneDrive/worksocial-db",
     { resolveCanonical: false },
   );
+  const syncTemporal = evaluateSyncPathPolicy(
+    "temporal",
+    "C:/Users/Owner/OneDrive/temporal",
+    { resolveCanonical: false },
+  );
   const offSyncDb = evaluateSyncPathPolicy(
     "database",
     "D:/worksocial/local-state/database",
@@ -117,15 +125,17 @@ export function proofUnsafeFoldersUnresolvedFactsBlocked(
     syncSecrets.ok === false &&
     syncSecrets.reason === "DURABLE_ON_SYNC_PATH" &&
     syncDb.ok === false &&
-    syncDb.reason === "DURABLE_ON_SYNC_PATH"
+    syncDb.reason === "DURABLE_ON_SYNC_PATH" &&
+    syncTemporal.ok === false &&
+    syncTemporal.reason === "DURABLE_ON_SYNC_PATH"
   ) {
     details.push(
-      "Durable secrets+database under OneDrive → DURABLE_ON_SYNC_PATH (blocked)",
+      "Durable secrets+database+temporal under OneDrive → DURABLE_ON_SYNC_PATH (blocked)",
     );
   } else {
     passed = false;
     details.push(
-      `Unsafe durable folder policy unexpected: secrets.ok=${syncSecrets.ok} db.ok=${syncDb.ok}`,
+      `Unsafe durable folder policy unexpected: secrets.ok=${syncSecrets.ok} db.ok=${syncDb.ok} temporal.ok=${syncTemporal.ok}`,
     );
   }
 
@@ -185,6 +195,13 @@ export function proofUnsafeFoldersUnresolvedFactsBlocked(
         durableOnSyncRefused: syncDb.ok === false,
       },
       {
+        id: "root-temporal-unsafe",
+        kind: "temporal",
+        path: syncTemporal.path,
+        syncPath: true,
+        durableOnSyncRefused: syncTemporal.ok === false,
+      },
+      {
         id: "root-db-safe",
         kind: "database",
         path: offSyncDb.path,
@@ -196,22 +213,111 @@ export function proofUnsafeFoldersUnresolvedFactsBlocked(
   });
 
   if (
+    decision.ok &&
+    decision.code === "UNSAFE_FOLDERS_UNRESOLVED_FACTS_BLOCKED" &&
     decision.allUnsafeFoldersBlocked &&
-    decision.unsafeFoldersBlocked.length === 2 &&
+    decision.unsafeFoldersBlocked.length === 3 &&
     decision.hasUsableSafeFacts &&
     decision.usableFacts.some((f) => f.factId === "fact-hours-safe") &&
     decision.blockedUnresolvedFacts.some(
       (f) => f.factId === "fact-price-unresolved",
     ) &&
-    decision.externalEffects === "NONE"
+    decision.externalEffects === "NONE" &&
+    decision.liveProviderWiring === "NOT_WIRED" &&
+    decision.chatgptAdsAccess === "ACCESS_BLOCKED" &&
+    decision.liveProviderSuccessClaimed === false
   ) {
     details.push(
-      "Domain gate: unsafe durable folders blocked; unresolved facts blocked; safe facts usable",
+      "Domain gate: unsafe durable folders blocked (incl. temporal); unresolved facts blocked; safe facts usable; liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED",
     );
   } else {
     passed = false;
     details.push(
-      `Domain gate unexpected allBlocked=${decision.allUnsafeFoldersBlocked} usable=${decision.usableFacts.length} blocked=${decision.blockedUnresolvedFacts.length}`,
+      `Domain gate unexpected ok=${decision.ok} code=${decision.code} allBlocked=${decision.allUnsafeFoldersBlocked} usable=${decision.usableFacts.length} blocked=${decision.blockedUnresolvedFacts.length}`,
+    );
+  }
+
+  // Leak + no-usable-safe-fact edges.
+  const leak = evaluateUnsafeFoldersUnresolvedFactsGate({
+    folders: [
+      {
+        id: "root-secrets-leaked",
+        kind: "secrets",
+        path: syncSecrets.path,
+        syncPath: true,
+        durableOnSyncRefused: false,
+      },
+    ],
+    facts: [safeFact],
+  });
+  const noSafe = evaluateUnsafeFoldersUnresolvedFactsGate({
+    folders: [
+      {
+        id: "root-secrets-unsafe",
+        kind: "secrets",
+        path: syncSecrets.path,
+        syncPath: true,
+        durableOnSyncRefused: true,
+      },
+    ],
+    facts: [unresolvedFact],
+  });
+  if (
+    leak.ok === false &&
+    leak.code === "UNSAFE_FOLDER_LEAK" &&
+    noSafe.ok === false &&
+    noSafe.code === "NO_USABLE_SAFE_FACTS"
+  ) {
+    details.push(
+      "Edge refuse: UNSAFE_FOLDER_LEAK + NO_USABLE_SAFE_FACTS (fail closed)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Edge refuse unexpectedly leak=${leak.code} noSafe=${noSafe.code}`,
+    );
+  }
+
+  // Live VERIFIED / live folder wire refused.
+  const liveVerified = evaluateUnsafeFoldersUnresolvedFactsGate({
+    folders: [
+      {
+        id: "root-secrets-unsafe",
+        kind: "secrets",
+        path: syncSecrets.path,
+        syncPath: true,
+        durableOnSyncRefused: true,
+      },
+    ],
+    facts: [safeFact],
+    claimLiveVerified: true,
+  });
+  const liveWire = evaluateUnsafeFoldersUnresolvedFactsGate({
+    folders: [
+      {
+        id: "root-secrets-unsafe",
+        kind: "secrets",
+        path: syncSecrets.path,
+        syncPath: true,
+        durableOnSyncRefused: true,
+      },
+    ],
+    facts: [safeFact],
+    requestLiveFolderWire: true,
+  });
+  if (
+    liveVerified.code === "LIVE_FOLDER_CLAIM_REFUSED" &&
+    liveWire.code === "LIVE_FOLDER_CLAIM_REFUSED" &&
+    liveVerified.liveProviderWiring === "NOT_WIRED" &&
+    liveWire.chatgptAdsAccess === "ACCESS_BLOCKED"
+  ) {
+    details.push(
+      "claimLiveVerified / requestLiveFolderWire → LIVE_FOLDER_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Live refuse unexpectedly verified=${liveVerified.code} wire=${liveWire.code}`,
     );
   }
 
@@ -315,7 +421,7 @@ export function proofUnsafeFoldersUnresolvedFactsBlocked(
   }
 
   details.push(
-    "liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED",
+    "liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED",
   );
 
   return {

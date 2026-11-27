@@ -276,7 +276,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-F25** maps only to `OPERATE_DAILY_OWNER_REVIEW` (complete F25 evidence package; unsafe claims refused; live NOT_WIRED; distinct from T-US-049; not live VERIFIED).
 
-**T-US-004** maps only to `UNSAFE_FOLDERS_UNRESOLVED_FACTS_BLOCKED` (unsafe folders / unresolved facts blocked; safe facts usable; not live VERIFIED).
+**T-US-004** maps only to `UNSAFE_FOLDERS_UNRESOLVED_FACTS_BLOCKED` (unsafe folders incl. temporal / unresolved facts blocked; LIVE_FOLDER_CLAIM_REFUSED; Ads ACCESS_BLOCKED; liveProviderWiring NOT_WIRED; not live VERIFIED).
 
 **T-US-005** maps only to `SITE_PAGE_EDITABLE_SOURCES_BASELINE` (baseline-ID happy-path; distinct from T-F03 complete F03 evidence; not live VERIFIED).
 

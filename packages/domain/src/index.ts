@@ -299,12 +299,16 @@ export {
 } from "./business-truth-folders.js";
 export {
   UnsafeFolderDurableKind,
+  UNSAFE_FOLDERS_LIVE_PROVIDER_WIRING,
   isUnsafeFolderDurableKind,
   isUsableSafeFact,
   partitionFactsByUsability,
   evaluateUnsafeFoldersUnresolvedFactsGate,
   type UnsafeFolderDurableKindValue,
   type FolderPolicyVerdictInput,
+  type UnsafeFoldersGateCode,
+  type UnsafeFoldersHonesty,
+  type UnsafeFoldersLiveProviderWiring,
   type UnsafeFoldersUnresolvedFactsDecision,
 } from "./unsafe-folders-unresolved-facts.js";
 export {

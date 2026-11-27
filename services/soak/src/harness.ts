@@ -1805,7 +1805,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-043 fixture ACCEPTED via after_hours_handoff_acknowledged only — not live VERIFIED",
       "T-US-016 fixture ACCEPTED via claude_runtime_eval_auth_separated only — not live VERIFIED",
       "T-US-003 fixture ACCEPTED via business_truth_folders_restore_secrets_excluded only — not live VERIFIED",
-      "T-US-004 fixture ACCEPTED via unsafe_folders_unresolved_facts_blocked only — not live VERIFIED",
+      "T-US-004 fixture ACCEPTED via unsafe_folders_unresolved_facts_blocked only — temporal durable-on-sync; LIVE_FOLDER_CLAIM_REFUSED; Ads ACCESS_BLOCKED — not live VERIFIED",
       "T-US-005 fixture ACCEPTED via site_page_editable_sources_baseline only — not live VERIFIED",
       "T-US-007 fixture ACCEPTED via connect_ga4_read_ready_next_sync only — not live VERIFIED",
       "T-US-009 fixture ACCEPTED via connect_gsc_schedule_watermark only — not live VERIFIED",

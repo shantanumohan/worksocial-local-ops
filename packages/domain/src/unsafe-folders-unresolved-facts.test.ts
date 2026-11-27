@@ -109,6 +109,13 @@ describe("unsafe folders / unresolved facts gate (T-US-004)", () => {
           durableOnSyncRefused: true,
         },
         {
+          id: "root-temporal-unsafe",
+          kind: "temporal",
+          path: "C:/Users/Owner/OneDrive/temporal",
+          syncPath: true,
+          durableOnSyncRefused: true,
+        },
+        {
           id: "root-db-safe",
           kind: "database",
           path: "D:/worksocial/local-state/db",
@@ -119,16 +126,22 @@ describe("unsafe folders / unresolved facts gate (T-US-004)", () => {
       facts: [supportedHoursFact(), unresolvedHypothesisFact(), conflictedFact()],
     });
 
+    expect(decision.ok).toBe(true);
+    expect(decision.code).toBe("UNSAFE_FOLDERS_UNRESOLVED_FACTS_BLOCKED");
     expect(decision.allUnsafeFoldersBlocked).toBe(true);
     expect(decision.unsafeFoldersBlocked.map((f) => f.id).sort()).toEqual([
       "root-db-unsafe",
       "root-secrets-unsafe",
+      "root-temporal-unsafe",
     ]);
     expect(decision.hasUsableSafeFacts).toBe(true);
     expect(decision.usableFacts).toHaveLength(1);
     expect(decision.blockedUnresolvedFacts).toHaveLength(2);
     expect(decision.externalEffects).toBe("NONE");
     expect(decision.fixtureOnly).toBe(true);
+    expect(decision.liveProviderWiring).toBe("NOT_WIRED");
+    expect(decision.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(decision.liveProviderSuccessClaimed).toBe(false);
   });
 
   it("fails closed when a durable sync folder was not refused", () => {
@@ -144,7 +157,79 @@ describe("unsafe folders / unresolved facts gate (T-US-004)", () => {
       ],
       facts: [supportedHoursFact()],
     });
+    expect(decision.ok).toBe(false);
+    expect(decision.code).toBe("UNSAFE_FOLDER_LEAK");
     expect(decision.allUnsafeFoldersBlocked).toBe(false);
     expect(decision.unsafeFoldersBlocked).toHaveLength(0);
+    expect(decision.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("fails closed when no durable sync candidates are present", () => {
+    const decision = evaluateUnsafeFoldersUnresolvedFactsGate({
+      folders: [
+        {
+          id: "root-content",
+          kind: "content",
+          path: "C:/Users/Owner/OneDrive/content",
+          syncPath: true,
+          durableOnSyncRefused: false,
+        },
+      ],
+      facts: [supportedHoursFact()],
+    });
+    expect(decision.ok).toBe(false);
+    expect(decision.code).toBe("NO_DURABLE_SYNC_CANDIDATES");
+    expect(decision.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("fails closed when unsafe folders blocked but no usable safe facts remain", () => {
+    const decision = evaluateUnsafeFoldersUnresolvedFactsGate({
+      folders: [
+        {
+          id: "root-secrets-unsafe",
+          kind: "secrets",
+          path: "C:/Users/Owner/OneDrive/secrets",
+          syncPath: true,
+          durableOnSyncRefused: true,
+        },
+      ],
+      facts: [unresolvedHypothesisFact(), conflictedFact()],
+    });
+    expect(decision.ok).toBe(false);
+    expect(decision.code).toBe("NO_USABLE_SAFE_FACTS");
+    expect(decision.allUnsafeFoldersBlocked).toBe(true);
+    expect(decision.hasUsableSafeFacts).toBe(false);
+  });
+
+  it("refuses live VERIFIED and live folder wire claims", () => {
+    const folders = [
+      {
+        id: "root-secrets-unsafe",
+        kind: "secrets",
+        path: "C:/Users/Owner/OneDrive/secrets",
+        syncPath: true,
+        durableOnSyncRefused: true,
+      },
+    ];
+    const facts = [supportedHoursFact()];
+
+    const verified = evaluateUnsafeFoldersUnresolvedFactsGate({
+      folders,
+      facts,
+      claimLiveVerified: true,
+    });
+    expect(verified.ok).toBe(false);
+    expect(verified.code).toBe("LIVE_FOLDER_CLAIM_REFUSED");
+    expect(verified.liveProviderWiring).toBe("NOT_WIRED");
+
+    const wire = evaluateUnsafeFoldersUnresolvedFactsGate({
+      folders,
+      facts,
+      requestLiveFolderWire: true,
+    });
+    expect(wire.ok).toBe(false);
+    expect(wire.code).toBe("LIVE_FOLDER_CLAIM_REFUSED");
+    expect(wire.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(wire.externalEffects).toBe("NONE");
   });
 });

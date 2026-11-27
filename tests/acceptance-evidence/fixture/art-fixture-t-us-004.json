@@ -3,13 +3,13 @@
   "caseId": "T-US-004",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-US-004 (Unsafe folders / unresolved facts blocked; safe facts usable)\nproof=unsafe_folders_unresolved_facts_blocked applyCount=1 :: Durable secrets+database under OneDrive → DURABLE_ON_SYNC_PATH (blocked) | Off-sync durable database allowed; artifact content may sync | Fact labels honest: safe=SUPPORTED unresolved=HYPOTHESIS | Domain gate: unsafe durable folders blocked; unresolved facts blocked; safe facts usable | Article gate refuses unresolved citation (code=ARTICLE_GATE_FAILED) | Article gate allows SUPPORTED safe-fact citation | Concierge refuses unresolved fact citation (UNSUPPORTED_FACTS) | Concierge allows SUPPORTED safe-fact reply draft | liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-US-004 (Unsafe folders / unresolved facts blocked; safe facts usable)\nproof=unsafe_folders_unresolved_facts_blocked applyCount=1 :: Durable secrets+database+temporal under OneDrive → DURABLE_ON_SYNC_PATH (blocked) | Off-sync durable database allowed; artifact content may sync | Fact labels honest: safe=SUPPORTED unresolved=HYPOTHESIS | Domain gate: unsafe durable folders blocked (incl. temporal); unresolved facts blocked; safe facts usable; liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED | Edge refuse: UNSAFE_FOLDER_LEAK + NO_USABLE_SAFE_FACTS (fail closed) | claimLiveVerified / requestLiveFolderWire → LIVE_FOLDER_CLAIM_REFUSED | Article gate refuses unresolved citation (code=ARTICLE_GATE_FAILED) | Article gate allows SUPPORTED safe-fact citation | Concierge refuses unresolved fact citation (UNSUPPORTED_FACTS) | Concierge allows SUPPORTED safe-fact reply draft | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "unsafe_folders_unresolved_facts_blocked"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-004.json",
-  "createdAtIso": "2026-11-27T13:01:16.602Z",
+  "createdAtIso": "2026-11-27T13:26:30.199Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-004-a02b522167e2"
+  "uniqueSourceArtifactId": "art-fixture-t-us-004-27b1a091c8d2"
 }
