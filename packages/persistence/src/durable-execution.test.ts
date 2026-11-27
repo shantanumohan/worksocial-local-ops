@@ -433,6 +433,47 @@ describe("durable execution (memory fixture)", () => {
     ]);
   });
 
+  it("classifies string throws with mismatch phrase (T35/S17)", () => {
+    expect(isIdempotencyPayloadMismatchError("payload mismatch")).toBe(true);
+    expect(isIdempotencyPayloadMismatchError(null)).toBe(false);
+    expect(
+      isIdempotencyPayloadMismatchError({
+        message: "different payload digest bound",
+      }),
+    ).toBe(false);
+  });
+
+  it("matches case-insensitive payload mismatch phrases (T35/S18)", () => {
+    expect(
+      isIdempotencyPayloadMismatchError(
+        new Error("BOUND digest: PAYLOAD MISMATCH for operation"),
+      ),
+    ).toBe(true);
+    expect(
+      isIdempotencyPayloadMismatchError(
+        new Error("request used a DIFFERENT PAYLOAD DIGEST than bound key"),
+      ),
+    ).toBe(true);
+  });
+
+  it("same business key + digest replay is not a classifier conflict (T35/S19)", () => {
+    expect(
+      isIdempotencyPayloadMismatchError(
+        new Error("Duplicate acceptPending replay for same digest"),
+      ),
+    ).toBe(false);
+    expect(
+      isIdempotencyPayloadMismatchError(
+        new Error("Job insert idempotent hit for same idempotencyKey"),
+      ),
+    ).toBe(false);
+  });
+
+  it("live wiring pins NOT_WIRED for T-X022 durable path (T35/S20)", () => {
+    expect(IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING).toBe("NOT_WIRED");
+    expect(IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP).not.toContain("T-X022");
+  });
+
   it("empty and NUL-suffix digests Conflict after bind (T-X022)", async () => {
     const stores = createMemoryDurableStores();
     const service = createDurableExecutionService(stores);
