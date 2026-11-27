@@ -154,6 +154,154 @@ describe("evaluatePolicy", () => {
         revisionMatches: false,
       }),
     ).toMatchObject({ allowed: false, code: "OUTBOUND_STOPPED" });
+    // T-X016 R24 (idle): triple rate-limit + source-stale + revision still OUTBOUND_STOPPED.
+    expect(
+      evaluatePolicy({
+        ...base,
+        outboundStopped: true,
+        rateLimitExceeded: true,
+        sourceStale: true,
+        revisionMatches: false,
+      }),
+    ).toMatchObject({ allowed: false, code: "OUTBOUND_STOPPED" });
+    // T-X016 R25 (wipe15): quadruple rate-limit + stale + revision + grant-expired still OUTBOUND_STOPPED.
+    expect(
+      evaluatePolicy({
+        ...base,
+        outboundStopped: true,
+        rateLimitExceeded: true,
+        sourceStale: true,
+        revisionMatches: false,
+        grantExpired: true,
+      }),
+    ).toMatchObject({ allowed: false, code: "OUTBOUND_STOPPED" });
+    // T-X016 R26: quintuple adds PREREQUISITE_MISSING on R25 compound.
+    expect(
+      evaluatePolicy({
+        ...base,
+        outboundStopped: true,
+        rateLimitExceeded: true,
+        sourceStale: true,
+        revisionMatches: false,
+        grantExpired: true,
+        prerequisiteMissing: true,
+      }),
+    ).toMatchObject({ allowed: false, code: "OUTBOUND_STOPPED" });
+    // T-X016 R27: sextuple adds PREREQUISITE_CONFLICT on R26 compound.
+    expect(
+      evaluatePolicy({
+        ...base,
+        outboundStopped: true,
+        rateLimitExceeded: true,
+        sourceStale: true,
+        revisionMatches: false,
+        grantExpired: true,
+        prerequisiteMissing: true,
+        prerequisiteConflict: true,
+      }),
+    ).toMatchObject({ allowed: false, code: "OUTBOUND_STOPPED" });
+    // T-X016 R28 (wipe15): septuple adds READ_EVIDENCE_MISSING on R27 compound.
+    expect(
+      evaluatePolicy({
+        ...base,
+        outboundStopped: true,
+        rateLimitExceeded: true,
+        sourceStale: true,
+        revisionMatches: false,
+        grantExpired: true,
+        prerequisiteMissing: true,
+        prerequisiteConflict: true,
+        readEvidencePresent: false,
+      }),
+    ).toMatchObject({ allowed: false, code: "OUTBOUND_STOPPED" });
+    // T-X016 R29 (wipe15): octuple adds OWNERSHIP_UNPROVEN on R28 compound.
+    expect(
+      evaluatePolicy({
+        ...base,
+        outboundStopped: true,
+        rateLimitExceeded: true,
+        sourceStale: true,
+        revisionMatches: false,
+        grantExpired: true,
+        prerequisiteMissing: true,
+        prerequisiteConflict: true,
+        readEvidencePresent: false,
+        ownershipProven: false,
+      }),
+    ).toMatchObject({ allowed: false, code: "OUTBOUND_STOPPED" });
+    // T-X016 R30 (wipe15): nonuple adds GRANT_MISSING on R29 compound.
+    expect(
+      evaluatePolicy({
+        ...base,
+        outboundStopped: true,
+        rateLimitExceeded: true,
+        sourceStale: true,
+        revisionMatches: false,
+        grantPresent: false,
+        grantExpired: true,
+        prerequisiteMissing: true,
+        prerequisiteConflict: true,
+        readEvidencePresent: false,
+        ownershipProven: false,
+      }),
+    ).toMatchObject({ allowed: false, code: "OUTBOUND_STOPPED" });
+    // T-X016 R31 (wipe15): nonuple repeat gate — two passes still OUTBOUND_STOPPED.
+    const nonuple = {
+      ...base,
+      outboundStopped: true,
+      rateLimitExceeded: true,
+      sourceStale: true,
+      revisionMatches: false,
+      grantPresent: false,
+      grantExpired: true,
+      prerequisiteMissing: true,
+      prerequisiteConflict: true,
+      readEvidencePresent: false,
+      ownershipProven: false,
+    };
+    expect(evaluatePolicy(nonuple)).toMatchObject({
+      allowed: false,
+      code: "OUTBOUND_STOPPED",
+    });
+    expect(evaluatePolicy(nonuple)).toMatchObject({
+      allowed: false,
+      code: "OUTBOUND_STOPPED",
+    });
+    // T-X016 R32 (wipe15 retrain): third pass still OUTBOUND_STOPPED.
+    expect(evaluatePolicy(nonuple)).toMatchObject({
+      allowed: false,
+      code: "OUTBOUND_STOPPED",
+    });
+    // T-X016 R33 (wipe15 retrain): fourth pass still OUTBOUND_STOPPED.
+    expect(evaluatePolicy(nonuple)).toMatchObject({
+      allowed: false,
+      code: "OUTBOUND_STOPPED",
+    });
+    // T-X016 R34 (wipe15 retrain): fifth pass still OUTBOUND_STOPPED.
+    expect(evaluatePolicy(nonuple)).toMatchObject({
+      allowed: false,
+      code: "OUTBOUND_STOPPED",
+    });
+    // T-X016 R35 (wipe15 retrain): sixth pass still OUTBOUND_STOPPED.
+    expect(evaluatePolicy(nonuple)).toMatchObject({
+      allowed: false,
+      code: "OUTBOUND_STOPPED",
+    });
+    // T-X016 R36 (wipe15 retrain): seventh pass still OUTBOUND_STOPPED.
+    expect(evaluatePolicy(nonuple)).toMatchObject({
+      allowed: false,
+      code: "OUTBOUND_STOPPED",
+    });
+    // T-X016 R37 (wipe15 retrain): eighth pass still OUTBOUND_STOPPED.
+    expect(evaluatePolicy(nonuple)).toMatchObject({
+      allowed: false,
+      code: "OUTBOUND_STOPPED",
+    });
+    // T-X016 R38 (wipe15): ninth pass still OUTBOUND_STOPPED.
+    expect(evaluatePolicy(nonuple)).toMatchObject({
+      allowed: false,
+      code: "OUTBOUND_STOPPED",
+    });
   });
 
   it("denies missing grant", () => {

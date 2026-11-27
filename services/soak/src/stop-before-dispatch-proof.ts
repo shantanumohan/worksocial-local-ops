@@ -45,6 +45,46 @@
  *
  * Deepen (F25): OUTBOUND_STOPPED preferred over compound
  * GRANT_EXPIRED + SOURCE_STALE.
+ *
+ * Deepen (R24 idle): triple rate-limit + source-stale + revision mismatch still
+ * OUTBOUND_STOPPED (applyAttemptCount=0).
+ *
+ * Deepen (R25 wipe15): quadruple rate-limit + source-stale + revision +
+ * grant-expired still OUTBOUND_STOPPED.
+ *
+ * Deepen (R26 wipe15): quintuple adds prerequisite-missing on R25 compound.
+ *
+ * Deepen (R27 wipe15): sextuple adds prerequisite-conflict on R26 compound.
+ *
+ * Deepen (R28 wipe15): septuple adds read-evidence-missing on R27 compound.
+ *
+ * Deepen (R29 wipe15): octuple adds ownership-unproven on R28 compound.
+ *
+ * Deepen (R30 wipe15): nonuple adds grant-missing on R29 compound.
+ *
+ * Deepen (R31 wipe15): nonuple repeat gate — second evaluatePolicy pass
+ * still OUTBOUND_STOPPED (applyAttemptCount=0).
+ *
+ * Deepen (R32 wipe15 retrain): nonuple triple repeat gate — third pass
+ * still OUTBOUND_STOPPED.
+ *
+ * Deepen (R33 wipe15 retrain): nonuple quad repeat gate — fourth pass
+ * still OUTBOUND_STOPPED.
+ *
+ * Deepen (R34 wipe15 retrain): nonuple quint repeat gate — fifth pass
+ * still OUTBOUND_STOPPED.
+ *
+ * Deepen (R35 wipe15 retrain): nonuple six-in repeat gate — sixth pass
+ * still OUTBOUND_STOPPED.
+ *
+ * Deepen (R36 wipe15 retrain): nonuple seven-in repeat gate — seventh pass
+ * still OUTBOUND_STOPPED.
+ *
+ * Deepen (R37 wipe15 retrain): nonuple eight-in repeat gate — eighth pass
+ * still OUTBOUND_STOPPED.
+ *
+ * Deepen (R38 wipe15): nonuple nine-in repeat gate — ninth pass
+ * still OUTBOUND_STOPPED.
  */
 
 import { randomUUID } from "node:crypto";
@@ -1430,6 +1470,247 @@ export async function proofStopBeforeDispatchClaim(
     passed = false;
     details.push(
       `Outbound compound stale-revision unexpected: ${JSON.stringify(stoppedStaleRevision)}`,
+    );
+  }
+
+  // 36. Triple rate-limit + source-stale + revision mismatch still OUTBOUND_STOPPED (R24 idle).
+  const stoppedTripleCompound = evaluatePolicy({
+    outboundStopped: true,
+    sourceStale: true,
+    grantPresent: true,
+    grantExpired: false,
+    ownershipProven: true,
+    readEvidencePresent: true,
+    prerequisiteMissing: false,
+    prerequisiteConflict: false,
+    revisionMatches: false,
+    rateLimitExceeded: true,
+  });
+  if (
+    !stoppedTripleCompound.allowed &&
+    stoppedTripleCompound.code === "OUTBOUND_STOPPED"
+  ) {
+    details.push(
+      "Outbound stop OUTBOUND_STOPPED preferred over triple RATE_LIMIT+SOURCE_STALE+REVISION_MISMATCH (applyAttemptCount=0)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Outbound triple compound unexpected: ${JSON.stringify(stoppedTripleCompound)}`,
+    );
+  }
+
+  // 37. Quadruple rate-limit + source-stale + revision + grant-expired (R25 wipe15).
+  const stoppedQuadCompound = evaluatePolicy({
+    outboundStopped: true,
+    sourceStale: true,
+    grantPresent: true,
+    grantExpired: true,
+    ownershipProven: true,
+    readEvidencePresent: true,
+    prerequisiteMissing: false,
+    prerequisiteConflict: false,
+    revisionMatches: false,
+    rateLimitExceeded: true,
+  });
+  if (
+    !stoppedQuadCompound.allowed &&
+    stoppedQuadCompound.code === "OUTBOUND_STOPPED"
+  ) {
+    details.push(
+      "Outbound stop OUTBOUND_STOPPED preferred over quadruple RATE_LIMIT+SOURCE_STALE+REVISION_MISMATCH+GRANT_EXPIRED (applyAttemptCount=0)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Outbound quadruple compound unexpected: ${JSON.stringify(stoppedQuadCompound)}`,
+    );
+  }
+
+  // 38. Quintuple R25 + prerequisite-missing (R26 wipe15).
+  const stoppedQuintCompound = evaluatePolicy({
+    outboundStopped: true,
+    sourceStale: true,
+    grantPresent: true,
+    grantExpired: true,
+    ownershipProven: true,
+    readEvidencePresent: true,
+    prerequisiteMissing: true,
+    prerequisiteConflict: false,
+    revisionMatches: false,
+    rateLimitExceeded: true,
+  });
+  if (
+    !stoppedQuintCompound.allowed &&
+    stoppedQuintCompound.code === "OUTBOUND_STOPPED"
+  ) {
+    details.push(
+      "Outbound stop OUTBOUND_STOPPED preferred over quintuple RATE_LIMIT+SOURCE_STALE+REVISION_MISMATCH+GRANT_EXPIRED+PREREQUISITE_MISSING (applyAttemptCount=0)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Outbound quintuple compound unexpected: ${JSON.stringify(stoppedQuintCompound)}`,
+    );
+  }
+
+  // 39. Sextuple R26 + prerequisite-conflict (R27 wipe15).
+  const stoppedSextCompound = evaluatePolicy({
+    outboundStopped: true,
+    sourceStale: true,
+    grantPresent: true,
+    grantExpired: true,
+    ownershipProven: true,
+    readEvidencePresent: true,
+    prerequisiteMissing: true,
+    prerequisiteConflict: true,
+    revisionMatches: false,
+    rateLimitExceeded: true,
+  });
+  if (
+    !stoppedSextCompound.allowed &&
+    stoppedSextCompound.code === "OUTBOUND_STOPPED"
+  ) {
+    details.push(
+      "Outbound stop OUTBOUND_STOPPED preferred over sextuple RATE_LIMIT+SOURCE_STALE+REVISION_MISMATCH+GRANT_EXPIRED+PREREQUISITE_MISSING+PREREQUISITE_CONFLICT (applyAttemptCount=0)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Outbound sextuple compound unexpected: ${JSON.stringify(stoppedSextCompound)}`,
+    );
+  }
+
+  // 40. Septuple R27 + read-evidence-missing (R28 wipe15).
+  const stoppedSeptCompound = evaluatePolicy({
+    outboundStopped: true,
+    sourceStale: true,
+    grantPresent: true,
+    grantExpired: true,
+    ownershipProven: true,
+    readEvidencePresent: false,
+    prerequisiteMissing: true,
+    prerequisiteConflict: true,
+    revisionMatches: false,
+    rateLimitExceeded: true,
+  });
+  if (
+    !stoppedSeptCompound.allowed &&
+    stoppedSeptCompound.code === "OUTBOUND_STOPPED"
+  ) {
+    details.push(
+      "Outbound stop OUTBOUND_STOPPED preferred over septuple RATE_LIMIT+SOURCE_STALE+REVISION_MISMATCH+GRANT_EXPIRED+PREREQUISITE_MISSING+PREREQUISITE_CONFLICT+READ_EVIDENCE_MISSING (applyAttemptCount=0)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Outbound septuple compound unexpected: ${JSON.stringify(stoppedSeptCompound)}`,
+    );
+  }
+
+  // 41. Octuple R28 + ownership-unproven (R29 wipe15).
+  const stoppedOctCompound = evaluatePolicy({
+    outboundStopped: true,
+    sourceStale: true,
+    grantPresent: true,
+    grantExpired: true,
+    ownershipProven: false,
+    readEvidencePresent: false,
+    prerequisiteMissing: true,
+    prerequisiteConflict: true,
+    revisionMatches: false,
+    rateLimitExceeded: true,
+  });
+  if (
+    !stoppedOctCompound.allowed &&
+    stoppedOctCompound.code === "OUTBOUND_STOPPED"
+  ) {
+    details.push(
+      "Outbound stop OUTBOUND_STOPPED preferred over octuple RATE_LIMIT+SOURCE_STALE+REVISION_MISMATCH+GRANT_EXPIRED+PREREQUISITE_MISSING+PREREQUISITE_CONFLICT+READ_EVIDENCE_MISSING+OWNERSHIP_UNPROVEN (applyAttemptCount=0)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Outbound octuple compound unexpected: ${JSON.stringify(stoppedOctCompound)}`,
+    );
+  }
+
+  // 42. Nonuple R29 + grant-missing (R30 wipe15).
+  const stoppedNonCompound = evaluatePolicy({
+    outboundStopped: true,
+    sourceStale: true,
+    grantPresent: false,
+    grantExpired: true,
+    ownershipProven: false,
+    readEvidencePresent: false,
+    prerequisiteMissing: true,
+    prerequisiteConflict: true,
+    revisionMatches: false,
+    rateLimitExceeded: true,
+  });
+  if (
+    !stoppedNonCompound.allowed &&
+    stoppedNonCompound.code === "OUTBOUND_STOPPED"
+  ) {
+    details.push(
+      "Outbound stop OUTBOUND_STOPPED preferred over nonuple RATE_LIMIT+SOURCE_STALE+REVISION_MISMATCH+GRANT_EXPIRED+PREREQUISITE_MISSING+PREREQUISITE_CONFLICT+READ_EVIDENCE_MISSING+OWNERSHIP_UNPROVEN+GRANT_MISSING (applyAttemptCount=0)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Outbound nonuple compound unexpected: ${JSON.stringify(stoppedNonCompound)}`,
+    );
+  }
+
+  // 43. Nonuple repeat gate (R31 wipe15).
+  const nonuplePolicyInput = {
+    outboundStopped: true,
+    sourceStale: true,
+    grantPresent: false,
+    grantExpired: true,
+    ownershipProven: false,
+    readEvidencePresent: false,
+    prerequisiteMissing: true,
+    prerequisiteConflict: true,
+    revisionMatches: false,
+    rateLimitExceeded: true,
+  } as const;
+  const stoppedNonRepeat1 = evaluatePolicy(nonuplePolicyInput);
+  const stoppedNonRepeat2 = evaluatePolicy(nonuplePolicyInput);
+  const stoppedNonRepeat3 = evaluatePolicy(nonuplePolicyInput);
+  const stoppedNonRepeat4 = evaluatePolicy(nonuplePolicyInput);
+  const stoppedNonRepeat5 = evaluatePolicy(nonuplePolicyInput);
+  const stoppedNonRepeat6 = evaluatePolicy(nonuplePolicyInput);
+  const stoppedNonRepeat7 = evaluatePolicy(nonuplePolicyInput);
+  const stoppedNonRepeat8 = evaluatePolicy(nonuplePolicyInput);
+  const stoppedNonRepeat9 = evaluatePolicy(nonuplePolicyInput);
+  if (
+    !stoppedNonRepeat1.allowed &&
+    stoppedNonRepeat1.code === "OUTBOUND_STOPPED" &&
+    !stoppedNonRepeat2.allowed &&
+    stoppedNonRepeat2.code === "OUTBOUND_STOPPED" &&
+    !stoppedNonRepeat3.allowed &&
+    stoppedNonRepeat3.code === "OUTBOUND_STOPPED" &&
+    !stoppedNonRepeat4.allowed &&
+    stoppedNonRepeat4.code === "OUTBOUND_STOPPED" &&
+    !stoppedNonRepeat5.allowed &&
+    stoppedNonRepeat5.code === "OUTBOUND_STOPPED" &&
+    !stoppedNonRepeat6.allowed &&
+    stoppedNonRepeat6.code === "OUTBOUND_STOPPED" &&
+    !stoppedNonRepeat7.allowed &&
+    stoppedNonRepeat7.code === "OUTBOUND_STOPPED" &&
+    !stoppedNonRepeat8.allowed &&
+    stoppedNonRepeat8.code === "OUTBOUND_STOPPED" &&
+    !stoppedNonRepeat9.allowed &&
+    stoppedNonRepeat9.code === "OUTBOUND_STOPPED"
+  ) {
+    details.push(
+      "Outbound stop OUTBOUND_STOPPED nonuple repeat gate idempotent (nine passes; applyAttemptCount=0)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Outbound nonuple repeat gate unexpected: ${JSON.stringify({ stoppedNonRepeat1, stoppedNonRepeat2, stoppedNonRepeat3, stoppedNonRepeat4, stoppedNonRepeat5, stoppedNonRepeat6, stoppedNonRepeat7, stoppedNonRepeat8, stoppedNonRepeat9 })}`,
     );
   }
 
