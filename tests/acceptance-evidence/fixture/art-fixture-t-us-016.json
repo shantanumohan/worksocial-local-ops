@@ -8,8 +8,8 @@
     "claude_runtime_eval_auth_separated"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-016.json",
-  "createdAtIso": "2026-11-27T11:45:50.626Z",
+  "createdAtIso": "2026-11-27T11:47:18.308Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-016-15faf305bfac"
+  "uniqueSourceArtifactId": "art-fixture-t-us-016-9d3863032c3c"
 }

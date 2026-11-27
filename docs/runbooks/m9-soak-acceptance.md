@@ -32,7 +32,7 @@ Honest fixture ACCEPTED cases: **T-X001**, **T-X014**, **T-X020**, **T-US-048**,
 
 **T-X063** maps only to `INDIRECT_PROMPT_INJECTION_EXFIL_DENIED`.
 
-**T-X015** maps only to `DST_RECURRING_SCHEDULE_NO_DUPLICATES` (DST civil keys; spring gap skip; fall-back one claim; honesty fields on every resolve/claim; Lord Howe ±30m; third durable DUPLICATE; Europe/London spring/fall; blank keys fail closed then valid CLAIMED; LA spring gap; bad-zone key null; Phoenix no-DST one-per-day; inverted window empty; truncated primary recovers prior or fail-closed empty; wrong version/dual-corrupt/whitespace claimedKeys (G10); non-array/null-primary/mixed-type (G11); missing version/whitespace-primary/duplicate dedupe (G12); array-root/empty-object durable (G13); string version/null claimedKeys/numeric-root (G14); version zero/boolean-root (G15); live NOT_WIRED; ChatGPT Ads ACCESS_BLOCKED; not live VERIFIED).
+**T-X015** maps only to `DST_RECURRING_SCHEDULE_NO_DUPLICATES`.
 
 **T-X066** maps only to `BACKUP_OMIT_RECEIPT` (omit→restore→remote SoR reconcile→verify/retry). Retry-only `NO_DUPLICATE_EFFECTS`, `UNKNOWN_REMOTE_RECONCILE` (T-X020/T-US-048), and `RECOVER_ROTATE_RECONCILE` (T-F24/T-US-047) do not satisfy T-X066. Live backup/restore remains NOT_WIRED; ACCEPTED ≠ VERIFIED.
 
@@ -50,7 +50,7 @@ Honest fixture ACCEPTED cases: **T-X001**, **T-X014**, **T-X020**, **T-US-048**,
 
 **T-X006** maps only to `CROSS_WORKSPACE_REFERENCE_DENIED`.
 
-**T-X019 / T-US-036** map only to `APPROVED_PAYLOAD_EDIT_INVALIDATED`.
+**T-X019 / T-US-036** map only to `APPROVED_PAYLOAD_EDIT_INVALIDATED` (checksum/revision/evidence/artifact; sticky INVALIDATED; blank pin + empty proposalId/bindingId refuse; trim-normalized; padded mismatch still INVALIDATED; blank verdict author refuse; supplied proposal author/id swap refuse; padded verdict/supplied proposalId refuse; verdict author mismatch refuse; blank verdict proposalId refuse; padded verdict authorRoleId refuse; LIVE_REVIEW_CLAIM_REFUSED; live NOT_WIRED; distinct from T-US-035 and T-US-054/T-X018).
 
 ## Commands
 
