@@ -269,6 +269,44 @@ describe("evaluation store (memory/file)", () => {
     }
   });
 
+  it("parseBudget honors legacy scalar-only eval budget on load (L13)", async () => {
+    const evalDir = join(dir, "evaluation");
+    mkdirSync(evalDir, { recursive: true });
+    const statePath = join(evalDir, "evaluation-state.json");
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        version: 1,
+        updatedAtIso: now,
+        connections: [],
+        suites: [],
+        runs: [],
+        budget: {
+          dayKey: "2026-11-21",
+          currency: "USD",
+          limitMinor: 2000,
+          reservedMinor: 150,
+          settledMinor: 220,
+          heldMinor: 0,
+          openReservations: {},
+          heldReservations: {},
+          settledReservations: {},
+        },
+        liveEvalWiring: "NOT_WIRED",
+        chatgptAdsWiring: "NOT_WIRED",
+      }),
+      "utf8",
+    );
+    const store = createFileEvaluationStore(dir);
+    const state = await store.read();
+    expect(availableBudgetMinor(state.budget)).toBe(1630);
+    const blocked = reserveBudget(state.budget, "over", 1700);
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.availableMinor).toBe(1630);
+    }
+  });
+
   it("openEvaluationStore forceMemory ignores DATABASE_URL", () => {
     const opened = openEvaluationStore({
       stateDir: dir,
