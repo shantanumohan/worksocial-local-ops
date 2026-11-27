@@ -586,4 +586,14 @@ describe("recurring-schedule (T-X015 DST)", () => {
     expect(parsed.keys).toEqual([]);
     expectHonesty(parsed);
   });
+
+  it("rejects +Infinity durable version field (T-X015 wipe15)", () => {
+    const key = occurrenceKeyFor("sched-posinf", "2025-11-07", 9, 0);
+    const parsed = parseOccurrenceClaimDurableBody(
+      JSON.stringify({ version: Number.POSITIVE_INFINITY, claimedKeys: [key] }),
+    );
+    expect(parsed.status).toBe(DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL);
+    expect(parsed.keys).toEqual([]);
+    expectHonesty(parsed);
+  });
 });
