@@ -567,6 +567,40 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).toContain("Attempt 2 recorded");
     expect(art.summary).toContain("CMS repair wiring NOT_WIRED");
     expect(art.createdAtIso).toMatch(/^2026-/);
+    // P34 D5: RELEASED-within-limit + third ATTEMPT_LIMIT path (retip @1fb05770)
+    expect(art.summary).toContain("RELEASED within limit");
+    expect(art.summary).toMatch(/third attempt ATTEMPT_LIMIT/);
+    expect(art.summary).toContain(
+      "liveProviderSuccessClaimed=false cmsRepairWiring=NOT_WIRED externalEffects=NONE",
+    );
+    expect(art.proofKinds).toHaveLength(1);
+    // P34 D6: applyCount fence + RELEASED_PENDING arrow (wipe15 @d6731fcd)
+    expect(art.summary).toMatch(/applyCount=1 :: MAX_REPAIR_ATTEMPTS=2/);
+    expect(art.summary).toMatch(
+      /Attempt 2 recorded; ticket status=ESCALATED/,
+    );
+    expect(art.summary).toMatch(/→ RELEASED_PENDING/);
+    // P34 D7: denied-path wording + summary proof prefix (wipe15 @1fb05770)
+    expect(art.summary).toMatch(
+      /Third automatic attempt denied \(ATTEMPT_LIMIT\)/,
+    );
+    expect(art.summary).toContain(
+      "proof=repair_attempt_limit_escalated applyCount=1",
+    );
+    // P34 D8: GATE_DENIED stage delimiter + source id (wipe15 @60b4b782)
+    expect(art.summary).toMatch(
+      /cmsRepairWiring=NOT_WIRED externalEffects=NONE \| GATE_DENIED ×2/,
+    );
+    expect(art.uniqueSourceArtifactId).toMatch(
+      /^art-fixture-t-x058-[a-f0-9]+$/,
+    );
+    // P34 D9: ACCEPTED≠VERIFIED + externalEffects=NONE honesty fences (deepen @60b4b782)
+    expect(art.summary).not.toMatch(/\bVERIFIED\b/);
+    expect(art.summary).not.toMatch(/cmsRepairWiring=WIRED/);
+    expect(art.summary).not.toMatch(/liveProviderSuccessClaimed=true/);
+    expect(art.summary).not.toMatch(/externalEffects=(?!NONE\b)\S+/);
+    expect(art.externalEffects).not.toBe("LIVE");
+    expect(art.liveProviderSuccessClaimed).not.toBe(true);
     expect(art.proofKinds).not.toContain("VERIFIED");
     expect(art.summary).toMatch(
       /liveProviderSuccessClaimed=false externalEffects=NONE$/,
