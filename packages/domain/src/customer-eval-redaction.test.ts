@@ -145,6 +145,17 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses skipRedactionForEval", () => {
+    const skip = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      skipRedactionForEval: true,
+    });
+    expect(skip.allowed).toBe(false);
+    expect(skip.code).toBe("CUSTOMER_DATA_LEAK_BLOCKED");
+    expect(skip.reasons.some((r) => /Skip redaction/.test(r))).toBe(true);
+  });
+
   it("refuses forceDeliverDespiteLeak", () => {
     const forced = prepareCustomerDataForEvaluation({
       source,

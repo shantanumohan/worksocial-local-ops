@@ -193,8 +193,16 @@ export function prepareCustomerDataForEvaluation(input: {
   requestLiveEvalFleet?: boolean;
   /** Forbidden — fixture must not deliver raw PII despite leak detection. */
   forceDeliverDespiteLeak?: boolean;
+  /** Forbidden — eval gate must redact, not skip. */
+  skipRedactionForEval?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.skipRedactionForEval === true) {
+    return blockedLeak([
+      "Skip redaction for eval refused — customer data must be redacted (T-X072)",
+    ]);
+  }
 
   if (input.forceDeliverDespiteLeak === true) {
     return blockedLeak([

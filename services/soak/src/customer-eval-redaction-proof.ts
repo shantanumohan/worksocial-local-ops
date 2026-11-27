@@ -133,6 +133,21 @@ export function proofCustomerDataEvalRedactionBlocks(
     details.push(`raw passthrough unexpectedly ${JSON.stringify(raw)}`);
   }
 
+  const skipRedaction = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    skipRedactionForEval: true,
+  });
+  if (
+    !skipRedaction.allowed &&
+    skipRedaction.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("skipRedactionForEval → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`skipRedaction unexpectedly ${JSON.stringify(skipRedaction)}`);
+  }
+
   const forceDeliver = prepareCustomerDataForEvaluation({
     source,
     mode: "redact",
