@@ -1,14 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
-  ACTUAL_COST_OVERRUN_RELATED_CASE_IDS,
-  BUDGET_ACCOUNTING_LIVE_WIRING,
-  assertBudgetSettlementHonesty,
   availableBudgetMinor,
+  BUDGET_RESERVATION_LIVE_WIRING,
   cancelBudgetReservation,
+  committedBudgetMinor,
+  composeConcurrentFinalBudgetReserves,
   createBudgetAccount,
-  describeActualCostOverrunVisibility,
-  isActualCostOverrun,
-  overrunMinor,
+  isConcurrentBudgetCompositionHonest,
   reserveBudget,
   settleBudget,
 } from "./budget-accounting.js";
@@ -65,6 +63,882 @@ describe("budget accounting", () => {
     expect(isolA.account.reservedMinor).toBe(1000);
   });
 
+  it("composes exact-remaining concurrent finals without exceeding the cap", () => {
+    const first = reserveBudget(account(), "r-prior", 600);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    expect(availableBudgetMinor(first.account)).toBe(400);
+
+    const composition = composeConcurrentFinalBudgetReserves(first.account, [
+      { reservationId: "r-exact", amountMinor: 400 },
+      { reservationId: "r-stale-peer", amountMinor: 400 },
+    ]);
+    expect(composition.acceptedReservationIds).toEqual(["r-exact"]);
+    expect(composition.exhaustedReservationIds).toEqual(["r-stale-peer"]);
+    expect(composition.account.reservedMinor).toBe(1000);
+    expect(composition.reservedNeverExceedsLimit).toBe(true);
+    expect(composition.availableMinor).toBe(0);
+    expect(composition.availableAtSnapshotMinor).toBe(400);
+    expect(composition.isolationWouldOversubscribe).toBe(true);
+    expect(composition.exhausted).toEqual([
+      { reservationId: "r-stale-peer", availableMinor: 0 },
+    ]);
+    expect(composition.liveWiring).toBe(BUDGET_RESERVATION_LIVE_WIRING);
+    expect(composition.externalEffects).toBe("NONE");
+  });
+
+  it("composes three-way same-snapshot finals with reserved ≤ limit", () => {
+    const first = reserveBudget(account(), "r-seed", 500);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    // Remaining 500 — three 300 finals each ok in isolation; composition keeps ≤1000.
+    const snap = first.account;
+    const isol = ["r-t1", "r-t2", "r-t3"].map((id) =>
+      reserveBudget(snap, id, 300),
+    );
+    expect(isol.every((r) => r.ok)).toBe(true);
+
+    const composition = composeConcurrentFinalBudgetReserves(snap, [
+      { reservationId: "r-t1", amountMinor: 300 },
+      { reservationId: "r-t2", amountMinor: 300 },
+      { reservationId: "r-t3", amountMinor: 300 },
+    ]);
+    expect(composition.acceptedReservationIds).toEqual(["r-t1"]);
+    expect(composition.exhaustedReservationIds).toEqual(["r-t2", "r-t3"]);
+    expect(composition.account.reservedMinor).toBe(800);
+    expect(composition.account.reservedMinor).toBeLessThanOrEqual(
+      composition.account.limitMinor,
+    );
+    expect(composition.reservedNeverExceedsLimit).toBe(true);
+    expect(composition.availableMinor).toBe(200);
+    expect(composition.availableAtSnapshotMinor).toBe(500);
+    expect(composition.isolationSumMinor).toBe(900);
+    expect(composition.isolationWouldOversubscribe).toBe(true);
+    expect(composition.exhausted).toEqual([
+      { reservationId: "r-t2", availableMinor: 200 },
+      { reservationId: "r-t3", availableMinor: 200 },
+    ]);
+    expect(composition.liveWiring).toBe("NOT_WIRED");
+    expect(composition.externalEffects).toBe("NONE");
+    // Input snapshot is not mutated by composition.
+    expect(snap.reservedMinor).toBe(500);
+    expect(snap.openReservations).toEqual({ "r-seed": 500 });
+  });
+
+  it("composes four-way pack then exhausts with oversubscribe honesty", () => {
+    const first = reserveBudget(account(), "r-prior", 600);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const snap = first.account;
+    const composition = composeConcurrentFinalBudgetReserves(snap, [
+      { reservationId: "r-p1", amountMinor: 200 },
+      { reservationId: "r-p2", amountMinor: 200 },
+      { reservationId: "r-p3", amountMinor: 200 },
+      { reservationId: "r-p4", amountMinor: 200 },
+    ]);
+    expect(composition.acceptedReservationIds).toEqual(["r-p1", "r-p2"]);
+    expect(composition.exhaustedReservationIds).toEqual(["r-p3", "r-p4"]);
+    expect(composition.account.reservedMinor).toBe(1000);
+    expect(composition.availableAtSnapshotMinor).toBe(400);
+    expect(composition.isolationSumMinor).toBe(800);
+    expect(composition.isolationWouldOversubscribe).toBe(true);
+    expect(composition.exhausted).toEqual([
+      { reservationId: "r-p3", availableMinor: 0 },
+      { reservationId: "r-p4", availableMinor: 0 },
+    ]);
+    expect(composition.reservedNeverExceedsLimit).toBe(true);
+    expect(composition.liveWiring).toBe(BUDGET_RESERVATION_LIVE_WIRING);
+    expect(snap.reservedMinor).toBe(600);
+  });
+
+  it("enforces concurrent cap after settled spend reduces headroom", () => {
+    const reserved = reserveBudget(account(), "r-settle", 400);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const settled = settleBudget(reserved.account, "r-settle", 400);
+    expect(settled.ok).toBe(true);
+    if (!settled.ok) return;
+    // Settled 400 consumes limit; remaining 600 — two 400 finals oversubscribe.
+    expect(availableBudgetMinor(settled.account)).toBe(600);
+    const composition = composeConcurrentFinalBudgetReserves(settled.account, [
+      { reservationId: "r-after-a", amountMinor: 400 },
+      { reservationId: "r-after-b", amountMinor: 400 },
+    ]);
+    expect(composition.acceptedReservationIds).toEqual(["r-after-a"]);
+    expect(composition.exhaustedReservationIds).toEqual(["r-after-b"]);
+    expect(composition.availableAtSnapshotMinor).toBe(600);
+    expect(composition.isolationWouldOversubscribe).toBe(true);
+    expect(composition.acceptedSumMinor).toBe(400);
+    expect(composition.account.reservedMinor).toBe(400);
+    expect(composition.account.settledMinor).toBe(400);
+    expect(
+      composition.account.reservedMinor + composition.account.settledMinor,
+    ).toBeLessThanOrEqual(composition.account.limitMinor);
+    expect(composition.reservedNeverExceedsLimit).toBe(true);
+    expect(composition.exhausted[0]?.availableMinor).toBe(200);
+    expect(composition.externalEffects).toBe("NONE");
+  });
+
+  it("composes non-oversubscribe fit path with acceptedSumMinor", () => {
+    const first = reserveBudget(account(), "r-prior", 600);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const composition = composeConcurrentFinalBudgetReserves(first.account, [
+      { reservationId: "r-fit-a", amountMinor: 150 },
+      { reservationId: "r-fit-b", amountMinor: 150 },
+    ]);
+    expect(composition.isolationWouldOversubscribe).toBe(false);
+    expect(composition.availableAtSnapshotMinor).toBe(400);
+    expect(composition.isolationSumMinor).toBe(300);
+    expect(composition.acceptedReservationIds).toEqual(["r-fit-a", "r-fit-b"]);
+    expect(composition.exhaustedReservationIds).toEqual([]);
+    expect(composition.acceptedSumMinor).toBe(300);
+    expect(composition.account.reservedMinor).toBe(900);
+    expect(composition.reservedNeverExceedsLimit).toBe(true);
+    expect(composition.availableMinor).toBe(100);
+    expect(composition.liveWiring).toBe(BUDGET_RESERVATION_LIVE_WIRING);
+  });
+
+  it("exhausts all finals when snapshot headroom is zero", () => {
+    const fill = reserveBudget(account(), "r-fill", 1000);
+    expect(fill.ok).toBe(true);
+    if (!fill.ok) return;
+    expect(availableBudgetMinor(fill.account)).toBe(0);
+    const composition = composeConcurrentFinalBudgetReserves(fill.account, [
+      { reservationId: "r-z1", amountMinor: 1 },
+      { reservationId: "r-z2", amountMinor: 50 },
+    ]);
+    expect(composition.availableAtSnapshotMinor).toBe(0);
+    expect(composition.isolationWouldOversubscribe).toBe(true);
+    expect(composition.acceptedReservationIds).toEqual([]);
+    expect(composition.accepted).toEqual([]);
+    expect(composition.acceptedSumMinor).toBe(0);
+    expect(composition.exhaustedReservationIds).toEqual(["r-z1", "r-z2"]);
+    expect(composition.exhausted).toEqual([
+      { reservationId: "r-z1", availableMinor: 0 },
+      { reservationId: "r-z2", availableMinor: 0 },
+    ]);
+    expect(composition.account.reservedMinor).toBe(1000);
+    expect(committedBudgetMinor(composition.account)).toBe(1000);
+    expect(composition.reservedNeverExceedsLimit).toBe(true);
+    expect(composition.fixtureAcceptedNotVerified).toBe(true);
+    expect(composition.externalEffects).toBe("NONE");
+  });
+
+  it("keeps empty finals as identity composition", () => {
+    const first = reserveBudget(account(), "r-prior", 250);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const composition = composeConcurrentFinalBudgetReserves(first.account, []);
+    expect(composition.accepted).toEqual([]);
+    expect(composition.exhausted).toEqual([]);
+    expect(composition.acceptedSumMinor).toBe(0);
+    expect(composition.isolationSumMinor).toBe(0);
+    expect(composition.isolationWouldOversubscribe).toBe(false);
+    expect(composition.availableAtSnapshotMinor).toBe(750);
+    expect(composition.availableMinor).toBe(750);
+    expect(composition.account.reservedMinor).toBe(250);
+    expect(composition.fixtureAcceptedNotVerified).toBe(true);
+    expect(composition.liveWiring).toBe(BUDGET_RESERVATION_LIVE_WIRING);
+    expect(first.account.reservedMinor).toBe(250);
+  });
+
+  it("exhausts a single oversize final without accepting", () => {
+    const first = reserveBudget(account(), "r-prior", 800);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const composition = composeConcurrentFinalBudgetReserves(first.account, [
+      { reservationId: "r-oversize", amountMinor: 500 },
+    ]);
+    expect(composition.availableAtSnapshotMinor).toBe(200);
+    expect(composition.isolationWouldOversubscribe).toBe(true);
+    expect(composition.accepted).toEqual([]);
+    expect(composition.acceptedSumMinor).toBe(0);
+    expect(composition.exhausted).toEqual([
+      { reservationId: "r-oversize", availableMinor: 200 },
+    ]);
+    expect(composition.account.reservedMinor).toBe(800);
+    expect(committedBudgetMinor(composition.account)).toBe(800);
+    expect(composition.committedMinor).toBe(800);
+    expect(composition.availableMatchesLimitMinusCommitted).toBe(true);
+    expect(composition.reservedNeverExceedsLimit).toBe(true);
+    expect(composition.fixtureAcceptedNotVerified).toBe(true);
+    expect(isConcurrentBudgetCompositionHonest(composition)).toBe(true);
+  });
+
+  it("throws on duplicate reservationId without mutating the snapshot", () => {
+    const first = reserveBudget(account(), "r-prior", 400);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const snap = first.account;
+    expect(() =>
+      composeConcurrentFinalBudgetReserves(snap, [
+        { reservationId: "r-dup", amountMinor: 100 },
+        { reservationId: "r-dup", amountMinor: 100 },
+      ]),
+    ).toThrow(/already exists/i);
+    expect(snap.reservedMinor).toBe(400);
+    expect(snap.openReservations).toEqual({ "r-prior": 400 });
+  });
+
+  it("keeps composition honesty predicate on fit path", () => {
+    const first = reserveBudget(account(), "r-prior", 500);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const composition = composeConcurrentFinalBudgetReserves(first.account, [
+      { reservationId: "r-a", amountMinor: 200 },
+      { reservationId: "r-b", amountMinor: 200 },
+    ]);
+    expect(composition.committedMinor).toBe(900);
+    expect(composition.availableMatchesLimitMinusCommitted).toBe(true);
+    expect(isConcurrentBudgetCompositionHonest(composition)).toBe(true);
+  });
+
+  it("caps concurrent finals against heldMinor headroom (M6)", () => {
+    const reserved = reserveBudget(account(), "r-hold", 700);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const cancelled = cancelBudgetReservation(reserved.account, "r-hold", {
+      known: false,
+    });
+    expect(cancelled.ok).toBe(true);
+    if (!cancelled.ok) return;
+    expect(cancelled.account.heldMinor).toBe(700);
+    expect(availableBudgetMinor(cancelled.account)).toBe(300);
+    const composition = composeConcurrentFinalBudgetReserves(
+      cancelled.account,
+      [
+        { reservationId: "r-a", amountMinor: 300 },
+        { reservationId: "r-b", amountMinor: 300 },
+      ],
+    );
+    expect(composition.availableAtSnapshotMinor).toBe(300);
+    expect(composition.isolationWouldOversubscribe).toBe(true);
+    expect(composition.accepted).toEqual([
+      { reservationId: "r-a", amountMinor: 300 },
+    ]);
+    expect(composition.exhausted).toEqual([
+      { reservationId: "r-b", availableMinor: 0 },
+    ]);
+    expect(composition.committedMinor).toBe(1000);
+    expect(composition.availableMatchesLimitMinusCommitted).toBe(true);
+    expect(isConcurrentBudgetCompositionHonest(composition)).toBe(true);
+    expect(cancelled.account.heldMinor).toBe(700);
+    expect(cancelled.account.reservedMinor).toBe(0);
+  });
+
+  it("throws on non-positive amount without mutating the snapshot (M6)", () => {
+    const first = reserveBudget(account(), "r-prior", 400);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const snap = first.account;
+    expect(() =>
+      composeConcurrentFinalBudgetReserves(snap, [
+        { reservationId: "r-ok", amountMinor: 100 },
+        { reservationId: "r-zero", amountMinor: 0 },
+      ]),
+    ).toThrow(/positive/i);
+    expect(snap.reservedMinor).toBe(400);
+    expect(snap.openReservations).toEqual({ "r-prior": 400 });
+  });
+
+  it("fails honesty predicate on forged composition fields (M6)", () => {
+    const first = reserveBudget(account(), "r-prior", 500);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const honest = composeConcurrentFinalBudgetReserves(first.account, [
+      { reservationId: "r-a", amountMinor: 100 },
+    ]);
+    expect(isConcurrentBudgetCompositionHonest(honest)).toBe(true);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        liveWiring: "WIRED" as typeof honest.liveWiring,
+      }),
+    ).toBe(false);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        fixtureAcceptedNotVerified: false as true,
+      }),
+    ).toBe(false);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        acceptedSumMinor: honest.acceptedSumMinor + 1,
+      }),
+    ).toBe(false);
+  });
+
+  it("restores headroom after known-zero cancel then composes (M7)", () => {
+    const reserved = reserveBudget(account(), "r-zero-rel", 600);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const released = cancelBudgetReservation(reserved.account, "r-zero-rel", {
+      known: true,
+      actualMinor: 0,
+    });
+    expect(released.ok).toBe(true);
+    if (!released.ok) return;
+    expect(released.account.heldMinor).toBe(0);
+    expect(availableBudgetMinor(released.account)).toBe(1000);
+    const composition = composeConcurrentFinalBudgetReserves(
+      released.account,
+      [
+        { reservationId: "r-a", amountMinor: 400 },
+        { reservationId: "r-b", amountMinor: 400 },
+      ],
+    );
+    expect(composition.availableAtSnapshotMinor).toBe(1000);
+    expect(composition.acceptedSumMinor).toBe(800);
+    expect(composition.exhausted).toEqual([]);
+    expect(composition.committedMinor).toBe(800);
+    expect(isConcurrentBudgetCompositionHonest(composition)).toBe(true);
+  });
+
+  it("throws on settled reservationId reuse without mutating snap (M7)", () => {
+    const reserved = reserveBudget(account(), "r-settle", 300);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const settled = settleBudget(reserved.account, "r-settle", 120);
+    expect(settled.ok).toBe(true);
+    if (!settled.ok) return;
+    const snap = settled.account;
+    expect(() =>
+      composeConcurrentFinalBudgetReserves(snap, [
+        { reservationId: "r-settle", amountMinor: 100 },
+      ]),
+    ).toThrow(/already exists/i);
+    expect(snap.settledMinor).toBe(120);
+    expect(snap.openReservations).toEqual({});
+  });
+
+  it("fails honesty on forged externalEffects and isolation flag (M7)", () => {
+    const first = reserveBudget(account(), "r-prior", 500);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const honest = composeConcurrentFinalBudgetReserves(first.account, [
+      { reservationId: "r-a", amountMinor: 100 },
+      { reservationId: "r-b", amountMinor: 500 },
+    ]);
+    expect(isConcurrentBudgetCompositionHonest(honest)).toBe(true);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        externalEffects: "SOME" as "NONE",
+      }),
+    ).toBe(false);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        isolationWouldOversubscribe: !honest.isolationWouldOversubscribe,
+      }),
+    ).toBe(false);
+  });
+
+  it("throws on open reservationId collision without mutating snap (M8)", () => {
+    const open = reserveBudget(account(), "r-open", 250);
+    expect(open.ok).toBe(true);
+    if (!open.ok) return;
+    const snap = open.account;
+    expect(() =>
+      composeConcurrentFinalBudgetReserves(snap, [
+        { reservationId: "r-open", amountMinor: 100 },
+        { reservationId: "r-peer", amountMinor: 100 },
+      ]),
+    ).toThrow(/already exists/i);
+    expect(snap.reservedMinor).toBe(250);
+    expect(snap.openReservations).toEqual({ "r-open": 250 });
+  });
+
+  it("throws on held reservationId collision without mutating snap (M8)", () => {
+    const reserved = reserveBudget(account(), "r-held", 400);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-held", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const snap = held.account;
+    expect(snap.heldMinor).toBe(400);
+    expect(() =>
+      composeConcurrentFinalBudgetReserves(snap, [
+        { reservationId: "r-held", amountMinor: 50 },
+      ]),
+    ).toThrow(/already exists/i);
+    expect(snap.heldMinor).toBe(400);
+    expect(snap.heldReservations["r-held"]).toBe(400);
+  });
+
+  it("caps concurrent finals against settled+held headroom (M8)", () => {
+    const first = reserveBudget(account(), "r-settle", 300);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const settled = settleBudget(first.account, "r-settle", 200);
+    expect(settled.ok).toBe(true);
+    if (!settled.ok) return;
+    const second = reserveBudget(settled.account, "r-hold", 500);
+    expect(second.ok).toBe(true);
+    if (!second.ok) return;
+    const held = cancelBudgetReservation(second.account, "r-hold", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    // available = 1000 - settled200 - held500 = 300
+    expect(availableBudgetMinor(held.account)).toBe(300);
+    const composition = composeConcurrentFinalBudgetReserves(held.account, [
+      { reservationId: "r-a", amountMinor: 200 },
+      { reservationId: "r-b", amountMinor: 200 },
+    ]);
+    expect(composition.availableAtSnapshotMinor).toBe(300);
+    expect(composition.acceptedSumMinor).toBe(200);
+    expect(composition.exhaustedReservationIds).toEqual(["r-b"]);
+    expect(composition.exhausted[0]?.availableMinor).toBe(100);
+    expect(composition.committedMinor).toBe(900);
+    expect(composition.reservedNeverExceedsLimit).toBe(true);
+    expect(isConcurrentBudgetCompositionHonest(composition)).toBe(true);
+  });
+
+  it("fails honesty on forged committedMinor and acceptedIds length (M8)", () => {
+    const honest = composeConcurrentFinalBudgetReserves(account(), [
+      { reservationId: "r-a", amountMinor: 100 },
+      { reservationId: "r-b", amountMinor: 100 },
+    ]);
+    expect(isConcurrentBudgetCompositionHonest(honest)).toBe(true);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        committedMinor: honest.committedMinor + 1,
+      }),
+    ).toBe(false);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        acceptedReservationIds: [...honest.acceptedReservationIds, "ghost"],
+      }),
+    ).toBe(false);
+  });
+
+  it("throws on blank reservationId without mutating snap (M9)", () => {
+    const snap = account();
+    expect(() =>
+      composeConcurrentFinalBudgetReserves(snap, [
+        { reservationId: "   ", amountMinor: 100 },
+        { reservationId: "r-peer", amountMinor: 100 },
+      ]),
+    ).toThrow(/non-blank/i);
+    expect(snap.reservedMinor).toBe(0);
+    expect(snap.openReservations).toEqual({});
+  });
+
+  it("composes after known-reconcile of hold restores headroom (M9)", () => {
+    const reserved = reserveBudget(account(), "r-reconcile", 400);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-reconcile", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const resolved = cancelBudgetReservation(held.account, "r-reconcile", {
+      known: true,
+      actualMinor: 175,
+    });
+    expect(resolved.ok).toBe(true);
+    if (!resolved.ok) return;
+    expect(availableBudgetMinor(resolved.account)).toBe(825);
+    const composition = composeConcurrentFinalBudgetReserves(
+      resolved.account,
+      [
+        { reservationId: "r-a", amountMinor: 500 },
+        { reservationId: "r-b", amountMinor: 500 },
+      ],
+    );
+    expect(composition.availableAtSnapshotMinor).toBe(825);
+    expect(composition.acceptedSumMinor).toBe(500);
+    expect(composition.exhaustedReservationIds).toEqual(["r-b"]);
+    expect(composition.exhausted[0]?.availableMinor).toBe(325);
+    expect(composition.committedMinor).toBe(675);
+    expect(isConcurrentBudgetCompositionHonest(composition)).toBe(true);
+  });
+
+  it("keeps all-exhaust snap immutable (M9)", () => {
+    const first = reserveBudget(account(), "r-fill", 1000);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const snap = first.account;
+    const composition = composeConcurrentFinalBudgetReserves(snap, [
+      { reservationId: "r-z1", amountMinor: 1 },
+      { reservationId: "r-z2", amountMinor: 50 },
+    ]);
+    expect(composition.acceptedSumMinor).toBe(0);
+    expect(composition.exhaustedReservationIds).toEqual(["r-z1", "r-z2"]);
+    expect(snap.reservedMinor).toBe(1000);
+    expect(snap.openReservations).toEqual({ "r-fill": 1000 });
+    expect(isConcurrentBudgetCompositionHonest(composition)).toBe(true);
+  });
+
+  it("fails honesty on forged fixture/availableMatches/exhausted/isolationSum (M9)", () => {
+    const honest = composeConcurrentFinalBudgetReserves(account(), [
+      { reservationId: "r-a", amountMinor: 100 },
+      { reservationId: "r-b", amountMinor: 100 },
+    ]);
+    expect(isConcurrentBudgetCompositionHonest(honest)).toBe(true);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        fixtureAcceptedNotVerified: false as true,
+      }),
+    ).toBe(false);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        availableMatchesLimitMinusCommitted: !honest.availableMatchesLimitMinusCommitted,
+      }),
+    ).toBe(false);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        exhaustedReservationIds: [...honest.exhaustedReservationIds, "ghost"],
+      }),
+    ).toBe(false);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        // Flip isolationSum past snapshot while leaving the flag false.
+        isolationSumMinor: honest.availableAtSnapshotMinor + 1,
+        isolationWouldOversubscribe: false,
+      }),
+    ).toBe(false);
+  });
+
+  it("throws on duplicate ids in finals before any apply (M10)", () => {
+    const snap = account();
+    expect(() =>
+      composeConcurrentFinalBudgetReserves(snap, [
+        { reservationId: "r-dup", amountMinor: 100 },
+        { reservationId: "r-dup", amountMinor: 200 },
+      ]),
+    ).toThrow(/already exists/i);
+    expect(snap.reservedMinor).toBe(0);
+    expect(snap.openReservations).toEqual({});
+  });
+
+  it("fails honesty when exhausted row id drifts from exhaustedReservationIds (M15)", () => {
+    const honest = composeConcurrentFinalBudgetReserves(account(), [
+      { reservationId: "r-a", amountMinor: 600 },
+      { reservationId: "r-b", amountMinor: 500 },
+    ]);
+    expect(honest.exhausted.length).toBeGreaterThan(0);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        exhausted: honest.exhausted.map((row) => ({
+          ...row,
+          reservationId: "r-forged-exhaust",
+        })),
+      }),
+    ).toBe(false);
+  });
+
+  it("fails honesty when accepted row id drifts from acceptedReservationIds (M14)", () => {
+    const honest = composeConcurrentFinalBudgetReserves(account(), [
+      { reservationId: "r-a", amountMinor: 100 },
+    ]);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        accepted: [{ reservationId: "r-forged", amountMinor: 100 }],
+      }),
+    ).toBe(false);
+  });
+
+  it("fails honesty when acceptedReservationIds order permuted vs accepted rows (M16)", () => {
+    const honest = composeConcurrentFinalBudgetReserves(account(), [
+      { reservationId: "r-a", amountMinor: 100 },
+      { reservationId: "r-b", amountMinor: 200 },
+    ]);
+    expect(honest.accepted.length).toBe(2);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        acceptedReservationIds: [...honest.acceptedReservationIds].reverse(),
+      }),
+    ).toBe(false);
+  });
+
+  it("fails honesty when exhaustedReservationIds order permuted vs exhausted rows (M17)", () => {
+    const honest = composeConcurrentFinalBudgetReserves(
+      createBudgetAccount({
+        dayKey: "2026-11-22-exh-order",
+        currency: "USD",
+        limitMinor: 500,
+      }),
+      [
+        { reservationId: "r-a", amountMinor: 300 },
+        { reservationId: "r-b", amountMinor: 300 },
+        { reservationId: "r-c", amountMinor: 300 },
+      ],
+    );
+    expect(honest.exhausted.length).toBeGreaterThanOrEqual(2);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        exhaustedReservationIds: [...honest.exhaustedReservationIds].reverse(),
+      }),
+    ).toBe(false);
+  });
+
+  it("fails honesty when accepted row amountMinor drifts from composed rows (M18)", () => {
+    const honest = composeConcurrentFinalBudgetReserves(account(), [
+      { reservationId: "r-a", amountMinor: 200 },
+      { reservationId: "r-b", amountMinor: 300 },
+    ]);
+    expect(honest.accepted.length).toBeGreaterThan(0);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        accepted: honest.accepted.map((row, i) =>
+          i === 0 ? { ...row, amountMinor: row.amountMinor + 1 } : row,
+        ),
+      }),
+    ).toBe(false);
+  });
+
+  it("fails honesty when exhausted row count drifts from exhaustedReservationIds (M19)", () => {
+    const honest = composeConcurrentFinalBudgetReserves(account(), [
+      { reservationId: "r-a", amountMinor: 700 },
+      { reservationId: "r-b", amountMinor: 500 },
+    ]);
+    expect(honest.exhausted.length).toBeGreaterThan(0);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        exhausted: [
+          ...honest.exhausted,
+          { reservationId: "r-ghost-exhaust", availableMinor: 0 },
+        ],
+      }),
+    ).toBe(false);
+  });
+
+  it("fails honesty when accepted row count drifts from acceptedReservationIds (M20)", () => {
+    const honest = composeConcurrentFinalBudgetReserves(account(), [
+      { reservationId: "r-a", amountMinor: 200 },
+      { reservationId: "r-b", amountMinor: 300 },
+    ]);
+    expect(honest.accepted.length).toBeGreaterThan(0);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        accepted: [
+          ...honest.accepted,
+          { reservationId: "r-ghost-accept", amountMinor: 1 },
+        ],
+      }),
+    ).toBe(false);
+  });
+
+  it("fails honesty when accepted rows shortened vs acceptedReservationIds (M21)", () => {
+    const honest = composeConcurrentFinalBudgetReserves(account(), [
+      { reservationId: "r-a", amountMinor: 100 },
+      { reservationId: "r-b", amountMinor: 200 },
+    ]);
+    expect(honest.accepted.length).toBeGreaterThanOrEqual(2);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        accepted: honest.accepted.slice(0, 1),
+      }),
+    ).toBe(false);
+  });
+
+  it("fails honesty when exhausted rows shortened vs exhaustedReservationIds (M22)", () => {
+    const honest = composeConcurrentFinalBudgetReserves(
+      createBudgetAccount({
+        dayKey: "2026-11-22-exh-short",
+        currency: "USD",
+        limitMinor: 500,
+      }),
+      [
+        { reservationId: "r-a", amountMinor: 300 },
+        { reservationId: "r-b", amountMinor: 300 },
+        { reservationId: "r-c", amountMinor: 300 },
+      ],
+    );
+    expect(honest.exhausted.length).toBeGreaterThanOrEqual(2);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        exhausted: honest.exhausted.slice(0, 1),
+      }),
+    ).toBe(false);
+  });
+
+  it("fails honesty when composition availableMinor drifts from account (M23)", () => {
+    const honest = composeConcurrentFinalBudgetReserves(account(), [
+      { reservationId: "r-a", amountMinor: 150 },
+    ]);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        availableMinor: honest.availableMinor + 1,
+      }),
+    ).toBe(false);
+  });
+
+  it("fails honesty when availableMatchesLimitMinusCommitted is forged (M24)", () => {
+    const honest = composeConcurrentFinalBudgetReserves(account(), [
+      { reservationId: "r-a", amountMinor: 100 },
+    ]);
+    expect(honest.availableMatchesLimitMinusCommitted).toBe(true);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        availableMatchesLimitMinusCommitted: false,
+      }),
+    ).toBe(false);
+  });
+
+  it("fails honesty when isolationWouldOversubscribe flag mismatches isolationSum (M25)", () => {
+    const honest = composeConcurrentFinalBudgetReserves(account(), [
+      { reservationId: "r-a", amountMinor: 600 },
+      { reservationId: "r-b", amountMinor: 600 },
+    ]);
+    expect(honest.isolationSumMinor).toBeGreaterThan(
+      honest.availableAtSnapshotMinor,
+    );
+    expect(honest.isolationWouldOversubscribe).toBe(true);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        isolationWouldOversubscribe: !honest.isolationWouldOversubscribe,
+      }),
+    ).toBe(false);
+  });
+
+  it("fails honesty when isolationSumMinor inconsistent with oversubscribe flag (M26)", () => {
+    const honest = composeConcurrentFinalBudgetReserves(account(), [
+      { reservationId: "r-a", amountMinor: 600 },
+      { reservationId: "r-b", amountMinor: 600 },
+    ]);
+    expect(honest.isolationWouldOversubscribe).toBe(true);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        isolationSumMinor: honest.availableAtSnapshotMinor,
+        isolationWouldOversubscribe: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("throws on non-finite amountMinor before apply (M13)", () => {
+    const snap = account();
+    for (const amountMinor of [Number.NaN, Number.POSITIVE_INFINITY, -0]) {
+      expect(() =>
+        composeConcurrentFinalBudgetReserves(snap, [
+          { reservationId: "r-bad", amountMinor },
+        ]),
+      ).toThrow(/finite positive integer/i);
+      expect(snap.reservedMinor).toBe(0);
+    }
+  });
+
+  it("throws on non-integer amountMinor before apply (M12)", () => {
+    const snap = account();
+    expect(() =>
+      composeConcurrentFinalBudgetReserves(snap, [
+        { reservationId: "r-frac", amountMinor: 10.5 },
+      ]),
+    ).toThrow(/integer minor unit/i);
+    expect(snap.reservedMinor).toBe(0);
+  });
+
+  it("throws on trim-normalized duplicate ids before apply (M11)", () => {
+    const snap = account();
+    expect(() =>
+      composeConcurrentFinalBudgetReserves(snap, [
+        { reservationId: " r-trim ", amountMinor: 100 },
+        { reservationId: "r-trim", amountMinor: 200 },
+      ]),
+    ).toThrow(/already exists/i);
+    expect(snap.reservedMinor).toBe(0);
+    const ok = composeConcurrentFinalBudgetReserves(snap, [
+      { reservationId: "  r-pad  ", amountMinor: 50 },
+    ]);
+    expect(ok.acceptedReservationIds).toEqual(["r-pad"]);
+    expect(isConcurrentBudgetCompositionHonest(ok)).toBe(true);
+  });
+
+  it("composes after known-positive cancel restores headroom (M10)", () => {
+    const reserved = reserveBudget(account(), "r-pos", 400);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const released = cancelBudgetReservation(reserved.account, "r-pos", {
+      known: true,
+      actualMinor: 150,
+    });
+    expect(released.ok).toBe(true);
+    if (!released.ok) return;
+    expect(availableBudgetMinor(released.account)).toBe(850);
+    const composition = composeConcurrentFinalBudgetReserves(
+      released.account,
+      [
+        { reservationId: "r-a", amountMinor: 500 },
+        { reservationId: "r-b", amountMinor: 500 },
+      ],
+    );
+    expect(composition.availableAtSnapshotMinor).toBe(850);
+    expect(composition.acceptedSumMinor).toBe(500);
+    expect(composition.exhaustedReservationIds).toEqual(["r-b"]);
+    expect(composition.exhausted[0]?.availableMinor).toBe(350);
+    expect(composition.committedMinor).toBe(650);
+    expect(isConcurrentBudgetCompositionHonest(composition)).toBe(true);
+  });
+
+  it("records exhausted availableMinor after prior accept (M10)", () => {
+    const composition = composeConcurrentFinalBudgetReserves(account(), [
+      { reservationId: "r-a", amountMinor: 600 },
+      { reservationId: "r-b", amountMinor: 500 },
+      { reservationId: "r-c", amountMinor: 450 },
+    ]);
+    expect(composition.acceptedReservationIds).toEqual(["r-a"]);
+    expect(composition.exhaustedReservationIds).toEqual(["r-b", "r-c"]);
+    expect(composition.exhausted.map((e) => e.availableMinor)).toEqual([
+      400, 400,
+    ]);
+    expect(composition.acceptedSumMinor).toBe(600);
+    expect(isConcurrentBudgetCompositionHonest(composition)).toBe(true);
+  });
+
+  it("fails honesty on forged reservedNeverExceeds/availableMinor/acceptedSum (M10)", () => {
+    const honest = composeConcurrentFinalBudgetReserves(account(), [
+      { reservationId: "r-a", amountMinor: 100 },
+      { reservationId: "r-b", amountMinor: 100 },
+    ]);
+    expect(isConcurrentBudgetCompositionHonest(honest)).toBe(true);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        reservedNeverExceedsLimit: false,
+      }),
+    ).toBe(false);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        availableMinor: honest.availableMinor + 1,
+      }),
+    ).toBe(false);
+    expect(
+      isConcurrentBudgetCompositionHonest({
+        ...honest,
+        acceptedSumMinor: honest.acceptedSumMinor + 1,
+      }),
+    ).toBe(false);
+  });
+
   it("settles actual cost honestly (may be less than reserved)", () => {
     const reserved = reserveBudget(account(), "r3", 500);
     expect(reserved.ok).toBe(true);
@@ -80,11 +954,6 @@ describe("budget accounting", () => {
   it("posts overrun when actual exceeds reserved estimate (T-X028)", () => {
     const seed = account();
     expect(seed.heldMinor).toBe(0);
-    expect(BUDGET_ACCOUNTING_LIVE_WIRING).toBe("NOT_WIRED");
-    expect(ACTUAL_COST_OVERRUN_RELATED_CASE_IDS).toEqual(["T-X028"]);
-    expect(overrunMinor(600, 750)).toBe(150);
-    expect(isActualCostOverrun(600, 750)).toBe(true);
-    expect(isActualCostOverrun(600, 600)).toBe(false);
     const reserved = reserveBudget(seed, "r-over", 600);
     expect(reserved.ok).toBe(true);
     if (!reserved.ok) return;
@@ -94,380 +963,11 @@ describe("budget accounting", () => {
     if (!settled.ok) return;
     expect(settled.actualMinor).toBe(750);
     expect(settled.reservedMinor).toBe(600);
-    expect(settled.overrunMinor).toBe(150);
     expect(settled.actualMinor).toBeGreaterThan(settled.reservedMinor);
-    expect(settled.externalEffects).toBe("NONE");
-    expect(settled.liveProviderWiring).toBe("NOT_WIRED");
-    expect(settled.liveProviderSuccessClaimed).toBe(false);
     expect(settled.account.reservedMinor).toBe(0);
     expect(settled.account.settledMinor).toBe(750);
     expect(settled.account.heldMinor).toBe(0);
     expect(settled.account.openReservations["r-over"]).toBeUndefined();
-    expect(settled.account.settledReservations["r-over"]).toEqual({
-      reservedMinor: 600,
-      actualMinor: 750,
-      overrunMinor: 150,
-    });
-    expect(describeActualCostOverrunVisibility(600, 750)).toEqual({
-      overrunMinor: 150,
-      overrunVisible: true,
-      cappedToEstimate: false,
-      liveProviderWiring: "NOT_WIRED",
-      liveProviderSuccessClaimed: false,
-      chatgptAdsAccess: "ACCESS_BLOCKED",
-      externalEffects: "NONE",
-      fixtureAcceptedOnly: true,
-      sandboxVerifiedClaimed: false,
-    });
-    expect(settled.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
-    expect(() => assertBudgetSettlementHonesty(settled)).not.toThrow();
-    // Available uses full posted actual, not the capped estimate.
-    expect(availableBudgetMinor(settled.account)).toBe(250);
-  });
-
-  it("rejects negative actual on settle (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-neg", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    expect(() => settleBudget(reserved.account, "r-neg", -1)).toThrow(
-      /non-negative integers/i,
-    );
-  });
-
-  it("rejects non-finite actual on settle (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-nan", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    expect(() => settleBudget(reserved.account, "r-nan", Number.NaN)).toThrow(
-      /non-negative integers/i,
-    );
-    expect(() =>
-      settleBudget(reserved.account, "r-nan", Number.POSITIVE_INFINITY),
-    ).toThrow(/non-negative integers/i);
-  });
-
-  it("rejects fractional actual on settle (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-frac", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    expect(() => settleBudget(reserved.account, "r-frac", 600.5)).toThrow(
-      /non-negative integers/i,
-    );
-  });
-
-  it("rejects non-integer / non-finite reserve amounts (T-X028 edge)", () => {
-    expect(() => reserveBudget(account(), "r-frac-res", 100.5)).toThrow(
-      /positive integer/i,
-    );
-    expect(() => reserveBudget(account(), "r-nan-res", Number.NaN)).toThrow(
-      /positive integer/i,
-    );
-  });
-
-  it("refuses conflicting known-cancel after overrun settle (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-conf", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-conf", 750);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    expect(settled.overrunMinor).toBe(150);
-    expect(() =>
-      cancelBudgetReservation(settled.account, "r-conf", {
-        known: true,
-        actualMinor: 800,
-      }),
-    ).toThrow(/already settled/i);
-  });
-
-  it("assertBudgetSettlementHonesty rejects tampered liveProviderWiring", () => {
-    const reserved = reserveBudget(account(), "r-wire", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-wire", 750);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    const tampered = {
-      ...settled,
-      liveProviderWiring: "WIRED" as typeof BUDGET_ACCOUNTING_LIVE_WIRING,
-    };
-    expect(() => assertBudgetSettlementHonesty(tampered)).toThrow(
-      /liveProviderWiring must be NOT_WIRED/i,
-    );
-  });
-
-  it("assertBudgetSettlementHonesty rejects claimed live provider success", () => {
-    const reserved = reserveBudget(account(), "r-live", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-live", 750);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    const tampered = { ...settled, liveProviderSuccessClaimed: true as false };
-    expect(() => assertBudgetSettlementHonesty(tampered)).toThrow(
-      /must not claim live provider success/i,
-    );
-  });
-
-  it("assertBudgetSettlementHonesty rejects tampered Ads access", () => {
-    const reserved = reserveBudget(account(), "r-ads", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-ads", 750);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    const tampered = {
-      ...settled,
-      chatgptAdsAccess: "ALLOWED" as "ACCESS_BLOCKED",
-    };
-    expect(() => assertBudgetSettlementHonesty(tampered)).toThrow(
-      /chatgptAdsAccess must be ACCESS_BLOCKED/i,
-    );
-  });
-
-  it("post-overspend reserve returns BUDGET_EXHAUSTED with negative available (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-over", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-over", 1200);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    expect(settled.overrunMinor).toBe(600);
-    expect(availableBudgetMinor(settled.account)).toBe(-200);
-    expect(reserveBudget(settled.account, "r-more", 1)).toEqual({
-      ok: false,
-      code: "BUDGET_EXHAUSTED",
-      availableMinor: -200,
-    });
-  });
-
-  it("assertBudgetSettlementHonesty rejects tampered externalEffects", () => {
-    const reserved = reserveBudget(account(), "r-tamper", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-tamper", 750);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    const tampered = { ...settled, externalEffects: "SOMETHING" as "NONE" };
-    expect(() => assertBudgetSettlementHonesty(tampered)).toThrow(
-      /externalEffects must be NONE/i,
-    );
-  });
-
-  it("assertBudgetSettlementHonesty rejects tampered overrunMinor (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-orm", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-orm", 750);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    const tampered = { ...settled, overrunMinor: 0 };
-    expect(() => assertBudgetSettlementHonesty(tampered)).toThrow(
-      /overrunMinor mismatch/i,
-    );
-  });
-
-  it("assertBudgetSettlementHonesty accepts replayed overrun settle", () => {
-    const reserved = reserveBudget(account(), "r-replay", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const first = settleBudget(reserved.account, "r-replay", 750);
-    expect(first.ok).toBe(true);
-    if (!first.ok) return;
-    const replay = settleBudget(first.account, "r-replay", 750);
-    expect(replay.ok).toBe(true);
-    if (!replay.ok) return;
-    expect(replay.replayed).toBe(true);
-    expect(replay.overrunMinor).toBe(150);
-    expect(() => assertBudgetSettlementHonesty(replay)).not.toThrow();
-  });
-
-  it("refuses unknown-cancel after overrun settle (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-post", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-post", 750);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    expect(settled.overrunMinor).toBe(150);
-    expect(() =>
-      cancelBudgetReservation(settled.account, "r-post", { known: false }),
-    ).toThrow(/already settled/i);
-  });
-
-  it("minimal +1 overrun is visible and Ads-blocked (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-min", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-min", 601);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    expect(settled.overrunMinor).toBe(1);
-    expect(settled.account.settledReservations["r-min"]?.overrunMinor).toBe(1);
-    expect(settled.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
-    expect(settled.liveProviderSuccessClaimed).toBe(false);
-  });
-
-  it("refuses settle on held unknown-usage reservation (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-hold", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const held = cancelBudgetReservation(reserved.account, "r-hold", {
-      known: false,
-    });
-    expect(held.ok).toBe(true);
-    if (!held.ok) return;
-    expect(held.account.heldMinor).toBe(600);
-    expect(() => settleBudget(held.account, "r-hold", 750)).toThrow(
-      /held for unknown usage/i,
-    );
-  });
-
-  it("zero-actual settle shows overrunMinor=0 with Ads blocked (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-zero", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-zero", 0);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    expect(settled.overrunMinor).toBe(0);
-    expect(settled.account.settledMinor).toBe(0);
-    expect(settled.account.settledReservations["r-zero"]?.overrunMinor).toBe(0);
-    expect(settled.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
-    expect(settled.liveProviderWiring).toBe("NOT_WIRED");
-    expect(settled.liveProviderSuccessClaimed).toBe(false);
-  });
-
-  it("held→known-cancel with actual>reserved persists overrunMinor (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-recon", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const held = cancelBudgetReservation(reserved.account, "r-recon", {
-      known: false,
-    });
-    expect(held.ok).toBe(true);
-    if (!held.ok) return;
-    const reconciled = cancelBudgetReservation(held.account, "r-recon", {
-      known: true,
-      actualMinor: 750,
-    });
-    expect(reconciled.ok).toBe(true);
-    if (!reconciled.ok) return;
-    expect(reconciled.account.heldMinor).toBe(0);
-    expect(reconciled.account.settledMinor).toBe(750);
-    expect(reconciled.account.settledReservations["r-recon"]).toEqual({
-      reservedMinor: 600,
-      actualMinor: 750,
-      overrunMinor: 150,
-    });
-    expect(availableBudgetMinor(reconciled.account)).toBe(250);
-  });
-
-  it("accumulates sequential overruns without capping either (T-X028)", () => {
-    let state = createBudgetAccount({
-      dayKey: "2026-11-17",
-      currency: "USD",
-      limitMinor: 2000,
-    });
-    const a = reserveBudget(state, "r-a", 400);
-    expect(a.ok).toBe(true);
-    if (!a.ok) return;
-    state = a.account;
-    const b = reserveBudget(state, "r-b", 400);
-    expect(b.ok).toBe(true);
-    if (!b.ok) return;
-    state = b.account;
-    const sa = settleBudget(state, "r-a", 550);
-    expect(sa.ok).toBe(true);
-    if (!sa.ok) return;
-    expect(sa.overrunMinor).toBe(150);
-    expect(sa.liveProviderSuccessClaimed).toBe(false);
-    expect(sa.account.settledReservations["r-a"]?.overrunMinor).toBe(150);
-    state = sa.account;
-    const sb = settleBudget(state, "r-b", 500);
-    expect(sb.ok).toBe(true);
-    if (!sb.ok) return;
-    expect(sb.overrunMinor).toBe(100);
-    expect(sb.account.settledMinor).toBe(1050);
-    expect(sb.account.settledReservations["r-a"]?.overrunMinor).toBe(150);
-    expect(sb.account.settledReservations["r-b"]?.overrunMinor).toBe(100);
-    expect(availableBudgetMinor(sb.account)).toBe(950);
-  });
-
-  it("equal-estimate settle shows overrunMinor=0 (T-X028 control)", () => {
-    const reserved = reserveBudget(account(), "r-eq", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-eq", 600);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    expect(settled.overrunMinor).toBe(0);
-    expect(isActualCostOverrun(settled.reservedMinor, settled.actualMinor)).toBe(
-      false,
-    );
-    expect(settled.account.settledMinor).toBe(600);
-    expect(settled.externalEffects).toBe("NONE");
-    expect(settled.liveProviderWiring).toBe("NOT_WIRED");
-  });
-
-  it("overrun settle preserves sibling open reservation (T-X028)", () => {
-    let state = account();
-    const a = reserveBudget(state, "r-over", 600);
-    expect(a.ok).toBe(true);
-    if (!a.ok) return;
-    state = a.account;
-    const b = reserveBudget(state, "r-sib", 200);
-    expect(b.ok).toBe(true);
-    if (!b.ok) return;
-    state = b.account;
-    const overrun = settleBudget(state, "r-over", 750);
-    expect(overrun.ok).toBe(true);
-    if (!overrun.ok) return;
-    expect(overrun.overrunMinor).toBe(150);
-    expect(overrun.account.openReservations["r-sib"]).toBe(200);
-    expect(overrun.account.reservedMinor).toBe(200);
-    expect(overrun.account.settledMinor).toBe(750);
-    expect(overrun.account.heldMinor).toBe(0);
-    expect(availableBudgetMinor(overrun.account)).toBe(50);
-  });
-
-  it("posts full overrun past day limit — never silently capped (T-X028)", () => {
-    const reserved = reserveBudget(account(), "r-past", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-past", 1200);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    expect(settled.actualMinor).toBe(1200);
-    expect(settled.overrunMinor).toBe(600);
-    expect(settled.account.settledMinor).toBe(1200);
-    expect(settled.account.reservedMinor).toBe(0);
-    expect(settled.account.heldMinor).toBe(0);
-    // Honesty: overspend is visible in available (negative), not capped to limit.
-    expect(availableBudgetMinor(settled.account)).toBe(-200);
-    expect(settled.externalEffects).toBe("NONE");
-    expect(settled.liveProviderWiring).toBe("NOT_WIRED");
-  });
-
-  it("overrun settle replay is idempotent; conflicting actual throws (T-X028)", () => {
-    const reserved = reserveBudget(account(), "r-replay", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const first = settleBudget(reserved.account, "r-replay", 750);
-    expect(first.ok).toBe(true);
-    if (!first.ok) return;
-    expect(first.overrunMinor).toBe(150);
-    const replay = settleBudget(first.account, "r-replay", 750);
-    expect(replay.ok).toBe(true);
-    if (!replay.ok) return;
-    expect(replay.replayed).toBe(true);
-    expect(replay.overrunMinor).toBe(150);
-    expect(replay.account.settledMinor).toBe(750);
-    expect(replay.externalEffects).toBe("NONE");
-    expect(replay.liveProviderWiring).toBe("NOT_WIRED");
-    expect(() => settleBudget(replay.account, "r-replay", 800)).toThrow(
-      /already settled with actual 750/,
-    );
   });
 
   it("does not let a replayed settlement consume another reservation", () => {

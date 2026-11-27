@@ -8,8 +8,8 @@
     "rate_limit_bounded_backoff_preserves_deadline"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x030.json",
-  "createdAtIso": "2026-11-27T12:01:51.221Z",
+  "createdAtIso": "2026-11-27T12:10:16.033Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x030-91bba5e5d332"
+  "uniqueSourceArtifactId": "art-fixture-t-x030-f7dbffdd2707"
 }
