@@ -483,4 +483,38 @@ describe("platform-attribution (T-X059)", () => {
     expect(projection.uniqueBookingCount).toBe(1);
     expect(refuseSilentPlatformSum(projection).allowed).toBe(true);
   });
+
+  it("sorts uniqueBookingIds lexicographically across bookings (Q34 wipe15 @ 63d2c0e0)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-b",
+        platformId: "google_ads",
+        bookingId: "booking-b",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "c-a",
+        platformId: "meta_ads",
+        bookingId: "booking-a",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(projection.uniqueBookingIds).toEqual(["booking-a", "booking-b"]);
+    expect(projection.uniqueBookingCount).toBe(2);
+    expect(refuseSilentPlatformSum(projection).allowed).toBe(true);
+  });
+
+  it("accepts negative numeric offset with colon (Q34 wipe15 @ 63d2c0e0)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-neg-offset",
+        platformId: "linkedin_ads",
+        bookingId: "booking-neg-offset",
+        claimedAtIso: "2026-11-22T14:00:00-05:00",
+      },
+    ]);
+    expect(projection.hasInvalidClaims).toBe(false);
+    expect(projection.platformClaimCount).toBe(1);
+    expect(refuseSilentPlatformSum(projection).code).toBe(null);
+  });
 });

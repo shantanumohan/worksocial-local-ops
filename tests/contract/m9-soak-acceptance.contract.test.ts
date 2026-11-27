@@ -927,5 +927,7 @@ describe("contract: M9 soak / acceptance evidence", () => {
     );
     expect(art.proofKinds).not.toContain("VERIFIED");
     expect(art.summary).toContain("ACCEPTED≠VERIFIED");
+    expect(art.summary).toMatch(/chronological/);
+    expect(art.summary).toMatch(/uniqueBookingCount=1/);
   });
 });
