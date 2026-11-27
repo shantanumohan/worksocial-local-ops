@@ -226,6 +226,49 @@ describe("evaluation store (memory/file)", () => {
     expect(availableBudgetMinor(state.budget)).toBe(800);
   });
 
+  it("parseBudget normalize syncs stale reservedMinor/settledMinor from maps (T-X027)", async () => {
+    const evalDir = join(dir, "evaluation");
+    mkdirSync(evalDir, { recursive: true });
+    const statePath = join(evalDir, "evaluation-state.json");
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        version: 1,
+        updatedAtIso: now,
+        connections: [],
+        suites: [],
+        runs: [],
+        budget: {
+          dayKey: "2026-11-21",
+          currency: "USD",
+          limitMinor: 1000,
+          reservedMinor: 0,
+          settledMinor: 0,
+          heldMinor: 0,
+          openReservations: { "legacy-open": 300, "ghost-open": 0 },
+          heldReservations: {},
+          settledReservations: {
+            "legacy-settled": { reservedMinor: 300, actualMinor: 120 },
+          },
+        },
+        liveEvalWiring: "NOT_WIRED",
+        chatgptAdsWiring: "NOT_WIRED",
+      }),
+      "utf8",
+    );
+    const store = createFileEvaluationStore(dir);
+    const state = await store.read();
+    expect(state.budget.reservedMinor).toBe(300);
+    expect(state.budget.settledMinor).toBe(120);
+    expect(state.budget.openReservations).toEqual({ "legacy-open": 300 });
+    expect(availableBudgetMinor(state.budget)).toBe(580);
+    const blocked = reserveBudget(state.budget, "over", 600);
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.availableMinor).toBe(580);
+    }
+  });
+
   it("openEvaluationStore forceMemory ignores DATABASE_URL", () => {
     const opened = openEvaluationStore({
       stateDir: dir,

@@ -22,6 +22,7 @@ import {
   type EvalRunRecord,
   type EvalSuite,
   type EvaluationState,
+  normalizeBudgetHolds,
 } from "@worksocial/domain";
 import {
   createPgPool,
@@ -268,7 +269,7 @@ function parseBudget(raw: unknown, fallbackIso: string): BudgetAccount {
       heldMinor += n;
     }
   }
-  return {
+  return normalizeBudgetHolds({
     dayKey: String(row.dayKey ?? empty.dayKey),
     currency: String(row.currency ?? empty.currency),
     limitMinor: Number(row.limitMinor ?? empty.limitMinor),
@@ -285,7 +286,7 @@ function parseBudget(raw: unknown, fallbackIso: string): BudgetAccount {
       row.settledReservations !== null
         ? (row.settledReservations as BudgetAccount["settledReservations"])
         : {},
-  };
+  });
 }
 
 function rowToConnection(row: Record<string, unknown>): EvalConnectionRecord {
