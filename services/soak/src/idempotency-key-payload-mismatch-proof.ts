@@ -639,6 +639,51 @@ export async function proofIdempotencyKeyPayloadMismatch(
   );
   if (!ideographicSpaceConflict) passed = false;
 
+  const digestFigureSpace = `${digestA}\u2007`;
+  const figureSpaceConflict = await expectMismatchConflict(
+    "acceptPending figure-space-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: digestFigureSpace,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!figureSpaceConflict) passed = false;
+
+  const digestPunctuationSpace = `${digestA}\u2008`;
+  const punctuationSpaceConflict = await expectMismatchConflict(
+    "acceptPending punctuation-space-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: digestPunctuationSpace,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!punctuationSpaceConflict) passed = false;
+
+  const digestMmsp = `${digestA}\u205F`;
+  const mmspConflict = await expectMismatchConflict(
+    "acceptPending MMSP-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: digestMmsp,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!mmspConflict) passed = false;
+
   // Concurrent multi-alt digest-B barrage — all Conflict; no orphans; applyCount=1.
   const barrageN = 8;
   const barrageIds = Array.from(
@@ -1302,6 +1347,9 @@ export async function proofIdempotencyKeyPayloadMismatch(
       enQuadConflict &&
       emSpaceConflict &&
       ideographicSpaceConflict &&
+      figureSpaceConflict &&
+      punctuationSpaceConflict &&
+      mmspConflict &&
       barrageAllConflict &&
       !barrageOrphans &&
       sameOpRaceAllConflict &&
