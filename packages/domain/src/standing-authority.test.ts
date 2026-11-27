@@ -245,4 +245,14 @@ describe("evaluateStandingAuthority", () => {
     });
     expect(denied.match).toBeNull();
   });
+
+  it("skips supervisor lease fence when not required (T-X006 edge)", () => {
+    const allowed = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: false,
+        supervisorLeaseHeld: false,
+      }),
+    );
+    expect(allowed.decision).toEqual({ allowed: true });
+  });
 });
