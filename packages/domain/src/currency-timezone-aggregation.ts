@@ -7,6 +7,10 @@
  * Whitespace around currency/timezone is normalized so padding cannot invent
  * a mismatch or a match against blanks. Live provider wiring: NOT_WIRED.
  * External effects: NONE. Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
+ *
+ * Hillclimb G35: evaluateCurrencyTimezoneLiveClaim — refuse live VERIFIED /
+ * silent-sum-on-mismatch claims; FALSE_AGGREGATED_PASS when claimed PASS
+ * without measured AGGREGATED + totalMinor.
  */
 
 export type CurrencyTimezoneObservation = {
@@ -133,6 +137,23 @@ export function aggregateCurrencyTimezoneSeries(
     };
   }
 
+  const hasNonIntegerMinor = observations.some(
+    (o) => !Number.isFinite(o.amountMinor) || !Number.isInteger(o.amountMinor),
+  );
+  if (hasNonIntegerMinor) {
+    return {
+      ok: false,
+      code: "INVALID_DIMENSION",
+      totalMinor: null,
+      currencies,
+      reportingTimezones,
+      reasons: [
+        "Non-integer or non-finite amountMinor — refuse silent sum (T-X060 G35 wipe15)",
+      ],
+      ...honesty,
+    };
+  }
+
   const currency = currencies[0]!;
   const reportingTimezone = reportingTimezones[0]!;
   const totalMinor = observations.reduce((sum, o) => sum + o.amountMinor, 0);
@@ -153,3 +174,163 @@ export function aggregateCurrencyTimezoneSeries(
 export const CURRENCY_TIMEZONE_AGGREGATION_RELATED_CASE_IDS = [
   "T-X060",
 ] as const;
+
+export const CurrencyTimezoneLiveOutcome = {
+  LIVE_WIRING_CLAIM_REFUSED: "LIVE_WIRING_CLAIM_REFUSED",
+  LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED: "LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED",
+  FIXTURE_ACCEPTED_AS_VERIFIED_REFUSED: "FIXTURE_ACCEPTED_AS_VERIFIED_REFUSED",
+  SILENT_SUM_ON_MISMATCH_REFUSED: "SILENT_SUM_ON_MISMATCH_REFUSED",
+  FALSE_AGGREGATED_PASS_REFUSED: "FALSE_AGGREGATED_PASS_REFUSED",
+  /** Wipe15 G35 edge: claimed PASS with measured total ≠ series sum. */
+  FALSE_AGGREGATED_TOTAL_MISMATCH_REFUSED:
+    "FALSE_AGGREGATED_TOTAL_MISMATCH_REFUSED",
+} as const;
+
+export type CurrencyTimezoneLiveClaimDecision = {
+  code:
+    | (typeof CurrencyTimezoneLiveOutcome)[keyof typeof CurrencyTimezoneLiveOutcome];
+  reasons: string[];
+  liveProviderWiring: "NOT_WIRED";
+  externalEffects: "NONE";
+  fixtureOnly: true;
+  fixtureAcceptedNotVerified: true;
+};
+
+function currencyTimezoneHonesty() {
+  return {
+    liveProviderWiring: "NOT_WIRED" as const,
+    externalEffects: "NONE" as const,
+    fixtureOnly: true as const,
+    fixtureAcceptedNotVerified: true as const,
+  };
+}
+
+function liveClaimRefuse(
+  code: CurrencyTimezoneLiveClaimDecision["code"],
+  reasons: string[],
+): CurrencyTimezoneLiveClaimDecision {
+  const honesty = currencyTimezoneHonesty();
+  return { code, reasons, ...honesty };
+}
+
+/**
+ * Refuse live-VERIFIED / silent-sum / false aggregated PASS on T-X060 fixture path.
+ */
+export function evaluateCurrencyTimezoneLiveClaim(input: {
+  claimLiveVerified?: boolean;
+  requestLiveWire?: boolean;
+  fixtureOnly?: boolean;
+  liveWiring?: "NOT_WIRED" | "WIRED";
+  claimLiveProviderSuccess?: boolean;
+  claimFixtureAcceptedIsVerified?: boolean;
+  /** Forbidden — must not invent a total across currency/timezone mismatch. */
+  claimSilentSumOnMismatch?: boolean;
+  /**
+   * Claimed AGGREGATED PASS — only when measuredCode is AGGREGATED and
+   * totalMinor is a finite number (G35).
+   */
+  claimedAggregatedPass?: boolean;
+  measuredCode?: CurrencyTimezoneAggregateCode;
+  totalMinor?: number | null;
+  /** Measured sum from aggregateCurrencyTimezoneSeries — must match totalMinor for PASS. */
+  expectedTotalMinor?: number;
+}): CurrencyTimezoneLiveClaimDecision | null {
+  const honesty = currencyTimezoneHonesty();
+  if (input.claimFixtureAcceptedIsVerified === true) {
+    return liveClaimRefuse(
+      CurrencyTimezoneLiveOutcome.FIXTURE_ACCEPTED_AS_VERIFIED_REFUSED,
+      [
+        "FIXTURE_ACCEPTED_AS_VERIFIED_REFUSED — T-X060 ACCEPTED must not be equated to sandbox/prod VERIFIED",
+        `fixtureAcceptedNotVerified=${honesty.fixtureAcceptedNotVerified}`,
+      ],
+    );
+  }
+  if (input.claimLiveProviderSuccess === true) {
+    return liveClaimRefuse(
+      CurrencyTimezoneLiveOutcome.LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED,
+      [
+        "LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED — fixture currency/timezone soak must not claim live provider SUCCESS (T-X060)",
+        `liveProviderWiring=${honesty.liveProviderWiring} externalEffects=${honesty.externalEffects}`,
+      ],
+    );
+  }
+  if (input.claimLiveVerified === true || input.requestLiveWire === true) {
+    return liveClaimRefuse(CurrencyTimezoneLiveOutcome.LIVE_WIRING_CLAIM_REFUSED, [
+      "Live VERIFIED / live-wire refused on T-X060 fixture path — ACCEPTED≠VERIFIED",
+      `liveProviderWiring=${honesty.liveProviderWiring}`,
+    ]);
+  }
+  if (input.fixtureOnly === false || input.liveWiring === "WIRED") {
+    return liveClaimRefuse(CurrencyTimezoneLiveOutcome.LIVE_WIRING_CLAIM_REFUSED, [
+      "Non-fixture or claimed WIRED refused — T-X060 liveProviderWiring=NOT_WIRED",
+      `liveProviderWiring=${honesty.liveProviderWiring} externalEffects=${honesty.externalEffects}`,
+    ]);
+  }
+  if (input.claimSilentSumOnMismatch === true) {
+    return liveClaimRefuse(
+      CurrencyTimezoneLiveOutcome.SILENT_SUM_ON_MISMATCH_REFUSED,
+      [
+        "SILENT_SUM_ON_MISMATCH_REFUSED — heterogeneous currency/timezone must not silently sum (T-X060)",
+        `totalMinor=null enforced on mismatch; externalEffects=${honesty.externalEffects}`,
+      ],
+    );
+  }
+  if (input.claimedAggregatedPass === true) {
+    const code = input.measuredCode;
+    const minor = input.totalMinor;
+    if (
+      code !== "AGGREGATED" ||
+      minor === null ||
+      minor === undefined ||
+      !Number.isFinite(minor)
+    ) {
+      return liveClaimRefuse(
+        CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED,
+        [
+          "FALSE_AGGREGATED_PASS_REFUSED — claimed AGGREGATED PASS without measured AGGREGATED totalMinor (T-X060)",
+          `measuredCode=${code ?? "unmeasured"} totalMinor=${minor ?? "unmeasured"} ACCEPTED≠VERIFIED`,
+        ],
+      );
+    }
+    if (!Number.isInteger(minor)) {
+      return liveClaimRefuse(
+        CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED,
+        [
+          "FALSE_AGGREGATED_PASS_REFUSED — totalMinor must be integer minor units, not fractional (T-X060 G35 wipe15)",
+          `totalMinor=${minor} ACCEPTED≠VERIFIED`,
+        ],
+      );
+    }
+    if (input.expectedTotalMinor === undefined) {
+      return liveClaimRefuse(
+        CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED,
+        [
+          "FALSE_AGGREGATED_PASS_REFUSED — claimed AGGREGATED PASS without measured expectedTotalMinor (T-X060 G35 wipe15)",
+          `totalMinor=${minor} expectedTotalMinor=unmeasured ACCEPTED≠VERIFIED`,
+        ],
+      );
+    }
+    if (
+      !Number.isFinite(input.expectedTotalMinor) ||
+      !Number.isInteger(input.expectedTotalMinor)
+    ) {
+      return liveClaimRefuse(
+        CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED,
+        [
+          "FALSE_AGGREGATED_PASS_REFUSED — expectedTotalMinor must be integer minor units, not fractional (T-X060 G35 wipe15)",
+          `totalMinor=${minor} expectedTotalMinor=${input.expectedTotalMinor} ACCEPTED≠VERIFIED`,
+        ],
+      );
+    }
+    if (minor !== input.expectedTotalMinor) {
+      return liveClaimRefuse(
+        CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_TOTAL_MISMATCH_REFUSED,
+        [
+          "FALSE_AGGREGATED_TOTAL_MISMATCH_REFUSED — claimed AGGREGATED PASS while totalMinor ≠ measured series sum (T-X060 G35 edge)",
+          `totalMinor=${minor} expectedTotalMinor=${input.expectedTotalMinor} ACCEPTED≠VERIFIED`,
+        ],
+      );
+    }
+  }
+  return null;
+}
