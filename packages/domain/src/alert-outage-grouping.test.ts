@@ -313,6 +313,141 @@ describe("alert outage grouping (T-X068)", () => {
     expect(incidents[0]!.outageKey).toBe(key);
   });
 
+  it("collapses four-per-em/punctuation space splits (T-X068 J36)", () => {
+    const key = "provider:fixture-crm";
+    const split = `provider:\u2005fix\u2008ture-crm`;
+    expect(normalizeOutageKey(split)).toBe(key);
+    const split2 = `pro\u2006vider:fixture-crm`;
+    expect(normalizeOutageKey(split2)).toBe(key);
+    const alerts = [
+      alertAt(1, split, 0),
+      alertAt(2, key, 1000),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(key);
+  });
+
+  it("collapses invisible math-operator splits in outageKey (T-X068 J37)", () => {
+    const key = "host:local-1";
+    const split = `host:lo\u2063cal\u2064-1`;
+    expect(normalizeOutageKey(split)).toBe(key);
+    const split2 = `host:\u2062local-1`;
+    expect(normalizeOutageKey(split2)).toBe(key);
+    const alerts = [
+      alertAt(1, split, 0),
+      alertAt(2, key, 1000, AlertSeverity.P0),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(key);
+    expect(incidents[0]!.severity).toBe(AlertSeverity.P0);
+  });
+
+  it("collapses vertical-tab/CR/next-line splits (T-X068 J38)", () => {
+    const key = "host:local-1";
+    const split = `host:local\u000b-1`;
+    expect(normalizeOutageKey(split)).toBe(key);
+    const split2 = `host:\u000dlocal-1`;
+    expect(normalizeOutageKey(split2)).toBe(key);
+    const alerts = [
+      alertAt(1, split, 0),
+      alertAt(2, key, 1000),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(key);
+  });
+
+  it("collapses en-quad/em-quad/three-per-em splits (T-X068 J39)", () => {
+    const key = "provider:fixture-crm";
+    const split = `provider:\u2000fix\u2001ture-crm`;
+    expect(normalizeOutageKey(split)).toBe(key);
+    const split2 = `pro\u2004vider:fixture-crm`;
+    expect(normalizeOutageKey(split2)).toBe(key);
+    const alerts = [
+      alertAt(1, split, 0),
+      alertAt(2, key, 1000, AlertSeverity.P0),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(key);
+    expect(incidents[0]!.severity).toBe(AlertSeverity.P0);
+    expect(incidents[0]!.externalEffects).toBe("NONE");
+  });
+
+  it("collapses ogham/MVS/function-application splits (T-X068 J40)", () => {
+    const key = "capability:gsc-fetch";
+    const split = `capability:\u1680gsc\u180e-fetch`;
+    expect(normalizeOutageKey(split)).toBe(key);
+    const split2 = `capability:gsc\u2061-fetch`;
+    expect(normalizeOutageKey(split2)).toBe(key);
+    const alerts = [
+      alertAt(1, split, 0),
+      alertAt(2, key, 1000),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(key);
+    expect(incidents[0]!.alertCount).toBe(2);
+    expect(incidents[0]!.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("collapses bidi embedding/override splits (T-X068 J41)", () => {
+    const key = "host:local-1";
+    const split = `host:\u202elocal\u202c-1`;
+    expect(normalizeOutageKey(split)).toBe(key);
+    const split2 = `\u202a${key}\u202b`;
+    expect(normalizeOutageKey(split2)).toBe(key);
+    const alerts = [
+      alertAt(1, split, 0),
+      alertAt(2, key, 1000, AlertSeverity.P0),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(key);
+    expect(incidents[0]!.severity).toBe(AlertSeverity.P0);
+    expect(incidents[0]!.externalEffects).toBe("NONE");
+  });
+
+  it("collapses bidi isolate splits in outageKey (T-X068 J42)", () => {
+    const key = "provider:fixture-crm";
+    const split = `provider:\u2066fix\u2069ture-crm`;
+    expect(normalizeOutageKey(split)).toBe(key);
+    const split2 = `\u2067${key}\u2068`;
+    expect(normalizeOutageKey(split2)).toBe(key);
+    const alerts = [
+      alertAt(1, split, 0),
+      alertAt(2, key, 1000),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(key);
+    expect(incidents[0]!.alertCount).toBe(2);
+    expect(incidents[0]!.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
   it("does not case-fold distinct outageKeys into one incident (T-X068 J30)", () => {
     const alerts = [
       alertAt(1, "host:local-1", 0),

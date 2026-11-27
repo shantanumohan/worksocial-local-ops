@@ -3,13 +3,13 @@
   "caseId": "T-X059",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X059 (Duplicate platform attribution — one booking; separate claims)\nproof=duplicate_platform_attribution_one_booking applyCount=1 :: two platform claims retained separately (claim-google-57830a14, claim-meta-b72b5f88) → uniqueBookingCount=1; liveProviderWiring=NOT_WIRED | SILENT_PLATFORM_SUM_REFUSED — platform conversions not summed into unique bookings; liveProviderWiring=NOT_WIRED | counterfactual: naive platform sum 2 ≠ unique booking 1 (double-count blocked) | single-platform claim → unique=1 allowed (no false double-count) | three platforms one booking → unique=1 platformClaimCount=3; chronological retainedClaims; silent sum refused | blank claimId + malformed claimedAtIso → INVALID_ATTRIBUTION_CLAIM; never invent unique bookings | offset timestamps sorted by parsed instant (19:30+02 before 18:00Z); not lexicographic | empty claims → unique=0 allowed; liveProviderWiring=NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X059 (Duplicate platform attribution — one booking; separate claims)\nproof=duplicate_platform_attribution_one_booking applyCount=1 :: two platform claims retained separately (claim-google-44d54d24, claim-meta-24cd6536) → uniqueBookingCount=1; liveProviderWiring=NOT_WIRED | SILENT_PLATFORM_SUM_REFUSED — platform conversions not summed into unique bookings; liveProviderWiring=NOT_WIRED | counterfactual: naive platform sum 2 ≠ unique booking 1 (double-count blocked) | single-platform claim → unique=1 allowed (no false double-count) | three platforms one booking → unique=1 platformClaimCount=3; chronological retainedClaims; silent sum refused | blank claimId + malformed claimedAtIso → INVALID_ATTRIBUTION_CLAIM; never invent unique bookings | offset timestamps sorted by parsed instant (19:30+02 before 18:00Z); not lexicographic | empty claims → unique=0 allowed; liveProviderWiring=NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "duplicate_platform_attribution_one_booking"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x059.json",
-  "createdAtIso": "2026-11-27T23:40:54.249Z",
+  "createdAtIso": "2026-11-27T23:54:29.787Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x059-51066e4b4997"
+  "uniqueSourceArtifactId": "art-fixture-t-x059-59577e18922c"
 }
