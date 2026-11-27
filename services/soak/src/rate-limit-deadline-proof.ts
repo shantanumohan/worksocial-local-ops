@@ -29,6 +29,7 @@
  * Deepen (Q41): +Infinity attempt → STOP_MAX_ATTEMPTS (no WAIT invent).
  * Deepen (Q44): -Infinity attempt floors to 1 → WAIT exponential (not STOP).
  * Deepen (Q47): maxAttempts=0.9 floors to 0 → attempt 1 STOP (no WAIT invent).
+ * Deepen (Q49): fractional initialBackoffSeconds ceils (0.4 → WAIT 1s).
  */
 
 import { randomUUID } from "node:crypto";
@@ -556,6 +557,27 @@ export function proofRateLimitBoundedBackoffPreservesDeadline(
     passed = false;
     details.push(
       `maxAttempts=1 STOP honesty failed: ${JSON.stringify(oneShot)}`,
+    );
+  }
+
+  // Scenario P14 (Q49): fractional initialBackoff 0.4s ceils to exponential WAIT 1s.
+  const fracInitial = computeBackoffWaitSeconds({
+    attempt: 1,
+    retryAfterSeconds: null,
+    initialBackoffSeconds: 0.4,
+    backoffMultiplier: 2,
+  });
+  if (
+    fracInitial.source === "exponential" &&
+    fracInitial.waitSeconds === 1
+  ) {
+    details.push(
+      "initialBackoffSeconds=0.4 ceils to exponential WAIT 1s (not zero-wait invent)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Fractional initialBackoff failed: ${JSON.stringify(fracInitial)}`,
     );
   }
 

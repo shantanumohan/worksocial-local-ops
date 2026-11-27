@@ -457,6 +457,25 @@ describe("rate-limit-backoff (T-X030)", () => {
     ).toEqual({ waitSeconds: 1, source: "exponential" });
   });
 
+  it("ceils fractional initialBackoffSeconds in exponential path (Q49 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 1,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 0.4,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 1, source: "exponential" });
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 2,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 0.4,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 1, source: "exponential" });
+  });
+
   it("floors fractional maxAttempts=0.9 → STOP on first 429 (Q47 wipe15)", () => {
     const step = evaluateRateLimitWithDeadline(
       {
