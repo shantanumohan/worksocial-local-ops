@@ -8,8 +8,8 @@
     "public_synthetic_flag_requires_server_grant"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x050.json",
-  "createdAtIso": "2026-11-27T22:01:00.921Z",
+  "createdAtIso": "2026-11-27T22:06:42.421Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x050-50ddc047a006"
+  "uniqueSourceArtifactId": "art-fixture-t-x050-d821a40ede03"
 }
