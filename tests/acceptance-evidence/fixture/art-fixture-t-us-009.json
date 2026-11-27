@@ -3,13 +3,13 @@
   "caseId": "T-US-009",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-US-009 (Connect Search Console schedule and source watermark)\nproof=connect_gsc_schedule_watermark applyCount=0 :: READ_READY schedule=2026-11-22T19:21:10.000Z; watermark=2026-11-21T07:21:10.000Z; property=sc-domain:worksocial.test | Comparable query usa/DESKTOP/web | Intent mappings=2; observation batch obs-7056f249 rows=2 | WRITE save mode → WRITE_SAVE_REFUSED (read-only only) | LIVE property → LIVE_TRANSPORT_NOT_WIRED | Future source watermark → INVALID_SOURCE_WATERMARK | unknown property kind → WRONG_PROPERTY_KIND refuse | No gateway mutate — connection save is local fixture record only; applyAttemptCount=0 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-US-009 (Connect Search Console schedule and source watermark)\nproof=connect_gsc_schedule_watermark applyCount=0 :: READ_READY schedule=2026-11-22T19:21:10.000Z; watermark=2026-11-21T07:21:10.000Z; property=sc-domain:worksocial.test | Comparable query usa/DESKTOP/web | Intent mappings=2; observation batch obs-3d238881 rows=2 | WRITE save mode → WRITE_SAVE_REFUSED (read-only only) | LIVE property → LIVE_TRANSPORT_NOT_WIRED | Future source watermark → INVALID_SOURCE_WATERMARK | unknown property kind → WRONG_PROPERTY_KIND refuse | No gateway mutate — connection save is local fixture record only; applyAttemptCount=0 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "connect_gsc_schedule_watermark"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-009.json",
-  "createdAtIso": "2026-11-27T11:53:04.796Z",
+  "createdAtIso": "2026-11-27T12:01:38.976Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-009-755210c1ad47"
+  "uniqueSourceArtifactId": "art-fixture-t-us-009-0507cd77bb8c"
 }

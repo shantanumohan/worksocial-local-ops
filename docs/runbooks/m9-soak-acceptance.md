@@ -155,7 +155,7 @@ Suggested owner Windows flow (state off OneDrive):
 **T-X050** maps only to `PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT` (OR dual-field / whitespace public claims denied without server canary grant; server grant wins over client false; not live VERIFIED).
 
 
-**T-X021** maps only to `CONCURRENT_IDEMPOTENT_RELEASE` (not retry-only `NO_DUPLICATE_EFFECTS`).
+**T-X021** maps only to `CONCURRENT_IDEMPOTENT_RELEASE` (per-key overlap-while-held + global-mutex negative; mutex survives throw; winner/loser/biz-key lookup; blank + whitespace-padded key/digest/op refuse; gate-before-apply; PG-race claim refuse; retry-only NO_DUPLICATE claim refuse; externalEffects claim refuse; overlap≠live VERIFIED; claimFixtureAcceptedIsVerified → `FIXTURE_ACCEPTED_AS_VERIFIED_REFUSED`; claimLiveProviderSuccess → `LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED`; claimSandboxVerified → `SANDBOX_VERIFIED_CLAIM_REFUSED`; claimProductionVerified → `PRODUCTION_VERIFIED_CLAIM_REFUSED`; claimCanaryVerified → `CANARY_VERIFIED_CLAIM_REFUSED`; claimIntegrationVerified → `INTEGRATION_VERIFIED_CLAIM_REFUSED`; claimAuthorizedProductionVerified → `AUTHORIZED_PRODUCTION_VERIFIED_CLAIM_REFUSED`; claimProductionCanaryVerified → `PRODUCTION_CANARY_VERIFIED_CLAIM_REFUSED`; claimSandboxProductionVerified → `SANDBOX_PRODUCTION_VERIFIED_CLAIM_REFUSED`; false ONE_DISPATCH / per-key overlap PASS refuse; not retry-only `NO_DUPLICATE_EFFECTS`). Live VERIFIED / live-wire → `LIVE_WIRING_CLAIM_REFUSED`; fixture+WIRED / non-fixture / preferLive → `LIVE_TRANSPORT_NOT_WIRED`. Live wiring **NOT_WIRED**; Ads ACCESS_BLOCKED soft-skip; `pgRaceNotClaimed`; ACCEPTED ≠ VERIFIED; `externalEffects=NONE`.
 
 **T-X008** maps only to `FACT_CHANGES_AFTER_REVIEW_STALE`.
 
@@ -199,8 +199,6 @@ Suggested owner Windows flow (state off OneDrive):
 **T-X030** maps only to `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (bounded backoff preserves deadline; not live VERIFIED).
 
 **T-X040** maps only to `LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE` (research-only; never a publish trigger from this gate; live trend provider NOT_WIRED; externalEffects NONE; not live VERIFIED).
-
-**T-X041** maps only to `INCOMPARABLE_TREND_INDICES_REJECTED` (case/whitespace-normalized unit/source; blank group / zero baseline / non-trend / missing value rejected; not live VERIFIED).
 
 **T-US-012** maps only to `GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED` (Google Ads TEST vs PRODUCTION credential/customer separation; LIVE NOT_WIRED; not live VERIFIED).
 
