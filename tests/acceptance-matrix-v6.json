@@ -1610,7 +1610,7 @@
       "definitionShape": "list_item",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-us-058",
-      "evidenceNote": "Fixture metric-denominators-honest proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture synthetic excluded via METRIC_DENOMINATORS_HONEST \u2014 EXCLUDED_SYNTHETIC; MEASURED countsInDenominator; missingCount aggregate; all-bucket aggregate edge; empty batch denominator=0; no-measured batch denominator=0; unsupported-only batch denominator=0 sampleSize ignored; partial-only batch denominator=0 sampleSize ignored; provider_error-only batch denominator=0 sampleSize ignored; UNAVAILABLE_AS_ZERO_REFUSED provider_error/partial; NaN sampleSize non_finite; minSample zero sampleSize zero; negative sampleSize insufficient_sample; custom minSample threshold; unavailableCount aggregate; excludedCount aggregate; UNAVAILABLE_AS_ZERO_REFUSED unsupported/partial; null sampleSize non_finite; \u00b1Infinity non_finite; provider_error unavailable; missing excluded; insufficient_sample excluded; non_finite excluded; live NOT_WIRED; ACCESS_BLOCKED; externalEffects=NONE; ACCEPTED \u2260 sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-US-059",
@@ -2266,7 +2266,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x039",
-      "evidenceNote": "Fixture metric-denominators-honest proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture ACCEPTED via METRIC_DENOMINATORS_HONEST only \u2014 provider_error unavailable; unsupported/partial unavailable not zero pass; UNAVAILABLE_AS_ZERO_REFUSED on unsupported/partial/provider_error; missingCount aggregate honest; all-bucket aggregate edge; empty batch denominator=0; no-measured batch denominator=0; unsupported-only batch denominator=0 large sampleSize ignored; partial-only batch denominator=0 large sampleSize ignored; provider_error-only batch denominator=0 large sampleSize ignored; NaN sampleSize non_finite excluded; minSample zero no denominator inflation; negative sampleSize insufficient_sample excluded; custom minSample threshold; non-finite minSample excluded; unavailableCount aggregate; excludedCount aggregate; missing observation excluded; insufficient_sample excluded; synthetic EXCLUDED_SYNTHETIC; MEASURED countsInDenominator; null sampleSize non_finite excluded; non_finite excluded; \u00b1Infinity non_finite excluded; LIVE_METRICS_CLAIM_REFUSED; live NOT_WIRED; ACCESS_BLOCKED; externalEffects=NONE; ACCEPTED \u2260 VERIFIED"
     },
     {
       "id": "T-X040",
