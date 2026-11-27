@@ -1690,7 +1690,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x003",
-      "evidenceNote": "Fixture symlink-escape after root verification proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture ACCEPTED via SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION (blank root/candidate refuse; logical+canonical confinement; nested/relative symlink escape deny; fixture+WIRED refuse LIVE_TRANSPORT_NOT_WIRED; civil verified-until DST gap/ambiguous/bad zone/expired + invalid/whitespace-only asOf refuse; escape still denies under valid window; liveProviderWiring=NOT_WIRED; externalEffects=NONE) \u2014 not sandbox/prod VERIFIED"
     },
     {
       "id": "T-X004",

@@ -1013,7 +1013,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X011** is fixture ACCEPTED only via the output bomb bounded/quarantined proof (`OUTPUT_BOMB_BOUNDED_QUARANTINED`) — oversized CLI stdout is refused (`OUTPUT_TOO_LARGE`) and not delivered; non-finite/≤0 max refused; close-path one-shot bomb quarantined; idempotent reclaim (no invent deliver; assessment.code / quarantine.reason drift refused); simultaneous live-claim flags refused; live VERIFIED / force-deliver claims refused; ACCEPTED≠VERIFIED. Not sandbox/prod VERIFIED.
 
-**T-X003** is fixture ACCEPTED only via the symlink escape after root verification proof (`SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION`) — logical root check then canonical/realpath deny when a symlink would write outside the verified root. Not sandbox/prod VERIFIED.
+**T-X003** is fixture ACCEPTED only via `SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION` — blank root/candidate refuse; logical+canonical confinement; nested/relative symlink escape deny; fixture+`WIRED` refuse; civil verified-until DST gap/ambiguous/bad zone/expired + invalid/whitespace asOf refuse; escape still denies under valid window; `liveProviderWiring=NOT_WIRED`; `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 
 **T-X009** is fixture ACCEPTED only via the CLI error despite exit 0 proof (`CLI_ERROR_DESPITE_EXIT_ZERO`) — Claude `--output-format json` may set `is_error` while exiting 0; the job must FAIL. Not sandbox/prod VERIFIED.
 
@@ -1029,7 +1029,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 |---|---|---|
 | T-X001 | Host sleeps during scheduled monitoring | Coverage gap honest; coalesce *(fixture ACCEPTED)* |
 | T-X002 | Two supervisors start together | Single host lease *(fixture ACCEPTED — competing-supervisor lease proof; third competitor / generic LEASE_HELD; not sandbox/prod VERIFIED)* |
-| T-X003 | Symlink escape after root verification | Write denied outside root *(fixture ACCEPTED — symlink escape after root verification proof; not sandbox/prod VERIFIED)* |
+| T-X003 | Symlink escape after root verification | Escape denied *(fixture ACCEPTED — symlink-escape proof; blank root/candidate refuse; nested/relative escape; WIRED refuse; DST/civil until + invalid asOf; escape under valid window; liveProviderWiring NOT_WIRED; externalEffects NONE; not sandbox/prod VERIFIED)* |
 | T-X004 | Disk full during evidence write | No partial completed manifest *(fixture ACCEPTED — ENOSPC/EDQUOT write|rename|mkdir; EIO/EACCES/EPERM no-partial incl. rename/mkdir; safe runId+C0/DEL/dot-edge/.. refuse; prior preserve incl. EPERM/EIO; NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X005 | Forged browser role | Payload role ignored *(fixture ACCEPTED — forged browser role ignored proof; not sandbox/prod VERIFIED)* |
 | T-X006 | Cross-workspace object reference | Deny without leak *(fixture ACCEPTED — cross-workspace reference denied proof; whitespace-normalized / dual foreign; not sandbox/prod VERIFIED)* |
