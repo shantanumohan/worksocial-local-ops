@@ -274,8 +274,10 @@ export async function proofReplayHistoricalNoRepeatIo(
   const driftSummary = driftHooks.summary();
   if (
     driftReplay.outcome === "FAILED" &&
-    driftSummary.liveIoLabels.some((l) =>
-      l.includes("history_activity_terminal_op_mismatch"),
+    driftSummary.liveIoLabels.some(
+      (l) =>
+        l.includes("history_claim_verify_op_mismatch") ||
+        l.includes("history_activity_terminal_op_mismatch"),
     )
   ) {
     details.push(
@@ -302,8 +304,10 @@ export async function proofReplayHistoricalNoRepeatIo(
   const applyDriftSummary = applyDriftHooks.summary();
   if (
     applyDriftReplay.outcome === "FAILED" &&
-    applyDriftSummary.liveIoLabels.some((l) =>
-      l.includes("history_activity_terminal_op_mismatch"),
+    applyDriftSummary.liveIoLabels.some(
+      (l) =>
+        l.includes("history_claim_verify_apply_mismatch") ||
+        l.includes("history_activity_terminal_op_mismatch"),
     )
   ) {
     details.push(
@@ -872,6 +876,63 @@ export async function proofReplayHistoricalNoRepeatIo(
     details.push("Terminal outcome not VERIFIED unexpectedly passed");
   }
 
+  // B19 — verify apply drift; claim/verify opId disagree.
+  const verifyApplyDriftHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) =>
+      e.activity === "verify" ? { ...e, applyAttemptCount: 2 } : e,
+    ),
+    terminal: { ...history.terminal },
+  };
+  const verifyApplyDriftHooks = createHistoryOnlyReplayHooks();
+  const verifyApplyDriftReplay = replayMissionWorkflowHistory(
+    verifyApplyDriftHistory,
+    verifyApplyDriftHooks.hooks,
+  );
+  if (
+    verifyApplyDriftReplay.outcome === "FAILED" &&
+    verifyApplyDriftHooks.summary().liveIoLabels.some((l) =>
+      l.includes("history_claim_verify_apply_mismatch"),
+    )
+  ) {
+    details.push(
+      "Verify applyAttemptCount drift vs claim/terminal → FAILED (B19)",
+    );
+  } else {
+    details.push("Verify apply drift unexpectedly passed");
+  }
+
+  const claimVerifyOpSplitHistory: ReplayWorkflowHistory = {
+    events: history.events.map((e) => {
+      if (e.activity === "claimAndAccept") {
+        return { ...e, operationId: `${operationId}-claim` };
+      }
+      if (e.activity === "verify") {
+        return { ...e, operationId: `${operationId}-verify` };
+      }
+      return e;
+    }),
+    terminal: {
+      outcome: "VERIFIED",
+      applyAttemptCount: history.terminal.applyAttemptCount,
+      operationId: `${operationId}-claim`,
+    },
+  };
+  const claimVerifyOpSplitHooks = createHistoryOnlyReplayHooks();
+  const claimVerifyOpSplitReplay = replayMissionWorkflowHistory(
+    claimVerifyOpSplitHistory,
+    claimVerifyOpSplitHooks.hooks,
+  );
+  if (
+    claimVerifyOpSplitReplay.outcome === "FAILED" &&
+    claimVerifyOpSplitHooks.summary().liveIoLabels.some((l) =>
+      l.includes("history_claim_verify_op_mismatch"),
+    )
+  ) {
+    details.push("Claim/verify operationId disagree → FAILED (B19)");
+  } else {
+    details.push("Claim/verify opId split unexpectedly passed");
+  }
+
   const rehydrateSvc = openService(stateDir);
   const decisionAfter = await rehydrateSvc.getDecision(operationId);
   const providersAfterReplay = await rehydrateSvc.stores.fakeProvider.list();
@@ -944,6 +1005,8 @@ export async function proofReplayHistoricalNoRepeatIo(
     nanVerifyReplay.outcome === "FAILED" &&
     badVerifyPhaseReplay.outcome === "FAILED" &&
     badTerminalOutcomeReplay.outcome === "FAILED" &&
+    verifyApplyDriftReplay.outcome === "FAILED" &&
+    claimVerifyOpSplitReplay.outcome === "FAILED" &&
     applyBeforeReplay === 1 &&
     applyAfterReplay === 1 &&
     thisOpBefore === 1 &&
