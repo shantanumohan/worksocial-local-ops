@@ -31,13 +31,15 @@ import {
 const now = "2026-11-21T19:00:00.000Z";
 
 describe("contract: T-X055 unknown policy question", () => {
-  let dir: string;
+  let dirs: string[];
 
   beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), "ws-tx055-contract-"));
+    dirs = [mkdtempSync(join(tmpdir(), "ws-tx055-contract-"))];
   });
   afterEach(() => {
-    rmSync(dir, { recursive: true, force: true });
+    for (const d of dirs) {
+      rmSync(d, { recursive: true, force: true });
+    }
   });
 
   it("attack suite covers allowed + unknown/empty with NOT_WIRED honesty", () => {
@@ -76,8 +78,9 @@ describe("contract: T-X055 unknown policy question", () => {
   });
 
   it("harness + compiler mark T-X055 fixture ACCEPTED, never VERIFIED", async () => {
+    const harnessDir = dirs[0];
     const harness = await runSoakRecoveryHarness({
-      stateDir: dir,
+      stateDir: harnessDir,
       nowIso: now,
     });
     expect(harness.allPassed).toBe(true);
@@ -112,8 +115,16 @@ describe("contract: T-X055 unknown policy question", () => {
     expect(compiled.chatgptAds.allowed).toBe(false);
     expect(compiled.blockedLiveVerified).toBe(true);
 
-    const soak = createSoakService(createFileSoakStore(dir));
+    const soakDir = mkdtempSync(join(tmpdir(), "ws-tx055-soak-store-"));
+    dirs.push(soakDir);
+    const soak = createSoakService(createFileSoakStore(soakDir));
     const run = await soak.runFixtureSoak({ harnessNowIso: now });
+    if (!run.ok) {
+      const failedKinds = run.run.proofs
+        .filter((p) => !p.passed)
+        .map((p) => p.kind);
+      expect(failedKinds, "runFixtureSoak harness proof failures").toEqual([]);
+    }
     expect(run.ok).toBe(true);
     expect(run.run.externalEffects).toBe("NONE");
     expect(run.run.liveWiring.cms).toBe("NOT_WIRED");

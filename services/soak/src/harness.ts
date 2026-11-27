@@ -75,6 +75,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
@@ -1331,6 +1332,10 @@ export async function runSoakRecoveryHarness(input: {
   // Default to deterministic after-hours fixture clock (not wall clock).
   const nowIso = input.nowIso ?? SOAK_FIXTURE_HARNESS_NOW_ISO;
   const durableDir = join(input.stateDir, "durable-soak");
+  if (existsSync(durableDir)) {
+    rmSync(durableDir, { recursive: true, force: true });
+  }
+  mkdirSync(durableDir, { recursive: true });
   const proofs: SoakProofRecord[] = [];
 
   proofs.push(await proofCrashRestart(durableDir, nowIso));
