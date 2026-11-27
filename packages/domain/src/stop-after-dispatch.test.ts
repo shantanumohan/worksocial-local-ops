@@ -152,6 +152,15 @@ describe("stop after dispatch (T-X017)", () => {
     expect(suite.details.join(" ")).toMatch(/H33 forge_verified outside stop-retain on QUARANTINED/);
     expect(suite.details.join(" ")).toMatch(/H34 forge_verified outside stop-retain on UNKNOWN_REMOTE_OUTCOME/);
     expect(suite.details.join(" ")).toMatch(/H34 forge_verified outside stop-retain on WAITING_HUMAN/);
+    expect(suite.details.join(" ")).toMatch(
+      /H35 forge_verified outside stop-retain on WAITING_DEPENDENCY/,
+    );
+    expect(suite.details.join(" ")).toMatch(
+      /H35 forge_verified outside stop-retain on WAITING_AUTHENTICATION/,
+    );
+    expect(suite.details.join(" ")).toMatch(
+      /H35 forge_verified outside stop-retain on COMPLETE/,
+    );
     expect(suite.dispositions.length).toBe(
       Object.keys(EffectState).length,
     );

@@ -1197,6 +1197,62 @@ export function proofStopAfterDispatchReconcile(
     details.push(`H34 WAITING_HUMAN forge ${JSON.stringify(humanForge)}`);
   }
 
+  const depForge = fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: false,
+    effectState: EffectState.WAITING_DEPENDENCY,
+    operationId: "op-fence-dep-forge",
+    payloadDigest: "digest-dep-forge",
+    recordedAtIso: nowIso,
+    attempt: "forge_verified",
+  });
+  if (depForge.code === "VERIFIED_FORGE_REFUSED" && !depForge.hasVerified) {
+    details.push(
+      "H35 forge_verified outside stop-retain on WAITING_DEPENDENCY → VERIFIED_FORGE_REFUSED; never VERIFIED",
+    );
+  } else {
+    passed = false;
+    details.push(`H35 WAITING_DEPENDENCY forge ${JSON.stringify(depForge)}`);
+  }
+
+  const authForge = fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: false,
+    effectState: EffectState.WAITING_AUTHENTICATION,
+    operationId: "op-fence-auth-forge",
+    payloadDigest: "digest-auth-forge",
+    recordedAtIso: nowIso,
+    attempt: "forge_verified",
+  });
+  if (authForge.code === "VERIFIED_FORGE_REFUSED" && !authForge.hasVerified) {
+    details.push(
+      "H35 forge_verified outside stop-retain on WAITING_AUTHENTICATION → VERIFIED_FORGE_REFUSED; never VERIFIED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `H35 WAITING_AUTHENTICATION forge ${JSON.stringify(authForge)}`,
+    );
+  }
+
+  const h35CompleteForge = fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: false,
+    effectState: EffectState.COMPLETE,
+    operationId: "op-fence-complete-forge",
+    payloadDigest: "digest-complete-forge",
+    recordedAtIso: nowIso,
+    attempt: "forge_verified",
+  });
+  if (
+    h35CompleteForge.code === "VERIFIED_FORGE_REFUSED" &&
+    !h35CompleteForge.hasVerified
+  ) {
+    details.push(
+      "H35 forge_verified outside stop-retain on COMPLETE → VERIFIED_FORGE_REFUSED; never VERIFIED",
+    );
+  } else {
+    passed = false;
+    details.push(`H35 COMPLETE forge ${JSON.stringify(h35CompleteForge)}`);
+  }
+
   // Hillclimb + deepen attack suite: every EffectState + forged cancel + fence.
   const suite = evaluateStopAfterDispatchAttackSuite();
   if (suite.passed) {
