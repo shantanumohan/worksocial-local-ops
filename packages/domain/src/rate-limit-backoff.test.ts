@@ -429,6 +429,35 @@ describe("rate-limit-backoff (T-X030)", () => {
     ).toEqual({ waitSeconds: 3, source: "retry_after" });
   });
 
+  it("ignores negative Retry-After and uses exponential (Q16 idle)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 2,
+        retryAfterSeconds: -5,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 2, source: "exponential" });
+    const step = evaluateRateLimitWithDeadline(
+      {
+        httpStatus: 429,
+        retryAfterSeconds: -1,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+      {
+        attempt: 1,
+        deadlineAtIso: "2026-11-22T12:01:00.000Z",
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      },
+    );
+    expect(step).toMatchObject({
+      action: "WAIT",
+      waitSeconds: 1,
+      source: "exponential",
+    });
+  });
+
   it("maxAttempts=1 stops immediately without WAIT (T-X030 F13)", () => {
     const loop = simulateRateLimitedProviderRecovery({
       startIso: "2026-11-22T12:00:00.000Z",

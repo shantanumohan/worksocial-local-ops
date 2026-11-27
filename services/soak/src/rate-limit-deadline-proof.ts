@@ -15,6 +15,8 @@
  *
  * Deepen (F13): fractional Retry-After ceil; maxAttempts=1 immediate
  * STOP_MAX_ATTEMPTS; exponential capped at maxBackoff when Retry-After null.
+ *
+ * Deepen (Q16 idle): negative Retry-After is not honored — exponential only.
  */
 
 import { randomUUID } from "node:crypto";
@@ -541,6 +543,48 @@ export function proofRateLimitBoundedBackoffPreservesDeadline(
     passed = false;
     details.push(
       `maxAttempts=1 STOP honesty failed: ${JSON.stringify(oneShot)}`,
+    );
+  }
+
+  // Scenario P (Q16): negative Retry-After ignored → exponential wait (no invent).
+  const negativeRetry = computeBackoffWaitSeconds({
+    attempt: 2,
+    retryAfterSeconds: -3,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 2,
+  });
+  const negativePlan = planRateLimitRecovery({
+    signals: [
+      {
+        httpStatus: 429,
+        retryAfterSeconds: -1,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+    ],
+    config: {
+      deadlineAtIso: "2026-11-22T12:01:00.000Z",
+      maxAttempts: 5,
+      initialBackoffSeconds: 1,
+      backoffMultiplier: 2,
+    },
+  });
+  const negStep = negativePlan.steps[0];
+  if (
+    negativeRetry.source === "exponential" &&
+    negativeRetry.waitSeconds === 2 &&
+    negStep?.action === "WAIT" &&
+    negStep.source === "exponential" &&
+    negStep.waitSeconds === 1 &&
+    negativePlan.liveProviderSuccessClaimed === false &&
+    negativePlan.externalEffects === "NONE"
+  ) {
+    details.push(
+      "Negative Retry-After refused → exponential WAIT (no honor of invalid provider seconds)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Negative Retry-After refuse failed compute=${JSON.stringify(negativeRetry)} plan=${JSON.stringify(negativePlan)}`,
     );
   }
 
