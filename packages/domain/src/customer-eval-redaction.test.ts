@@ -145,6 +145,16 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses allowResidualPiiInPayload", () => {
+    const waive = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      allowResidualPiiInPayload: true,
+    });
+    expect(waive.allowed).toBe(false);
+    expect(waive.reasons.some((r) => /residual PII/i.test(r))).toBe(true);
+  });
+
   it("refuses exportToLiveProvider", () => {
     const live = prepareCustomerDataForEvaluation({
       source,

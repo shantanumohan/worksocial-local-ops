@@ -133,6 +133,21 @@ export function proofCustomerDataEvalRedactionBlocks(
     details.push(`raw passthrough unexpectedly ${JSON.stringify(raw)}`);
   }
 
+  const waiveResidual = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    allowResidualPiiInPayload: true,
+  });
+  if (
+    !waiveResidual.allowed &&
+    waiveResidual.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("allowResidualPiiInPayload → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`waiveResidual unexpectedly ${JSON.stringify(waiveResidual)}`);
+  }
+
   const exportLive = prepareCustomerDataForEvaluation({
     source,
     mode: "redact",

@@ -197,8 +197,16 @@ export function prepareCustomerDataForEvaluation(input: {
   skipRedactionForEval?: boolean;
   /** Forbidden — fixture must not export eval payload to live provider. */
   exportToLiveProvider?: boolean;
+  /** Forbidden — must not waive residual-PII post-check. */
+  allowResidualPiiInPayload?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.allowResidualPiiInPayload === true) {
+    return blockedLeak([
+      "Waive residual PII in eval payload refused — redaction gate (T-X072)",
+    ]);
+  }
 
   if (input.exportToLiveProvider === true) {
     return blockedLeak([
