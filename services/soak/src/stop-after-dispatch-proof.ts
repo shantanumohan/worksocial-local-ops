@@ -6,7 +6,8 @@
  * retains post-apply items; attempt ledger fence refuses a second apply after
  * stop retain (including post-UNKNOWN / VERIFYING / COMPLETE / empty/whitespace
  * digest; double UNKNOWN; pre-apply retain-flag N/A; same-digest after UNKNOWN;
- * cross-op isolation; COMPLETE settle UNKNOWN);
+ * cross-op isolation; COMPLETE settle UNKNOWN; F28–F31 retain-path second-apply/
+ * forge on post-apply states);
  * settle UNKNOWN only; never invent VERIFIED.
  * External effects: NONE. Never invents live VERIFIED.
  */
@@ -30,7 +31,7 @@ import {
 /**
  * Complete expected proof set for T-X017 fixture ACCEPTED.
  * Hillclimb + deepen: attack suite, forged post-apply cancel refuse,
- * attempt ledger fence + H13–H25 FAILED_RETRYABLE-settle, NOT_WIRED/NONE.
+ * attempt ledger fence + H13–H35 + F28–F31 retain-path second-apply refuse, NOT_WIRED/NONE.
  */
 export function proofStopAfterDispatchReconcile(
   nowIso: string,
@@ -1251,6 +1252,391 @@ export function proofStopAfterDispatchReconcile(
   } else {
     passed = false;
     details.push(`H35 COMPLETE forge ${JSON.stringify(h35CompleteForge)}`);
+  }
+
+  const f28VerLedger = new SimulatedEffectLedger();
+  fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.VERIFYING,
+    operationId: `${opId}-f28v`,
+    payloadDigest: "digest-f28v",
+    recordedAtIso: nowIso,
+    attempt: "settle_unknown",
+    ledger: f28VerLedger,
+  });
+  const f28VerSecond = fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.VERIFYING,
+    operationId: `${opId}-f28v`,
+    payloadDigest: "digest-f28v",
+    secondApplyDigest: "digest-f28v-second",
+    recordedAtIso: nowIso,
+    attempt: "record_second_apply",
+    ledger: f28VerLedger,
+  });
+  if (
+    f28VerSecond.allowed === false &&
+    f28VerSecond.code === "SECOND_APPLY_REFUSED" &&
+    f28VerSecond.applyAttemptCount === 1 &&
+    f28VerLedger.hasVerified(`${opId}-f28v`) === false
+  ) {
+    details.push(
+      "F28 stop-retain VERIFYING post-settle second apply → SECOND_APPLY_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(`F28 VERIFYING second unexpectedly ${JSON.stringify(f28VerSecond)}`);
+  }
+
+  const f28AppLedger = new SimulatedEffectLedger();
+  fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.APPLYING,
+    operationId: `${opId}-f28a`,
+    payloadDigest: "digest-f28a",
+    recordedAtIso: nowIso,
+    attempt: "settle_unknown",
+    ledger: f28AppLedger,
+  });
+  const f28AppSecond = fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    operationId: `${opId}-f28a`,
+    payloadDigest: "digest-f28a",
+    secondApplyDigest: "digest-f28a-second",
+    recordedAtIso: nowIso,
+    attempt: "record_second_apply",
+    ledger: f28AppLedger,
+  });
+  if (
+    f28AppSecond.allowed === false &&
+    f28AppSecond.code === "SECOND_APPLY_REFUSED" &&
+    f28AppLedger.hasVerified(`${opId}-f28a`) === false
+  ) {
+    details.push(
+      "F28 stop-retain APPLYING→URO second apply → SECOND_APPLY_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(`F28 APPLYING second unexpectedly ${JSON.stringify(f28AppSecond)}`);
+  }
+
+  const f28ValLedger = new SimulatedEffectLedger();
+  fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.VALIDATING,
+    operationId: `${opId}-f28val`,
+    payloadDigest: "digest-f28val",
+    recordedAtIso: nowIso,
+    attempt: "settle_unknown",
+    ledger: f28ValLedger,
+  });
+  const f28ValForge = fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    operationId: `${opId}-f28val`,
+    payloadDigest: "digest-f28val",
+    recordedAtIso: nowIso,
+    attempt: "forge_verified",
+    ledger: f28ValLedger,
+  });
+  if (
+    f28ValForge.allowed === false &&
+    f28ValForge.code === "VERIFIED_FORGE_REFUSED" &&
+    f28ValForge.liveProviderWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "F28 stop-retain VALIDATING post-settle forge VERIFIED → VERIFIED_FORGE_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(`F28 VALIDATING forge unexpectedly ${JSON.stringify(f28ValForge)}`);
+  }
+
+  const f29CompleteLedger = new SimulatedEffectLedger();
+  fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.COMPLETE,
+    operationId: `${opId}-f29c`,
+    payloadDigest: "digest-f29c",
+    recordedAtIso: nowIso,
+    attempt: "settle_unknown",
+    ledger: f29CompleteLedger,
+  });
+  const f29CompleteSecond = fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.COMPLETE,
+    operationId: `${opId}-f29c`,
+    payloadDigest: "digest-f29c",
+    secondApplyDigest: "digest-f29c-second",
+    recordedAtIso: nowIso,
+    attempt: "record_second_apply",
+    ledger: f29CompleteLedger,
+  });
+  if (
+    f29CompleteSecond.allowed === false &&
+    f29CompleteSecond.code === "SECOND_APPLY_REFUSED" &&
+    f29CompleteLedger.hasVerified(`${opId}-f29c`) === false
+  ) {
+    details.push(
+      "F29 stop-retain COMPLETE post-settle second apply → SECOND_APPLY_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `F29 COMPLETE second unexpectedly ${JSON.stringify(f29CompleteSecond)}`,
+    );
+  }
+
+  const f29QuarLedger = new SimulatedEffectLedger();
+  fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.QUARANTINED,
+    operationId: `${opId}-f29q`,
+    payloadDigest: "digest-f29q",
+    recordedAtIso: nowIso,
+    attempt: "settle_unknown",
+    ledger: f29QuarLedger,
+  });
+  const f29QuarSecond = fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    operationId: `${opId}-f29q`,
+    payloadDigest: "digest-f29q",
+    secondApplyDigest: "digest-f29q-second",
+    recordedAtIso: nowIso,
+    attempt: "record_second_apply",
+    ledger: f29QuarLedger,
+  });
+  if (
+    f29QuarSecond.allowed === false &&
+    f29QuarSecond.code === "SECOND_APPLY_REFUSED"
+  ) {
+    details.push(
+      "F29 stop-retain QUARANTINED→URO second apply → SECOND_APPLY_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(`F29 QUARANTINED second unexpectedly ${JSON.stringify(f29QuarSecond)}`);
+  }
+
+  const f29UroForge = fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    operationId: `${opId}-f29u`,
+    payloadDigest: "digest-f29u",
+    recordedAtIso: nowIso,
+    attempt: "forge_verified",
+    ledger: new SimulatedEffectLedger(),
+  });
+  if (
+    f29UroForge.allowed === false &&
+    f29UroForge.code === "VERIFIED_FORGE_REFUSED" &&
+    f29UroForge.externalEffects === "NONE"
+  ) {
+    details.push(
+      "F29 stop-retain URO forge VERIFIED → VERIFIED_FORGE_REFUSED; NONE",
+    );
+  } else {
+    passed = false;
+    details.push(`F29 URO forge unexpectedly ${JSON.stringify(f29UroForge)}`);
+  }
+
+  const f30VerForgeLedger = new SimulatedEffectLedger();
+  fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.VERIFYING,
+    operationId: `${opId}-f30vf`,
+    payloadDigest: "digest-f30vf",
+    recordedAtIso: nowIso,
+    attempt: "settle_unknown",
+    ledger: f30VerForgeLedger,
+  });
+  const f30VerForge = fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.VERIFYING,
+    operationId: `${opId}-f30vf`,
+    payloadDigest: "digest-f30vf",
+    recordedAtIso: nowIso,
+    attempt: "forge_verified",
+    ledger: f30VerForgeLedger,
+  });
+  if (
+    f30VerForge.allowed === false &&
+    f30VerForge.code === "VERIFIED_FORGE_REFUSED" &&
+    f30VerForgeLedger.hasVerified(`${opId}-f30vf`) === false
+  ) {
+    details.push(
+      "F30 stop-retain VERIFYING post-settle forge VERIFIED → VERIFIED_FORGE_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(`F30 VERIFYING forge unexpectedly ${JSON.stringify(f30VerForge)}`);
+  }
+
+  const f30ValLedger = new SimulatedEffectLedger();
+  fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.VALIDATING,
+    operationId: `${opId}-f30val`,
+    payloadDigest: "digest-f30val",
+    recordedAtIso: nowIso,
+    attempt: "settle_unknown",
+    ledger: f30ValLedger,
+  });
+  const f30ValSecond = fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    operationId: `${opId}-f30val`,
+    payloadDigest: "digest-f30val",
+    secondApplyDigest: "digest-f30val-second",
+    recordedAtIso: nowIso,
+    attempt: "record_second_apply",
+    ledger: f30ValLedger,
+  });
+  if (
+    f30ValSecond.allowed === false &&
+    f30ValSecond.code === "SECOND_APPLY_REFUSED" &&
+    f30ValLedger.hasVerified(`${opId}-f30val`) === false
+  ) {
+    details.push(
+      "F30 stop-retain VALIDATING→URO second apply → SECOND_APPLY_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(`F30 VALIDATING second unexpectedly ${JSON.stringify(f30ValSecond)}`);
+  }
+
+  const f30AppForgeLedger = new SimulatedEffectLedger();
+  fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.APPLYING,
+    operationId: `${opId}-f30af`,
+    payloadDigest: "digest-f30af",
+    recordedAtIso: nowIso,
+    attempt: "settle_unknown",
+    ledger: f30AppForgeLedger,
+  });
+  const f30AppForge = fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    operationId: `${opId}-f30af`,
+    payloadDigest: "digest-f30af",
+    recordedAtIso: nowIso,
+    attempt: "forge_verified",
+    ledger: f30AppForgeLedger,
+  });
+  if (
+    f30AppForge.allowed === false &&
+    f30AppForge.code === "VERIFIED_FORGE_REFUSED" &&
+    f30AppForge.externalEffects === "NONE"
+  ) {
+    details.push(
+      "F30 stop-retain APPLYING→URO forge VERIFIED → VERIFIED_FORGE_REFUSED; NONE",
+    );
+  } else {
+    passed = false;
+    details.push(`F30 APPLYING forge unexpectedly ${JSON.stringify(f30AppForge)}`);
+  }
+
+  const f31CompleteForgeLedger = new SimulatedEffectLedger();
+  fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.COMPLETE,
+    operationId: `${opId}-f31cf`,
+    payloadDigest: "digest-f31cf",
+    recordedAtIso: nowIso,
+    attempt: "settle_unknown",
+    ledger: f31CompleteForgeLedger,
+  });
+  const f31CompleteForge = fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.COMPLETE,
+    operationId: `${opId}-f31cf`,
+    payloadDigest: "digest-f31cf",
+    recordedAtIso: nowIso,
+    attempt: "forge_verified",
+    ledger: f31CompleteForgeLedger,
+  });
+  if (
+    f31CompleteForge.allowed === false &&
+    f31CompleteForge.code === "VERIFIED_FORGE_REFUSED" &&
+    f31CompleteForgeLedger.hasVerified(`${opId}-f31cf`) === false
+  ) {
+    details.push(
+      "F31 stop-retain COMPLETE post-settle forge VERIFIED → VERIFIED_FORGE_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `F31 COMPLETE forge unexpectedly ${JSON.stringify(f31CompleteForge)}`,
+    );
+  }
+
+  const f31QuarForgeLedger = new SimulatedEffectLedger();
+  fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.QUARANTINED,
+    operationId: `${opId}-f31qf`,
+    payloadDigest: "digest-f31qf",
+    recordedAtIso: nowIso,
+    attempt: "settle_unknown",
+    ledger: f31QuarForgeLedger,
+  });
+  const f31QuarForge = fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    operationId: `${opId}-f31qf`,
+    payloadDigest: "digest-f31qf",
+    recordedAtIso: nowIso,
+    attempt: "forge_verified",
+    ledger: f31QuarForgeLedger,
+  });
+  if (
+    f31QuarForge.allowed === false &&
+    f31QuarForge.code === "VERIFIED_FORGE_REFUSED" &&
+    f31QuarForge.liveProviderWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "F31 stop-retain QUARANTINED→URO forge VERIFIED → VERIFIED_FORGE_REFUSED; NOT_WIRED",
+    );
+  } else {
+    passed = false;
+    details.push(`F31 QUARANTINED forge unexpectedly ${JSON.stringify(f31QuarForge)}`);
+  }
+
+  const f31VerUroForgeLedger = new SimulatedEffectLedger();
+  fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.VERIFYING,
+    operationId: `${opId}-f31vu`,
+    payloadDigest: "digest-f31vu",
+    recordedAtIso: nowIso,
+    attempt: "settle_unknown",
+    ledger: f31VerUroForgeLedger,
+  });
+  const f31VerUroForge = fenceStopAfterDispatchLedgerAttempt({
+    stopRetainedForReconcile: true,
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    operationId: `${opId}-f31vu`,
+    payloadDigest: "digest-f31vu",
+    recordedAtIso: nowIso,
+    attempt: "forge_verified",
+    ledger: f31VerUroForgeLedger,
+  });
+  if (
+    f31VerUroForge.allowed === false &&
+    f31VerUroForge.code === "VERIFIED_FORGE_REFUSED" &&
+    f31VerUroForge.externalEffects === "NONE"
+  ) {
+    details.push(
+      "F31 stop-retain VERIFYING→URO forge VERIFIED → VERIFIED_FORGE_REFUSED; NONE",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `F31 VERIFYING→URO forge unexpectedly ${JSON.stringify(f31VerUroForge)}`,
+    );
   }
 
   // Hillclimb + deepen attack suite: every EffectState + forged cancel + fence.
