@@ -194,7 +194,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-US-056** maps only to `HONEST_OUTAGE_HOSTED_CONTACT_PATH` (honest outage; durable hosted contact path; not live VERIFIED).
 
-**T-X030** maps only to `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (bounded backoff preserves deadline; not live VERIFIED).
+**T-X030** maps only to `RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE` (Retry-After/exponential WAIT; STOP_DEADLINE on exact/overshoot/past-deadline; STOP_MAX_ATTEMPTS incl. maxAttempts=1; fractional Retry-After ceil; exponential maxBackoff cap; 429→200 recovery honesty; partial WAIT progress then STOP invents no COMPLETED write; Retry-After preferred over exponential; Retry-After=0 WAIT; partial body still no live VERIFIED). Grant hourly `RATE_LIMIT_EXCEEDED`, `NO_DUPLICATE_EFFECTS`, `CONCURRENT_IDEMPOTENT_RELEASE` (T-X021), `DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED` (T-X004), and `PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE` (T-X045) do not satisfy T-X030. Live providers NOT_WIRED; ACCEPTED ≠ VERIFIED.
 
 **T-X040** maps only to `LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE` (research-only; never a publish trigger from this gate; live trend provider NOT_WIRED; externalEffects NONE; not live VERIFIED).
 

@@ -239,4 +239,225 @@ describe("rate-limit-backoff (T-X030)", () => {
     expect(loop.externalEffects).toBe("NONE");
     expect(loop.liveProviderSuccessClaimed).toBe(false);
   });
+
+  it("STOP_DEADLINE when Retry-After lands exactly on the deadline", () => {
+    const step = evaluateRateLimitWithDeadline(
+      {
+        httpStatus: 429,
+        retryAfterSeconds: 10,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+      {
+        attempt: 1,
+        deadlineAtIso: "2026-11-22T12:00:10.000Z",
+      },
+    );
+    expect(step).toEqual({
+      action: "STOP_DEADLINE",
+      attempt: 1,
+      proposedWaitSeconds: 10,
+      remainingSecondsBeforeDeadline: 10,
+      reason: "BACKOFF_EXCEEDS_DEADLINE",
+    });
+  });
+
+  it("recovers on 200 without claiming live success or spawning agents", () => {
+    const loop = simulateRateLimitedProviderRecovery({
+      startIso: "2026-11-22T12:00:00.000Z",
+      config: {
+        deadlineAtIso: "2026-11-22T12:05:00.000Z",
+        maxAttempts: 5,
+      },
+      fetchOnce: (attempt) => {
+        if (attempt === 1) {
+          return { status: 429, retryAfterSeconds: 2 };
+        }
+        return { status: 200, body: { ok: true } };
+      },
+    });
+    expect(loop.recovered).toBe(true);
+    expect(loop.providerCallCount).toBe(2);
+    expect(loop.afterState.terminalAction).toBe("SUCCESS");
+    expect(loop.spawnedExtraAgents).toBe(0);
+    expect(loop.liveProviderSuccessClaimed).toBe(false);
+    expect(loop.externalEffects).toBe("NONE");
+    expect(loop.preservedDeadline).toBe(true);
+  });
+
+  it("partial WAIT progress then STOP_DEADLINE does not invent COMPLETED write (T-X030)", () => {
+    const outcome = planRateLimitRecovery({
+      signals: [
+        {
+          httpStatus: 429,
+          retryAfterSeconds: 2,
+          observedAtIso: "2026-11-22T12:00:00.000Z",
+        },
+        {
+          httpStatus: 429,
+          retryAfterSeconds: 2,
+          observedAtIso: "2026-11-22T12:00:02.000Z",
+        },
+        {
+          httpStatus: 429,
+          retryAfterSeconds: 50,
+          observedAtIso: "2026-11-22T12:00:04.000Z",
+        },
+      ],
+      config: {
+        deadlineAtIso: "2026-11-22T12:00:30.000Z",
+        maxAttempts: 5,
+      },
+    });
+    expect(outcome.steps.map((s) => s.action)).toEqual([
+      "WAIT",
+      "WAIT",
+      "STOP_DEADLINE",
+    ]);
+    expect(outcome.dataStatus).toBe("UNAVAILABLE");
+    expect(outcome.liveProviderSuccessClaimed).toBe(false);
+    expect(outcome.externalEffects).toBe("NONE");
+  });
+
+  it("Retry-After=0 within deadline is WAIT 0s DELAYED, not SUCCESS write (T-X030)", () => {
+    const step = evaluateRateLimitWithDeadline(
+      {
+        httpStatus: 429,
+        retryAfterSeconds: 0,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+      {
+        attempt: 1,
+        deadlineAtIso: "2026-11-22T12:01:00.000Z",
+      },
+    );
+    expect(step).toMatchObject({
+      action: "WAIT",
+      waitSeconds: 0,
+      source: "retry_after",
+    });
+  });
+
+  it("200 with partial body still refuses live VERIFIED / effects (T-X030)", () => {
+    const loop = simulateRateLimitedProviderRecovery({
+      startIso: "2026-11-22T12:00:00.000Z",
+      config: {
+        deadlineAtIso: "2026-11-22T12:05:00.000Z",
+        maxAttempts: 5,
+      },
+      fetchOnce: (attempt) => {
+        if (attempt === 1) {
+          return { status: 429, retryAfterSeconds: 1 };
+        }
+        return {
+          status: 200,
+          body: { partial: true, writtenBytes: 3, complete: false },
+        };
+      },
+    });
+    expect(loop.recovered).toBe(true);
+    expect(loop.afterState.terminalAction).toBe("SUCCESS");
+    expect(loop.liveProviderSuccessClaimed).toBe(false);
+    expect(loop.externalEffects).toBe("NONE");
+    expect(loop.spawnedExtraAgents).toBe(0);
+  });
+
+  it("STOP_DEADLINE when observed clock is already past the deadline (T-X030 F12)", () => {
+    const step = evaluateRateLimitWithDeadline(
+      {
+        httpStatus: 429,
+        retryAfterSeconds: 5,
+        observedAtIso: "2026-11-22T12:01:00.000Z",
+      },
+      {
+        attempt: 1,
+        deadlineAtIso: "2026-11-22T12:00:30.000Z",
+      },
+    );
+    expect(step).toMatchObject({
+      action: "STOP_DEADLINE",
+      remainingSecondsBeforeDeadline: 0,
+      proposedWaitSeconds: 5,
+      reason: "BACKOFF_EXCEEDS_DEADLINE",
+    });
+  });
+
+  it("prefers Retry-After over exponential when both would apply (T-X030 F12)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 3,
+        retryAfterSeconds: 7,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 7, source: "retry_after" });
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 3,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 4, source: "exponential" });
+  });
+
+  it("WAIT then STOP_MAX_ATTEMPTS invents no COMPLETED write (T-X030 F12)", () => {
+    const loop = simulateRateLimitedProviderRecovery({
+      startIso: "2026-11-22T12:00:00.000Z",
+      config: {
+        deadlineAtIso: "2026-11-22T13:00:00.000Z",
+        maxAttempts: 3,
+      },
+      fetchOnce: () => ({ status: 429, retryAfterSeconds: 1 }),
+    });
+    expect(loop.steps.map((s) => s.action)).toEqual([
+      "WAIT",
+      "WAIT",
+      "STOP_MAX_ATTEMPTS",
+    ]);
+    expect(loop.dataStatus).toBe("UNAVAILABLE");
+    expect(loop.recovered).toBe(false);
+    expect(loop.liveProviderSuccessClaimed).toBe(false);
+    expect(loop.externalEffects).toBe("NONE");
+  });
+
+  it("ceils fractional Retry-After (T-X030 F13)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 1,
+        retryAfterSeconds: 2.3,
+      }),
+    ).toEqual({ waitSeconds: 3, source: "retry_after" });
+  });
+
+  it("maxAttempts=1 stops immediately without WAIT (T-X030 F13)", () => {
+    const loop = simulateRateLimitedProviderRecovery({
+      startIso: "2026-11-22T12:00:00.000Z",
+      config: {
+        deadlineAtIso: "2026-11-22T13:00:00.000Z",
+        maxAttempts: 1,
+      },
+      fetchOnce: () => ({ status: 429, retryAfterSeconds: 5 }),
+    });
+    expect(loop.steps).toEqual([
+      {
+        action: "STOP_MAX_ATTEMPTS",
+        attempt: 1,
+        reason: "MAX_ATTEMPTS",
+      },
+    ]);
+    expect(loop.dataStatus).toBe("UNAVAILABLE");
+    expect(loop.recovered).toBe(false);
+  });
+
+  it("caps exponential backoff at maxBackoffSeconds (T-X030 F13)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 10,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+        maxBackoffSeconds: 60,
+      }),
+    ).toEqual({ waitSeconds: 60, source: "exponential" });
+  });
 });

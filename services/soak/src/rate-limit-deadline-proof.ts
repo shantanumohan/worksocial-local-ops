@@ -5,11 +5,22 @@
  * capped exponential backoff, advance a logical clock on WAIT, stop before the
  * job deadline or at maxAttempts, surface delayed/unavailable data, and never
  * spawn extra agents. External effects: NONE.
+ *
+ * Deepen (F11 / partial-write note): STOP after partial WAIT progress must not
+ * invent COMPLETED/VERIFIED write; Retry-After=0 is WAIT not SUCCESS; 200 with
+ * partial body still liveProviderSuccessClaimed=false.
+ *
+ * Deepen (F12): observed clock past deadline → STOP_DEADLINE; Retry-After
+ * preferred over exponential; WAIT then STOP_MAX_ATTEMPTS invents no COMPLETED.
+ *
+ * Deepen (F13): fractional Retry-After ceil; maxAttempts=1 immediate
+ * STOP_MAX_ATTEMPTS; exponential capped at maxBackoff when Retry-After null.
  */
 
 import { randomUUID } from "node:crypto";
 import {
   SoakProofKind,
+  computeBackoffWaitSeconds,
   planRateLimitRecovery,
   simulateRateLimitedProviderRecovery,
   type SoakProofRecord,
@@ -177,8 +188,384 @@ export function proofRateLimitBoundedBackoffPreservesDeadline(
     );
   }
 
+  // Scenario E: exact deadline equality (nextAttemptMs === deadlineMs) → STOP_DEADLINE.
+  const exactDeadline = planRateLimitRecovery({
+    signals: [
+      {
+        httpStatus: 429,
+        retryAfterSeconds: 10,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+    ],
+    config: {
+      deadlineAtIso: "2026-11-22T12:00:10.000Z",
+      maxAttempts: 5,
+    },
+  });
+  const exactStep = exactDeadline.steps[0];
+  if (
+    exactStep?.action === "STOP_DEADLINE" &&
+    exactStep.proposedWaitSeconds === 10 &&
+    exactStep.remainingSecondsBeforeDeadline === 10 &&
+    exactDeadline.dataStatus === "UNAVAILABLE" &&
+    exactDeadline.spawnedExtraAgents === 0
+  ) {
+    details.push(
+      "Retry-After lands exactly on deadline → STOP_DEADLINE (no wait that consumes the deadline)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Exact-deadline STOP failed: ${JSON.stringify(exactDeadline)}`,
+    );
+  }
+
+  // Scenario F: fake-provider recovers with 200 — still no agent fan-out / live claim / effects.
+  const recovered = simulateRateLimitedProviderRecovery({
+    startIso: "2026-11-22T12:00:00.000Z",
+    config: {
+      deadlineAtIso: "2026-11-22T12:05:00.000Z",
+      maxAttempts: 5,
+      initialBackoffSeconds: 1,
+      backoffMultiplier: 2,
+    },
+    fetchOnce: (attempt) => {
+      fakeProviderCalls += 1;
+      if (attempt === 1) {
+        return { status: 429, retryAfterSeconds: 2 };
+      }
+      return { status: 200, body: { ok: true } };
+    },
+  });
+  if (
+    recovered.recovered === true &&
+    recovered.providerCallCount === 2 &&
+    recovered.afterState.terminalAction === "SUCCESS" &&
+    recovered.spawnedExtraAgents === 0 &&
+    recovered.liveProviderSuccessClaimed === false &&
+    recovered.externalEffects === "NONE" &&
+    recovered.preservedDeadline === true
+  ) {
+    details.push(
+      "Fake-provider 429→200 recovery: calls=2 terminal=SUCCESS; spawnedExtraAgents=0; liveProviderSuccessClaimed=false",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Recovery honesty failed: ${JSON.stringify(recovered)}`,
+    );
+  }
+
+  // Scenario G: partial WAIT progress then STOP_DEADLINE — no invented COMPLETED write.
+  const partialProgress = planRateLimitRecovery({
+    signals: [
+      {
+        httpStatus: 429,
+        retryAfterSeconds: 2,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+      {
+        httpStatus: 429,
+        retryAfterSeconds: 2,
+        observedAtIso: "2026-11-22T12:00:02.000Z",
+      },
+      {
+        httpStatus: 429,
+        retryAfterSeconds: 50,
+        observedAtIso: "2026-11-22T12:00:04.000Z",
+      },
+    ],
+    config: {
+      deadlineAtIso: "2026-11-22T12:00:30.000Z",
+      initialBackoffSeconds: 1,
+      backoffMultiplier: 2,
+      maxBackoffSeconds: 60,
+      maxAttempts: 5,
+    },
+  });
+  const pp0 = partialProgress.steps[0];
+  const pp1 = partialProgress.steps[1];
+  const pp2 = partialProgress.steps[2];
+  if (
+    pp0?.action === "WAIT" &&
+    pp1?.action === "WAIT" &&
+    pp2?.action === "STOP_DEADLINE" &&
+    partialProgress.steps.length === 3 &&
+    partialProgress.dataStatus === "UNAVAILABLE" &&
+    partialProgress.liveProviderSuccessClaimed === false &&
+    partialProgress.externalEffects === "NONE" &&
+    partialProgress.spawnedExtraAgents === 0 &&
+    !partialProgress.steps.some((s) => s.action === "STOP_MAX_ATTEMPTS")
+  ) {
+    details.push(
+      "Partial WAIT progress then STOP_DEADLINE → dataStatus=UNAVAILABLE (no invented COMPLETED/VERIFIED write)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Partial-progress stop failed: ${JSON.stringify(partialProgress)}`,
+    );
+  }
+
+  // Scenario H: Retry-After=0 within deadline → WAIT 0s (DELAYED), not SUCCESS write.
+  const zeroRetry = planRateLimitRecovery({
+    signals: [
+      {
+        httpStatus: 429,
+        retryAfterSeconds: 0,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+    ],
+    config: {
+      deadlineAtIso: "2026-11-22T12:01:00.000Z",
+      maxAttempts: 5,
+    },
+  });
+  const zeroStep = zeroRetry.steps[0];
+  if (
+    zeroStep?.action === "WAIT" &&
+    zeroStep.waitSeconds === 0 &&
+    zeroStep.source === "retry_after" &&
+    zeroRetry.dataStatus === "DELAYED" &&
+    zeroRetry.liveProviderSuccessClaimed === false &&
+    zeroRetry.externalEffects === "NONE"
+  ) {
+    details.push(
+      "Retry-After=0 within deadline → WAIT 0s dataStatus=DELAYED (not invented SUCCESS write)",
+    );
+  } else {
+    passed = false;
+    details.push(`Retry-After=0 WAIT failed: ${JSON.stringify(zeroRetry)}`);
+  }
+
+  // Scenario I: 200 with partial body still refuses live VERIFIED / effects.
+  const partialBody = simulateRateLimitedProviderRecovery({
+    startIso: "2026-11-22T12:00:00.000Z",
+    config: {
+      deadlineAtIso: "2026-11-22T12:05:00.000Z",
+      maxAttempts: 5,
+    },
+    fetchOnce: (attempt) => {
+      fakeProviderCalls += 1;
+      if (attempt === 1) {
+        return { status: 429, retryAfterSeconds: 1 };
+      }
+      return {
+        status: 200,
+        body: { partial: true, writtenBytes: 3, complete: false },
+      };
+    },
+  });
+  if (
+    partialBody.recovered === true &&
+    partialBody.afterState.terminalAction === "SUCCESS" &&
+    partialBody.liveProviderSuccessClaimed === false &&
+    partialBody.externalEffects === "NONE" &&
+    partialBody.spawnedExtraAgents === 0 &&
+    partialBody.preservedDeadline === true
+  ) {
+    details.push(
+      "200 with partial body: terminal=SUCCESS fixture-only; liveProviderSuccessClaimed=false externalEffects=NONE (no invented VERIFIED write)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Partial-body recovery honesty failed: ${JSON.stringify(partialBody)}`,
+    );
+  }
+
+  // Scenario J (F12): observed clock already past deadline → STOP_DEADLINE.
+  const pastDeadline = planRateLimitRecovery({
+    signals: [
+      {
+        httpStatus: 429,
+        retryAfterSeconds: 5,
+        observedAtIso: "2026-11-22T12:01:00.000Z",
+      },
+    ],
+    config: {
+      deadlineAtIso: "2026-11-22T12:00:30.000Z",
+      maxAttempts: 5,
+    },
+  });
+  const pastStep = pastDeadline.steps[0];
+  if (
+    pastStep?.action === "STOP_DEADLINE" &&
+    pastStep.remainingSecondsBeforeDeadline === 0 &&
+    pastStep.proposedWaitSeconds === 5 &&
+    pastDeadline.dataStatus === "UNAVAILABLE" &&
+    pastDeadline.liveProviderSuccessClaimed === false &&
+    pastDeadline.spawnedExtraAgents === 0
+  ) {
+    details.push(
+      "Observed clock past deadline → STOP_DEADLINE remainingSeconds=0 (no invented WAIT/SUCCESS write)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Past-deadline STOP failed: ${JSON.stringify(pastDeadline)}`,
+    );
+  }
+
+  // Scenario K (F12): Retry-After preferred over exponential when both would apply.
+  const preferred = computeBackoffWaitSeconds({
+    attempt: 3,
+    retryAfterSeconds: 7,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 2,
+    maxBackoffSeconds: 60,
+  });
+  const exponentialOnly = computeBackoffWaitSeconds({
+    attempt: 3,
+    retryAfterSeconds: null,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 2,
+    maxBackoffSeconds: 60,
+  });
+  if (
+    preferred.source === "retry_after" &&
+    preferred.waitSeconds === 7 &&
+    exponentialOnly.source === "exponential" &&
+    exponentialOnly.waitSeconds === 4
+  ) {
+    details.push(
+      "Retry-After=7s preferred over exponential wait=4s at attempt 3 (provider hint honored; not truncated inventively)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Retry-After preference failed preferred=${JSON.stringify(preferred)} exponential=${JSON.stringify(exponentialOnly)}`,
+    );
+  }
+
+  // Scenario L (F12): WAIT then STOP_MAX_ATTEMPTS invents no COMPLETED write.
+  const maxAfterWait = simulateRateLimitedProviderRecovery({
+    startIso: "2026-11-22T12:00:00.000Z",
+    config: {
+      deadlineAtIso: "2026-11-22T13:00:00.000Z",
+      maxAttempts: 3,
+      maxBackoffSeconds: 60,
+    },
+    fetchOnce: () => {
+      fakeProviderCalls += 1;
+      return { status: 429, retryAfterSeconds: 1 };
+    },
+  });
+  const maxLast = maxAfterWait.steps[maxAfterWait.steps.length - 1];
+  if (
+    maxAfterWait.providerCallCount === 3 &&
+    maxAfterWait.steps.length === 3 &&
+    maxAfterWait.steps[0]?.action === "WAIT" &&
+    maxAfterWait.steps[1]?.action === "WAIT" &&
+    maxLast?.action === "STOP_MAX_ATTEMPTS" &&
+    maxAfterWait.dataStatus === "UNAVAILABLE" &&
+    maxAfterWait.recovered === false &&
+    maxAfterWait.liveProviderSuccessClaimed === false &&
+    maxAfterWait.externalEffects === "NONE" &&
+    maxAfterWait.spawnedExtraAgents === 0
+  ) {
+    details.push(
+      "WAIT then STOP_MAX_ATTEMPTS (maxAttempts=3) → dataStatus=UNAVAILABLE recovered=false (no invented COMPLETED write)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `WAIT→STOP_MAX_ATTEMPTS honesty failed: ${JSON.stringify(maxAfterWait)}`,
+    );
+  }
+
+  // Scenario M (F13): fractional Retry-After is ceiled (not truncated inventively).
+  const fractional = computeBackoffWaitSeconds({
+    attempt: 1,
+    retryAfterSeconds: 2.3,
+  });
+  const fractionalPlan = planRateLimitRecovery({
+    signals: [
+      {
+        httpStatus: 429,
+        retryAfterSeconds: 2.3,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+    ],
+    config: {
+      deadlineAtIso: "2026-11-22T12:01:00.000Z",
+      maxAttempts: 5,
+    },
+  });
+  const fracStep = fractionalPlan.steps[0];
+  if (
+    fractional.source === "retry_after" &&
+    fractional.waitSeconds === 3 &&
+    fracStep?.action === "WAIT" &&
+    fracStep.waitSeconds === 3 &&
+    fracStep.source === "retry_after" &&
+    fractionalPlan.dataStatus === "DELAYED" &&
+    fractionalPlan.liveProviderSuccessClaimed === false
+  ) {
+    details.push(
+      "Fractional Retry-After=2.3s ceiled to WAIT 3s (not truncated inventively; dataStatus=DELAYED)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Fractional Retry-After ceil failed compute=${JSON.stringify(fractional)} plan=${JSON.stringify(fractionalPlan)}`,
+    );
+  }
+
+  // Scenario N (F13): maxAttempts=1 → immediate STOP_MAX_ATTEMPTS (no WAIT invent).
+  const oneShot = simulateRateLimitedProviderRecovery({
+    startIso: "2026-11-22T12:00:00.000Z",
+    config: {
+      deadlineAtIso: "2026-11-22T13:00:00.000Z",
+      maxAttempts: 1,
+    },
+    fetchOnce: () => {
+      fakeProviderCalls += 1;
+      return { status: 429, retryAfterSeconds: 5 };
+    },
+  });
+  if (
+    oneShot.providerCallCount === 1 &&
+    oneShot.steps.length === 1 &&
+    oneShot.steps[0]?.action === "STOP_MAX_ATTEMPTS" &&
+    oneShot.dataStatus === "UNAVAILABLE" &&
+    oneShot.recovered === false &&
+    oneShot.liveProviderSuccessClaimed === false &&
+    oneShot.externalEffects === "NONE" &&
+    oneShot.spawnedExtraAgents === 0
+  ) {
+    details.push(
+      "maxAttempts=1 → immediate STOP_MAX_ATTEMPTS (no WAIT; no invented COMPLETED write)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `maxAttempts=1 STOP honesty failed: ${JSON.stringify(oneShot)}`,
+    );
+  }
+
+  // Scenario O (F13): exponential without Retry-After is capped at maxBackoffSeconds.
+  const capped = computeBackoffWaitSeconds({
+    attempt: 10,
+    retryAfterSeconds: null,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 2,
+    maxBackoffSeconds: 60,
+  });
+  if (capped.source === "exponential" && capped.waitSeconds === 60) {
+    details.push(
+      "Exponential attempt=10 without Retry-After capped at maxBackoffSeconds=60 (not unbounded invent)",
+    );
+  } else {
+    passed = false;
+    details.push(`Exponential maxBackoff cap failed: ${JSON.stringify(capped)}`);
+  }
+
   details.push(
-    `instrumentedFakeProviderCalls=${fakeProviderCalls} liveProviderSuccessClaimed=false externalEffects=NONE`,
+    `instrumentedFakeProviderCalls=${fakeProviderCalls} liveProviderWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE`,
+  );
+  details.push(
+    "Distinct from grant hourly RATE_LIMIT_EXCEEDED (policy hard-deny), NO_DUPLICATE_EFFECTS (retry-only), CONCURRENT_IDEMPOTENT_RELEASE (T-X021), DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED (T-X004), and PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE (T-X045)",
   );
 
   return {

@@ -3,13 +3,13 @@
   "caseId": "T-X030",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X030 (Rate-limit with deadline — bounded backoff)\nproof=rate_limit_bounded_backoff_preserves_deadline applyCount=1 :: 429 Retry-After=5s within deadline → WAIT (dataStatus=DELAYED, spawnedExtraAgents=0) | Fake-provider loop: before calls=0 → after calls=3; STOP_DEADLINE; dataStatus=UNAVAILABLE; no agent fan-out | STOP_MAX_ATTEMPTS on attempt 5 (maxAttempts=5); no sixth wait; spawnedExtraAgents=0 | Retry-After=300s honored (not truncated to 60); STOP_DEADLINE vs 60s remaining | instrumentedFakeProviderCalls=8 liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X030 (Rate-limit with deadline — bounded backoff)\nproof=rate_limit_bounded_backoff_preserves_deadline applyCount=1 :: 429 Retry-After=5s within deadline → WAIT (dataStatus=DELAYED, spawnedExtraAgents=0) | Fake-provider loop: before calls=0 → after calls=3; STOP_DEADLINE; dataStatus=UNAVAILABLE; no agent fan-out | STOP_MAX_ATTEMPTS on attempt 5 (maxAttempts=5); no sixth wait; spawnedExtraAgents=0 | Retry-After=300s honored (not truncated to 60); STOP_DEADLINE vs 60s remaining | Retry-After lands exactly on deadline → STOP_DEADLINE (no wait that consumes the deadline) | Fake-provider 429→200 recovery: calls=2 terminal=SUCCESS; spawnedExtraAgents=0; liveProviderSuccessClaimed=false | Partial WAIT progress then STOP_DEADLINE → dataStatus=UNAVAILABLE (no invented COMPLETED/VERIFIED write) | Retry-After=0 within deadline → WAIT 0s dataStatus=DELAYED (not invented SUCCESS write) | 200 with partial body: terminal=SUCCESS fixture-only; liveProviderSuccessClaimed=false externalEffects=NONE (no invented VERIFIED write) | Observed clock past deadline → STOP_DEADLINE remainingSeconds=0 (no invented WAIT/SUCCESS write) | Retry-After=7s preferred over exponential wait=4s at attempt 3 (provider hint honored; not truncated inventively) | WAIT then STOP_MAX_ATTEMPTS (maxAttempts=3) → dataStatus=UNAVAILABLE recovered=false (no invented COMPLETED write) | Fractional Retry-After=2.3s ceiled to WAIT 3s (not truncated inventively; dataStatus=DELAYED) | maxAttempts=1 → immediate STOP_MAX_ATTEMPTS (no WAIT; no invented COMPLETED write) | Exponential attempt=10 without Retry-After capped at maxBackoffSeconds=60 (not unbounded invent) | instrumentedFakeProviderCalls=16 liveProviderWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE | Distinct from grant hourly RATE_LIMIT_EXCEEDED (policy hard-deny), NO_DUPLICATE_EFFECTS (retry-only), CONCURRENT_IDEMPOTENT_RELEASE (T-X021), DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED (T-X004), and PARTIAL_CAMPAIGN_DESTINATIONS_PER_STATE (T-X045)\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "rate_limit_bounded_backoff_preserves_deadline"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x030.json",
-  "createdAtIso": "2026-11-27T10:27:00.491Z",
+  "createdAtIso": "2026-11-27T10:30:38.258Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x030-493689cb7bed"
+  "uniqueSourceArtifactId": "art-fixture-t-x030-fc72a3d18ff3"
 }
