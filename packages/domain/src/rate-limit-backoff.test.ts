@@ -544,6 +544,35 @@ describe("rate-limit-backoff (T-X030)", () => {
     ).toEqual({ waitSeconds: 2, source: "exponential" });
   });
 
+  it("caps +Infinity attempt index at maxBackoff exponential (Q41 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: Number.POSITIVE_INFINITY,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+        maxBackoffSeconds: 60,
+      }),
+    ).toEqual({ waitSeconds: 60, source: "exponential" });
+    const step = evaluateRateLimitWithDeadline(
+      {
+        httpStatus: 429,
+        retryAfterSeconds: 5,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+      {
+        attempt: Number.POSITIVE_INFINITY,
+        deadlineAtIso: "2026-11-22T13:00:00.000Z",
+        maxAttempts: 5,
+      },
+    );
+    expect(step).toEqual({
+      action: "STOP_MAX_ATTEMPTS",
+      attempt: Number.POSITIVE_INFINITY,
+      reason: "MAX_ATTEMPTS",
+    });
+  });
+
   it("ignores -Infinity Retry-After and uses exponential (Q38 wipe15)", () => {
     expect(
       computeBackoffWaitSeconds({
