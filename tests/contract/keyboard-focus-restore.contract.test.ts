@@ -26,6 +26,7 @@ import { createFileSoakStore } from "@worksocial/persistence";
 import {
   compileAcceptanceEvidence,
   createSoakService,
+  proofKeyboardFocusRestoreAfterDialog,
   runSoakRecoveryHarness,
 } from "@worksocial/soak";
 
@@ -91,6 +92,14 @@ describe("contract: T-X061 keyboard focus restore", () => {
     expect(lost.ok).toBe(false);
     expect(lost.code).toBe("FOCUS_LOST");
     expect(lost.session.activeFocusId).toBeNull();
+  });
+
+  it("proofKeyboardFocusRestoreAfterDialog stays fixture-only with honest labels", () => {
+    const proof = proofKeyboardFocusRestoreAfterDialog(now);
+    expect(proof.passed).toBe(true);
+    expect(proof.fixtureOnly).toBe(true);
+    expect(proof.kind).toBe(SoakProofKind.KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG);
+    expect(String(proof.kind).toUpperCase()).not.toBe("VERIFIED");
   });
 
   it("cycleDialogFocus fails closed when overlay is not open", () => {

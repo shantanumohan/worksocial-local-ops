@@ -8,3 +8,4 @@ export {
   runSoakRecoveryHarness,
   type SoakHarnessResult,
 } from "./harness.js";
+export { proofKeyboardFocusRestoreAfterDialog } from "./keyboard-focus-restore-proof.js";
