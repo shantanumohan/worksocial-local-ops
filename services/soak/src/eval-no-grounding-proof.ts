@@ -2178,6 +2178,379 @@ export function proofEvalNoGroundingFailClosed(
     details.push("N44 quad-decimal/triple-supported unexpectedly failed");
   }
 
+  // 56. greenfield I62 BIND @ f63907cf — "5.0 " alias + claimed PASS quad UNKNOWN.
+  const pentaDecimalPadI62 = adjudicateGroundedEvalCase({
+    caseDef: {
+      caseId: "c-penta-decimal-pad",
+      prompt: "What are hours?",
+      expectedFactIds: ["fixture-fact-hours"],
+      requiresGrounding: true,
+      acceptanceCaseId: "T-X038",
+    },
+    citedFactIds: ["fixture-fact-hours"],
+    factLabels: labels,
+    groundingUsed: "5.0 ",
+  });
+  const quadUnknownLabelsI62 = new Map([
+    ["fixture-fact-a", SupportLabel.UNKNOWN],
+    ["fixture-fact-b", SupportLabel.UNKNOWN],
+    ["fixture-fact-c", SupportLabel.UNKNOWN],
+    ["fixture-fact-d", SupportLabel.UNKNOWN],
+  ]);
+  const claimedQuadUnknownI62 = adjudicateGroundedEvalCase({
+    caseDef: {
+      caseId: "c-quad-unknown-claim",
+      prompt: "Unknown mix",
+      expectedFactIds: ["fixture-fact-a"],
+      requiresGrounding: true,
+      acceptanceCaseId: "T-X038",
+    },
+    citedFactIds: [
+      "fixture-fact-a",
+      "fixture-fact-b",
+      "fixture-fact-c",
+      "fixture-fact-d",
+    ],
+    factLabels: quadUnknownLabelsI62,
+    groundingUsed: true,
+    claimedVerdict: EvalCaseVerdict.PASS,
+  });
+  if (
+    pentaDecimalPadI62.verdict === EvalCaseVerdict.NO_GROUNDING &&
+    normalizeGroundingUsed("5.0 ") === false &&
+    claimedQuadUnknownI62.verdict === EvalCaseVerdict.NO_GROUNDING
+  ) {
+    details.push(
+      'greenfield I62 BIND: groundingUsed="5.0 " → NO_GROUNDING; claimed PASS quad UNKNOWN → NO_GROUNDING (exclusive #280 Slot N)',
+    );
+  } else {
+    passed = false;
+    details.push("I62 penta-decimal/quad-unknown unexpectedly failed");
+  }
+
+  // 57. wipe15 I63 post-#280 — "6.0 " alias + claimed PASS penta HYPOTHESIS.
+  const hexaDecimalPadI63 = adjudicateGroundedEvalCase({
+    caseDef: {
+      caseId: "c-hexa-decimal-pad",
+      prompt: "What are hours?",
+      expectedFactIds: ["fixture-fact-hours"],
+      requiresGrounding: true,
+      acceptanceCaseId: "T-X038",
+    },
+    citedFactIds: ["fixture-fact-hours"],
+    factLabels: labels,
+    groundingUsed: "6.0 ",
+  });
+  const pentaHypothesisLabelsI63 = new Map([
+    ["fixture-fact-h1", SupportLabel.HYPOTHESIS],
+    ["fixture-fact-h2", SupportLabel.HYPOTHESIS],
+    ["fixture-fact-h3", SupportLabel.HYPOTHESIS],
+    ["fixture-fact-h4", SupportLabel.HYPOTHESIS],
+    ["fixture-fact-h5", SupportLabel.HYPOTHESIS],
+  ]);
+  const claimedPentaHypothesisI63 = adjudicateGroundedEvalCase({
+    caseDef: {
+      caseId: "c-penta-hypothesis-claim",
+      prompt: "Hypothesis mix",
+      expectedFactIds: ["fixture-fact-h1"],
+      requiresGrounding: true,
+      acceptanceCaseId: "T-X038",
+    },
+    citedFactIds: [
+      "fixture-fact-h1",
+      "fixture-fact-h2",
+      "fixture-fact-h3",
+      "fixture-fact-h4",
+      "fixture-fact-h5",
+    ],
+    factLabels: pentaHypothesisLabelsI63,
+    groundingUsed: true,
+    claimedVerdict: EvalCaseVerdict.PASS,
+  });
+  if (
+    hexaDecimalPadI63.verdict === EvalCaseVerdict.NO_GROUNDING &&
+    normalizeGroundingUsed("6.0 ") === false &&
+    claimedPentaHypothesisI63.verdict === EvalCaseVerdict.NO_GROUNDING
+  ) {
+    details.push(
+      'wipe15 I63 tip-moved-280: groundingUsed="6.0 " → NO_GROUNDING; claimed PASS penta HYPOTHESIS → NO_GROUNDING (distinct from #280 T-X014)',
+    );
+  } else {
+    passed = false;
+    details.push("I63 hexa-decimal/penta-hypothesis unexpectedly failed");
+  }
+
+  // 58. wipe15 I64 post-#281 — "7.0 " alias + claimed PASS mixed hypo+unknown.
+  const septDecimalPadI64 = adjudicateGroundedEvalCase({
+    caseDef: {
+      caseId: "c-sept-decimal-pad",
+      prompt: "What are hours?",
+      expectedFactIds: ["fixture-fact-hours"],
+      requiresGrounding: true,
+      acceptanceCaseId: "T-X038",
+    },
+    citedFactIds: ["fixture-fact-hours"],
+    factLabels: labels,
+    groundingUsed: "7.0 ",
+  });
+  const mixedHypoUnknownI64 = new Map([
+    ["fixture-fact-m1", SupportLabel.HYPOTHESIS],
+    ["fixture-fact-m2", SupportLabel.HYPOTHESIS],
+    ["fixture-fact-m3", SupportLabel.UNKNOWN],
+    ["fixture-fact-m4", SupportLabel.UNKNOWN],
+  ]);
+  const claimedMixedI64 = adjudicateGroundedEvalCase({
+    caseDef: {
+      caseId: "c-mixed-hypo-unknown-claim",
+      prompt: "Mixed labels",
+      expectedFactIds: ["fixture-fact-m1"],
+      requiresGrounding: true,
+      acceptanceCaseId: "T-X038",
+    },
+    citedFactIds: [
+      "fixture-fact-m1",
+      "fixture-fact-m2",
+      "fixture-fact-m3",
+      "fixture-fact-m4",
+    ],
+    factLabels: mixedHypoUnknownI64,
+    groundingUsed: true,
+    claimedVerdict: EvalCaseVerdict.PASS,
+  });
+  if (
+    septDecimalPadI64.verdict === EvalCaseVerdict.NO_GROUNDING &&
+    normalizeGroundingUsed("7.0 ") === false &&
+    claimedMixedI64.verdict === EvalCaseVerdict.NO_GROUNDING
+  ) {
+    details.push(
+      'wipe15 I64 tip-moved-281: groundingUsed="7.0 " → NO_GROUNDING; claimed PASS mixed hypo+unknown → NO_GROUNDING (distinct from #281 T-X070)',
+    );
+  } else {
+    passed = false;
+    details.push("I64 sept-decimal/mixed-labels unexpectedly failed");
+  }
+
+  // 59. wipe15 I65 TIMER ON_TIP 66a4ef90 — "8.0 " + claimed PASS lone SUPPORTED in unknown sea.
+  const octDecimalPadI65 = adjudicateGroundedEvalCase({
+    caseDef: {
+      caseId: "c-oct-decimal-pad",
+      prompt: "What are hours?",
+      expectedFactIds: ["fixture-fact-hours"],
+      requiresGrounding: true,
+      acceptanceCaseId: "T-X038",
+    },
+    citedFactIds: ["fixture-fact-hours"],
+    factLabels: labels,
+    groundingUsed: "8.0 ",
+  });
+  const loneSupportedSeaI65 = new Map([
+    ["fixture-fact-s1", SupportLabel.SUPPORTED],
+    ["fixture-fact-u1", SupportLabel.UNKNOWN],
+    ["fixture-fact-u2", SupportLabel.UNKNOWN],
+    ["fixture-fact-u3", SupportLabel.UNKNOWN],
+  ]);
+  const claimedLoneSupportedI65 = adjudicateGroundedEvalCase({
+    caseDef: {
+      caseId: "c-lone-supported-sea",
+      prompt: "One supported",
+      expectedFactIds: ["fixture-fact-s1", "fixture-fact-u1"],
+      requiresGrounding: true,
+      acceptanceCaseId: "T-X038",
+    },
+    citedFactIds: [
+      "fixture-fact-s1",
+      "fixture-fact-u1",
+      "fixture-fact-u2",
+      "fixture-fact-u3",
+    ],
+    factLabels: loneSupportedSeaI65,
+    groundingUsed: true,
+    claimedVerdict: EvalCaseVerdict.PASS,
+  });
+  if (
+    octDecimalPadI65.verdict === EvalCaseVerdict.NO_GROUNDING &&
+    normalizeGroundingUsed("8.0 ") === false &&
+    claimedLoneSupportedI65.verdict === EvalCaseVerdict.FAIL
+  ) {
+    details.push(
+      'wipe15 I65 TIMER ON_TIP: groundingUsed="8.0 " → NO_GROUNDING; claimed PASS lone SUPPORTED missing expected → FAIL (exclusive #282 not Slot I)',
+    );
+  } else {
+    passed = false;
+    details.push("I65 oct-decimal/lone-supported unexpectedly failed");
+  }
+
+  // 60. wipe15 I66 post-#282 — "9.0 " alias + quad SUPPORTED pass control.
+  const nonaDecimalPadI66 = adjudicateGroundedEvalCase({
+    caseDef: {
+      caseId: "c-nona-decimal-pad",
+      prompt: "What are hours?",
+      expectedFactIds: ["fixture-fact-hours"],
+      requiresGrounding: true,
+      acceptanceCaseId: "T-X038",
+    },
+    citedFactIds: ["fixture-fact-hours"],
+    factLabels: labels,
+    groundingUsed: "9.0 ",
+  });
+  const quadSupportedLabelsI66 = new Map([
+    ["fixture-fact-q1", SupportLabel.SUPPORTED],
+    ["fixture-fact-q2", SupportLabel.SUPPORTED],
+    ["fixture-fact-q3", SupportLabel.SUPPORTED],
+    ["fixture-fact-q4", SupportLabel.SUPPORTED],
+  ]);
+  const quadSupportedPassI66 = adjudicateGroundedEvalCase({
+    caseDef: {
+      caseId: "c-quad-supported-pass",
+      prompt: "All supported",
+      expectedFactIds: ["fixture-fact-q1", "fixture-fact-q2"],
+      requiresGrounding: true,
+      acceptanceCaseId: "T-X038",
+    },
+    citedFactIds: [
+      "fixture-fact-q1",
+      "fixture-fact-q2",
+      "fixture-fact-q3",
+      "fixture-fact-q4",
+    ],
+    factLabels: quadSupportedLabelsI66,
+    groundingUsed: true,
+  });
+  if (
+    nonaDecimalPadI66.verdict === EvalCaseVerdict.NO_GROUNDING &&
+    normalizeGroundingUsed("9.0 ") === false &&
+    quadSupportedPassI66.verdict === EvalCaseVerdict.PASS &&
+    quadSupportedPassI66.groundingUsed === true
+  ) {
+    details.push(
+      'wipe15 I66 tip-moved-282: groundingUsed="9.0 " → NO_GROUNDING; quad SUPPORTED full expected → PASS (distinct from #282 T-X031)',
+    );
+  } else {
+    passed = false;
+    details.push("I66 nona-decimal/quad-supported unexpectedly failed");
+  }
+
+  // 61. wipe15 I67 post-#283 — "10.0 " alias + hypo+supported PASS when expected SUPPORTED cited.
+  const decaDecimalPadI67 = adjudicateGroundedEvalCase({
+    caseDef: {
+      caseId: "c-deca-decimal-pad",
+      prompt: "What are hours?",
+      expectedFactIds: ["fixture-fact-hours"],
+      requiresGrounding: true,
+      acceptanceCaseId: "T-X038",
+    },
+    citedFactIds: ["fixture-fact-hours"],
+    factLabels: labels,
+    groundingUsed: "10.0 ",
+  });
+  const hypoSupportedMixI67 = new Map([
+    ["fixture-fact-hs1", SupportLabel.HYPOTHESIS],
+    ["fixture-fact-hs2", SupportLabel.SUPPORTED],
+  ]);
+  const claimedHypoSupportedI67 = adjudicateGroundedEvalCase({
+    caseDef: {
+      caseId: "c-hypo-supported-claim",
+      prompt: "Mixed hypo supported",
+      expectedFactIds: ["fixture-fact-hs2"],
+      requiresGrounding: true,
+      acceptanceCaseId: "T-X038",
+    },
+    citedFactIds: ["fixture-fact-hs1", "fixture-fact-hs2"],
+    factLabels: hypoSupportedMixI67,
+    groundingUsed: true,
+    claimedVerdict: EvalCaseVerdict.PASS,
+  });
+  if (
+    decaDecimalPadI67.verdict === EvalCaseVerdict.NO_GROUNDING &&
+    normalizeGroundingUsed("10.0 ") === false &&
+    claimedHypoSupportedI67.verdict === EvalCaseVerdict.PASS &&
+    claimedHypoSupportedI67.groundingUsed === true
+  ) {
+    details.push(
+      'wipe15 I67 tip-moved-283: groundingUsed="10.0 " → NO_GROUNDING; hypo+supported with expected SUPPORTED cited → PASS (distinct from #283 T-X028)',
+    );
+  } else {
+    passed = false;
+    details.push("I67 deca-decimal/hypo-supported unexpectedly failed");
+  }
+
+  // 62. wipe15 I68 TIMER ON_TIP c9b7bd66 — "11.0 " + requiresGrounding=false PASS.
+  const undecaDecimalPadI68 = adjudicateGroundedEvalCase({
+    caseDef: {
+      caseId: "c-undeca-decimal-pad",
+      prompt: "What are hours?",
+      expectedFactIds: ["fixture-fact-hours"],
+      requiresGrounding: true,
+      acceptanceCaseId: "T-X038",
+    },
+    citedFactIds: ["fixture-fact-hours"],
+    factLabels: labels,
+    groundingUsed: "11.0 ",
+  });
+  const noGroundRequiredI68 = adjudicateGroundedEvalCase({
+    caseDef: {
+      caseId: "c-no-ground-required",
+      prompt: "Open",
+      expectedFactIds: [],
+      requiresGrounding: false,
+      acceptanceCaseId: "T-X038",
+    },
+    citedFactIds: [],
+    factLabels: labels,
+    groundingUsed: false,
+  });
+  if (
+    undecaDecimalPadI68.verdict === EvalCaseVerdict.NO_GROUNDING &&
+    normalizeGroundingUsed("11.0 ") === false &&
+    noGroundRequiredI68.verdict === EvalCaseVerdict.PASS
+  ) {
+    details.push(
+      'wipe15 I68 TIMER: groundingUsed="11.0 " → NO_GROUNDING; requiresGrounding=false → PASS (exclusive #292 Slot S)',
+    );
+  } else {
+    passed = false;
+    details.push("I68 undeca-decimal/no-ground-required unexpectedly failed");
+  }
+
+  // 63. wipe15 I69 TIMER ON_TIP 578b1a08 — "12.0 " + claimed PASS with grounding false.
+  const dodecaDecimalPadI69 = adjudicateGroundedEvalCase({
+    caseDef: {
+      caseId: "c-dodeca-decimal-pad",
+      prompt: "What are hours?",
+      expectedFactIds: ["fixture-fact-hours"],
+      requiresGrounding: true,
+      acceptanceCaseId: "T-X038",
+    },
+    citedFactIds: ["fixture-fact-hours"],
+    factLabels: labels,
+    groundingUsed: "12.0 ",
+  });
+  const falseGroundClaimedI69 = adjudicateGroundedEvalCase({
+    caseDef: {
+      caseId: "c-false-ground-claim",
+      prompt: "Need ground",
+      expectedFactIds: ["fixture-fact-hours"],
+      requiresGrounding: true,
+      acceptanceCaseId: "T-X038",
+    },
+    citedFactIds: ["fixture-fact-hours"],
+    factLabels: labels,
+    groundingUsed: false,
+    claimedVerdict: EvalCaseVerdict.PASS,
+  });
+  if (
+    dodecaDecimalPadI69.verdict === EvalCaseVerdict.NO_GROUNDING &&
+    normalizeGroundingUsed("12.0 ") === false &&
+    falseGroundClaimedI69.verdict === EvalCaseVerdict.NO_GROUNDING
+  ) {
+    details.push(
+      'wipe15 I69 TIMER: groundingUsed="12.0 " → NO_GROUNDING; false ground + claimed PASS → NO_GROUNDING (exclusive #293 Slot J)',
+    );
+  } else {
+    passed = false;
+    details.push("I69 dodeca-decimal/false-ground unexpectedly failed");
+  }
+
   details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
 
   return {

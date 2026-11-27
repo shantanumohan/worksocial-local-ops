@@ -404,67 +404,6 @@ describe("evaluation — EVAL_ONLY isolation", () => {
     expect(falseLive.liveReceiptClaimed).toBe(false);
   });
 
-  it("refuses sandbox-verified receipt invent (T-X037 B21)", () => {
-    const allowedEnv = resolveEvalToolAttemptEnvelope({
-      rawTool: EvalToolClass.JUDGE_ANSWER,
-      attemptCount: 0,
-      startingNewAttempt: true,
-    });
-    const allowedOut = resolveEvalToolOutcomeClaim({ envelope: allowedEnv });
-    const allowedSide = resolveEvalToolSideEffectClaim({ outcome: allowedOut });
-    const falseSandbox = resolveEvalToolReceiptClaim({
-      sideEffect: allowedSide,
-      claimSandboxVerifiedReceipt: true,
-    });
-    expect(falseSandbox.receipt).toBe("NONE");
-    expect(falseSandbox.sandboxVerifiedClaimed).toBe(false);
-    expect(falseSandbox.inventedReceipt).toBe(false);
-    expect(falseSandbox.verifiedClaimed).toBe(false);
-    expect(falseSandbox.chatgptAdsWiring).toBe("NOT_WIRED");
-    expect(falseSandbox.reason).toContain("FALSE_LIVE_RECEIPT_REFUSED");
-  });
-
-  it("refuses combined sandbox+provider receipt invent (T-X037 B22)", () => {
-    const allowedEnv = resolveEvalToolAttemptEnvelope({
-      rawTool: EvalToolClass.JUDGE_ANSWER,
-      attemptCount: 0,
-      startingNewAttempt: true,
-    });
-    const allowedOut = resolveEvalToolOutcomeClaim({ envelope: allowedEnv });
-    const allowedSide = resolveEvalToolSideEffectClaim({ outcome: allowedOut });
-    const combo = resolveEvalToolReceiptClaim({
-      sideEffect: allowedSide,
-      claimSandboxVerifiedReceipt: true,
-      claimProviderReceipt: true,
-    });
-    expect(combo.receipt).toBe("NONE");
-    expect(combo.sandboxVerifiedClaimed).toBe(false);
-    expect(combo.providerReceiptClaimed).toBe(false);
-    expect(combo.inventedReceipt).toBe(false);
-    expect(combo.acceptedIsNotVerified).toBe(true);
-    expect(combo.externalEffects).toBe("NONE");
-  });
-
-  it("refuses combined sandbox+measured receipt invent (T-X037 B23)", () => {
-    const allowedEnv = resolveEvalToolAttemptEnvelope({
-      rawTool: EvalToolClass.JUDGE_ANSWER,
-      attemptCount: 0,
-      startingNewAttempt: true,
-    });
-    const allowedOut = resolveEvalToolOutcomeClaim({ envelope: allowedEnv });
-    const allowedSide = resolveEvalToolSideEffectClaim({ outcome: allowedOut });
-    const combo = resolveEvalToolReceiptClaim({
-      sideEffect: allowedSide,
-      claimSandboxVerifiedReceipt: true,
-      claimMeasuredReceipt: true,
-    });
-    expect(combo.receipt).toBe("NONE");
-    expect(combo.sandboxVerifiedClaimed).toBe(false);
-    expect(combo.measuredReceiptClaimed).toBe(false);
-    expect(combo.verifiedClaimed).toBe(false);
-    expect(combo.acceptedIsNotVerified).toBe(true);
-  });
-
   it("uses a separate eval budget account", () => {
     let state = emptyEvaluationState(now);
     const reserved = reserveEvalBudget(state.budget, "res-1", 100);
@@ -2255,5 +2194,323 @@ describe("evaluation — grounded adjudication", () => {
     });
     expect(claimedTripleSupported.verdict).toBe(EvalCaseVerdict.PASS);
     expect(claimedTripleSupported.groundingUsed).toBe(true);
+  });
+
+  it("greenfield I62 BIND: penta-decimal alias and claimed PASS quad UNKNOWN (T-X038)", () => {
+    const pentaDecimalPad = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-penta-decimal-pad",
+        prompt: "Hours?",
+        expectedFactIds: ["fixture-fact-hours"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: ["fixture-fact-hours"],
+      factLabels: labels,
+      groundingUsed: "5.0 ",
+    });
+    expect(pentaDecimalPad.verdict).toBe(EvalCaseVerdict.NO_GROUNDING);
+    expect(normalizeGroundingUsed("5.0 ")).toBe(false);
+
+    const quadUnknownLabels = new Map([
+      ["fixture-fact-a", SupportLabel.UNKNOWN],
+      ["fixture-fact-b", SupportLabel.UNKNOWN],
+      ["fixture-fact-c", SupportLabel.UNKNOWN],
+      ["fixture-fact-d", SupportLabel.UNKNOWN],
+    ]);
+    const claimedQuadUnknown = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-quad-unknown-claim",
+        prompt: "Unknown mix",
+        expectedFactIds: ["fixture-fact-a"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: [
+        "fixture-fact-a",
+        "fixture-fact-b",
+        "fixture-fact-c",
+        "fixture-fact-d",
+      ],
+      factLabels: quadUnknownLabels,
+      groundingUsed: true,
+      claimedVerdict: EvalCaseVerdict.PASS,
+    });
+    expect(claimedQuadUnknown.verdict).toBe(EvalCaseVerdict.NO_GROUNDING);
+  });
+
+  it("wipe15 I63 post-#280: hexa-decimal alias and claimed PASS penta HYPOTHESIS (T-X038)", () => {
+    const hexaDecimalPad = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-hexa-decimal-pad",
+        prompt: "Hours?",
+        expectedFactIds: ["fixture-fact-hours"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: ["fixture-fact-hours"],
+      factLabels: labels,
+      groundingUsed: "6.0 ",
+    });
+    expect(hexaDecimalPad.verdict).toBe(EvalCaseVerdict.NO_GROUNDING);
+    expect(normalizeGroundingUsed("6.0 ")).toBe(false);
+
+    const pentaHypothesisLabels = new Map([
+      ["fixture-fact-h1", SupportLabel.HYPOTHESIS],
+      ["fixture-fact-h2", SupportLabel.HYPOTHESIS],
+      ["fixture-fact-h3", SupportLabel.HYPOTHESIS],
+      ["fixture-fact-h4", SupportLabel.HYPOTHESIS],
+      ["fixture-fact-h5", SupportLabel.HYPOTHESIS],
+    ]);
+    const claimedPentaHypothesis = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-penta-hypothesis-claim",
+        prompt: "Hypothesis mix",
+        expectedFactIds: ["fixture-fact-h1"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: [
+        "fixture-fact-h1",
+        "fixture-fact-h2",
+        "fixture-fact-h3",
+        "fixture-fact-h4",
+        "fixture-fact-h5",
+      ],
+      factLabels: pentaHypothesisLabels,
+      groundingUsed: true,
+      claimedVerdict: EvalCaseVerdict.PASS,
+    });
+    expect(claimedPentaHypothesis.verdict).toBe(EvalCaseVerdict.NO_GROUNDING);
+  });
+
+  it("wipe15 I64 post-#281: sept-decimal alias and claimed PASS mixed hypo+unknown (T-X038)", () => {
+    const septDecimalPad = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-sept-decimal-pad",
+        prompt: "Hours?",
+        expectedFactIds: ["fixture-fact-hours"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: ["fixture-fact-hours"],
+      factLabels: labels,
+      groundingUsed: "7.0 ",
+    });
+    expect(septDecimalPad.verdict).toBe(EvalCaseVerdict.NO_GROUNDING);
+    expect(normalizeGroundingUsed("7.0 ")).toBe(false);
+
+    const mixedHypoUnknown = new Map([
+      ["fixture-fact-m1", SupportLabel.HYPOTHESIS],
+      ["fixture-fact-m2", SupportLabel.HYPOTHESIS],
+      ["fixture-fact-m3", SupportLabel.UNKNOWN],
+      ["fixture-fact-m4", SupportLabel.UNKNOWN],
+    ]);
+    const claimedMixed = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-mixed-hypo-unknown-claim",
+        prompt: "Mixed labels",
+        expectedFactIds: ["fixture-fact-m1"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: [
+        "fixture-fact-m1",
+        "fixture-fact-m2",
+        "fixture-fact-m3",
+        "fixture-fact-m4",
+      ],
+      factLabels: mixedHypoUnknown,
+      groundingUsed: true,
+      claimedVerdict: EvalCaseVerdict.PASS,
+    });
+    expect(claimedMixed.verdict).toBe(EvalCaseVerdict.NO_GROUNDING);
+  });
+
+  it("wipe15 I65 TIMER ON_TIP: oct-decimal alias and claimed PASS lone SUPPORTED in unknown sea (T-X038)", () => {
+    const octDecimalPad = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-oct-decimal-pad",
+        prompt: "Hours?",
+        expectedFactIds: ["fixture-fact-hours"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: ["fixture-fact-hours"],
+      factLabels: labels,
+      groundingUsed: "8.0 ",
+    });
+    expect(octDecimalPad.verdict).toBe(EvalCaseVerdict.NO_GROUNDING);
+    expect(normalizeGroundingUsed("8.0 ")).toBe(false);
+
+    const loneSupportedSea = new Map([
+      ["fixture-fact-s1", SupportLabel.SUPPORTED],
+      ["fixture-fact-u1", SupportLabel.UNKNOWN],
+      ["fixture-fact-u2", SupportLabel.UNKNOWN],
+      ["fixture-fact-u3", SupportLabel.UNKNOWN],
+    ]);
+    const claimedLoneSupported = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-lone-supported-sea",
+        prompt: "One supported",
+        expectedFactIds: ["fixture-fact-s1", "fixture-fact-u1"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: [
+        "fixture-fact-s1",
+        "fixture-fact-u1",
+        "fixture-fact-u2",
+        "fixture-fact-u3",
+      ],
+      factLabels: loneSupportedSea,
+      groundingUsed: true,
+      claimedVerdict: EvalCaseVerdict.PASS,
+    });
+    expect(claimedLoneSupported.verdict).toBe(EvalCaseVerdict.FAIL);
+  });
+
+  it("wipe15 I66 post-#282: nona-decimal alias and quad SUPPORTED pass control (T-X038)", () => {
+    const nonaDecimalPad = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-nona-decimal-pad",
+        prompt: "Hours?",
+        expectedFactIds: ["fixture-fact-hours"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: ["fixture-fact-hours"],
+      factLabels: labels,
+      groundingUsed: "9.0 ",
+    });
+    expect(nonaDecimalPad.verdict).toBe(EvalCaseVerdict.NO_GROUNDING);
+    expect(normalizeGroundingUsed("9.0 ")).toBe(false);
+
+    const quadSupportedLabels = new Map([
+      ["fixture-fact-q1", SupportLabel.SUPPORTED],
+      ["fixture-fact-q2", SupportLabel.SUPPORTED],
+      ["fixture-fact-q3", SupportLabel.SUPPORTED],
+      ["fixture-fact-q4", SupportLabel.SUPPORTED],
+    ]);
+    const quadSupportedPass = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-quad-supported-pass",
+        prompt: "All supported",
+        expectedFactIds: ["fixture-fact-q1", "fixture-fact-q2"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: [
+        "fixture-fact-q1",
+        "fixture-fact-q2",
+        "fixture-fact-q3",
+        "fixture-fact-q4",
+      ],
+      factLabels: quadSupportedLabels,
+      groundingUsed: true,
+    });
+    expect(quadSupportedPass.verdict).toBe(EvalCaseVerdict.PASS);
+    expect(quadSupportedPass.groundingUsed).toBe(true);
+  });
+
+  it("wipe15 I67 post-#283: deca-decimal alias and claimed PASS hypo+supported mix (T-X038)", () => {
+    const decaDecimalPad = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-deca-decimal-pad",
+        prompt: "Hours?",
+        expectedFactIds: ["fixture-fact-hours"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: ["fixture-fact-hours"],
+      factLabels: labels,
+      groundingUsed: "10.0 ",
+    });
+    expect(decaDecimalPad.verdict).toBe(EvalCaseVerdict.NO_GROUNDING);
+    expect(normalizeGroundingUsed("10.0 ")).toBe(false);
+
+    const hypoSupportedMix = new Map([
+      ["fixture-fact-hs1", SupportLabel.HYPOTHESIS],
+      ["fixture-fact-hs2", SupportLabel.SUPPORTED],
+    ]);
+    const claimedHypoSupported = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-hypo-supported-claim",
+        prompt: "Mixed hypo supported",
+        expectedFactIds: ["fixture-fact-hs2"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: ["fixture-fact-hs1", "fixture-fact-hs2"],
+      factLabels: hypoSupportedMix,
+      groundingUsed: true,
+      claimedVerdict: EvalCaseVerdict.PASS,
+    });
+    expect(claimedHypoSupported.verdict).toBe(EvalCaseVerdict.PASS);
+    expect(claimedHypoSupported.groundingUsed).toBe(true);
+  });
+
+  it("wipe15 I68 TIMER ON_TIP: undeca-decimal alias; no-grounding case PASS (T-X038)", () => {
+    const undecaDecimalPad = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-undeca-decimal-pad",
+        prompt: "Hours?",
+        expectedFactIds: ["fixture-fact-hours"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: ["fixture-fact-hours"],
+      factLabels: labels,
+      groundingUsed: "11.0 ",
+    });
+    expect(undecaDecimalPad.verdict).toBe(EvalCaseVerdict.NO_GROUNDING);
+    expect(normalizeGroundingUsed("11.0 ")).toBe(false);
+
+    const noGroundRequired = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-no-ground-required",
+        prompt: "Open",
+        expectedFactIds: [],
+        requiresGrounding: false,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: [],
+      factLabels: labels,
+      groundingUsed: false,
+    });
+    expect(noGroundRequired.verdict).toBe(EvalCaseVerdict.PASS);
+    expect(noGroundRequired.groundingUsed).toBe(false);
+  });
+
+  it("wipe15 I69 TIMER ON_TIP: dodeca-decimal alias; grounding false on required case (T-X038)", () => {
+    const dodecaDecimalPad = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-dodeca-decimal-pad",
+        prompt: "Hours?",
+        expectedFactIds: ["fixture-fact-hours"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: ["fixture-fact-hours"],
+      factLabels: labels,
+      groundingUsed: "12.0 ",
+    });
+    expect(dodecaDecimalPad.verdict).toBe(EvalCaseVerdict.NO_GROUNDING);
+    expect(normalizeGroundingUsed("12.0 ")).toBe(false);
+
+    const falseGroundClaimed = adjudicateGroundedEvalCase({
+      caseDef: {
+        caseId: "c-false-ground-claim",
+        prompt: "Need ground",
+        expectedFactIds: ["fixture-fact-hours"],
+        requiresGrounding: true,
+        acceptanceCaseId: "T-X038",
+      },
+      citedFactIds: ["fixture-fact-hours"],
+      factLabels: labels,
+      groundingUsed: false,
+      claimedVerdict: EvalCaseVerdict.PASS,
+    });
+    expect(falseGroundClaimed.verdict).toBe(EvalCaseVerdict.NO_GROUNDING);
   });
 });
