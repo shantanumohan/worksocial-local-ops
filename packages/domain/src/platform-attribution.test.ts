@@ -309,6 +309,24 @@ describe("platform-attribution (T-X059)", () => {
     expect(decision.platformClaimCount).toBe(2);
   });
 
+  it("refuses claimedAtIso without timezone — no lexicographic chronology trap (Q34 wipe15)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-no-tz",
+        platformId: "google_ads",
+        bookingId: "booking-no-tz",
+        claimedAtIso: "2026-11-22T19:00:00",
+      },
+    ]);
+    expect(projection.hasInvalidClaims).toBe(true);
+    expect(projection.platformClaimCount).toBe(0);
+    expect(refuseSilentPlatformSum(projection).code).toBe(
+      "INVALID_ATTRIBUTION_CLAIM",
+    );
+    expect(projection.externalEffects).toBe("NONE");
+    expect(projection.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
   it("allow path keeps NOT_WIRED and NONE on single-platform unique match (Q34/S20)", () => {
     const projection = projectUniqueOutcomes([
       {
