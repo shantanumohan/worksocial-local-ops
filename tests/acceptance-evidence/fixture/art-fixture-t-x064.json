@@ -8,8 +8,8 @@
     "ssrf_redirect_dns_rebind_blocked_every_hop"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x064.json",
-  "createdAtIso": "2026-11-27T18:19:39.230Z",
+  "createdAtIso": "2026-11-27T18:24:42.401Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x064-47b128e207c5"
+  "uniqueSourceArtifactId": "art-fixture-t-x064-5346d967c8db"
 }
