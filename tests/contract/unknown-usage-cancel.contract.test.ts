@@ -23,6 +23,7 @@ import {
   listUnknownUsageHoldIds,
   mapProofToFixtureCases,
   normalizeBudgetHolds,
+  openReservationsTotalMinor,
   reserveBudget,
 } from "@worksocial/domain";
 import { createFileSoakStore } from "@worksocial/persistence";
@@ -120,6 +121,22 @@ describe("contract: T-X027 unknown usage cancel holds residual", () => {
     if (!reuse.ok) return;
     expect(reuse.account.openReservations["ghost-reuse"]).toBe(50);
     expect(reuse.account.heldReservations["ghost-reuse"]).toBeUndefined();
+
+    const openStale = {
+      ...createBudgetAccount({
+        dayKey: "2026-11-22",
+        currency: "USD",
+        limitMinor: 1000,
+      }),
+      reservedMinor: 0,
+      openReservations: { "req-open": 350, "ghost-open": 0 },
+    };
+    expect(openReservationsTotalMinor(openStale)).toBe(350);
+    expect(availableBudgetMinor(openStale)).toBe(650);
+    expect(normalizeBudgetHolds(openStale).reservedMinor).toBe(350);
+    expect(normalizeBudgetHolds(openStale).openReservations).toEqual({
+      "req-open": 350,
+    });
   });
 
   it("maps T-X027 only to UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL", () => {

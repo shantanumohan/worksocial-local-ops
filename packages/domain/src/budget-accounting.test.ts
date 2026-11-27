@@ -9,6 +9,7 @@ import {
   isUnknownUsageHold,
   listUnknownUsageHoldIds,
   normalizeBudgetHolds,
+  openReservationsTotalMinor,
   reserveBudget,
   settleBudget,
 } from "./budget-accounting.js";
@@ -666,5 +667,30 @@ describe("budget accounting", () => {
     expect(listUnknownUsageHoldIds(cancelled.account)).toEqual([
       "ghost-reuse",
     ]);
+  });
+
+  it("stale reservedMinor=0 with open map cannot invent capacity", () => {
+    const reserved = reserveBudget(account(), "r-open", 400);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const stale = {
+      ...reserved.account,
+      reservedMinor: 0,
+      openReservations: {
+        ...reserved.account.openReservations,
+        "ghost-open": 0,
+      },
+    };
+    expect(openReservationsTotalMinor(stale)).toBe(400);
+    expect(availableBudgetMinor(stale)).toBe(600);
+    const blocked = reserveBudget(stale, "r-over", 700);
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.code).toBe("BUDGET_EXHAUSTED");
+      expect(blocked.availableMinor).toBe(600);
+    }
+    const scrubbed = normalizeBudgetHolds(stale);
+    expect(scrubbed.reservedMinor).toBe(400);
+    expect(scrubbed.openReservations).toEqual({ "r-open": 400 });
   });
 });

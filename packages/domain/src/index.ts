@@ -32,6 +32,7 @@ export {
   isUnknownUsageHold,
   listUnknownUsageHoldIds,
   normalizeBudgetHolds,
+  openReservationsTotalMinor,
   reserveBudget,
   settleBudget,
   type BudgetAccount,

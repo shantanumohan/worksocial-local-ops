@@ -76,10 +76,11 @@ const honesty = {
 };
 
 function available(account: BudgetAccount): number {
-  // Hold map is source of truth — ignore stale heldMinor (T-X027).
+  // Open + hold maps are source of truth — ignore stale reservedMinor /
+  // heldMinor fields that would invent capacity (T-X027).
   return (
     account.limitMinor -
-    account.reservedMinor -
+    openReservationsTotalMinor(account) -
     account.settledMinor -
     heldReservationsTotalMinor(account)
   );
@@ -87,6 +88,22 @@ function available(account: BudgetAccount): number {
 
 export function availableBudgetMinor(account: BudgetAccount): number {
   return available(account);
+}
+
+/**
+ * Sum of open reservation amounts. Non-finite / non-positive map values
+ * are ignored (never invent capacity) — T-X027 honesty twin of holds.
+ */
+export function openReservationsTotalMinor(account: BudgetAccount): number {
+  const open = account.openReservations ?? {};
+  let total = 0;
+  for (const amount of Object.values(open)) {
+    const n = Number(amount);
+    if (Number.isFinite(n) && n > 0) {
+      total += n;
+    }
+  }
+  return total;
 }
 
 /**
@@ -123,34 +140,54 @@ export function isUnknownUsageHold(
 }
 
 /**
- * Sync `heldMinor` to the hold-map sum and drop non-positive / non-finite
- * map keys. Map is source of truth — stale heldMinor must not invent
- * available capacity; ghost keys must not look like holds (T-X027).
+ * Sync `heldMinor` / `reservedMinor` to map sums and drop non-positive /
+ * non-finite map keys. Maps are source of truth — stale fields must not
+ * invent available capacity; ghost keys must not look like holds (T-X027).
  */
 export function normalizeBudgetHolds(account: BudgetAccount): BudgetAccount {
-  const raw = account.heldReservations ?? {};
-  const scrubbed: Record<string, number> = {};
-  let mapChanged = false;
-  for (const [id, amount] of Object.entries(raw)) {
+  const rawHeld = account.heldReservations ?? {};
+  const scrubbedHeld: Record<string, number> = {};
+  let heldMapChanged = false;
+  for (const [id, amount] of Object.entries(rawHeld)) {
     const n = Number(amount);
     if (Number.isFinite(n) && n > 0) {
-      scrubbed[id] = n;
-      if (n !== amount) mapChanged = true;
+      scrubbedHeld[id] = n;
+      if (n !== amount) heldMapChanged = true;
     } else {
-      mapChanged = true;
+      heldMapChanged = true;
     }
   }
-  const heldMinor = heldReservationsTotalMinor({
+  const rawOpen = account.openReservations ?? {};
+  const scrubbedOpen: Record<string, number> = {};
+  let openMapChanged = false;
+  for (const [id, amount] of Object.entries(rawOpen)) {
+    const n = Number(amount);
+    if (Number.isFinite(n) && n > 0) {
+      scrubbedOpen[id] = n;
+      if (n !== amount) openMapChanged = true;
+    } else {
+      openMapChanged = true;
+    }
+  }
+  const next = {
     ...account,
-    heldReservations: scrubbed,
-  });
-  if (!mapChanged && account.heldMinor === heldMinor) {
+    heldReservations: heldMapChanged ? scrubbedHeld : account.heldReservations,
+    openReservations: openMapChanged ? scrubbedOpen : account.openReservations,
+  };
+  const heldMinor = heldReservationsTotalMinor(next);
+  const reservedMinor = openReservationsTotalMinor(next);
+  if (
+    !heldMapChanged &&
+    !openMapChanged &&
+    account.heldMinor === heldMinor &&
+    account.reservedMinor === reservedMinor
+  ) {
     return account;
   }
   return {
-    ...account,
+    ...next,
     heldMinor,
-    heldReservations: mapChanged ? scrubbed : account.heldReservations,
+    reservedMinor,
   };
 }
 

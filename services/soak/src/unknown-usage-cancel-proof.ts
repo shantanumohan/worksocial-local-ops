@@ -17,6 +17,7 @@ import {
   isUnknownUsageHold,
   listUnknownUsageHoldIds,
   normalizeBudgetHolds,
+  openReservationsTotalMinor,
   reserveBudget,
   settleBudget,
   type SoakProofRecord,
@@ -520,6 +521,51 @@ export function proofUnknownUsageCancelHoldsResidual(
     passed = false;
     details.push(
       `Ghost-reuse/scrub-open-cancel failed reuse=${JSON.stringify(reuse)} hold=${JSON.stringify(reuseHold)}`,
+    );
+  }
+
+  // 17. Stale reservedMinor=0 with open map cannot invent capacity.
+  const openReserved = reserveBudget(
+    createBudgetAccount({
+      dayKey: "2026-11-22",
+      currency: "USD",
+      limitMinor: 1000,
+    }),
+    "req-stale-open",
+    500,
+  );
+  if (!openReserved.ok) {
+    passed = false;
+    details.push(`Stale-open reserve failed: ${JSON.stringify(openReserved)}`);
+    return finish(passed, details, nowIso);
+  }
+  const staleOpen = {
+    ...openReserved.account,
+    reservedMinor: 0,
+    openReservations: {
+      ...openReserved.account.openReservations,
+      "ghost-open": 0,
+    },
+  };
+  const staleOpenAvail = availableBudgetMinor(staleOpen);
+  const staleOpenBlocked = reserveBudget(staleOpen, "req-stale-open-over", 600);
+  const normOpen = normalizeBudgetHolds(staleOpen);
+  if (
+    openReservationsTotalMinor(staleOpen) === 500 &&
+    staleOpenAvail === 500 &&
+    !staleOpenBlocked.ok &&
+    staleOpenBlocked.code === "BUDGET_EXHAUSTED" &&
+    staleOpenBlocked.availableMinor === 500 &&
+    normOpen.reservedMinor === 500 &&
+    normOpen.openReservations["ghost-open"] === undefined
+  ) {
+    details.push(
+      "Stale reservedMinor=0 cannot invent capacity; open map 500 → available=500; normalize restores reservedMinor and scrubs open ghosts",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Stale reservedMinor probe failed avail=${staleOpenAvail} blocked=${JSON.stringify(staleOpenBlocked)} norm=${normOpen.reservedMinor}`,
     );
   }
 
