@@ -1,12 +1,12 @@
 /**
- * T-X065 worker browser auth — soak proof (M16 idle hillclimb).
+ * T-X065 worker browser auth — soak proof (M16+ / M18 edge deepen).
  */
 
 import { describe, expect, it } from "vitest";
 import { SoakProofKind } from "@worksocial/domain";
 import { proofWorkerBrowserAuthStateOsDenied } from "./browser-auth-state-proof.js";
 
-describe("proofWorkerBrowserAuthStateOsDenied (T-X065 M16)", () => {
+describe("proofWorkerBrowserAuthStateOsDenied (T-X065 M16+)", () => {
   it("passes with full domain matrix and worker partition escalation denies", () => {
     const proof = proofWorkerBrowserAuthStateOsDenied(
       "2026-11-27T18:30:00.000Z",
@@ -18,7 +18,10 @@ describe("proofWorkerBrowserAuthStateOsDenied (T-X065 M16)", () => {
 
     const joined = proof.details.join(" | ");
     expect(joined).toMatch(
-      /domain workflow-worker → workspace_browser_partition: OS_DENY/,
+      /domain workflow-worker → workspace_browser_partition: OS_DENY \(no-consent domain path\)/,
+    );
+    expect(joined).toMatch(
+      /domain workflow-worker → workspace_browser_partition: OS_DENY; liveBrowserAuthWiring=NOT_WIRED/,
     );
     expect(joined).toMatch(
       /boundary claude-runner → workspace_browser_partition: OS_DENY \(consent cannot escalate\)/,
@@ -46,6 +49,18 @@ describe("proofWorkerBrowserAuthStateOsDenied (T-X065 M16)", () => {
     );
     expect(joined).toMatch(
       /boundary host-admin → workspace_browser_partition: OS_DENY \(no-consent path\)/,
+    );
+    expect(joined).toMatch(
+      /domain workflow-worker → workspace_browser_partition: OS_DENY \(explicitUserConsent=false\)/,
+    );
+    expect(joined).toMatch(
+      /domain browser-pool → system_chrome_cookies: OS_DENY \(explicitUserConsent=false\)/,
+    );
+    expect(joined).toMatch(
+      /domain browser-pool → workspace_browser_partition: CONSENT_REQUIRED \(explicitUserConsent=false\)/,
+    );
+    expect(joined).toMatch(
+      /domain browser-pool → workspace_browser_partition: ALLOWED honesty locked \(no material; NOT_WIRED; NONE\)/,
     );
     expect(joined).toMatch(/fixture vault intact after OS_DENY matrix/);
     expect(joined).toMatch(/liveBrowserAuthWiring=NOT_WIRED/);
