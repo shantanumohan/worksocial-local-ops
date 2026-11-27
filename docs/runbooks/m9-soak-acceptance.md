@@ -104,7 +104,7 @@ Suggested owner Windows flow (state off OneDrive):
 | T-X031 | Fixture ACCEPTED via GA4 wrong property kind refused only |
 | T-US-040 / T-X049 | Fixture ACCEPTED via thank-you without CRM fails delivery only |
 | T-X017 | Fixture ACCEPTED via stop-after-dispatch reconcile / no fake cancel only |
-| T-X024 | Fixture ACCEPTED via old fence after reassignment only |
+| T-X024 | Fixture ACCEPTED via old fence after reassignment only (fenceCause expired≠wrong_holder; Temporal NOT_WIRED) |
 | T-X011 | Fixture ACCEPTED via output bomb bounded/quarantined only (non-finite max refused; close-path quarantine; idempotent reclaim+code drift; dual live-claim refuse; ACCEPTED≠VERIFIED) |
 | T-X003 | Fixture ACCEPTED via symlink escape after root verification only |
 | T-X010 | Fixture ACCEPTED via malicious prompt no shell injection only |

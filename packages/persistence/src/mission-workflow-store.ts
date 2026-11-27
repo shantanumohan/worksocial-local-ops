@@ -143,14 +143,539 @@ function rowToMission(row: Record<string, unknown>): MissionWorkflowRecord {
   };
 }
 
-function leaseActive(
+/** T-X024 related case — fixture ACCEPTED only; never invent past T-X073. */
+export const OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS = [
+  "T-X024",
+] as const;
+
+/**
+ * Fixture honesty for T-X024 old-fence proofs (edge deepen O4).
+ * ACCEPTED ≠ VERIFIED; Temporal NOT_WIRED; Ads soft-skip; externalEffects NONE.
+ */
+export const OLD_FENCE_HONESTY = {
+  liveTemporalWiring: "NOT_WIRED",
+  chatgptAdsAccess: "ACCESS_BLOCKED",
+  softSkipAdsCases: ["T-F07", "T-US-013", "T-US-014"],
+  liveProviderSuccessClaimed: false,
+  externalEffects: "NONE",
+  acceptedNotVerified: true,
+} as const;
+
+/**
+ * Why a holder may or may not commit under the mission lease fence.
+ * Distinct causes keep expired ≠ wrong_holder (hillclimb O2).
+ * wrong_holder is checked before expiry so mismatched holders never
+ * report as expired (edge honesty O4).
+ */
+export type MissionLeaseFenceCause =
+  | "active"
+  | "expired"
+  | "wrong_holder"
+  | "no_holder";
+
+/**
+ * Classify lease fence state for `holder` at `nowIso`.
+ * Exact expiry (`nowIso === leaseExpiresAtIso`) → `expired`.
+ * Null `leaseExpiresAtIso` stays `active` for the matching holder.
+ */
+export function classifyMissionLeaseFence(
+  record: MissionWorkflowRecord,
+  holder: string,
+  nowIso: string,
+): MissionLeaseFenceCause {
+  if (record.leaseHolder == null) return "no_holder";
+  if (record.leaseHolder !== holder) return "wrong_holder";
+  if (
+    record.leaseExpiresAtIso &&
+    Date.parse(record.leaseExpiresAtIso) <= Date.parse(nowIso)
+  ) {
+    return "expired";
+  }
+  return "active";
+}
+
+/**
+ * True when `holder` still owns an unexpired lease on `record`.
+ * Exact expiry (`nowIso === leaseExpiresAtIso`) is inactive — enables
+ * T-X024 reassignment at the boundary without a live Temporal clock.
+ */
+export function isMissionLeaseActive(
   record: MissionWorkflowRecord,
   holder: string,
   nowIso: string,
 ): boolean {
-  if (record.leaseHolder !== holder) return false;
-  if (!record.leaseExpiresAtIso) return true;
-  return Date.parse(record.leaseExpiresAtIso) > Date.parse(nowIso);
+  return classifyMissionLeaseFence(record, holder, nowIso) === "active";
+}
+
+/**
+ * Lease-fence deny message with classified cause (T-X024 O3).
+ * Keeps expired ≠ wrong_holder visible on the throw path.
+ */
+export function missionLeaseFenceFailedMessage(
+  workflowId: string,
+  cause: MissionLeaseFenceCause,
+): string {
+  return `Lease fence failed for ${workflowId} (fenceCause=${cause})`;
+}
+
+const FENCE_CAUSE_VALUES: readonly MissionLeaseFenceCause[] = [
+  "active",
+  "expired",
+  "wrong_holder",
+  "no_holder",
+] as const;
+
+/**
+ * Parse `fenceCause=` from a lease-fence deny message (T-X024 O6).
+ * Round-trips with `missionLeaseFenceFailedMessage`; null when absent/unknown.
+ */
+export function parseMissionLeaseFenceCause(
+  message: string,
+): MissionLeaseFenceCause | null {
+  const match = /fenceCause=([a-z_]+)/.exec(message);
+  if (!match) return null;
+  const cause = match[1] as MissionLeaseFenceCause;
+  return (FENCE_CAUSE_VALUES as readonly string[]).includes(cause)
+    ? cause
+    : null;
+}
+
+/**
+ * Fixture soak may only claim FIXTURE temporal wiring (T-X024 O5).
+ * TEMPORAL / LOCAL_DURABLE / bare NOT_WIRED-as-store-row → LIVE_TEMPORAL_CLAIM_REFUSED.
+ */
+export type FixtureTemporalWiringDecision = {
+  allowed: boolean;
+  code: "FIXTURE_OK" | "LIVE_TEMPORAL_CLAIM_REFUSED";
+  temporalWiring: MissionTemporalWiring;
+  liveTemporalWiring: typeof OLD_FENCE_HONESTY.liveTemporalWiring;
+  externalEffects: typeof OLD_FENCE_HONESTY.externalEffects;
+  acceptedNotVerified: typeof OLD_FENCE_HONESTY.acceptedNotVerified;
+  chatgptAdsAccess: typeof OLD_FENCE_HONESTY.chatgptAdsAccess;
+};
+
+export function evaluateFixtureTemporalWiring(
+  wiring: MissionTemporalWiring,
+): FixtureTemporalWiringDecision {
+  const honesty = {
+    liveTemporalWiring: OLD_FENCE_HONESTY.liveTemporalWiring,
+    externalEffects: OLD_FENCE_HONESTY.externalEffects,
+    acceptedNotVerified: OLD_FENCE_HONESTY.acceptedNotVerified,
+    chatgptAdsAccess: OLD_FENCE_HONESTY.chatgptAdsAccess,
+  } as const;
+  if (wiring === "FIXTURE") {
+    return {
+      allowed: true,
+      code: "FIXTURE_OK",
+      temporalWiring: wiring,
+      ...honesty,
+    };
+  }
+  return {
+    allowed: false,
+    code: "LIVE_TEMPORAL_CLAIM_REFUSED",
+    temporalWiring: wiring,
+    ...honesty,
+  };
+}
+
+/**
+ * Fixture acceptance label gate (T-X024 O6).
+ * ACCEPTED is the only allowed fixture label — VERIFIED (and any other
+ * upgrade) → VERIFIED_CLAIM_REFUSED. ACCEPTED ≠ VERIFIED.
+ */
+export type OldFenceAcceptanceLabelDecision = {
+  allowed: boolean;
+  code: "ACCEPTED_OK" | "VERIFIED_CLAIM_REFUSED";
+  label: string;
+  acceptedNotVerified: typeof OLD_FENCE_HONESTY.acceptedNotVerified;
+  externalEffects: typeof OLD_FENCE_HONESTY.externalEffects;
+  liveTemporalWiring: typeof OLD_FENCE_HONESTY.liveTemporalWiring;
+};
+
+export function evaluateOldFenceAcceptanceLabel(
+  label: string,
+): OldFenceAcceptanceLabelDecision {
+  const honesty = {
+    acceptedNotVerified: OLD_FENCE_HONESTY.acceptedNotVerified,
+    externalEffects: OLD_FENCE_HONESTY.externalEffects,
+    liveTemporalWiring: OLD_FENCE_HONESTY.liveTemporalWiring,
+  } as const;
+  if (label === "ACCEPTED") {
+    return { allowed: true, code: "ACCEPTED_OK", label, ...honesty };
+  }
+  return {
+    allowed: false,
+    code: "VERIFIED_CLAIM_REFUSED",
+    label,
+    ...honesty,
+  };
+}
+
+/**
+ * Fixture external-effects gate (T-X024 O7).
+ * Only `NONE` is allowed — any other claim → EXTERNAL_EFFECTS_CLAIM_REFUSED.
+ */
+export type OldFenceExternalEffectsDecision = {
+  allowed: boolean;
+  code: "EXTERNAL_EFFECTS_NONE_OK" | "EXTERNAL_EFFECTS_CLAIM_REFUSED";
+  claim: string;
+  externalEffects: typeof OLD_FENCE_HONESTY.externalEffects;
+  acceptedNotVerified: typeof OLD_FENCE_HONESTY.acceptedNotVerified;
+};
+
+export function evaluateOldFenceExternalEffects(
+  claim: string,
+): OldFenceExternalEffectsDecision {
+  const honesty = {
+    externalEffects: OLD_FENCE_HONESTY.externalEffects,
+    acceptedNotVerified: OLD_FENCE_HONESTY.acceptedNotVerified,
+  } as const;
+  if (claim === "NONE") {
+    return {
+      allowed: true,
+      code: "EXTERNAL_EFFECTS_NONE_OK",
+      claim,
+      ...honesty,
+    };
+  }
+  return {
+    allowed: false,
+    code: "EXTERNAL_EFFECTS_CLAIM_REFUSED",
+    claim,
+    ...honesty,
+  };
+}
+
+/**
+ * Fixture live-provider-success gate (T-X024 O7).
+ * `true` → LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED (fixture never claims live apply).
+ */
+export type OldFenceLiveProviderSuccessDecision = {
+  allowed: boolean;
+  code: "LIVE_PROVIDER_SUCCESS_NONE_OK" | "LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED";
+  claimed: boolean;
+  liveProviderSuccessClaimed: typeof OLD_FENCE_HONESTY.liveProviderSuccessClaimed;
+  externalEffects: typeof OLD_FENCE_HONESTY.externalEffects;
+};
+
+export function evaluateOldFenceLiveProviderSuccess(
+  claimed: boolean,
+): OldFenceLiveProviderSuccessDecision {
+  const honesty = {
+    liveProviderSuccessClaimed: OLD_FENCE_HONESTY.liveProviderSuccessClaimed,
+    externalEffects: OLD_FENCE_HONESTY.externalEffects,
+  } as const;
+  if (claimed === false) {
+    return {
+      allowed: true,
+      code: "LIVE_PROVIDER_SUCCESS_NONE_OK",
+      claimed,
+      ...honesty,
+    };
+  }
+  return {
+    allowed: false,
+    code: "LIVE_PROVIDER_SUCCESS_CLAIM_REFUSED",
+    claimed,
+    ...honesty,
+  };
+}
+
+/**
+ * Fixture ChatGPT Ads access gate (T-X024 O8).
+ * Only `ACCESS_BLOCKED` is allowed — any open/live claim → CHATGPT_ADS_ACCESS_CLAIM_REFUSED.
+ */
+export type OldFenceChatgptAdsAccessDecision = {
+  allowed: boolean;
+  code:
+    | "CHATGPT_ADS_ACCESS_BLOCKED_OK"
+    | "CHATGPT_ADS_ACCESS_CLAIM_REFUSED";
+  access: string;
+  chatgptAdsAccess: typeof OLD_FENCE_HONESTY.chatgptAdsAccess;
+  softSkipAdsCases: typeof OLD_FENCE_HONESTY.softSkipAdsCases;
+};
+
+export function evaluateOldFenceChatgptAdsAccess(
+  access: string,
+): OldFenceChatgptAdsAccessDecision {
+  const honesty = {
+    chatgptAdsAccess: OLD_FENCE_HONESTY.chatgptAdsAccess,
+    softSkipAdsCases: OLD_FENCE_HONESTY.softSkipAdsCases,
+  } as const;
+  if (access === "ACCESS_BLOCKED") {
+    return {
+      allowed: true,
+      code: "CHATGPT_ADS_ACCESS_BLOCKED_OK",
+      access,
+      ...honesty,
+    };
+  }
+  return {
+    allowed: false,
+    code: "CHATGPT_ADS_ACCESS_CLAIM_REFUSED",
+    access,
+    ...honesty,
+  };
+}
+
+/**
+ * Soft-skip Ads case gate (T-X024 O8).
+ * T-F07 / T-US-013 / T-US-014 → SOFT_SKIP_ADS_OK (do not build).
+ * Any other caseId → NOT_SOFT_SKIP_ADS_CASE.
+ */
+export type OldFenceSoftSkipAdsCaseDecision = {
+  softSkip: boolean;
+  code: "SOFT_SKIP_ADS_OK" | "NOT_SOFT_SKIP_ADS_CASE";
+  caseId: string;
+  softSkipAdsCases: typeof OLD_FENCE_HONESTY.softSkipAdsCases;
+};
+
+export function evaluateOldFenceSoftSkipAdsCase(
+  caseId: string,
+): OldFenceSoftSkipAdsCaseDecision {
+  const softSkip = (
+    OLD_FENCE_HONESTY.softSkipAdsCases as readonly string[]
+  ).includes(caseId);
+  return {
+    softSkip,
+    code: softSkip ? "SOFT_SKIP_ADS_OK" : "NOT_SOFT_SKIP_ADS_CASE",
+    caseId,
+    softSkipAdsCases: OLD_FENCE_HONESTY.softSkipAdsCases,
+  };
+}
+
+/** Catalog ceiling for T-X* invent guard (never invent past T-X073). */
+export const OLD_FENCE_CATALOG_CEILING = 73 as const;
+
+/**
+ * Related-case gate (T-X024 O9).
+ * Exactly `["T-X024"]` → RELATED_CASES_OK; any other set → RELATED_CASES_CLAIM_REFUSED.
+ */
+export type OldFenceRelatedCaseIdsDecision = {
+  allowed: boolean;
+  code: "RELATED_CASES_OK" | "RELATED_CASES_CLAIM_REFUSED";
+  relatedCaseIds: readonly string[];
+};
+
+export function evaluateOldFenceRelatedCaseIds(
+  relatedCaseIds: readonly string[],
+): OldFenceRelatedCaseIdsDecision {
+  const expected = [...OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS];
+  const ok =
+    relatedCaseIds.length === expected.length &&
+    relatedCaseIds.every((id, i) => id === expected[i]);
+  return {
+    allowed: ok,
+    code: ok ? "RELATED_CASES_OK" : "RELATED_CASES_CLAIM_REFUSED",
+    relatedCaseIds,
+  };
+}
+
+/**
+ * Catalog case-id gate (T-X024 O9).
+ * T-X024 → CATALOG_CASE_OK; invent past T-X073 → CATALOG_CEILING_REFUSED;
+ * other IDs → CATALOG_CASE_REFUSED.
+ */
+export type OldFenceCatalogCaseDecision = {
+  allowed: boolean;
+  code: "CATALOG_CASE_OK" | "CATALOG_CEILING_REFUSED" | "CATALOG_CASE_REFUSED";
+  caseId: string;
+  catalogCeiling: typeof OLD_FENCE_CATALOG_CEILING;
+};
+
+export function evaluateOldFenceCatalogCaseId(
+  caseId: string,
+): OldFenceCatalogCaseDecision {
+  const ceiling = OLD_FENCE_CATALOG_CEILING;
+  const match = /^T-X(\d+)$/.exec(caseId);
+  if (match) {
+    const n = Number(match[1]);
+    if (n > ceiling) {
+      return {
+        allowed: false,
+        code: "CATALOG_CEILING_REFUSED",
+        caseId,
+        catalogCeiling: ceiling,
+      };
+    }
+  }
+  if (caseId === "T-X024") {
+    return {
+      allowed: true,
+      code: "CATALOG_CASE_OK",
+      caseId,
+      catalogCeiling: ceiling,
+    };
+  }
+  return {
+    allowed: false,
+    code: "CATALOG_CASE_REFUSED",
+    caseId,
+    catalogCeiling: ceiling,
+  };
+}
+
+/**
+ * acceptedNotVerified boolean gate (T-X024 O10).
+ * Only `true` is allowed — `false` collapses ACCEPTED into VERIFIED → refused.
+ */
+export type OldFenceAcceptedNotVerifiedDecision = {
+  allowed: boolean;
+  code: "ACCEPTED_NOT_VERIFIED_OK" | "ACCEPTED_EQUALS_VERIFIED_CLAIM_REFUSED";
+  flag: boolean;
+  acceptedNotVerified: typeof OLD_FENCE_HONESTY.acceptedNotVerified;
+  liveTemporalWiring: typeof OLD_FENCE_HONESTY.liveTemporalWiring;
+};
+
+export function evaluateOldFenceAcceptedNotVerified(
+  flag: boolean,
+): OldFenceAcceptedNotVerifiedDecision {
+  const honesty = {
+    acceptedNotVerified: OLD_FENCE_HONESTY.acceptedNotVerified,
+    liveTemporalWiring: OLD_FENCE_HONESTY.liveTemporalWiring,
+  } as const;
+  if (flag === true) {
+    return {
+      allowed: true,
+      code: "ACCEPTED_NOT_VERIFIED_OK",
+      flag,
+      ...honesty,
+    };
+  }
+  return {
+    allowed: false,
+    code: "ACCEPTED_EQUALS_VERIFIED_CLAIM_REFUSED",
+    flag,
+    ...honesty,
+  };
+}
+
+/**
+ * Live Temporal wiring honesty gate (T-X024 O10).
+ * Only `"NOT_WIRED"` is allowed on the live claim — distinct from store-row
+ * `evaluateFixtureTemporalWiring` (`FIXTURE_OK` vs `LIVE_TEMPORAL_CLAIM_REFUSED`).
+ */
+export type OldFenceLiveTemporalNotWiredDecision = {
+  allowed: boolean;
+  code: "LIVE_TEMPORAL_NOT_WIRED_OK" | "LIVE_TEMPORAL_WIRED_CLAIM_REFUSED";
+  claim: string;
+  liveTemporalWiring: typeof OLD_FENCE_HONESTY.liveTemporalWiring;
+  acceptedNotVerified: typeof OLD_FENCE_HONESTY.acceptedNotVerified;
+};
+
+export function evaluateOldFenceLiveTemporalNotWired(
+  claim: string,
+): OldFenceLiveTemporalNotWiredDecision {
+  const honesty = {
+    liveTemporalWiring: OLD_FENCE_HONESTY.liveTemporalWiring,
+    acceptedNotVerified: OLD_FENCE_HONESTY.acceptedNotVerified,
+  } as const;
+  if (claim === "NOT_WIRED") {
+    return {
+      allowed: true,
+      code: "LIVE_TEMPORAL_NOT_WIRED_OK",
+      claim,
+      ...honesty,
+    };
+  }
+  return {
+    allowed: false,
+    code: "LIVE_TEMPORAL_WIRED_CLAIM_REFUSED",
+    claim,
+    ...honesty,
+  };
+}
+
+/**
+ * Assigned case-id gate (T-X024 O11).
+ * Only `T-X024` is allowed for slot-O hillclimb — other IDs (even ≤T-X073)
+ * → `ASSIGNED_CASE_REFUSED` (distinct from catalog ceiling).
+ */
+export type OldFenceAssignedCaseDecision = {
+  allowed: boolean;
+  code: "ASSIGNED_CASE_OK" | "ASSIGNED_CASE_REFUSED";
+  caseId: string;
+  assignedCaseId: "T-X024";
+};
+
+export function evaluateOldFenceAssignedCaseId(
+  caseId: string,
+): OldFenceAssignedCaseDecision {
+  const assignedCaseId = "T-X024" as const;
+  const ok = caseId === assignedCaseId;
+  return {
+    allowed: ok,
+    code: ok ? "ASSIGNED_CASE_OK" : "ASSIGNED_CASE_REFUSED",
+    caseId,
+    assignedCaseId,
+  };
+}
+
+/** AA-209 Cohort-2 slot O: squash-merge only when sequencer names this PR. */
+export type OldFenceCohort2MergeHoldDecision = {
+  allowed: boolean;
+  code: "COHORT2_MERGE_HOLD_OK" | "COHORT2_MERGE_AUTHORIZED_REFUSED";
+  mergeAuthorized: boolean;
+  assignedCaseId: "T-X024";
+  cohort: "2";
+};
+
+/** AA-209 catalog slot gate — only Cohort-2 **O** owns T-X024 hillclimb #235. */
+export type OldFenceAssignedCohortSlotDecision = {
+  allowed: boolean;
+  code: "ASSIGNED_COHORT_SLOT_OK" | "ASSIGNED_COHORT_SLOT_REFUSED";
+  slot: string;
+  assignedSlot: "O";
+  cohort: "2";
+  assignedCaseId: "T-X024";
+};
+
+export function evaluateOldFenceAssignedCohortSlot(
+  slot: string,
+): OldFenceAssignedCohortSlotDecision {
+  const meta = {
+    assignedSlot: "O" as const,
+    cohort: "2" as const,
+    assignedCaseId: "T-X024" as const,
+  };
+  const ok = slot === meta.assignedSlot;
+  return {
+    allowed: ok,
+    code: ok ? "ASSIGNED_COHORT_SLOT_OK" : "ASSIGNED_COHORT_SLOT_REFUSED",
+    slot,
+    ...meta,
+  };
+}
+
+export function evaluateOldFenceCohort2MergeHold(
+  mergeAuthorized: boolean,
+): OldFenceCohort2MergeHoldDecision {
+  const meta = {
+    assignedCaseId: "T-X024" as const,
+    cohort: "2" as const,
+  };
+  if (mergeAuthorized === false) {
+    return {
+      allowed: true,
+      code: "COHORT2_MERGE_HOLD_OK",
+      mergeAuthorized,
+      ...meta,
+    };
+  }
+  return {
+    allowed: false,
+    code: "COHORT2_MERGE_AUTHORIZED_REFUSED",
+    mergeAuthorized,
+    ...meta,
+  };
+}
+
+/** Stable honesty detail line for soak evidence (O4–O11). */
+export function formatOldFenceHonestyDetail(
+  relatedCaseIds: readonly string[] = OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
+): string {
+  return `relatedCases=${relatedCaseIds.join(",")} liveTemporalWiring=${OLD_FENCE_HONESTY.liveTemporalWiring} chatgptAdsAccess=${OLD_FENCE_HONESTY.chatgptAdsAccess} softSkipAds=${OLD_FENCE_HONESTY.softSkipAdsCases.join(",")} liveProviderSuccessClaimed=${OLD_FENCE_HONESTY.liveProviderSuccessClaimed} externalEffects=${OLD_FENCE_HONESTY.externalEffects} acceptedNotVerified=${OLD_FENCE_HONESTY.acceptedNotVerified}`;
 }
 
 export function createMemoryMissionWorkflowStore(): MissionWorkflowStore {
@@ -228,8 +753,15 @@ export function createMemoryMissionWorkflowStore(): MissionWorkflowStore {
           `Workflow ${input.workflowId} must be leased to bind operation`,
         );
       }
-      if (!leaseActive(existing, input.holder, input.nowIso)) {
-        throw new Error(`Lease fence failed for ${input.workflowId}`);
+      if (!isMissionLeaseActive(existing, input.holder, input.nowIso)) {
+        const cause = classifyMissionLeaseFence(
+          existing,
+          input.holder,
+          input.nowIso,
+        );
+        throw new Error(
+          missionLeaseFenceFailedMessage(input.workflowId, cause),
+        );
       }
       const updated: MissionWorkflowRecord = {
         ...existing,
@@ -253,8 +785,15 @@ export function createMemoryMissionWorkflowStore(): MissionWorkflowStore {
           `Workflow ${input.workflowId} must be leased to mark effect_pending`,
         );
       }
-      if (!leaseActive(existing, input.holder, input.nowIso)) {
-        throw new Error(`Lease fence failed for ${input.workflowId}`);
+      if (!isMissionLeaseActive(existing, input.holder, input.nowIso)) {
+        const cause = classifyMissionLeaseFence(
+          existing,
+          input.holder,
+          input.nowIso,
+        );
+        throw new Error(
+          missionLeaseFenceFailedMessage(input.workflowId, cause),
+        );
       }
       if (
         existing.operationId &&

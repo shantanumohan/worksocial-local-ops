@@ -2026,7 +2026,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x024",
-      "evidenceNote": "Fixture old-fence-after-reassignment proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture old-fence-after-reassignment proof only (fenceCause expired≠wrong_holder; VERIFIED_CLAIM_REFUSED; EXTERNAL_EFFECTS_CLAIM_REFUSED; CHATGPT_ADS_ACCESS_CLAIM_REFUSED; SOFT_SKIP_ADS; CATALOG_CEILING_REFUSED; UNFENCED_RECOVERY_NOT_FENCE_PROOF; Temporal NOT_WIRED) — not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X025",
