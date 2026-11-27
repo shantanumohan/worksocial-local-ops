@@ -2106,7 +2106,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x029",
-      "evidenceNote": "Fixture ACCEPTED via EXPLICIT_ACCOUNT_REBIND only. Same-account local rotate does not satisfy. Not sandbox/prod VERIFIED."
+      "evidenceNote": "Fixture ACCEPTED via EXPLICIT_ACCOUNT_REBIND (silent different-account REBIND_REQUIRED; blank/whitespace refuse; trim+case-fold same-account; blank rebind label refuse; fixture+WIRED refuse LIVE_TRANSPORT_NOT_WIRED; liveProviderWiring/liveProviderRevoke=NOT_WIRED; externalEffects=NONE) — not sandbox/prod VERIFIED"
     },
     {
       "id": "T-X030",

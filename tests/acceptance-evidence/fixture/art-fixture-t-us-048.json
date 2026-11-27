@@ -3,13 +3,13 @@
   "caseId": "T-US-048",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-US-048 (Unknown remote effects reconciled before resume)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-f0f33155 without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-US-048 (Unknown remote effects reconciled before resume)\nproof=unknown_remote_reconcile applyCount=1 :: Left ACCEPTED_PENDING (unknown until independent read) apply=1 | Reconciled remoteRef=remote-a27a13ac without re-apply | Post-reconcile verified matched=true applyCount=1\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "unknown_remote_reconcile"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-048.json",
-  "createdAtIso": "2026-11-27T10:35:06.468Z",
+  "createdAtIso": "2026-11-27T10:48:07.120Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-048-8607621d70e6"
+  "uniqueSourceArtifactId": "art-fixture-t-us-048-135e5b91c19f"
 }

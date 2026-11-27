@@ -129,6 +129,8 @@ export type CredentialRotationService = {
     secretMaterial: string;
     nowIso?: string;
     newConnectionId?: string;
+    /** Live provider wiring — fixture proofs keep NOT_WIRED. */
+    liveProviderWiring?: "NOT_WIRED" | "WIRED";
   }): Promise<
     | {
         ok: true;
@@ -570,11 +572,13 @@ export function createCredentialRotationService(input: {
         connection: existing,
         newAccountLabel: req.newAccountLabel,
         approvedBy: req.approvedBy,
+        liveProviderWiring: req.liveProviderWiring ?? "NOT_WIRED",
       });
       if (!decision.ok) {
         if (
           decision.code === "SAME_ACCOUNT" ||
-          decision.code === "APPROVAL_REQUIRED"
+          decision.code === "APPROVAL_REQUIRED" ||
+          decision.code === "LIVE_TRANSPORT_NOT_WIRED"
         ) {
           await store.appendAudit(
             createAuditEntry({
