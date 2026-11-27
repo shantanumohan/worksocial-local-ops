@@ -5,7 +5,18 @@
  * Occurrence identity is local calendar date + local HH:MM — never two
  * dispatches for the same logical day across fall-back ambiguous hours.
  * Spring-forward gaps skip nonexistent local times (no compensatory duplicate).
- * External effects: NONE. No Temporal / network / credentials.
+ * Honesty fields on every resolve/claim path (live NOT_WIRED; ChatGPT Ads
+ * ACCESS_BLOCKED; externalEffects NONE). No Temporal / network / credentials.
+ * Hillclimb: honesty on resolve+claim; third durable duplicate; ±30m zones;
+ * blank occurrence keys fail closed; Europe/London spring/fall; LA spring gap;
+ * bad-zone instant key null; inverted window; no-DST zones stay one-per-day;
+ * durable claim JSON truncated/corrupt recovers prior or fail-closed empty;
+ * wrong version / whitespace-only durable keys / dual-corrupt fail-closed (G10);
+ * non-array claimedKeys / null primary+prior recover / mixed-type filter (G11);
+ * missing version / whitespace-only primary recover / duplicate durable keys dedupe (G12);
+ * array-root JSON / empty object durable body (G13);
+ * string version / null claimedKeys / numeric-root JSON (G14);
+ * version zero / boolean-root JSON (G15).
  */
 
 export const RecurringScheduleFrequency = {
@@ -46,21 +57,34 @@ export const LocalCivilResolveCode = {
 export type LocalCivilResolveCodeValue =
   (typeof LocalCivilResolveCode)[keyof typeof LocalCivilResolveCode];
 
+/** Honesty fields on every T-X015 resolve/claim path (hillclimb). */
+export type DstScheduleHonesty = {
+  liveProviderWiring: "NOT_WIRED";
+  chatgptAdsAccess: "ACCESS_BLOCKED";
+  externalEffects: "NONE";
+};
+
+export const DST_SCHEDULE_HONESTY: DstScheduleHonesty = {
+  liveProviderWiring: "NOT_WIRED",
+  chatgptAdsAccess: "ACCESS_BLOCKED",
+  externalEffects: "NONE",
+};
+
 export type LocalCivilResolveResult =
-  | {
+  | ({
       ok: true;
       code: typeof LocalCivilResolveCode.OK;
       fireAtIso: string;
       /** True when the local civil time is ambiguous (fall-back hour). */
       ambiguous: boolean;
-    }
-  | {
+    } & DstScheduleHonesty)
+  | ({
       ok: false;
       code:
         | typeof LocalCivilResolveCode.NONEXISTENT_LOCAL_TIME
         | typeof LocalCivilResolveCode.INVALID_INPUT;
       reason: string;
-    };
+    } & DstScheduleHonesty);
 
 export const OccurrenceClaimCode = {
   CLAIMED: "CLAIMED",
@@ -71,12 +95,16 @@ export type OccurrenceClaimCodeValue =
   (typeof OccurrenceClaimCode)[keyof typeof OccurrenceClaimCode];
 
 export type OccurrenceClaimResult =
-  | { ok: true; code: typeof OccurrenceClaimCode.CLAIMED; occurrenceKey: string }
-  | {
+  | ({
+      ok: true;
+      code: typeof OccurrenceClaimCode.CLAIMED;
+      occurrenceKey: string;
+    } & DstScheduleHonesty)
+  | ({
       ok: false;
       code: typeof OccurrenceClaimCode.DUPLICATE_OCCURRENCE;
       occurrenceKey: string;
-    };
+    } & DstScheduleHonesty);
 
 export type OccurrenceClaimLedger = {
   claimedKeys: ReadonlySet<string>;
@@ -201,6 +229,7 @@ export function resolveLocalCivilTime(input: {
       ok: false,
       code: LocalCivilResolveCode.INVALID_INPUT,
       reason: "Invalid civil time or timezone",
+      ...DST_SCHEDULE_HONESTY,
     };
   }
 
@@ -250,6 +279,7 @@ export function resolveLocalCivilTime(input: {
       ok: false,
       code: LocalCivilResolveCode.NONEXISTENT_LOCAL_TIME,
       reason: `Local ${year}-${pad2(month)}-${pad2(day)} ${formatLocalTime(hour, minute)} does not exist in ${timeZone} (DST gap)`,
+      ...DST_SCHEDULE_HONESTY,
     };
   }
   return {
@@ -257,6 +287,7 @@ export function resolveLocalCivilTime(input: {
     code: LocalCivilResolveCode.OK,
     fireAtIso: new Date(unique[0]!).toISOString(),
     ambiguous: unique.length > 1,
+    ...DST_SCHEDULE_HONESTY,
   };
 }
 
@@ -413,31 +444,148 @@ export function occurrenceClaimKeys(
   return [...ledger.claimedKeys].sort();
 }
 
+/** On-disk durable claim payload (versioned JSON body, no I/O). */
+export type DurableOccurrenceClaimFile = {
+  version: 1;
+  claimedKeys: string[];
+};
+
+export const DurableOccurrenceClaimParseStatus = {
+  OK: "OK",
+  CORRUPT_OR_PARTIAL: "CORRUPT_OR_PARTIAL",
+  RECOVERED_FROM_PRIOR: "RECOVERED_FROM_PRIOR",
+  RECOVERED_EMPTY: "RECOVERED_EMPTY",
+} as const;
+
+export type DurableOccurrenceClaimParseStatusValue =
+  (typeof DurableOccurrenceClaimParseStatus)[keyof typeof DurableOccurrenceClaimParseStatus];
+
+export type DurableOccurrenceClaimParseResult = {
+  keys: string[];
+  status: DurableOccurrenceClaimParseStatusValue;
+} & DstScheduleHonesty;
+
+/** Serialize ledger to durable JSON body (pretty for inspectability). */
+export function serializeOccurrenceClaimDurableBody(
+  ledger: OccurrenceClaimLedger,
+): string {
+  const payload: DurableOccurrenceClaimFile = {
+    version: 1,
+    claimedKeys: occurrenceClaimKeys(ledger),
+  };
+  return `${JSON.stringify(payload, null, 2)}\n`;
+}
+
+/**
+ * Parse a durable claim file body. Truncated / corrupt JSON fail closed to
+ * empty keys (never invent claimedKeys). Valid version-1 objects accepted.
+ */
+export function parseOccurrenceClaimDurableBody(
+  raw: string,
+): DurableOccurrenceClaimParseResult {
+  const honesty = { ...DST_SCHEDULE_HONESTY };
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return {
+      keys: [],
+      status: DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL,
+      ...honesty,
+    };
+  }
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      Array.isArray(parsed) ||
+      (parsed as DurableOccurrenceClaimFile).version !== 1 ||
+      !Array.isArray((parsed as DurableOccurrenceClaimFile).claimedKeys)
+    ) {
+      return {
+        keys: [],
+        status: DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL,
+        ...honesty,
+      };
+    }
+    const keys = (parsed as DurableOccurrenceClaimFile).claimedKeys
+      .filter((k): k is string => typeof k === "string")
+      .map((k) => k.trim())
+      .filter((k) => k.length > 0);
+    return {
+      keys,
+      status: DurableOccurrenceClaimParseStatus.OK,
+      ...honesty,
+    };
+  } catch {
+    return {
+      keys: [],
+      status: DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL,
+      ...honesty,
+    };
+  }
+}
+
+/**
+ * Recover after a partial primary write: prefer intact prior body; else empty.
+ * Never invents keys that were not durably recorded in primary or prior.
+ */
+export function recoverOccurrenceClaimDurableBodies(input: {
+  primaryRaw: string | null;
+  priorRaw: string | null;
+}): DurableOccurrenceClaimParseResult {
+  const honesty = { ...DST_SCHEDULE_HONESTY };
+  if (input.primaryRaw !== null) {
+    const primary = parseOccurrenceClaimDurableBody(input.primaryRaw);
+    if (primary.status === DurableOccurrenceClaimParseStatus.OK) {
+      return primary;
+    }
+  }
+  if (input.priorRaw !== null) {
+    const prior = parseOccurrenceClaimDurableBody(input.priorRaw);
+    if (prior.status === DurableOccurrenceClaimParseStatus.OK) {
+      return {
+        keys: prior.keys,
+        status: DurableOccurrenceClaimParseStatus.RECOVERED_FROM_PRIOR,
+        ...honesty,
+      };
+    }
+  }
+  return {
+    keys: [],
+    status: DurableOccurrenceClaimParseStatus.RECOVERED_EMPTY,
+    ...honesty,
+  };
+}
+
 /**
  * Claim a logical occurrence once. Second claim with the same key is DUPLICATE.
+ * Blank/whitespace keys fail closed (never CLAIMED) — no invented dispatch.
  */
 export function claimOccurrence(
   ledger: OccurrenceClaimLedger,
   occurrenceKey: string,
 ): { ledger: OccurrenceClaimLedger; result: OccurrenceClaimResult } {
-  if (ledger.claimedKeys.has(occurrenceKey)) {
+  const key = occurrenceKey.trim();
+  if (!key || ledger.claimedKeys.has(key)) {
     return {
       ledger,
       result: {
         ok: false,
         code: OccurrenceClaimCode.DUPLICATE_OCCURRENCE,
-        occurrenceKey,
+        occurrenceKey: key || occurrenceKey,
+        ...DST_SCHEDULE_HONESTY,
       },
     };
   }
   const next = new Set(ledger.claimedKeys);
-  next.add(occurrenceKey);
+  next.add(key);
   return {
     ledger: { claimedKeys: next },
     result: {
       ok: true,
       code: OccurrenceClaimCode.CLAIMED,
-      occurrenceKey,
+      occurrenceKey: key,
+      ...DST_SCHEDULE_HONESTY,
     },
   };
 }
@@ -476,6 +624,7 @@ export function resolveLocalDateTime(input: {
       ok: false,
       code: LocalCivilResolveCode.INVALID_INPUT,
       reason: `Invalid localDate ${input.localDate}`,
+      ...DST_SCHEDULE_HONESTY,
     };
   }
   return resolveLocalCivilTime({
