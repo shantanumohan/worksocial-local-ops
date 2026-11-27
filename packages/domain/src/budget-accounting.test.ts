@@ -749,7 +749,7 @@ describe("budget accounting", () => {
     ).toBe(false);
   });
 
-  it("fails honesty when accepted rows shortened vs acceptedReservationIds (M21)", () => {
+  it("fails honesty when accepted rows shortened vs acceptedReservationIds (T-X026 S21)", () => {
     const honest = composeConcurrentFinalBudgetReserves(account(), [
       { reservationId: "r-a", amountMinor: 100 },
       { reservationId: "r-b", amountMinor: 200 },
@@ -763,7 +763,7 @@ describe("budget accounting", () => {
     ).toBe(false);
   });
 
-  it("fails honesty when exhausted rows shortened vs exhaustedReservationIds (M22)", () => {
+  it("fails honesty when exhausted rows shortened vs exhaustedReservationIds (T-X026 S22)", () => {
     const honest = composeConcurrentFinalBudgetReserves(
       createBudgetAccount({
         dayKey: "2026-11-22-exh-short",
@@ -785,7 +785,7 @@ describe("budget accounting", () => {
     ).toBe(false);
   });
 
-  it("fails honesty when composition availableMinor drifts from account (M23)", () => {
+  it("fails honesty when composition availableMinor drifts from account (T-X026 S23)", () => {
     const honest = composeConcurrentFinalBudgetReserves(account(), [
       { reservationId: "r-a", amountMinor: 150 },
     ]);
@@ -797,7 +797,7 @@ describe("budget accounting", () => {
     ).toBe(false);
   });
 
-  it("fails honesty when availableMatchesLimitMinusCommitted is forged (M24)", () => {
+  it("fails honesty when availableMatchesLimitMinusCommitted is forged (T-X026 S24)", () => {
     const honest = composeConcurrentFinalBudgetReserves(account(), [
       { reservationId: "r-a", amountMinor: 100 },
     ]);
@@ -810,7 +810,7 @@ describe("budget accounting", () => {
     ).toBe(false);
   });
 
-  it("fails honesty when isolationWouldOversubscribe flag mismatches isolationSum (M25)", () => {
+  it("fails honesty when isolationWouldOversubscribe flag mismatches isolationSum (T-X026 S25)", () => {
     const honest = composeConcurrentFinalBudgetReserves(account(), [
       { reservationId: "r-a", amountMinor: 600 },
       { reservationId: "r-b", amountMinor: 600 },
@@ -827,7 +827,7 @@ describe("budget accounting", () => {
     ).toBe(false);
   });
 
-  it("fails honesty when isolationSumMinor inconsistent with oversubscribe flag (M26)", () => {
+  it("fails honesty when isolationSumMinor inconsistent with oversubscribe flag (T-X026 S26)", () => {
     const honest = composeConcurrentFinalBudgetReserves(account(), [
       { reservationId: "r-a", amountMinor: 600 },
       { reservationId: "r-b", amountMinor: 600 },
@@ -842,7 +842,7 @@ describe("budget accounting", () => {
     ).toBe(false);
   });
 
-  it("throws on non-finite amountMinor before apply (M13)", () => {
+  it("throws on non-finite amountMinor before apply (T-X026 S29)", () => {
     const snap = account();
     for (const amountMinor of [Number.NaN, Number.POSITIVE_INFINITY, -0]) {
       expect(() =>
@@ -854,7 +854,7 @@ describe("budget accounting", () => {
     }
   });
 
-  it("throws on non-integer amountMinor before apply (M12)", () => {
+  it("throws on non-integer amountMinor before apply (T-X026 S28)", () => {
     const snap = account();
     expect(() =>
       composeConcurrentFinalBudgetReserves(snap, [
@@ -864,7 +864,7 @@ describe("budget accounting", () => {
     expect(snap.reservedMinor).toBe(0);
   });
 
-  it("throws on trim-normalized duplicate ids before apply (M11)", () => {
+  it("throws on trim-normalized duplicate ids before apply (T-X026 S27)", () => {
     const snap = account();
     expect(() =>
       composeConcurrentFinalBudgetReserves(snap, [
@@ -880,7 +880,7 @@ describe("budget accounting", () => {
     expect(isConcurrentBudgetCompositionHonest(ok)).toBe(true);
   });
 
-  it("composes after known-positive cancel restores headroom (M10)", () => {
+  it("composes after known-positive cancel restores headroom (T-X026 S30)", () => {
     const reserved = reserveBudget(account(), "r-pos", 400);
     expect(reserved.ok).toBe(true);
     if (!reserved.ok) return;
