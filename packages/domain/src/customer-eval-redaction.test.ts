@@ -145,6 +145,16 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses mirrorRawFieldsInRedactedPayload", () => {
+    const mirror = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      mirrorRawFieldsInRedactedPayload: true,
+    });
+    expect(mirror.allowed).toBe(false);
+    expect(mirror.reasons.some((r) => /Mirror raw/.test(r))).toBe(true);
+  });
+
   it("refuses degradeToRawPassthrough", () => {
     const degrade = prepareCustomerDataForEvaluation({
       source,

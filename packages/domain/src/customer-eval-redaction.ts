@@ -211,8 +211,16 @@ export function prepareCustomerDataForEvaluation(input: {
   buildPromptFromRawSource?: boolean;
   /** Forbidden — must not downgrade redact mode into raw passthrough. */
   degradeToRawPassthrough?: boolean;
+  /** Forbidden — redacted payload must not echo raw structured fields. */
+  mirrorRawFieldsInRedactedPayload?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.mirrorRawFieldsInRedactedPayload === true) {
+    return blockedLeak([
+      "Mirror raw customer fields in redacted payload refused — T-X072",
+    ]);
+  }
 
   if (input.degradeToRawPassthrough === true) {
     return blockedLeak([
