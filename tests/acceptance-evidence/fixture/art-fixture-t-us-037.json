@@ -8,8 +8,8 @@
     "portable_analysis_artifact"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-037.json",
-  "createdAtIso": "2026-11-27T14:45:18.591Z",
+  "createdAtIso": "2026-11-27T14:59:05.049Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-037-9f5927b2a171"
+  "uniqueSourceArtifactId": "art-fixture-t-us-037-d3766174dc2c"
 }

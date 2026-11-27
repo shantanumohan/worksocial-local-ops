@@ -8,8 +8,8 @@
     "test_semantic_search_improve_no_result"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-f23.json",
-  "createdAtIso": "2026-11-27T14:45:18.591Z",
+  "createdAtIso": "2026-11-27T14:59:05.049Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-f23-9f5927b2a171"
+  "uniqueSourceArtifactId": "art-fixture-t-f23-d3766174dc2c"
 }
