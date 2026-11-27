@@ -210,6 +210,47 @@ describe("contract: T-X061 keyboard focus restore", () => {
     );
   });
 
+  it("refused re-open preserves activeFocus + dialogFocusables + restorable (T52)", () => {
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-keyboard-review",
+      dialogFocusables: dialog,
+    });
+    const stepped = cycleDialogFocus({
+      session: opened.session,
+      direction: "forward",
+    });
+    const refused = openOverlayFocus({
+      session: stepped.session,
+      triggerId: "btn-other",
+      dialogFocusables: ["dlg-injected"],
+    });
+    expect(refused.ok).toBe(false);
+    expect(refused.session).toBe(stepped.session);
+    expect(refused.session.activeFocusId).toBe("dlg-primary");
+    expect(refused.session.dialogFocusables).toEqual([
+      "dlg-close",
+      "dlg-primary",
+      "dlg-secondary",
+    ]);
+    expect(refused.session.triggerRestorable).toBe(true);
+  });
+
+  it("cycleDialogFocus fails closed when open session has empty focusables (T52)", () => {
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-keyboard-review",
+      dialogFocusables: dialog,
+    });
+    const tab = cycleDialogFocus({
+      session: { ...opened.session, dialogFocusables: [] },
+      direction: "backward",
+    });
+    expect(tab.ok).toBe(false);
+    expect(tab.reasons.join(" ")).toMatch(/no dialog focusables/i);
+    expect(tab.session.savedTriggerId).toBe("btn-keyboard-review");
+  });
+
   it("cycleDialogFocus re-anchors from stale activeFocusId without losing savedTrigger", () => {
     const opened = openOverlayFocus({
       session: emptyFocusSession(),

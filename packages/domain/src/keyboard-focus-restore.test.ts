@@ -388,6 +388,48 @@ describe("keyboard focus restore (T-X061)", () => {
     );
   });
 
+  it("refused re-open preserves activeFocus + dialogFocusables + restorable (T52)", () => {
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-review",
+      dialogFocusables: dialog,
+    });
+    const stepped = cycleDialogFocus({
+      session: opened.session,
+      direction: "forward",
+    });
+    expect(stepped.session.activeFocusId).toBe("dlg-confirm");
+    const refused = openOverlayFocus({
+      session: stepped.session,
+      triggerId: "btn-other",
+      dialogFocusables: ["dlg-injected"],
+    });
+    expect(refused.ok).toBe(false);
+    expect(refused.session).toBe(stepped.session);
+    expect(refused.session.savedTriggerId).toBe("btn-review");
+    expect(refused.session.activeFocusId).toBe("dlg-confirm");
+    expect(refused.session.dialogFocusables).toEqual(["dlg-close", "dlg-confirm"]);
+    expect(refused.session.triggerRestorable).toBe(true);
+    expect(refused.session.overlayOpen).toBe(true);
+  });
+
+  it("cycleDialogFocus fails closed when open session has empty focusables (T52)", () => {
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-review",
+      dialogFocusables: dialog,
+    });
+    const corrupt = { ...opened.session, dialogFocusables: [] as const };
+    const tab = cycleDialogFocus({
+      session: corrupt,
+      direction: "forward",
+    });
+    expect(tab.ok).toBe(false);
+    expect(tab.reasons.join(" ")).toMatch(/no dialog focusables/i);
+    expect(tab.session.overlayOpen).toBe(true);
+    expect(tab.session.savedTriggerId).toBe("btn-review");
+  });
+
   it("evaluateKeyboardFocusRestoreReview passes open/trap/restore + lost control", () => {
     const result = evaluateKeyboardFocusRestoreReview({
       triggerId: "btn-review",
