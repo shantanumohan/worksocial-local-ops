@@ -590,4 +590,58 @@ describe("host-lease", () => {
       expect(bad.message).not.toBe(HOST_LEASE_HELD_MESSAGE);
     }
   });
+
+  it("edge: non-number holderPid fails INVALID_INPUT without LEASE_HELD (T-X002)", () => {
+    const bad = acquireHostLease(
+      null,
+      {
+        hostId: "host-pid-str",
+        holderPid: "1" as unknown as number,
+        generationId: "gen-pid-str",
+        ttlMs: 5_000,
+      },
+      clockAt(1_000),
+    );
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) {
+      expect(bad.reason).toBe("INVALID_INPUT");
+      expect(bad.message).not.toBe(HOST_LEASE_HELD_MESSAGE);
+    }
+  });
+
+  it("edge: zero ttlMs fails INVALID_INPUT without LEASE_HELD (T-X002)", () => {
+    const bad = acquireHostLease(
+      null,
+      {
+        hostId: "host-ttl-zero",
+        holderPid: 1,
+        generationId: "gen-ttl-zero",
+        ttlMs: 0,
+      },
+      clockAt(1_000),
+    );
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) {
+      expect(bad.reason).toBe("INVALID_INPUT");
+      expect(bad.message).not.toBe(HOST_LEASE_HELD_MESSAGE);
+    }
+  });
+
+  it("edge: negative finite ttlMs fails INVALID_INPUT without LEASE_HELD (T-X002)", () => {
+    const bad = acquireHostLease(
+      null,
+      {
+        hostId: "host-ttl-neg",
+        holderPid: 1,
+        generationId: "gen-ttl-neg",
+        ttlMs: -100,
+      },
+      clockAt(1_000),
+    );
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) {
+      expect(bad.reason).toBe("INVALID_INPUT");
+      expect(bad.message).not.toBe(HOST_LEASE_HELD_MESSAGE);
+    }
+  });
 });
