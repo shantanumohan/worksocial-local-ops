@@ -8,8 +8,8 @@
     "operate_daily_owner_review"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-f25.json",
-  "createdAtIso": "2026-11-27T16:25:03.032Z",
+  "createdAtIso": "2026-11-27T16:33:35.869Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-f25-49cd06919268"
+  "uniqueSourceArtifactId": "art-fixture-t-f25-c51a1a150c46"
 }
