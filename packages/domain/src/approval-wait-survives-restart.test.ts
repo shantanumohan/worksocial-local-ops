@@ -715,4 +715,594 @@ describe("approval wait survives restart (T-X014)", () => {
     expect(d.code).toBe("INVALID_SNAPSHOT");
     expect(d.reasons.join(" ")).toMatch(/visible characters/);
   });
+
+  it("idle N45: CORRUPT_JSON manifest inspect and multi-restart AUTO_VERIFIED hop (T-X014)", () => {
+    const corruptInspect = inspectApprovalWaitDurableManifest({
+      raw: '{"schema":"approval-wait-v1","operationId":',
+    });
+    expect(corruptInspect.integrity).toBe(
+      ApprovalWaitManifestIntegrity.TRUNCATED,
+    );
+
+    const corruptInvent = evaluateApprovalWaitCorruptManifest({
+      rawManifest: "not-json-at-all",
+      inventWaitingApprovalFromCorrupt: true,
+    });
+    expect(corruptInvent.allowed).toBe(false);
+    expect(corruptInvent.code).toBe("CORRUPT_WAIT_MANIFEST");
+
+    const autoVerifiedHop = evaluateApprovalWaitAcrossRestarts({
+      operationId: "op-n45",
+      jobId: "job-n45",
+      waitIdentityKey: "biz-n45",
+      phases: [
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.AUTO_VERIFIED,
+      ],
+      applyAttemptCounts: [1, 1, 1],
+      slotLeaseAfterEachRestart: [
+        ApprovalWaitSlotLease.RELEASED,
+        ApprovalWaitSlotLease.RELEASED,
+      ],
+    });
+    expect(autoVerifiedHop.allowed).toBe(false);
+    expect(autoVerifiedHop.code).toBe("AUTO_VERIFY_ON_RESTART_REFUSED");
+  });
+
+  it("wipe15 N46: APPROVED multi-restart hop and live claim on chain (T-X014)", () => {
+    const explicitInvent = evaluateApprovalWaitSurvivesRestart({
+      snapshot: baseSnapshot,
+      inventApprovedOnRestart: true,
+    });
+    expect(explicitInvent.code).toBe("INVENT_APPROVED_ON_RESTART_REFUSED");
+
+    const approvedHop = evaluateApprovalWaitAcrossRestarts({
+      operationId: "op-n46",
+      jobId: "job-n46",
+      waitIdentityKey: "biz-n46",
+      phases: [
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.APPROVED,
+      ],
+      applyAttemptCounts: [1, 1, 1],
+      slotLeaseAfterEachRestart: [
+        ApprovalWaitSlotLease.RELEASED,
+        ApprovalWaitSlotLease.RELEASED,
+      ],
+    });
+    expect(approvedHop.allowed).toBe(false);
+    expect(approvedHop.code).toBe("AUTO_VERIFY_ON_RESTART_REFUSED");
+
+    const liveChain = evaluateApprovalWaitAcrossRestarts({
+      operationId: "op-n46-live",
+      jobId: "job-n46-live",
+      waitIdentityKey: "biz-n46-live",
+      phases: [
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+      ],
+      applyAttemptCounts: [1, 1],
+      slotLeaseAfterEachRestart: [ApprovalWaitSlotLease.RELEASED],
+      claimLiveVerified: true,
+    });
+    expect(liveChain.allowed).toBe(false);
+    expect(liveChain.code).toBe("LIVE_TEMPORAL_CLAIM_REFUSED");
+  });
+
+  it("retip N47: invent-rejected refuse and triple-restart resume (T-X014)", () => {
+    const inventRejected = evaluateApprovalWaitSurvivesRestart({
+      snapshot: baseSnapshot,
+      inventRejectedOnRestart: true,
+    });
+    expect(inventRejected.code).toBe("INVENT_REJECTED_ON_RESTART_REFUSED");
+
+    const tripleResume = evaluateApprovalWaitAcrossRestarts({
+      operationId: "op-n47",
+      jobId: "job-n47",
+      waitIdentityKey: "biz-n47",
+      phases: [
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+      ],
+      applyAttemptCounts: [1, 1, 1, 1],
+      slotLeaseAfterEachRestart: [
+        ApprovalWaitSlotLease.RELEASED,
+        ApprovalWaitSlotLease.RELEASED,
+        ApprovalWaitSlotLease.RELEASED,
+      ],
+    });
+    expect(tripleResume.allowed).toBe(true);
+    expect(tripleResume.code).toBe("RESUME_WAIT_NO_SLOT");
+    expect(tripleResume.restartCount).toBe(3);
+  });
+
+  it("wipe15 N48: cancel-on-restart and multi-restart apply-count growth (T-X014)", () => {
+    const cancelAlone = evaluateApprovalWaitSurvivesRestart({
+      snapshot: baseSnapshot,
+      cancelWaitOnRestartAlone: true,
+    });
+    expect(cancelAlone.code).toBe("CANCEL_WAIT_ON_RESTART_REFUSED");
+
+    const applyGrew = evaluateApprovalWaitAcrossRestarts({
+      operationId: "op-n48",
+      jobId: "job-n48",
+      waitIdentityKey: "biz-n48",
+      phases: [
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+      ],
+      applyAttemptCounts: [1, 2],
+      slotLeaseAfterEachRestart: [ApprovalWaitSlotLease.RELEASED],
+    });
+    expect(applyGrew.allowed).toBe(false);
+    expect(applyGrew.code).toBe("APPLY_COUNT_GREW_ON_RESTART");
+  });
+
+  it("retip N49: apply-count decrease chain and promote-without-verify (T-X014)", () => {
+    const applyDecreased = evaluateApprovalWaitAcrossRestarts({
+      operationId: "op-n49",
+      jobId: "job-n49",
+      waitIdentityKey: "biz-n49",
+      phases: [
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+      ],
+      applyAttemptCounts: [2, 1],
+      slotLeaseAfterEachRestart: [ApprovalWaitSlotLease.RELEASED],
+    });
+    expect(applyDecreased.allowed).toBe(false);
+    expect(applyDecreased.code).toBe("APPLY_COUNT_DECREASED_ON_RESTART");
+
+    const promote = evaluateApprovalWaitSurvivesRestart({
+      snapshot: baseSnapshot,
+      promoteWithoutIndependentVerify: true,
+    });
+    expect(promote.code).toBe("PROMOTE_WITHOUT_INDEPENDENT_VERIFY_REFUSED");
+  });
+
+  it("retip N50: wall-clock expire refuse and multi-restart slot-hold chain (T-X014)", () => {
+    const wall = evaluateApprovalWaitSurvivesRestart({
+      snapshot: baseSnapshot,
+      wallClockAdvanceAlone: true,
+    });
+    expect(wall.allowed).toBe(false);
+    expect(wall.code).toBe("WALL_CLOCK_EXPIRE_REFUSED");
+
+    const slotHold = evaluateApprovalWaitAcrossRestarts({
+      operationId: "op-n50",
+      jobId: "job-n50",
+      waitIdentityKey: "biz-n50",
+      phases: [
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+      ],
+      applyAttemptCounts: [1, 1, 1],
+      slotLeaseAfterEachRestart: [
+        ApprovalWaitSlotLease.HELD,
+        ApprovalWaitSlotLease.RELEASED,
+      ],
+    });
+    expect(slotHold.allowed).toBe(false);
+    expect(slotHold.code).toBe("SLOT_HOLD_WHILE_WAITING_REFUSED");
+  });
+
+  it("wipe15 N51: expire-on-restart and slot-lease reacquire while waiting (T-X014)", () => {
+    const expire = evaluateApprovalWaitSurvivesRestart({
+      snapshot: baseSnapshot,
+      expireWaitOnRestartAlone: true,
+    });
+    expect(expire.allowed).toBe(false);
+    expect(expire.code).toBe("EXPIRE_WAIT_ON_RESTART_REFUSED");
+
+    const reacquire = evaluateApprovalWaitSurvivesRestart({
+      snapshot: baseSnapshot,
+      reacquireSlotLeaseWhileWaiting: true,
+    });
+    expect(reacquire.allowed).toBe(false);
+    expect(reacquire.code).toBe("SLOT_LEASE_REACQUIRE_REFUSED");
+  });
+
+  it("retip N52: wait-identity mismatch and multi-restart REJECTED hop (T-X014)", () => {
+    const mismatch = evaluateApprovalWaitSurvivesRestart({
+      snapshot: {
+        ...baseSnapshot,
+        waitIdentityKeyAfterRestart: "biz-n52-other",
+      },
+    });
+    expect(mismatch.allowed).toBe(false);
+    expect(mismatch.code).toBe("WAIT_IDENTITY_MISMATCH");
+
+    const rejectedHop = evaluateApprovalWaitAcrossRestarts({
+      operationId: "op-n52",
+      jobId: "job-n52",
+      waitIdentityKey: "biz-n52",
+      phases: [
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.REJECTED,
+      ],
+      applyAttemptCounts: [1, 1, 1],
+      slotLeaseAfterEachRestart: [
+        ApprovalWaitSlotLease.RELEASED,
+        ApprovalWaitSlotLease.RELEASED,
+      ],
+    });
+    expect(rejectedHop.allowed).toBe(false);
+    expect(rejectedHop.code).toBe("INVENT_REJECTED_ON_RESTART_REFUSED");
+  });
+
+  it("retip N53: temporal wire refuse and job-continuity mismatch (T-X014)", () => {
+    const temporal = evaluateApprovalWaitSurvivesRestart({
+      snapshot: baseSnapshot,
+      requestTemporalWire: true,
+    });
+    expect(temporal.allowed).toBe(false);
+    expect(temporal.code).toBe("LIVE_TEMPORAL_CLAIM_REFUSED");
+
+    const dupJob = evaluateApprovalWaitJobContinuity({
+      operationId: "op-n53",
+      jobIdBeforeRestart: "job-n53",
+      jobIdAfterRestart: "job-n53-fork",
+      jobCreatedAfterRestart: true,
+      phaseBeforeRestart: ApprovalWaitPhase.WAITING_APPROVAL,
+      phaseAfterRestart: ApprovalWaitPhase.WAITING_APPROVAL,
+      holdsWorkerSlot: false,
+      waitIdentityKeyBeforeRestart: "biz-n53",
+      waitIdentityKeyAfterRestart: "biz-n53",
+    });
+    expect(dupJob.allowed).toBe(false);
+    expect(dupJob.code).toBe("JOB_CONTINUITY_MISMATCH");
+  });
+
+  it("wipe15 N54: missing-manifest snapshot and holds-worker-slot (T-X014)", () => {
+    const missing = evaluateApprovalWaitSurvivesRestart({
+      snapshot: {
+        ...baseSnapshot,
+        manifestIntegrity: ApprovalWaitManifestIntegrity.MISSING_REQUIRED_FIELDS,
+      },
+    });
+    expect(missing.allowed).toBe(false);
+    expect(missing.code).toBe("MISSING_WAIT_MANIFEST");
+
+    const hold = evaluateApprovalWaitSurvivesRestart({
+      snapshot: {
+        ...baseSnapshot,
+        holdsWorkerSlot: true,
+        slotLease: ApprovalWaitSlotLease.HELD,
+      },
+    });
+    expect(hold.allowed).toBe(false);
+    expect(hold.code).toBe("SLOT_HOLD_WHILE_WAITING_REFUSED");
+  });
+
+  it("retip N55: non-integer restartCount and null corrupt invent (T-X014)", () => {
+    const badRestart = evaluateApprovalWaitSurvivesRestart({
+      snapshot: { ...baseSnapshot, restartCount: 1.5 },
+    });
+    expect(badRestart.allowed).toBe(false);
+    expect(badRestart.code).toBe("INVALID_SNAPSHOT");
+
+    const nullInvent = evaluateApprovalWaitCorruptManifest({
+      rawManifest: null,
+      inventWaitingApprovalFromCorrupt: true,
+    });
+    expect(nullInvent.allowed).toBe(false);
+    expect(nullInvent.code).toBe("MISSING_WAIT_MANIFEST");
+  });
+
+  it("retip N56: truncated manifest snapshot and invalid restart chain (T-X014)", () => {
+    const truncated = evaluateApprovalWaitSurvivesRestart({
+      snapshot: {
+        ...baseSnapshot,
+        manifestIntegrity: ApprovalWaitManifestIntegrity.TRUNCATED,
+      },
+    });
+    expect(truncated.allowed).toBe(false);
+    expect(truncated.code).toBe("CORRUPT_WAIT_MANIFEST");
+
+    const badChain = evaluateApprovalWaitAcrossRestarts({
+      operationId: "op-n56",
+      jobId: "job-n56",
+      waitIdentityKey: "biz-n56",
+      phases: [ApprovalWaitPhase.WAITING_APPROVAL],
+      applyAttemptCounts: [1],
+      slotLeaseAfterEachRestart: [],
+    });
+    expect(badChain.allowed).toBe(false);
+    expect(badChain.code).toBe("INVALID_SNAPSHOT");
+  });
+
+  it("wipe15 N57: wrong-schema snapshot and job live-claim refuse (T-X014)", () => {
+    const wrongSchema = evaluateApprovalWaitSurvivesRestart({
+      snapshot: {
+        ...baseSnapshot,
+        manifestIntegrity: ApprovalWaitManifestIntegrity.WRONG_SCHEMA,
+      },
+    });
+    expect(wrongSchema.allowed).toBe(false);
+    expect(wrongSchema.code).toBe("CORRUPT_WAIT_MANIFEST");
+
+    const liveJob = evaluateApprovalWaitJobContinuity({
+      operationId: "op-n57",
+      jobIdBeforeRestart: "job-n57",
+      jobIdAfterRestart: "job-n57",
+      jobCreatedAfterRestart: false,
+      phaseBeforeRestart: ApprovalWaitPhase.WAITING_APPROVAL,
+      phaseAfterRestart: ApprovalWaitPhase.WAITING_APPROVAL,
+      holdsWorkerSlot: false,
+      slotLease: ApprovalWaitSlotLease.RELEASED,
+      waitIdentityKeyBeforeRestart: "biz-n57",
+      waitIdentityKeyAfterRestart: "biz-n57",
+      claimLiveVerified: true,
+    });
+    expect(liveJob.allowed).toBe(false);
+    expect(liveJob.code).toBe("LIVE_TEMPORAL_CLAIM_REFUSED");
+  });
+
+  it("retip N58: invent corrupt apply-count and zero restartCount refuse (T-X014)", () => {
+    const inventCount = evaluateApprovalWaitCorruptManifest({
+      rawManifest: okManifestRaw,
+      expectedChecksum: "abc123",
+      inventApplyCountFromCorrupt: 99,
+    });
+    expect(inventCount.allowed).toBe(false);
+    expect(inventCount.code).toBe("CORRUPT_WAIT_MANIFEST");
+
+    const zeroRestart = evaluateApprovalWaitSurvivesRestart({
+      snapshot: { ...baseSnapshot, restartCount: 0 },
+    });
+    expect(zeroRestart.allowed).toBe(false);
+    expect(zeroRestart.code).toBe("INVALID_SNAPSHOT");
+  });
+
+  it("retip N59: BOM corrupt invent and rejected-phase snapshot refuse (T-X014)", () => {
+    const bomInvent = evaluateApprovalWaitCorruptManifest({
+      rawManifest: `\uFEFF${okManifestRaw}`,
+      inventWaitingApprovalFromCorrupt: true,
+    });
+    expect(bomInvent.allowed).toBe(false);
+    expect(bomInvent.code).toBe("CORRUPT_WAIT_MANIFEST");
+
+    const rejectedPhase = evaluateApprovalWaitSurvivesRestart({
+      snapshot: {
+        ...baseSnapshot,
+        phaseAfterRestart: ApprovalWaitPhase.REJECTED,
+      },
+    });
+    expect(rejectedPhase.allowed).toBe(false);
+    expect(rejectedPhase.code).toBe("INVENT_REJECTED_ON_RESTART_REFUSED");
+  });
+
+  it("wipe15 N60: checksum-mismatch corrupt invent and APPROVED phase refuse (T-X014)", () => {
+    const checksumInvent = evaluateApprovalWaitCorruptManifest({
+      rawManifest: okManifestRaw,
+      expectedChecksum: "deadbeef",
+      inventWaitingApprovalFromCorrupt: true,
+    });
+    expect(checksumInvent.allowed).toBe(false);
+    expect(checksumInvent.code).toBe("CORRUPT_WAIT_MANIFEST");
+
+    const approvedPhase = evaluateApprovalWaitSurvivesRestart({
+      snapshot: {
+        ...baseSnapshot,
+        phaseAfterRestart: ApprovalWaitPhase.APPROVED,
+      },
+    });
+    expect(approvedPhase.allowed).toBe(false);
+    expect(approvedPhase.code).toBe("AUTO_VERIFY_ON_RESTART_REFUSED");
+  });
+
+  it("retip N61: before-restart identity mismatch and truncated raw invent (T-X014)", () => {
+    const beforeMismatch = evaluateApprovalWaitSurvivesRestart({
+      snapshot: {
+        ...baseSnapshot,
+        waitIdentityKeyBeforeRestart: "biz-other",
+      },
+    });
+    expect(beforeMismatch.allowed).toBe(false);
+    expect(beforeMismatch.code).toBe("WAIT_IDENTITY_MISMATCH");
+
+    const truncatedInvent = evaluateApprovalWaitCorruptManifest({
+      rawManifest: okManifestRaw.slice(0, 20),
+      inventWaitingApprovalFromCorrupt: true,
+    });
+    expect(truncatedInvent.allowed).toBe(false);
+    expect(truncatedInvent.code).toBe("CORRUPT_WAIT_MANIFEST");
+  });
+
+  it("retip N62: negative restartCount and WRONG_SCHEMA raw invent refuse (T-X014)", () => {
+    const negativeRestart = evaluateApprovalWaitSurvivesRestart({
+      snapshot: { ...baseSnapshot, restartCount: -1 },
+    });
+    expect(negativeRestart.allowed).toBe(false);
+    expect(negativeRestart.code).toBe("INVALID_SNAPSHOT");
+
+    const schemaInvent = evaluateApprovalWaitCorruptManifest({
+      rawManifest: '{"not":"approval-wait"}',
+      inventWaitingApprovalFromCorrupt: true,
+    });
+    expect(schemaInvent.allowed).toBe(false);
+    expect(schemaInvent.code).toBe("CORRUPT_WAIT_MANIFEST");
+  });
+
+  it("wipe15 N63: null manifest invent apply-count and quad-restart resume (T-X014)", () => {
+    const inventOnMissing = evaluateApprovalWaitCorruptManifest({
+      rawManifest: null,
+      inventApplyCountFromCorrupt: 3,
+    });
+    expect(inventOnMissing.allowed).toBe(false);
+    expect(inventOnMissing.code).toBe("MISSING_WAIT_MANIFEST");
+
+    const quadResume = evaluateApprovalWaitAcrossRestarts({
+      operationId: "op-n63",
+      jobId: "job-n63",
+      waitIdentityKey: "biz-n63",
+      phases: [
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+      ],
+      applyAttemptCounts: [1, 1, 1, 1],
+      slotLeaseAfterEachRestart: [
+        ApprovalWaitSlotLease.RELEASED,
+        ApprovalWaitSlotLease.RELEASED,
+        ApprovalWaitSlotLease.RELEASED,
+      ],
+    });
+    expect(quadResume.allowed).toBe(true);
+    expect(quadResume.code).toBe("RESUME_WAIT_NO_SLOT");
+    expect(quadResume.restartCount).toBe(3);
+  });
+
+  it("retip N64: cancel+expire restart flags and AUTO_VERIFIED phase refuse (T-X014)", () => {
+    const cancelExpire = evaluateApprovalWaitSurvivesRestart({
+      snapshot: baseSnapshot,
+      cancelWaitOnRestartAlone: true,
+      expireWaitOnRestartAlone: true,
+    });
+    expect(cancelExpire.allowed).toBe(false);
+    expect(cancelExpire.code).toBe("EXPIRE_WAIT_ON_RESTART_REFUSED");
+
+    const autoPhase = evaluateApprovalWaitSurvivesRestart({
+      snapshot: {
+        ...baseSnapshot,
+        phaseAfterRestart: ApprovalWaitPhase.AUTO_VERIFIED,
+      },
+    });
+    expect(autoPhase.allowed).toBe(false);
+    expect(autoPhase.code).toBe("AUTO_VERIFY_ON_RESTART_REFUSED");
+  });
+
+  it("retip N65: wall-clock alone and held slot snapshot refuse (T-X014)", () => {
+    const wall = evaluateApprovalWaitSurvivesRestart({
+      snapshot: baseSnapshot,
+      wallClockAdvanceAlone: true,
+    });
+    expect(wall.allowed).toBe(false);
+    expect(wall.code).toBe("WALL_CLOCK_EXPIRE_REFUSED");
+
+    const heldSlot = evaluateApprovalWaitSurvivesRestart({
+      snapshot: {
+        ...baseSnapshot,
+        holdsWorkerSlot: true,
+        slotLease: ApprovalWaitSlotLease.HELD,
+      },
+    });
+    expect(heldSlot.allowed).toBe(false);
+    expect(heldSlot.code).toBe("SLOT_HOLD_WHILE_WAITING_REFUSED");
+  });
+
+  it("retip N66: reacquire slot lease and REJECTED hop refuse (T-X014)", () => {
+    const reacquire = evaluateApprovalWaitSurvivesRestart({
+      snapshot: baseSnapshot,
+      reacquireSlotLeaseWhileWaiting: true,
+    });
+    expect(reacquire.allowed).toBe(false);
+    expect(reacquire.code).toBe("SLOT_LEASE_REACQUIRE_REFUSED");
+
+    const rejectedHop = evaluateApprovalWaitAcrossRestarts({
+      operationId: "op-n66",
+      jobId: "job-n66",
+      waitIdentityKey: "biz-n66",
+      phases: [
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.REJECTED,
+      ],
+      applyAttemptCounts: [1, 1, 1],
+      slotLeaseAfterEachRestart: [
+        ApprovalWaitSlotLease.RELEASED,
+        ApprovalWaitSlotLease.RELEASED,
+      ],
+    });
+    expect(rejectedHop.allowed).toBe(false);
+    expect(rejectedHop.code).toBe("INVENT_REJECTED_ON_RESTART_REFUSED");
+  });
+
+  it("wipe15 N67: invent-approved flag and live job claim refuse (T-X014)", () => {
+    const inventApproved = evaluateApprovalWaitSurvivesRestart({
+      snapshot: baseSnapshot,
+      inventApprovedOnRestart: true,
+    });
+    expect(inventApproved.allowed).toBe(false);
+    expect(inventApproved.code).toBe("INVENT_APPROVED_ON_RESTART_REFUSED");
+
+    const liveJob = evaluateApprovalWaitJobContinuity({
+      operationId: "op-n67",
+      jobIdBeforeRestart: "job-n67",
+      jobIdAfterRestart: "job-n67",
+      jobCreatedAfterRestart: false,
+      phaseBeforeRestart: ApprovalWaitPhase.WAITING_APPROVAL,
+      phaseAfterRestart: ApprovalWaitPhase.WAITING_APPROVAL,
+      holdsWorkerSlot: false,
+      waitIdentityKeyBeforeRestart: "biz-n67",
+      waitIdentityKeyAfterRestart: "biz-n67",
+      claimLiveVerified: true,
+    });
+    expect(liveJob.allowed).toBe(false);
+    expect(liveJob.code).toBe("LIVE_TEMPORAL_CLAIM_REFUSED");
+  });
+
+  it("retip N68: temporal wire and job REJECTED continuity refuse (T-X014)", () => {
+    const temporal = evaluateApprovalWaitSurvivesRestart({
+      snapshot: baseSnapshot,
+      requestTemporalWire: true,
+    });
+    expect(temporal.allowed).toBe(false);
+    expect(temporal.code).toBe("LIVE_TEMPORAL_CLAIM_REFUSED");
+
+    const phaseBad = evaluateApprovalWaitJobContinuity({
+      operationId: "op-n68",
+      jobIdBeforeRestart: "job-n68",
+      jobIdAfterRestart: "job-n68",
+      jobCreatedAfterRestart: false,
+      phaseBeforeRestart: ApprovalWaitPhase.WAITING_APPROVAL,
+      phaseAfterRestart: ApprovalWaitPhase.REJECTED,
+      holdsWorkerSlot: false,
+      waitIdentityKeyBeforeRestart: "biz-n68",
+      waitIdentityKeyAfterRestart: "biz-n68",
+    });
+    expect(phaseBad.allowed).toBe(false);
+    expect(phaseBad.code).toBe("PHASE_NOT_WAITING");
+  });
+
+  it("retip N69: APPROVED hop and blank operationId chain refuse (T-X014)", () => {
+    const approvedHop = evaluateApprovalWaitAcrossRestarts({
+      operationId: "op-n69",
+      jobId: "job-n69",
+      waitIdentityKey: "biz-n69",
+      phases: [
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.APPROVED,
+      ],
+      applyAttemptCounts: [1, 1, 1],
+      slotLeaseAfterEachRestart: [
+        ApprovalWaitSlotLease.RELEASED,
+        ApprovalWaitSlotLease.RELEASED,
+      ],
+    });
+    expect(approvedHop.allowed).toBe(false);
+    expect(approvedHop.code).toBe("AUTO_VERIFY_ON_RESTART_REFUSED");
+
+    const blankOp = evaluateApprovalWaitAcrossRestarts({
+      operationId: "   ",
+      jobId: "job-n69",
+      waitIdentityKey: "biz-n69",
+      phases: [
+        ApprovalWaitPhase.WAITING_APPROVAL,
+        ApprovalWaitPhase.WAITING_APPROVAL,
+      ],
+      applyAttemptCounts: [1, 1],
+      slotLeaseAfterEachRestart: [ApprovalWaitSlotLease.RELEASED],
+    });
+    expect(blankOp.allowed).toBe(false);
+    expect(blankOp.code).toBe("INVALID_SNAPSHOT");
+  });
 });
