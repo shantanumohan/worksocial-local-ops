@@ -17,6 +17,25 @@
  * B17: blank generationId → GENERATION_REQUIRED; foreign parentPid-sharing extra skipped.
  * B18: missing worker root → TREE_REQUIRED; duplicate-PID extras ignored (no double-stop).
  * B19: invalid-PID extras dropped; parentPid-cycle extras skipped (no invented kill).
+ * A1 idle / A2 wipe15: corrupt ±Infinity deadlineSeconds → INVALID_CLOCK;
+ * worker+children untouched (3 alive in proof tree).
+ * A3 wipe15 retrain: idempotent repeat +Infinity INVALID_CLOCK on 3-node tree.
+ * A4 wipe15 train: idempotent repeat -Infinity INVALID_CLOCK on 3-node tree.
+ * A5 wipe15 train: triple repeat +Infinity INVALID_CLOCK on 3-node tree.
+ * A6 wipe15 train: triple repeat -Infinity INVALID_CLOCK on 3-node tree.
+ * A7 wipe15 train: ±Infinity on proof tree both INVALID_CLOCK (3 alive).
+ * A8 wipe15 train: corrupt ±Infinity startedAtMs → INVALID_CLOCK (3 alive).
+ * A9 wipe15 train: triple repeat +Infinity startedAtMs INVALID_CLOCK on 3-node tree.
+ * A10 wipe15 train: triple repeat -Infinity startedAtMs INVALID_CLOCK on 3-node tree.
+ * A11 wipe15 train: double repeat +Infinity startedAtMs INVALID_CLOCK on 3-node tree.
+ * A12 wipe15 train: double repeat -Infinity startedAtMs INVALID_CLOCK on 3-node tree.
+ * A13 wipe15 train: ±Infinity startedAtMs on single-child tree INVALID_CLOCK (2 alive).
+ * A14 wipe15 train: compound ±∞ deadlineSeconds+startedAtMs INVALID_CLOCK (3-node).
+ * A15 tip-moved-272 train: mixed ±∞ deadline vs startedAtMs INVALID_CLOCK (3-node).
+ * A16 tip-moved-273 train: repeat mixed ±∞ clocks INVALID_CLOCK idempotent (3-node).
+ * A17 wipe15 timer train: repeat -∞ deadline + +∞ startedAt INVALID_CLOCK idempotent.
+ * A18 tip-moved-274 train: triple repeat mixed ±∞ clocks INVALID_CLOCK (3-node).
+ * A19 tip-moved-275 train: triple -∞ deadline + +∞ startedAt INVALID_CLOCK (3-node).
  */
 
 import { spawn } from "node:child_process";
@@ -583,6 +602,409 @@ export async function proofOrphanWorkerDeadlineTreeStopped(
     } else {
       passed = false;
       details.push(`Empty tree unexpectedly ${JSON.stringify(emptyTree)}`);
+    }
+
+    const negInfDeadline = stopProcessTreeOnDeadline(
+      { ...tree, deadlineSeconds: Number.NEGATIVE_INFINITY },
+      afterMs,
+    );
+    const posInfDeadline = stopProcessTreeOnDeadline(
+      { ...tree, deadlineSeconds: Number.POSITIVE_INFINITY },
+      afterMs,
+    );
+    if (
+      negInfDeadline.ok === false &&
+      negInfDeadline.code === "INVALID_CLOCK" &&
+      negInfDeadline.externalEffects === "NONE" &&
+      posInfDeadline.ok === false &&
+      posInfDeadline.code === "INVALID_CLOCK" &&
+      alivePids(posInfDeadline.tree).length === 3 &&
+      alivePids(negInfDeadline.tree).length === 3 &&
+      posInfDeadline.tree.outcome === "running" &&
+      posInfDeadline.liveProviderWiring === "NOT_WIRED"
+    ) {
+      details.push(
+        "Corrupt ±Infinity deadlineSeconds → INVALID_CLOCK; worker+2 children still running (A1/A2 wipe15)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `Corrupt ±Infinity deadline unexpectedly neg=${JSON.stringify(negInfDeadline)} pos=${JSON.stringify(posInfDeadline)}`,
+      );
+    }
+
+    const posInfRepeat = stopProcessTreeOnDeadline(posInfDeadline.tree, afterMs);
+    const negInfRepeat = stopProcessTreeOnDeadline(negInfDeadline.tree, afterMs);
+    if (
+      posInfDeadline.ok === false &&
+      posInfRepeat.ok === false &&
+      posInfRepeat.code === "INVALID_CLOCK" &&
+      alivePids(posInfRepeat.tree).length === 3 &&
+      posInfRepeat.tree.outcome === "running" &&
+      posInfRepeat.externalEffects === "NONE"
+    ) {
+      details.push(
+        "A3 wipe15 retrain: repeat +Infinity INVALID_CLOCK idempotent (worker+2 children running)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `A3 +Infinity repeat unexpectedly ${JSON.stringify(posInfRepeat)}`,
+      );
+    }
+    if (
+      negInfDeadline.ok === false &&
+      negInfRepeat.ok === false &&
+      negInfRepeat.code === "INVALID_CLOCK" &&
+      alivePids(negInfRepeat.tree).length === 3 &&
+      negInfRepeat.tree.outcome === "running" &&
+      negInfRepeat.liveProviderWiring === "NOT_WIRED"
+    ) {
+      details.push(
+        "A4 wipe15 train: repeat -Infinity INVALID_CLOCK idempotent (worker+2 children running)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `A4 -Infinity repeat unexpectedly ${JSON.stringify(negInfRepeat)}`,
+      );
+    }
+    const posInfTriple2 = stopProcessTreeOnDeadline(posInfRepeat.tree, afterMs);
+    const posInfTriple3 = stopProcessTreeOnDeadline(
+      posInfTriple2.ok === false ? posInfTriple2.tree : posInfDeadline.tree,
+      afterMs + 1,
+    );
+    if (
+      posInfRepeat.ok === false &&
+      posInfTriple2.ok === false &&
+      posInfTriple3.ok === false &&
+      posInfTriple3.code === "INVALID_CLOCK" &&
+      alivePids(posInfTriple3.tree).length === 3 &&
+      posInfTriple3.tree.outcome === "running"
+    ) {
+      details.push(
+        "A5 wipe15 train: triple +Infinity INVALID_CLOCK idempotent (worker+2 children running)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `A5 +Infinity triple repeat unexpectedly ${JSON.stringify({ posInfTriple2, posInfTriple3 })}`,
+      );
+    }
+    const negInfTriple2 = stopProcessTreeOnDeadline(negInfRepeat.tree, afterMs);
+    const negInfTriple3 = stopProcessTreeOnDeadline(
+      negInfTriple2.ok === false ? negInfTriple2.tree : negInfDeadline.tree,
+      afterMs + 1,
+    );
+    if (
+      negInfRepeat.ok === false &&
+      negInfTriple2.ok === false &&
+      negInfTriple3.ok === false &&
+      negInfTriple3.code === "INVALID_CLOCK" &&
+      alivePids(negInfTriple3.tree).length === 3 &&
+      negInfTriple3.externalEffects === "NONE"
+    ) {
+      details.push(
+        "A6 wipe15 train: triple -Infinity INVALID_CLOCK idempotent (worker+2 children running)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `A6 -Infinity triple repeat unexpectedly ${JSON.stringify({ negInfTriple2, negInfTriple3 })}`,
+      );
+    }
+    if (
+      negInfDeadline.ok === false &&
+      posInfDeadline.ok === false &&
+      negInfDeadline.code === "INVALID_CLOCK" &&
+      posInfDeadline.code === "INVALID_CLOCK" &&
+      alivePids(negInfDeadline.tree).length === 3 &&
+      alivePids(posInfDeadline.tree).length === 3
+    ) {
+      details.push(
+        "A7 wipe15 train: ±Infinity pair INVALID_CLOCK on same 3-node tree (no invented stop)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `A7 ±Infinity pair unexpectedly neg=${JSON.stringify(negInfDeadline)} pos=${JSON.stringify(posInfDeadline)}`,
+      );
+    }
+    const posInfStartedAt = stopProcessTreeOnDeadline(
+      { ...tree, startedAtMs: Number.POSITIVE_INFINITY },
+      afterMs,
+    );
+    const negInfStartedAt = stopProcessTreeOnDeadline(
+      { ...tree, startedAtMs: Number.NEGATIVE_INFINITY },
+      afterMs,
+    );
+    if (
+      posInfStartedAt.ok === false &&
+      negInfStartedAt.ok === false &&
+      posInfStartedAt.code === "INVALID_CLOCK" &&
+      negInfStartedAt.code === "INVALID_CLOCK" &&
+      alivePids(posInfStartedAt.tree).length === 3 &&
+      alivePids(negInfStartedAt.tree).length === 3
+    ) {
+      details.push(
+        "A8 wipe15 train: corrupt ±Infinity startedAtMs INVALID_CLOCK (worker+2 children running)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `A8 ±Infinity startedAtMs unexpectedly pos=${JSON.stringify(posInfStartedAt)} neg=${JSON.stringify(negInfStartedAt)}`,
+      );
+    }
+    const posInfStartedTriple2 = stopProcessTreeOnDeadline(posInfStartedAt.tree, afterMs);
+    const posInfStartedTriple3 = stopProcessTreeOnDeadline(
+      posInfStartedTriple2.ok === false ? posInfStartedTriple2.tree : tree,
+      afterMs + 1,
+    );
+    if (
+      posInfStartedAt.ok === false &&
+      posInfStartedTriple2.ok === false &&
+      posInfStartedTriple3.ok === false &&
+      posInfStartedTriple3.code === "INVALID_CLOCK" &&
+      alivePids(posInfStartedTriple3.tree).length === 3 &&
+      posInfStartedTriple3.tree.outcome === "running"
+    ) {
+      details.push(
+        "A9 wipe15 train: triple +Infinity startedAtMs INVALID_CLOCK idempotent (worker+2 children running)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `A9 +Infinity startedAtMs triple unexpectedly ${JSON.stringify({ posInfStartedTriple2, posInfStartedTriple3 })}`,
+      );
+    }
+    const negInfStartedTriple2 = stopProcessTreeOnDeadline(negInfStartedAt.tree, afterMs);
+    const negInfStartedTriple3 = stopProcessTreeOnDeadline(
+      negInfStartedTriple2.ok === false ? negInfStartedTriple2.tree : tree,
+      afterMs + 1,
+    );
+    if (
+      negInfStartedAt.ok === false &&
+      negInfStartedTriple2.ok === false &&
+      negInfStartedTriple3.ok === false &&
+      negInfStartedTriple3.code === "INVALID_CLOCK" &&
+      alivePids(negInfStartedTriple3.tree).length === 3 &&
+      negInfStartedTriple3.externalEffects === "NONE"
+    ) {
+      details.push(
+        "A10 wipe15 train: triple -Infinity startedAtMs INVALID_CLOCK idempotent (worker+2 children running)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `A10 -Infinity startedAtMs triple unexpectedly ${JSON.stringify({ negInfStartedTriple2, negInfStartedTriple3 })}`,
+      );
+    }
+    const posInfStartedRepeat = stopProcessTreeOnDeadline(posInfStartedAt.tree, afterMs);
+    const negInfStartedRepeat = stopProcessTreeOnDeadline(negInfStartedAt.tree, afterMs);
+    if (
+      posInfStartedAt.ok === false &&
+      posInfStartedRepeat.ok === false &&
+      posInfStartedRepeat.code === "INVALID_CLOCK" &&
+      alivePids(posInfStartedRepeat.tree).length === 3 &&
+      posInfStartedRepeat.tree.outcome === "running" &&
+      posInfStartedRepeat.externalEffects === "NONE"
+    ) {
+      details.push(
+        "A11 wipe15 train: repeat +Infinity startedAtMs INVALID_CLOCK idempotent (worker+2 children running)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `A11 +Infinity startedAtMs repeat unexpectedly ${JSON.stringify(posInfStartedRepeat)}`,
+      );
+    }
+    if (
+      negInfStartedAt.ok === false &&
+      negInfStartedRepeat.ok === false &&
+      negInfStartedRepeat.code === "INVALID_CLOCK" &&
+      alivePids(negInfStartedRepeat.tree).length === 3 &&
+      negInfStartedRepeat.tree.outcome === "running" &&
+      negInfStartedRepeat.liveProviderWiring === "NOT_WIRED"
+    ) {
+      details.push(
+        "A12 wipe15 train: repeat -Infinity startedAtMs INVALID_CLOCK idempotent (worker+2 children running)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `A12 -Infinity startedAtMs repeat unexpectedly ${JSON.stringify(negInfStartedRepeat)}`,
+      );
+    }
+    const singleChild = createWorkerProcessTree({
+      generationId: tree.generationId,
+      startedAtMs: tree.startedAtMs,
+      deadlineSeconds: tree.deadlineSeconds,
+      workerPid: 4100,
+      childPids: [4101],
+    });
+    const posInfStartedSingle = stopProcessTreeOnDeadline(
+      { ...singleChild, startedAtMs: Number.POSITIVE_INFINITY },
+      afterMs,
+    );
+    const negInfStartedSingle = stopProcessTreeOnDeadline(
+      { ...singleChild, startedAtMs: Number.NEGATIVE_INFINITY },
+      afterMs,
+    );
+    if (
+      posInfStartedSingle.ok === false &&
+      negInfStartedSingle.ok === false &&
+      posInfStartedSingle.code === "INVALID_CLOCK" &&
+      negInfStartedSingle.code === "INVALID_CLOCK" &&
+      alivePids(posInfStartedSingle.tree).length === 2 &&
+      alivePids(negInfStartedSingle.tree).length === 2
+    ) {
+      details.push(
+        "A13 wipe15 train: ±Infinity startedAtMs INVALID_CLOCK on single-child tree (worker+1 running)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `A13 ±Infinity startedAtMs single-child unexpectedly pos=${JSON.stringify(posInfStartedSingle)} neg=${JSON.stringify(negInfStartedSingle)}`,
+      );
+    }
+    const compoundPos = stopProcessTreeOnDeadline(
+      {
+        ...tree,
+        deadlineSeconds: Number.POSITIVE_INFINITY,
+        startedAtMs: Number.POSITIVE_INFINITY,
+      },
+      afterMs,
+    );
+    const compoundNeg = stopProcessTreeOnDeadline(
+      {
+        ...tree,
+        deadlineSeconds: Number.NEGATIVE_INFINITY,
+        startedAtMs: Number.NEGATIVE_INFINITY,
+      },
+      afterMs,
+    );
+    if (
+      compoundPos.ok === false &&
+      compoundNeg.ok === false &&
+      compoundPos.code === "INVALID_CLOCK" &&
+      compoundNeg.code === "INVALID_CLOCK" &&
+      alivePids(compoundPos.tree).length === 3 &&
+      alivePids(compoundNeg.tree).length === 3
+    ) {
+      details.push(
+        "A14 wipe15 train: compound ±Infinity deadline+startedAtMs INVALID_CLOCK (worker+2 children running)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `A14 compound ±Infinity unexpectedly pos=${JSON.stringify(compoundPos)} neg=${JSON.stringify(compoundNeg)}`,
+      );
+    }
+    const mixedPosNeg = stopProcessTreeOnDeadline(
+      {
+        ...tree,
+        deadlineSeconds: Number.POSITIVE_INFINITY,
+        startedAtMs: Number.NEGATIVE_INFINITY,
+      },
+      afterMs,
+    );
+    const mixedNegPos = stopProcessTreeOnDeadline(
+      {
+        ...tree,
+        deadlineSeconds: Number.NEGATIVE_INFINITY,
+        startedAtMs: Number.POSITIVE_INFINITY,
+      },
+      afterMs,
+    );
+    if (
+      mixedPosNeg.ok === false &&
+      mixedNegPos.ok === false &&
+      mixedPosNeg.code === "INVALID_CLOCK" &&
+      mixedNegPos.code === "INVALID_CLOCK" &&
+      alivePids(mixedPosNeg.tree).length === 3 &&
+      alivePids(mixedNegPos.tree).length === 3
+    ) {
+      details.push(
+        "A15 tip-moved-272 train: mixed ±Infinity deadline vs startedAtMs INVALID_CLOCK (worker+2 children running)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `A15 mixed ±Infinity unexpectedly posNeg=${JSON.stringify(mixedPosNeg)} negPos=${JSON.stringify(mixedNegPos)}`,
+      );
+    }
+    const mixedRepeat = stopProcessTreeOnDeadline(mixedPosNeg.tree, afterMs);
+    if (
+      mixedPosNeg.ok === false &&
+      mixedRepeat.ok === false &&
+      mixedRepeat.code === "INVALID_CLOCK" &&
+      alivePids(mixedRepeat.tree).length === 3 &&
+      mixedRepeat.tree.outcome === "running" &&
+      mixedRepeat.externalEffects === "NONE"
+    ) {
+      details.push(
+        "A16 tip-moved-273 train: repeat mixed ±Infinity clocks INVALID_CLOCK idempotent (worker+2 children running)",
+      );
+    } else {
+      passed = false;
+      details.push(`A16 mixed repeat unexpectedly ${JSON.stringify(mixedRepeat)}`);
+    }
+    const mixedNegPosRepeat = stopProcessTreeOnDeadline(mixedNegPos.tree, afterMs);
+    if (
+      mixedNegPos.ok === false &&
+      mixedNegPosRepeat.ok === false &&
+      mixedNegPosRepeat.code === "INVALID_CLOCK" &&
+      alivePids(mixedNegPosRepeat.tree).length === 3 &&
+      mixedNegPosRepeat.liveProviderWiring === "NOT_WIRED"
+    ) {
+      details.push(
+        "A17 wipe15 timer train: repeat -∞ deadline + +∞ startedAt INVALID_CLOCK idempotent (worker+2 children running)",
+      );
+    } else {
+      passed = false;
+      details.push(`A17 negPos mixed repeat unexpectedly ${JSON.stringify(mixedNegPosRepeat)}`);
+    }
+    const mixedTriple2 = stopProcessTreeOnDeadline(mixedRepeat.tree, afterMs);
+    const mixedTriple3 = stopProcessTreeOnDeadline(
+      mixedTriple2.ok === false ? mixedTriple2.tree : tree,
+      afterMs + 1,
+    );
+    if (
+      mixedRepeat.ok === false &&
+      mixedTriple2.ok === false &&
+      mixedTriple3.ok === false &&
+      mixedTriple3.code === "INVALID_CLOCK" &&
+      alivePids(mixedTriple3.tree).length === 3
+    ) {
+      details.push(
+        "A18 tip-moved-274 train: triple mixed ±Infinity clocks INVALID_CLOCK idempotent (worker+2 children running)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `A18 mixed triple unexpectedly ${JSON.stringify({ mixedTriple2, mixedTriple3 })}`,
+      );
+    }
+    const negPosTriple2 = stopProcessTreeOnDeadline(mixedNegPosRepeat.tree, afterMs);
+    const negPosTriple3 = stopProcessTreeOnDeadline(
+      negPosTriple2.ok === false ? negPosTriple2.tree : tree,
+      afterMs + 1,
+    );
+    if (
+      mixedNegPosRepeat.ok === false &&
+      negPosTriple2.ok === false &&
+      negPosTriple3.ok === false &&
+      negPosTriple3.code === "INVALID_CLOCK" &&
+      alivePids(negPosTriple3.tree).length === 3
+    ) {
+      details.push(
+        "A19 tip-moved-275 train: triple -∞ deadline + +∞ startedAt INVALID_CLOCK (worker+2 children running)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `A19 negPos triple unexpectedly ${JSON.stringify({ negPosTriple2, negPosTriple3 })}`,
+      );
     }
 
     // B10: idempotent re-stop after first kill invents no second wave.

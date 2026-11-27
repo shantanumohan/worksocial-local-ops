@@ -782,4 +782,401 @@ describe("orphan-worker-deadline", () => {
     expect(refused.code).toBe("INVALID_CLOCK");
     expect(refused.liveProviderWiring).toBe("NOT_WIRED");
   });
+
+  it("corrupt +Infinity deadlineSeconds leaves owned tree running (A1 idle)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101],
+    });
+    const corrupt = { ...tree, deadlineSeconds: Number.POSITIVE_INFINITY };
+    const refused = stopProcessTreeOnDeadline(corrupt, startedAtMs + 31_000);
+    expect(refused.ok).toBe(false);
+    if (refused.ok) throw new Error("expected INVALID_CLOCK");
+    expect(refused.code).toBe("INVALID_CLOCK");
+    expect(alivePids(refused.tree)).toEqual([100, 101]);
+    expect(refused.tree.outcome).toBe("running");
+    expect(refused.externalEffects).toBe("NONE");
+    expect(refused.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("corrupt -Infinity deadlineSeconds leaves multi-child tree running (A2 wipe15)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101, 102],
+    });
+    const corrupt = { ...tree, deadlineSeconds: Number.NEGATIVE_INFINITY };
+    const refused = stopProcessTreeOnDeadline(corrupt, startedAtMs + 31_000);
+    expect(refused.ok).toBe(false);
+    if (refused.ok) throw new Error("expected INVALID_CLOCK");
+    expect(refused.code).toBe("INVALID_CLOCK");
+    expect(alivePids(refused.tree).sort()).toEqual([100, 101, 102]);
+    expect(refused.tree.outcome).toBe("running");
+    expect(refused.externalEffects).toBe("NONE");
+    expect(refused.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("corrupt +Infinity on multi-child tree still running (A3 wipe15 retrain)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101, 102],
+    });
+    const corrupt = { ...tree, deadlineSeconds: Number.POSITIVE_INFINITY };
+    const first = stopProcessTreeOnDeadline(corrupt, startedAtMs + 31_000);
+    const second = stopProcessTreeOnDeadline(first.tree, startedAtMs + 32_000);
+    expect(first.ok).toBe(false);
+    expect(second.ok).toBe(false);
+    if (first.ok || second.ok) throw new Error("expected INVALID_CLOCK");
+    expect(first.code).toBe("INVALID_CLOCK");
+    expect(second.code).toBe("INVALID_CLOCK");
+    expect(alivePids(second.tree).sort()).toEqual([100, 101, 102]);
+    expect(second.tree.outcome).toBe("running");
+    expect(second.externalEffects).toBe("NONE");
+    expect(second.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("corrupt -Infinity repeat stays INVALID_CLOCK on 3-node tree (A4 wipe15 train)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101, 102],
+    });
+    const corrupt = { ...tree, deadlineSeconds: Number.NEGATIVE_INFINITY };
+    const first = stopProcessTreeOnDeadline(corrupt, startedAtMs + 31_000);
+    const second = stopProcessTreeOnDeadline(first.tree, startedAtMs + 32_000);
+    expect(first.code).toBe("INVALID_CLOCK");
+    expect(second.code).toBe("INVALID_CLOCK");
+    expect(alivePids(second.tree).sort()).toEqual([100, 101, 102]);
+    expect(second.tree.outcome).toBe("running");
+    expect(second.externalEffects).toBe("NONE");
+    expect(second.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("triple corrupt +Infinity repeat stays INVALID_CLOCK (A5 wipe15 train)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101, 102],
+    });
+    const corrupt = { ...tree, deadlineSeconds: Number.POSITIVE_INFINITY };
+    let state = corrupt;
+    for (let i = 0; i < 3; i++) {
+      const r = stopProcessTreeOnDeadline(state, startedAtMs + 31_000 + i * 1_000);
+      expect(r.ok).toBe(false);
+      if (r.ok) throw new Error("expected INVALID_CLOCK");
+      expect(r.code).toBe("INVALID_CLOCK");
+      expect(alivePids(r.tree).sort()).toEqual([100, 101, 102]);
+      expect(r.tree.outcome).toBe("running");
+      state = r.tree;
+    }
+  });
+
+  it("triple corrupt -Infinity repeat stays INVALID_CLOCK (A6 wipe15 train)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101, 102],
+    });
+    const corrupt = { ...tree, deadlineSeconds: Number.NEGATIVE_INFINITY };
+    let state = corrupt;
+    for (let i = 0; i < 3; i++) {
+      const r = stopProcessTreeOnDeadline(state, startedAtMs + 31_000 + i * 1_000);
+      expect(r.code).toBe("INVALID_CLOCK");
+      expect(alivePids(r.tree).sort()).toEqual([100, 101, 102]);
+      expect(r.externalEffects).toBe("NONE");
+      expect(r.liveProviderWiring).toBe("NOT_WIRED");
+      state = r.tree;
+    }
+  });
+
+  it("±Infinity corrupt single-child tree both INVALID_CLOCK (A7 wipe15 train)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101],
+    });
+    for (const ds of [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY] as const) {
+      const refused = stopProcessTreeOnDeadline(
+        { ...tree, deadlineSeconds: ds },
+        startedAtMs + 31_000,
+      );
+      expect(refused.ok).toBe(false);
+      if (refused.ok) throw new Error("expected INVALID_CLOCK");
+      expect(refused.code).toBe("INVALID_CLOCK");
+      expect(alivePids(refused.tree).sort()).toEqual([100, 101]);
+      expect(refused.tree.outcome).toBe("running");
+      expect(refused.externalEffects).toBe("NONE");
+    }
+  });
+
+  it("corrupt ±Infinity startedAtMs leaves tree running (A8 wipe15 train)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101, 102],
+    });
+    for (const sa of [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY] as const) {
+      const refused = stopProcessTreeOnDeadline(
+        { ...tree, startedAtMs: sa },
+        startedAtMs + 31_000,
+      );
+      expect(refused.code).toBe("INVALID_CLOCK");
+      expect(alivePids(refused.tree).sort()).toEqual([100, 101, 102]);
+      expect(refused.tree.outcome).toBe("running");
+      expect(refused.liveProviderWiring).toBe("NOT_WIRED");
+    }
+  });
+
+  it("triple corrupt +Infinity startedAtMs repeat stays INVALID_CLOCK (A9 wipe15 train)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101, 102],
+    });
+    const corrupt = { ...tree, startedAtMs: Number.POSITIVE_INFINITY };
+    let state = corrupt;
+    for (let i = 0; i < 3; i++) {
+      const r = stopProcessTreeOnDeadline(state, startedAtMs + 31_000 + i * 1_000);
+      expect(r.ok).toBe(false);
+      if (r.ok) throw new Error("expected INVALID_CLOCK");
+      expect(r.code).toBe("INVALID_CLOCK");
+      expect(alivePids(r.tree).sort()).toEqual([100, 101, 102]);
+      expect(r.tree.outcome).toBe("running");
+      expect(r.externalEffects).toBe("NONE");
+      state = r.tree;
+    }
+  });
+
+  it("triple corrupt -Infinity startedAtMs repeat stays INVALID_CLOCK (A10 wipe15 train)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101, 102],
+    });
+    const corrupt = { ...tree, startedAtMs: Number.NEGATIVE_INFINITY };
+    let state = corrupt;
+    for (let i = 0; i < 3; i++) {
+      const r = stopProcessTreeOnDeadline(state, startedAtMs + 31_000 + i * 1_000);
+      expect(r.code).toBe("INVALID_CLOCK");
+      expect(alivePids(r.tree).sort()).toEqual([100, 101, 102]);
+      expect(r.liveProviderWiring).toBe("NOT_WIRED");
+      state = r.tree;
+    }
+  });
+
+  it("corrupt +Infinity startedAtMs repeat stays INVALID_CLOCK (A11 wipe15 train)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101, 102],
+    });
+    const corrupt = { ...tree, startedAtMs: Number.POSITIVE_INFINITY };
+    const first = stopProcessTreeOnDeadline(corrupt, startedAtMs + 31_000);
+    const second = stopProcessTreeOnDeadline(first.tree, startedAtMs + 32_000);
+    expect(first.ok).toBe(false);
+    expect(second.ok).toBe(false);
+    if (first.ok || second.ok) throw new Error("expected INVALID_CLOCK");
+    expect(first.code).toBe("INVALID_CLOCK");
+    expect(second.code).toBe("INVALID_CLOCK");
+    expect(alivePids(second.tree).sort()).toEqual([100, 101, 102]);
+    expect(second.tree.outcome).toBe("running");
+    expect(second.externalEffects).toBe("NONE");
+    expect(second.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("corrupt -Infinity startedAtMs repeat stays INVALID_CLOCK (A12 wipe15 train)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101, 102],
+    });
+    const corrupt = { ...tree, startedAtMs: Number.NEGATIVE_INFINITY };
+    const first = stopProcessTreeOnDeadline(corrupt, startedAtMs + 31_000);
+    const second = stopProcessTreeOnDeadline(first.tree, startedAtMs + 32_000);
+    expect(first.code).toBe("INVALID_CLOCK");
+    expect(second.code).toBe("INVALID_CLOCK");
+    expect(alivePids(second.tree).sort()).toEqual([100, 101, 102]);
+    expect(second.tree.outcome).toBe("running");
+    expect(second.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("±Infinity startedAtMs on single-child tree both INVALID_CLOCK (A13 wipe15 train)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101],
+    });
+    for (const sa of [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY] as const) {
+      const refused = stopProcessTreeOnDeadline(
+        { ...tree, startedAtMs: sa },
+        startedAtMs + 31_000,
+      );
+      expect(refused.ok).toBe(false);
+      if (refused.ok) throw new Error("expected INVALID_CLOCK");
+      expect(refused.code).toBe("INVALID_CLOCK");
+      expect(alivePids(refused.tree).sort()).toEqual([100, 101]);
+      expect(refused.tree.outcome).toBe("running");
+      expect(refused.externalEffects).toBe("NONE");
+    }
+  });
+
+  it("compound ±Infinity deadlineSeconds and startedAtMs stays INVALID_CLOCK (A14 wipe15 train)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101, 102],
+    });
+    const pairs = [
+      { deadlineSeconds: Number.POSITIVE_INFINITY, startedAtMs: Number.POSITIVE_INFINITY },
+      { deadlineSeconds: Number.NEGATIVE_INFINITY, startedAtMs: Number.NEGATIVE_INFINITY },
+    ] as const;
+    for (const corrupt of pairs) {
+      const refused = stopProcessTreeOnDeadline({ ...tree, ...corrupt }, startedAtMs + 31_000);
+      expect(refused.code).toBe("INVALID_CLOCK");
+      expect(alivePids(refused.tree).sort()).toEqual([100, 101, 102]);
+      expect(refused.tree.outcome).toBe("running");
+      expect(refused.liveProviderWiring).toBe("NOT_WIRED");
+    }
+  });
+
+  it("mixed ±Infinity deadline vs startedAtMs stays INVALID_CLOCK (A15 tip-moved-272 train)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101, 102],
+    });
+    const mixed = [
+      { deadlineSeconds: Number.POSITIVE_INFINITY, startedAtMs: Number.NEGATIVE_INFINITY },
+      { deadlineSeconds: Number.NEGATIVE_INFINITY, startedAtMs: Number.POSITIVE_INFINITY },
+    ] as const;
+    for (const corrupt of mixed) {
+      const refused = stopProcessTreeOnDeadline({ ...tree, ...corrupt }, startedAtMs + 31_000);
+      expect(refused.ok).toBe(false);
+      if (refused.ok) throw new Error("expected INVALID_CLOCK");
+      expect(refused.code).toBe("INVALID_CLOCK");
+      expect(alivePids(refused.tree).sort()).toEqual([100, 101, 102]);
+      expect(refused.externalEffects).toBe("NONE");
+    }
+  });
+
+  it("mixed ±Infinity clocks repeat stays INVALID_CLOCK (A16 tip-moved-273 train)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101, 102],
+    });
+    const corrupt = {
+      ...tree,
+      deadlineSeconds: Number.POSITIVE_INFINITY,
+      startedAtMs: Number.NEGATIVE_INFINITY,
+    };
+    const first = stopProcessTreeOnDeadline(corrupt, startedAtMs + 31_000);
+    const second = stopProcessTreeOnDeadline(first.tree, startedAtMs + 32_000);
+    expect(first.code).toBe("INVALID_CLOCK");
+    expect(second.code).toBe("INVALID_CLOCK");
+    expect(alivePids(second.tree).sort()).toEqual([100, 101, 102]);
+    expect(second.tree.outcome).toBe("running");
+    expect(second.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("neg deadline + pos startedAt repeat stays INVALID_CLOCK (A17 wipe15 timer train)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101, 102],
+    });
+    const corrupt = {
+      ...tree,
+      deadlineSeconds: Number.NEGATIVE_INFINITY,
+      startedAtMs: Number.POSITIVE_INFINITY,
+    };
+    const first = stopProcessTreeOnDeadline(corrupt, startedAtMs + 31_000);
+    const second = stopProcessTreeOnDeadline(first.tree, startedAtMs + 32_000);
+    expect(first.code).toBe("INVALID_CLOCK");
+    expect(second.code).toBe("INVALID_CLOCK");
+    expect(alivePids(second.tree).sort()).toEqual([100, 101, 102]);
+    expect(second.externalEffects).toBe("NONE");
+  });
+
+  it("triple mixed ±Infinity clocks repeat stays INVALID_CLOCK (A18 tip-moved-274 train)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101, 102],
+    });
+    const corrupt = {
+      ...tree,
+      deadlineSeconds: Number.POSITIVE_INFINITY,
+      startedAtMs: Number.NEGATIVE_INFINITY,
+    };
+    let state = corrupt;
+    for (let i = 0; i < 3; i++) {
+      const r = stopProcessTreeOnDeadline(state, startedAtMs + 31_000 + i * 1_000);
+      expect(r.code).toBe("INVALID_CLOCK");
+      expect(alivePids(r.tree).sort()).toEqual([100, 101, 102]);
+      expect(r.tree.outcome).toBe("running");
+      state = r.tree;
+    }
+  });
+
+  it("triple neg deadline + pos startedAt repeat stays INVALID_CLOCK (A19 tip-moved-275 train)", () => {
+    const tree = createWorkerProcessTree({
+      generationId: "gen-a",
+      startedAtMs,
+      deadlineSeconds: 30,
+      workerPid: 100,
+      childPids: [101, 102],
+    });
+    const corrupt = {
+      ...tree,
+      deadlineSeconds: Number.NEGATIVE_INFINITY,
+      startedAtMs: Number.POSITIVE_INFINITY,
+    };
+    let state = corrupt;
+    for (let i = 0; i < 3; i++) {
+      const r = stopProcessTreeOnDeadline(state, startedAtMs + 31_000 + i * 1_000);
+      expect(r.code).toBe("INVALID_CLOCK");
+      expect(alivePids(r.tree).sort()).toEqual([100, 101, 102]);
+      expect(r.liveProviderWiring).toBe("NOT_WIRED");
+      state = r.tree;
+    }
+  });
 });
