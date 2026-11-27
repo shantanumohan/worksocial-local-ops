@@ -457,6 +457,15 @@ describe("rate-limit-backoff (T-X030)", () => {
     ).toEqual({ waitSeconds: 1, source: "exponential" });
   });
 
+  it("ceils Number.EPSILON Retry-After to 1s (Q51 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 1,
+        retryAfterSeconds: Number.EPSILON,
+      }),
+    ).toEqual({ waitSeconds: 1, source: "retry_after" });
+  });
+
   it("ceils fractional initialBackoffSeconds in exponential path (Q49 wipe15)", () => {
     expect(
       computeBackoffWaitSeconds({

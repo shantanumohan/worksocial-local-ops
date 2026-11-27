@@ -30,6 +30,7 @@
  * Deepen (Q44): -Infinity attempt floors to 1 → WAIT exponential (not STOP).
  * Deepen (Q47): maxAttempts=0.9 floors to 0 → attempt 1 STOP (no WAIT invent).
  * Deepen (Q49): fractional initialBackoffSeconds ceils (0.4 → WAIT 1s).
+ * Deepen (Q51): Retry-After=EPSILON ceils to 1s retry_after.
  */
 
 import { randomUUID } from "node:crypto";
@@ -558,6 +559,23 @@ export function proofRateLimitBoundedBackoffPreservesDeadline(
     details.push(
       `maxAttempts=1 STOP honesty failed: ${JSON.stringify(oneShot)}`,
     );
+  }
+
+  // Scenario P15 (Q51): Retry-After=EPSILON ceils to 1s retry_after.
+  const epsilonRetry = computeBackoffWaitSeconds({
+    attempt: 1,
+    retryAfterSeconds: Number.EPSILON,
+  });
+  if (
+    epsilonRetry.source === "retry_after" &&
+    epsilonRetry.waitSeconds === 1
+  ) {
+    details.push(
+      "Retry-After=EPSILON ceiled to WAIT 1s retry_after (subnormal honored)",
+    );
+  } else {
+    passed = false;
+    details.push(`EPSILON Retry-After failed: ${JSON.stringify(epsilonRetry)}`);
   }
 
   // Scenario P14 (Q49): fractional initialBackoff 0.4s ceils to exponential WAIT 1s.
