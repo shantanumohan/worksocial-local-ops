@@ -307,6 +307,12 @@ export function assertOutputBombReclaimIdempotent(input: {
       reasons.push("reclaim quarantine.code drifted");
     }
     if (
+      first.quarantine.reason !== second.quarantine.reason &&
+      first.quarantine.code === second.quarantine.code
+    ) {
+      reasons.push("reclaim quarantine.reason drifted");
+    }
+    if (
       first.quarantine.quarantinedStdout !== null ||
       second.quarantine.quarantinedStdout !== null
     ) {

@@ -185,6 +185,26 @@ describe("claude-runner (R1-04)", () => {
       expect(codeDrift.ok).toBe(false);
       expect(codeDrift.code).toBe("OUTPUT_BOMB_RECLAIM_DRIFT");
     }
+
+    const reasonTampered: OutputBombReclaimResult = { ...r2 };
+    if (
+      !r1.quarantine.deliver &&
+      !reasonTampered.quarantine.deliver &&
+      r1.quarantine.code === reasonTampered.quarantine.code
+    ) {
+      reasonTampered.quarantine = {
+        ...reasonTampered.quarantine,
+        reason: `${reasonTampered.quarantine.reason} (invent drift)`,
+      };
+      const reasonDrift = assertOutputBombReclaimIdempotent({
+        first: r1,
+        second: reasonTampered,
+      });
+      expect(reasonDrift.ok).toBe(false);
+      expect(reasonDrift.reasons).toContain("reclaim quarantine.reason drifted");
+    }
+
+    expect(assessStdoutBound("", 64).withinBound).toBe(true);
   });
 
   it("refuses invokeClaudeCli when maxOutputBytes is nonpositive or non-finite (T-X011)", async () => {

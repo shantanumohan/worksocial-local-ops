@@ -1011,7 +1011,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X024** is fixture ACCEPTED only via the old fence after reassignment proof (`OLD_FENCE_AFTER_REASSIGNMENT`). Not sandbox/prod VERIFIED.
 
-**T-X011** is fixture ACCEPTED only via the output bomb bounded/quarantined proof (`OUTPUT_BOMB_BOUNDED_QUARANTINED`) — oversized CLI stdout is refused (`OUTPUT_TOO_LARGE`) and not delivered; non-finite/≤0 max refused; close-path one-shot bomb quarantined; idempotent reclaim (no invent deliver; assessment.code drift refused); simultaneous live-claim flags refused; live VERIFIED / force-deliver claims refused; ACCEPTED≠VERIFIED. Not sandbox/prod VERIFIED.
+**T-X011** is fixture ACCEPTED only via the output bomb bounded/quarantined proof (`OUTPUT_BOMB_BOUNDED_QUARANTINED`) — oversized CLI stdout is refused (`OUTPUT_TOO_LARGE`) and not delivered; non-finite/≤0 max refused; close-path one-shot bomb quarantined; idempotent reclaim (no invent deliver; assessment.code / quarantine.reason drift refused); simultaneous live-claim flags refused; live VERIFIED / force-deliver claims refused; ACCEPTED≠VERIFIED. Not sandbox/prod VERIFIED.
 
 **T-X003** is fixture ACCEPTED only via the symlink escape after root verification proof (`SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION`) — logical root check then canonical/realpath deny when a symlink would write outside the verified root. Not sandbox/prod VERIFIED.
 

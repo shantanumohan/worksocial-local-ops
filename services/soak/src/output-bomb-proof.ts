@@ -1,6 +1,6 @@
 /**
  * Fixture proof for T-X011 — output bomb bounded/quarantined.
- * Hillclimb deepen I7: idempotent reclaim; exact-at-bound ok;
+ * Hillclimb deepen I7–I9: idempotent reclaim; reason drift refused; empty stdout bound;
  * zero/negative/non-finite max refused; UTF-8 4-byte emoji bomb;
  * close-path one-shot bomb quarantine; live VERIFIED / force-deliver refused;
  * mismatched honesty; ACCEPTED≠VERIFIED.
@@ -407,6 +407,40 @@ export async function proofOutputBombBoundedQuarantined(
       details.push(
         `idempotent reclaim unexpectedly idem=${JSON.stringify(reclaimIdem)} r1=${JSON.stringify(reclaim1)} afterForce=${JSON.stringify(afterForce)} after=${JSON.stringify(reclaimAfterForce)}`,
       );
+    }
+
+    const emptyBound = assessStdoutBound("", maxBytes);
+    const reasonTampered = {
+      ...reclaim2,
+      quarantine: {
+        ...reclaim2.quarantine,
+        reason: `${reclaim2.quarantine.deliver === false ? reclaim2.quarantine.reason : ""} (invent)`,
+      },
+    };
+    const reasonDrift =
+      !reclaim1.quarantine.deliver &&
+      !reasonTampered.quarantine.deliver &&
+      reclaim1.quarantine.code === reasonTampered.quarantine.code
+        ? assertOutputBombReclaimIdempotent({
+            first: reclaim1,
+            second: reasonTampered,
+          })
+        : { ok: true, code: "OUTPUT_BOMB_RECLAIM_IDEMPOTENT" as const, reasons: [], externalEffects: "NONE" as const };
+    if (
+      emptyBound.withinBound &&
+      emptyBound.byteLength === 0 &&
+      !reasonDrift.ok &&
+      reasonDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT"
+    ) {
+      details.push(
+        "empty stdout within bound; reclaim quarantine.reason drift refused",
+      );
+    } else if (!emptyBound.withinBound || emptyBound.byteLength !== 0) {
+      passed = false;
+      details.push(`empty bound unexpectedly ${JSON.stringify(emptyBound)}`);
+    } else {
+      passed = false;
+      details.push(`reason drift unexpectedly ${JSON.stringify(reasonDrift)}`);
     }
 
     details.push(
