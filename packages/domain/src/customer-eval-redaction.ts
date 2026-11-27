@@ -205,8 +205,16 @@ export function prepareCustomerDataForEvaluation(input: {
   bypassIntentLabelRedaction?: boolean;
   /** Forbidden — messageBody must stay scanned/redacted when it carries identifiers. */
   bypassMessageBodyRedaction?: boolean;
+  /** Forbidden — structured name/email/phone fields must stay tokenized. */
+  bypassStructuredFieldRedaction?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.bypassStructuredFieldRedaction === true) {
+    return blockedLeak([
+      "Bypass structured customer field redaction refused — eval gate (T-X072)",
+    ]);
+  }
 
   if (input.bypassMessageBodyRedaction === true) {
     return blockedLeak([
