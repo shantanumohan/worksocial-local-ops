@@ -191,6 +191,22 @@ describe("unsupported blog destination (T-X046)", () => {
     expect(decision.inventPublishedVerified).toBe(false);
   });
 
+  it("refuses empty destinationId — never invents PUBLISHED_VERIFIED (G17)", () => {
+    const decision = classifyUnsupportedBlogDestination({
+      destination: dest({
+        destinationId: "",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("OTHER_BLOG_NO_ADAPTER_UNSUPPORTED");
+    expect(decision.outcome).toBe(PublicationOutcome.UNSUPPORTED_ACTION);
+    expectHonesty(decision, AdapterLiveStatus.FIXTURE);
+  });
+
   it("refuses whitespace-padded destinationId — never invents PUBLISHED_VERIFIED (G15)", () => {
     const decision = classifyUnsupportedBlogDestination({
       destination: dest({
@@ -222,6 +238,403 @@ describe("unsupported blog destination (T-X046)", () => {
     expect(decision.code).toBe("OTHER_BLOG_NO_ADAPTER_UNSUPPORTED");
     expect(decision.outcome).toBe(PublicationOutcome.UNSUPPORTED_ACTION);
     expectHonesty(decision, AdapterLiveStatus.FIXTURE);
+  });
+
+  it("refuses preferLive on resolved fixture CMS schedule (G23)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-cms",
+        kind: DestinationKind.CMS,
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+      preferLive: true,
+    });
+    expect(decision.scheduleOk).toBe(true);
+    expect(decision.scheduleCode).toBe("SCHEDULE_RESOLVED");
+    expect(decision.allowed).toBe(false);
+    expect(decision.publish.code).toBe("LIVE_WIRE_CLAIM_REFUSED");
+    expect(decision.inventPublishedVerified).toBe(false);
+  });
+
+  it("allows fixture CMS scheduled publish when civil time resolves (G22)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-cms",
+        kind: DestinationKind.CMS,
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+    });
+    expect(decision.scheduleOk).toBe(true);
+    expect(decision.scheduleCode).toBe("SCHEDULE_RESOLVED");
+    expect(decision.allowed).toBe(true);
+    expect(decision.publish.code).toBe("OWNED_CMS_ALLOWED");
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.externalEffects).toBe("NONE");
+  });
+
+  it("blocks spring-gap schedule even for fixture OTHER_BLOG — never invent (G21)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-other-blog-fixture",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-03-09",
+      hour: 2,
+      minute: 30,
+    });
+    expect(decision.scheduleOk).toBe(false);
+    expect(decision.scheduleCode).toBe("NONEXISTENT_LOCAL_TIME");
+    expect(decision.allowed).toBe(false);
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.publish.code).toBe("OTHER_BLOG_FIXTURE_ALLOWED");
+  });
+
+  it("refuses out-of-range civil minute — INVALID_SCHEDULE_INPUT (G20)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-other-blog-unsupported",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: false,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 60,
+    });
+    expect(decision.scheduleOk).toBe(false);
+    expect(decision.scheduleCode).toBe("INVALID_SCHEDULE_INPUT");
+    expect(decision.allowed).toBe(false);
+    expect(decision.inventPublishedVerified).toBe(false);
+  });
+
+  it("refuses out-of-range civil hour — INVALID_SCHEDULE_INPUT (G19)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-other-blog-unsupported",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: false,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 25,
+      minute: 0,
+    });
+    expect(decision.scheduleOk).toBe(false);
+    expect(decision.scheduleCode).toBe("INVALID_SCHEDULE_INPUT");
+    expect(decision.allowed).toBe(false);
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.publish.code).toBe("OTHER_BLOG_NO_ADAPTER_UNSUPPORTED");
+  });
+
+  it("refuses malformed localDate on scheduled publish — INVALID_SCHEDULE_INPUT (G18)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-other-blog-unsupported",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: false,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-13-01",
+      hour: 9,
+      minute: 0,
+    });
+    expect(decision.scheduleOk).toBe(false);
+    expect(decision.scheduleCode).toBe("INVALID_SCHEDULE_INPUT");
+    expect(decision.allowed).toBe(false);
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.publish.code).toBe("OTHER_BLOG_NO_ADAPTER_UNSUPPORTED");
+  });
+
+  it("refuses invalid civil schedule input — INVALID_SCHEDULE_INPUT (G16)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-other-blog-unsupported",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: false,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "Not/A_Valid_Zone",
+      localDate: "2025-11-02",
+      hour: 9,
+      minute: 0,
+    });
+    expect(decision.scheduleOk).toBe(false);
+    expect(decision.scheduleCode).toBe("INVALID_SCHEDULE_INPUT");
+    expect(decision.fireAtIso).toBeNull();
+    expect(decision.allowed).toBe(false);
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.publish.code).toBe("OTHER_BLOG_NO_ADAPTER_UNSUPPORTED");
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("resolves civil schedule for Hub FULL_ARTICLE but publish still unsupported (G24)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-hub",
+        kind: DestinationKind.CHATGPT_HUB,
+        fixtureAvailable: false,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+    });
+    expect(decision.scheduleOk).toBe(true);
+    expect(decision.scheduleCode).toBe("SCHEDULE_RESOLVED");
+    expect(decision.fireAtIso).not.toBeNull();
+    expect(decision.allowed).toBe(false);
+    expect(decision.publish.code).toBe("HUB_FULL_BLOG_UNSUPPORTED");
+    expect(decision.publish.outcome).toBe(PublicationOutcome.UNSUPPORTED_ACTION);
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("allows fixture OTHER_BLOG on fall-back ambiguous hour without inventing VERIFIED (G25)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-other-blog-fixture",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-11-02",
+      hour: 1,
+      minute: 30,
+    });
+    expect(decision.scheduleOk).toBe(true);
+    expect(decision.scheduleCode).toBe("SCHEDULE_RESOLVED");
+    expect(decision.ambiguous).toBe(true);
+    expect(decision.fireAtIso).not.toBeNull();
+    expect(decision.allowed).toBe(true);
+    expect(decision.publish.code).toBe("OTHER_BLOG_FIXTURE_ALLOWED");
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.liveProviderWiring).toBe(AdapterLiveStatus.FIXTURE);
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("resolves civil schedule but still refuses format mismatch on fixture OTHER_BLOG (G26)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-other-blog-fixture",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: true,
+        allowedFormats: [ContentFormat.PROFILE_FACT],
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+    });
+    expect(decision.scheduleOk).toBe(true);
+    expect(decision.scheduleCode).toBe("SCHEDULE_RESOLVED");
+    expect(decision.fireAtIso).not.toBeNull();
+    expect(decision.allowed).toBe(false);
+    expect(decision.publish.code).toBe("OTHER_BLOG_NO_ADAPTER_UNSUPPORTED");
+    expect(decision.publish.outcome).toBe(PublicationOutcome.UNSUPPORTED_ACTION);
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("resolves civil schedule but still refuses whitespace-padded destinationId (G27)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "  dest-other-blog-fixture  ",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+    });
+    expect(decision.scheduleOk).toBe(true);
+    expect(decision.scheduleCode).toBe("SCHEDULE_RESOLVED");
+    expect(decision.fireAtIso).not.toBeNull();
+    expect(decision.allowed).toBe(false);
+    expect(decision.publish.code).toBe("OTHER_BLOG_NO_ADAPTER_UNSUPPORTED");
+    expect(decision.publish.outcome).toBe(PublicationOutcome.UNSUPPORTED_ACTION);
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("allows fixture CMS on fall-back ambiguous hour without inventing VERIFIED (G33)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-cms",
+        kind: DestinationKind.CMS,
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-11-02",
+      hour: 1,
+      minute: 30,
+    });
+    expect(decision.scheduleOk).toBe(true);
+    expect(decision.scheduleCode).toBe("SCHEDULE_RESOLVED");
+    expect(decision.ambiguous).toBe(true);
+    expect(decision.fireAtIso).not.toBeNull();
+    expect(decision.allowed).toBe(true);
+    expect(decision.publish.code).toBe("OWNED_CMS_ALLOWED");
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.liveProviderWiring).toBe(AdapterLiveStatus.FIXTURE);
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("refuses preferLive on Hub scheduled FULL_ARTICLE (G32)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-hub",
+        kind: DestinationKind.CHATGPT_HUB,
+        fixtureAvailable: false,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+      preferLive: true,
+    });
+    expect(decision.scheduleOk).toBe(true);
+    expect(decision.scheduleCode).toBe("SCHEDULE_RESOLVED");
+    expect(decision.allowed).toBe(false);
+    expect(decision.publish.code).toBe("LIVE_WIRE_CLAIM_REFUSED");
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("resolves schedule but unsupported OTHER_BLOG publish still refused (G31)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-other-blog-unsupported",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: false,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+    });
+    expect(decision.scheduleOk).toBe(true);
+    expect(decision.scheduleCode).toBe("SCHEDULE_RESOLVED");
+    expect(decision.fireAtIso).not.toBeNull();
+    expect(decision.allowed).toBe(false);
+    expect(decision.publish.code).toBe("OTHER_BLOG_NO_ADAPTER_UNSUPPORTED");
+    expect(decision.publish.outcome).toBe(PublicationOutcome.UNSUPPORTED_ACTION);
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("refuses preferLive on normal fixture OTHER_BLOG schedule (G30)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-other-blog-fixture",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+      preferLive: true,
+    });
+    expect(decision.scheduleOk).toBe(true);
+    expect(decision.scheduleCode).toBe("SCHEDULE_RESOLVED");
+    expect(decision.ambiguous).toBe(false);
+    expect(decision.allowed).toBe(false);
+    expect(decision.publish.code).toBe("LIVE_WIRE_CLAIM_REFUSED");
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("allows fixture OTHER_BLOG on normal civil schedule without inventing VERIFIED (G29)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "dest-other-blog-fixture",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+    });
+    expect(decision.scheduleOk).toBe(true);
+    expect(decision.scheduleCode).toBe("SCHEDULE_RESOLVED");
+    expect(decision.ambiguous).toBe(false);
+    expect(decision.fireAtIso).not.toBeNull();
+    expect(decision.allowed).toBe(true);
+    expect(decision.publish.code).toBe("OTHER_BLOG_FIXTURE_ALLOWED");
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.liveProviderWiring).toBe(AdapterLiveStatus.FIXTURE);
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("resolves civil schedule but still refuses empty destinationId (G28)", () => {
+    const decision = classifyUnsupportedBlogScheduledPublish({
+      destination: dest({
+        destinationId: "",
+        kind: DestinationKind.OTHER_BLOG,
+        fixtureAvailable: true,
+        liveWiring: AdapterLiveStatus.FIXTURE,
+      }),
+      format: ContentFormat.FULL_ARTICLE,
+      timeZone: "America/New_York",
+      localDate: "2025-06-15",
+      hour: 9,
+      minute: 0,
+    });
+    expect(decision.scheduleOk).toBe(true);
+    expect(decision.scheduleCode).toBe("SCHEDULE_RESOLVED");
+    expect(decision.fireAtIso).not.toBeNull();
+    expect(decision.allowed).toBe(false);
+    expect(decision.publish.code).toBe("OTHER_BLOG_NO_ADAPTER_UNSUPPORTED");
+    expect(decision.publish.outcome).toBe(PublicationOutcome.UNSUPPORTED_ACTION);
+    expect(decision.inventPublishedVerified).toBe(false);
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
   });
 
   it("resolves fall-back schedule but preferLive still refused (G15)", () => {

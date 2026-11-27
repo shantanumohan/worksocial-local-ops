@@ -8,8 +8,8 @@
     "create_trusted_local_workspace"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-f01.json",
-  "createdAtIso": "2026-11-27T15:13:20.299Z",
+  "createdAtIso": "2026-11-27T15:50:17.834Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-f01-dec2fbec695b"
+  "uniqueSourceArtifactId": "art-fixture-t-f01-034390605f4a"
 }

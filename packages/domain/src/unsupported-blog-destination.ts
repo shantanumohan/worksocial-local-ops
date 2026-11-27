@@ -11,7 +11,21 @@
  * unsupported; owned CMS / fixture OTHER_BLOG remain positive controls;
  * DST civil schedule gaps still refuse fake publication (G11);
  * blank/whitespace destinationId + preferLive-on-schedule + format mismatch
- * still refuse invent (G15).
+ * still refuse invent (G15); invalid civil schedule input → INVALID_SCHEDULE_INPUT (G16);
+ * empty destinationId still fail closed (G17); malformed localDate/out-of-range civil time → INVALID_SCHEDULE_INPUT (G18–G20);
+ * spring-gap blocks scheduled publish even when fixture OTHER_BLOG would classify allowed (G21);
+ * fixture CMS civil schedule may resolve with inventPublishedVerified still false (G22);
+ * preferLive on resolved CMS schedule still LIVE_WIRE_CLAIM_REFUSED (G23);
+ * resolved civil schedule for ChatGPT Hub FULL_ARTICLE still HUB_FULL_BLOG_UNSUPPORTED (G24);
+ * fall-back ambiguous civil schedule may allow fixture OTHER_BLOG without inventPublishedVerified (G25);
+ * resolved civil schedule does not override format mismatch on fixture OTHER_BLOG (G26);
+ * resolved civil schedule does not bypass whitespace-padded destinationId refuse (G27);
+ * resolved civil schedule does not bypass empty destinationId refuse (G28);
+ * fixture OTHER_BLOG may classify allowed on normal civil schedule without inventPublishedVerified (G29);
+ * preferLive on resolved normal fixture OTHER_BLOG schedule still LIVE_WIRE_CLAIM_REFUSED (G30);
+ * civil schedule resolve does not unlock unsupported OTHER_BLOG publish (G31);
+ * preferLive on resolved Hub FULL_ARTICLE schedule still LIVE_WIRE_CLAIM_REFUSED (G32);
+ * fixture CMS may classify allowed on fall-back ambiguous civil schedule without inventPublishedVerified (G33).
  */
 
 import {
@@ -203,7 +217,7 @@ export type UnsupportedBlogScheduledPublishDecision = {
   /** Ambiguous fall-back hour when schedule resolved. */
   ambiguous: boolean;
   publish: UnsupportedBlogDestinationDecision;
-  /** Combined gate: schedule must resolve AND publish allowed. */
+  /** Combined gate: schedule must resolve AND publish allowed (G21: gap blocks even fixture publish). */
   allowed: boolean;
   inventPublishedVerified: false;
   liveProviderWiring: AdapterLiveStatusValue;
