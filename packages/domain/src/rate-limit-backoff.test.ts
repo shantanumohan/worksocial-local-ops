@@ -429,6 +429,26 @@ describe("rate-limit-backoff (T-X030)", () => {
     ).toEqual({ waitSeconds: 3, source: "retry_after" });
   });
 
+  it("floors fractional maxAttempts before STOP gate (Q28 wipe15)", () => {
+    const step = evaluateRateLimitWithDeadline(
+      {
+        httpStatus: 429,
+        retryAfterSeconds: 1,
+        observedAtIso: "2026-11-22T12:00:00.000Z",
+      },
+      {
+        attempt: 2,
+        deadlineAtIso: "2026-11-22T13:00:00.000Z",
+        maxAttempts: 2.9,
+      },
+    );
+    expect(step).toEqual({
+      action: "STOP_MAX_ATTEMPTS",
+      attempt: 2,
+      reason: "MAX_ATTEMPTS",
+    });
+  });
+
   it("floors fractional attempt index for exponential backoff (Q24 wipe15)", () => {
     expect(
       computeBackoffWaitSeconds({

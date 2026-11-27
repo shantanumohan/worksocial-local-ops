@@ -21,12 +21,14 @@
  * Deepen (Q19 wake): +Infinity Retry-After → exponential (non-finite refuse).
  * Deepen (Q23): -0 Retry-After → WAIT 0; -1 → exponential (sign boundary).
  * Deepen (Q24): fractional attempt floors before exponential index.
+ * Deepen (Q28): fractional maxAttempts floors (2.9 → cap at attempt 2 STOP).
  */
 
 import { randomUUID } from "node:crypto";
 import {
   SoakProofKind,
   computeBackoffWaitSeconds,
+  evaluateRateLimitWithDeadline,
   planRateLimitRecovery,
   simulateRateLimitedProviderRecovery,
   type SoakProofRecord,
@@ -548,6 +550,32 @@ export function proofRateLimitBoundedBackoffPreservesDeadline(
     details.push(
       `maxAttempts=1 STOP honesty failed: ${JSON.stringify(oneShot)}`,
     );
+  }
+
+  // Scenario P6 (Q28): fractional maxAttempts=2.9 → attempt 2 STOP_MAX_ATTEMPTS.
+  const fracMax = evaluateRateLimitWithDeadline(
+    {
+      httpStatus: 429,
+      retryAfterSeconds: 1,
+      observedAtIso: "2026-11-22T12:00:00.000Z",
+    },
+    {
+      attempt: 2,
+      deadlineAtIso: "2026-11-22T13:00:00.000Z",
+      maxAttempts: 2.9,
+    },
+  );
+  if (
+    fracMax.action === "STOP_MAX_ATTEMPTS" &&
+    fracMax.attempt === 2 &&
+    fracMax.reason === "MAX_ATTEMPTS"
+  ) {
+    details.push(
+      "Fractional maxAttempts=2.9 floors → attempt 2 STOP_MAX_ATTEMPTS (no extra WAIT invent)",
+    );
+  } else {
+    passed = false;
+    details.push(`Fractional maxAttempts failed: ${JSON.stringify(fracMax)}`);
   }
 
   // Scenario P5 (Q24): fractional attempt floors (2.9 → attempt 2 wait).
