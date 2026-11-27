@@ -4,11 +4,14 @@
  * Instrumented Zoho CRM fixture: write with visibility lag → getByCorrelation
  * empty (false not-found) → BOUND_WAIT createLead=false; writeAttemptCount
  * stays 1; after lag clears, reconcile MATCHED. External effects: NONE.
- * Never invents live VERIFIED.
+ * Live Zoho NOT_WIRED. ChatGPT Ads ACCESS_BLOCKED.
+ * Never invents live VERIFIED (ACCEPTED ≠ VERIFIED).
  */
 
 import { randomUUID } from "node:crypto";
 import {
+  CRM_CHATGPT_ADS_ACCESS,
+  CRM_LIVE_ZOHO_WIRING,
   CrmEmptyReadAction,
   DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
   ProbeVerdict,
@@ -17,6 +20,7 @@ import {
   counterfactualUnsafeCreateOnEmptyRead,
   decideCrmLeadRetryAfterEmptyRead,
   reconcileAfterConsistencyVisibility,
+  refuseUnsafeSecondCrmCreate,
   type CanaryIntent,
   type SoakProofRecord,
 } from "@worksocial/domain";
@@ -62,7 +66,8 @@ export function proofEventualConsistencyFalseNotFound(
     writeReceipt.correlationId === correlationId &&
     writeReceipt.recordId &&
     crm.writeAttemptCount() === 1 &&
-    crm.listAll().length === 1
+    crm.listAll().length === 1 &&
+    crm.visibilityLagRemaining(correlationId) === 2
   ) {
     details.push(
       "Fixture CRM write → ledger size 1; writeAttemptCount=1; lag reads scheduled",
@@ -70,7 +75,7 @@ export function proofEventualConsistencyFalseNotFound(
   } else {
     passed = false;
     details.push(
-      `Local write unexpectedly receipt=${JSON.stringify(writeReceipt)} attempts=${crm.writeAttemptCount()} ledger=${crm.listAll().length}`,
+      `Local write unexpectedly receipt=${JSON.stringify(writeReceipt)} attempts=${crm.writeAttemptCount()} ledger=${crm.listAll().length} lag=${crm.visibilityLagRemaining(correlationId)}`,
     );
   }
 
@@ -87,7 +92,13 @@ export function proofEventualConsistencyFalseNotFound(
   if (
     emptyRead === null &&
     emptyDecision.action === CrmEmptyReadAction.BOUND_WAIT &&
-    emptyDecision.createLead === false
+    emptyDecision.situation === "local_empty_within_window" &&
+    emptyDecision.createLead === false &&
+    emptyDecision.liveZohoWiring === CRM_LIVE_ZOHO_WIRING &&
+    emptyDecision.chatgptAdsAccess === CRM_CHATGPT_ADS_ACCESS &&
+    emptyDecision.externalEffects === "NONE" &&
+    emptyDecision.liveProviderSuccessClaimed === false &&
+    crm.visibilityLagRemaining(correlationId) === 1
   ) {
     details.push(
       "getByCorrelation empty under lag → BOUND_WAIT createLead=false (false not-found)",
@@ -95,24 +106,36 @@ export function proofEventualConsistencyFalseNotFound(
   } else {
     passed = false;
     details.push(
-      `Empty-read path unexpectedly emptyRead=${JSON.stringify(emptyRead)} decision=${JSON.stringify(emptyDecision)}`,
+      `Empty-read path unexpectedly emptyRead=${JSON.stringify(emptyRead)} decision=${JSON.stringify(emptyDecision)} lag=${crm.visibilityLagRemaining(correlationId)}`,
     );
   }
 
-  // 3. Counterfactual empty→create forbidden; do not issue a second write.
+  // 3. Counterfactual empty→create forbidden; explicit refuse second create.
   const counterfactual = counterfactualUnsafeCreateOnEmptyRead({
     remoteReadEmpty: true,
     localWriteReceiptPresent: true,
   });
+  const refuseSecond = refuseUnsafeSecondCrmCreate({
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: true,
+    priorWriteAttemptCount: crm.writeAttemptCount(),
+  });
   if (
     counterfactual.wouldCreateLead === true &&
     counterfactual.forbidden === true &&
-    emptyDecision.createLead === false
+    counterfactual.createLead === false &&
+    counterfactual.chatgptAdsAccess === CRM_CHATGPT_ADS_ACCESS &&
+    counterfactual.externalEffects === "NONE" &&
+    emptyDecision.createLead === false &&
+    refuseSecond.createLead === false &&
+    refuseSecond.refused === true
   ) {
     details.push("Counterfactual empty→create documented as forbidden");
   } else {
     passed = false;
-    details.push(`Counterfactual unexpectedly ${JSON.stringify(counterfactual)}`);
+    details.push(
+      `Counterfactual/refuse unexpectedly cf=${JSON.stringify(counterfactual)} refuse=${JSON.stringify(refuseSecond)}`,
+    );
   }
 
   if (crm.writeAttemptCount() !== 1 || crm.listAll().length !== 1) {
@@ -125,13 +148,17 @@ export function proofEventualConsistencyFalseNotFound(
   }
 
   // 4. Drain remaining lag, then reconcile MATCHED from fixture read-back.
-  // Lag was 2: step 2 consumed 1; consume the second empty, then read visible.
   const secondEmpty = crm.getByCorrelation(correlationId);
+  const lagAfterSecond = crm.visibilityLagRemaining(correlationId);
   const visibleEntry = crm.getByCorrelation(correlationId);
-  if (secondEmpty !== null || !visibleEntry?.receipt?.recordId) {
+  if (
+    secondEmpty !== null ||
+    lagAfterSecond !== 0 ||
+    !visibleEntry?.receipt?.recordId
+  ) {
     passed = false;
     details.push(
-      `Expected lag drain then visible receipt; secondEmpty=${JSON.stringify(secondEmpty)} visible=${JSON.stringify(visibleEntry)}`,
+      `Expected lag drain then visible receipt; secondEmpty=${JSON.stringify(secondEmpty)} lag=${lagAfterSecond} visible=${JSON.stringify(visibleEntry)}`,
     );
   } else {
     const visibleDecision = decideCrmLeadRetryAfterEmptyRead({
@@ -149,9 +176,17 @@ export function proofEventualConsistencyFalseNotFound(
     });
     if (
       visibleDecision.action === CrmEmptyReadAction.RECONCILE &&
+      visibleDecision.situation === "visible_receipt" &&
       visibleDecision.createLead === false &&
+      visibleDecision.liveZohoWiring === CRM_LIVE_ZOHO_WIRING &&
+      visibleDecision.chatgptAdsAccess === CRM_CHATGPT_ADS_ACCESS &&
+      visibleDecision.externalEffects === "NONE" &&
+      visibleDecision.liveProviderSuccessClaimed === false &&
       after.matched === true &&
       after.createLead === false &&
+      after.chatgptAdsAccess === CRM_CHATGPT_ADS_ACCESS &&
+      after.externalEffects === "NONE" &&
+      after.liveProviderSuccessClaimed === false &&
       after.reconcile.status === ReconciliationStatus.MATCHED &&
       after.reconcile.verdict === ProbeVerdict.SUCCESS &&
       after.reconcile.blocksRetry === false &&
@@ -168,7 +203,318 @@ export function proofEventualConsistencyFalseNotFound(
     }
   }
 
-  // 5. Window exceeded still empty → escalate missing, never create.
+  // 5. Empty-string recordId must not count as visible (edge honesty).
+  const emptyIdDecision = decideCrmLeadRetryAfterEmptyRead({
+    correlationId,
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: false,
+    elapsedMs: 3_000,
+    consistencyWindowMs: DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+    correlatedReceipts: [
+      {
+        receiptId: "rcpt-empty-id",
+        correlationId,
+        moduleId: "Leads",
+        recordId: "",
+        synthetic: true,
+        observedAtIso: nowIso,
+        source: "fixture_crm",
+        fieldSnapshot,
+      },
+    ],
+  });
+  if (
+    emptyIdDecision.action === CrmEmptyReadAction.REFUSE_CREATE &&
+    emptyIdDecision.situation === "local_nonempty_no_visible" &&
+    emptyIdDecision.createLead === false &&
+    emptyIdDecision.liveProviderSuccessClaimed === false
+  ) {
+    details.push(
+      "Empty-string recordId ignored — REFUSE_CREATE (not durable visibility)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Empty recordId unexpectedly ${JSON.stringify(emptyIdDecision)}`,
+    );
+  }
+
+  // 6. Live/Ads/effects claim refuse + snapshot/source gates never RECONCILE.
+  const liveClaim = decideCrmLeadRetryAfterEmptyRead({
+    correlationId,
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: true,
+    elapsedMs: 1_000,
+    consistencyWindowMs: DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+    correlatedReceipts: [],
+    claimLiveVerified: true,
+  });
+  const adsClaim = decideCrmLeadRetryAfterEmptyRead({
+    correlationId,
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: true,
+    elapsedMs: 1_000,
+    consistencyWindowMs: DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+    correlatedReceipts: [],
+    requestChatgptAdsAccess: "ACCESS_ALLOWED",
+  });
+  const adsBlockedOk = decideCrmLeadRetryAfterEmptyRead({
+    correlationId,
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: true,
+    elapsedMs: 2_000,
+    consistencyWindowMs: DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+    correlatedReceipts: [],
+    requestChatgptAdsAccess: "ACCESS_BLOCKED",
+  });
+  const effectsClaim = decideCrmLeadRetryAfterEmptyRead({
+    correlationId,
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: true,
+    elapsedMs: 1_000,
+    consistencyWindowMs: DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+    correlatedReceipts: [],
+    claimExternalEffects: "LIVE",
+  });
+  const liveSuccessClaim = decideCrmLeadRetryAfterEmptyRead({
+    correlationId,
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: true,
+    elapsedMs: 1_000,
+    consistencyWindowMs: DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+    correlatedReceipts: [],
+    claimLiveProviderSuccess: true,
+  });
+  const sandboxClaim = decideCrmLeadRetryAfterEmptyRead({
+    correlationId,
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: true,
+    elapsedMs: 1_000,
+    consistencyWindowMs: DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+    correlatedReceipts: [],
+    claimSandboxVerified: true,
+  });
+  const garbageObserved = decideCrmLeadRetryAfterEmptyRead({
+    correlationId,
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: false,
+    elapsedMs: 3_000,
+    consistencyWindowMs: DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+    correlatedReceipts: [
+      {
+        receiptId: "rcpt-garbage-obs",
+        correlationId,
+        moduleId: "Leads",
+        recordId: "lead-garbage-obs",
+        synthetic: true,
+        observedAtIso: "not-parseable-iso",
+        source: "fixture_crm",
+        fieldSnapshot,
+      },
+    ],
+  });
+  const blankObserved = decideCrmLeadRetryAfterEmptyRead({
+    correlationId,
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: false,
+    elapsedMs: 3_000,
+    consistencyWindowMs: DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+    correlatedReceipts: [
+      {
+        receiptId: "rcpt-blank-obs",
+        correlationId,
+        moduleId: "Leads",
+        recordId: "lead-blank-obs",
+        synthetic: true,
+        observedAtIso: "   ",
+        source: "fixture_crm",
+        fieldSnapshot,
+      },
+    ],
+  });
+  const badSnapshot = decideCrmLeadRetryAfterEmptyRead({
+    correlationId,
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: false,
+    elapsedMs: 3_000,
+    consistencyWindowMs: DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+    correlatedReceipts: [
+      {
+        receiptId: "rcpt-bad-snap",
+        correlationId,
+        moduleId: "Leads",
+        recordId: "lead-bad-snap",
+        synthetic: true,
+        observedAtIso: nowIso,
+        source: "fixture_crm",
+        fieldSnapshot: {
+          ...fieldSnapshot,
+          ws_correlation_id: "other-corr",
+          ws_synthetic: "false",
+        },
+      },
+    ],
+  });
+  const blankReceiptId = decideCrmLeadRetryAfterEmptyRead({
+    correlationId,
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: false,
+    elapsedMs: 3_000,
+    consistencyWindowMs: DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+    correlatedReceipts: [
+      {
+        receiptId: "   ",
+        correlationId,
+        moduleId: "Leads",
+        recordId: "lead-blank-rcpt",
+        synthetic: true,
+        observedAtIso: nowIso,
+        source: "fixture_crm",
+        fieldSnapshot,
+      },
+    ],
+  });
+  const fauxSyntheticFlag = decideCrmLeadRetryAfterEmptyRead({
+    correlationId,
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: false,
+    elapsedMs: 3_000,
+    consistencyWindowMs: DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+    correlatedReceipts: [
+      {
+        receiptId: "rcpt-faux-synth",
+        correlationId,
+        moduleId: "Leads",
+        recordId: "lead-faux-synth",
+        synthetic: false,
+        observedAtIso: nowIso,
+        source: "fixture_crm",
+        fieldSnapshot,
+      },
+    ],
+  });
+  const wrongSource = decideCrmLeadRetryAfterEmptyRead({
+    correlationId,
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: false,
+    elapsedMs: 3_000,
+    consistencyWindowMs: DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+    correlatedReceipts: [
+      {
+        receiptId: "rcpt-wrong-src",
+        correlationId,
+        moduleId: "Leads",
+        recordId: "lead-wrong-src",
+        synthetic: true,
+        observedAtIso: nowIso,
+        source: "live_zoho",
+        fieldSnapshot,
+      },
+    ],
+  });
+  const blankModule = decideCrmLeadRetryAfterEmptyRead({
+    correlationId,
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: false,
+    elapsedMs: 3_000,
+    consistencyWindowMs: DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+    correlatedReceipts: [
+      {
+        receiptId: "rcpt-blank-mod",
+        correlationId,
+        moduleId: "   ",
+        recordId: "lead-blank-mod",
+        synthetic: true,
+        observedAtIso: nowIso,
+        source: "fixture_crm",
+        fieldSnapshot,
+      },
+    ],
+  });
+  const moduleTrimOk = decideCrmLeadRetryAfterEmptyRead({
+    correlationId,
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: false,
+    elapsedMs: 3_000,
+    consistencyWindowMs: DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+    correlatedReceipts: [
+      {
+        receiptId: "rcpt-mod-trim",
+        correlationId,
+        moduleId: "  Leads  ",
+        recordId: "lead-mod-trim",
+        synthetic: true,
+        observedAtIso: nowIso,
+        source: "fixture_crm",
+        fieldSnapshot,
+      },
+    ],
+    expectedModuleId: "Leads",
+  });
+  const moduleMismatch = decideCrmLeadRetryAfterEmptyRead({
+    correlationId,
+    localWriteReceiptPresent: true,
+    remoteReadEmpty: false,
+    elapsedMs: 3_000,
+    consistencyWindowMs: DEFAULT_CRM_CONSISTENCY_WINDOW_MS,
+    correlatedReceipts: [
+      {
+        receiptId: "rcpt-mod-mismatch",
+        correlationId,
+        moduleId: "Leads",
+        recordId: "lead-mod-mismatch",
+        synthetic: true,
+        observedAtIso: nowIso,
+        source: "fixture_crm",
+        fieldSnapshot,
+      },
+    ],
+    expectedModuleId: "Contacts",
+  });
+  if (
+    liveClaim.action === CrmEmptyReadAction.LIVE_CLAIM_REFUSED &&
+    liveClaim.createLead === false &&
+    liveClaim.liveProviderSuccessClaimed === false &&
+    adsClaim.action === CrmEmptyReadAction.LIVE_CLAIM_REFUSED &&
+    adsClaim.chatgptAdsAccess === "ACCESS_BLOCKED" &&
+    adsBlockedOk.action === CrmEmptyReadAction.BOUND_WAIT &&
+    adsBlockedOk.chatgptAdsAccess === CRM_CHATGPT_ADS_ACCESS &&
+    effectsClaim.action === CrmEmptyReadAction.LIVE_CLAIM_REFUSED &&
+    effectsClaim.externalEffects === "NONE" &&
+    liveSuccessClaim.action === CrmEmptyReadAction.LIVE_CLAIM_REFUSED &&
+    liveSuccessClaim.liveProviderSuccessClaimed === false &&
+    sandboxClaim.action === CrmEmptyReadAction.LIVE_CLAIM_REFUSED &&
+    sandboxClaim.createLead === false &&
+    garbageObserved.action === CrmEmptyReadAction.REFUSE_CREATE &&
+    garbageObserved.situation === "local_nonempty_no_visible" &&
+    blankObserved.action === CrmEmptyReadAction.REFUSE_CREATE &&
+    blankObserved.situation === "local_nonempty_no_visible" &&
+    badSnapshot.action === CrmEmptyReadAction.REFUSE_CREATE &&
+    badSnapshot.situation === "local_nonempty_no_visible" &&
+    blankReceiptId.action === CrmEmptyReadAction.REFUSE_CREATE &&
+    blankReceiptId.situation === "local_nonempty_no_visible" &&
+    fauxSyntheticFlag.action === CrmEmptyReadAction.REFUSE_CREATE &&
+    fauxSyntheticFlag.situation === "local_nonempty_no_visible" &&
+    wrongSource.action === CrmEmptyReadAction.REFUSE_CREATE &&
+    wrongSource.situation === "local_nonempty_no_visible" &&
+    blankModule.action === CrmEmptyReadAction.REFUSE_CREATE &&
+    blankModule.situation === "local_nonempty_no_visible" &&
+    moduleTrimOk.action === CrmEmptyReadAction.RECONCILE &&
+    moduleTrimOk.situation === "visible_receipt" &&
+    moduleMismatch.action === CrmEmptyReadAction.REFUSE_CREATE &&
+    moduleMismatch.situation === "local_nonempty_no_visible"
+  ) {
+    details.push(
+      "Live/Ads/effects/providerSuccess/sandbox refused; fixture_crm source+snapshot+moduleId gates",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Live/Ads/effects/provider/sandbox/obs/snap/rcpt/module unexpectedly live=${JSON.stringify(liveClaim)} ads=${JSON.stringify(adsClaim)} fx=${JSON.stringify(effectsClaim)} provider=${JSON.stringify(liveSuccessClaim)} sandbox=${JSON.stringify(sandboxClaim)} garbageObs=${JSON.stringify(garbageObserved)} obs=${JSON.stringify(blankObserved)} snap=${JSON.stringify(badSnapshot)} rcpt=${JSON.stringify(blankReceiptId)} wrongSrc=${JSON.stringify(wrongSource)} blankMod=${JSON.stringify(blankModule)} mod=${JSON.stringify(moduleMismatch)}`,
+    );
+  }
+
+  // 7. Window exceeded still empty → escalate missing, never create.
   const escalate = decideCrmLeadRetryAfterEmptyRead({
     correlationId,
     localWriteReceiptPresent: true,
@@ -179,7 +525,10 @@ export function proofEventualConsistencyFalseNotFound(
   });
   if (
     escalate.action === CrmEmptyReadAction.ESCALATE_MISSING &&
-    escalate.createLead === false
+    escalate.situation === "local_empty_after_window" &&
+    escalate.createLead === false &&
+    escalate.chatgptAdsAccess === CRM_CHATGPT_ADS_ACCESS &&
+    escalate.externalEffects === "NONE"
   ) {
     details.push("Window exceeded empty → ESCALATE_MISSING createLead=false");
   } else {
@@ -193,6 +542,10 @@ export function proofEventualConsistencyFalseNotFound(
   } else {
     details.push("Fixture CRM only — live Zoho NOT_WIRED; externalEffects NONE");
   }
+
+  details.push(
+    "ACCEPTED≠VERIFIED — fixture eventual-consistency proof only; live Zoho NOT_WIRED; chatgptAdsAccess=ACCESS_BLOCKED; liveProviderSuccessClaimed=false; externalEffects=NONE",
+  );
 
   return {
     proofId: `proof-x023-${randomUUID().slice(0, 8)}`,

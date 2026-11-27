@@ -964,7 +964,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-US-012** is fixture ACCEPTED only via the Google Ads test vs production access separated proof (`GOOGLE_ADS_TEST_PRODUCTION_ACCESS_SEPARATED`) — TEST credential cannot access PRODUCTION customer (and reverse); LIVE NOT_WIRED; mutate never authorized. Distinct from T-X034 and T-US-011. Not sandbox/prod VERIFIED.
 
-**T-X023** is fixture ACCEPTED only via the eventual-consistency false not-found proof (`EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND`) — instrumented fixture CRM lagging read with local write refuses create (BOUND_WAIT); after visibility reconcile MATCHED; writeAttemptCount stays 1. Not sandbox/prod VERIFIED.
+**T-X023** is fixture ACCEPTED only via the eventual-consistency false not-found proof (`EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND`) — instrumented fixture CRM lagging read with local write refuses create (BOUND_WAIT); durable recordId+receiptId+observedAtIso; fixture_crm+synthetic visibility with ws_correlation_id+ws_synthetic gates; reconcile filters non-fixture receipts; write-attempt count sanitized; LIVE_CLAIM_REFUSED for live/sandbox VERIFIED/live Zoho wire/Ads ACCESS_ALLOWED/claimExternalEffects≠NONE/claimLiveProviderSuccess; after visibility reconcile MATCHED; writeAttemptCount stays 1; live Zoho `NOT_WIRED`; ChatGPT Ads `ACCESS_BLOCKED`; `liveProviderSuccessClaimed=false`; `externalEffects=NONE`. ACCEPTED ≠ sandbox/prod VERIFIED.
 
 **T-US-056** is fixture ACCEPTED only via the honest outage durable hosted contact path proof (`HONEST_OUTAGE_HOSTED_CONTACT_PATH`) — host OFFLINE makes public chat UNAVAILABLE; hosted form path stays fail-closed durable; pretend local receipt refused. Not sandbox/prod VERIFIED.
 
@@ -1049,7 +1049,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X020 | Timeout after provider acceptance | Unknown → reconcile; no resend *(fixture ACCEPTED)* |
 | T-X021 | Concurrent idempotent releases | One dispatch *(fixture ACCEPTED)* |
 | T-X022 | Idempotency key payload mismatch | Conflict *(fixture ACCEPTED — idempotency key payload mismatch proof; not sandbox/prod VERIFIED)* |
-| T-X023 | Eventual consistency false not-found | No unsafe retry *(fixture ACCEPTED — eventual-consistency false not-found proof; not sandbox/prod VERIFIED)* |
+| T-X023 | Eventual consistency false not-found | No unsafe retry *(fixture ACCEPTED — eventual-consistency false not-found proof; LIVE_CLAIM_REFUSED; durable observedAtIso; CRM_EXTERNAL_EFFECTS=NONE; live Zoho NOT_WIRED; Ads ACCESS_BLOCKED; liveProviderSuccessClaimed=false; ACCEPTED ≠ sandbox/prod VERIFIED)* |
 | T-X024 | Old fence after reassignment | Old worker cannot commit *(fixture ACCEPTED — old fence after reassignment proof; not sandbox/prod VERIFIED)* |
 | T-X025 | External human edit during staging | Conflict retained *(fixture ACCEPTED — external human edit conflict retained; live Temporal NOT_WIRED; claimed VERIFIED refused; not sandbox/prod VERIFIED)* |
 | T-X026 | Concurrent final budget reservation | Cap enforced *(fixture ACCEPTED — concurrent final budget reservation cap proof; not sandbox/prod VERIFIED)* |

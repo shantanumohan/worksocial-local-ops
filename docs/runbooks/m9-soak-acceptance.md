@@ -192,7 +192,8 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-US-006** maps only to `UNBOUND_WRITE_PATH_FAIL_CLOSED` (observe/create ok; unbound write fail closed; applyAttemptCount=0; not live VERIFIED).
 
-**T-X023**, **T-US-052** maps only to `EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND`.
+**T-X023** maps only to `EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND` (false not-found BOUND_WAIT; LIVE_CLAIM_REFUSED; parseable durable observedAtIso; durable moduleId; write-attempt sanitize; writeAttemptCount=1; live Zoho NOT_WIRED; Ads ACCESS_BLOCKED; liveProviderSuccessClaimed=false; externalEffects=NONE; ACCEPTED ≠ VERIFIED).
+
 
 **T-US-056** maps only to `HONEST_OUTAGE_HOSTED_CONTACT_PATH` (honest outage; durable hosted contact path; not live VERIFIED).
 
