@@ -429,6 +429,23 @@ describe("rate-limit-backoff (T-X030)", () => {
     ).toEqual({ waitSeconds: 3, source: "retry_after" });
   });
 
+  it("honors -0 Retry-After as WAIT 0s, not exponential (Q23 wipe15)", () => {
+    const negZero = computeBackoffWaitSeconds({
+      attempt: 1,
+      retryAfterSeconds: -0,
+    });
+    expect(negZero.source).toBe("retry_after");
+    expect(negZero.waitSeconds === 0).toBe(true);
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 1,
+        retryAfterSeconds: -1,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 1, source: "exponential" });
+  });
+
   it("ignores +Infinity Retry-After and uses exponential (Q19 wipe15 wake)", () => {
     expect(
       computeBackoffWaitSeconds({
