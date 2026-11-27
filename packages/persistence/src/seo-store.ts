@@ -76,11 +76,17 @@ export function createFileSeoStore(stateDir: string): SeoStore {
     if (!existing || existing.version !== 1) {
       return emptySeoState(new Date().toISOString());
     }
+    // Backfill honesty fields on legacy schema validations (pre-T-X042 hillclimb).
+    const schemaValidations = (existing.schemaValidations ?? []).map((v) => ({
+      ...v,
+      externalEffects: (v.externalEffects ?? "NONE") as "NONE",
+      liveProviderWiring: (v.liveProviderWiring ?? "NOT_WIRED") as "NOT_WIRED",
+    }));
     return {
       ...existing,
       pageAudits: existing.pageAudits ?? [],
       proposals: existing.proposals ?? [],
-      schemaValidations: existing.schemaValidations ?? [],
+      schemaValidations,
       searchIndex: existing.searchIndex ?? null,
       searchResults: existing.searchResults ?? [],
       searchJudgments: existing.searchJudgments ?? [],

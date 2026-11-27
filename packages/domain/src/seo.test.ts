@@ -128,6 +128,159 @@ describe("seo domain — schema validation", () => {
     });
     expect(result.verdict).toBe(SchemaValidationVerdict.PASS);
     expect(result.agreesWithVisibleContent).toBe(true);
+    expect(result.externalEffects).toBe("NONE");
+    expect(result.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("matches whitespace-trimmed schema name against visible content", () => {
+    const result = validateSchemaOrg({
+      validationId: "val-trim",
+      pageAssetId: "page-home",
+      nodes: [
+        {
+          nodeId: "n1",
+          schemaType: "LocalBusiness",
+          properties: { name: "  WorkSocial  " },
+          citedFactIds: ["fact-ok"],
+        },
+      ],
+      visibleContent: "  Welcome to WorkSocial Hudson  ",
+      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    expect(result.verdict).toBe(SchemaValidationVerdict.PASS);
+    expect(result.agreesWithVisibleContent).toBe(true);
+    expect(result.externalEffects).toBe("NONE");
+    expect(result.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("case-folds schema name against visible content (intentional)", () => {
+    const result = validateSchemaOrg({
+      validationId: "val-case",
+      pageAssetId: "page-home",
+      nodes: [
+        {
+          nodeId: "n1",
+          schemaType: "LocalBusiness",
+          properties: { name: "WORKSOCIAL" },
+          citedFactIds: ["fact-ok"],
+        },
+      ],
+      visibleContent: "welcome to worksocial hudson",
+      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    expect(result.verdict).toBe(SchemaValidationVerdict.PASS);
+    expect(result.agreesWithVisibleContent).toBe(true);
+  });
+
+  it("refuses empty/whitespace-only name with SCHEMA_VISIBLE_MISMATCH", () => {
+    const result = validateSchemaOrg({
+      validationId: "val-empty",
+      pageAssetId: "page-home",
+      nodes: [
+        {
+          nodeId: "n1",
+          schemaType: "LocalBusiness",
+          properties: { name: "   " },
+          citedFactIds: ["fact-ok"],
+        },
+      ],
+      visibleContent: "Welcome to WorkSocial Hudson",
+      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    expect(result.verdict).toBe(SchemaValidationVerdict.PARTIAL);
+    expect(result.agreesWithVisibleContent).toBe(false);
+    expect(
+      result.issues.some((i) => i.code === "SCHEMA_VISIBLE_MISMATCH"),
+    ).toBe(true);
+    expect(result.externalEffects).toBe("NONE");
+    expect(result.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("flags multi-property address mismatch", () => {
+    const result = validateSchemaOrg({
+      validationId: "val-multi",
+      pageAssetId: "page-home",
+      nodes: [
+        {
+          nodeId: "n1",
+          schemaType: "LocalBusiness",
+          properties: {
+            name: "Phantom Sky Lounge",
+            address: "999 Nowhere Ave",
+            telephone: "+1-555-0100",
+          },
+          citedFactIds: ["fact-ok"],
+        },
+      ],
+      visibleContent: "Welcome to WorkSocial Hudson boardroom coworking",
+      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    expect(result.verdict).toBe(SchemaValidationVerdict.PARTIAL);
+    expect(result.agreesWithVisibleContent).toBe(false);
+    const mismatches = result.issues.filter(
+      (i) => i.code === "SCHEMA_VISIBLE_MISMATCH",
+    );
+    expect(mismatches.length).toBeGreaterThanOrEqual(2);
+    expect(result.externalEffects).toBe("NONE");
+  });
+
+  it("refuses matching schema when liveCmsWiring=WIRED", () => {
+    const result = validateSchemaOrg({
+      validationId: "val-wired",
+      pageAssetId: "page-home",
+      nodes: [
+        {
+          nodeId: "n1",
+          schemaType: "LocalBusiness",
+          properties: { name: "WorkSocial" },
+          citedFactIds: ["fact-ok"],
+        },
+      ],
+      visibleContent: "Welcome to WorkSocial Hudson",
+      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
+      fixtureOnly: true,
+      liveCmsWiring: "WIRED",
+      createdAtIso: now,
+    });
+    expect(result.verdict).toBe(SchemaValidationVerdict.PARTIAL);
+    expect(
+      result.issues.some((i) => i.code === "LIVE_TRANSPORT_NOT_WIRED"),
+    ).toBe(true);
+    expect(result.liveProviderWiring).toBe("NOT_WIRED");
+    expect(result.externalEffects).toBe("NONE");
+  });
+
+  it("refuses matching schema outside fixture (fixtureOnly=false)", () => {
+    const result = validateSchemaOrg({
+      validationId: "val-live",
+      pageAssetId: "page-home",
+      nodes: [
+        {
+          nodeId: "n1",
+          schemaType: "LocalBusiness",
+          properties: { name: "WorkSocial" },
+          citedFactIds: ["fact-ok"],
+        },
+      ],
+      visibleContent: "Welcome to WorkSocial Hudson",
+      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
+      fixtureOnly: false,
+      createdAtIso: now,
+    });
+    expect(result.verdict).toBe(SchemaValidationVerdict.PARTIAL);
+    expect(
+      result.issues.some((i) => i.code === "LIVE_TRANSPORT_NOT_WIRED"),
+    ).toBe(true);
+    expect(result.liveProviderWiring).toBe("NOT_WIRED");
+    expect(result.externalEffects).toBe("NONE");
   });
 });
 

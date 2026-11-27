@@ -232,6 +232,10 @@ export type SchemaValidationResult = {
   agreesWithVisibleContent: boolean;
   fixtureOnly: boolean;
   createdAtIso: string;
+  /** Fixture ACCEPTED path never mutates live providers. */
+  externalEffects: "NONE";
+  /** Live CMS / schema publish transport — fixture proofs stay NOT_WIRED. */
+  liveProviderWiring: "NOT_WIRED";
 };
 
 /** Semantic catalog entry for on-site search (fixture corpus OK). */
@@ -465,6 +469,9 @@ export type FactSupportLookup = ReadonlyMap<string, SupportLabelValue>;
 /**
  * Schema validation: nodes must agree with visible content; cited facts must
  * be SUPPORTED. HYPOTHESIS citations are schema failures (not “truth”).
+ * Honesty: every result is `externalEffects=NONE` + `liveProviderWiring=NOT_WIRED`
+ * (fixture ACCEPTED ≠ sandbox/prod VERIFIED). Non-fixture / claimed WIRED paths
+ * refuse inventing live publish success (`LIVE_TRANSPORT_NOT_WIRED`).
  */
 export function validateSchemaOrg(input: {
   validationId: string;
@@ -476,9 +483,12 @@ export function validateSchemaOrg(input: {
   factLabels: FactSupportLookup;
   fixtureOnly: boolean;
   createdAtIso: string;
+  /** Live CMS publish wiring — fixture proofs keep NOT_WIRED. */
+  liveCmsWiring?: "NOT_WIRED" | "WIRED";
 }): SchemaValidationResult {
   const issues: SchemaValidationIssue[] = [];
-  const visible = input.visibleContent.toLowerCase();
+  const liveCmsWiring = input.liveCmsWiring ?? "NOT_WIRED";
+  const visible = input.visibleContent.toLowerCase().trim();
 
   if (input.nodes.length === 0) {
     issues.push({
@@ -530,7 +540,22 @@ export function validateSchemaOrg(input: {
     for (const [key, value] of Object.entries(node.properties)) {
       if (value === null || value === undefined) continue;
       if (key === "@type") continue;
-      const text = String(value).toLowerCase();
+
+      if (typeof value === "string" && value.trim().length === 0) {
+        // Empty / whitespace-only claims must not silently PASS.
+        issues.push({
+          code: "SCHEMA_VISIBLE_MISMATCH",
+          message: `Property ${key} is empty/whitespace — refuse silent visible agreement`,
+          propertyPath: `${node.nodeId}.${key}`,
+          relatedFactId: null,
+        });
+        continue;
+      }
+
+      const text =
+        typeof value === "string"
+          ? value.trim().toLowerCase()
+          : String(value).toLowerCase();
       // Concrete string / number / boolean claims must appear in visible copy.
       const concrete =
         (typeof value === "string" && value.trim().length > 0) ||
@@ -547,6 +572,18 @@ export function validateSchemaOrg(input: {
     }
   }
 
+  // Non-fixture / claimed WIRED paths never invent live CMS publish success.
+  if (!input.fixtureOnly || liveCmsWiring !== "NOT_WIRED") {
+    issues.push({
+      code: "LIVE_TRANSPORT_NOT_WIRED",
+      message: !input.fixtureOnly
+        ? "Schema validation refused outside fixture NOT_WIRED path — no invented live CMS publish (T-X042)"
+        : "Schema validation refused while liveCmsWiring=WIRED — live transport NOT_WIRED; no invented live success (T-X042)",
+      propertyPath: null,
+      relatedFactId: null,
+    });
+  }
+
   const hardFail = issues.some(
     (i) =>
       i.code === "SCHEMA_HYPOTHESIS_NOT_TRUTH" ||
@@ -558,7 +595,9 @@ export function validateSchemaOrg(input: {
     !hardFail &&
     issues.some(
       (i) =>
-        i.code === "SCHEMA_VISIBLE_MISMATCH" || i.code === "SCHEMA_UNKNOWN_FACT",
+        i.code === "SCHEMA_VISIBLE_MISMATCH" ||
+        i.code === "SCHEMA_UNKNOWN_FACT" ||
+        i.code === "LIVE_TRANSPORT_NOT_WIRED",
     );
 
   let verdict: SchemaValidationVerdictValue = SchemaValidationVerdict.PASS;
@@ -580,6 +619,8 @@ export function validateSchemaOrg(input: {
     agreesWithVisibleContent,
     fixtureOnly: input.fixtureOnly,
     createdAtIso: input.createdAtIso,
+    externalEffects: "NONE",
+    liveProviderWiring: "NOT_WIRED",
   };
 }
 
@@ -1384,4 +1425,5 @@ export const SEO_RELATED_CASE_IDS = [
   "T-F23", // judged retrieval / no-result (M8)
   "T-US-045",
   "T-US-046",
+  "T-X042", // schema differs from page — gate fails (fixture ACCEPTED ≠ VERIFIED)
 ] as const;
