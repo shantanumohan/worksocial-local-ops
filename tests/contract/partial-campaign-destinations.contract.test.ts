@@ -27,13 +27,12 @@ import {
 const now = "2026-11-21T19:00:00.000Z";
 
 describe("contract: T-X045 partial campaign destinations", () => {
-  let dir: string;
+  const dirs: string[] = [];
 
-  beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), "ws-tx045-contract-"));
-  });
   afterEach(() => {
-    rmSync(dir, { recursive: true, force: true });
+    for (const dir of dirs.splice(0)) {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it("attack suite covers mixed/pending/failed/blocked with NOT_WIRED honesty", () => {
@@ -58,10 +57,18 @@ describe("contract: T-X045 partial campaign destinations", () => {
   });
 
   it("harness + compiler mark T-X045 fixture ACCEPTED, never VERIFIED", async () => {
+    const harnessDir = mkdtempSync(join(tmpdir(), "ws-tx045-harness-"));
+    dirs.push(harnessDir);
     const harness = await runSoakRecoveryHarness({
-      stateDir: dir,
+      stateDir: harnessDir,
       nowIso: now,
     });
+    if (!harness.allPassed) {
+      const failedKinds = harness.proofs
+        .filter((p) => !p.passed)
+        .map((p) => p.kind);
+      expect(failedKinds, "runSoakRecoveryHarness proof failures").toEqual([]);
+    }
     expect(harness.allPassed).toBe(true);
     const proof = harness.proofs.find(
       (p) =>
@@ -94,8 +101,16 @@ describe("contract: T-X045 partial campaign destinations", () => {
     expect(compiled.chatgptAds.allowed).toBe(false);
     expect(compiled.blockedLiveVerified).toBe(true);
 
-    const soak = createSoakService(createFileSoakStore(dir));
+    const soakDir = mkdtempSync(join(tmpdir(), "ws-tx045-soak-"));
+    dirs.push(soakDir);
+    const soak = createSoakService(createFileSoakStore(soakDir));
     const run = await soak.runFixtureSoak({ harnessNowIso: now });
+    if (!run.ok) {
+      const failedKinds = run.run.proofs
+        .filter((p) => !p.passed)
+        .map((p) => p.kind);
+      expect(failedKinds, "runFixtureSoak harness proof failures").toEqual([]);
+    }
     expect(run.ok).toBe(true);
     expect(run.run.externalEffects).toBe("NONE");
     expect(run.run.liveWiring.cms).toBe("NOT_WIRED");
