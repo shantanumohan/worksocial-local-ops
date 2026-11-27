@@ -17,10 +17,12 @@ import {
   emptySoakAcceptanceState,
   evaluatePilotGate,
   expectedProofsForFixtureCase,
+  isAllowedAcceptanceStatus,
   mapProofToFixtureCases,
   redactEvidenceSummary,
   soakChatGptAdsBlocked,
   soakNotWiredLiveWiring,
+  stableFixtureEvidenceArtifactId,
   uniqueFixtureEvidenceArtifactId,
   validateAcceptanceCaseStatus,
 } from "./soak-acceptance.js";
@@ -28,6 +30,7 @@ import {
   defaultResponsePolicy,
   isWithinCoverageWindow,
 } from "./inbox.js";
+import { unknownRemoteDistinctFromUncertainPost } from "./unknown-remote-reconcile.js";
 import {
   REVIEW_BINDING_EXTERNAL_EFFECTS,
   REVIEW_BINDING_LIVE_CLAIM_REFUSED,
@@ -1588,5 +1591,358 @@ describe("soak-acceptance domain", () => {
     expect(
       isWithinCoverageWindow(policy, SOAK_FIXTURE_HARNESS_NOW_ISO),
     ).toBe(true);
+  });
+});
+
+describe("T-X066 backup omit receipt (idle hillclimb L36)", () => {
+  it("T-X066 maps only BACKUP_OMIT_RECEIPT; sibling proofs exclude T-X066 (L36)", () => {
+    expect(expectedProofsForFixtureCase("T-X066")).toEqual([
+      SoakProofKind.BACKUP_OMIT_RECEIPT,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.UNKNOWN_REMOTE_RECONCILE),
+    ).not.toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.RECOVER_ROTATE_RECONCILE),
+    ).not.toContain("T-X066");
+    expect(mapProofToFixtureCases(SoakProofKind.NO_DUPLICATE_EFFECTS)).toEqual(
+      [],
+    );
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X066");
+  });
+
+  it("unknown-remote distinct pins T-X066 to BACKUP_OMIT_RECEIPT sibling (L37)", () => {
+    const d = unknownRemoteDistinctFromUncertainPost();
+    const idx = d.distinctFromCaseIds.indexOf("T-X066");
+    expect(idx).toBeGreaterThanOrEqual(0);
+    expect(d.distinctFromProofs[idx]).toBe("BACKUP_OMIT_RECEIPT");
+    expect(d.fixtureOnly).toBe(true);
+    expect(d.acceptedEqualsVerified).toBe(false);
+    expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
+      "T-X066",
+    ]);
+  });
+
+  it("idempotent-release and stop-after-dispatch proofs exclude T-X066 (L38)", () => {
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE),
+    ).not.toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.STOP_AFTER_DISPATCH_RECONCILE),
+    ).not.toContain("T-X066");
+    expect(expectedProofsForFixtureCase("T-X066")).not.toContain(
+      SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE,
+    );
+    expect(soakNotWiredLiveWiring()).toEqual(SOAK_NOT_WIRED_LIVE_WIRING);
+  });
+
+  it("T-X066 ACCEPTED with artifact ok; VERIFIED rejected; emergency-stop unmapped (L39)", () => {
+    const accepted = validateAcceptanceCaseStatus({
+      status: AcceptanceCaseStatus.ACCEPTED,
+      environment: AcceptanceEnvironment.FIXTURE,
+      evidenceArtifactId: "art-fixture-t-x066",
+    });
+    expect(accepted.ok).toBe(true);
+    const verified = validateAcceptanceCaseStatus({
+      status: "VERIFIED",
+      environment: AcceptanceEnvironment.FIXTURE,
+      evidenceArtifactId: "art-fixture-t-x066",
+    });
+    expect(verified.ok).toBe(false);
+    if (verified.ok) return;
+    expect(verified.reasons.some((r) => /VERIFIED is forbidden/i.test(r))).toBe(
+      true,
+    );
+    expect(SOAK_FIXTURE_STATUS_HONEST_NOTE).toMatch(/ACCEPTED/);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.EMERGENCY_STOP_AT_COMMIT),
+    ).not.toContain("T-X066");
+  });
+
+  it("T-X066 outside Ads soft-skip; RECOVER_ROTATE maps F24 only (L40)", () => {
+    expect(SOAK_CHATGPT_ADS_SOFT_SKIP_CASE_IDS).not.toContain("T-X066");
+    const adsGate = soakChatGptAdsBlocked();
+    expect(adsGate.allowed).toBe(false);
+    expect(adsGate.wiring).toBe("NOT_WIRED");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.RECOVER_ROTATE_RECONCILE),
+    ).toEqual(["T-F24", "T-US-047"]);
+    expect(stableFixtureEvidenceArtifactId("T-X066")).toBe("art-fixture-t-x066");
+  });
+
+  it("UNKNOWN_REMOTE maps T-X020 not T-X066; RELATED_CASE_IDS singleton (L41)", () => {
+    const uro = mapProofToFixtureCases(SoakProofKind.UNKNOWN_REMOTE_RECONCILE);
+    expect(uro).toContain("T-X020");
+    expect(uro).not.toContain("T-X066");
+    expect(SOAK_RELATED_CASE_IDS.filter((id) => id === "T-X066")).toHaveLength(
+      1,
+    );
+    expect(FORBIDDEN_SILENT_LIVE_STATUS).toMatch(/VERIFIED/i);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT),
+    ).toEqual(["T-X066"]);
+  });
+
+  it("continuity proofs exclude T-X066; review-binding honesty fence (L42)", () => {
+    expect(
+      mapProofToFixtureCases(SoakProofKind.JOB_CONTINUITY),
+    ).not.toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CRASH_RESTART),
+    ).not.toContain("T-X066");
+    expect(SOAK_RELATED_CASE_IDS).toContain("T-X066");
+    expect(REVIEW_BINDING_RELATED_CASE_IDS).not.toContain("T-X066");
+    expect(REVIEW_BINDING_EXTERNAL_EFFECTS).toBe("NONE");
+    expect(REVIEW_BINDING_LIVE_WIRING).toBe("NOT_WIRED");
+    expect(REVIEW_BINDING_LIVE_CLAIM_REFUSED).toBe("LIVE_REVIEW_CLAIM_REFUSED");
+    expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
+      "T-X066",
+    ]);
+  });
+
+  it("offboard and uncertain-post exclude T-X066; empty soak state lists case (L43)", () => {
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.UNCERTAIN_POST_RECONCILE_BEFORE_RETRY,
+      ),
+    ).not.toContain("T-X066");
+    expect(SOAK_FIXTURE_HARNESS_NOW_ISO).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X066");
+    const empty = emptySoakAcceptanceState(SOAK_FIXTURE_HARNESS_NOW_ISO);
+    expect(empty.liveWiring).toEqual(SOAK_NOT_WIRED_LIVE_WIRING);
+    expect(empty.chatgptAdsWiring).toBe("NOT_WIRED");
+    expect(expectedProofsForFixtureCase("T-X066")).toEqual([
+      SoakProofKind.BACKUP_OMIT_RECEIPT,
+    ]);
+  });
+
+  it("T-X066 keeps NO_DUPLICATE unmapped; honest note and redact fence (L44)", () => {
+    expect(mapProofToFixtureCases(SoakProofKind.NO_DUPLICATE_EFFECTS)).toEqual(
+      [],
+    );
+    expect(expectedProofsForFixtureCase("T-X066")).not.toContain(
+      SoakProofKind.NO_DUPLICATE_EFFECTS,
+    );
+    expect(SOAK_FIXTURE_STATUS_HONEST_NOTE).toMatch(/ACCEPTED/);
+    expect(SOAK_FIXTURE_STATUS_HONEST_NOTE).toMatch(/VERIFIED/i);
+    const redacted = redactEvidenceSummary(
+      "secret=token art-fixture-t-x066 password=hunter2",
+    );
+    expect(redacted).not.toMatch(/token|hunter2/i);
+    expect(stableFixtureEvidenceArtifactId("T-X066")).toBe(
+      "art-fixture-t-x066",
+    );
+  });
+
+  it("DST and emergency-stop exclude T-X066; BACKUP map singleton (L45)", () => {
+    expect(
+      mapProofToFixtureCases(SoakProofKind.DST_RECURRING_SCHEDULE_NO_DUPLICATES),
+    ).not.toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.EMERGENCY_STOP_AT_COMMIT),
+    ).not.toContain("T-X066");
+    expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
+      "T-X066",
+    ]);
+    expect(soakNotWiredLiveWiring()).toEqual(SOAK_NOT_WIRED_LIVE_WIRING);
+  });
+
+  it("T-X066 fixture ACCEPTED ok; live production ACCEPTED rejected (L46)", () => {
+    const art = stableFixtureEvidenceArtifactId("T-X066");
+    const fixture = validateAcceptanceCaseStatus({
+      status: AcceptanceCaseStatus.ACCEPTED,
+      environment: AcceptanceEnvironment.FIXTURE,
+      evidenceArtifactId: art,
+    });
+    expect(fixture.ok).toBe(true);
+    const live = validateAcceptanceCaseStatus({
+      status: AcceptanceCaseStatus.ACCEPTED,
+      environment: AcceptanceEnvironment.AUTHORIZED_PRODUCTION,
+      evidenceArtifactId: art,
+    });
+    expect(live.ok).toBe(false);
+    if (live.ok) return;
+    expect(
+      mapProofToFixtureCases(SoakProofKind.RECOVER_ROTATE_RECONCILE),
+    ).not.toContain("T-X066");
+    expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
+      "T-X066",
+    ]);
+  });
+
+  it("release/dispatch proofs exclude T-X066; ads soft-skip fence (L47)", () => {
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE),
+    ).not.toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.STOP_AFTER_DISPATCH_RECONCILE),
+    ).not.toContain("T-X066");
+    expect(SOAK_CHATGPT_ADS_SOFT_SKIP_CASE_IDS).not.toContain("T-X066");
+    const ads = soakChatGptAdsBlocked();
+    expect(ads.allowed).toBe(false);
+    expect(ads.wiring).toBe("NOT_WIRED");
+    expect(expectedProofsForFixtureCase("T-X066")).toEqual([
+      SoakProofKind.BACKUP_OMIT_RECEIPT,
+    ]);
+  });
+
+  it("T-X066 buildRedactedArtifact fixture-only; production compile throws (L48)", () => {
+    const art = buildRedactedArtifact({
+      artifactId: stableFixtureEvidenceArtifactId("T-X066"),
+      caseId: "T-X066",
+      environment: AcceptanceEnvironment.FIXTURE,
+      summary: "Bearer secret-token backup omit",
+      proofKinds: [SoakProofKind.BACKUP_OMIT_RECEIPT],
+      evidenceRef: "fixture://t-x066",
+      createdAtIso: SOAK_FIXTURE_HARNESS_NOW_ISO,
+    });
+    expect(art.caseId).toBe("T-X066");
+    expect(art.redacted).toBe(true);
+    expect(art.summary).not.toMatch(/secret-token/i);
+    expect(art.liveProviderSuccessClaimed).toBe(false);
+    expect(() =>
+      buildRedactedArtifact({
+        artifactId: "art-live",
+        caseId: "T-X066",
+        environment: AcceptanceEnvironment.AUTHORIZED_PRODUCTION,
+        summary: "x",
+        proofKinds: [SoakProofKind.BACKUP_OMIT_RECEIPT],
+        evidenceRef: "x",
+        createdAtIso: SOAK_FIXTURE_HARNESS_NOW_ISO,
+      }),
+    ).toThrow(/authorized_production/i);
+  });
+
+  it("T-X066 stable vs run-scoped artifact; unknown-remote distinct row (L49)", () => {
+    const stable = stableFixtureEvidenceArtifactId("T-X066");
+    const runScoped = uniqueFixtureEvidenceArtifactId("T-X066", "soak-l49-run");
+    expect(stable).toBe("art-fixture-t-x066");
+    expect(runScoped).not.toBe(stable);
+    expect(runScoped).toMatch(/art-fixture-t-x066/);
+    const d = unknownRemoteDistinctFromUncertainPost();
+    const idx = d.distinctFromCaseIds.indexOf("T-X066");
+    expect(idx).toBeGreaterThanOrEqual(0);
+    expect(d.distinctFromProofs[idx]).toBe("BACKUP_OMIT_RECEIPT");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.UNKNOWN_REMOTE_RECONCILE),
+    ).toContain("T-X020");
+  });
+
+  it("T-X066 allowed status ACCEPTED only; OFFBOARD maps T-X073 not T-X066 (L50)", () => {
+    expect(isAllowedAcceptanceStatus(AcceptanceCaseStatus.ACCEPTED)).toBe(true);
+    expect(isAllowedAcceptanceStatus("VERIFIED")).toBe(false);
+    expect(isAllowedAcceptanceStatus(FORBIDDEN_SILENT_LIVE_STATUS)).toBe(false);
+    const offboard = mapProofToFixtureCases(
+      SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL,
+    );
+    expect(offboard).toContain("T-X073");
+    expect(offboard).not.toContain("T-X066");
+    expect(expectedProofsForFixtureCase("T-X066")).toEqual([
+      SoakProofKind.BACKUP_OMIT_RECEIPT,
+    ]);
+  });
+
+  it("T-X066 distinct accepted≠verified; JOB_CONTINUITY unmapped (L51)", () => {
+    const d = unknownRemoteDistinctFromUncertainPost();
+    expect(d.acceptedEqualsVerified).toBe(false);
+    expect(d.fixtureOnly).toBe(true);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.JOB_CONTINUITY),
+    ).not.toContain("T-X066");
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X066");
+    expect(mapProofToFixtureCases(SoakProofKind.NO_DUPLICATE_EFFECTS)).toEqual(
+      [],
+    );
+    expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
+      "T-X066",
+    ]);
+  });
+
+  it("T-X066 bare ACCEPTED rejected; CRASH_RESTART unmapped (L52)", () => {
+    const bare = validateAcceptanceCaseStatus({
+      status: AcceptanceCaseStatus.ACCEPTED,
+      environment: AcceptanceEnvironment.FIXTURE,
+      evidenceArtifactId: null,
+    });
+    expect(bare.ok).toBe(false);
+    const withArt = validateAcceptanceCaseStatus({
+      status: AcceptanceCaseStatus.ACCEPTED,
+      environment: AcceptanceEnvironment.FIXTURE,
+      evidenceArtifactId: stableFixtureEvidenceArtifactId("T-X066"),
+    });
+    expect(withArt.ok).toBe(true);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CRASH_RESTART),
+    ).not.toContain("T-X066");
+    expect(REVIEW_BINDING_EXTERNAL_EFFECTS).toBe("NONE");
+  });
+
+  it("T-X066 uncertain-post and recover-rotate fences; STOP_AFTER unmapped (L53)", () => {
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.UNCERTAIN_POST_RECONCILE_BEFORE_RETRY,
+      ),
+    ).not.toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.RECOVER_ROTATE_RECONCILE),
+    ).not.toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.STOP_AFTER_DISPATCH_RECONCILE),
+    ).not.toContain("T-X066");
+    expect(soakChatGptAdsBlocked().wiring).toBe("NOT_WIRED");
+    expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
+      "T-X066",
+    ]);
+  });
+
+  it("T-X066 short fixture soak pilot NOT_MET; COMPETING_SUPERVISOR unmapped (L54)", () => {
+    const ended = SOAK_FIXTURE_HARNESS_NOW_ISO;
+    const started = new Date(Date.parse(ended) - 5 * 60 * 1000).toISOString();
+    const gate = evaluatePilotGate({
+      observations: [
+        { kind: PilotObservationKind.START, recordedAtIso: started },
+        { kind: PilotObservationKind.END, recordedAtIso: ended },
+      ],
+      proofs: [
+        {
+          proofId: "p-backup-omit",
+          kind: SoakProofKind.BACKUP_OMIT_RECEIPT,
+          passed: true,
+          details: ["fixture-only backup omit receipt"],
+          applyAttemptCount: 1,
+          operationId: "op-t-x066",
+          createdAtIso: ended,
+          fixtureOnly: true,
+        },
+      ],
+    });
+    expect(gate.status).toBe(PilotGateStatus.NOT_MET);
+    expect(gate.serverObservationsOnly).toBe(true);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.COMPETING_SUPERVISOR_LEASE),
+    ).not.toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.SELF_APPROVAL_REJECTED),
+    ).not.toContain("T-X066");
+    expect(expectedProofsForFixtureCase("T-X066")).toEqual([
+      SoakProofKind.BACKUP_OMIT_RECEIPT,
+    ]);
+  });
+
+  it("T-X066 forged-browser and cross-workspace exclude; VERIFIED forbidden (L55)", () => {
+    expect(
+      mapProofToFixtureCases(SoakProofKind.FORGED_BROWSER_ROLE_IGNORED),
+    ).not.toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CROSS_WORKSPACE_REFERENCE_DENIED),
+    ).not.toContain("T-X066");
+    expect(isAllowedAcceptanceStatus(FORBIDDEN_SILENT_LIVE_STATUS)).toBe(false);
+    expect(REVIEW_BINDING_LIVE_CLAIM_REFUSED).toBe("LIVE_REVIEW_CLAIM_REFUSED");
+    expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
+      "T-X066",
+    ]);
   });
 });
