@@ -23,6 +23,8 @@ describe("SSE gap after offline UI (T-X062)", () => {
     expect(d1.cursor.lastAppliedSeq).toBe(11);
     expect(d1.externalEffects).toBe("NONE");
     expect(d1.liveProviderWiring).toBe("NOT_WIRED");
+    expect(d1.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(d1.liveProviderSuccessClaimed).toBe(false);
     cursor = d1.cursor;
 
     const d2 = evaluateSseEventAfterOffline({
@@ -199,7 +201,7 @@ describe("SSE gap after offline UI (T-X062)", () => {
     expect(blocked.liveProviderWiring).toBe("NOT_WIRED");
   });
 
-  it("raises minResyncThroughSeq when a larger gap arrives while pending", () => {
+  it("F34 raises minResyncThroughSeq when a larger gap arrives while pending", () => {
     let cursor = createSseUiCursor({
       lastAppliedSeq: 10,
       stateDigest: "digest-seq-10",
@@ -220,6 +222,42 @@ describe("SSE gap after offline UI (T-X062)", () => {
     expect(raised.code).toBe("SSE_GAP_FULL_RESYNC_REQUIRED");
     expect(raised.cursor.minResyncThroughSeq).toBe(22);
     expect(raised.cursor.lastAppliedSeq).toBe(10);
+  });
+
+  it("F35 accepts snapshot at exact minResyncThroughSeq boundary", () => {
+    let cursor = createSseUiCursor({
+      lastAppliedSeq: 7,
+      stateDigest: "digest-seq-7",
+    });
+    const gap = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 13, payloadId: "e13" },
+      reconnecting: false,
+    });
+    expect(gap.cursor.minResyncThroughSeq).toBe(13);
+
+    const exact = applySseFullStateResync({
+      cursor: gap.cursor,
+      snapshot: {
+        revision: 3,
+        coversThroughSeq: 13,
+        entityCount: 2,
+        stateDigest: "digest-snap-13",
+      },
+    });
+    expect(exact.code).toBe("FULL_STATE_RESYNC");
+    expect(exact.cursor.lastAppliedSeq).toBe(13);
+    expect(exact.cursor.minResyncThroughSeq).toBeNull();
+    expect(exact.fullStateResyncRequired).toBe(false);
+
+    const resume = evaluateSseEventAfterOffline({
+      cursor: exact.cursor,
+      event: { seq: 14, payloadId: "e14" },
+      reconnecting: false,
+    });
+    expect(resume.code).toBe("INCREMENTAL_APPLY");
+    expect(resume.cursor.lastAppliedSeq).toBe(14);
+    expect(resume.cursor.minResyncThroughSeq).toBeNull();
   });
 
   it("accepts snapshot covering beyond minResyncThroughSeq", () => {
@@ -250,6 +288,45 @@ describe("SSE gap after offline UI (T-X062)", () => {
     expect(beyond.liveProviderWiring).toBe("NOT_WIRED");
   });
 
+  it("F38 refuses seq=0 while gap pending without clearing minResyncThroughSeq", () => {
+    let cursor = createSseUiCursor({
+      lastAppliedSeq: 8,
+      stateDigest: "digest-seq-8",
+    });
+    cursor = markSseUiOffline(cursor);
+    const gap = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 12, payloadId: "e-gap-12" },
+      reconnecting: true,
+    });
+    const zero = evaluateSseEventAfterOffline({
+      cursor: gap.cursor,
+      event: { seq: 0, payloadId: "e-zero" },
+      reconnecting: false,
+    });
+    expect(zero.code).toBe("INVALID_SEQ");
+    expect(zero.fullStateResyncRequired).toBe(true);
+    expect(zero.cursor.lastAppliedSeq).toBe(8);
+    expect(zero.cursor.minResyncThroughSeq).toBe(12);
+    expect(zero.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("F37 refuses negative seq without mutating cursor", () => {
+    const cursor = createSseUiCursor({
+      lastAppliedSeq: 5,
+      stateDigest: "digest-seq-5",
+    });
+    const neg = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: -3, payloadId: "e-neg" },
+      reconnecting: false,
+    });
+    expect(neg.code).toBe("INVALID_SEQ");
+    expect(neg.cursor.lastAppliedSeq).toBe(5);
+    expect(neg.cursor.stateDigest).toBe("digest-seq-5");
+    expect(neg.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
   it("refuses invalid seq and blank/whitespace snapshot digests", () => {
     const cursor = createSseUiCursor({
       lastAppliedSeq: 10,
@@ -265,6 +342,7 @@ describe("SSE gap after offline UI (T-X062)", () => {
       expect(bad.allowedIncremental).toBe(false);
       expect(bad.liveProviderWiring).toBe("NOT_WIRED");
       expect(bad.externalEffects).toBe("NONE");
+      expect(bad.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
     }
 
     const blank = applySseFullStateResync({
@@ -278,5 +356,90 @@ describe("SSE gap after offline UI (T-X062)", () => {
     });
     expect(blank.code).toBe("SNAPSHOT_INSUFFICIENT_COVERAGE");
     expect(blank.liveProviderWiring).toBe("NOT_WIRED");
+    expect(blank.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
+
+  it("IGNORE_STALE leaves minResyncThroughSeq set after a gap", () => {
+    let cursor = createSseUiCursor({
+      lastAppliedSeq: 20,
+      stateDigest: "digest-seq-20",
+    });
+    cursor = markSseUiOffline(cursor);
+    const gap = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 25, payloadId: "e25" },
+      reconnecting: true,
+    });
+    expect(gap.cursor.minResyncThroughSeq).toBe(25);
+
+    const stale = evaluateSseEventAfterOffline({
+      cursor: gap.cursor,
+      event: { seq: 18, payloadId: "e18-dup" },
+      reconnecting: false,
+    });
+    expect(stale.code).toBe("IGNORE_STALE");
+    expect(stale.cursor.minResyncThroughSeq).toBe(25);
+    expect(stale.fullStateResyncRequired).toBe(true);
+    expect(stale.liveProviderSuccessClaimed).toBe(false);
+  });
+
+  it("refuses live VERIFIED and live SSE wire claims", () => {
+    const cursor = createSseUiCursor({
+      lastAppliedSeq: 10,
+      stateDigest: "digest-seq-10",
+    });
+    const verified = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 11, payloadId: "e11" },
+      reconnecting: false,
+      claimLiveVerified: true,
+    });
+    expect(verified.code).toBe("LIVE_SSE_CLAIM_REFUSED");
+    expect(verified.allowedIncremental).toBe(false);
+    expect(verified.liveProviderWiring).toBe("NOT_WIRED");
+    expect(verified.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+
+    const wire = evaluateSseEventAfterOffline({
+      cursor,
+      event: { seq: 11, payloadId: "e11" },
+      reconnecting: false,
+      requestLiveSseWire: true,
+    });
+    expect(wire.code).toBe("LIVE_SSE_CLAIM_REFUSED");
+    expect(wire.externalEffects).toBe("NONE");
+
+    const snapWire = applySseFullStateResync({
+      cursor,
+      snapshot: {
+        revision: 1,
+        coversThroughSeq: 10,
+        entityCount: 1,
+        stateDigest: "digest-ok",
+      },
+      requestLiveSseWire: true,
+    });
+    expect(snapWire.code).toBe("LIVE_SSE_CLAIM_REFUSED");
+    expect(snapWire.cursor.stateDigest).toBe("digest-seq-10");
+  });
+
+  it("refuses regressive snapshot below lastAppliedSeq", () => {
+    const cursor = createSseUiCursor({
+      lastAppliedSeq: 20,
+      stateDigest: "digest-seq-20",
+    });
+    const regressive = applySseFullStateResync({
+      cursor,
+      snapshot: {
+        revision: 2,
+        coversThroughSeq: 15,
+        entityCount: 3,
+        stateDigest: "digest-old",
+      },
+    });
+    expect(regressive.code).toBe("IGNORE_STALE");
+    expect(regressive.fullStateResyncRequired).toBe(true);
+    expect(regressive.cursor.lastAppliedSeq).toBe(20);
+    expect(regressive.cursor.stateDigest).toBe("digest-seq-20");
+    expect(regressive.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
   });
 });
