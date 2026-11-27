@@ -406,6 +406,7 @@ export {
 } from "./monitoring.js";
 export {
   MonitoringSlotOutcome,
+  HOST_SLEEP_LIVE_WIRING,
   HOST_SLEEP_MONITORING_RELATED_CASE_IDS,
   createHostSleepMonitoringState,
   monitoringSlotId,
@@ -413,11 +414,15 @@ export {
   markHostSleepCoverageGaps,
   deriveMissedScheduledSlots,
   coalesceWakeCatchup,
+  isOpenCoverageGap,
+  listOpenCoverageGaps,
+  evaluateHostSleepMonitoringHonesty,
   type MonitoringSlotOutcomeValue,
   type MonitoringSlotRecord,
   type HostSleepMonitoringState,
   type CatchupProbeResult,
   type CoalesceWakeCatchupResult,
+  type HostSleepMonitoringHonesty,
 } from "./host-sleep-monitoring.js";
 export {
   StagingConflictStatus,
