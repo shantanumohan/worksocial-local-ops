@@ -774,6 +774,51 @@ export async function proofIdempotencyKeyPayloadMismatch(
   );
   if (!leadingEnSpaceConflict) passed = false;
 
+  const digestLeadingNbsp = `\u00A0${digestA}`;
+  const leadingNbspConflict = await expectMismatchConflict(
+    "acceptPending leading-NBSP-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: digestLeadingNbsp,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!leadingNbspConflict) passed = false;
+
+  const digestMiddleDot = `${digestA}\u00B7`;
+  const middleDotConflict = await expectMismatchConflict(
+    "acceptPending middle-dot-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: digestMiddleDot,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!middleDotConflict) passed = false;
+
+  const digestWordJoiner = `${digestA}\u2060`;
+  const wordJoinerConflict = await expectMismatchConflict(
+    "acceptPending word-joiner-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: digestWordJoiner,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!wordJoinerConflict) passed = false;
+
   // Concurrent multi-alt digest-B barrage — all Conflict; no orphans; applyCount=1.
   const barrageN = 8;
   const barrageIds = Array.from(
@@ -1446,6 +1491,9 @@ export async function proofIdempotencyKeyPayloadMismatch(
       sixPerEmConflict &&
       oghamSpaceConflict &&
       leadingEnSpaceConflict &&
+      leadingNbspConflict &&
+      middleDotConflict &&
+      wordJoinerConflict &&
       barrageAllConflict &&
       !barrageOrphans &&
       sameOpRaceAllConflict &&
