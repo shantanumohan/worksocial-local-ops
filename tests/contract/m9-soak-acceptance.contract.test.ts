@@ -10,6 +10,8 @@
  * T-X005 fixture ACCEPTED only via FORGED_BROWSER_ROLE_IGNORED.
  * T-X006 fixture ACCEPTED only via CROSS_WORKSPACE_REFERENCE_DENIED.
  * T-X019/T-US-75 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED.
+ * T-X029 fixture ACCEPTED only via EXPLICIT_ACCOUNT_REBIND.
+ * T-X031 fixture ACCEPTED only via GA4_WRONG_PROPERTY_KIND_REFUSED.
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -457,5 +459,132 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).toMatch(
       /New connection lease granted leaseId=lease-[0-9a-f-]+ \| Same-account rebind correctly denied/,
     );
+  });
+
+  it("T-X031 fixture artifact names GA4 wrong property kind honesty (ACCEPTED ≠ VERIFIED)", () => {
+    const artPath = resolve(
+      repoRoot,
+      "tests/acceptance-evidence/fixture/art-fixture-t-x031.json",
+    );
+    const art = JSON.parse(readFileSync(artPath, "utf8")) as {
+      artifactId: string;
+      caseId: string;
+      environment: string;
+      redacted: boolean;
+      summary: string;
+      liveProviderSuccessClaimed: boolean;
+      externalEffects: string;
+      proofKinds: string[];
+      evidenceRef: string;
+      uniqueSourceArtifactId: string;
+      createdAtIso: string;
+    };
+    expect(art.artifactId).toBe("art-fixture-t-x031");
+    expect(art.createdAtIso).toMatch(/^2026-/);
+    expect(art.uniqueSourceArtifactId).toMatch(/^art-fixture-t-x031-/);
+    expect(art.evidenceRef).toBe("soak/evidence/art-fixture-t-x031.json");
+    expect(art.caseId).toBe("T-X031");
+    expect(art.environment).toBe("fixture");
+    expect(art.redacted).toBe(true);
+    expect(art.proofKinds).toEqual(["ga4_wrong_property_kind_refused"]);
+    expect(art.summary).toMatch(/Fixture ACCEPTED/);
+    expect(art.summary).not.toMatch(/Fixture VERIFIED/);
+    expect(art.liveProviderSuccessClaimed).toBe(false);
+    expect(art.externalEffects).toBe("NONE");
+    expect(art.summary).toContain("ACCEPTED≠VERIFIED");
+    expect(art.summary).toContain("catalogClaim=ACCEPTED≠VERIFIED");
+    expect(art.summary).toContain("proof=ga4_wrong_property_kind_refused");
+    expect(art.summary).toContain("applyCount=1");
+    expect(art.summary).toContain("WRONG_PROPERTY_KIND");
+    expect(art.summary).toContain("measurement_id_only");
+    expect(art.summary).toContain("MISSING_PROPERTY");
+    expect(art.summary).toContain("GA4_KIND_HONEST");
+    expect(art.summary).toContain("LIVE_CLAIM_REFUSED");
+    expect(art.summary).toContain("NOT_WIRED");
+    expect(art.summary).toContain("Live GA4 bind refused");
+    expect(art.summary).toContain("Fixture GA4 property accepted");
+    expect(art.summary).toContain("Sandbox GA4 accepted");
+    expect(art.summary).toContain("claimLiveVerified");
+    expect(art.summary).toContain("requestLiveGa4Transport");
+    expect(art.summary).toMatch(
+      /Fixture ACCEPTED for T-X031 \(Wrong GA4 property kind — refuse bind\)/,
+    );
+    expect(art.summary).toMatch(/UA property kind → WRONG_PROPERTY_KIND refuse/);
+    expect(art.summary).toMatch(
+      /assertGa4WrongPropertyKindHonest → GA4_KIND_HONEST; ACCEPTED≠VERIFIED/,
+    );
+    expect(art.summary).toMatch(
+      /idempotent reclaim: double UA refuse agrees; post-live-claim reclaim still WRONG_PROPERTY_KIND/,
+    );
+    expect(art.summary).toMatch(
+      /I10 edges: padded id \+ measurement-id-shaped property refuse/,
+    );
+    expect(art.summary).toMatch(
+      /dual live-claim LIVE_CLAIM_REFUSED; triple reclaim idempotent/,
+    );
+    // K31: I13 reclaim drift + live-transport invent closed
+    expect(art.summary).toMatch(
+      /I13 edges: claim-on-padded\/mid LIVE_CLAIM_REFUSED; invent live-transport closed dishonest/,
+    );
+    expect(art.summary).toMatch(/honest\+dishonest reclaim DRIFT/);
+    expect(art.proofKinds).not.toContain("VERIFIED");
+    expect(art.summary).toMatch(
+      /liveProviderSuccessClaimed=false externalEffects=NONE catalogClaim=ACCEPTED≠VERIFIED/,
+    );
+    // K32: UNAVAILABLE env refuse bind edge
+    expect(art.summary).toMatch(
+      /UA-shaped id \+ UNAVAILABLE env → WRONG_PROPERTY_KIND refuse/,
+    );
+    // K33: post-#266 tip fences
+    expect(art.summary).toMatch(/Empty property id → MISSING_PROPERTY/);
+    expect(art.summary).toMatch(
+      /post-live-claim reclaim still WRONG_PROPERTY_KIND \(no invent bind\)/,
+    );
+    // K34: post-#267 tip — unknown measurement kinds fence
+    expect(art.summary).toMatch(
+      /measurement_id_only \+ unknown kinds → WRONG_PROPERTY_KIND refuse/,
+    );
+    // K35: wipe15 — sandbox GA4 label distinct from fixture/live
+    expect(art.summary).toMatch(
+      /Sandbox GA4 accepted as distinct label \(≠ fixture ≠ live\)/,
+    );
+    // K36: post-#268 tip — live transport refuse bind
+    expect(art.summary).toMatch(/Live GA4 bind refused while transport NOT_WIRED/);
+    // K37: post-#269 tip — live-claim path fenced NOT_WIRED
+    expect(art.summary).toMatch(
+      /claimLiveVerified \/ requestLiveGa4Transport → LIVE_CLAIM_REFUSED \(NOT_WIRED\)/,
+    );
+    // K38: wipe15 — fixture GA4 accepted not live metrics
+    expect(art.summary).toMatch(
+      /Fixture GA4 property accepted \(not live metrics\)/,
+    );
+    // K39: post-#270 tip — idempotent UA refuse reclaim
+    expect(art.summary).toMatch(/double UA refuse agrees/);
+    // K40: post-#271 tip — triple reclaim idempotent
+    expect(art.summary).toMatch(/triple reclaim idempotent/);
+    // K41: wipe15 — I13 claim-on-padded/mid LIVE_CLAIM_REFUSED
+    expect(art.summary).toMatch(/claim-on-padded\/mid LIVE_CLAIM_REFUSED/);
+    // K42: post-#272 tip — I10 padded id + measurement-id-shaped refuse
+    expect(art.summary).toMatch(/padded id \+ measurement-id-shaped property refuse/);
+    // K43: post-#273 tip — invent live-transport closed dishonest
+    expect(art.summary).toMatch(/invent live-transport closed dishonest/);
+    // K44: wipe15 ON_TIP e5f43ded — dual live-claim fence
+    expect(art.summary).toMatch(/dual live-claim LIVE_CLAIM_REFUSED/);
+    // K45: post-#274 tip — I13 edges fence
+    expect(art.summary).toMatch(/I13 edges:/);
+    // K46: post-#275 tip — I10 edges fence
+    expect(art.summary).toMatch(/I10 edges:/);
+    // K47: post-#277 tip — idempotent reclaim fence
+    expect(art.summary).toMatch(/idempotent reclaim:/);
+    // K48: wipe15 ON_TIP 64e25ce8 — post-live-claim reclaim
+    expect(art.summary).toMatch(/post-live-claim reclaim/);
+    // K49: post-#278 tip — no invent bind fence
+    expect(art.summary).toMatch(/no invent bind/);
+    // K50: post-#279 tip — post-live-claim still WRONG_PROPERTY_KIND
+    expect(art.summary).toMatch(/still WRONG_PROPERTY_KIND/);
+    // K51: post-#280 tip — unknown measurement kinds refuse
+    expect(art.summary).toMatch(/unknown kinds/);
+    // K52: post-#281 tip — assertGa4WrongPropertyKindHonest
+    expect(art.summary).toMatch(/assertGa4WrongPropertyKindHonest/);
   });
 });
