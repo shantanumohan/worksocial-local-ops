@@ -145,6 +145,18 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses useUnredactedCustomerDisplayNameInEval", () => {
+    const rawName = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      useUnredactedCustomerDisplayNameInEval: true,
+    });
+    expect(rawName.allowed).toBe(false);
+    expect(
+      rawName.reasons.some((r) => /Unredacted customer display name/.test(r)),
+    ).toBe(true);
+  });
+
   it("refuses useUnredactedCustomerPhoneInEval", () => {
     const rawPhone = prepareCustomerDataForEvaluation({
       source,
