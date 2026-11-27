@@ -3,6 +3,7 @@
  * Exercises the guarded production-bind boundary with an instrumented fake
  * provider (call count must stay 0). External effects: NONE.
  * Distinct from T-US-012 (Google Ads TEST vs PRODUCTION).
+ * Soft-skip T-F07 / T-US-013 / T-US-014 remain ACCESS_BLOCKED on connect.
  */
 
 import { randomUUID } from "node:crypto";
@@ -17,6 +18,7 @@ import {
   createPaidMediaProposal,
   diagnoseDelivery,
   evaluateChatGptAdsAccess,
+  isAdsTestProjectProductionMismatch,
   type SoakProofRecord,
 } from "@worksocial/domain";
 
@@ -54,10 +56,12 @@ export function proofAdsTestProjectProductionBlocked(
     guarded.decision.code === "ADS_TEST_PROJECT_MISMATCH" &&
     guarded.productionBindCallCount === 0 &&
     productionBindCallCount === 0 &&
-    guarded.externalEffects === "NONE"
+    guarded.liveProviderWiring === "NOT_WIRED" &&
+    guarded.externalEffects === "NONE" &&
+    guarded.decision.liveProviderWiring === "NOT_WIRED"
   ) {
     details.push(
-      "Guarded bind: SANDBOX→LIVE → ADS_TEST_PROJECT_MISMATCH; productionBindCallCount=0",
+      "Guarded bind: SANDBOX→LIVE → ADS_TEST_PROJECT_MISMATCH; productionBindCallCount=0; honesty NOT_WIRED/NONE",
     );
   } else {
     passed = false;
@@ -71,16 +75,74 @@ export function proofAdsTestProjectProductionBlocked(
     );
   }
 
-  // 2. Predicate alone still reports mismatch (honesty / before adapter).
+  // 2. Blank projectId + repeated mismatch — binder still unused.
+  const blankGuarded = attemptGuardedChatGptAdsProductionBind({
+    access: testProjectAccess,
+    projectId: "   ",
+    productionBind,
+  });
+  if (
+    !blankGuarded.bound &&
+    blankGuarded.decision.code === "ADS_TEST_PROJECT_MISMATCH" &&
+    blankGuarded.productionBindCallCount === 0 &&
+    productionBindCallCount === 0
+  ) {
+    details.push(
+      "Repeated SANDBOX→LIVE (blank projectId) → ADS_TEST_PROJECT_MISMATCH; bind count still 0",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Blank/repeat guarded unexpectedly ${JSON.stringify(blankGuarded)} bindCount=${productionBindCallCount}`,
+    );
+  }
+
+  // 3. Predicate alone still reports mismatch (honesty / before adapter).
   const mismatch = evaluateChatGptAdsAccess(testProjectAccess);
-  if (!mismatch.allowed && mismatch.code === "ADS_TEST_PROJECT_MISMATCH") {
-    details.push("evaluateChatGptAdsAccess → ADS_TEST_PROJECT_MISMATCH (T-X034)");
+  if (
+    !mismatch.allowed &&
+    mismatch.code === "ADS_TEST_PROJECT_MISMATCH" &&
+    mismatch.externalEffects === "NONE" &&
+    isAdsTestProjectProductionMismatch(
+      AnalyticsEnvironment.SANDBOX,
+      AnalyticsEnvironment.LIVE,
+    )
+  ) {
+    details.push(
+      "evaluateChatGptAdsAccess → ADS_TEST_PROJECT_MISMATCH (T-X034); helper confirms mismatch",
+    );
   } else {
     passed = false;
     details.push(`Predicate unexpectedly ${JSON.stringify(mismatch)}`);
   }
 
-  // 3. Paid-media create path with mismatch access — blocked; no production call.
+  // 4. SANDBOX→FIXTURE is not T-X034 mismatch (connect soft-skip stays ACCESS_BLOCKED).
+  const sandboxFixture = evaluateChatGptAdsAccess({
+    localTransportVerified: true,
+    entitlementVerified: true,
+    authVerified: true,
+    projectEnvironment: AnalyticsEnvironment.SANDBOX,
+    requestedEnvironment: AnalyticsEnvironment.FIXTURE,
+  });
+  if (
+    !sandboxFixture.allowed &&
+    sandboxFixture.code === "ADS_ACCESS_BLOCKED" &&
+    !isAdsTestProjectProductionMismatch(
+      AnalyticsEnvironment.SANDBOX,
+      AnalyticsEnvironment.FIXTURE,
+    )
+  ) {
+    details.push(
+      "SANDBOX→FIXTURE → ADS_ACCESS_BLOCKED (not T-X034 mismatch; soft-skip connect distinct)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `SANDBOX→FIXTURE unexpectedly ${JSON.stringify(sandboxFixture)}`,
+    );
+  }
+
+  // 5. Paid-media create path with mismatch access — blocked; no production call.
   const diagnosis = diagnoseDelivery({
     impressions: 100,
     clicks: 5,
@@ -127,7 +189,7 @@ export function proofAdsTestProjectProductionBlocked(
     );
   }
 
-  // 4. Execute path on blocked proposal — refused; binder still unused.
+  // 6. Execute path on blocked proposal — refused; binder still unused.
   if (created.proposal) {
     const executed = attemptPaidMediaExecution({
       proposal: created.proposal,
@@ -153,7 +215,7 @@ export function proofAdsTestProjectProductionBlocked(
     details.push("Blocked proposal missing — cannot assert execute refuse");
   }
 
-  // 5. LIVE→LIVE is distinct NOT_WIRED (not T-X034 mismatch); still no bind.
+  // 7. LIVE→LIVE is distinct NOT_WIRED (not T-X034 mismatch); still no bind.
   const liveGuarded = attemptGuardedChatGptAdsProductionBind({
     access: {
       localTransportVerified: true,

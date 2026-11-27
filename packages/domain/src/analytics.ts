@@ -1706,10 +1706,33 @@ export type ChatGptAdsAccessDecision = {
     | "ADS_AUTH_UNVERIFIED"
     | "ADS_TEST_PROJECT_MISMATCH"
     | "ADS_LIVE_NOT_WIRED"
-    | "ADS_ACCESS_GRANTED_FIXTURE";
+    | "ADS_ACCESS_GRANTED_FIXTURE"
+    | "ADS_PROJECT_ID_MISSING";
   reasons: string[];
   environment: AnalyticsEnvironmentValue;
+  /** Honesty: never claims live Ads success from this gate. */
+  liveProviderWiring: "NOT_WIRED";
+  externalEffects: "NONE";
 };
+
+const ADS_ACCESS_HONESTY = {
+  liveProviderWiring: "NOT_WIRED" as const,
+  externalEffects: "NONE" as const,
+};
+
+/**
+ * True when a test-only/sandbox Ads project is requesting LIVE production.
+ * T-X034 — never bind production from a sandbox project.
+ */
+export function isAdsTestProjectProductionMismatch(
+  projectEnvironment: AnalyticsEnvironmentValue,
+  requestedEnvironment: AnalyticsEnvironmentValue,
+): boolean {
+  return (
+    projectEnvironment === AnalyticsEnvironment.SANDBOX &&
+    requestedEnvironment === AnalyticsEnvironment.LIVE
+  );
+}
 
 /**
  * ChatGPT Ads stays access-blocked without verified local transport +
@@ -1719,14 +1742,17 @@ export function evaluateChatGptAdsAccess(
   input: ChatGptAdsAccessInput,
 ): ChatGptAdsAccessDecision {
   if (
-    input.projectEnvironment === AnalyticsEnvironment.SANDBOX &&
-    input.requestedEnvironment === AnalyticsEnvironment.LIVE
+    isAdsTestProjectProductionMismatch(
+      input.projectEnvironment,
+      input.requestedEnvironment,
+    )
   ) {
     return {
       allowed: false,
       code: "ADS_TEST_PROJECT_MISMATCH",
       reasons: ["Test-only Ads project cannot bind production (T-X034)"],
       environment: AnalyticsEnvironment.NOT_WIRED,
+      ...ADS_ACCESS_HONESTY,
     };
   }
   if (input.requestedEnvironment === AnalyticsEnvironment.LIVE) {
@@ -1737,6 +1763,7 @@ export function evaluateChatGptAdsAccess(
         "ChatGPT Ads live adapter is NOT_WIRED — no spend or mutations (M8)",
       ],
       environment: AnalyticsEnvironment.NOT_WIRED,
+      ...ADS_ACCESS_HONESTY,
     };
   }
   if (!input.localTransportVerified) {
@@ -1747,6 +1774,7 @@ export function evaluateChatGptAdsAccess(
         "ChatGPT Ads access blocked — local transport not verified",
       ],
       environment: AnalyticsEnvironment.NOT_WIRED,
+      ...ADS_ACCESS_HONESTY,
     };
   }
   if (!input.entitlementVerified) {
@@ -1757,6 +1785,7 @@ export function evaluateChatGptAdsAccess(
         "ChatGPT Ads access blocked — entitlement not verified",
       ],
       environment: AnalyticsEnvironment.NOT_WIRED,
+      ...ADS_ACCESS_HONESTY,
     };
   }
   if (!input.authVerified) {
@@ -1765,6 +1794,7 @@ export function evaluateChatGptAdsAccess(
       code: "ADS_AUTH_UNVERIFIED",
       reasons: ["ChatGPT Ads access blocked — auth not verified"],
       environment: AnalyticsEnvironment.NOT_WIRED,
+      ...ADS_ACCESS_HONESTY,
     };
   }
   // Even with gates, M8 only permits labeled FIXTURE analysis — never live.
@@ -1776,6 +1806,7 @@ export function evaluateChatGptAdsAccess(
         "Transport/entitlement would be required for any Ads path; ChatGPT Ads remains access-blocked in M8 without a verified local Ads transport implementation",
       ],
       environment: AnalyticsEnvironment.NOT_WIRED,
+      ...ADS_ACCESS_HONESTY,
     };
   }
   return {
@@ -1783,21 +1814,24 @@ export function evaluateChatGptAdsAccess(
     code: "ADS_ACCESS_BLOCKED",
     reasons: ["ChatGPT Ads access blocked until verified local transport"],
     environment: AnalyticsEnvironment.NOT_WIRED,
+    ...ADS_ACCESS_HONESTY,
   };
 }
 
 /**
  * Fixture Ads production-bind boundary (T-X034).
- * Access is evaluated first; the production binder is invoked only when allowed.
- * Instrumented `productionBind` call counts prove a refused test project never
- * reaches a production bind/mutate adapter. External effects: NONE.
- * Fixture ACCEPTED ≠ sandbox/prod VERIFIED. Distinct from T-US-012 (Google Ads).
+ * Access is evaluated first; the production binder is invoked only when allowed
+ * and projectId is non-blank. Instrumented `productionBind` call counts prove a
+ * refused test project never reaches a production bind/mutate adapter.
+ * External effects: NONE. Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
+ * Distinct from T-US-012 (Google Ads). Soft-skip T-F07/T-US-013/T-US-014.
  */
 export type GuardedChatGptAdsProductionBindResult = {
   bound: boolean;
   decision: ChatGptAdsAccessDecision;
   /** How many times the production binder was invoked (0 when refused). */
   productionBindCallCount: number;
+  liveProviderWiring: "NOT_WIRED";
   externalEffects: "NONE";
 };
 
@@ -1813,14 +1847,32 @@ export function attemptGuardedChatGptAdsProductionBind(input: {
       bound: false,
       decision,
       productionBindCallCount: 0,
+      liveProviderWiring: "NOT_WIRED",
       externalEffects: "NONE",
     };
   }
-  input.productionBind(input.projectId);
+  const projectId = input.projectId.trim();
+  if (projectId.length === 0) {
+    return {
+      bound: false,
+      decision: {
+        allowed: false,
+        code: "ADS_PROJECT_ID_MISSING",
+        reasons: ["Production bind refused — blank Ads project id"],
+        environment: AnalyticsEnvironment.NOT_WIRED,
+        ...ADS_ACCESS_HONESTY,
+      },
+      productionBindCallCount: 0,
+      liveProviderWiring: "NOT_WIRED",
+      externalEffects: "NONE",
+    };
+  }
+  input.productionBind(projectId);
   return {
     bound: true,
     decision,
     productionBindCallCount: 1,
+    liveProviderWiring: "NOT_WIRED",
     externalEffects: "NONE",
   };
 }

@@ -1824,7 +1824,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X066 fixture ACCEPTED via backup_omit_receipt only — omit→restore→remote SoR reconcile→verify/retry applyCount=1; distinct from no-dup/unknown-remote/recover-rotate; live NOT_WIRED — not live VERIFIED",
       "T-X071 fixture ACCEPTED via host_offline_public_discovery_unavailable only — not live VERIFIED",
       "T-X067 fixture ACCEPTED via incompatible_workflow_upgrade_blocked_or_retained only — not live VERIFIED",
-      "T-X034 fixture ACCEPTED via ads_test_project_production_blocked only — not live VERIFIED",
+      "T-X034 fixture ACCEPTED via ads_test_project_production_blocked only — bind count 0; soft-skip connect ACCESS_BLOCKED; not live VERIFIED",
       "T-X035 fixture ACCEPTED via shared_ad_budget_external_change_invalidates only — not live VERIFIED",
       "T-X036 fixture ACCEPTED via recent_ads_conversion_blank_pending only — not live VERIFIED",
     ],

@@ -335,6 +335,8 @@ function rowToRun(row: Record<string, unknown>): EvalRunRecord {
             code: "ADS_ACCESS_BLOCKED" as const,
             reasons: ["ChatGPT Ads NOT_WIRED"],
             environment: "NOT_WIRED" as const,
+            liveProviderWiring: "NOT_WIRED" as const,
+            externalEffects: "NONE" as const,
           };
   return {
     runId: String(row.run_id),
@@ -351,6 +353,14 @@ function rowToRun(row: Record<string, unknown>): EvalRunRecord {
     chatgptAdsDecision: {
       ...adsRaw,
       allowed: false,
+      liveProviderWiring:
+        "liveProviderWiring" in adsRaw
+          ? (adsRaw as ChatGptAdsAccessDecision).liveProviderWiring
+          : "NOT_WIRED",
+      externalEffects:
+        "externalEffects" in adsRaw
+          ? (adsRaw as ChatGptAdsAccessDecision).externalEffects
+          : "NONE",
     },
     createdAtIso: new Date(String(row.created_at)).toISOString(),
     completedAtIso:
