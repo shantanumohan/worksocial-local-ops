@@ -507,6 +507,48 @@ export async function proofIdempotencyKeyPayloadMismatch(
   );
   if (!rlmConflict) passed = false;
 
+  const zwnjConflict = await expectMismatchConflict(
+    "acceptPending ZWNJ-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}\u200c`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!zwnjConflict) passed = false;
+
+  const zwjConflict = await expectMismatchConflict(
+    "acceptPending ZWJ-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}\u200d`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!zwjConflict) passed = false;
+
+  const wjConflict = await expectMismatchConflict(
+    "acceptPending WJ-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: `${digestA}\u2060`,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!wjConflict) passed = false;
+
   // Concurrent multi-alt digest-B barrage — all Conflict; no orphans; applyCount=1.
   const barrageN = 8;
   const barrageIds = Array.from(
@@ -1109,6 +1151,21 @@ export async function proofIdempotencyKeyPayloadMismatch(
     );
   }
 
+  // gateDetails marker retained on main decision after all Conflict edges.
+  const gateOk =
+    Array.isArray(finalDecision?.gateDetails) &&
+    finalDecision.gateDetails.includes("idempotency_key_payload_mismatch");
+  if (!gateOk) {
+    passed = false;
+    details.push(
+      `gateDetails retention failed: ${JSON.stringify(finalDecision?.gateDetails ?? null)}`,
+    );
+  } else {
+    details.push(
+      "gateDetails retains idempotency_key_payload_mismatch after Conflicts",
+    );
+  }
+
   details.push(
     `liveProviderSuccessClaimed=false liveProviderWiring=${IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING} externalEffects=NONE ACCEPTED≠VERIFIED chatgptAdsConnectSoftSkip=${IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP.join(",")} ACCESS_BLOCKED`,
   );
@@ -1146,6 +1203,9 @@ export async function proofIdempotencyKeyPayloadMismatch(
       softHyphenConflict &&
       lrmConflict &&
       rlmConflict &&
+      zwnjConflict &&
+      zwjConflict &&
+      wjConflict &&
       barrageAllConflict &&
       !barrageOrphans &&
       sameOpRaceAllConflict &&
@@ -1161,7 +1221,8 @@ export async function proofIdempotencyKeyPayloadMismatch(
       postFailedOk &&
       failedRaceOk &&
       applyAttemptsOk &&
-      finalIntegrityOk,
+      finalIntegrityOk &&
+      gateOk,
     details,
     applyAttemptCount: afterVerified?.applyCount ?? first.applyAttemptCount,
     operationId,

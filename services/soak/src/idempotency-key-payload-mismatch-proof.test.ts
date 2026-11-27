@@ -159,11 +159,31 @@ describe("proofIdempotencyKeyPayloadMismatch (T-X022)", () => {
       ),
     ).toBe(true);
     expect(
+      proof.details.some((d) =>
+        d.includes("ZWNJ-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("ZWJ-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("WJ-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
       proof.details.some(
         (d) =>
           d.includes("same-operationId digest-B race") &&
           d.includes("all Conflict") &&
           d.includes("applyCount=1"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("gateDetails retains idempotency_key_payload_mismatch"),
       ),
     ).toBe(true);
     expect(
