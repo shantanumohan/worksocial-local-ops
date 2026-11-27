@@ -94,6 +94,17 @@ describe("contract: T-X061 keyboard focus restore", () => {
     expect(lost.session.activeFocusId).toBeNull();
   });
 
+  it("evaluateKeyboardFocusRestoreReview refuses empty dialogFocusables", () => {
+    const review = evaluateKeyboardFocusRestoreReview({
+      triggerId: "btn-keyboard-review",
+      dialogFocusables: [],
+    });
+    expect(review.passed).toBe(false);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG),
+    ).toEqual(["T-X061"]);
+  });
+
   it("proofKeyboardFocusRestoreAfterDialog stays fixture-only with honest labels", () => {
     const proof = proofKeyboardFocusRestoreAfterDialog(now);
     expect(proof.passed).toBe(true);

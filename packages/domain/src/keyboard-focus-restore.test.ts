@@ -162,6 +162,15 @@ describe("keyboard focus restore (T-X061)", () => {
     expect(closed.code).toBeNull();
   });
 
+  it("evaluateKeyboardFocusRestoreReview fails closed when dialog has no focusables", () => {
+    const result = evaluateKeyboardFocusRestoreReview({
+      triggerId: "btn-review",
+      dialogFocusables: [],
+    });
+    expect(result.passed).toBe(false);
+    expect(result.details.some((d) => /Open failed/i.test(d))).toBe(true);
+  });
+
   it("evaluateKeyboardFocusRestoreReview passes open/trap/restore + lost control", () => {
     const result = evaluateKeyboardFocusRestoreReview({
       triggerId: "btn-review",
