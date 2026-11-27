@@ -125,6 +125,129 @@ export function proofWorkerBrowserAuthStateOsDenied(
     BrowserAuthStateKind.WORKSPACE_BROWSER_PARTITION,
   ] as const;
 
+  // M17: domain no-consent matrix — workers never CONSENT_REQUIRED escalation paths.
+  for (const principal of workerDomainPrincipals) {
+    for (const stateKind of allStateKinds) {
+      const domainNoConsent = evaluateBrowserAuthStateAccess({
+        principal,
+        stateKind,
+      });
+      if (
+        isWorkerBrowserAuthOsDeny(domainNoConsent) &&
+        domainNoConsent.authMaterialReturned === false
+      ) {
+        details.push(
+          `domain ${principal} → ${stateKind}: OS_DENY (no-consent domain path)`,
+        );
+      } else {
+        passed = false;
+        details.push(
+          `domain no-consent ${principal} → ${stateKind} unexpectedly ${JSON.stringify(domainNoConsent)}`,
+        );
+      }
+    }
+  }
+
+  // M18: explicitUserConsent:false ≡ absent — workers stay OS_DENY (never CONSENT_REQUIRED).
+  for (const principal of workerDomainPrincipals) {
+    for (const stateKind of allStateKinds) {
+      const falseConsent = evaluateBrowserAuthStateAccess({
+        principal,
+        stateKind,
+        explicitUserConsent: false,
+      });
+      if (
+        isWorkerBrowserAuthOsDeny(falseConsent) &&
+        falseConsent.code === BrowserAuthAccessCode.OS_DENY &&
+        falseConsent.authMaterialReturned === false &&
+        falseConsent.externalEffects === "NONE" &&
+        falseConsent.liveBrowserAuthWiring === BROWSER_AUTH_LIVE_WIRING
+      ) {
+        details.push(
+          `domain ${principal} → ${stateKind}: OS_DENY (explicitUserConsent=false)`,
+        );
+      } else {
+        passed = false;
+        details.push(
+          `domain false-consent ${principal} → ${stateKind} unexpectedly ${JSON.stringify(falseConsent)}`,
+        );
+      }
+    }
+  }
+
+  // M18: browser-pool false consent — system kinds OS_DENY; workspace stays CONSENT_REQUIRED.
+  for (const stateKind of SYSTEM_BROWSER_AUTH_STATE_KINDS) {
+    const poolFalse = evaluateBrowserAuthStateAccess({
+      principal: BrowserAuthPrincipal.BROWSER_POOL,
+      stateKind,
+      explicitUserConsent: false,
+    });
+    if (
+      poolFalse.allowed === false &&
+      poolFalse.code === BrowserAuthAccessCode.OS_DENY &&
+      poolFalse.authMaterialReturned === false &&
+      poolFalse.externalEffects === "NONE" &&
+      poolFalse.liveBrowserAuthWiring === BROWSER_AUTH_LIVE_WIRING
+    ) {
+      details.push(
+        `domain browser-pool → ${stateKind}: OS_DENY (explicitUserConsent=false)`,
+      );
+    } else {
+      passed = false;
+      details.push(
+        `domain browser-pool false-consent ${stateKind} unexpectedly ${JSON.stringify(poolFalse)}`,
+      );
+    }
+  }
+  {
+    const poolPartitionFalse = evaluateBrowserAuthStateAccess({
+      principal: BrowserAuthPrincipal.BROWSER_POOL,
+      stateKind: BrowserAuthStateKind.WORKSPACE_BROWSER_PARTITION,
+      explicitUserConsent: false,
+    });
+    if (
+      poolPartitionFalse.allowed === false &&
+      poolPartitionFalse.code === BrowserAuthAccessCode.CONSENT_REQUIRED &&
+      poolPartitionFalse.authMaterialReturned === false &&
+      poolPartitionFalse.externalEffects === "NONE" &&
+      poolPartitionFalse.liveBrowserAuthWiring === BROWSER_AUTH_LIVE_WIRING
+    ) {
+      details.push(
+        "domain browser-pool → workspace_browser_partition: CONSENT_REQUIRED (explicitUserConsent=false)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `domain browser-pool partition false-consent unexpectedly ${JSON.stringify(poolPartitionFalse)}`,
+      );
+    }
+  }
+
+  // M18: ALLOWED workspace mount still locks honesty (no material; NOT_WIRED; NONE).
+  {
+    const allowedHonesty = evaluateBrowserAuthStateAccess({
+      principal: BrowserAuthPrincipal.BROWSER_POOL,
+      stateKind: BrowserAuthStateKind.WORKSPACE_BROWSER_PARTITION,
+      explicitUserConsent: true,
+    });
+    if (
+      allowedHonesty.allowed === true &&
+      allowedHonesty.code === BrowserAuthAccessCode.ALLOWED &&
+      allowedHonesty.authMaterialReturned === false &&
+      allowedHonesty.externalEffects === "NONE" &&
+      allowedHonesty.liveBrowserAuthWiring === BROWSER_AUTH_LIVE_WIRING
+    ) {
+      details.push(
+        "domain browser-pool → workspace_browser_partition: ALLOWED honesty locked (no material; NOT_WIRED; NONE)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `domain ALLOWED honesty unexpectedly ${JSON.stringify(allowedHonesty)}`,
+      );
+    }
+  }
+
   // Domain helper honesty: every worker × every auth-state kind (M16 matrix).
   for (const principal of workerDomainPrincipals) {
     for (const stateKind of allStateKinds) {
