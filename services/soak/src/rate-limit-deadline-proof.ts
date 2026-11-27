@@ -28,6 +28,7 @@
  * Deepen (Q38): -Infinity Retry-After → exponential (finite but < 0 refuse).
  * Deepen (Q41): +Infinity attempt → STOP_MAX_ATTEMPTS (no WAIT invent).
  * Deepen (Q44): -Infinity attempt floors to 1 → WAIT exponential (not STOP).
+ * Deepen (Q47): maxAttempts=0.9 floors to 0 → attempt 1 STOP (no WAIT invent).
  */
 
 import { randomUUID } from "node:crypto";
@@ -556,6 +557,32 @@ export function proofRateLimitBoundedBackoffPreservesDeadline(
     details.push(
       `maxAttempts=1 STOP honesty failed: ${JSON.stringify(oneShot)}`,
     );
+  }
+
+  // Scenario P13 (Q47): maxAttempts=0.9 floors to 0 → immediate STOP on attempt 1.
+  const zeroMax = evaluateRateLimitWithDeadline(
+    {
+      httpStatus: 429,
+      retryAfterSeconds: 8,
+      observedAtIso: "2026-11-22T12:00:00.000Z",
+    },
+    {
+      attempt: 1,
+      deadlineAtIso: "2026-11-22T13:00:00.000Z",
+      maxAttempts: 0.9,
+    },
+  );
+  if (
+    zeroMax.action === "STOP_MAX_ATTEMPTS" &&
+    zeroMax.attempt === 1 &&
+    zeroMax.reason === "MAX_ATTEMPTS"
+  ) {
+    details.push(
+      "maxAttempts=0.9 floors to 0 → attempt 1 STOP_MAX_ATTEMPTS (no WAIT invent)",
+    );
+  } else {
+    passed = false;
+    details.push(`maxAttempts=0.9 STOP failed: ${JSON.stringify(zeroMax)}`);
   }
 
   // Scenario P12 (Q44): -Infinity attempt floors to WAIT attempt 1 (exponential 1s).
