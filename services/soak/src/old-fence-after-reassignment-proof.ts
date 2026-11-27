@@ -29,6 +29,7 @@
  * post-fail lease clear → fenceCause=no_holder; claimLease refused.
  * Hillclimb O11: ASSIGNED_CASE_OK only T-X024; post-succeed bind phase fence.
  * Hillclimb O12 (fixture-wipe15): COHORT2_MERGE_HOLD_OK; post-fail bind phase fence.
+ * Hillclimb O13 (wipe15 wake): ASSIGNED_COHORT_SLOT_OK; post-fail mark phase fence.
  */
 
 import { randomUUID } from "node:crypto";
@@ -44,6 +45,7 @@ import {
   evaluateOldFenceAcceptanceLabel,
   evaluateOldFenceAcceptedNotVerified,
   evaluateOldFenceAssignedCaseId,
+  evaluateOldFenceAssignedCohortSlot,
   evaluateOldFenceCohort2MergeHold,
   evaluateOldFenceCatalogCaseId,
   evaluateOldFenceChatgptAdsAccess,
@@ -114,6 +116,8 @@ export async function proofOldFenceAfterReassignment(
   const assignedRefuse = evaluateOldFenceAssignedCaseId("T-X025");
   const mergeHoldOk = evaluateOldFenceCohort2MergeHold(false);
   const mergeAuthorizedRefuse = evaluateOldFenceCohort2MergeHold(true);
+  const cohortSlotOk = evaluateOldFenceAssignedCohortSlot("O");
+  const cohortSlotRefuse = evaluateOldFenceAssignedCohortSlot("N");
   if (
     liveTemporalRefuse.code === "LIVE_TEMPORAL_CLAIM_REFUSED" &&
     liveTemporalRefuse.allowed === false &&
@@ -231,6 +235,18 @@ export async function proofOldFenceAfterReassignment(
   } else {
     passed = false;
     details.push("Fixture Cohort-2 merge HOLD honesty gate unexpected");
+  }
+  if (
+    cohortSlotOk.code === "ASSIGNED_COHORT_SLOT_OK" &&
+    cohortSlotRefuse.code === "ASSIGNED_COHORT_SLOT_REFUSED" &&
+    cohortSlotOk.assignedCaseId === "T-X024"
+  ) {
+    details.push(
+      "ASSIGNED_COHORT_SLOT_OK for slot O only; ASSIGNED_COHORT_SLOT_REFUSED for N (exclusive #234)",
+    );
+  } else {
+    passed = false;
+    details.push("Fixture assigned Cohort-2 slot honesty gate unexpected");
   }
 
   const enqueued = await store.enqueue({
@@ -919,6 +935,28 @@ export async function proofOldFenceAfterReassignment(
   if (!postFailBindDenied) {
     passed = false;
     details.push("Post-fail old B bind unexpectedly succeeded");
+  }
+  let postFailMarkDenied = false;
+  try {
+    await sideFailStore.markEffectPending({
+      workflowId: sideFailWf,
+      operationId: `op-post-fail-mark-${randomUUID().slice(0, 8)}`,
+      holder: workerB,
+      nowIso: tAfterExpiry,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/must be leased/i.test(msg)) {
+      postFailMarkDenied = true;
+      details.push(`Post-fail old B mark denied phase fence: ${msg}`);
+    } else {
+      passed = false;
+      details.push(`Post-fail mark unexpected error: ${msg}`);
+    }
+  }
+  if (!postFailMarkDenied) {
+    passed = false;
+    details.push("Post-fail old B mark unexpectedly succeeded");
   }
 
   details.push(

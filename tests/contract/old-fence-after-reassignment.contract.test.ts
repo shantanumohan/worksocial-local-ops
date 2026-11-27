@@ -17,6 +17,7 @@ import {
   evaluateOldFenceAcceptanceLabel,
   evaluateOldFenceAcceptedNotVerified,
   evaluateOldFenceAssignedCaseId,
+  evaluateOldFenceAssignedCohortSlot,
   evaluateOldFenceCohort2MergeHold,
   evaluateOldFenceCatalogCaseId,
   evaluateOldFenceChatgptAdsAccess,
@@ -125,6 +126,12 @@ describe("contract: T-X024 old fence after reassignment", () => {
     expect(evaluateOldFenceCohort2MergeHold(true).code).toBe(
       "COHORT2_MERGE_AUTHORIZED_REFUSED",
     );
+    expect(evaluateOldFenceAssignedCohortSlot("O").code).toBe(
+      "ASSIGNED_COHORT_SLOT_OK",
+    );
+    expect(evaluateOldFenceAssignedCohortSlot("N").code).toBe(
+      "ASSIGNED_COHORT_SLOT_REFUSED",
+    );
     expect(
       parseMissionLeaseFenceCause(
         missionLeaseFenceFailedMessage("wf-c", "wrong_holder"),
@@ -155,6 +162,8 @@ describe("contract: T-X024 old fence after reassignment", () => {
     expect(art.summary).toMatch(/Post-fail claimLease refused/);
     expect(art.summary).toMatch(/COHORT2_MERGE_HOLD_OK/);
     expect(art.summary).toMatch(/Post-fail old B bind denied phase fence/);
+    expect(art.summary).toMatch(/ASSIGNED_COHORT_SLOT_OK/);
+    expect(art.summary).toMatch(/Post-fail old B mark denied phase fence/);
     expect(art.summary).toMatch(/1ms-before-expiry boundary/);
     expect(art.summary).toMatch(/fenceCause=expired/);
     expect(art.summary).toMatch(/fenceCause=wrong_holder/);

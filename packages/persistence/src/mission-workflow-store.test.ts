@@ -15,6 +15,7 @@ import {
   evaluateOldFenceLiveProviderSuccess,
   evaluateOldFenceAcceptedNotVerified,
   evaluateOldFenceAssignedCaseId,
+  evaluateOldFenceAssignedCohortSlot,
   evaluateOldFenceCohort2MergeHold,
   evaluateOldFenceRelatedCaseIds,
   evaluateOldFenceLiveTemporalNotWired,
@@ -241,6 +242,18 @@ describe("classifyMissionLeaseFence / isMissionLeaseActive (T-X024)", () => {
     );
     expect(evaluateOldFenceAssignedCaseId("T-X074").code).toBe(
       "ASSIGNED_CASE_REFUSED",
+    );
+  });
+
+  it("allows only Cohort-2 slot O for T-X024 hillclimb", () => {
+    expect(evaluateOldFenceAssignedCohortSlot("O").code).toBe(
+      "ASSIGNED_COHORT_SLOT_OK",
+    );
+    expect(evaluateOldFenceAssignedCohortSlot("N").code).toBe(
+      "ASSIGNED_COHORT_SLOT_REFUSED",
+    );
+    expect(evaluateOldFenceAssignedCohortSlot("O").assignedCaseId).toBe(
+      "T-X024",
     );
   });
 

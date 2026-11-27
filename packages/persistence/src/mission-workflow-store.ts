@@ -621,6 +621,33 @@ export type OldFenceCohort2MergeHoldDecision = {
   cohort: "2";
 };
 
+/** AA-209 catalog slot gate — only Cohort-2 **O** owns T-X024 hillclimb #235. */
+export type OldFenceAssignedCohortSlotDecision = {
+  allowed: boolean;
+  code: "ASSIGNED_COHORT_SLOT_OK" | "ASSIGNED_COHORT_SLOT_REFUSED";
+  slot: string;
+  assignedSlot: "O";
+  cohort: "2";
+  assignedCaseId: "T-X024";
+};
+
+export function evaluateOldFenceAssignedCohortSlot(
+  slot: string,
+): OldFenceAssignedCohortSlotDecision {
+  const meta = {
+    assignedSlot: "O" as const,
+    cohort: "2" as const,
+    assignedCaseId: "T-X024" as const,
+  };
+  const ok = slot === meta.assignedSlot;
+  return {
+    allowed: ok,
+    code: ok ? "ASSIGNED_COHORT_SLOT_OK" : "ASSIGNED_COHORT_SLOT_REFUSED",
+    slot,
+    ...meta,
+  };
+}
+
 export function evaluateOldFenceCohort2MergeHold(
   mergeAuthorized: boolean,
 ): OldFenceCohort2MergeHoldDecision {
