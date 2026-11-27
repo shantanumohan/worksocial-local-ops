@@ -2010,7 +2010,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x023",
-      "evidenceNote": "Fixture eventual-consistency-false-not-found proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture ACCEPTED via EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND only — lagging CRM read BOUND_WAIT createLead=false; writeAttemptCount=1; empty/whitespace recordId/receiptId/observedAtIso not durable; fixture_crm+synthetic visibility; ws_correlation_id+ws_synthetic snapshot gates; module mismatch REFUSE_CREATE; reconcile filters to fixture-visible only; write-attempt count sanitized; LIVE_CLAIM_REFUSED for live/sandbox VERIFIED/live Zoho wire/Ads ACCESS_ALLOWED/claimExternalEffects≠NONE/claimLiveProviderSuccess; non-finite timing sanitized; after visibility RECONCILE MATCHED; ESCALATE_MISSING still no create; live Zoho NOT_WIRED; chatgptAdsAccess=ACCESS_BLOCKED; liveProviderSuccessClaimed=false; externalEffects=NONE (CRM_EXTERNAL_EFFECTS). ACCEPTED ≠ sandbox/prod VERIFIED."
     },
     {
       "id": "T-X024",
