@@ -3,13 +3,13 @@
   "caseId": "T-X018",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X018 (Self-approval rejected)\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | evaluateSelfApprovalHonesty(selfApprovalAttempted) → SELF_APPROVAL_FORBIDDEN; NOT_WIRED/NONE | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | assertSelfApprovalRefusedAcrossSurfaces → gate/binding/propose/verdict all reject; NONE | A25 author+reviewer → REVIEWER_CANNOT_AUTHOR_SAME (self-approval rejected) | Independent A25 path ok binding=bind-ok-0b5b90ee reviewer=A25; honesty=INDEPENDENT_A25_OK | Ledger fence: SELF_APPROVAL_LEDGER_FENCE blocks APPROVED invent; REFUSED recorded; independent A25 APPROVED ok (distinct from T-US-035/T-F18) | Stale ledger upgrade fence: SELF_APPROVAL_LEDGER_STALE_UPGRADE blocks REFUSED→APPROVED for same proposalId (distinct from T-US-036/T-X019) | Idempotent duplicate REFUSED: second append reuses existing entry (no invented SUCCESS / no double-write; distinct from T-US-036/T-X019) | liveReviewWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X018 (Self-approval rejected)\nproof=self_approval_rejected applyCount=1 :: Self-approval gate rejected code=SELF_APPROVAL_FORBIDDEN reason=Author role cannot self-approve effects | evaluateSelfApprovalHonesty(selfApprovalAttempted) → SELF_APPROVAL_FORBIDDEN; NOT_WIRED/NONE | Review binding refused self-approval code=SELF_APPROVAL_FORBIDDEN | Author-as-reviewer rejected code=SELF_APPROVAL_FORBIDDEN | assertSelfApprovalRefusedAcrossSurfaces → gate/binding/propose/verdict all reject; NONE | A25 author+reviewer → REVIEWER_CANNOT_AUTHOR_SAME (self-approval rejected) | Independent A25 path ok binding=bind-ok-87c3c2d4 reviewer=A25; honesty=INDEPENDENT_A25_OK | Ledger fence: SELF_APPROVAL_LEDGER_FENCE blocks APPROVED invent; REFUSED recorded; independent A25 APPROVED ok (distinct from T-US-035/T-F18) | Stale ledger upgrade fence: SELF_APPROVAL_LEDGER_STALE_UPGRADE blocks REFUSED→APPROVED for same proposalId (distinct from T-US-036/T-X019) | Idempotent duplicate REFUSED: second append reuses existing entry (no invented SUCCESS / no double-write; distinct from T-US-036/T-X019) | liveReviewWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "self_approval_rejected"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x018.json",
-  "createdAtIso": "2026-11-27T16:18:43.346Z",
+  "createdAtIso": "2026-11-27T16:25:03.032Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x018-f45b160cfdc1"
+  "uniqueSourceArtifactId": "art-fixture-t-x018-49cd06919268"
 }

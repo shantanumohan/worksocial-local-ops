@@ -10,6 +10,7 @@
 import { randomUUID } from "node:crypto";
 import {
   DEFAULT_MIN_TREND_SAMPLE,
+  DEFAULT_SPIKE_RATIO,
   SoakProofKind,
   TrendSpikeDecisionCode,
   assessTrendSpikeEvidence,
@@ -181,21 +182,494 @@ export function proofLowSampleTrendSpikeInsufficientEvidence(
     );
   }
 
-  // Zero observations are missing, not low-but-present.
+  const forgedBigIntSample = assessTrendSpikeEvidence({
+    currentValue: 40,
+    baselineValue: 10,
+    sampleSize: 20n as unknown as number,
+  });
   if (
-    isLowButPresentTrendSample(0) === false &&
-    assessTrendSpikeEvidence({
-      currentValue: 90,
-      baselineValue: 10,
-      sampleSize: 0,
-    }).code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE
+    forgedBigIntSample.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    forgedBigIntSample.allowPublishTrigger === false &&
+    /bigint/i.test(forgedBigIntSample.reason)
   ) {
     details.push(
-      "sampleSize=0 → missing (not low-but-present); INSUFFICIENT_EVIDENCE",
+      "Forged BigInt sampleSize=20n → INSUFFICIENT_EVIDENCE; plain integer counts only",
     );
   } else {
     passed = false;
-    details.push("Expected sampleSize=0 to be missing, not low-but-present");
+    details.push(
+      `Forged BigInt sample unexpectedly ${JSON.stringify(forgedBigIntSample)}`,
+    );
+  }
+
+  const forgedBooleanSample = assessTrendSpikeEvidence({
+    currentValue: 40,
+    baselineValue: 10,
+    sampleSize: true as unknown as number,
+  });
+  if (
+    forgedBooleanSample.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    forgedBooleanSample.allowPublishTrigger === false &&
+    /non-number/i.test(forgedBooleanSample.reason)
+  ) {
+    details.push(
+      "Forged boolean sampleSize=true → INSUFFICIENT_EVIDENCE; non-number type refused",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Forged boolean sample unexpectedly ${JSON.stringify(forgedBooleanSample)}`,
+    );
+  }
+
+  const forgedStringSample = assessTrendSpikeEvidence({
+    currentValue: 40,
+    baselineValue: 10,
+    sampleSize: "25" as unknown as number,
+  });
+  if (
+    forgedStringSample.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    forgedStringSample.allowPublishTrigger === false &&
+    /non-number/i.test(forgedStringSample.reason)
+  ) {
+    details.push(
+      'Forged string sampleSize="25" → INSUFFICIENT_EVIDENCE; non-number type refused',
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Forged string sample unexpectedly ${JSON.stringify(forgedStringSample)}`,
+    );
+  }
+
+  const negativeIntegerSample = assessTrendSpikeEvidence({
+    currentValue: 80,
+    baselineValue: 10,
+    sampleSize: -4,
+  });
+  if (
+    negativeIntegerSample.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    negativeIntegerSample.allowPublishTrigger === false &&
+    negativeIntegerSample.researchTaskOnly === true &&
+    /negative trend sample/i.test(negativeIntegerSample.reason) &&
+    isLowButPresentTrendSample(-4) === false
+  ) {
+    details.push(
+      "Negative integer sampleSize=-4 → INSUFFICIENT_EVIDENCE; not low-but-present",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Negative sample unexpectedly ${JSON.stringify(negativeIntegerSample)}`,
+    );
+  }
+
+  const boxedNumberSample = assessTrendSpikeEvidence({
+    currentValue: 40,
+    baselineValue: 10,
+    sampleSize: Object(20) as unknown as number,
+  });
+  if (
+    boxedNumberSample.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    boxedNumberSample.allowPublishTrigger === false &&
+    /non-number/i.test(boxedNumberSample.reason)
+  ) {
+    details.push(
+      "Boxed Number sampleSize=Object(20) → INSUFFICIENT_EVIDENCE; primitive integer only",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Boxed Number sample unexpectedly ${JSON.stringify(boxedNumberSample)}`,
+    );
+  }
+
+  const fractionalSample = assessTrendSpikeEvidence({
+    currentValue: 40,
+    baselineValue: 10,
+    sampleSize: 10.5,
+  });
+  if (
+    fractionalSample.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    fractionalSample.allowPublishTrigger === false &&
+    fractionalSample.researchTaskOnly === true &&
+    /fractional|non-integer/i.test(fractionalSample.reason)
+  ) {
+    details.push(
+      "Fractional sampleSize=10.5 (otherwise ≥min) → INSUFFICIENT_EVIDENCE; integer counts only",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Fractional sample unexpectedly ${JSON.stringify(fractionalSample)}`,
+    );
+  }
+
+  // Zero observations are missing, not low-but-present.
+  const zeroSample = assessTrendSpikeEvidence({
+    currentValue: 90,
+    baselineValue: 10,
+    sampleSize: 0,
+  });
+  if (
+    isLowButPresentTrendSample(0) === false &&
+    zeroSample.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    zeroSample.researchTaskOnly === true &&
+    /zero trend sample|missing observations/i.test(zeroSample.reason)
+  ) {
+    details.push(
+      "sampleSize=0 → explicit missing observations; not low-but-present",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Expected sampleSize=0 missing observations; got ${JSON.stringify(zeroSample)}`,
+    );
+  }
+
+  const symbolSample = assessTrendSpikeEvidence({
+    currentValue: 40,
+    baselineValue: 10,
+    sampleSize: Symbol("n") as unknown as number,
+  });
+  if (
+    symbolSample.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    symbolSample.allowPublishTrigger === false &&
+    /non-number/i.test(symbolSample.reason)
+  ) {
+    details.push("Symbol sampleSize → INSUFFICIENT_EVIDENCE; non-number refused");
+  } else {
+    passed = false;
+    details.push(`Symbol sample unexpectedly ${JSON.stringify(symbolSample)}`);
+  }
+
+  const arraySample = assessTrendSpikeEvidence({
+    currentValue: 40,
+    baselineValue: 10,
+    sampleSize: [20] as unknown as number,
+  });
+  if (
+    arraySample.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    arraySample.allowPublishTrigger === false &&
+    /non-number/i.test(arraySample.reason)
+  ) {
+    details.push("Array sampleSize [20] → INSUFFICIENT_EVIDENCE; non-number refused");
+  } else {
+    passed = false;
+    details.push(`Array sample unexpectedly ${JSON.stringify(arraySample)}`);
+  }
+
+  const exactSpike = assessTrendSpikeEvidence({
+    currentValue: 10 * DEFAULT_SPIKE_RATIO,
+    baselineValue: 10,
+    sampleSize: DEFAULT_MIN_TREND_SAMPLE,
+    spikeRatio: DEFAULT_SPIKE_RATIO,
+  });
+  if (
+    exactSpike.code === TrendSpikeDecisionCode.MEASURED_SPIKE &&
+    exactSpike.liftRatio === DEFAULT_SPIKE_RATIO &&
+    exactSpike.allowPublishTrigger === false
+  ) {
+    details.push(
+      `Lift exactly ${DEFAULT_SPIKE_RATIO}× at min sample → MEASURED_SPIKE; still no publish`,
+    );
+  } else {
+    passed = false;
+    details.push(`Exact spike boundary unexpectedly ${JSON.stringify(exactSpike)}`);
+  }
+
+  const noSpikeHonesty = evaluateTrendSpikePublishHonesty(
+    assessTrendSpikeEvidence({
+      currentValue: 15,
+      baselineValue: 10,
+      sampleSize: 30,
+    }),
+  );
+  if (
+    noSpikeHonesty.code === TrendSpikeDecisionCode.NO_SPIKE &&
+    noSpikeHonesty.allowPublishTrigger === false &&
+    noSpikeHonesty.measuredSpikeImpliesPublish === false
+  ) {
+    details.push("evaluateTrendSpikePublishHonesty(NO_SPIKE) → never publish");
+  } else {
+    passed = false;
+    details.push(`NO_SPIKE honesty unexpectedly ${JSON.stringify(noSpikeHonesty)}`);
+  }
+
+  const customMin = assessTrendSpikeEvidence({
+    currentValue: 90,
+    baselineValue: 10,
+    sampleSize: 20,
+    minSample: 21,
+  });
+  if (
+    customMin.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    customMin.allowPublishTrigger === false &&
+    isLowButPresentTrendSample(20, 21)
+  ) {
+    details.push("Custom minSample=21 with sampleSize=20 → insufficient (low-but-present)");
+  } else {
+    passed = false;
+    details.push(`Custom minSample unexpectedly ${JSON.stringify(customMin)}`);
+  }
+
+  const customSpikeRatio = assessTrendSpikeEvidence({
+    currentValue: 25,
+    baselineValue: 10,
+    sampleSize: 30,
+    spikeRatio: 3,
+  });
+  if (
+    customSpikeRatio.code === TrendSpikeDecisionCode.NO_SPIKE &&
+    customSpikeRatio.liftRatio === 2.5 &&
+    customSpikeRatio.allowPublishTrigger === false
+  ) {
+    details.push("Custom spikeRatio=3 with 2.5× lift → NO_SPIKE");
+  } else {
+    passed = false;
+    details.push(
+      `Custom spikeRatio unexpectedly ${JSON.stringify(customSpikeRatio)}`,
+    );
+  }
+
+  const lowSampleHonesty = evaluateTrendSpikePublishHonesty(
+    assessTrendSpikeEvidence({
+      currentValue: 80,
+      baselineValue: 10,
+      sampleSize: 3,
+    }),
+  );
+  if (
+    lowSampleHonesty.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    lowSampleHonesty.allowPublishTrigger === false &&
+    lowSampleHonesty.measuredSpikeImpliesPublish === false
+  ) {
+    details.push(
+      "evaluateTrendSpikePublishHonesty(INSUFFICIENT low-sample) → never publish",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Low-sample honesty unexpectedly ${JSON.stringify(lowSampleHonesty)}`,
+    );
+  }
+
+  const justBelowSpike = assessTrendSpikeEvidence({
+    currentValue: 19.9,
+    baselineValue: 10,
+    sampleSize: 25,
+  });
+  if (
+    justBelowSpike.code === TrendSpikeDecisionCode.NO_SPIKE &&
+    justBelowSpike.allowPublishTrigger === false &&
+    justBelowSpike.liftRatio !== null &&
+    justBelowSpike.liftRatio < DEFAULT_SPIKE_RATIO
+  ) {
+    details.push("Lift 1.99× at adequate sample → NO_SPIKE (below default 2×)");
+  } else {
+    passed = false;
+    details.push(
+      `Just-below spike unexpectedly ${JSON.stringify(justBelowSpike)}`,
+    );
+  }
+
+  const infiniteCurrent = assessTrendSpikeEvidence({
+    currentValue: Number.POSITIVE_INFINITY,
+    baselineValue: 10,
+    sampleSize: 25,
+  });
+  if (
+    infiniteCurrent.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    infiniteCurrent.liftRatio === null &&
+    infiniteCurrent.researchTaskOnly === true
+  ) {
+    details.push("Non-finite currentValue + adequate sample → uncomputable lift");
+  } else {
+    passed = false;
+    details.push(
+      `Infinite current unexpectedly ${JSON.stringify(infiniteCurrent)}`,
+    );
+  }
+
+  const nanBaseline = assessTrendSpikeEvidence({
+    currentValue: 50,
+    baselineValue: Number.NaN,
+    sampleSize: 25,
+  });
+  if (
+    nanBaseline.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    nanBaseline.liftRatio === null &&
+    nanBaseline.liveProviderSuccessClaimed === false
+  ) {
+    details.push("NaN baseline + adequate sample → insufficient; no live success claim");
+  } else {
+    passed = false;
+    details.push(`NaN baseline unexpectedly ${JSON.stringify(nanBaseline)}`);
+  }
+
+  const dateSample = assessTrendSpikeEvidence({
+    currentValue: 40,
+    baselineValue: 10,
+    sampleSize: new Date() as unknown as number,
+  });
+  if (
+    dateSample.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    dateSample.allowPublishTrigger === false &&
+    /non-number/i.test(dateSample.reason)
+  ) {
+    details.push("Date sampleSize → INSUFFICIENT_EVIDENCE; non-number refused");
+  } else {
+    passed = false;
+    details.push(`Date sample unexpectedly ${JSON.stringify(dateSample)}`);
+  }
+
+  const justAboveSpike = assessTrendSpikeEvidence({
+    currentValue: 20.01,
+    baselineValue: 10,
+    sampleSize: 25,
+  });
+  if (
+    justAboveSpike.code === TrendSpikeDecisionCode.MEASURED_SPIKE &&
+    justAboveSpike.liftRatio !== null &&
+    justAboveSpike.liftRatio > DEFAULT_SPIKE_RATIO &&
+    justAboveSpike.allowPublishTrigger === false
+  ) {
+    details.push("Lift 2.001× → MEASURED_SPIKE; still no publish trigger");
+  } else {
+    passed = false;
+    details.push(
+      `Just-above spike unexpectedly ${JSON.stringify(justAboveSpike)}`,
+    );
+  }
+
+  const regexpSample = assessTrendSpikeEvidence({
+    currentValue: 40,
+    baselineValue: 10,
+    sampleSize: /n/ as unknown as number,
+  });
+  if (
+    regexpSample.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    regexpSample.allowPublishTrigger === false &&
+    /non-number/i.test(regexpSample.reason)
+  ) {
+    details.push("RegExp sampleSize → INSUFFICIENT_EVIDENCE; non-number refused");
+  } else {
+    passed = false;
+    details.push(`RegExp sample unexpectedly ${JSON.stringify(regexpSample)}`);
+  }
+
+  const mapSample = assessTrendSpikeEvidence({
+    currentValue: 40,
+    baselineValue: 10,
+    sampleSize: new Map() as unknown as number,
+  });
+  if (
+    mapSample.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    mapSample.allowPublishTrigger === false &&
+    /non-number/i.test(mapSample.reason)
+  ) {
+    details.push("Map sampleSize → INSUFFICIENT_EVIDENCE; non-number refused");
+  } else {
+    passed = false;
+    details.push(`Map sample unexpectedly ${JSON.stringify(mapSample)}`);
+  }
+
+  const infiniteBaseline = assessTrendSpikeEvidence({
+    currentValue: 50,
+    baselineValue: Number.POSITIVE_INFINITY,
+    sampleSize: 25,
+  });
+  if (
+    infiniteBaseline.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    infiniteBaseline.liftRatio === null &&
+    infiniteBaseline.allowPublishTrigger === false
+  ) {
+    details.push("+Infinity baseline → insufficient; uncomputable lift");
+  } else {
+    passed = false;
+    details.push(
+      `Infinite baseline unexpectedly ${JSON.stringify(infiniteBaseline)}`,
+    );
+  }
+
+  const setSample = assessTrendSpikeEvidence({
+    currentValue: 40,
+    baselineValue: 10,
+    sampleSize: new Set([20]) as unknown as number,
+  });
+  if (
+    setSample.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    setSample.allowPublishTrigger === false &&
+    /non-number/i.test(setSample.reason)
+  ) {
+    details.push("Set sampleSize → INSUFFICIENT_EVIDENCE; non-number refused");
+  } else {
+    passed = false;
+    details.push(`Set sample unexpectedly ${JSON.stringify(setSample)}`);
+  }
+
+  const nanCurrentSample = assessTrendSpikeEvidence({
+    currentValue: Number.NaN,
+    baselineValue: 10,
+    sampleSize: 25,
+  });
+  if (
+    nanCurrentSample.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    nanCurrentSample.liftRatio === null &&
+    nanCurrentSample.researchTaskOnly === true
+  ) {
+    details.push("NaN currentValue + adequate sample → insufficient");
+  } else {
+    passed = false;
+    details.push(
+      `NaN current unexpectedly ${JSON.stringify(nanCurrentSample)}`,
+    );
+  }
+
+  if (
+    isLowButPresentTrendSample(9) === true &&
+    isLowButPresentTrendSample(10) === false &&
+    isLowButPresentTrendSample(Number.NaN) === false
+  ) {
+    details.push(
+      "isLowButPresentTrendSample: 9 low-but-present; 10 at min not; NaN false",
+    );
+  } else {
+    passed = false;
+    details.push("isLowButPresentTrendSample boundary check failed");
+  }
+
+  const weakMapSample = assessTrendSpikeEvidence({
+    currentValue: 40,
+    baselineValue: 10,
+    sampleSize: new WeakMap() as unknown as number,
+  });
+  if (
+    weakMapSample.code === TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE &&
+    weakMapSample.allowPublishTrigger === false &&
+    /non-number/i.test(weakMapSample.reason)
+  ) {
+    details.push("WeakMap sampleSize → INSUFFICIENT_EVIDENCE; non-number refused");
+  } else {
+    passed = false;
+    details.push(`WeakMap sample unexpectedly ${JSON.stringify(weakMapSample)}`);
+  }
+
+  const flatLift = assessTrendSpikeEvidence({
+    currentValue: 10,
+    baselineValue: 10,
+    sampleSize: 25,
+  });
+  if (
+    flatLift.code === TrendSpikeDecisionCode.NO_SPIKE &&
+    flatLift.liftRatio === 1 &&
+    flatLift.allowPublishTrigger === false &&
+    flatLift.researchTaskOnly === false
+  ) {
+    details.push("1× lift at adequate sample → NO_SPIKE; not research-only");
+  } else {
+    passed = false;
+    details.push(`Flat lift unexpectedly ${JSON.stringify(flatLift)}`);
   }
 
   details.push(
