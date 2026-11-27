@@ -88,6 +88,7 @@ describe("proofOldFenceAfterReassignment (T-X024)", () => {
     expect(joined).toMatch(/ASSIGNED_CASE_OK/);
     expect(joined).toMatch(/ASSIGNED_CASE_REFUSED/);
     expect(joined).toMatch(/Post-succeed old A bind denied phase fence/);
+    expect(joined).toMatch(/Post-succeed old A mark denied phase fence/);
     expect(joined).not.toMatch(/\bVERIFIED\b/);
     expect(OLD_FENCE_TEMPORAL_WIRING).toBe("NOT_WIRED");
   });
