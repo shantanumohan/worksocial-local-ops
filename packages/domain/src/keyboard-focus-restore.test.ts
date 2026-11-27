@@ -200,6 +200,41 @@ describe("keyboard focus restore (T-X061)", () => {
     expect(result.details.some((d) => /Open failed/i.test(d))).toBe(true);
   });
 
+  it("refuses trap after close until overlay reopens (T43)", () => {
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-review",
+      dialogFocusables: dialog,
+    });
+    const closed = closeOverlayRestoreFocus({ session: opened.session });
+    expect(closed.code).toBe("FOCUS_RESTORED");
+    const tab = cycleDialogFocus({
+      session: closed.session,
+      direction: "forward",
+    });
+    expect(tab.ok).toBe(false);
+    expect(tab.reasons.join(" ")).toMatch(/not open/i);
+    expect(tab.session.overlayOpen).toBe(false);
+  });
+
+  it("allows fresh open after restore resets overlay session (T43)", () => {
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-review",
+      dialogFocusables: dialog,
+    });
+    const closed = closeOverlayRestoreFocus({ session: opened.session });
+    const reopened = openOverlayFocus({
+      session: closed.session,
+      triggerId: "btn-other",
+      dialogFocusables: dialog,
+    });
+    expect(reopened.ok).toBe(true);
+    expect(reopened.code).toBe("OPENED");
+    expect(reopened.session.savedTriggerId).toBe("btn-other");
+    expect(reopened.session.overlayOpen).toBe(true);
+  });
+
   it("re-anchors trap cycle when activeFocusId is stale (not in dialog list)", () => {
     const opened = openOverlayFocus({
       session: emptyFocusSession(),

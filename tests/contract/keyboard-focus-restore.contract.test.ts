@@ -122,6 +122,27 @@ describe("contract: T-X061 keyboard focus restore", () => {
     expect(tab.reasons.join(" ")).toMatch(/not open/i);
   });
 
+  it("close then trap fails closed until a fresh open (T43)", () => {
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-keyboard-review",
+      dialogFocusables: dialog,
+    });
+    const closed = closeOverlayRestoreFocus({ session: opened.session });
+    expect(closed.code).toBe("FOCUS_RESTORED");
+    const tab = cycleDialogFocus({
+      session: closed.session,
+      direction: "forward",
+    });
+    expect(tab.ok).toBe(false);
+    const reopened = openOverlayFocus({
+      session: closed.session,
+      triggerId: "btn-keyboard-review",
+      dialogFocusables: dialog,
+    });
+    expect(reopened.ok).toBe(true);
+  });
+
   it("cycleDialogFocus re-anchors from stale activeFocusId without losing savedTrigger", () => {
     const opened = openOverlayFocus({
       session: emptyFocusSession(),
