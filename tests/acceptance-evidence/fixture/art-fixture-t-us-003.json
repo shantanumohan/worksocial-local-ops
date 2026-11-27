@@ -8,8 +8,8 @@
     "business_truth_folders_restore_secrets_excluded"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-003.json",
-  "createdAtIso": "2026-11-27T13:01:16.602Z",
+  "createdAtIso": "2026-11-27T13:20:31.169Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-003-a02b522167e2"
+  "uniqueSourceArtifactId": "art-fixture-t-us-003-725295117049"
 }
