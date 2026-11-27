@@ -192,6 +192,198 @@ export function proofUnknownPolicyQuestionEscalatesWithoutPromise(
     details.push(`Attack suite failed: ${suite.details.join(" | ")}`);
   }
 
+  const zwspDraft = prepareConciergeReply({
+    draftId: "d-zwsp-suite",
+    conversation,
+    inboundBody: "Promise me a lifetime discount?",
+    citedFactIds: ["fact-hours"],
+    factLabels: new Map([["fact-hours", SupportLabel.SUPPORTED]]),
+    policy,
+    bookingEvidence: [],
+    questionId: "\u200b",
+    nowIso,
+  });
+  if (!zwspDraft.ok && zwspDraft.code === "UNKNOWN_POLICY_QUESTION") {
+    details.push(
+      "prepareConciergeReply ZWSP-only questionId → UNKNOWN_POLICY_QUESTION",
+    );
+  } else {
+    passed = false;
+    details.push(`ZWSP draft unexpectedly ${JSON.stringify(zwspDraft)}`);
+  }
+
+  const allowedId = policy.allowedQuestionIds[0]!;
+  const zwspWrapId = `\u200b${allowedId}\u200b`;
+  const wrapGate = evaluateUnknownPolicyQuestion({
+    questionId: zwspWrapId,
+    policy,
+  });
+  if (
+    !wrapGate.allowed &&
+    wrapGate.code === "UNKNOWN_POLICY_QUESTION" &&
+    wrapGate.escalateWithoutPromise
+  ) {
+    details.push(
+      `ZWSP-wrapped allowedId ${allowedId} → UNKNOWN_POLICY_QUESTION (no invisible bypass)`,
+    );
+  } else {
+    passed = false;
+    details.push(`ZWSP-wrap gate unexpectedly ${JSON.stringify(wrapGate)}`);
+  }
+
+  const bomPrefixedId = `\ufeff${allowedId}`;
+  const bomGate = evaluateUnknownPolicyQuestion({
+    questionId: bomPrefixedId,
+    policy,
+  });
+  if (
+    !bomGate.allowed &&
+    bomGate.code === "UNKNOWN_POLICY_QUESTION" &&
+    bomGate.escalateWithoutPromise
+  ) {
+    details.push(
+      `BOM-prefixed allowedId ${allowedId} → UNKNOWN_POLICY_QUESTION (exact match only)`,
+    );
+  } else {
+    passed = false;
+    details.push(`BOM-prefix gate unexpectedly ${JSON.stringify(bomGate)}`);
+  }
+
+  const ltrMarkId = `\u200e${allowedId}`;
+  const ltrGate = evaluateUnknownPolicyQuestion({
+    questionId: ltrMarkId,
+    policy,
+  });
+  if (
+    !ltrGate.allowed &&
+    ltrGate.code === "UNKNOWN_POLICY_QUESTION" &&
+    ltrGate.escalateWithoutPromise
+  ) {
+    details.push(
+      `LTR-mark-prefixed allowedId ${allowedId} → UNKNOWN_POLICY_QUESTION`,
+    );
+  } else {
+    passed = false;
+    details.push(`LTR-mark gate unexpectedly ${JSON.stringify(ltrGate)}`);
+  }
+
+  const nulSuffixId = `${allowedId}\u0000`;
+  const nulGate = evaluateUnknownPolicyQuestion({
+    questionId: nulSuffixId,
+    policy,
+  });
+  if (
+    !nulGate.allowed &&
+    nulGate.code === "UNKNOWN_POLICY_QUESTION" &&
+    nulGate.escalateWithoutPromise
+  ) {
+    details.push(
+      `NUL-suffixed allowedId ${allowedId} → UNKNOWN_POLICY_QUESTION (exact match only)`,
+    );
+  } else {
+    passed = false;
+    details.push(`NUL-suffix gate unexpectedly ${JSON.stringify(nulGate)}`);
+  }
+
+  const partialId = allowedId.slice(0, Math.max(3, allowedId.length - 3));
+  const partialGate = evaluateUnknownPolicyQuestion({
+    questionId: partialId,
+    policy,
+  });
+  if (
+    !partialGate.allowed &&
+    partialGate.code === "UNKNOWN_POLICY_QUESTION" &&
+    partialGate.escalateWithoutPromise
+  ) {
+    details.push(
+      `partial-prefix questionId ${partialId} → UNKNOWN_POLICY_QUESTION (no prefix allow)`,
+    );
+  } else {
+    passed = false;
+    details.push(`partial-prefix gate unexpectedly ${JSON.stringify(partialGate)}`);
+  }
+
+  const suffixExtendedId = `${allowedId}_extra`;
+  const suffixGate = evaluateUnknownPolicyQuestion({
+    questionId: suffixExtendedId,
+    policy,
+  });
+  if (
+    !suffixGate.allowed &&
+    suffixGate.code === "UNKNOWN_POLICY_QUESTION" &&
+    suffixGate.escalateWithoutPromise
+  ) {
+    details.push(
+      `suffix-extended questionId ${suffixExtendedId} → UNKNOWN_POLICY_QUESTION`,
+    );
+  } else {
+    passed = false;
+    details.push(`suffix-extended gate unexpectedly ${JSON.stringify(suffixGate)}`);
+  }
+
+  const suffixDraft = prepareConciergeReply({
+    draftId: "d-suffix-suite",
+    conversation,
+    inboundBody: "Guarantee my rate forever?",
+    citedFactIds: ["fact-hours"],
+    factLabels: new Map([["fact-hours", SupportLabel.SUPPORTED]]),
+    policy,
+    bookingEvidence: [],
+    questionId: suffixExtendedId,
+    nowIso,
+  });
+  if (!suffixDraft.ok && suffixDraft.code === "UNKNOWN_POLICY_QUESTION") {
+    details.push(
+      "prepareConciergeReply suffix-extended allowedId → UNKNOWN_POLICY_QUESTION",
+    );
+  } else {
+    passed = false;
+    details.push(`suffix draft unexpectedly ${JSON.stringify(suffixDraft)}`);
+  }
+
+  const typoId = allowedId.replace(/ies$/, "y").replace(/s$/, "");
+  if (typoId !== allowedId) {
+    const typoGate = evaluateUnknownPolicyQuestion({
+      questionId: typoId,
+      policy,
+    });
+    if (
+      !typoGate.allowed &&
+      typoGate.code === "UNKNOWN_POLICY_QUESTION" &&
+      typoGate.escalateWithoutPromise
+    ) {
+      details.push(
+        `lookalike typo questionId ${typoId} → UNKNOWN_POLICY_QUESTION (no fuzzy allow)`,
+      );
+    } else {
+      passed = false;
+      details.push(`typo gate unexpectedly ${JSON.stringify(typoGate)}`);
+    }
+  }
+
+  const secondAllowed = policy.allowedQuestionIds[1];
+  if (secondAllowed) {
+    const compositeId = `${allowedId},${secondAllowed}`;
+    const compositeGate = evaluateUnknownPolicyQuestion({
+      questionId: compositeId,
+      policy,
+    });
+    if (
+      !compositeGate.allowed &&
+      compositeGate.code === "UNKNOWN_POLICY_QUESTION" &&
+      compositeGate.escalateWithoutPromise
+    ) {
+      details.push(
+        `composite questionId ${compositeId} → UNKNOWN_POLICY_QUESTION (no multi-allow)`,
+      );
+    } else {
+      passed = false;
+      details.push(
+        `composite gate unexpectedly ${JSON.stringify(compositeGate)}`,
+      );
+    }
+  }
+
   details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
 
   return {

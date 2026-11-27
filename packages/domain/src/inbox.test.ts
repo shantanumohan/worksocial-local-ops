@@ -408,6 +408,275 @@ describe("inbox domain", () => {
     expect([...UNKNOWN_POLICY_QUESTION_RELATED_CASE_IDS]).toEqual(["T-X055"]);
   });
 
+  it("refuses whitespace-only and ZWSP questionId without allowing draft (T-X055 J25)", () => {
+    const policy = defaultResponsePolicy(now);
+    for (const questionId of ["   ", "\u200b\u200b"]) {
+      const gate = evaluateUnknownPolicyQuestion({ questionId, policy });
+      expect(gate.allowed).toBe(false);
+      if (!gate.allowed) {
+        expect(gate.code).toBe("UNKNOWN_POLICY_QUESTION");
+        expect(gate.escalateWithoutPromise).toBe(true);
+        expect(gate.liveProviderWiring).toBe("NOT_WIRED");
+      }
+    }
+  });
+
+  it("prepareConciergeReply refuses ZWSP-only questionId (T-X055 J27)", () => {
+    const conversation = createConversation({
+      conversationId: "c-zwsp-qid",
+      providerThreadId: "thr-zwsp",
+      channel: InboxChannel.FIXTURE,
+      customerDisplayName: "Alex",
+      nowIso: now,
+    });
+    const policy = defaultResponsePolicy(now);
+    const refused = prepareConciergeReply({
+      draftId: "d-zwsp",
+      conversation,
+      inboundBody: "Can you guarantee unlimited free months?",
+      citedFactIds: ["fact-hours"],
+      factLabels: new Map([["fact-hours", SupportLabel.SUPPORTED]]),
+      policy,
+      bookingEvidence: [],
+      questionId: "\u200b",
+      nowIso: now,
+    });
+    expect(refused.ok).toBe(false);
+    if (!refused.ok) {
+      expect(refused.code).toBe("UNKNOWN_POLICY_QUESTION");
+    }
+  });
+
+  it("refuses padded and case-mutated questionId without inventing allow (T-X055 J26)", () => {
+    const policy = defaultResponsePolicy(now);
+    const allowedId = policy.allowedQuestionIds[0]!;
+    for (const questionId of [
+      ` ${allowedId} `,
+      allowedId.toUpperCase(),
+      `${allowedId}\u00ad`,
+    ]) {
+      const gate = evaluateUnknownPolicyQuestion({ questionId, policy });
+      expect(gate.allowed).toBe(false);
+      if (!gate.allowed) {
+        expect(gate.code).toBe("UNKNOWN_POLICY_QUESTION");
+        expect(gate.escalateWithoutPromise).toBe(true);
+        expect(gate.externalEffects).toBe("NONE");
+      }
+    }
+  });
+
+  it("refuses ZWSP-wrapped allowed questionId without granting allow (T-X055 J28)", () => {
+    const policy = defaultResponsePolicy(now);
+    const allowedId = policy.allowedQuestionIds[0]!;
+    const questionId = `\u200b${allowedId}\u200b`;
+    const gate = evaluateUnknownPolicyQuestion({ questionId, policy });
+    expect(gate.allowed).toBe(false);
+    if (!gate.allowed) {
+      expect(gate.code).toBe("UNKNOWN_POLICY_QUESTION");
+      expect(gate.escalateWithoutPromise).toBe(true);
+      expect(gate.liveProviderWiring).toBe("NOT_WIRED");
+    }
+    const conversation = createConversation({
+      conversationId: "c-zwsp-wrap-qid",
+      providerThreadId: "thr-zwsp-wrap",
+      channel: InboxChannel.FIXTURE,
+      customerDisplayName: "Alex",
+      nowIso: now,
+    });
+    const refused = prepareConciergeReply({
+      draftId: "d-zwsp-wrap",
+      conversation,
+      inboundBody: "What are your documented policies?",
+      citedFactIds: ["fact-hours"],
+      factLabels: new Map([["fact-hours", SupportLabel.SUPPORTED]]),
+      policy,
+      bookingEvidence: [],
+      questionId,
+      nowIso: now,
+    });
+    expect(refused.ok).toBe(false);
+    if (!refused.ok) {
+      expect(refused.code).toBe("UNKNOWN_POLICY_QUESTION");
+    }
+  });
+
+  it("refuses BOM-prefixed allowed questionId without exact allow (T-X055 J29)", () => {
+    const policy = defaultResponsePolicy(now);
+    const allowedId = policy.allowedQuestionIds[0]!;
+    const questionId = `\ufeff${allowedId}`;
+    const gate = evaluateUnknownPolicyQuestion({ questionId, policy });
+    expect(gate.allowed).toBe(false);
+    if (!gate.allowed) {
+      expect(gate.code).toBe("UNKNOWN_POLICY_QUESTION");
+      expect(gate.escalateWithoutPromise).toBe(true);
+      expect(gate.externalEffects).toBe("NONE");
+    }
+  });
+
+  it("refuses bidi and newline-mutated allowed questionId (T-X055 J30)", () => {
+    const policy = defaultResponsePolicy(now);
+    const allowedId = policy.allowedQuestionIds[0]!;
+    for (const questionId of [
+      `\u200e${allowedId}`,
+      `${allowedId.slice(0, 10)}\n${allowedId.slice(10)}`,
+    ]) {
+      const gate = evaluateUnknownPolicyQuestion({ questionId, policy });
+      expect(gate.allowed).toBe(false);
+      if (!gate.allowed) {
+        expect(gate.code).toBe("UNKNOWN_POLICY_QUESTION");
+        expect(gate.escalateWithoutPromise).toBe(true);
+        expect(gate.liveProviderWiring).toBe("NOT_WIRED");
+      }
+    }
+  });
+
+  it("refuses NUL-suffixed and RTL-override allowed questionId (T-X055 J31)", () => {
+    const policy = defaultResponsePolicy(now);
+    const allowedId = policy.allowedQuestionIds[0]!;
+    for (const questionId of [`${allowedId}\u0000`, `\u202e${allowedId}`]) {
+      const gate = evaluateUnknownPolicyQuestion({ questionId, policy });
+      expect(gate.allowed).toBe(false);
+      if (!gate.allowed) {
+        expect(gate.code).toBe("UNKNOWN_POLICY_QUESTION");
+        expect(gate.escalateWithoutPromise).toBe(true);
+        expect(gate.externalEffects).toBe("NONE");
+      }
+    }
+  });
+
+  it("refuses partial-prefix and BOM draft bypass of allowed questionId (T-X055 J32)", () => {
+    const policy = defaultResponsePolicy(now);
+    const allowedId = policy.allowedQuestionIds[0]!;
+    const partialId = allowedId.slice(0, Math.max(3, allowedId.length - 3));
+    const partialGate = evaluateUnknownPolicyQuestion({
+      questionId: partialId,
+      policy,
+    });
+    expect(partialGate.allowed).toBe(false);
+    if (!partialGate.allowed) {
+      expect(partialGate.code).toBe("UNKNOWN_POLICY_QUESTION");
+      expect(partialGate.escalateWithoutPromise).toBe(true);
+    }
+    const conversation = createConversation({
+      conversationId: "c-bom-draft",
+      providerThreadId: "thr-bom-draft",
+      channel: InboxChannel.FIXTURE,
+      customerDisplayName: "Alex",
+      nowIso: now,
+    });
+    const refused = prepareConciergeReply({
+      draftId: "d-bom-draft",
+      conversation,
+      inboundBody: "What policies apply?",
+      citedFactIds: ["fact-hours"],
+      factLabels: new Map([["fact-hours", SupportLabel.SUPPORTED]]),
+      policy,
+      bookingEvidence: [],
+      questionId: `\ufeff${allowedId}`,
+      nowIso: now,
+    });
+    expect(refused.ok).toBe(false);
+    if (!refused.ok) {
+      expect(refused.code).toBe("UNKNOWN_POLICY_QUESTION");
+    }
+  });
+
+  it("refuses suffix-extended and doubled allowed questionId (T-X055 J33)", () => {
+    const policy = defaultResponsePolicy(now);
+    const allowedId = policy.allowedQuestionIds[0]!;
+    for (const questionId of [`${allowedId}_extra`, `${allowedId}${allowedId}`]) {
+      const gate = evaluateUnknownPolicyQuestion({ questionId, policy });
+      expect(gate.allowed).toBe(false);
+      if (!gate.allowed) {
+        expect(gate.code).toBe("UNKNOWN_POLICY_QUESTION");
+        expect(gate.escalateWithoutPromise).toBe(true);
+        expect(gate.liveProviderWiring).toBe("NOT_WIRED");
+      }
+    }
+  });
+
+  it("prepareConciergeReply refuses suffix-extended allowed questionId (T-X055 J34)", () => {
+    const policy = defaultResponsePolicy(now);
+    const allowedId = policy.allowedQuestionIds[0]!;
+    const conversation = createConversation({
+      conversationId: "c-suffix-draft",
+      providerThreadId: "thr-suffix-draft",
+      channel: InboxChannel.FIXTURE,
+      customerDisplayName: "Alex",
+      nowIso: now,
+    });
+    const refused = prepareConciergeReply({
+      draftId: "d-suffix-draft",
+      conversation,
+      inboundBody: "What are your documented policies?",
+      citedFactIds: ["fact-hours"],
+      factLabels: new Map([["fact-hours", SupportLabel.SUPPORTED]]),
+      policy,
+      bookingEvidence: [],
+      questionId: `${allowedId}_extra`,
+      nowIso: now,
+    });
+    expect(refused.ok).toBe(false);
+    if (!refused.ok) {
+      expect(refused.code).toBe("UNKNOWN_POLICY_QUESTION");
+    }
+  });
+
+  it("refuses lookalike typo and doubled draft questionId (T-X055 J35)", () => {
+    const policy = defaultResponsePolicy(now);
+    const allowedId = policy.allowedQuestionIds.find((id) =>
+      id.includes("polic"),
+    )!;
+    const typoId = allowedId.replace(/ies$/, "y").replace(/s$/, "");
+    expect(typoId).not.toBe(allowedId);
+    const typoGate = evaluateUnknownPolicyQuestion({
+      questionId: typoId,
+      policy,
+    });
+    expect(typoGate.allowed).toBe(false);
+    if (!typoGate.allowed) {
+      expect(typoGate.code).toBe("UNKNOWN_POLICY_QUESTION");
+      expect(typoGate.escalateWithoutPromise).toBe(true);
+    }
+    const conversation = createConversation({
+      conversationId: "c-double-draft",
+      providerThreadId: "thr-double-draft",
+      channel: InboxChannel.FIXTURE,
+      customerDisplayName: "Alex",
+      nowIso: now,
+    });
+    const refused = prepareConciergeReply({
+      draftId: "d-double-draft",
+      conversation,
+      inboundBody: "What policies apply?",
+      citedFactIds: ["fact-hours"],
+      factLabels: new Map([["fact-hours", SupportLabel.SUPPORTED]]),
+      policy,
+      bookingEvidence: [],
+      questionId: `${allowedId}${allowedId}`,
+      nowIso: now,
+    });
+    expect(refused.ok).toBe(false);
+    if (!refused.ok) {
+      expect(refused.code).toBe("UNKNOWN_POLICY_QUESTION");
+    }
+  });
+
+  it("refuses composite and slash-joined allowed questionIds (T-X055 J36)", () => {
+    const policy = defaultResponsePolicy(now);
+    const first = policy.allowedQuestionIds[0]!;
+    const second = policy.allowedQuestionIds[1]!;
+    for (const questionId of [`${first},${second}`, `${first}/${second}`]) {
+      const gate = evaluateUnknownPolicyQuestion({ questionId, policy });
+      expect(gate.allowed).toBe(false);
+      if (!gate.allowed) {
+        expect(gate.code).toBe("UNKNOWN_POLICY_QUESTION");
+        expect(gate.escalateWithoutPromise).toBe(true);
+        expect(gate.externalEffects).toBe("NONE");
+      }
+    }
+  });
+
   it("prepareConciergeReply routes empty/whitespace questionId through unknown-policy gate", () => {
     const conversation = createConversation({
       conversationId: "c-empty-qid",

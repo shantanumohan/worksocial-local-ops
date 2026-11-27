@@ -8,8 +8,8 @@
     "incompatible_workflow_upgrade_blocked_or_retained"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x067.json",
-  "createdAtIso": "2026-11-27T16:39:53.518Z",
+  "createdAtIso": "2026-11-27T16:46:36.156Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x067-61e81f8dbc8b"
+  "uniqueSourceArtifactId": "art-fixture-t-x067-33b90d96569b"
 }
