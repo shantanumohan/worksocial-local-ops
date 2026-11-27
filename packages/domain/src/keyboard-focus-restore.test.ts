@@ -191,6 +191,36 @@ describe("keyboard focus restore (T-X061)", () => {
     expect(result.details.some((d) => /Open failed/i.test(d))).toBe(true);
   });
 
+  it("evaluateKeyboardFocusRestoreReview fails closed when trigger id is missing", () => {
+    const result = evaluateKeyboardFocusRestoreReview({
+      triggerId: "",
+      dialogFocusables: dialog,
+    });
+    expect(result.passed).toBe(false);
+    expect(result.details.some((d) => /Open failed/i.test(d))).toBe(true);
+  });
+
+  it("re-anchors trap cycle when activeFocusId is stale (not in dialog list)", () => {
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-review",
+      dialogFocusables: dialog,
+    });
+    const staleSession = {
+      ...opened.session,
+      activeFocusId: "dlg-removed",
+    };
+    const step = cycleDialogFocus({
+      session: staleSession,
+      direction: "forward",
+    });
+    expect(step.ok).toBe(true);
+    expect(step.code).toBe("TRAP_CYCLE");
+    expect(step.session.activeFocusId).toBe("dlg-confirm");
+    expect(step.session.savedTriggerId).toBe("btn-review");
+    expect(step.session.overlayOpen).toBe(true);
+  });
+
   it("evaluateKeyboardFocusRestoreReview passes open/trap/restore + lost control", () => {
     const result = evaluateKeyboardFocusRestoreReview({
       triggerId: "btn-review",
