@@ -142,6 +142,16 @@ describe("e2e-lite: M9 soak acceptance", () => {
     expect(report.acceptedCases.some((c) => c.caseId === "T-X004")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X016")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X022")).toBe(true);
+    const tx022 = report.acceptedCases.find((c) => c.caseId === "T-X022");
+    expect(tx022?.environment).toBe("fixture");
+    expect(
+      result.run.proofs.some(
+        (p) =>
+          p.kind === SoakProofKind.IDEMPOTENCY_KEY_PAYLOAD_MISMATCH &&
+          p.passed === true &&
+          p.fixtureOnly === true,
+      ),
+    ).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X065")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X063")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-F24")).toBe(true);

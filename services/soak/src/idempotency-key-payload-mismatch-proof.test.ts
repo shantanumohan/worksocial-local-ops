@@ -1,0 +1,299 @@
+/**
+ * Unit coverage for T-X022 soak proof hillclimb.
+ * Fixture ACCEPTED ≠ sandbox/prod VERIFIED; live provider NOT_WIRED.
+ */
+
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import { SoakProofKind } from "@worksocial/domain";
+import {
+  IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP,
+  IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING,
+} from "@worksocial/persistence";
+import { proofIdempotencyKeyPayloadMismatch } from "./idempotency-key-payload-mismatch-proof.js";
+
+const dirs: string[] = [];
+
+afterEach(() => {
+  for (const d of dirs.splice(0)) {
+    rmSync(d, { recursive: true, force: true });
+  }
+});
+
+describe("proofIdempotencyKeyPayloadMismatch (T-X022)", () => {
+  it("passes with Conflict + retention + VERIFIED-path + honesty details", async () => {
+    const stateDir = mkdtempSync(join(tmpdir(), "soak-tx022-"));
+    dirs.push(stateDir);
+    const proof = await proofIdempotencyKeyPayloadMismatch(
+      stateDir,
+      "2026-11-21T18:00:00.000Z",
+    );
+    expect(proof.passed).toBe(true);
+    expect(proof.kind).toBe(SoakProofKind.IDEMPOTENCY_KEY_PAYLOAD_MISMATCH);
+    expect(proof.fixtureOnly).toBe(true);
+    expect(proof.applyAttemptCount).toBe(1);
+    expect(proof.details.some((d) => d.includes("→ Conflict"))).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("whitespace-distinct payloadDigest → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("after VERIFIED + different payloadDigest → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("decision/effect/provider retain digest A"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Alt-op Conflict left no orphan effect/decision"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("case-distinct payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) => d.includes("empty payloadDigest → Conflict")),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("NUL-suffix payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("tab-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("CRLF-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("leading-space-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("NBSP-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("ZWSP-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("prefix-distinct payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("suffix-distinct payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("BOM-prefixed payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("double-space-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("VT-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("FF-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("LS-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("CR-only-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("PS-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("mid-NUL payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("soft-hyphen-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("LRM-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("RLM-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("ZWNJ-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("ZWJ-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("WJ-padded payloadDigest (byte-exact) → Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("same-operationId digest-B race") &&
+          d.includes("all Conflict") &&
+          d.includes("applyCount=1"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("gateDetails retains idempotency_key_payload_mismatch"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Post-FAILED concurrent") &&
+          d.includes("all Conflict") &&
+          d.includes("FAILED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Final integrity snapshot") &&
+          d.includes("remoteRef unchanged") &&
+          d.includes("digest A"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Interleaved concurrent mix") &&
+          d.includes("applyCount=1"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Post-VERIFIED concurrent") &&
+          d.includes("all Conflict") &&
+          d.includes("VERIFIED applyCount=1"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Post-VERIFIED concurrent") &&
+          d.includes("same-digest accepts") &&
+          d.includes("VERIFIED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Post-FAILED digest-B acceptPending → Conflict") &&
+          d.includes("FAILED"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("effects.countApplyAttempts=1") &&
+          d.includes("no second remote effect"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Receipt integrity") && d.includes("digest A only"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Re-verify after VERIFIED Conflict") &&
+        d.includes("applyCount=1"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Concurrent") && d.includes("all Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Same-digest new operationId control") &&
+          d.includes("replay, not Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Concurrent") &&
+          d.includes("same-digest accepts") &&
+          d.includes("not Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("Business-key mismatch ≠ payload-mismatch Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes("Wrong-digest verifyIndependent") &&
+          d.includes("FAILED applyCount=1") &&
+          d.includes("≠ payload-mismatch Conflict"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some(
+        (d) =>
+          d.includes(`liveProviderWiring=${IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING}`) &&
+          d.includes("externalEffects=NONE") &&
+          d.includes("ACCEPTED≠VERIFIED") &&
+          d.includes(
+            `chatgptAdsConnectSoftSkip=${IDEMPOTENCY_PAYLOAD_MISMATCH_ADS_SOFT_SKIP.join(",")}`,
+          ),
+      ),
+    ).toBe(true);
+    expect(IDEMPOTENCY_PAYLOAD_MISMATCH_LIVE_WIRING).toBe("NOT_WIRED");
+  });
+});
