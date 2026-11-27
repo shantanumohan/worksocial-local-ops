@@ -429,6 +429,17 @@ describe("rate-limit-backoff (T-X030)", () => {
     ).toEqual({ waitSeconds: 3, source: "retry_after" });
   });
 
+  it("ignores +Infinity Retry-After and uses exponential (Q19 wipe15 wake)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 2,
+        retryAfterSeconds: Number.POSITIVE_INFINITY,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 2, source: "exponential" });
+  });
+
   it("ignores NaN Retry-After and uses exponential (Q17 wipe15)", () => {
     expect(
       computeBackoffWaitSeconds({
