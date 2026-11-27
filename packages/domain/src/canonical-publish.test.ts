@@ -73,6 +73,139 @@ describe("canonical-publish — versioned draft edit", () => {
     expect(edited.article.status).toBe(ArticleStatus.READY_FOR_REVIEW);
   });
 
+  it("invalidates evidence when cited facts are removed without body edit (T-X008)", () => {
+    const base = {
+      ...article({
+        citedFactIds: ["fixture-fact-hours", "fixture-fact-capacity"],
+      }),
+      status: ArticleStatus.APPROVED,
+      version: 2,
+    };
+    const edited = editCanonicalArticle({
+      article: base,
+      citedFactIds: ["fixture-fact-hours"],
+      nowIso: now,
+    });
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+    expect(edited.digestChanged).toBe(false);
+    expect(edited.evidenceChanged).toBe(true);
+    expect(edited.article.status).toBe(ArticleStatus.READY_FOR_REVIEW);
+    expect(edited.article.citedFactIds).toEqual(["fixture-fact-hours"]);
+  });
+
+  it("invalidates evidence when hypothesisFactIds change without body edit (T-X008)", () => {
+    const base = {
+      ...article({ hypothesisFactIds: [] }),
+      status: ArticleStatus.APPROVED,
+      version: 2,
+    };
+    const edited = editCanonicalArticle({
+      article: base,
+      hypothesisFactIds: ["fixture-fact-hypothesis"],
+      nowIso: now,
+    });
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+    expect(edited.digestChanged).toBe(false);
+    expect(edited.evidenceChanged).toBe(true);
+    expect(edited.article.status).toBe(ArticleStatus.READY_FOR_REVIEW);
+  });
+
+  it("treats cited-fact reorder as evidence-stable (T-X008)", () => {
+    const base = {
+      ...article({
+        citedFactIds: ["fixture-fact-hours", "fixture-fact-capacity"],
+      }),
+      status: ArticleStatus.APPROVED,
+      version: 2,
+    };
+    const edited = editCanonicalArticle({
+      article: base,
+      citedFactIds: ["fixture-fact-capacity", "fixture-fact-hours"],
+      nowIso: now,
+    });
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+    expect(edited.evidenceChanged).toBe(false);
+    expect(edited.digestChanged).toBe(false);
+    expect(edited.article.status).toBe(ArticleStatus.APPROVED);
+    expect(edited.article.version).toBe(2);
+  });
+
+  it("invalidates evidence when citedFactIds are cleared (T-X008)", () => {
+    const base = {
+      ...article(),
+      status: ArticleStatus.APPROVED,
+      version: 2,
+    };
+    const edited = editCanonicalArticle({
+      article: base,
+      citedFactIds: [],
+      nowIso: now,
+    });
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+    expect(edited.evidenceChanged).toBe(true);
+    expect(edited.digestChanged).toBe(false);
+    expect(edited.article.status).toBe(ArticleStatus.READY_FOR_REVIEW);
+    expect(edited.article.citedFactIds).toEqual([]);
+  });
+
+  it("returns DRAFT on title-only digest edit without evidence change (T-X008 contrast)", () => {
+    const base = {
+      ...article(),
+      status: ArticleStatus.APPROVED,
+      version: 2,
+    };
+    const edited = editCanonicalArticle({
+      article: base,
+      title: "Training rooms — revised",
+      nowIso: now,
+    });
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+    expect(edited.digestChanged).toBe(true);
+    expect(edited.evidenceChanged).toBe(false);
+    expect(edited.article.status).toBe(ArticleStatus.DRAFT);
+  });
+
+  it("invalidates evidence when hypothesisFactIds are cleared (T-X008)", () => {
+    const base = {
+      ...article({ hypothesisFactIds: ["fixture-fact-hypothesis"] }),
+      status: ArticleStatus.APPROVED,
+      version: 2,
+    };
+    const edited = editCanonicalArticle({
+      article: base,
+      hypothesisFactIds: [],
+      nowIso: now,
+    });
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+    expect(edited.evidenceChanged).toBe(true);
+    expect(edited.digestChanged).toBe(false);
+    expect(edited.article.status).toBe(ArticleStatus.READY_FOR_REVIEW);
+  });
+
+  it("changes evidence package digest when claimIds alone change (T-X008)", () => {
+    const a = digestContentEvidencePackage({
+      articleId: "art-m6",
+      contentDigest: "digest-a",
+      version: 2,
+      citedFactIds: ["fixture-fact-hours"],
+      claimIds: ["claim-hours"],
+    });
+    const b = digestContentEvidencePackage({
+      articleId: "art-m6",
+      contentDigest: "digest-a",
+      version: 2,
+      citedFactIds: ["fixture-fact-hours"],
+      claimIds: ["claim-hours", "claim-extra"],
+    });
+    expect(a).not.toBe(b);
+  });
+
   it("refuses edit of RELEASED_PENDING / VERIFIED articles", () => {
     const released = {
       ...article(),
@@ -186,6 +319,246 @@ describe("canonical-publish — A25 review binding", () => {
     expect(check.ok).toBe(false);
     if (check.ok) return;
     expect(check.code).toBe("BINDING_INVALIDATED");
+  });
+
+  // T-X008 F13: repeated publish gate stays denied after binding invalidated (no apply).
+  it("denies publish eligibility on fourth probe after body stale (F13)", () => {
+    const art = article({ status: ArticleStatus.APPROVED, version: 1 });
+    const evidence = digestContentEvidencePackage({
+      citedFactIds: art.citedFactIds,
+      claimIds: [],
+      hypothesisFactIds: [],
+    });
+    const proposal: EffectProposal = {
+      proposalId: "prop-f13",
+      authorRoleId: "A13",
+      actionClass: "ROUTINE_PUBLISH",
+      operation: "publish_article",
+      assetId: art.articleId,
+      channelId: "owned-site",
+      payloadDigest: art.contentDigest,
+      evidenceArtifactIds: ["ev-f13"],
+    };
+    const bound = bindContentIndependentReview({
+      bindingId: "bind-f13",
+      proposal,
+      snapshot: {
+        articleId: art.articleId,
+        version: art.version,
+        contentDigest: art.contentDigest,
+        evidencePackageDigest: evidence,
+        citedFactIds: art.citedFactIds,
+      },
+      createdAtIso: now,
+    });
+    expect(bound.ok).toBe(true);
+    if (!bound.ok) return;
+
+    const edited = editCanonicalArticle({
+      article: art,
+      body: "Changed body",
+      nowIso: now,
+    });
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+
+    const staleEvidence = digestContentEvidencePackage({
+      citedFactIds: edited.article.citedFactIds,
+      claimIds: [],
+      hypothesisFactIds: [],
+    });
+    const stillStale = () =>
+      validateContentReviewAgainstArticle({
+        binding: bound.binding,
+        article: edited.article,
+        evidencePackageDigest: staleEvidence,
+      });
+    expect(stillStale().ok).toBe(false);
+    expect(stillStale().ok).toBe(false);
+    expect(stillStale().ok).toBe(false);
+    expect(stillStale().ok).toBe(false);
+    expect(stillStale().ok).toBe(false);
+    expect(stillStale().ok).toBe(false);
+    if (!stillStale().ok) {
+      expect(stillStale().code).toBe("BINDING_INVALIDATED");
+    }
+  });
+
+  // T-X008 F16: sixth stale validation probe still BINDING_INVALIDATED.
+  it("stays BINDING_INVALIDATED on sixth stale review probe (F16)", () => {
+    const art = article({ status: ArticleStatus.APPROVED, version: 1 });
+    const evidence = digestContentEvidencePackage({
+      citedFactIds: art.citedFactIds,
+      claimIds: [],
+      hypothesisFactIds: [],
+    });
+    const proposal: EffectProposal = {
+      proposalId: "prop-f16",
+      authorRoleId: "A13",
+      actionClass: "ROUTINE_PUBLISH",
+      operation: "publish_article",
+      assetId: art.articleId,
+      channelId: "owned-site",
+      payloadDigest: art.contentDigest,
+      evidenceArtifactIds: ["ev-f16"],
+    };
+    const bound = bindContentIndependentReview({
+      bindingId: "bind-f16",
+      proposal,
+      snapshot: {
+        articleId: art.articleId,
+        version: art.version,
+        contentDigest: art.contentDigest,
+        evidencePackageDigest: evidence,
+        citedFactIds: art.citedFactIds,
+      },
+      createdAtIso: now,
+    });
+    expect(bound.ok).toBe(true);
+    if (!bound.ok) return;
+
+    const edited = editCanonicalArticle({
+      article: art,
+      body: "Changed body for F16",
+      nowIso: now,
+    });
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+
+    const staleEvidence = digestContentEvidencePackage({
+      citedFactIds: edited.article.citedFactIds,
+      claimIds: [],
+      hypothesisFactIds: [],
+    });
+    for (let i = 0; i < 6; i++) {
+      const check = validateContentReviewAgainstArticle({
+        binding: bound.binding,
+        article: edited.article,
+        evidencePackageDigest: staleEvidence,
+      });
+      expect(check.ok).toBe(false);
+      if (!check.ok) {
+        expect(check.code).toBe("BINDING_INVALIDATED");
+      }
+    }
+  });
+
+  // T-X008 F17: seventh stale validation probe still BINDING_INVALIDATED.
+  it("stays BINDING_INVALIDATED on seventh stale review probe (F17)", () => {
+    const art = article({ status: ArticleStatus.APPROVED, version: 1 });
+    const evidence = digestContentEvidencePackage({
+      citedFactIds: art.citedFactIds,
+      claimIds: [],
+      hypothesisFactIds: [],
+    });
+    const proposal: EffectProposal = {
+      proposalId: "prop-f17",
+      authorRoleId: "A13",
+      actionClass: "ROUTINE_PUBLISH",
+      operation: "publish_article",
+      assetId: art.articleId,
+      channelId: "owned-site",
+      payloadDigest: art.contentDigest,
+      evidenceArtifactIds: ["ev-f17"],
+    };
+    const bound = bindContentIndependentReview({
+      bindingId: "bind-f17",
+      proposal,
+      snapshot: {
+        articleId: art.articleId,
+        version: art.version,
+        contentDigest: art.contentDigest,
+        evidencePackageDigest: evidence,
+        citedFactIds: art.citedFactIds,
+      },
+      createdAtIso: now,
+    });
+    expect(bound.ok).toBe(true);
+    if (!bound.ok) return;
+
+    const edited = editCanonicalArticle({
+      article: art,
+      body: "Changed body for F17",
+      nowIso: now,
+    });
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+
+    const staleEvidence = digestContentEvidencePackage({
+      citedFactIds: edited.article.citedFactIds,
+      claimIds: [],
+      hypothesisFactIds: [],
+    });
+    for (let i = 0; i < 7; i++) {
+      const check = validateContentReviewAgainstArticle({
+        binding: bound.binding,
+        article: edited.article,
+        evidencePackageDigest: staleEvidence,
+      });
+      expect(check.ok).toBe(false);
+      if (!check.ok) {
+        expect(check.code).toBe("BINDING_INVALIDATED");
+      }
+    }
+  });
+
+  // T-X008 F18: eighth stale validation probe still BINDING_INVALIDATED.
+  it("stays BINDING_INVALIDATED on eighth stale review probe (F18)", () => {
+    const art = article({ status: ArticleStatus.APPROVED, version: 1 });
+    const evidence = digestContentEvidencePackage({
+      citedFactIds: art.citedFactIds,
+      claimIds: [],
+      hypothesisFactIds: [],
+    });
+    const proposal: EffectProposal = {
+      proposalId: "prop-f18",
+      authorRoleId: "A13",
+      actionClass: "ROUTINE_PUBLISH",
+      operation: "publish_article",
+      assetId: art.articleId,
+      channelId: "owned-site",
+      payloadDigest: art.contentDigest,
+      evidenceArtifactIds: ["ev-f18"],
+    };
+    const bound = bindContentIndependentReview({
+      bindingId: "bind-f18",
+      proposal,
+      snapshot: {
+        articleId: art.articleId,
+        version: art.version,
+        contentDigest: art.contentDigest,
+        evidencePackageDigest: evidence,
+        citedFactIds: art.citedFactIds,
+      },
+      createdAtIso: now,
+    });
+    expect(bound.ok).toBe(true);
+    if (!bound.ok) return;
+
+    const edited = editCanonicalArticle({
+      article: art,
+      body: "Changed body for F18",
+      nowIso: now,
+    });
+    expect(edited.ok).toBe(true);
+    if (!edited.ok) return;
+
+    const staleEvidence = digestContentEvidencePackage({
+      citedFactIds: edited.article.citedFactIds,
+      claimIds: [],
+      hypothesisFactIds: [],
+    });
+    for (let i = 0; i < 8; i++) {
+      const check = validateContentReviewAgainstArticle({
+        binding: bound.binding,
+        article: edited.article,
+        evidencePackageDigest: staleEvidence,
+      });
+      expect(check.ok).toBe(false);
+      if (!check.ok) {
+        expect(check.code).toBe("BINDING_INVALIDATED");
+      }
+    }
   });
 });
 

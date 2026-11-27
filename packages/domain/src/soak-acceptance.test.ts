@@ -464,6 +464,18 @@ describe("soak-acceptance domain", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.FACT_CHANGES_AFTER_REVIEW_STALE),
     ).toEqual(["T-X008"]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.APPROVED_PAYLOAD_EDIT_INVALIDATED),
+    ).not.toContain("T-X008");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.IMPORTED_DOC_QUARANTINED_AS_DATA),
+    ).not.toContain("T-X008");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.SELF_APPROVAL_REJECTED),
+    ).not.toContain("T-X008");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CLI_ERROR_DESPITE_EXIT_ZERO),
+    ).not.toContain("T-X008");
     expect(expectedProofsForFixtureCase("T-X012")).toEqual([
       SoakProofKind.ORPHAN_WORKER_DEADLINE_TREE_STOPPED,
     ]);

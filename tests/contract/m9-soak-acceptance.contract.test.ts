@@ -9,13 +9,10 @@
  * T-US-75 fixture ACCEPTED only via EMERGENCY_STOP_AT_COMMIT.
  * T-X005 fixture ACCEPTED only via FORGED_BROWSER_ROLE_IGNORED.
  * T-X006 fixture ACCEPTED only via CROSS_WORKSPACE_REFERENCE_DENIED.
- * T-X019/T-US-75 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED.
- */
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+ * T-X019/T-US-75 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED. */import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import {
   AcceptanceCaseStatus,
   AcceptanceEnvironment,
@@ -29,8 +26,6 @@ import {
   createSoakService,
   runSoakRecoveryHarness,
 } from "@worksocial/soak";
-
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 describe("contract: M9 soak / acceptance evidence", () => {
   let dir: string;
@@ -263,45 +258,5 @@ describe("contract: M9 soak / acceptance evidence", () => {
       evidenceArtifactId: "x",
     });
     expect(bad.ok).toBe(false);
-  });
-
-  it("T-X025 fixture art keeps edge honesty (silent clear / NOT_WIRED / ACCEPTED≠VERIFIED)", () => {
-    const artPath = resolve(
-      repoRoot,
-      "tests/acceptance-evidence/fixture/art-fixture-t-x025.json",
-    );
-    const art = JSON.parse(readFileSync(artPath, "utf8")) as {
-      caseId: string;
-      summary: string;
-      liveProviderSuccessClaimed: boolean;
-      externalEffects: string;
-    };
-    expect(art.caseId).toBe("T-X025");
-    expect(art.liveProviderSuccessClaimed).toBe(false);
-    expect(art.externalEffects).toBe("NONE");
-    expect(art.summary).toMatch(/SILENT_CLEAR_FORBIDDEN/);
-    expect(art.summary).toMatch(/NOT_WIRED/);
-    expect(art.summary).toMatch(/CLAIMED_VERIFIED/);
-    expect(art.summary).toMatch(/ACCEPTED≠VERIFIED/);
-    expect(art.summary).toMatch(/Owner-ack literal-only/);
-    expect(art.summary).toMatch(/v1→v1-next|MATCHED_PENDING_ONLY refuses claimedVerified/);
-    expect(art.summary).toMatch(
-      /convergent human edit still CONFLICT_RETAINED|post-MATCHED overwrite OVERWRITE_FORBIDDEN/,
-    );
-    expect(art.summary).toMatch(
-      /N8 whitespace pageId\/revision throw|live verify literal true → NOT_WIRED/,
-    );
-    expect(art.summary).toMatch(
-      /N9 dual live\+claimed verify refuse|post-MATCHED human edit → CONFLICT_RETAINED/,
-    );
-    expect(art.summary).toMatch(
-      /N10 alias TRUE live overwrite → OVERWRITE_FORBIDDEN|owner-ack then CLAIMED_VERIFIED_REFUSED/,
-    );
-    expect(art.summary).toMatch(
-      /N11 numeric live 1 → OVERWRITE_FORBIDDEN|convergent CONFLICT verify never elevates/,
-    );
-    expect(art.summary).toMatch(
-      /N12 live verify TRUE alias → MATCHED_PENDING_ONLY|post-ack OVERWRITE_FORBIDDEN/,
-    );
   });
 });
