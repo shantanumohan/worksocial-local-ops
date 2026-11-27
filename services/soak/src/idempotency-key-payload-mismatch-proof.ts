@@ -729,6 +729,51 @@ export async function proofIdempotencyKeyPayloadMismatch(
   );
   if (!fourPerEmConflict) passed = false;
 
+  const digestSixPerEm = `${digestA}\u2006`;
+  const sixPerEmConflict = await expectMismatchConflict(
+    "acceptPending six-per-em-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: digestSixPerEm,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!sixPerEmConflict) passed = false;
+
+  const digestOgham = `${digestA}\u1680`;
+  const oghamSpaceConflict = await expectMismatchConflict(
+    "acceptPending ogham-space-mark-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: digestOgham,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!oghamSpaceConflict) passed = false;
+
+  const digestLeadingEnSpace = `\u2002${digestA}`;
+  const leadingEnSpaceConflict = await expectMismatchConflict(
+    "acceptPending leading-en-space-padded payloadDigest (byte-exact)",
+    details,
+    () =>
+      accept(svc, {
+        operationId,
+        bizKey,
+        digest: digestLeadingEnSpace,
+        idem,
+        nowIso,
+      }),
+  );
+  if (!leadingEnSpaceConflict) passed = false;
+
   // Concurrent multi-alt digest-B barrage — all Conflict; no orphans; applyCount=1.
   const barrageN = 8;
   const barrageIds = Array.from(
@@ -1398,6 +1443,9 @@ export async function proofIdempotencyKeyPayloadMismatch(
       enSpaceConflict &&
       threePerEmConflict &&
       fourPerEmConflict &&
+      sixPerEmConflict &&
+      oghamSpaceConflict &&
+      leadingEnSpaceConflict &&
       barrageAllConflict &&
       !barrageOrphans &&
       sameOpRaceAllConflict &&
