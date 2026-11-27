@@ -229,8 +229,16 @@ export function prepareCustomerDataForEvaluation(input: {
   deferCustomerRedactionUntilAfterEval?: boolean;
   /** Forbidden — eval prompts must not strip redaction tokens to recover PII. */
   stripRedactionTokensFromEvalPrompt?: boolean;
+  /** Forbidden — eval must not consume unredacted messageBody from customer source. */
+  useUnredactedMessageBodyInEval?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.useUnredactedMessageBodyInEval === true) {
+    return blockedLeak([
+      "Unredacted customer messageBody in eval refused — T-X072",
+    ]);
+  }
 
   if (input.stripRedactionTokensFromEvalPrompt === true) {
     return blockedLeak([
