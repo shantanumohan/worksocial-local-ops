@@ -917,6 +917,131 @@ describe("contract: M9 soak / acceptance evidence", () => {
     // K52: post-#298 tip — repair weaken not T-X043 optimization-breaks-CTA drift
     expect(art.proofKinds).not.toContain("optimization_breaks_cta_journey_fails");
     expect(art.summary).not.toMatch(/optimization_breaks_cta_journey_fails/);
+    // K53: post-#299 tip — repair weaken not T-X058 attempt-limit escalate drift
+    expect(art.proofKinds).not.toContain("repair_attempt_limit_escalated");
+    expect(art.summary).not.toMatch(/repair_attempt_limit_escalated/);
+    expect(art.summary).not.toMatch(/ATTEMPT_LIMIT.*ESCALATED/);
+    // K54: wipe15 @ 63d2c0e0 — repair weaken summary not T-X058 attempt-ledger drift
+    expect(art.summary).not.toMatch(/MAX_REPAIR_ATTEMPTS=/);
+    expect(art.summary).not.toMatch(/Third automatic repair attempt/);
+    expect(art.summary).not.toMatch(/ticket status=ESCALATED/);
+    // K55: post-#300 tip — repair weaken not T-X058 P33 escalate-ledger drift
+    expect(art.summary).not.toMatch(/GATE_DENIED ×2/);
+    expect(art.summary).not.toMatch(/RELEASED within limit/);
+    expect(art.summary).not.toMatch(/Second automatic attempt allowed/);
+    // K56: post-#301 tip — repair weaken not T-X059 duplicate-attribution drift
+    expect(art.proofKinds).not.toContain("duplicate_platform_attribution_one_booking");
+    expect(art.summary).not.toMatch(/duplicate_platform_attribution_one_booking/);
+    expect(art.summary).not.toMatch(/SILENT_PLATFORM_SUM_REFUSED/);
+    expect(art.summary).not.toMatch(/INVALID_ATTRIBUTION_CLAIM/);
+    // K57: wipe15 @ d6731fcd — repair weaken summary not T-X059 booking-uniqueness drift
+    expect(art.summary).not.toMatch(/uniqueBookingCount=/);
+    expect(art.summary).not.toMatch(/double-count blocked/);
+    expect(art.summary).not.toMatch(/platformClaimCount=/);
+    // K58: post-#302 tip — repair weaken not T-X060 currency/timezone mismatch drift
+    expect(art.proofKinds).not.toContain("currency_timezone_mismatch_no_silent_sum");
+    expect(art.summary).not.toMatch(/currency_timezone_mismatch_no_silent_sum/);
+    expect(art.summary).not.toMatch(/CURRENCY_MISMATCH/);
+    expect(art.summary).not.toMatch(/TIMEZONE_MISMATCH/);
+    // K59: post-#303 tip — repair weaken not T-X061 keyboard-focus-restore drift
+    expect(art.proofKinds).not.toContain("keyboard_focus_restore_after_dialog");
+    expect(art.summary).not.toMatch(/keyboard_focus_restore_after_dialog/);
+    expect(art.summary).not.toMatch(/FOCUS_LOST/);
+    expect(art.summary).not.toMatch(/savedTrigger=/);
+    // K60: wipe15 @ 1fb05770 — repair weaken summary not T-X061 dialog-trap drift
+    expect(art.summary).not.toMatch(/activeFocus=dlg-close/);
+    expect(art.summary).not.toMatch(/Re-open refused/);
+    expect(art.summary).not.toMatch(/fixtureOnly keyboard/);
+    // K61: post-#304 tip — repair weaken not T-X062 SSE gap resync drift
+    expect(art.proofKinds).not.toContain("sse_gap_full_state_resync");
+    expect(art.summary).not.toMatch(/sse_gap_full_state_resync/);
+    expect(art.summary).not.toMatch(/SSE_GAP_FULL_RESYNC_REQUIRED/);
+    expect(art.summary).not.toMatch(/SNAPSHOT_INSUFFICIENT_COVERAGE/);
+    // K62: post-#305 tip — repair weaken not T-X063 indirect-injection exfil drift
+    expect(art.proofKinds).not.toContain("indirect_prompt_injection_exfil_denied");
+    expect(art.summary).not.toMatch(/indirect_prompt_injection_exfil_denied/);
+    expect(art.summary).not.toMatch(/EXFILTRATION_DENIED/);
+    expect(art.summary).not.toMatch(/instructionEligible=false/);
+    // K63: post-#306 tip — repair weaken not T-X064 SSRF redirect/DNS-rebind drift
+    expect(art.proofKinds).not.toContain("ssrf_redirect_dns_rebind_blocked_every_hop");
+    expect(art.summary).not.toMatch(/ssrf_redirect_dns_rebind_blocked_every_hop/);
+    expect(art.summary).not.toMatch(/DNS_REBIND_PRIVATE_ADDRESS/);
+    expect(art.summary).not.toMatch(/ALL_HOPS_ALLOWED/);
+    // K64: wipe15 @ 64829602 — repair weaken summary not T-X064 SSRF hop-ledger drift
+    expect(art.summary).not.toMatch(/PRIVATE_OR_LOCAL_HOSTNAME/);
+    expect(art.summary).not.toMatch(/HOST_NOT_ALLOWLISTED/);
+    expect(art.summary).not.toMatch(/CREDENTIALS_FORBIDDEN/);
+    expect(art.summary).not.toMatch(/liveDnsResolve=NOT_WIRED/);
+    // K65: post-#307 tip — repair weaken not T-X065 browser-auth OS-deny drift
+    expect(art.proofKinds).not.toContain("worker_browser_auth_state_os_denied");
+    expect(art.summary).not.toMatch(/worker_browser_auth_state_os_denied/);
+    expect(art.summary).not.toMatch(/liveBrowserAuthWiring=NOT_WIRED/);
+    expect(art.summary).not.toMatch(/workspace_browser_partition/);
+    // K66: post-#308 tip — repair weaken not T-X066 backup-omit-receipt drift
+    expect(art.proofKinds).not.toContain("backup_omit_receipt");
+    expect(art.summary).not.toMatch(/backup_omit_receipt/);
+    expect(art.summary).not.toMatch(/Omit-receipt backup/);
+    expect(art.summary).not.toMatch(/UNKNOWN_REMOTE_RECONCILE/);
+    // K67: wipe15 @ 5ed3d15d — repair weaken summary not T-X066 backup-reconcile ledger drift
+    expect(art.summary).not.toMatch(/remoteRef=remote-/);
+    expect(art.summary).not.toMatch(/Post-restore decision=ACCEPTED_PENDING/);
+    expect(art.summary).not.toMatch(/Reconciled remoteRef=/);
+    expect(art.summary).not.toMatch(/providerEffects=\[\]/);
+    // K68: post-#309 tip — repair weaken not T-X067 incompatible workflow upgrade drift
+    expect(art.proofKinds).not.toContain(
+      "incompatible_workflow_upgrade_blocked_or_retained",
+    );
+    expect(art.summary).not.toMatch(
+      /incompatible_workflow_upgrade_blocked_or_retained/,
+    );
+    expect(art.summary).not.toMatch(/INCOMPATIBLE_UPGRADE_BLOCKED/);
+    expect(art.summary).not.toMatch(/COMPATIBLE_UPGRADE_APPLIED/);
+    // K69: post-#310 tip — repair weaken not T-X068 grouped-outage incident drift
+    expect(art.proofKinds).not.toContain("thirty_alerts_one_outage_grouped");
+    expect(art.summary).not.toMatch(/thirty_alerts_one_outage_grouped/);
+    expect(art.summary).not.toMatch(/outageKey=host:/);
+    expect(art.summary).not.toMatch(/one-alert-one-incident fan-out/);
+    // K70: wipe15 @ 7a9be9a1 — repair weaken summary not T-X068 incident-group ledger drift
+    expect(art.summary).not.toMatch(/alertCount=30/);
+    expect(art.summary).not.toMatch(/uniqueSourceCount=/);
+    expect(art.summary).not.toMatch(/no silent cross-key merge/);
+    expect(art.summary).not.toMatch(/Incident count < alert count/);
+    // K71: post-#311 tip — repair weaken not T-X069 imported-doc quarantine drift
+    expect(art.proofKinds).not.toContain("imported_doc_quarantined_as_data");
+    expect(art.summary).not.toMatch(/imported_doc_quarantined_as_data/);
+    expect(art.summary).not.toMatch(/UNTRUSTED_SOURCE_NOT_INSTRUCTION/);
+    expect(art.summary).not.toMatch(/instructionVersion while QUARANTINED/);
+    // K72: post-#312 tip — repair weaken not T-X070 validated-payload collection drift
+    expect(art.proofKinds).not.toContain(
+      "validated_payload_not_collected_separate_states",
+    );
+    expect(art.summary).not.toMatch(
+      /validated_payload_not_collected_separate_states/,
+    );
+    expect(art.summary).not.toMatch(/COLLECTION_FAILED/);
+    expect(art.summary).not.toMatch(/VALIDATION_FAILED ≠ COLLECTION_FAILED/);
+    // K73: wipe15 @ 579ffaf8 — repair weaken summary not T-X070 collection-state ledger drift
+    expect(art.summary).not.toMatch(/collectionAttempted=false/);
+    expect(art.summary).not.toMatch(/validated=true collected=false/);
+    expect(art.summary).not.toMatch(/chatgptAdsAccess=ACCESS_BLOCKED/);
+    expect(art.summary).not.toMatch(/validated=true collected=true/);
+    // K74: post-#313 tip — repair weaken not T-X071 host-offline public discovery drift
+    expect(art.proofKinds).not.toContain(
+      "host_offline_public_discovery_unavailable",
+    );
+    expect(art.summary).not.toMatch(/host_offline_public_discovery_unavailable/);
+    expect(art.summary).not.toMatch(/CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED/);
+    expect(art.summary).not.toMatch(/activeCoverageClaimed=false/);
+    // K75: post-#314 tip — repair weaken not T-X072 customer eval redaction drift
+    expect(art.proofKinds).not.toContain("customer_data_eval_redaction_blocks");
+    expect(art.summary).not.toMatch(/customer_data_eval_redaction_blocks/);
+    expect(art.summary).not.toMatch(/CUSTOMER_DATA_LEAK_BLOCKED/);
+    expect(art.summary).not.toMatch(/liveEvalWiring=NOT_WIRED/);
+    // K76: promoted tip 4feba617 — repair weaken not T-X073 offboard ACTIVE_TOKEN residual drift
+    expect(art.proofKinds).not.toContain("offboard_active_token_residual");
+    expect(art.summary).not.toMatch(/offboard_active_token_residual/);
+    expect(art.summary).not.toMatch(/BLOCKED_NOT_WIRED/);
+    expect(art.summary).not.toMatch(/OFFBOARD_RESIDUAL_HONEST/);
   });
   it("T-X059 fixture artifact names duplicate platform attribution (ACCEPTED ≠ VERIFIED)", () => {
     const artPath = resolve(
