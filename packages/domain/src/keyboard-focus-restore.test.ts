@@ -217,6 +217,26 @@ describe("keyboard focus restore (T-X061)", () => {
     expect(tab.session.overlayOpen).toBe(false);
   });
 
+  it("markTriggerUnrestorable keeps trap active until close (T45)", () => {
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-review",
+      dialogFocusables: dialog,
+    });
+    const marked = markTriggerUnrestorable(opened.session);
+    expect(marked.overlayOpen).toBe(true);
+    expect(marked.triggerRestorable).toBe(false);
+    expect(marked.savedTriggerId).toBe("btn-review");
+    const step = cycleDialogFocus({
+      session: marked,
+      direction: "forward",
+    });
+    expect(step.ok).toBe(true);
+    expect(step.session.overlayOpen).toBe(true);
+    const closed = closeOverlayRestoreFocus({ session: step.session });
+    expect(closed.code).toBe("FOCUS_LOST");
+  });
+
   it("fails closed FOCUS_LOST when overlay open but savedTrigger cleared (T44)", () => {
     const opened = openOverlayFocus({
       session: emptyFocusSession(),

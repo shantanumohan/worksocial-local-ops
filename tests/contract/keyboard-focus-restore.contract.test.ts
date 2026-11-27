@@ -122,6 +122,19 @@ describe("contract: T-X061 keyboard focus restore", () => {
     expect(tab.reasons.join(" ")).toMatch(/not open/i);
   });
 
+  it("unrestorable trigger still traps Tab until close yields FOCUS_LOST (T45)", () => {
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-keyboard-review",
+      dialogFocusables: dialog,
+    });
+    const marked = markTriggerUnrestorable(opened.session);
+    const step = cycleDialogFocus({ session: marked, direction: "forward" });
+    expect(step.ok).toBe(true);
+    const lost = closeOverlayRestoreFocus({ session: step.session });
+    expect(lost.code).toBe("FOCUS_LOST");
+  });
+
   it("close fails closed FOCUS_LOST when savedTrigger cleared while open (T44)", () => {
     const opened = openOverlayFocus({
       session: emptyFocusSession(),
