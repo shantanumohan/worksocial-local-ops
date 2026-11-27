@@ -56,6 +56,40 @@ describe("proofIndirectPromptInjectionExfilDenied (T-X063)", () => {
         d.includes("T-X063 R33: attack suite quad repeat gate idempotent"),
       ),
     ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes(
+          "T-X063 R34: attack suite quint repeat gate idempotent (five passes; details+decisions content match",
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("T-X063 R35: attack suite sextet repeat gate idempotent"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("T-X063 R36: attack suite septet repeat gate idempotent"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("T-X063 R37: attack suite octet repeat gate idempotent"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes("T-X063 R38: attack suite nonet repeat gate idempotent"),
+      ),
+    ).toBe(true);
+    expect(
+      proof.details.some((d) =>
+        d.includes(
+          "T-X063 R39: exact denial reasons; near-miss effects stay UNTRUSTED_SOURCE_NOT_INSTRUCTION; trusted near-miss exact-match-only",
+        ),
+      ),
+    ).toBe(true);
     expect(proof.details.some((d) => d.includes("externalEffects=NONE"))).toBe(
       true,
     );

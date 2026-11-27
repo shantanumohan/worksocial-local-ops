@@ -7,6 +7,7 @@ import {
   IndirectInjectionChannel,
   evaluateIndirectPromptInjectionAttackSuite,
   evaluateIndirectPromptInjectionBoundary,
+  indirectPromptInjectionAttackSuiteContentEqual,
   isAbsoluteExfiltrationEffect,
 } from "./prompt-injection-boundary.js";
 
@@ -229,6 +230,171 @@ describe("evaluateIndirectPromptInjectionBoundary (T-X063)", () => {
     const i2 = c2.package.entries[0]?.instructionEligible;
     expect(i1).toBe(false);
     expect(i2).toBe(false);
+  });
+
+  // T-X063 R39 tip-moved-316 edge: exact reasons; near-miss exact-match; contentEqual negative.
+  it("R39: exact denial reasons; near-miss effects; contentEqual rejects detail drift", () => {
+    const secret = evaluateIndirectPromptInjectionBoundary({
+      channel: IndirectInjectionChannel.WEB,
+      trustLabel: ArtifactTrustLabel.TRUSTED_INSTRUCTION,
+      attemptedEffect: ExfiltrationEffect.SECRET_EXFILTRATION,
+    });
+    expect(secret.allowed).toBe(false);
+    if (!secret.allowed) {
+      expect(secret.code).toBe("EXFILTRATION_DENIED");
+      expect(secret.reason).toBe(
+        "secret_exfiltration denied — secrets stay in broker; no exfiltration (channel=web)",
+      );
+      expect(secret.liveProviderWiring).toBe("NOT_WIRED");
+      expect(secret.externalEffects).toBe("NONE");
+    }
+
+    const cred = evaluateIndirectPromptInjectionBoundary({
+      channel: IndirectInjectionChannel.EMAIL,
+      trustLabel: ArtifactTrustLabel.UNTRUSTED_SOURCE,
+      attemptedEffect: ExfiltrationEffect.CREDENTIAL_ACCESS,
+    });
+    expect(cred.allowed).toBe(false);
+    if (!cred.allowed) {
+      expect(cred.code).toBe("CREDENTIAL_ACCESS_DENIED");
+      expect(cred.reason).toBe(
+        "credential_access denied at broker boundary (channel=email)",
+      );
+    }
+
+    // Near-miss aliases must NOT take absolute codes on untrusted — source gate wins.
+    for (const nearMiss of [
+      "Secret_Exfiltration",
+      "exfil_secrets",
+      "broker-secret-read",
+      "",
+    ] as const) {
+      expect(isAbsoluteExfiltrationEffect(nearMiss)).toBe(false);
+      const decision = evaluateIndirectPromptInjectionBoundary({
+        channel: IndirectInjectionChannel.ATTACHMENT,
+        trustLabel: ArtifactTrustLabel.UNTRUSTED_SOURCE,
+        attemptedEffect: nearMiss,
+      });
+      expect(decision.allowed).toBe(false);
+      if (!decision.allowed) {
+        expect(decision.code).toBe("UNTRUSTED_SOURCE_NOT_INSTRUCTION");
+        expect(decision.reason).toBe(
+          "Untrusted attachment content is not instruction-eligible; indirect prompt injection cannot widen tools",
+        );
+      }
+    }
+
+    // Trusted + near-miss alias is exact-match only: not absolute-denied at this
+    // boundary (other gates still apply). Honesty: ACCEPTED ≠ VERIFIED.
+    const nearMissTrusted = evaluateIndirectPromptInjectionBoundary({
+      channel: IndirectInjectionChannel.WEB,
+      trustLabel: ArtifactTrustLabel.TRUSTED_INSTRUCTION,
+      attemptedEffect: "exfil_secrets",
+    });
+    expect(nearMissTrusted.allowed).toBe(true);
+    if (nearMissTrusted.allowed) {
+      expect(nearMissTrusted.reason).toBe(
+        "Trusted instruction with non-exfiltration effect passes injection boundary",
+      );
+      expect(nearMissTrusted.instructionEligible).toBe(true);
+      expect(nearMissTrusted.liveProviderWiring).toBe("NOT_WIRED");
+      expect(nearMissTrusted.externalEffects).toBe("NONE");
+    }
+
+    // MEASURED_EVIDENCE + empty effect still not instruction-eligible (exact reason).
+    const measuredEmpty = evaluateIndirectPromptInjectionBoundary({
+      channel: IndirectInjectionChannel.EMAIL,
+      trustLabel: ArtifactTrustLabel.MEASURED_EVIDENCE,
+      attemptedEffect: "",
+    });
+    expect(measuredEmpty.allowed).toBe(false);
+    if (!measuredEmpty.allowed) {
+      expect(measuredEmpty.code).toBe("UNTRUSTED_SOURCE_NOT_INSTRUCTION");
+      expect(measuredEmpty.reason).toBe(
+        "Untrusted email content is not instruction-eligible; indirect prompt injection cannot widen tools",
+      );
+    }
+
+    // contentEqual negative: detail drift must not match.
+    const baseline = evaluateIndirectPromptInjectionAttackSuite();
+    expect(baseline.passed).toBe(true);
+    const drifted = {
+      ...baseline,
+      details: [...baseline.details, "injected-drift"],
+    };
+    expect(
+      indirectPromptInjectionAttackSuiteContentEqual(baseline, drifted),
+    ).toBe(false);
+  });
+
+  // T-X063 R38 wipe15: attack suite content-stable across nine runs.
+  it("R38: attack suite details and decisions match on nonet re-run", () => {
+    const suites = Array.from({ length: 9 }, () =>
+      evaluateIndirectPromptInjectionAttackSuite(),
+    );
+    const baseline = suites[0];
+    expect(baseline?.passed).toBe(true);
+    for (const suite of suites) {
+      expect(indirectPromptInjectionAttackSuiteContentEqual(baseline!, suite)).toBe(
+        true,
+      );
+    }
+  });
+
+  // T-X063 R37 wipe15: attack suite content-stable across eight runs.
+  it("R37: attack suite details and decisions match on octet re-run", () => {
+    const suites = Array.from({ length: 8 }, () =>
+      evaluateIndirectPromptInjectionAttackSuite(),
+    );
+    const baseline = suites[0];
+    expect(baseline?.passed).toBe(true);
+    for (const suite of suites) {
+      expect(indirectPromptInjectionAttackSuiteContentEqual(baseline!, suite)).toBe(
+        true,
+      );
+    }
+  });
+
+  // T-X063 R36 wipe15: attack suite content-stable across seven runs.
+  it("R36: attack suite details and decisions match on septet re-run", () => {
+    const suites = Array.from({ length: 7 }, () =>
+      evaluateIndirectPromptInjectionAttackSuite(),
+    );
+    const baseline = suites[0];
+    expect(baseline?.passed).toBe(true);
+    for (const suite of suites) {
+      expect(indirectPromptInjectionAttackSuiteContentEqual(baseline!, suite)).toBe(
+        true,
+      );
+    }
+  });
+
+  // T-X063 R35 wipe15: attack suite content-stable across six runs.
+  it("R35: attack suite details and decisions match on sextet re-run", () => {
+    const suites = Array.from({ length: 6 }, () =>
+      evaluateIndirectPromptInjectionAttackSuite(),
+    );
+    const baseline = suites[0];
+    expect(baseline?.passed).toBe(true);
+    for (const suite of suites) {
+      expect(indirectPromptInjectionAttackSuiteContentEqual(baseline!, suite)).toBe(
+        true,
+      );
+    }
+  });
+
+  // T-X063 R34 refill: attack suite content-stable across five runs.
+  it("R34: attack suite details and decisions match on quint re-run", () => {
+    const suites = Array.from({ length: 5 }, () =>
+      evaluateIndirectPromptInjectionAttackSuite(),
+    );
+    const baseline = suites[0];
+    expect(baseline?.passed).toBe(true);
+    for (const suite of suites) {
+      expect(indirectPromptInjectionAttackSuiteContentEqual(baseline!, suite)).toBe(
+        true,
+      );
+    }
   });
 
   // T-X063 R33 wipe15: attack suite stable across four runs.

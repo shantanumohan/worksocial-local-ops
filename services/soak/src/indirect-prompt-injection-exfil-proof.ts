@@ -22,6 +22,16 @@
  * still passed with stable details count.
  * Deepen (R33 wipe15 retrain): attack-suite quad repeat gate — fourth pass
  * still passed with stable details count.
+ * Deepen (R34 refill): attack-suite quint repeat gate — fifth pass matches
+ * baseline details and decisions (content-level, not length-only).
+ * Deepen (R35 wipe15): attack-suite sextet repeat gate — six passes content match.
+ * Deepen (R36 wipe15): attack-suite septet repeat gate — seven passes content match.
+ * Deepen (R37 wipe15): attack-suite octet repeat gate — eight passes content match.
+ * Deepen (R38 wipe15): attack-suite nonet repeat gate — nine passes content match.
+ * Deepen (R39 tip-moved-316): exact denial reasons; near-miss aliases stay
+ * UNTRUSTED_SOURCE_NOT_INSTRUCTION on untrusted; trusted near-miss is
+ * exact-match-only (passes this boundary); MEASURED_EVIDENCE+empty exact reason;
+ * contentEqual rejects detail drift.
  */
 
 import { createHash, randomUUID } from "node:crypto";
@@ -33,6 +43,8 @@ import {
   compileInputPackage,
   evaluateIndirectPromptInjectionAttackSuite,
   evaluateIndirectPromptInjectionBoundary,
+  indirectPromptInjectionAttackSuiteContentEqual,
+  isAbsoluteExfiltrationEffect,
   proposeEffect,
   roleForbidsEffect,
   validateRoleStructuredOutput,
@@ -550,6 +562,181 @@ export function proofIndirectPromptInjectionExfilDenied(
   } else {
     passed = false;
     details.push("T-X063 R33 attack suite quad repeat gate failed");
+  }
+
+  // 15. R34 refill: attack-suite quint repeat gate.
+  const r34Suites = Array.from({ length: 5 }, () =>
+    evaluateIndirectPromptInjectionAttackSuite(),
+  );
+  const r34Baseline = r34Suites[0];
+  const r34Ok =
+    r34Baseline !== undefined &&
+    r34Suites.every((s) =>
+      indirectPromptInjectionAttackSuiteContentEqual(r34Baseline, s),
+    );
+  if (r34Ok) {
+    details.push(
+      "T-X063 R34: attack suite quint repeat gate idempotent (five passes; details+decisions content match; applyAttemptCount=1)",
+    );
+  } else {
+    passed = false;
+    details.push("T-X063 R34 attack suite quint repeat gate failed");
+  }
+
+  // 16. R35 wipe15: attack-suite sextet content repeat gate.
+  const r35Suites = Array.from({ length: 6 }, () =>
+    evaluateIndirectPromptInjectionAttackSuite(),
+  );
+  const r35Baseline = r35Suites[0];
+  const r35Ok =
+    r35Baseline !== undefined &&
+    r35Suites.every((s) =>
+      indirectPromptInjectionAttackSuiteContentEqual(r35Baseline, s),
+    );
+  if (r35Ok) {
+    details.push(
+      "T-X063 R35: attack suite sextet repeat gate idempotent (six passes; details+decisions content match)",
+    );
+  } else {
+    passed = false;
+    details.push("T-X063 R35 attack suite sextet repeat gate failed");
+  }
+
+  // 17. R36 wipe15: attack-suite septet content repeat gate.
+  const r36Suites = Array.from({ length: 7 }, () =>
+    evaluateIndirectPromptInjectionAttackSuite(),
+  );
+  const r36Baseline = r36Suites[0];
+  const r36Ok =
+    r36Baseline !== undefined &&
+    r36Suites.every((s) =>
+      indirectPromptInjectionAttackSuiteContentEqual(r36Baseline, s),
+    );
+  if (r36Ok) {
+    details.push(
+      "T-X063 R36: attack suite septet repeat gate idempotent (seven passes; details+decisions content match)",
+    );
+  } else {
+    passed = false;
+    details.push("T-X063 R36 attack suite septet repeat gate failed");
+  }
+
+  // 18. R37 wipe15: attack-suite octet content repeat gate.
+  const r37Suites = Array.from({ length: 8 }, () =>
+    evaluateIndirectPromptInjectionAttackSuite(),
+  );
+  const r37Baseline = r37Suites[0];
+  const r37Ok =
+    r37Baseline !== undefined &&
+    r37Suites.every((s) =>
+      indirectPromptInjectionAttackSuiteContentEqual(r37Baseline, s),
+    );
+  if (r37Ok) {
+    details.push(
+      "T-X063 R37: attack suite octet repeat gate idempotent (eight passes; details+decisions content match)",
+    );
+  } else {
+    passed = false;
+    details.push("T-X063 R37 attack suite octet repeat gate failed");
+  }
+
+  // 19. R38 wipe15: attack-suite nonet content repeat gate.
+  const r38Suites = Array.from({ length: 9 }, () =>
+    evaluateIndirectPromptInjectionAttackSuite(),
+  );
+  const r38Baseline = r38Suites[0];
+  const r38Ok =
+    r38Baseline !== undefined &&
+    r38Suites.every((s) =>
+      indirectPromptInjectionAttackSuiteContentEqual(r38Baseline, s),
+    );
+  if (r38Ok) {
+    details.push(
+      "T-X063 R38: attack suite nonet repeat gate idempotent (nine passes; details+decisions content match)",
+    );
+  } else {
+    passed = false;
+    details.push("T-X063 R38 attack suite nonet repeat gate failed");
+  }
+
+  // 20. R39 tip-moved-316: exact reason + near-miss exact-match + contentEqual negative.
+  const r39Secret = evaluateIndirectPromptInjectionBoundary({
+    channel: IndirectInjectionChannel.WEB,
+    trustLabel: ArtifactTrustLabel.TRUSTED_INSTRUCTION,
+    attemptedEffect: ExfiltrationEffect.SECRET_EXFILTRATION,
+  });
+  const r39Cred = evaluateIndirectPromptInjectionBoundary({
+    channel: IndirectInjectionChannel.EMAIL,
+    trustLabel: ArtifactTrustLabel.UNTRUSTED_SOURCE,
+    attemptedEffect: ExfiltrationEffect.CREDENTIAL_ACCESS,
+  });
+  const r39NearMissEffects = [
+    "Secret_Exfiltration",
+    "exfil_secrets",
+    "broker-secret-read",
+    "",
+  ] as const;
+  const r39NearMisses = r39NearMissEffects.map((attemptedEffect) =>
+    evaluateIndirectPromptInjectionBoundary({
+      channel: IndirectInjectionChannel.ATTACHMENT,
+      trustLabel: ArtifactTrustLabel.UNTRUSTED_SOURCE,
+      attemptedEffect,
+    }),
+  );
+  const r39NearMissTrusted = evaluateIndirectPromptInjectionBoundary({
+    channel: IndirectInjectionChannel.WEB,
+    trustLabel: ArtifactTrustLabel.TRUSTED_INSTRUCTION,
+    attemptedEffect: "exfil_secrets",
+  });
+  const r39MeasuredEmpty = evaluateIndirectPromptInjectionBoundary({
+    channel: IndirectInjectionChannel.EMAIL,
+    trustLabel: ArtifactTrustLabel.MEASURED_EVIDENCE,
+    attemptedEffect: "",
+  });
+  const r39Baseline = evaluateIndirectPromptInjectionAttackSuite();
+  const r39Drifted = {
+    ...r39Baseline,
+    details: [...r39Baseline.details, "injected-drift"],
+  };
+  const r39Ok =
+    r39Secret.allowed === false &&
+    r39Secret.code === "EXFILTRATION_DENIED" &&
+    r39Secret.reason ===
+      "secret_exfiltration denied — secrets stay in broker; no exfiltration (channel=web)" &&
+    r39Secret.liveProviderWiring === "NOT_WIRED" &&
+    r39Secret.externalEffects === "NONE" &&
+    r39Cred.allowed === false &&
+    r39Cred.code === "CREDENTIAL_ACCESS_DENIED" &&
+    r39Cred.reason ===
+      "credential_access denied at broker boundary (channel=email)" &&
+    r39NearMissEffects.every((e) => !isAbsoluteExfiltrationEffect(e)) &&
+    r39NearMisses.every(
+      (d) =>
+        d.allowed === false &&
+        d.code === "UNTRUSTED_SOURCE_NOT_INSTRUCTION" &&
+        d.reason ===
+          "Untrusted attachment content is not instruction-eligible; indirect prompt injection cannot widen tools",
+    ) &&
+    r39NearMissTrusted.allowed === true &&
+    r39NearMissTrusted.reason ===
+      "Trusted instruction with non-exfiltration effect passes injection boundary" &&
+    r39NearMissTrusted.instructionEligible === true &&
+    r39NearMissTrusted.liveProviderWiring === "NOT_WIRED" &&
+    r39NearMissTrusted.externalEffects === "NONE" &&
+    r39MeasuredEmpty.allowed === false &&
+    r39MeasuredEmpty.code === "UNTRUSTED_SOURCE_NOT_INSTRUCTION" &&
+    r39MeasuredEmpty.reason ===
+      "Untrusted email content is not instruction-eligible; indirect prompt injection cannot widen tools" &&
+    r39Baseline.passed &&
+    indirectPromptInjectionAttackSuiteContentEqual(r39Baseline, r39Drifted) ===
+      false;
+  if (r39Ok) {
+    details.push(
+      "T-X063 R39: exact denial reasons; near-miss effects stay UNTRUSTED_SOURCE_NOT_INSTRUCTION; trusted near-miss exact-match-only; contentEqual rejects detail drift",
+    );
+  } else {
+    passed = false;
+    details.push("T-X063 R39 edge assertion gate failed");
   }
 
   details.push("liveProviderSuccessClaimed=false externalEffects=NONE");

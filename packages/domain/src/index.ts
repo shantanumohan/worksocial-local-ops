@@ -271,11 +271,13 @@ export {
   INDIRECT_PROMPT_INJECTION_RELATED_CASE_IDS,
   evaluateIndirectPromptInjectionBoundary,
   evaluateIndirectPromptInjectionAttackSuite,
+  indirectPromptInjectionAttackSuiteContentEqual,
   isAbsoluteExfiltrationEffect,
   type IndirectInjectionChannelValue,
   type ExfiltrationEffectValue,
   type IndirectPromptInjectionBoundaryInput,
   type IndirectPromptInjectionBoundaryDecision,
+  type IndirectPromptInjectionAttackSuiteResult,
 } from "./prompt-injection-boundary.js";
 export {
   VenueMediaLicenseStatus,
