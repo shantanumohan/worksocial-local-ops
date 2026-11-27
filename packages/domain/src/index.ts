@@ -11,6 +11,20 @@ export {
   type EffectStateValue,
 } from "./effect-state-machine.js";
 export {
+  createHistoryOnlyReplayHooks,
+  replayEmptyHistoryFailsClosed,
+  replayMissionWorkflowHistory,
+  replayPartialHistoryFailsClosed,
+  replayTwoEventHistoryFailsClosed,
+  runMissionWorkflowControlFlow,
+  type ReplayActivityName,
+  type ReplayActivityResult,
+  type ReplayHooks,
+  type ReplayMissionOutcome,
+  type ReplayNoRepeatIoSummary,
+  type ReplayWorkflowHistory,
+} from "./replay-historical-workflow.js";
+export {
   applyTakeover,
   canAgentSend,
   type AgentSendDenialCode,

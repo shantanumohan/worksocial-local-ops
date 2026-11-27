@@ -934,7 +934,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X063** is fixture ACCEPTED only via the indirect prompt-injection exfiltration boundary proof (`INDIRECT_PROMPT_INJECTION_EXFIL_DENIED`) — untrusted web/email content is not instruction-eligible; `secret_exfiltration` / `credential_access` / `broker_secret_read` are absolute-denied via `proposeEffect` and the injection boundary. Not sandbox/prod VERIFIED.
 
-**T-X013** is fixture ACCEPTED only via the replay historical workflow / no repeated external I/O proof (`REPLAY_HISTORICAL_NO_REPEAT_IO`) — record enqueue→accept→verify activity history, then replay the mission control flow from that history without re-invoking acceptPending/applyOnce; provider ledger must not grow. Distinct from mid-flight no-dup, crash-restart, and mere VERIFIED acceptPending short-circuit. Not sandbox/prod VERIFIED.
+**T-X013** is fixture ACCEPTED only via the replay historical workflow / no repeated external I/O proof (`REPLAY_HISTORICAL_NO_REPEAT_IO`) — record enqueue→accept→verify activity history, then replay the mission control flow from that history without re-invoking acceptPending/applyOnce; provider ledger must not grow; second replay stays history-only; empty/partial/two-event/truncated history fails closed without inventing live I/O success; terminal bind + claim/verify/terminal opId and applyAttemptCount cross-bind refuse inconsistent history; zero/negative/non-finite/non-integer terminal apply refuse; terminal outcome must be VERIFIED; blank enqueue workflowId refuse; blank claim/verify operationId refuse; enqueue/claim/verify activity shape refuse (phase/outcome/`providerCreated`/apply≥1 including Infinity/NaN/non-number); padded terminal, claim/verify opId, and enqueue workflowId trim; verify matched=false refuse; live wiring stays **NOT_WIRED**; `externalEffects=NONE`. Distinct from mid-flight no-dup, crash-restart, and mere VERIFIED acceptPending short-circuit. Not sandbox/prod VERIFIED.
 
 **T-X004** is fixture ACCEPTED only via the disk-full evidence no partial completed proof (`DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED`) — ENOSPC during evidence write must not leave a COMPLETED manifest. Not sandbox/prod VERIFIED.
 
@@ -1039,7 +1039,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X010 | Malicious prompt interpolation | No shell injection *(fixture ACCEPTED)* |
 | T-X011 | Output bomb | Bounded/quarantined *(fixture ACCEPTED — OUTPUT_TOO_LARGE quarantine; non-finite max refused; close-path quarantine; idempotent reclaim+code drift; dual live-claim refuse; ACCEPTED≠VERIFIED; not sandbox/prod VERIFIED)* |
 | T-X012 | Orphan worker on deadline | Process tree stopped *(fixture ACCEPTED)* |
-| T-X013 | Replay historical workflow | No repeated external I/O *(fixture ACCEPTED — replay historical no-repeat-I/O proof; not sandbox/prod VERIFIED)* |
+| T-X013 | Replay historical workflow | No repeated external I/O *(fixture ACCEPTED — replay historical no-repeat-I/O proof; second replay + empty-history fail-closed; not sandbox/prod VERIFIED)* |
 | T-X014 | Approval wait survives restart | Resume wait; no slot hold *(fixture ACCEPTED)* |
 | T-X015 | DST recurring schedule | No unintended duplicates *(fixture ACCEPTED — DST recurring schedule no-duplicates proof; not sandbox/prod VERIFIED)* |
 | T-X016 | Stop before dispatch claim | No adapter mutation *(fixture ACCEPTED — stop-before-dispatch / no adapter mutation proof; not sandbox/prod VERIFIED)* |
