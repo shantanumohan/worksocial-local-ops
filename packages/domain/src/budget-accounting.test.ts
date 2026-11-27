@@ -718,6 +718,32 @@ describe("budget accounting", () => {
     expect(normalized.settledMinor).toBe(180);
   });
 
+  it("normalizeBudgetHolds preserves legacy scalar-only totals when maps empty (L15)", () => {
+    const legacy = {
+      ...createBudgetAccount({
+        dayKey: "2026-11-17",
+        currency: "USD",
+        limitMinor: 2000,
+      }),
+      reservedMinor: 100,
+      settledMinor: 220,
+      heldMinor: 700,
+      openReservations: {},
+      heldReservations: {},
+      settledReservations: {},
+    };
+    const normalized = normalizeBudgetHolds(legacy);
+    expect(normalized.reservedMinor).toBe(100);
+    expect(normalized.settledMinor).toBe(220);
+    expect(normalized.heldMinor).toBe(700);
+    expect(availableBudgetMinor(normalized)).toBe(980);
+    const blocked = reserveBudget(legacy, "legacy-over", 990);
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.availableMinor).toBe(980);
+    }
+  });
+
   it("legacy scalars when maps empty still constrain available", () => {
     const legacy = createBudgetAccount({
       dayKey: "2026-11-17",

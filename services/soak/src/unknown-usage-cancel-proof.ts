@@ -569,6 +569,46 @@ export function proofUnknownUsageCancelHoldsResidual(
     );
   }
 
+  // 18. Legacy scalar-only M8 eval snapshot (maps empty) still constrains capacity.
+  const legacyScalar = {
+    ...createBudgetAccount({
+      dayKey: "2026-11-22",
+      currency: "USD",
+      limitMinor: 2000,
+    }),
+    reservedMinor: 100,
+    settledMinor: 220,
+    heldMinor: 700,
+    openReservations: {},
+    heldReservations: {},
+    settledReservations: {},
+  };
+  const legacyAvail = availableBudgetMinor(legacyScalar);
+  const legacyNorm = normalizeBudgetHolds(legacyScalar);
+  const legacyBlocked = reserveBudget(legacyScalar, "legacy-over", 1900);
+  if (
+    legacyAvail === 980 &&
+    legacyNorm.heldMinor === 700 &&
+    legacyNorm.reservedMinor === 100 &&
+    legacyNorm.settledMinor === 220 &&
+    !legacyBlocked.ok &&
+    legacyBlocked.code === "BUDGET_EXHAUSTED" &&
+    legacyBlocked.availableMinor === 980
+  ) {
+    details.push(
+      "Legacy scalar-only eval budget (empty maps) honors held/settled/reserved scalars; available=980; NOT_WIRED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Legacy scalar-only probe failed avail=${legacyAvail} norm=${JSON.stringify({
+        heldMinor: legacyNorm.heldMinor,
+        reservedMinor: legacyNorm.reservedMinor,
+        settledMinor: legacyNorm.settledMinor,
+      })} blocked=${JSON.stringify(legacyBlocked)}`,
+    );
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false externalEffects=NONE liveBudgetProviderWiring=NOT_WIRED ACCEPTED≠VERIFIED",
   );
