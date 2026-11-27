@@ -279,3 +279,37 @@ export function evaluateIndirectPromptInjectionAttackSuite(): {
 
   return { passed, details, decisions };
 }
+
+export type IndirectPromptInjectionAttackSuiteResult = ReturnType<
+  typeof evaluateIndirectPromptInjectionAttackSuite
+>;
+
+/** Compare full attack-suite output (not details.length alone). */
+export function indirectPromptInjectionAttackSuiteContentEqual(
+  baseline: IndirectPromptInjectionAttackSuiteResult,
+  other: IndirectPromptInjectionAttackSuiteResult,
+): boolean {
+  if (baseline.passed !== other.passed) {
+    return false;
+  }
+  if (baseline.details.length !== other.details.length) {
+    return false;
+  }
+  for (let i = 0; i < baseline.details.length; i++) {
+    if (baseline.details[i] !== other.details[i]) {
+      return false;
+    }
+  }
+  if (baseline.decisions.length !== other.decisions.length) {
+    return false;
+  }
+  for (let i = 0; i < baseline.decisions.length; i++) {
+    if (
+      JSON.stringify(baseline.decisions[i]) !==
+      JSON.stringify(other.decisions[i])
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
