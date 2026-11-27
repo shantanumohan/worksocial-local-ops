@@ -20,6 +20,7 @@
  * Deepen (Q17 wipe15): NaN Retry-After → exponential (non-finite refuse).
  * Deepen (Q19 wake): +Infinity Retry-After → exponential (non-finite refuse).
  * Deepen (Q23): -0 Retry-After → WAIT 0; -1 → exponential (sign boundary).
+ * Deepen (Q24): fractional attempt floors before exponential index.
  */
 
 import { randomUUID } from "node:crypto";
@@ -547,6 +548,25 @@ export function proofRateLimitBoundedBackoffPreservesDeadline(
     details.push(
       `maxAttempts=1 STOP honesty failed: ${JSON.stringify(oneShot)}`,
     );
+  }
+
+  // Scenario P5 (Q24): fractional attempt floors (2.9 → attempt 2 wait).
+  const fracAttempt = computeBackoffWaitSeconds({
+    attempt: 2.9,
+    retryAfterSeconds: null,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 2,
+  });
+  if (
+    fracAttempt.source === "exponential" &&
+    fracAttempt.waitSeconds === 2
+  ) {
+    details.push(
+      "Fractional attempt=2.9 floors to exponential wait 2s (not attempt-3 wait 4s)",
+    );
+  } else {
+    passed = false;
+    details.push(`Fractional attempt floor failed: ${JSON.stringify(fracAttempt)}`);
   }
 
   // Scenario P4 (Q23): -0 vs -1 Retry-After sign boundary.

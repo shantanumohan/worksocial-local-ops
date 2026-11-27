@@ -429,6 +429,25 @@ describe("rate-limit-backoff (T-X030)", () => {
     ).toEqual({ waitSeconds: 3, source: "retry_after" });
   });
 
+  it("floors fractional attempt index for exponential backoff (Q24 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 2.9,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 2, source: "exponential" });
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 3.1,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 2,
+      }),
+    ).toEqual({ waitSeconds: 4, source: "exponential" });
+  });
+
   it("honors -0 Retry-After as WAIT 0s, not exponential (Q23 wipe15)", () => {
     const negZero = computeBackoffWaitSeconds({
       attempt: 1,
