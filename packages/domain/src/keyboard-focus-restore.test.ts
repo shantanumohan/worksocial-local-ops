@@ -109,6 +109,38 @@ describe("keyboard focus restore (T-X061)", () => {
     expect(closed.session.activeFocusId).toBeNull();
   });
 
+  it("refuses open without a trigger id", () => {
+    const decision = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "",
+      dialogFocusables: dialog,
+    });
+    expect(decision.ok).toBe(false);
+    expect(decision.reasons.join(" ")).toMatch(/Missing trigger/i);
+    expect(decision.session.overlayOpen).toBe(false);
+  });
+
+  it("retains trap with a single dialog focusable (wrap stays in-dialog)", () => {
+    const sole = ["dlg-only"] as const;
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-review",
+      dialogFocusables: sole,
+    });
+    const forward = cycleDialogFocus({
+      session: opened.session,
+      direction: "forward",
+    });
+    expect(forward.code).toBe("TRAP_CYCLE");
+    expect(forward.session.activeFocusId).toBe("dlg-only");
+    const backward = cycleDialogFocus({
+      session: forward.session,
+      direction: "backward",
+    });
+    expect(backward.session.activeFocusId).toBe("dlg-only");
+    expect(backward.session.overlayOpen).toBe(true);
+  });
+
   it("refuses open when dialog has no focusables", () => {
     const decision = openOverlayFocus({
       session: emptyFocusSession(),

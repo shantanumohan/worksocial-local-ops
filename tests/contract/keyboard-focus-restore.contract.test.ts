@@ -93,6 +93,15 @@ describe("contract: T-X061 keyboard focus restore", () => {
     expect(lost.session.activeFocusId).toBeNull();
   });
 
+  it("cycleDialogFocus fails closed when overlay is not open", () => {
+    const tab = cycleDialogFocus({
+      session: emptyFocusSession(),
+      direction: "forward",
+    });
+    expect(tab.ok).toBe(false);
+    expect(tab.reasons.join(" ")).toMatch(/not open/i);
+  });
+
   it("openOverlayFocus fails closed on empty dialog (externalEffects NONE model)", () => {
     const decision = openOverlayFocus({
       session: emptyFocusSession(),
