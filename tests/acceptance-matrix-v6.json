@@ -2602,7 +2602,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x060",
-      "evidenceNote": "Fixture ACCEPTED via CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM (whitespace-normalized match; blank/fractional minor \u2192 INVALID_DIMENSION; mismatch \u2192 totalMinor=null; NOT_WIRED). Slot G G35: liveClaim refuses FALSE_AGGREGATED_PASS (unmeasured/fractional totalMinor or expectedTotalMinor), FALSE_AGGREGATED_TOTAL_MISMATCH, silent-sum-on-mismatch. ACCEPTED \u2260 sandbox/prod VERIFIED. externalEffects=NONE."
+      "evidenceNote": "Fixture ACCEPTED via CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM (whitespace-normalized match; blank \u2192 INVALID_DIMENSION; mismatch \u2192 totalMinor=null; NOT_WIRED). ACCEPTED \u2260 sandbox/prod VERIFIED. externalEffects=NONE. ChatGPT Ads remains ACCESS_BLOCKED."
     },
     {
       "id": "T-X061",
@@ -2730,7 +2730,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x068",
-      "evidenceNote": "Fixture ACCEPTED via THIRTY_ALERTS_ONE_OUTAGE_GROUPED only \u2014 whitespace-normalized outageKey collapse; chronological alertIds; max severity; uniqueSources; live NOT_WIRED. ACCEPTED \u2260 sandbox/prod VERIFIED. externalEffects=NONE."
+      "evidenceNote": "Fixture ACCEPTED via THIRTY_ALERTS_ONE_OUTAGE_GROUPED only \u2014 whitespace/bidi/line-separator/word-joiner/narrow/thin/en-space outageKey collapse; no case-fold merge; chronological alertIds; max severity; uniqueSources; live NOT_WIRED. ACCEPTED \u2260 sandbox/prod VERIFIED. externalEffects=NONE."
     },
     {
       "id": "T-X069",
