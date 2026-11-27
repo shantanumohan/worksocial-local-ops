@@ -748,6 +748,40 @@ describe("replay historical workflow (T-X013)", () => {
     ).toBe(true);
   });
 
+  it("fails closed on NaN terminal applyAttemptCount (edge)", () => {
+    const history = sampleHistory();
+    history.terminal = {
+      outcome: "VERIFIED",
+      applyAttemptCount: Number.NaN,
+      operationId: "op-1",
+    };
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_terminal_missing_or_incomplete"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed when terminal outcome is ACCEPTED not VERIFIED (edge)", () => {
+    const history = sampleHistory();
+    history.terminal = {
+      outcome: "ACCEPTED" as "VERIFIED",
+      applyAttemptCount: 1,
+      operationId: "op-1",
+    };
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_terminal_missing_or_incomplete"),
+      ),
+    ).toBe(true);
+  });
+
   it("fails closed when terminal outcome is not VERIFIED (edge)", () => {
     const history = sampleHistory();
     history.terminal = {
