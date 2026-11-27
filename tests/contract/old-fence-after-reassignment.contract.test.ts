@@ -155,6 +155,7 @@ describe("contract: T-X024 old fence after reassignment", () => {
     expect(art.summary).toMatch(/ASSIGNED_CASE_OK/);
     expect(art.summary).toMatch(/ASSIGNED_CASE_REFUSED/);
     expect(art.summary).toMatch(/Post-succeed old A bind denied phase fence/);
+    expect(art.summary).toMatch(/Post-succeed old A mark denied phase fence/);
     expect(art.summary).toMatch(/Active holder operation mismatch/);
     expect(art.summary).toMatch(/Post-succeed lease cleared fenceCause=no_holder/);
     expect(art.summary).toMatch(/Post-succeed claimLease refused/);

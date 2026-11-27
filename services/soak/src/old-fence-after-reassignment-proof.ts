@@ -30,6 +30,7 @@
  * Hillclimb O11: ASSIGNED_CASE_OK only T-X024; post-succeed bind phase fence.
  * Hillclimb O12 (fixture-wipe15): COHORT2_MERGE_HOLD_OK; post-fail bind phase fence.
  * Hillclimb O13 (wipe15 wake): ASSIGNED_COHORT_SLOT_OK; post-fail mark phase fence.
+ * Hillclimb O14 (Slot M M15): post-succeed old A mark denied phase fence.
  */
 
 import { randomUUID } from "node:crypto";
@@ -745,6 +746,28 @@ export async function proofOldFenceAfterReassignment(
   if (!postSucceedBindDenied) {
     passed = false;
     details.push("Post-succeed old A bind unexpectedly succeeded");
+  }
+  let postSucceedMarkDenied = false;
+  try {
+    await store.markEffectPending({
+      workflowId,
+      operationId: `${operationId}-post-succeed-mark`,
+      holder: workerA,
+      nowIso: tAfterExpiry,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/must be leased/i.test(msg)) {
+      postSucceedMarkDenied = true;
+      details.push(`Post-succeed old A mark denied phase fence: ${msg}`);
+    } else {
+      passed = false;
+      details.push(`Post-succeed mark unexpected error: ${msg}`);
+    }
+  }
+  if (!postSucceedMarkDenied) {
+    passed = false;
+    details.push("Post-succeed old A mark unexpectedly succeeded");
   }
 
   // 6. Side workflow: original holder self-reclaim after own expiry (before foreign).
