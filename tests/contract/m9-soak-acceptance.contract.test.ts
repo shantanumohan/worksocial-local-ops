@@ -9,10 +9,13 @@
  * T-US-75 fixture ACCEPTED only via EMERGENCY_STOP_AT_COMMIT.
  * T-X005 fixture ACCEPTED only via FORGED_BROWSER_ROLE_IGNORED.
  * T-X006 fixture ACCEPTED only via CROSS_WORKSPACE_REFERENCE_DENIED.
- * T-X019/T-US-75 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED. */import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
+ * T-X019/T-US-75 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED.
+ */
+import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   AcceptanceCaseStatus,
   AcceptanceEnvironment,
@@ -26,6 +29,8 @@ import {
   createSoakService,
   runSoakRecoveryHarness,
 } from "@worksocial/soak";
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 describe("contract: M9 soak / acceptance evidence", () => {
   let dir: string;
@@ -258,5 +263,199 @@ describe("contract: M9 soak / acceptance evidence", () => {
       evidenceArtifactId: "x",
     });
     expect(bad.ok).toBe(false);
+  });
+
+  it("T-X029 fixture artifact names explicit rebind honesty (ACCEPTED ≠ VERIFIED)", () => {
+    const artPath = resolve(
+      repoRoot,
+      "tests/acceptance-evidence/fixture/art-fixture-t-x029.json",
+    );
+    const art = JSON.parse(readFileSync(artPath, "utf8")) as {
+      artifactId: string;
+      caseId: string;
+      environment: string;
+      redacted: boolean;
+      summary: string;
+      liveProviderSuccessClaimed: boolean;
+      externalEffects: string;
+      proofKinds: string[];
+      evidenceRef: string;
+      uniqueSourceArtifactId: string;
+      createdAtIso: string;
+    };
+    expect(art.artifactId).toBe("art-fixture-t-x029");
+    expect(art.createdAtIso).toMatch(/^2026-/);
+    expect(art.uniqueSourceArtifactId).toMatch(/^art-fixture-t-x029-/);
+    expect(art.evidenceRef).toBe("soak/evidence/art-fixture-t-x029.json");
+    expect(art.caseId).toBe("T-X029");
+    expect(art.environment).toBe("fixture");
+    expect(art.redacted).toBe(true);
+    expect(art.proofKinds).toEqual(["explicit_account_rebind"]);
+    expect(art.summary).toMatch(/Fixture ACCEPTED/);
+    expect(art.summary).not.toMatch(/Fixture VERIFIED/);
+    expect(art.summary).toContain("ACCEPTED≠VERIFIED");
+    expect(art.liveProviderSuccessClaimed).toBe(false);
+    expect(art.externalEffects).toBe("NONE");
+    expect(art.summary).toContain("REBIND_REQUIRED");
+    expect(art.summary).toContain("ACCOUNT_IDENTITY_REQUIRED");
+    expect(art.summary).toContain("LIVE_TRANSPORT_NOT_WIRED");
+    expect(art.summary).toContain("liveProviderRevoke=NOT_WIRED");
+    expect(art.summary).toContain("liveProviderWiring=NOT_WIRED");
+    expect(art.summary).toContain("silentRefreshRejected=true");
+    expect(art.summary).toContain("ACCOUNT_LABEL_REQUIRED");
+    expect(art.summary).toContain("CONNECTION_ID_COLLISION");
+    expect(art.summary).toContain("CONNECTION_ROTATED_AWAY");
+    expect(art.summary).toContain("ROTATED_AWAY");
+    expect(art.summary).toContain("SAME_ACCOUNT");
+    expect(art.summary).toContain("catalogCaseId=T-X029");
+    expect(art.summary).toContain("liveProviderRevocation=NOT_WIRED");
+    expect(art.summary).toContain("proof=explicit_account_rebind");
+    expect(art.summary).toContain("applyAttemptCount=1");
+    expect(art.summary).toContain("Whitespace-only observedAccountLabel denied");
+    expect(art.summary).toContain("Same-account rebind correctly denied");
+    expect(art.summary).toContain("never silently VERIFIED for live");
+    expect(art.summary).toContain("Audit retained and redacted");
+    expect(art.summary).toContain("Measured broker putReference");
+    expect(art.summary).toContain("Silent different-account rotate denied");
+    expect(art.summary).toContain("Blank observedAccountLabel denied");
+    expect(art.summary).toContain("Whitespace-trimmed account labels match");
+    expect(art.summary).toContain("Case-fold account labels match");
+    expect(art.summary).toContain("Blank/whitespace newAccountLabel denied");
+    expect(art.summary).toContain("Fixture match with liveProviderWiring=WIRED");
+    expect(art.summary).toContain("Explicit rebind complete");
+    expect(art.summary).toContain("Successor connectionId collision rejected");
+    expect(art.summary).toContain("Old connection leases denied");
+    expect(art.summary).toContain("New connection lease granted");
+    expect(art.summary).toContain("no secret material in records");
+    expect(art.summary).toContain("Token rotates to different account");
+    expect(art.summary).toContain("applyCount=1");
+    expect(art.summary).toContain("not treated as transparent refresh");
+    expect(art.summary).toContain("no silent different-account bind");
+    expect(art.summary).toContain("intentional fold");
+    expect(art.summary).toContain("no invented live revoke/rebind");
+    expect(art.summary).toContain("use rotate for same-account refresh");
+    expect(art.summary).toContain("liveProviderSuccessClaimed=false");
+    expect(art.summary).toContain("honesty NOT_WIRED/NONE");
+    expect(art.summary).toContain("silent SAME_ACCOUNT allowed");
+    expect(art.summary).toContain("during rebind");
+    expect(art.summary).toContain("Seeded connection");
+    expect(art.summary).toMatch(/leaseId=lease-[0-9a-f-]+/);
+    expect(art.summary).toContain("fixture-account-alpha");
+    expect(art.summary).toContain("fixture-account-beta");
+    expect(art.summary).toMatch(/conn-old-rebind-[0-9a-f]+→ROTATED_AWAY/);
+    expect(art.summary).toContain("externalEffects=NONE liveProviderWiring=NOT_WIRED");
+    expect(art.summary).toMatch(
+      /Successor connectionId collision rejected \(CONNECTION_ID_COLLISION\)/,
+    );
+    expect(art.summary).toMatch(/conn-new-rebind-[0-9a-f]+/);
+    expect(art.summary).toMatch(
+      /Old connection leases denied \(CONNECTION_ROTATED_AWAY\)/,
+    );
+    expect(art.summary).toContain("honesty externalEffects=NONE");
+    expect(art.summary).toContain(
+      "ACCEPTED≠VERIFIED — never silently VERIFIED for live",
+    );
+    expect(art.summary).toContain("proof=explicit_account_rebind applyCount=1");
+    expect(art.summary).toMatch(
+      /Seeded connection=conn-old-rebind-[0-9a-f]+ account=fixture-account-alpha/,
+    );
+    expect(art.summary).toMatch(
+      /Explicit rebind complete old=conn-old-rebind-[0-9a-f]+→ROTATED_AWAY new=conn-new-rebind-[0-9a-f]+ account=fixture-account-beta/,
+    );
+    expect(art.summary).toMatch(
+      /silentRefreshRejected=true catalogCaseId=T-X029 liveProviderRevoke=NOT_WIRED externalEffects=NONE/,
+    );
+    expect(art.summary).toMatch(
+      /Silent different-account rotate denied \(REBIND_REQUIRED\)/,
+    );
+    expect(art.summary).toMatch(
+      /Fixture ACCEPTED for T-X029 \(Token rotates to different account\)/,
+    );
+    expect(art.summary).toMatch(
+      /Blank observedAccountLabel denied \(ACCOUNT_IDENTITY_REQUIRED\) — no silent different-account bind/,
+    );
+    expect(art.summary).toMatch(
+      /Measured broker putReference during rebind applyAttemptCount=1/,
+    );
+    expect(art.summary).toMatch(
+      /New connection lease granted leaseId=lease-[0-9a-f-]+/,
+    );
+    expect(art.summary).toMatch(
+      /proof=explicit_account_rebind applyCount=1 :: Seeded connection=/,
+    );
+    expect(art.summary).toMatch(
+      /Whitespace-only observedAccountLabel denied \(ACCOUNT_IDENTITY_REQUIRED\)/,
+    );
+    expect(art.summary).toMatch(
+      /Fixture match with liveProviderWiring=WIRED → LIVE_TRANSPORT_NOT_WIRED; no invented live revoke\/rebind/,
+    );
+    expect(art.summary).toMatch(
+      /Same-account rebind correctly denied \(use rotate for same-account refresh\)/,
+    );
+    expect(art.summary).toMatch(
+      /Silent different-account rotate denied \(REBIND_REQUIRED\) — not treated as transparent refresh/,
+    );
+    expect(art.summary).toMatch(
+      /Whitespace-trimmed account labels match → silent SAME_ACCOUNT allowed; honesty externalEffects=NONE liveProviderWiring=NOT_WIRED/,
+    );
+    expect(art.summary).toMatch(
+      /Case-fold account labels match → silent SAME_ACCOUNT \(intentional fold\)/,
+    );
+    expect(art.summary).toMatch(
+      /Audit retained and redacted; no secret material in records/,
+    );
+    expect(art.summary).toMatch(
+      /Blank\/whitespace newAccountLabel denied \(ACCOUNT_LABEL_REQUIRED\); honesty NOT_WIRED\/NONE/,
+    );
+    expect(art.summary).toMatch(
+      /liveProviderRevocation=NOT_WIRED externalEffects=NONE liveProviderWiring=NOT_WIRED ACCEPTED≠VERIFIED — never silently VERIFIED for live/,
+    );
+    expect(art.summary).toMatch(
+      /liveProviderSuccessClaimed=false externalEffects=NONE$/,
+    );
+    expect(art.summary).toMatch(
+      /Successor connectionId collision rejected \(CONNECTION_ID_COLLISION\) \| Old connection leases denied/,
+    );
+    expect(art.summary).toMatch(
+      /Old connection leases denied \(CONNECTION_ROTATED_AWAY\) \| New connection lease granted/,
+    );
+    expect(art.summary).toMatch(
+      /conn-old-rebind-([0-9a-f]+)→ROTATED_AWAY new=conn-new-rebind-\1 account=fixture-account-beta/,
+    );
+    expect(art.summary).toMatch(
+      /not treated as transparent refresh \| Blank observedAccountLabel denied/,
+    );
+    expect(art.summary).toMatch(
+      /for live\nliveProviderSuccessClaimed=false externalEffects=NONE/,
+    );
+    expect(art.summary).toMatch(
+      /applyAttemptCount=1 \| Successor connectionId collision rejected/,
+    );
+    expect(art.summary).toMatch(
+      /no silent different-account bind \| Whitespace-only observedAccountLabel denied/,
+    );
+    expect(art.summary).toMatch(
+      /account=fixture-account-beta \| silentRefreshRejected=true catalogCaseId=T-X029/,
+    );
+    expect(art.summary).toMatch(
+      /during rebind applyAttemptCount=1 \| Successor connectionId collision rejected \(CONNECTION_ID_COLLISION\)/,
+    );
+    expect(art.summary).toMatch(
+      /\(ACCOUNT_IDENTITY_REQUIRED\) \| Whitespace-trimmed account labels match/,
+    );
+    expect(art.summary).toMatch(
+      /no secret material in records \| liveProviderRevocation=NOT_WIRED/,
+    );
+    expect(art.summary).toMatch(
+      /liveProviderRevoke=NOT_WIRED externalEffects=NONE \| Measured broker putReference/,
+    );
+    expect(art.summary).toMatch(
+      /\(ACCOUNT_LABEL_REQUIRED\); honesty NOT_WIRED\/NONE \| Fixture match with liveProviderWiring=WIRED/,
+    );
+    // K27: fence explicit rebind proof kind against silent VERIFIED drift
+    expect(art.proofKinds).not.toContain("VERIFIED");
+    expect(art.summary).toMatch(
+      /New connection lease granted leaseId=lease-[0-9a-f-]+ \| Same-account rebind correctly denied/,
+    );
   });
 });
