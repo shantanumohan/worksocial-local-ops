@@ -8,6 +8,8 @@
 import { randomUUID } from "node:crypto";
 import {
   SoakProofKind,
+  assertCustomerEvalRedactionDecisionHonest,
+  assertCustomerEvalRedactionIdempotent,
   assertEvalPromptHasNoCustomerPii,
   buildEvalSafePromptFromPayload,
   prepareCustomerDataForEvaluation,
@@ -127,6 +129,47 @@ export function proofCustomerDataEvalRedactionBlocks(
   } else {
     passed = false;
     details.push(`raw passthrough unexpectedly ${JSON.stringify(raw)}`);
+  }
+
+  // 2a. Simultaneous live VERIFIED + live fleet refused.
+  const dualLive = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    claimLiveVerified: true,
+    requestLiveEvalFleet: true,
+  });
+  if (
+    !dualLive.allowed &&
+    dualLive.code === "CUSTOMER_DATA_LEAK_BLOCKED" &&
+    dualLive.reasons.some((r) => /LIVE_CLAIM_REFUSED/.test(r))
+  ) {
+    details.push(
+      "simultaneous claimLiveVerified+requestLiveEvalFleet → LIVE_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(`dual live claims unexpectedly ${JSON.stringify(dualLive)}`);
+  }
+
+  const idempotent = assertCustomerEvalRedactionIdempotent({
+    source,
+    mode: "redact",
+  });
+  if (idempotent.ok) {
+    details.push("reapply redact path idempotent (code/payload fields stable)");
+  } else {
+    passed = false;
+    details.push(`idempotent redact failed: ${idempotent.reasons.join("; ")}`);
+  }
+
+  if (redacted.allowed) {
+    const honest = assertCustomerEvalRedactionDecisionHonest(redacted);
+    if (honest.ok) {
+      details.push("fixture decision honesty (liveEvalWiring/externalEffects)");
+    } else {
+      passed = false;
+      details.push(`honesty check failed: ${honest.reasons.join("; ")}`);
+    }
   }
 
   // 2b. Live VERIFIED / live fleet claims refused.

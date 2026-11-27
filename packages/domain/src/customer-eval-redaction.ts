@@ -194,6 +194,12 @@ export function prepareCustomerDataForEvaluation(input: {
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
 
+  if (input.claimLiveVerified === true && input.requestLiveEvalFleet === true) {
+    return blockedLeak([
+      "Simultaneous live VERIFIED and live-fleet claims refused — LIVE_CLAIM_REFUSED (T-X072)",
+    ]);
+  }
+
   if (input.claimLiveVerified === true) {
     return blockedLeak([
       "Live VERIFIED customer-eval claims are forbidden — fixture ACCEPTED only (T-X072)",
@@ -316,6 +322,94 @@ export function assertEvalPromptHasNoCustomerPii(
     code: "EVAL_PROMPT_CLEAN",
     reasons: ["Evaluation prompt has no raw customer identifiers"],
     liveEvalWiring: CUSTOMER_EVAL_LIVE_WIRING,
+  };
+}
+
+/** Idempotent re-apply of the same source/mode must not drift codes or redacted payload shape. */
+export function assertCustomerEvalRedactionIdempotent(
+  input: Parameters<typeof prepareCustomerDataForEvaluation>[0],
+): { ok: boolean; reasons: string[] } {
+  const first = prepareCustomerDataForEvaluation(input);
+  const second = prepareCustomerDataForEvaluation(input);
+  const reasons: string[] = [];
+
+  if (first.allowed !== second.allowed) {
+    reasons.push("reapply allowed drifted");
+  }
+  if (first.code !== second.code) {
+    reasons.push("reapply code drifted");
+  }
+  if (first.liveEvalWiring !== second.liveEvalWiring) {
+    reasons.push("reapply liveEvalWiring drifted");
+  }
+  if (
+    first.liveProviderSuccessClaimed !== second.liveProviderSuccessClaimed
+  ) {
+    reasons.push("reapply liveProviderSuccessClaimed drifted");
+  }
+
+  if (first.allowed && second.allowed && first.payload && second.payload) {
+    if (
+      first.payload.redactedFields.join(",") !==
+      second.payload.redactedFields.join(",")
+    ) {
+      reasons.push("reapply redactedFields drifted");
+    }
+    if (first.payload.messageBody !== second.payload.messageBody) {
+      reasons.push("reapply messageBody drifted");
+    }
+    if (first.payload.intentLabel !== second.payload.intentLabel) {
+      reasons.push("reapply intentLabel drifted");
+    }
+    if (first.payload.conversationId !== second.payload.conversationId) {
+      reasons.push("reapply conversationId drifted");
+    }
+  }
+
+  if (
+    !first.allowed &&
+    !second.allowed &&
+    first.reasons.join("|") !== second.reasons.join("|")
+  ) {
+    reasons.push("reapply block reasons drifted");
+  }
+
+  return { ok: reasons.length === 0, reasons };
+}
+
+/**
+ * Refuse dishonest post-hoc tampering on fixture decisions (live success scrub).
+ */
+export function assertCustomerEvalRedactionDecisionHonest(
+  decision: CustomerEvalRedactionDecision,
+): { ok: boolean; code: "HONEST" | "DISHONEST_LIVE_CLAIM"; reasons: string[] } {
+  if (decision.liveProviderSuccessClaimed !== false) {
+    return {
+      ok: false,
+      code: "DISHONEST_LIVE_CLAIM",
+      reasons: [
+        "liveProviderSuccessClaimed must stay false on T-X072 fixture decisions",
+      ],
+    };
+  }
+  if (decision.liveEvalWiring !== CUSTOMER_EVAL_LIVE_WIRING) {
+    return {
+      ok: false,
+      code: "DISHONEST_LIVE_CLAIM",
+      reasons: ["liveEvalWiring must stay NOT_WIRED (T-X072)"],
+    };
+  }
+  if (decision.externalEffects !== "NONE") {
+    return {
+      ok: false,
+      code: "DISHONEST_LIVE_CLAIM",
+      reasons: ["externalEffects must stay NONE (T-X072)"],
+    };
+  }
+  return {
+    ok: true,
+    code: "HONEST",
+    reasons: ["fixture decision fields honest"],
   };
 }
 

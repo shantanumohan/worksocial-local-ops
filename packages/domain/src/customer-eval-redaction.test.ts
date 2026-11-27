@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   CUSTOMER_EVAL_LIVE_WIRING,
+  assertCustomerEvalRedactionDecisionHonest,
+  assertCustomerEvalRedactionIdempotent,
   assertEvalPromptHasNoCustomerPii,
   buildEvalSafePromptFromPayload,
   containsRawCustomerPii,
@@ -113,6 +115,43 @@ describe("customer eval redaction (T-X072)", () => {
     expect(decision.payload?.customerPhone).toBeNull();
     expect(decision.payload?.redactedFields).toEqual([]);
     expect(decision.reasons.some((r) => /No identifiable/.test(r))).toBe(true);
+  });
+
+  it("refuses simultaneous claimLiveVerified and requestLiveEvalFleet", () => {
+    const dual = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      claimLiveVerified: true,
+      requestLiveEvalFleet: true,
+    });
+    expect(dual.allowed).toBe(false);
+    expect(dual.code).toBe("CUSTOMER_DATA_LEAK_BLOCKED");
+    expect(dual.reasons.some((r) => /LIVE_CLAIM_REFUSED/.test(r))).toBe(true);
+  });
+
+  it("reapply is idempotent for redact and block paths", () => {
+    const redactOk = assertCustomerEvalRedactionIdempotent({
+      source,
+      mode: "redact",
+    });
+    expect(redactOk.ok).toBe(true);
+    const rawBlock = assertCustomerEvalRedactionIdempotent({
+      source,
+      mode: "raw_passthrough",
+    });
+    expect(rawBlock.ok).toBe(true);
+
+    const first = prepareCustomerDataForEvaluation({ source, mode: "redact" });
+    if (!first.allowed || !first.payload) throw new Error("expected redact");
+    const tampered = {
+      ...first,
+      liveProviderSuccessClaimed: true as false,
+    };
+    const honesty = assertCustomerEvalRedactionDecisionHonest(
+      tampered as typeof first,
+    );
+    expect(honesty.ok).toBe(false);
+    expect(honesty.code).toBe("DISHONEST_LIVE_CLAIM");
   });
 
   it("refuses claimLiveVerified and requestLiveEvalFleet", () => {
