@@ -227,8 +227,16 @@ export function prepareCustomerDataForEvaluation(input: {
   allowPartialRedactionForEval?: boolean;
   /** Forbidden — redaction cannot be deferred until after eval consumes data. */
   deferCustomerRedactionUntilAfterEval?: boolean;
+  /** Forbidden — eval prompts must not strip redaction tokens to recover PII. */
+  stripRedactionTokensFromEvalPrompt?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.stripRedactionTokensFromEvalPrompt === true) {
+    return blockedLeak([
+      "Strip redaction tokens from eval prompt refused — T-X072",
+    ]);
+  }
 
   if (input.deferCustomerRedactionUntilAfterEval === true) {
     return blockedLeak([

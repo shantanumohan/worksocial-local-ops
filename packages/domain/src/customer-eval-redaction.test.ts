@@ -145,6 +145,16 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses stripRedactionTokensFromEvalPrompt", () => {
+    const strip = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      stripRedactionTokensFromEvalPrompt: true,
+    });
+    expect(strip.allowed).toBe(false);
+    expect(strip.reasons.some((r) => /Strip redaction tokens/.test(r))).toBe(true);
+  });
+
   it("refuses deferCustomerRedactionUntilAfterEval", () => {
     const deferred = prepareCustomerDataForEvaluation({
       source,
