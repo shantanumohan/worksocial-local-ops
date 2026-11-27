@@ -11,6 +11,7 @@
  * T-X006 fixture ACCEPTED only via CROSS_WORKSPACE_REFERENCE_DENIED.
  * T-X019/T-US-75 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED.
  * T-X028 fixture ACCEPTED only via ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE.
+ * T-X058 fixture ACCEPTED only via REPAIR_ATTEMPT_LIMIT_ESCALATED.
  * T-X029 fixture ACCEPTED only via EXPLICIT_ACCOUNT_REBIND.
  * T-X031 fixture ACCEPTED only via GA4_WRONG_PROPERTY_KIND_REFUSED.
  * T-X020 fixture ACCEPTED only via UNKNOWN_REMOTE_RECONCILE.
@@ -504,6 +505,66 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).toMatch(
       /Fixture ACCEPTED for T-X028 \(Actual cost exceeds estimate — overrun visible\)/,
     );
+    expect(art.proofKinds).not.toContain("VERIFIED");
+    expect(art.summary).toMatch(
+      /liveProviderSuccessClaimed=false externalEffects=NONE$/,
+    );
+  });
+
+  it("T-X058 fixture artifact names repair attempt limit escalate (ACCEPTED ≠ VERIFIED)", () => {
+    const artPath = resolve(
+      repoRoot,
+      "tests/acceptance-evidence/fixture/art-fixture-t-x058.json",
+    );
+    const art = JSON.parse(readFileSync(artPath, "utf8")) as {
+      artifactId: string;
+      caseId: string;
+      environment: string;
+      redacted: boolean;
+      summary: string;
+      liveProviderSuccessClaimed: boolean;
+      externalEffects: string;
+      proofKinds: string[];
+      evidenceRef: string;
+      uniqueSourceArtifactId: string;
+      createdAtIso: string;
+    };
+    expect(art.artifactId).toBe("art-fixture-t-x058");
+    expect(art.caseId).toBe("T-X058");
+    expect(art.environment).toBe("fixture");
+    expect(art.redacted).toBe(true);
+    expect(art.evidenceRef).toBe("soak/evidence/art-fixture-t-x058.json");
+    expect(art.proofKinds).toEqual(["repair_attempt_limit_escalated"]);
+    expect(art.summary).toMatch(/Fixture ACCEPTED/);
+    expect(art.summary).not.toMatch(/Fixture VERIFIED/);
+    expect(art.liveProviderSuccessClaimed).toBe(false);
+    expect(art.externalEffects).toBe("NONE");
+    expect(art.summary).toContain("proof=repair_attempt_limit_escalated");
+    expect(art.summary).toContain("MAX_REPAIR_ATTEMPTS=2");
+    expect(art.summary).toContain("ATTEMPT_LIMIT");
+    expect(art.summary).toContain("cmsRepairWiring=NOT_WIRED");
+    expect(art.summary).toMatch(/ticket status=ESCALATED/);
+    // P33 D1: within-limit RELEASED must not premature-escalate (post-#291 tip fence)
+    expect(art.summary).toContain("RELEASED_PENDING");
+    expect(art.summary).toMatch(/no premature escalate/);
+    // P33 D2: third attempt denied without recording — ATTEMPT_LIMIT path (wipe15 @578b1a08)
+    expect(art.summary).toContain("Third automatic attempt denied");
+    expect(art.summary).toMatch(/GATE_DENIED/);
+    expect(art.summary).toMatch(
+      /Fixture ACCEPTED for T-X058 \(Third automatic repair attempt — escalate\)/,
+    );
+    // P33 D3: attempts 1–2 recorded; third refused unrecorded (wipe15 @e969eb6e)
+    expect(art.summary).toContain("applyCount=1");
+    expect(art.summary).toContain("Attempt 1 recorded (TESTS_FAILED)");
+    expect(art.summary).toContain("Second automatic attempt allowed (at max)");
+    expect(art.summary).toMatch(/escalate without recording attempt/);
+    expect(art.summary).toMatch(/GATE_DENIED ×2 → ESCALATED/);
+    expect(art.uniqueSourceArtifactId).toMatch(/^art-fixture-t-x058-/);
+    // P33 D4: first/second attempt ledger + CMS honesty (wipe15 @e7226169)
+    expect(art.summary).toContain("First automatic attempt allowed");
+    expect(art.summary).toContain("Attempt 2 recorded");
+    expect(art.summary).toContain("CMS repair wiring NOT_WIRED");
+    expect(art.createdAtIso).toMatch(/^2026-/);
     expect(art.proofKinds).not.toContain("VERIFIED");
     expect(art.summary).toMatch(
       /liveProviderSuccessClaimed=false externalEffects=NONE$/,
