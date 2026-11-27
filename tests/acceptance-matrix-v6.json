@@ -2602,7 +2602,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x060",
-      "evidenceNote": "Fixture ACCEPTED via CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM (whitespace-normalized match; blank \u2192 INVALID_DIMENSION; mismatch \u2192 totalMinor=null; NOT_WIRED). ACCEPTED \u2260 sandbox/prod VERIFIED. externalEffects=NONE. ChatGPT Ads remains ACCESS_BLOCKED."
+      "evidenceNote": "Fixture ACCEPTED via CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM (whitespace-normalized match; blank/fractional/negative/unsafe/signed-zero minor \u2192 INVALID_DIMENSION; blank observationId \u2192 INVALID_DIMENSION G43; mismatch \u2192 totalMinor=null; NOT_WIRED). Slot G G44: liveClaim refuses signed-zero (-0) totalMinor/expectedTotalMinor PASS plus G42 blank-after-normalize dimensions, G41 negative expectedTotalMinor, G40 unsafe-integer, G39 negative totalMinor PASS, FALSE_AGGREGATED_DIMENSION_MISMATCH, FALSE_AGGREGATED_PASS/TOTAL_MISMATCH, silent-sum-on-mismatch. ACCEPTED \u2260 sandbox/prod VERIFIED. externalEffects=NONE."
     },
     {
       "id": "T-X061",

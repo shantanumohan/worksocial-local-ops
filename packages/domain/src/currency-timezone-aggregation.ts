@@ -8,9 +8,12 @@
  * a mismatch or a match against blanks. Live provider wiring: NOT_WIRED.
  * External effects: NONE. Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  *
- * Hillclimb G35: evaluateCurrencyTimezoneLiveClaim — refuse live VERIFIED /
+ * Hillclimb G35–G44: evaluateCurrencyTimezoneLiveClaim — refuse live VERIFIED /
  * silent-sum-on-mismatch claims; FALSE_AGGREGATED_PASS when claimed PASS
- * without measured AGGREGATED + totalMinor.
+ * without measured AGGREGATED + totalMinor. G36: dimension mismatch on PASS claim.
+ * G42: blank-after-normalize claimed/measured dimensions refuse PASS.
+ * G43: blank observationId → INVALID_DIMENSION (no silent sum).
+ * G44: signed-zero (-0) amountMinor / claim totals → refuse (not non-negative).
  */
 
 export type CurrencyTimezoneObservation = {
@@ -88,6 +91,23 @@ export function aggregateCurrencyTimezoneSeries(
     };
   }
 
+  const hasBlankObservationId = observations.some(
+    (o) => o.observationId.trim() === "",
+  );
+  if (hasBlankObservationId) {
+    return {
+      ok: false,
+      code: "INVALID_DIMENSION",
+      totalMinor: null,
+      currencies: [],
+      reportingTimezones: [],
+      reasons: [
+        "Blank observationId — refuse silent sum (T-X060 G43 wipe15)",
+      ],
+      ...honesty,
+    };
+  }
+
   const currencies = [
     ...new Set(observations.map((o) => normalizeCurrency(o.currency))),
   ];
@@ -153,10 +173,51 @@ export function aggregateCurrencyTimezoneSeries(
       ...honesty,
     };
   }
+  const hasNegativeMinor = observations.some((o) => o.amountMinor < 0);
+  if (hasNegativeMinor) {
+    return {
+      ok: false,
+      code: "INVALID_DIMENSION",
+      totalMinor: null,
+      currencies,
+      reportingTimezones,
+      reasons: [
+        "Negative amountMinor — refuse silent sum (T-X060 G38 wipe15)",
+      ],
+      ...honesty,
+    };
+  }
+  const hasSignedZeroMinor = observations.some((o) => Object.is(o.amountMinor, -0));
+  if (hasSignedZeroMinor) {
+    return {
+      ok: false,
+      code: "INVALID_DIMENSION",
+      totalMinor: null,
+      currencies,
+      reportingTimezones,
+      reasons: [
+        "Signed-zero (-0) amountMinor — refuse silent sum (T-X060 G44 wipe15)",
+      ],
+      ...honesty,
+    };
+  }
 
   const currency = currencies[0]!;
   const reportingTimezone = reportingTimezones[0]!;
   const totalMinor = observations.reduce((sum, o) => sum + o.amountMinor, 0);
+  if (!Number.isSafeInteger(totalMinor)) {
+    return {
+      ok: false,
+      code: "INVALID_DIMENSION",
+      totalMinor: null,
+      currencies,
+      reportingTimezones,
+      reasons: [
+        "Aggregated totalMinor exceeds safe integer range — refuse silent sum (T-X060 G37 wipe15)",
+      ],
+      ...honesty,
+    };
+  }
 
   return {
     ok: true,
@@ -184,6 +245,9 @@ export const CurrencyTimezoneLiveOutcome = {
   /** Wipe15 G35 edge: claimed PASS with measured total ≠ series sum. */
   FALSE_AGGREGATED_TOTAL_MISMATCH_REFUSED:
     "FALSE_AGGREGATED_TOTAL_MISMATCH_REFUSED",
+  /** G36: claimed AGGREGATED PASS with currency/timezone ≠ measured aggregate dimensions. */
+  FALSE_AGGREGATED_DIMENSION_MISMATCH_REFUSED:
+    "FALSE_AGGREGATED_DIMENSION_MISMATCH_REFUSED",
 } as const;
 
 export type CurrencyTimezoneLiveClaimDecision = {
@@ -234,6 +298,12 @@ export function evaluateCurrencyTimezoneLiveClaim(input: {
   totalMinor?: number | null;
   /** Measured sum from aggregateCurrencyTimezoneSeries — must match totalMinor for PASS. */
   expectedTotalMinor?: number;
+  /** G36 — measured aggregate dimensions (from series). */
+  measuredCurrency?: string;
+  measuredReportingTimezone?: string;
+  /** G36 — dimensions asserted on a false PASS claim. */
+  claimedCurrency?: string;
+  claimedReportingTimezone?: string;
 }): CurrencyTimezoneLiveClaimDecision | null {
   const honesty = currencyTimezoneHonesty();
   if (input.claimFixtureAcceptedIsVerified === true) {
@@ -301,6 +371,33 @@ export function evaluateCurrencyTimezoneLiveClaim(input: {
         ],
       );
     }
+    if (minor < 0) {
+      return liveClaimRefuse(
+        CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED,
+        [
+          "FALSE_AGGREGATED_PASS_REFUSED — totalMinor must be non-negative integer minor units (T-X060 G39 wipe15)",
+          `totalMinor=${minor} ACCEPTED≠VERIFIED`,
+        ],
+      );
+    }
+    if (Object.is(minor, -0)) {
+      return liveClaimRefuse(
+        CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED,
+        [
+          "FALSE_AGGREGATED_PASS_REFUSED — totalMinor must not be signed zero (-0) (T-X060 G44 wipe15)",
+          `totalMinor=-0 ACCEPTED≠VERIFIED`,
+        ],
+      );
+    }
+    if (!Number.isSafeInteger(minor)) {
+      return liveClaimRefuse(
+        CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED,
+        [
+          "FALSE_AGGREGATED_PASS_REFUSED — totalMinor exceeds safe integer range (T-X060 G40 wipe15)",
+          `totalMinor=${minor} ACCEPTED≠VERIFIED`,
+        ],
+      );
+    }
     if (input.expectedTotalMinor === undefined) {
       return liveClaimRefuse(
         CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED,
@@ -322,12 +419,107 @@ export function evaluateCurrencyTimezoneLiveClaim(input: {
         ],
       );
     }
+    if (input.expectedTotalMinor < 0) {
+      return liveClaimRefuse(
+        CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED,
+        [
+          "FALSE_AGGREGATED_PASS_REFUSED — expectedTotalMinor must be non-negative integer minor units (T-X060 G41 wipe15)",
+          `totalMinor=${minor} expectedTotalMinor=${input.expectedTotalMinor} ACCEPTED≠VERIFIED`,
+        ],
+      );
+    }
+    if (Object.is(input.expectedTotalMinor, -0)) {
+      return liveClaimRefuse(
+        CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED,
+        [
+          "FALSE_AGGREGATED_PASS_REFUSED — expectedTotalMinor must not be signed zero (-0) (T-X060 G44 wipe15)",
+          `totalMinor=${minor} expectedTotalMinor=-0 ACCEPTED≠VERIFIED`,
+        ],
+      );
+    }
+    if (!Number.isSafeInteger(input.expectedTotalMinor)) {
+      return liveClaimRefuse(
+        CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED,
+        [
+          "FALSE_AGGREGATED_PASS_REFUSED — expectedTotalMinor exceeds safe integer range (T-X060 G40 wipe15)",
+          `totalMinor=${minor} expectedTotalMinor=${input.expectedTotalMinor} ACCEPTED≠VERIFIED`,
+        ],
+      );
+    }
     if (minor !== input.expectedTotalMinor) {
       return liveClaimRefuse(
         CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_TOTAL_MISMATCH_REFUSED,
         [
           "FALSE_AGGREGATED_TOTAL_MISMATCH_REFUSED — claimed AGGREGATED PASS while totalMinor ≠ measured series sum (T-X060 G35 edge)",
           `totalMinor=${minor} expectedTotalMinor=${input.expectedTotalMinor} ACCEPTED≠VERIFIED`,
+        ],
+      );
+    }
+    const measuredCurrency =
+      input.measuredCurrency !== undefined
+        ? normalizeCurrency(input.measuredCurrency)
+        : undefined;
+    const measuredTz =
+      input.measuredReportingTimezone !== undefined
+        ? normalizeTimezone(input.measuredReportingTimezone)
+        : undefined;
+    const claimedCurrency =
+      input.claimedCurrency !== undefined
+        ? normalizeCurrency(input.claimedCurrency)
+        : undefined;
+    const claimedTz =
+      input.claimedReportingTimezone !== undefined
+        ? normalizeTimezone(input.claimedReportingTimezone)
+        : undefined;
+    if (
+      (claimedCurrency !== undefined && claimedCurrency === "") ||
+      (claimedTz !== undefined && claimedTz === "") ||
+      (measuredCurrency !== undefined && measuredCurrency === "") ||
+      (measuredTz !== undefined && measuredTz === "")
+    ) {
+      return liveClaimRefuse(
+        CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED,
+        [
+          "FALSE_AGGREGATED_PASS_REFUSED — blank currency/timezone after normalize cannot support AGGREGATED PASS (T-X060 G42 wipe15)",
+          `claimedCurrency=${claimedCurrency ?? "unset"} measuredCurrency=${measuredCurrency ?? "unset"} claimedReportingTimezone=${claimedTz ?? "unset"} measuredReportingTimezone=${measuredTz ?? "unset"} ACCEPTED≠VERIFIED`,
+        ],
+      );
+    }
+    if (
+      claimedCurrency !== undefined &&
+      measuredCurrency !== undefined &&
+      claimedCurrency !== measuredCurrency
+    ) {
+      return liveClaimRefuse(
+        CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_DIMENSION_MISMATCH_REFUSED,
+        [
+          "FALSE_AGGREGATED_DIMENSION_MISMATCH_REFUSED — claimed currency ≠ measured aggregate currency (T-X060 G36)",
+          `claimedCurrency=${claimedCurrency} measuredCurrency=${measuredCurrency} ACCEPTED≠VERIFIED`,
+        ],
+      );
+    }
+    if (
+      claimedTz !== undefined &&
+      measuredTz !== undefined &&
+      claimedTz !== measuredTz
+    ) {
+      return liveClaimRefuse(
+        CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_DIMENSION_MISMATCH_REFUSED,
+        [
+          "FALSE_AGGREGATED_DIMENSION_MISMATCH_REFUSED — claimed reportingTimezone ≠ measured aggregate timezone (T-X060 G36)",
+          `claimedReportingTimezone=${claimedTz} measuredReportingTimezone=${measuredTz} ACCEPTED≠VERIFIED`,
+        ],
+      );
+    }
+    if (
+      (claimedCurrency !== undefined && measuredCurrency === undefined) ||
+      (claimedTz !== undefined && measuredTz === undefined)
+    ) {
+      return liveClaimRefuse(
+        CurrencyTimezoneLiveOutcome.FALSE_AGGREGATED_PASS_REFUSED,
+        [
+          "FALSE_AGGREGATED_PASS_REFUSED — claimed dimensions without measured currency/timezone (T-X060 G36)",
+          `measuredCurrency=${measuredCurrency ?? "unmeasured"} measuredReportingTimezone=${measuredTz ?? "unmeasured"} ACCEPTED≠VERIFIED`,
         ],
       );
     }
