@@ -5,6 +5,7 @@ import {
   assertSelfApprovalRefusedAcrossSurfaces,
   createSelfApprovalDecisionLedger,
   evaluateSelfApprovalHonesty,
+  evaluateSelfApprovalCredentialBindingFailClosed,
   isAuthorActingAsReviewer,
 } from "./self-approval.js";
 import type { EffectProposal } from "./role-runtime.js";
@@ -406,5 +407,244 @@ describe("self-approval honesty (T-X018 / T-US-054)", () => {
     expect(fourteenth.idempotent).toBe(true);
     expect(fourteenth.ledger.entries).toHaveLength(1);
     expect(fourteenth.ledger.externalEffects).toBe("NONE");
+  });
+
+  it("I47 credential binding fail-closed on independent A25 path", () => {
+    const missing = evaluateSelfApprovalHonesty({
+      proposal: baseProposal(),
+      reviewerRoleId: "A25",
+      enforceCredentialBindingFailClosed: true,
+    });
+    expect(missing.code).toBe("SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED");
+    expect(missing.selfApprovalRejected).toBe(false);
+    expect(missing.externalEffects).toBe("NONE");
+
+    const raw = evaluateSelfApprovalHonesty({
+      proposal: baseProposal(),
+      reviewerRoleId: "A25",
+      reviewerCredentialRef: "AIza-not-broker",
+    });
+    expect(raw.code).toBe("SELF_APPROVAL_CREDENTIAL_RAW_REF_FORBIDDEN");
+
+    const ok = evaluateSelfApprovalHonesty({
+      proposal: baseProposal(),
+      reviewerRoleId: "A25",
+      reviewerCredentialRef: "broker:a25-review:fixture-ref-1",
+    });
+    expect(ok.code).toBe("INDEPENDENT_A25_OK");
+  });
+
+  it("wipe15 I48: nullish aliases and padded raw secret (T-X018)", () => {
+    const nullAlias = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: " null ",
+    });
+    expect(nullAlias.ok).toBe(false);
+    expect(nullAlias.code).toBe("SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED");
+
+    const brokerOnly = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:",
+    });
+    expect(brokerOnly.ok).toBe(false);
+    expect(brokerOnly.code).toBe("SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED");
+
+    const paddedRaw = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "  sk-padded-raw  ",
+    });
+    expect(paddedRaw.ok).toBe(false);
+    expect(paddedRaw.code).toBe("SELF_APPROVAL_CREDENTIAL_RAW_REF_FORBIDDEN");
+
+    const paddedOk = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "  broker:a25-review:fixture-ref-2  ",
+    });
+    expect(paddedOk.ok).toBe(true);
+    expect(paddedOk.externalEffects).toBe("NONE");
+  });
+
+  it("wipe15 I49: non-broker path and boolean-ish aliases (T-X018)", () => {
+    const vaultPath = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "vault:a25-review:fixture",
+    });
+    expect(vaultPath.ok).toBe(false);
+    expect(vaultPath.code).toBe("SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED");
+
+    const falseAlias = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: " NO ",
+    });
+    expect(falseAlias.ok).toBe(false);
+    expect(falseAlias.code).toBe("SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED");
+
+    const brokerOk = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25-review:fixture-ref-3",
+    });
+    expect(brokerOk.ok).toBe(true);
+  });
+
+  it("wipe15 I50: unsafe broker body and case-fold prefix (T-X018)", () => {
+    const traversal = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25:../escape",
+    });
+    expect(traversal.ok).toBe(false);
+    expect(traversal.code).toBe("SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED");
+
+    const upper = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "BROKER:a25-review:fixture-ref-4",
+    });
+    expect(upper.ok).toBe(true);
+    expect(upper.externalEffects).toBe("NONE");
+  });
+
+  it("wipe15 I51: smuggled broker body and skip bypass (T-X018)", () => {
+    const nested = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:broker:double-prefix",
+    });
+    expect(nested.ok).toBe(false);
+    expect(nested.code).toBe("SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED");
+
+    const urlSmuggle = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:https://not-allowed",
+    });
+    expect(urlSmuggle.ok).toBe(false);
+
+    const skip = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25-review:fixture-ref-5",
+      skipCredentialBindingCheck: true,
+    });
+    expect(skip.ok).toBe(false);
+    expect(skip.code).toBe("SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN");
+  });
+
+  it("wipe15 I52: control chars in broker body (T-X018)", () => {
+    const ctrl = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25-review:\nfixture",
+    });
+    expect(ctrl.ok).toBe(false);
+    expect(ctrl.code).toBe("SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED");
+
+    const honestySkip = evaluateSelfApprovalHonesty({
+      proposal: baseProposal(),
+      reviewerRoleId: "A25",
+      reviewerCredentialRef: "broker:a25-review:fixture-ref-6",
+      skipCredentialBindingCheck: true,
+    });
+    expect(honestySkip.code).toBe("SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN");
+  });
+
+  it("wipe15 I53: placeholder broker body and allowEmpty bypass (T-X018)", () => {
+    const placeholder = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:...---",
+    });
+    expect(placeholder.ok).toBe(false);
+    expect(placeholder.code).toBe("SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED");
+
+    const allowEmpty = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25-review:fixture-ref-7",
+      allowEmptyCredentialBinding: true,
+    });
+    expect(allowEmpty.ok).toBe(false);
+    expect(allowEmpty.code).toBe("SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN");
+
+    const digitsOnly = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:00042",
+    });
+    expect(digitsOnly.ok).toBe(false);
+    expect(digitsOnly.code).toBe("SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED");
+  });
+
+  it("wipe15 I55: invisible Unicode and optional bypass (T-X018)", () => {
+    const zwsp = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25\u200b-review:fixture",
+    });
+    expect(zwsp.ok).toBe(false);
+    expect(zwsp.code).toBe("SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED");
+
+    const optional = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25-review:fixture-ref-8",
+      treatCredentialBindingAsOptional: true,
+    });
+    expect(optional.ok).toBe(false);
+    expect(optional.code).toBe("SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN");
+  });
+
+  it("wipe15 I56: weak broker body and waive bypass (T-X018)", () => {
+    const atSign = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:reviewer@fixture",
+    });
+    expect(atSign.ok).toBe(false);
+
+    const short = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:ab",
+    });
+    expect(short.ok).toBe(false);
+
+    const waive = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25-review:fixture-ref-9",
+      waiveCredentialBinding: true,
+    });
+    expect(waive.code).toBe("SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN");
+  });
+
+  it("wipe15 I57: shell injection broker body post-#274 (T-X018)", () => {
+    const shell = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25-$(inject)",
+    });
+    expect(shell.ok).toBe(false);
+
+    const ignore = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25-review:fixture-ref-10",
+      ignoreCredentialBinding: true,
+    });
+    expect(ignore.code).toBe("SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN");
+  });
+
+  it("wipe15 I58: pipe/chain broker body post-#275 (T-X018)", () => {
+    const pipe = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25|cat /etc/passwd",
+    });
+    expect(pipe.ok).toBe(false);
+
+    const disable = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25-review:fixture-ref-11",
+      disableCredentialBinding: true,
+    });
+    expect(disable.code).toBe("SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN");
+  });
+
+  it("wipe15 I59: redirect broker body post-#277 (T-X018)", () => {
+    const redirect = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25>/tmp/leak",
+    });
+    expect(redirect.ok).toBe(false);
+
+    const omit = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25-review:fixture-ref-12",
+      omitCredentialBinding: true,
+    });
+    expect(omit.code).toBe("SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN");
+  });
+
+  it("wipe15 I60 TIMER ON_TIP: ampersand broker; deferred bypass (T-X018)", () => {
+    const amp = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25&background",
+    });
+    expect(amp.ok).toBe(false);
+
+    const deferred = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25-review:fixture-ref-13",
+      deferredCredentialBinding: true,
+    });
+    expect(deferred.code).toBe("SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN");
+  });
+
+  it("wipe15 I61: glob broker post-#278 (T-X018)", () => {
+    const glob = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25*",
+    });
+    expect(glob.ok).toBe(false);
+
+    const relax = evaluateSelfApprovalCredentialBindingFailClosed({
+      reviewerCredentialRef: "broker:a25-review:fixture-ref-14",
+      relaxCredentialBinding: true,
+    });
+    expect(relax.code).toBe("SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN");
   });
 });

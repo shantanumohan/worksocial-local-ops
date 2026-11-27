@@ -7,7 +7,7 @@
  *
  * Hillclimb: evaluateSelfApprovalHonesty + cross-surface refuse + A25
  * self-review + decision-ledger fence + stale REFUSED→APPROVED upgrade fence +
- * idempotent duplicate REFUSED append.
+ * idempotent duplicate REFUSED append; I47 credential binding fail-closed.
  */
 
 import { randomUUID } from "node:crypto";
@@ -20,6 +20,7 @@ import {
   createSelfApprovalDecisionLedger,
   evaluateIndependentReviewGate,
   evaluateSelfApprovalHonesty,
+  evaluateSelfApprovalCredentialBindingFailClosed,
   isAuthorActingAsReviewer,
   type EffectProposal,
   type SoakProofRecord,
@@ -358,6 +359,379 @@ export function proofSelfApprovalRejected(nowIso: string): SoakProofRecord {
     passed = false;
     details.push(
       `Idempotent duplicate unexpected first=${JSON.stringify(dupFirst)} second=${JSON.stringify(dupSecond)}`,
+    );
+  }
+
+  // 8. I47 — credential binding fail-closed on independent A25 path.
+  const credMissing = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: null,
+  });
+  const credRaw = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "sk-raw-not-broker",
+  });
+  const credBypass = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25-review:fixture-ref-1",
+    bypassCredentialBindingFailClosed: true,
+  });
+  const credOk = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25-review:fixture-ref-1",
+  });
+  const honestyCredEnforced = evaluateSelfApprovalHonesty({
+    proposal: baseProposal({ proposalId: "prop-cred-enforce" }),
+    reviewerRoleId: "A25",
+    enforceCredentialBindingFailClosed: true,
+    reviewerCredentialRef: "broker:a25-review:fixture-ref-1",
+  });
+  if (
+    !credMissing.ok &&
+    credMissing.code === "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED" &&
+    !credRaw.ok &&
+    credRaw.code === "SELF_APPROVAL_CREDENTIAL_RAW_REF_FORBIDDEN" &&
+    !credBypass.ok &&
+    credBypass.code === "SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN" &&
+    credOk.ok &&
+    honestyCredEnforced.code === "INDEPENDENT_A25_OK" &&
+    honestyCredEnforced.externalEffects === "NONE"
+  ) {
+    details.push(
+      "I47 credential binding fail-closed: empty/raw/bypass refused; broker ref ok with enforceCredentialBindingFailClosed (distinct from #43 rebind lane)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `I47 credential binding unexpected missing=${JSON.stringify(credMissing)} raw=${JSON.stringify(credRaw)} bypass=${JSON.stringify(credBypass)} ok=${JSON.stringify(credOk)} honesty=${JSON.stringify(honestyCredEnforced)}`,
+    );
+  }
+
+  // 9. wipe15 I48 — nullish aliases, incomplete broker:, padded raw/ok.
+  const i48Null = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: " undefined ",
+  });
+  const i48BrokerOnly = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:  ",
+  });
+  const i48PaddedRaw = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "  AIza-padded  ",
+  });
+  const i48PaddedOk = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "  broker:a25-review:fixture-ref-2  ",
+  });
+  if (
+    !i48Null.ok &&
+    i48Null.code === "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED" &&
+    !i48BrokerOnly.ok &&
+    !i48PaddedRaw.ok &&
+    i48PaddedRaw.code === "SELF_APPROVAL_CREDENTIAL_RAW_REF_FORBIDDEN" &&
+    i48PaddedOk.ok
+  ) {
+    details.push(
+      "wipe15 I48 credential retrain: nullish/incomplete broker refused; padded raw forbidden; trimmed broker ok",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `wipe15 I48 unexpected null=${JSON.stringify(i48Null)} brokerOnly=${JSON.stringify(i48BrokerOnly)} paddedRaw=${JSON.stringify(i48PaddedRaw)} paddedOk=${JSON.stringify(i48PaddedOk)}`,
+    );
+  }
+
+  // 10. wipe15 I49 — non-broker prefix and boolean-ish aliases.
+  const i49Vault = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "credential-broker:ref-only",
+  });
+  const i49NoAlias = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: " off ",
+  });
+  const i49Broker = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25-review:fixture-ref-3",
+  });
+  if (
+    !i49Vault.ok &&
+    i49Vault.code === "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED" &&
+    !i49NoAlias.ok &&
+    i49Broker.ok
+  ) {
+    details.push(
+      "wipe15 I49 credential train: non-broker: path refused; OFF alias fail-closed; broker: ok (distinct from T-X029 #43 rebind)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `wipe15 I49 unexpected vault=${JSON.stringify(i49Vault)} off=${JSON.stringify(i49NoAlias)} broker=${JSON.stringify(i49Broker)}`,
+    );
+  }
+
+  // 11. wipe15 I50 — unsafe broker body + case-fold BROKER: ok.
+  const i50Traverse = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:ref/../other",
+  });
+  const i50Upper = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "BROKER:a25-review:fixture-ref-4",
+  });
+  if (
+    !i50Traverse.ok &&
+    i50Traverse.code === "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED" &&
+    i50Upper.ok
+  ) {
+    details.push(
+      "wipe15 I50 credential train: traversal broker body refused; BROKER: case-fold ok (distinct from T-X030 #266 rate-limit)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `wipe15 I50 unexpected traverse=${JSON.stringify(i50Traverse)} upper=${JSON.stringify(i50Upper)}`,
+    );
+  }
+
+  // 12. wipe15 I51 — smuggled broker body + skipCredentialBindingCheck refused.
+  const i51Nested = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:broker:nested",
+  });
+  const i51Skip = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25-review:fixture-ref-5",
+    skipCredentialBindingCheck: true,
+  });
+  const i51Ok = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25-review:fixture-ref-5",
+  });
+  if (
+    !i51Nested.ok &&
+    !i51Skip.ok &&
+    i51Skip.code === "SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN" &&
+    i51Ok.ok
+  ) {
+    details.push(
+      "wipe15 I51 credential train: nested/URL broker smuggle refused; skipCredentialBindingCheck forbidden (distinct from T-X039 #268 denominators)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `wipe15 I51 unexpected nested=${JSON.stringify(i51Nested)} skip=${JSON.stringify(i51Skip)} ok=${JSON.stringify(i51Ok)}`,
+    );
+  }
+
+  // 13. wipe15 I52 — control chars in broker body; honesty skip path.
+  const i52Ctrl = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25:\ninj",
+  });
+  const i52Honesty = evaluateSelfApprovalHonesty({
+    proposal: baseProposal({ proposalId: "prop-i52-honesty" }),
+    reviewerRoleId: "A25",
+    reviewerCredentialRef: "broker:a25-review:fixture-ref-6",
+    skipCredentialBindingCheck: true,
+  });
+  if (
+    !i52Ctrl.ok &&
+    i52Ctrl.code === "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED" &&
+    i52Honesty.code === "SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN"
+  ) {
+    details.push(
+      "wipe15 I52 credential train: control chars refused; honesty skipCredentialBindingCheck forbidden (distinct from T-X011 #269 output bomb)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `wipe15 I52 unexpected ctrl=${JSON.stringify(i52Ctrl)} honesty=${JSON.stringify(i52Honesty)}`,
+    );
+  }
+
+  // 14. wipe15 I53 — placeholder broker body; allowEmpty bypass refused; I54 digits-only on tip-moved-272.
+  const i54Digits = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:999",
+  });
+  if (!i54Digits.ok && i54Digits.code === "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED") {
+    details.push(
+      "wipe15 I54 post-#272: digits-only broker body refused (distinct from T-X040 #272)",
+    );
+  } else {
+    passed = false;
+    details.push(`wipe15 I54 unexpected digits=${JSON.stringify(i54Digits)}`);
+  }
+
+  // 14b. wipe15 I53 — placeholder broker body; allowEmpty bypass refused.
+  const i53Placeholder = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:___...",
+  });
+  const i53AllowEmpty = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25-review:fixture-ref-7",
+    allowEmptyCredentialBinding: true,
+  });
+  const i53Ok = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25-review:fixture-ref-7",
+  });
+  if (
+    !i53Placeholder.ok &&
+    !i53AllowEmpty.ok &&
+    i53AllowEmpty.code === "SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN" &&
+    i53Ok.ok
+  ) {
+    details.push(
+      "wipe15 I53 credential train: placeholder broker body refused; allowEmptyCredentialBinding forbidden (distinct from T-X040 #272 exclusive)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `wipe15 I53 unexpected placeholder=${JSON.stringify(i53Placeholder)} allowEmpty=${JSON.stringify(i53AllowEmpty)} ok=${JSON.stringify(i53Ok)}`,
+    );
+  }
+
+  // 15. wipe15 I55 post-#273 — invisible Unicode; treatCredentialBindingAsOptional refused.
+  const i55Zwsp = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25\u200b:fixture",
+  });
+  const i55Optional = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25-review:fixture-ref-8",
+    treatCredentialBindingAsOptional: true,
+  });
+  if (
+    !i55Zwsp.ok &&
+    !i55Optional.ok &&
+    i55Optional.code === "SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN"
+  ) {
+    details.push(
+      "wipe15 I55 post-#273: invisible Unicode refused; treatCredentialBindingAsOptional forbidden (distinct from T-X033 #273)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `wipe15 I55 unexpected zwsp=${JSON.stringify(i55Zwsp)} optional=${JSON.stringify(i55Optional)}`,
+    );
+  }
+
+  // 16. wipe15 I56 — weak broker body; waiveCredentialBinding refused.
+  const i56At = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25@fixture",
+  });
+  const i56Waive = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25-review:fixture-ref-9",
+    waiveCredentialBinding: true,
+  });
+  if (
+    !i56At.ok &&
+    !i56Waive.ok &&
+    i56Waive.code === "SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN"
+  ) {
+    details.push(
+      "wipe15 I56 TIMER: @ / short broker refused; waiveCredentialBinding forbidden (exclusive #274 T-X042 not Slot I)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `wipe15 I56 unexpected at=${JSON.stringify(i56At)} waive=${JSON.stringify(i56Waive)}`,
+    );
+  }
+
+  // 17. wipe15 I57 post-#274 — shell injection; ignoreCredentialBinding refused.
+  const i57Shell = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25;rm -rf",
+  });
+  const i57Ignore = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25-review:fixture-ref-10",
+    ignoreCredentialBinding: true,
+  });
+  if (
+    !i57Shell.ok &&
+    !i57Ignore.ok &&
+    i57Ignore.code === "SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN"
+  ) {
+    details.push(
+      "wipe15 I57 tip-moved-274: shell-metachar broker refused; ignoreCredentialBinding forbidden (distinct from T-X042 #274)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `wipe15 I57 unexpected shell=${JSON.stringify(i57Shell)} ignore=${JSON.stringify(i57Ignore)}`,
+    );
+  }
+
+  // 18. wipe15 I58 post-#275 — pipe broker; disableCredentialBinding refused.
+  const i58Pipe = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25&&true",
+  });
+  const i58Disable = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25-review:fixture-ref-11",
+    disableCredentialBinding: true,
+  });
+  if (
+    !i58Pipe.ok &&
+    !i58Disable.ok &&
+    i58Disable.code === "SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN"
+  ) {
+    details.push(
+      "wipe15 I58 tip-moved-275: pipe/chain broker refused; disableCredentialBinding forbidden (distinct from #275)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `wipe15 I58 unexpected pipe=${JSON.stringify(i58Pipe)} disable=${JSON.stringify(i58Disable)}`,
+    );
+  }
+
+  // 19. wipe15 I59 post-#277 — redirect broker; omitCredentialBinding refused.
+  const i59Redirect = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25</dev/null",
+  });
+  const i59Omit = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25-review:fixture-ref-12",
+    omitCredentialBinding: true,
+  });
+  if (
+    !i59Redirect.ok &&
+    !i59Omit.ok &&
+    i59Omit.code === "SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN"
+  ) {
+    details.push(
+      "wipe15 I59 tip-moved-277: redirect broker refused; omitCredentialBinding forbidden (distinct from #277 T-X012)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `wipe15 I59 unexpected redirect=${JSON.stringify(i59Redirect)} omit=${JSON.stringify(i59Omit)}`,
+    );
+  }
+
+  // 20. wipe15 I60 TIMER ON_TIP 64e25ce8 — & broker; deferredCredentialBinding refused.
+  const i60Amp = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25&disown",
+  });
+  const i60Deferred = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25-review:fixture-ref-13",
+    deferredCredentialBinding: true,
+  });
+  if (
+    !i60Amp.ok &&
+    !i60Deferred.ok &&
+    i60Deferred.code === "SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN"
+  ) {
+    details.push(
+      "wipe15 I60 TIMER ON_TIP: ampersand broker refused; deferredCredentialBinding forbidden (exclusive #278 not Slot I)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `wipe15 I60 unexpected amp=${JSON.stringify(i60Amp)} deferred=${JSON.stringify(i60Deferred)}`,
+    );
+  }
+
+  // 21. wipe15 I61 post-#278 — glob broker; relaxCredentialBinding refused.
+  const i61Glob = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25*wildcard",
+  });
+  const i61Relax = evaluateSelfApprovalCredentialBindingFailClosed({
+    reviewerCredentialRef: "broker:a25-review:fixture-ref-14",
+    relaxCredentialBinding: true,
+  });
+  if (
+    !i61Glob.ok &&
+    !i61Relax.ok &&
+    i61Relax.code === "SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN"
+  ) {
+    details.push(
+      "wipe15 I61 tip-moved-278: glob/wildcard broker refused; relaxCredentialBinding forbidden (distinct from #278 T-X013)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `wipe15 I61 unexpected glob=${JSON.stringify(i61Glob)} relax=${JSON.stringify(i61Relax)}`,
     );
   }
 

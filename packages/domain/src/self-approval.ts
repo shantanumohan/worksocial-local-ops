@@ -7,6 +7,7 @@
  * upgrade fence refuses REFUSED→APPROVED for the same proposalId (no
  * invented SUCCESS; distinct from T-US-036/T-X019 and T-US-035/T-F18).
  * Live review wiring stays NOT_WIRED. External effects: NONE.
+ * I47: independent A25 credential binding fail-closed (broker ref required).
  * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
 
@@ -28,6 +29,9 @@ export type SelfApprovalDecisionCode =
   | "INDEPENDENT_A25_OK"
   | "SELF_APPROVAL_LEDGER_FENCE"
   | "SELF_APPROVAL_LEDGER_STALE_UPGRADE"
+  | "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED"
+  | "SELF_APPROVAL_CREDENTIAL_RAW_REF_FORBIDDEN"
+  | "SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN"
   | "INVALID_INPUT"
   | null;
 
@@ -80,9 +84,369 @@ function honestyBase(): Pick<
  * Classify a review attempt for T-X018 honesty: self-approval must be refused;
  * only independent A25 (author ≠ reviewer) can succeed.
  */
+function rawCredentialRefForbidden(ref: string): boolean {
+  const t = ref.trim();
+  return t.includes("sk-") || t.includes("AIza");
+}
+
+/** Wipe15 I48 — padded / string nullish aliases are not broker bindings. */
+function isLiteralNullishCredentialAlias(ref: string): boolean {
+  const t = ref.trim().toLowerCase();
+  return (
+    t === "null" ||
+    t === "undefined" ||
+    t === "none" ||
+    t === "nil" ||
+    t === "false" ||
+    t === "no" ||
+    t === "off" ||
+    t === "0"
+  );
+}
+
+function isBrokerPrefixedCredentialRef(ref: string): boolean {
+  return ref.trim().toLowerCase().startsWith("broker:");
+}
+
+function isIncompleteBrokerCredentialRef(ref: string): boolean {
+  const t = ref.trim();
+  if (!t.toLowerCase().startsWith("broker:")) return false;
+  const body = t.slice("broker:".length).trim();
+  return body.length === 0;
+}
+
+/** wipe15 I50 — refuse traversal / absolute broker bodies (fail-closed). */
+function isUnsafeBrokerCredentialRef(ref: string): boolean {
+  const t = ref.trim();
+  const lower = t.toLowerCase();
+  if (!lower.startsWith("broker:")) return false;
+  const body = t.slice(t.indexOf(":") + 1).trim();
+  return (
+    body.includes("..") ||
+    body.startsWith("/") ||
+    body.startsWith("\\") ||
+    body.includes("\0")
+  );
+}
+
+/** wipe15 I51 — nested broker / URL-encoded / scheme smuggling in broker body. */
+function hasInvisibleUnicodeInBrokerBody(ref: string): boolean {
+  const t = ref.trim();
+  const lower = t.toLowerCase();
+  if (!lower.startsWith("broker:")) return false;
+  const body = t.slice("broker:".length);
+  return /[\u200b\u200c\u200d\ufeff]/.test(body);
+}
+
+function hasControlCharsInBrokerBody(ref: string): boolean {
+  const t = ref.trim();
+  const lower = t.toLowerCase();
+  if (!lower.startsWith("broker:")) return false;
+  const body = t.slice("broker:".length);
+  return /[\x00-\x1f\x7f]/.test(body);
+}
+
+/** wipe15 I53 — placeholder-only broker bodies (dots/dashes/colons) refused. */
+function isPlaceholderBrokerCredentialRef(ref: string): boolean {
+  const t = ref.trim();
+  const lower = t.toLowerCase();
+  if (!lower.startsWith("broker:")) return false;
+  const body = t.slice("broker:".length).trim();
+  return (
+    (body.length > 0 && /^[.\-_:\s]+$/.test(body)) ||
+    (body.length > 0 && /^\d+$/.test(body))
+  );
+}
+
+/** wipe15 I56 — @-shaped / too-short broker bodies refused. */
+function hasShellInjectionInBrokerBody(ref: string): boolean {
+  const t = ref.trim();
+  const lower = t.toLowerCase();
+  if (!lower.startsWith("broker:")) return false;
+  const body = t.slice("broker:".length);
+  return (
+    body.includes("$(") ||
+    body.includes("${") ||
+    body.includes("`") ||
+    body.includes(";") ||
+    body.includes("|") ||
+    body.includes("&&") ||
+    body.includes("||") ||
+    body.includes(">") ||
+    body.includes("<") ||
+    body.includes("&") ||
+    body.includes("*")
+  );
+}
+
+function isWeakBrokerCredentialRef(ref: string): boolean {
+  const t = ref.trim();
+  const lower = t.toLowerCase();
+  if (!lower.startsWith("broker:")) return false;
+  const body = t.slice("broker:".length).trim();
+  return body.includes("@") || (body.length > 0 && body.length < 4);
+}
+
+function isSmuggledBrokerCredentialRef(ref: string): boolean {
+  const t = ref.trim();
+  const lower = t.toLowerCase();
+  if (!lower.startsWith("broker:")) return false;
+  const body = t.slice("broker:".length).trim().toLowerCase();
+  return (
+    body.startsWith("broker:") ||
+    body.includes("://") ||
+    body.includes("%2f") ||
+    body.includes("%2e")
+  );
+}
+
+/**
+ * I47 — Independent A25 review credential binding is fail-closed: broker ref
+ * required; raw secret shapes refused; bypass flags refused. NOT_WIRED / NONE.
+ */
+export function evaluateSelfApprovalCredentialBindingFailClosed(input: {
+  reviewerCredentialRef?: string | null;
+  bypassCredentialBindingFailClosed?: boolean;
+  claimLiveCredentialVerified?: boolean;
+  skipCredentialBindingCheck?: boolean;
+  allowEmptyCredentialBinding?: boolean;
+  treatCredentialBindingAsOptional?: boolean;
+  waiveCredentialBinding?: boolean;
+  ignoreCredentialBinding?: boolean;
+  disableCredentialBinding?: boolean;
+  omitCredentialBinding?: boolean;
+  deferredCredentialBinding?: boolean;
+  relaxCredentialBinding?: boolean;
+}): {
+  ok: boolean;
+  code:
+    | "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED"
+    | "SELF_APPROVAL_CREDENTIAL_RAW_REF_FORBIDDEN"
+    | "SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN"
+    | "INDEPENDENT_A25_OK";
+  reasons: string[];
+  liveReviewWiring: "NOT_WIRED";
+  liveProviderSuccessClaimed: false;
+  externalEffects: "NONE";
+} {
+  const trailer =
+    "liveReviewWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE";
+  if (
+    input.bypassCredentialBindingFailClosed === true ||
+    input.skipCredentialBindingCheck === true ||
+    input.allowEmptyCredentialBinding === true ||
+    input.treatCredentialBindingAsOptional === true ||
+    input.waiveCredentialBinding === true ||
+    input.ignoreCredentialBinding === true ||
+    input.disableCredentialBinding === true ||
+    input.omitCredentialBinding === true ||
+    input.deferredCredentialBinding === true ||
+    input.relaxCredentialBinding === true
+  ) {
+    return {
+      ok: false,
+      code: "SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN",
+      reasons: [
+        "credential binding bypass/skip flags forbidden (T-X018 I47/I51 fail-closed)",
+        trailer,
+      ],
+      liveReviewWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
+      externalEffects: "NONE",
+    };
+  }
+  if (input.claimLiveCredentialVerified === true) {
+    return {
+      ok: false,
+      code: "SELF_APPROVAL_CREDENTIAL_BYPASS_FORBIDDEN",
+      reasons: [
+        "claimLiveCredentialVerified=true refused on fixture-only credential binding (T-X018 I47)",
+        trailer,
+      ],
+      liveReviewWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
+      externalEffects: "NONE",
+    };
+  }
+  const ref = input.reviewerCredentialRef;
+  if (ref === undefined || ref === null || ref.trim() === "") {
+    return {
+      ok: false,
+      code: "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED",
+      reasons: [
+        "reviewerCredentialRef missing/empty → SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED (fail-closed)",
+        trailer,
+      ],
+      liveReviewWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
+      externalEffects: "NONE",
+    };
+  }
+  if (isLiteralNullishCredentialAlias(ref)) {
+    return {
+      ok: false,
+      code: "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED",
+      reasons: [
+        "reviewerCredentialRef nullish string alias refused (wipe15 I48 fail-closed)",
+        trailer,
+      ],
+      liveReviewWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
+      externalEffects: "NONE",
+    };
+  }
+  if (isIncompleteBrokerCredentialRef(ref)) {
+    return {
+      ok: false,
+      code: "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED",
+      reasons: [
+        "reviewerCredentialRef broker: prefix without body → SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED (I48)",
+        trailer,
+      ],
+      liveReviewWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
+      externalEffects: "NONE",
+    };
+  }
+  if (rawCredentialRefForbidden(ref)) {
+    return {
+      ok: false,
+      code: "SELF_APPROVAL_CREDENTIAL_RAW_REF_FORBIDDEN",
+      reasons: [
+        "reviewerCredentialRef must be broker-shaped; raw secret patterns forbidden (T-X018 I47)",
+        trailer,
+      ],
+      liveReviewWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
+      externalEffects: "NONE",
+    };
+  }
+  if (!isBrokerPrefixedCredentialRef(ref)) {
+    return {
+      ok: false,
+      code: "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED",
+      reasons: [
+        "reviewerCredentialRef must be broker:-prefixed (non-broker path refused; wipe15 I49)",
+        trailer,
+      ],
+      liveReviewWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
+      externalEffects: "NONE",
+    };
+  }
+  if (isUnsafeBrokerCredentialRef(ref)) {
+    return {
+      ok: false,
+      code: "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED",
+      reasons: [
+        "reviewerCredentialRef unsafe broker body (traversal/absolute) refused (wipe15 I50)",
+        trailer,
+      ],
+      liveReviewWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
+      externalEffects: "NONE",
+    };
+  }
+  if (hasInvisibleUnicodeInBrokerBody(ref)) {
+    return {
+      ok: false,
+      code: "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED",
+      reasons: [
+        "reviewerCredentialRef invisible Unicode in broker body refused (wipe15 I55)",
+        trailer,
+      ],
+      liveReviewWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
+      externalEffects: "NONE",
+    };
+  }
+  if (hasControlCharsInBrokerBody(ref)) {
+    return {
+      ok: false,
+      code: "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED",
+      reasons: [
+        "reviewerCredentialRef control chars in broker body refused (wipe15 I52)",
+        trailer,
+      ],
+      liveReviewWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
+      externalEffects: "NONE",
+    };
+  }
+  if (isSmuggledBrokerCredentialRef(ref)) {
+    return {
+      ok: false,
+      code: "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED",
+      reasons: [
+        "reviewerCredentialRef smuggled broker/URL body refused (wipe15 I51)",
+        trailer,
+      ],
+      liveReviewWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
+      externalEffects: "NONE",
+    };
+  }
+  if (isPlaceholderBrokerCredentialRef(ref)) {
+    return {
+      ok: false,
+      code: "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED",
+      reasons: [
+        "reviewerCredentialRef placeholder-only broker body refused (wipe15 I53)",
+        trailer,
+      ],
+      liveReviewWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
+      externalEffects: "NONE",
+    };
+  }
+  if (isWeakBrokerCredentialRef(ref)) {
+    return {
+      ok: false,
+      code: "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED",
+      reasons: [
+        "reviewerCredentialRef weak broker body (@ or too-short) refused (wipe15 I56)",
+        trailer,
+      ],
+      liveReviewWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
+      externalEffects: "NONE",
+    };
+  }
+  if (hasShellInjectionInBrokerBody(ref)) {
+    return {
+      ok: false,
+      code: "SELF_APPROVAL_CREDENTIAL_BINDING_REQUIRED",
+      reasons: [
+        "reviewerCredentialRef shell-metachar broker body refused (wipe15 I57–I60)",
+        trailer,
+      ],
+      liveReviewWiring: "NOT_WIRED",
+      liveProviderSuccessClaimed: false,
+      externalEffects: "NONE",
+    };
+  }
+  return {
+    ok: true,
+    code: "INDEPENDENT_A25_OK",
+    reasons: [
+      "Independent A25 credential binding ok (broker ref present)",
+      trailer,
+    ],
+    liveReviewWiring: "NOT_WIRED",
+    liveProviderSuccessClaimed: false,
+    externalEffects: "NONE",
+  };
+}
+
 export function evaluateSelfApprovalHonesty(input: {
   proposal: EffectProposal;
   reviewerRoleId?: AgentRoleId | null;
+  reviewerCredentialRef?: string | null;
+  bypassCredentialBindingFailClosed?: boolean;
+  claimLiveCredentialVerified?: boolean;
+  /** When true, independent A25 OK requires credential binding (I47). */
+  enforceCredentialBindingFailClosed?: boolean;
+  skipCredentialBindingCheck?: boolean;
 }): SelfApprovalHonestyDecision {
   const base = honestyBase();
 
@@ -153,6 +517,47 @@ export function evaluateSelfApprovalHonesty(input: {
       ],
       ...base,
     };
+  }
+
+  const enforce =
+    input.enforceCredentialBindingFailClosed === true ||
+    input.reviewerCredentialRef !== undefined ||
+    input.bypassCredentialBindingFailClosed === true ||
+    input.claimLiveCredentialVerified === true ||
+    input.skipCredentialBindingCheck === true;
+
+  if (enforce) {
+    const bindingInput: {
+      reviewerCredentialRef?: string | null;
+      bypassCredentialBindingFailClosed?: boolean;
+      claimLiveCredentialVerified?: boolean;
+      skipCredentialBindingCheck?: boolean;
+    } = {};
+    if (input.reviewerCredentialRef !== undefined) {
+      bindingInput.reviewerCredentialRef = input.reviewerCredentialRef;
+    }
+    if (input.bypassCredentialBindingFailClosed !== undefined) {
+      bindingInput.bypassCredentialBindingFailClosed =
+        input.bypassCredentialBindingFailClosed;
+    }
+    if (input.claimLiveCredentialVerified !== undefined) {
+      bindingInput.claimLiveCredentialVerified =
+        input.claimLiveCredentialVerified;
+    }
+    if (input.skipCredentialBindingCheck !== undefined) {
+      bindingInput.skipCredentialBindingCheck = input.skipCredentialBindingCheck;
+    }
+    const binding =
+      evaluateSelfApprovalCredentialBindingFailClosed(bindingInput);
+    if (!binding.ok) {
+      return {
+        allowed: true,
+        code: binding.code,
+        selfApprovalRejected: false,
+        reasons: binding.reasons,
+        ...base,
+      };
+    }
   }
 
   return {
