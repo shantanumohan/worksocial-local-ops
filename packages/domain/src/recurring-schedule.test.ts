@@ -576,4 +576,14 @@ describe("recurring-schedule (T-X015 DST)", () => {
     expect(parsed.keys).toEqual([]);
     expectHonesty(parsed);
   });
+
+  it("rejects NaN durable version field (T-X015 idle C22 edge)", () => {
+    const key = occurrenceKeyFor("sched-nanver", "2025-11-06", 9, 0);
+    const parsed = parseOccurrenceClaimDurableBody(
+      JSON.stringify({ version: Number.NaN, claimedKeys: [key] }),
+    );
+    expect(parsed.status).toBe(DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL);
+    expect(parsed.keys).toEqual([]);
+    expectHonesty(parsed);
+  });
 });
