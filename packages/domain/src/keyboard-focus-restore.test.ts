@@ -320,6 +320,16 @@ describe("keyboard focus restore (T-X061)", () => {
     expect(step.session.overlayOpen).toBe(true);
   });
 
+  it("evaluateKeyboardFocusRestoreReview passes with single focusable dialog (T48)", () => {
+    const result = evaluateKeyboardFocusRestoreReview({
+      triggerId: "btn-review",
+      dialogFocusables: ["dlg-only"],
+    });
+    expect(result.passed).toBe(true);
+    expect(result.restored.code).toBe("FOCUS_RESTORED");
+    expect(result.lost.code).toBe("FOCUS_LOST");
+  });
+
   it("evaluateKeyboardFocusRestoreReview passes open/trap/restore + lost control", () => {
     const result = evaluateKeyboardFocusRestoreReview({
       triggerId: "btn-review",
