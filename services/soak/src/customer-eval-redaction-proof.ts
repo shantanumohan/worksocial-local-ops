@@ -133,6 +133,23 @@ export function proofCustomerDataEvalRedactionBlocks(
     details.push(`raw passthrough unexpectedly ${JSON.stringify(raw)}`);
   }
 
+  const deferRedact = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    deferCustomerRedactionUntilAfterEval: true,
+  });
+  if (
+    !deferRedact.allowed &&
+    deferRedact.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push(
+      "deferCustomerRedactionUntilAfterEval → CUSTOMER_DATA_LEAK_BLOCKED",
+    );
+  } else {
+    passed = false;
+    details.push(`deferRedact unexpectedly ${JSON.stringify(deferRedact)}`);
+  }
+
   const partialRedact = prepareCustomerDataForEvaluation({
     source,
     mode: "redact",

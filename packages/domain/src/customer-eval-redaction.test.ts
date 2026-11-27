@@ -145,6 +145,18 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses deferCustomerRedactionUntilAfterEval", () => {
+    const deferred = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      deferCustomerRedactionUntilAfterEval: true,
+    });
+    expect(deferred.allowed).toBe(false);
+    expect(
+      deferred.reasons.some((r) => /Defer customer redaction/.test(r)),
+    ).toBe(true);
+  });
+
   it("refuses allowPartialRedactionForEval", () => {
     const partial = prepareCustomerDataForEvaluation({
       source,

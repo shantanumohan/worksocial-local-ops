@@ -225,8 +225,16 @@ export function prepareCustomerDataForEvaluation(input: {
   reuseStaleRedactedEvalPayload?: boolean;
   /** Forbidden — eval gate must not accept partial redaction short-cuts. */
   allowPartialRedactionForEval?: boolean;
+  /** Forbidden — redaction cannot be deferred until after eval consumes data. */
+  deferCustomerRedactionUntilAfterEval?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.deferCustomerRedactionUntilAfterEval === true) {
+    return blockedLeak([
+      "Defer customer redaction until after eval refused — pre-eval gate (T-X072)",
+    ]);
+  }
 
   if (input.allowPartialRedactionForEval === true) {
     return blockedLeak([
