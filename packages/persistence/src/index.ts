@@ -39,7 +39,10 @@ export {
 } from "./storage-roots.js";
 
 export {
+  HOST_LEASE_HELD_MESSAGE,
   acquireHostLease,
+  classifyWakeCatchupLeaseGap,
+  normalizeHostLeaseToken,
   isLeaseExpired,
   isLeaseHeldByGeneration,
   releaseHostLease,
@@ -48,6 +51,7 @@ export {
   type HostLeaseAcquireResult,
   type HostLeaseClock,
   type HostLeaseRecord,
+  type WakeCatchupLeaseGap,
 } from "./host-lease.js";
 
 export {

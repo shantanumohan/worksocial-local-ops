@@ -338,7 +338,7 @@ export function compileAcceptanceEvidence(
     `Compiled ${artifacts.length} redacted artifact(s); ACCEPTED=${caseResults.filter((c) => c.status === "ACCEPTED").length}`,
     "T-X066 fixture ACCEPTED only via BACKUP_OMIT_RECEIPT (every hop: omit receipts+providerEffects → restore ACCEPTED_PENDING localProvider=omitted → remote SoR reconcile without re-apply → verify matched applyCount=1 → retry providerCreated=false; not NO_DUPLICATE_EFFECTS / UNKNOWN_REMOTE_RECONCILE / RECOVER_ROTATE_RECONCILE; live NOT_WIRED)",
     "T-F24/T-US-047 fixture ACCEPTED only via RECOVER_ROTATE_RECONCILE (complete F24 evidence set)",
-    "T-US-002/T-X002 fixture ACCEPTED only via COMPETING_SUPERVISOR_LEASE (singleton host lease)",
+    "T-US-002/T-X002 fixture ACCEPTED only via COMPETING_SUPERVISOR_LEASE (singleton host lease; third competitor / generic LEASE_HELD)",
     "T-X018/T-US-054 fixture ACCEPTED only via SELF_APPROVAL_REJECTED (independent A25)",
     "T-X073 fixture ACCEPTED only via OFFBOARD_ACTIVE_TOKEN_RESIDUAL (incomplete until live revoke)",
     "T-US-060 fixture ACCEPTED only via EMERGENCY_STOP_AT_COMMIT (outbound stop at commit)",
