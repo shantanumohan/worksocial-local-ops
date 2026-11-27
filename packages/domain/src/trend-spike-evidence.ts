@@ -55,7 +55,11 @@ export type AssessTrendSpikeEvidenceResult = {
 };
 
 function isUsableSampleCount(sample: number, minSample: number): boolean {
-  return Number.isFinite(sample) && sample >= minSample;
+  return (
+    Number.isFinite(sample) &&
+    Number.isInteger(sample) &&
+    sample >= minSample
+  );
 }
 
 function honestyFields(): Pick<
@@ -89,18 +93,98 @@ export function assessTrendSpikeEvidence(
       ? input.currentValue / input.baselineValue
       : null;
 
-  if (
-    sample === null ||
-    sample === undefined ||
-    !isUsableSampleCount(sample, minSample)
-  ) {
+  if (sample === null || sample === undefined) {
     return {
       code: TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE,
       liftRatio,
       measuredSpike: false,
       researchTaskOnly: true,
       reason:
-        "Low-sample, missing, or non-finite trend sample — insufficient evidence; research task only, not a publish trigger",
+        "Missing trend sample — insufficient evidence; research task only, not a publish trigger",
+      ...honesty,
+    };
+  }
+
+  if (typeof sample === "bigint") {
+    return {
+      code: TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE,
+      liftRatio,
+      measuredSpike: false,
+      researchTaskOnly: true,
+      reason:
+        "BigInt trend sample count — insufficient evidence; plain integer counts only; research task only, not a publish trigger",
+      ...honesty,
+    };
+  }
+
+  if (typeof sample !== "number") {
+    return {
+      code: TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE,
+      liftRatio,
+      measuredSpike: false,
+      researchTaskOnly: true,
+      reason:
+        "Non-number trend sample type — insufficient evidence; integer counts only; research task only, not a publish trigger",
+      ...honesty,
+    };
+  }
+
+  if (!Number.isFinite(sample)) {
+    return {
+      code: TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE,
+      liftRatio,
+      measuredSpike: false,
+      researchTaskOnly: true,
+      reason:
+        "Non-finite trend sample — insufficient evidence; research task only, not a publish trigger",
+      ...honesty,
+    };
+  }
+
+  if (!Number.isInteger(sample)) {
+    return {
+      code: TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE,
+      liftRatio,
+      measuredSpike: false,
+      researchTaskOnly: true,
+      reason:
+        "Non-integer (fractional) trend sample count — insufficient evidence; integer counts only; research task only, not a publish trigger",
+      ...honesty,
+    };
+  }
+
+  if (sample < 0) {
+    return {
+      code: TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE,
+      liftRatio,
+      measuredSpike: false,
+      researchTaskOnly: true,
+      reason:
+        "Negative trend sample count — insufficient evidence; non-negative integer counts only; research task only, not a publish trigger",
+      ...honesty,
+    };
+  }
+
+  if (sample === 0) {
+    return {
+      code: TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE,
+      liftRatio,
+      measuredSpike: false,
+      researchTaskOnly: true,
+      reason:
+        "Zero trend sample count — missing observations; insufficient evidence; research task only, not a publish trigger",
+      ...honesty,
+    };
+  }
+
+  if (!isUsableSampleCount(sample, minSample)) {
+    return {
+      code: TrendSpikeDecisionCode.INSUFFICIENT_EVIDENCE,
+      liftRatio,
+      measuredSpike: false,
+      researchTaskOnly: true,
+      reason:
+        "Low-sample trend count below minimum — insufficient evidence; research task only, not a publish trigger",
       ...honesty,
     };
   }
@@ -172,6 +256,7 @@ export function isLowButPresentTrendSample(
   return (
     typeof sampleSize === "number" &&
     Number.isFinite(sampleSize) &&
+    Number.isInteger(sampleSize) &&
     sampleSize > 0 &&
     sampleSize < minSample
   );

@@ -3,13 +3,13 @@
   "caseId": "T-US-007",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-US-007 (Connect GA4 — ready-read and next sync)\nproof=connect_ga4_read_ready_next_sync applyCount=0 :: READ_READY nextSync=2026-11-22T19:21:00.000Z; property=100000007 site=site-fixture-main | Event dictionary edict-tus007-v1 mapped=1 gaps=2 | Event gaps explicit: purchase/booking: booking stream not mapped; tour_request/tour_booked: tour intent unmapped | Sample report req-sample-6a48b4a6 rows=2; debug≠deliveredConversion | Sample row dim=sessionDefaultChannelGroup metric=sessions value=7 coverage=fixture sample — not live metrics | Sample row dim=pagePathPlusQueryString metric=screenPageViews value=21 coverage=fixture sample — not live metrics | Three measurement outcomes distinct: debugOk / no measured receipt / explicit mapping gaps | WRITE save mode → WRITE_SAVE_REFUSED (read-only only) | LIVE property → LIVE_TRANSPORT_NOT_WIRED | UA property kind → WRONG_PROPERTY_KIND refuse | NOT_WIRED environment → ENVIRONMENT_NOT_READY | Write-capable analytics scope → WRITE_SCOPE_REFUSED | No gateway mutate — connection save is local fixture record only; applyAttemptCount=0 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-US-007 (Connect GA4 — ready-read and next sync)\nproof=connect_ga4_read_ready_next_sync applyCount=0 :: READ_READY nextSync=2026-11-22T19:21:00.000Z; property=100000007 site=site-fixture-main | Event dictionary edict-tus007-v1 mapped=1 gaps=2 | Event gaps explicit: purchase/booking: booking stream not mapped; tour_request/tour_booked: tour intent unmapped | Sample report req-sample-576b352f rows=2; debug≠deliveredConversion | Sample row dim=sessionDefaultChannelGroup metric=sessions value=7 coverage=fixture sample — not live metrics | Sample row dim=pagePathPlusQueryString metric=screenPageViews value=21 coverage=fixture sample — not live metrics | Three measurement outcomes distinct: debugOk / no measured receipt / explicit mapping gaps | WRITE save mode → WRITE_SAVE_REFUSED (read-only only) | LIVE property → LIVE_TRANSPORT_NOT_WIRED | UA property kind → WRONG_PROPERTY_KIND refuse | NOT_WIRED environment → ENVIRONMENT_NOT_READY | Write-capable analytics scope → WRITE_SCOPE_REFUSED | No gateway mutate — connection save is local fixture record only; applyAttemptCount=0 | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "connect_ga4_read_ready_next_sync"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-007.json",
-  "createdAtIso": "2026-11-27T16:18:43.346Z",
+  "createdAtIso": "2026-11-27T16:25:03.032Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-007-f45b160cfdc1"
+  "uniqueSourceArtifactId": "art-fixture-t-us-007-49cd06919268"
 }
