@@ -362,6 +362,7 @@ export {
   SELF_APPROVAL_RELATED_CASE_IDS,
   assertSelfApprovalRefusedAcrossSurfaces,
   evaluateSelfApprovalHonesty,
+  evaluateSelfApprovalCredentialBindingFailClosed,
   isAuthorActingAsReviewer,
   createSelfApprovalDecisionLedger,
   appendSelfApprovalLedgerEntry,
