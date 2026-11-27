@@ -162,6 +162,27 @@ export function proofCustomerDataEvalRedactionBlocks(
     details.push(`idempotent redact failed: ${idempotent.reasons.join("; ")}`);
   }
 
+  const idempotentRaw = assertCustomerEvalRedactionIdempotent({
+    source,
+    mode: "raw_passthrough",
+  });
+  const idempotentDualLive = assertCustomerEvalRedactionIdempotent({
+    source,
+    mode: "redact",
+    claimLiveVerified: true,
+    requestLiveEvalFleet: true,
+  });
+  if (idempotentRaw.ok && idempotentDualLive.ok) {
+    details.push(
+      "reapply idempotent on raw_passthrough block and dual-live refuse",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `idempotent block paths failed raw=${idempotentRaw.reasons} dual=${idempotentDualLive.reasons}`,
+    );
+  }
+
   if (redacted.allowed) {
     const honest = assertCustomerEvalRedactionDecisionHonest(redacted);
     if (honest.ok) {
