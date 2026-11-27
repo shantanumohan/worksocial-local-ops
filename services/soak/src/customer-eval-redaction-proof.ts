@@ -10,6 +10,7 @@ import {
   SoakProofKind,
   assertCustomerEvalRedactionDecisionHonest,
   assertCustomerEvalRedactionIdempotent,
+  reclaimCustomerEvalRedactionDecision,
   assertEvalPromptHasNoCustomerPii,
   buildEvalSafePromptFromPayload,
   prepareCustomerDataForEvaluation,
@@ -196,6 +197,19 @@ export function proofCustomerDataEvalRedactionBlocks(
     details.push(
       `idempotent block paths failed raw=${idempotentRaw.reasons} dual=${idempotentDualLive.reasons}`,
     );
+  }
+
+  if (redacted.allowed) {
+    const reclaim = reclaimCustomerEvalRedactionDecision(
+      { source, mode: "redact" },
+      redacted,
+    );
+    if (reclaim.ok) {
+      details.push("reclaimCustomerEvalRedactionDecision stable on redact path");
+    } else {
+      passed = false;
+      details.push(`reclaim redact failed: ${reclaim.reasons.join("; ")}`);
+    }
   }
 
   if (redacted.allowed) {

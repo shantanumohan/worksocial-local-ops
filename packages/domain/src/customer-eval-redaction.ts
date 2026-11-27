@@ -333,6 +333,51 @@ export function assertEvalPromptHasNoCustomerPii(
   };
 }
 
+/**
+ * Re-verify a prior fixture decision against a fresh prepare() — refuse reason/code drift.
+ */
+export function reclaimCustomerEvalRedactionDecision(
+  input: Parameters<typeof prepareCustomerDataForEvaluation>[0],
+  prior: CustomerEvalRedactionDecision,
+): { ok: boolean; reasons: string[] } {
+  const next = prepareCustomerDataForEvaluation(input);
+  const reasons: string[] = [];
+
+  if (prior.allowed !== next.allowed) {
+    reasons.push("reclaim allowed drifted");
+  }
+  if (prior.code !== next.code) {
+    reasons.push("reclaim code drifted");
+  }
+  if (prior.liveEvalWiring !== next.liveEvalWiring) {
+    reasons.push("reclaim liveEvalWiring drifted");
+  }
+  if (
+    prior.liveProviderSuccessClaimed !== next.liveProviderSuccessClaimed
+  ) {
+    reasons.push("reclaim liveProviderSuccessClaimed drifted");
+  }
+  if (
+    !prior.allowed &&
+    !next.allowed &&
+    prior.code === next.code &&
+    prior.reasons.join("|") !== next.reasons.join("|")
+  ) {
+    reasons.push("reclaim block reasons drifted");
+  }
+
+  if (prior.allowed && next.allowed && prior.payload && next.payload) {
+    if (prior.payload.messageBody !== next.payload.messageBody) {
+      reasons.push("reclaim messageBody drifted");
+    }
+    if (prior.payload.intentLabel !== next.payload.intentLabel) {
+      reasons.push("reclaim intentLabel drifted");
+    }
+  }
+
+  return { ok: reasons.length === 0, reasons };
+}
+
 /** Idempotent re-apply of the same source/mode must not drift codes or redacted payload shape. */
 export function assertCustomerEvalRedactionIdempotent(
   input: Parameters<typeof prepareCustomerDataForEvaluation>[0],

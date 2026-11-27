@@ -3,6 +3,7 @@ import {
   CUSTOMER_EVAL_LIVE_WIRING,
   assertCustomerEvalRedactionDecisionHonest,
   assertCustomerEvalRedactionIdempotent,
+  reclaimCustomerEvalRedactionDecision,
   assertEvalPromptHasNoCustomerPii,
   buildEvalSafePromptFromPayload,
   containsRawCustomerPii,
@@ -115,6 +116,32 @@ describe("customer eval redaction (T-X072)", () => {
     expect(decision.payload?.customerPhone).toBeNull();
     expect(decision.payload?.redactedFields).toEqual([]);
     expect(decision.reasons.some((r) => /No identifiable/.test(r))).toBe(true);
+  });
+
+  it("reclaim refuses tampered prior decision drift", () => {
+    const prior = prepareCustomerDataForEvaluation({ source, mode: "redact" });
+    expect(prior.allowed).toBe(true);
+    const ok = reclaimCustomerEvalRedactionDecision(
+      { source, mode: "redact" },
+      prior,
+    );
+    expect(ok.ok).toBe(true);
+
+    const blocked = prepareCustomerDataForEvaluation({
+      source,
+      mode: "raw_passthrough",
+    });
+    expect(blocked.allowed).toBe(false);
+    const tampered = {
+      ...blocked,
+      reasons: ["invented reason"],
+    };
+    const drift = reclaimCustomerEvalRedactionDecision(
+      { source, mode: "raw_passthrough" },
+      tampered,
+    );
+    expect(drift.ok).toBe(false);
+    expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
   it("refuses forceDeliverDespiteLeak", () => {

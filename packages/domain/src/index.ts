@@ -1285,6 +1285,7 @@ export {
 export {
   assertCustomerEvalRedactionDecisionHonest,
   assertCustomerEvalRedactionIdempotent,
+  reclaimCustomerEvalRedactionDecision,
   assertEvalPromptHasNoCustomerPii,
   buildEvalSafePromptFromPayload,
   containsRawCustomerPii,
