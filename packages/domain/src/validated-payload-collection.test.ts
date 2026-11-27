@@ -62,6 +62,158 @@ describe("validated payload collection (T-X070)", () => {
     expectHonesty(decision);
   });
 
+  it("rejects non-64-hex signature length (T-X070 B24)", () => {
+    const { body, signatureHex, eventId } = signedBody({
+      eventId: "evt-len",
+      kind: "lead.created",
+    });
+    const decision = evaluateValidatedPayloadCollection({
+      payload: {
+        eventId,
+        body,
+        signatureHex: signatureHex.slice(0, 63),
+      },
+      secret,
+      collect: () => ({ ok: true, recordId: "must-not-collect" }),
+    });
+    expect(decision.code).toBe("VALIDATION_FAILED");
+    expect(decision.collectionAttempted).toBe(false);
+    expectHonesty(decision);
+  });
+
+  it("rejects 65-char hex signature (one nibble past spec) (T-X070 B25)", () => {
+    const { body, signatureHex, eventId } = signedBody({
+      eventId: "evt-b25",
+      kind: "lead.created",
+    });
+    const decision = evaluateValidatedPayloadCollection({
+      payload: {
+        eventId,
+        body,
+        signatureHex: `${signatureHex}a`,
+      },
+      secret,
+      collect: () => ({ ok: true, recordId: "must-not-collect" }),
+    });
+    expect(decision.code).toBe("VALIDATION_FAILED");
+    expect(decision.collectionAttempted).toBe(false);
+    expectHonesty(decision);
+  });
+
+  it("rejects 62-char hex signature (two nibbles short) (T-X070 B26)", () => {
+    const { body, signatureHex, eventId } = signedBody({
+      eventId: "evt-b26",
+      kind: "lead.created",
+    });
+    const decision = evaluateValidatedPayloadCollection({
+      payload: {
+        eventId,
+        body,
+        signatureHex: signatureHex.slice(0, 62),
+      },
+      secret,
+      collect: () => ({ ok: true, recordId: "must-not-collect" }),
+    });
+    expect(decision.code).toBe("VALIDATION_FAILED");
+    expect(decision.collectionAttempted).toBe(false);
+    expectHonesty(decision);
+  });
+
+  it("rejects 61-char hex signature (three nibbles short) (T-X070 B27)", () => {
+    const { body, signatureHex, eventId } = signedBody({
+      eventId: "evt-b27",
+      kind: "lead.created",
+    });
+    const decision = evaluateValidatedPayloadCollection({
+      payload: {
+        eventId,
+        body,
+        signatureHex: signatureHex.slice(0, 61),
+      },
+      secret,
+      collect: () => ({ ok: true, recordId: "must-not-collect" }),
+    });
+    expect(decision.code).toBe("VALIDATION_FAILED");
+    expect(decision.collectionAttempted).toBe(false);
+    expectHonesty(decision);
+  });
+
+  it("rejects 60-char hex signature (four nibbles short) (T-X070 B28)", () => {
+    const { body, signatureHex, eventId } = signedBody({
+      eventId: "evt-b28",
+      kind: "lead.created",
+    });
+    const decision = evaluateValidatedPayloadCollection({
+      payload: {
+        eventId,
+        body,
+        signatureHex: signatureHex.slice(0, 60),
+      },
+      secret,
+      collect: () => ({ ok: true, recordId: "must-not-collect" }),
+    });
+    expect(decision.code).toBe("VALIDATION_FAILED");
+    expect(decision.collectionAttempted).toBe(false);
+    expectHonesty(decision);
+  });
+
+  it("rejects 59-char hex signature (five nibbles short) (T-X070 B29)", () => {
+    const { body, signatureHex, eventId } = signedBody({
+      eventId: "evt-b29",
+      kind: "lead.created",
+    });
+    const decision = evaluateValidatedPayloadCollection({
+      payload: {
+        eventId,
+        body,
+        signatureHex: signatureHex.slice(0, 59),
+      },
+      secret,
+      collect: () => ({ ok: true, recordId: "must-not-collect" }),
+    });
+    expect(decision.code).toBe("VALIDATION_FAILED");
+    expect(decision.collectionAttempted).toBe(false);
+    expectHonesty(decision);
+  });
+
+  it("rejects 58-char hex signature (six nibbles short) (T-X070 B30)", () => {
+    const { body, signatureHex, eventId } = signedBody({
+      eventId: "evt-b30",
+      kind: "lead.created",
+    });
+    const decision = evaluateValidatedPayloadCollection({
+      payload: {
+        eventId,
+        body,
+        signatureHex: signatureHex.slice(0, 58),
+      },
+      secret,
+      collect: () => ({ ok: true, recordId: "must-not-collect" }),
+    });
+    expect(decision.code).toBe("VALIDATION_FAILED");
+    expect(decision.collectionAttempted).toBe(false);
+    expectHonesty(decision);
+  });
+
+  it("rejects 57-char hex signature (seven nibbles short) (T-X070 B31)", () => {
+    const { body, signatureHex, eventId } = signedBody({
+      eventId: "evt-b31",
+      kind: "lead.created",
+    });
+    const decision = evaluateValidatedPayloadCollection({
+      payload: {
+        eventId,
+        body,
+        signatureHex: signatureHex.slice(0, 57),
+      },
+      secret,
+      collect: () => ({ ok: true, recordId: "must-not-collect" }),
+    });
+    expect(decision.code).toBe("VALIDATION_FAILED");
+    expect(decision.collectionAttempted).toBe(false);
+    expectHonesty(decision);
+  });
+
   it("rejects signature with non-hex suffix even when prefix matches", () => {
     const { body, signatureHex, eventId } = signedBody({
       eventId: "evt-suffix",
