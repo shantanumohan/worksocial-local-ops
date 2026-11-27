@@ -918,7 +918,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-US-010** / **T-X033** are fixture ACCEPTED only via the GSC omitted rows unknown not zero proof (`GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO`). Not sandbox/prod VERIFIED.
 
-**T-US-008** / **T-X032** are fixture ACCEPTED only via the GA4 debug not delivered conversion proof (`GA4_DEBUG_NOT_DELIVERED_CONVERSION`). Not sandbox/prod VERIFIED.
+**T-US-008** / **T-X032** are fixture ACCEPTED only via the GA4 debug not delivered conversion proof (`GA4_DEBUG_NOT_DELIVERED_CONVERSION`) — debug success never claims delivered conversion or measured receipt; LIVE debug / claimDeliveredConversion refused; live `NOT_WIRED`. Not sandbox/prod VERIFIED.
 
 **T-X031** is fixture ACCEPTED only via the GA4 wrong property kind refused proof (`GA4_WRONG_PROPERTY_KIND_REFUSED`). Not sandbox/prod VERIFIED.
 
@@ -1060,7 +1060,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X029 | Token rotates to different account | Explicit rebind |
 | T-X030 | Rate-limit with deadline | Bounded backoff *(fixture ACCEPTED — rate-limit bounded backoff preserves deadline proof; not sandbox/prod VERIFIED)* |
 | T-X031 | Wrong GA4 property kind | Validation fails *(fixture ACCEPTED)* |
-| T-X032 | GA4 debug validation success only | No delivered-conversion claim *(fixture ACCEPTED)* |
+| T-X032 | GA4 debug validation success only | No delivered-conversion claim *(fixture ACCEPTED — debug≠delivered; LIVE/claim refused; NOT_WIRED)* |
 | T-X033 | Omitted GSC rows | Unknown ≠ zero *(fixture ACCEPTED)* |
 | T-X034 | Test-only Ads project vs production | Blocked *(fixture ACCEPTED — test Ads project vs production blocked proof; not sandbox/prod VERIFIED)* |
 | T-X035 | Shared ad budget changed externally | Proposal invalidated *(fixture ACCEPTED — shared ad budget external change invalidates proof; not sandbox/prod VERIFIED)* |

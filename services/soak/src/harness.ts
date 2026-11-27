@@ -1137,7 +1137,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-X039/T-US-058 fixture ACCEPTED via metric_denominators_honest only — not live VERIFIED",
       "T-US-046/T-X048 fixture ACCEPTED via hard_search_constraints_no_invention only — not live VERIFIED",
       "T-US-010/T-X033 fixture ACCEPTED via gsc_omitted_rows_unknown_not_zero only — not live VERIFIED",
-      "T-US-008/T-X032 fixture ACCEPTED via ga4_debug_not_delivered_conversion only — not live VERIFIED",
+      "T-US-008/T-X032 fixture ACCEPTED via ga4_debug_not_delivered_conversion only — debug≠delivered; LIVE/claim refused; live NOT_WIRED — not live VERIFIED",
       "T-X031 fixture ACCEPTED via ga4_wrong_property_kind_refused only — not live VERIFIED",
       "T-US-040/T-X049 fixture ACCEPTED via thank_you_without_crm_fails_delivery only — not live VERIFIED",
       "T-X017 fixture ACCEPTED via stop_after_dispatch_reconcile only — not live VERIFIED",

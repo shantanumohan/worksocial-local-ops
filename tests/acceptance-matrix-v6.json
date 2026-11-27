@@ -812,7 +812,7 @@
       "definitionShape": "list_item",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-us-008",
-      "evidenceNote": "Fixture ga4-debug-not-delivered-conversion proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture ACCEPTED via GA4_DEBUG_NOT_DELIVERED_CONVERSION only — debug≠delivered/measured receipt; LIVE debug / claimDeliveredConversion refused; live NOT_WIRED. ACCEPTED ≠ sandbox/prod VERIFIED. externalEffects=NONE."
     },
     {
       "id": "T-US-009",
@@ -2154,7 +2154,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x032",
-      "evidenceNote": "Fixture ga4-debug-not-delivered-conversion proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture ACCEPTED via GA4_DEBUG_NOT_DELIVERED_CONVERSION only — debug≠delivered/measured receipt; LIVE debug / claimDeliveredConversion refused; live NOT_WIRED. ACCEPTED ≠ sandbox/prod VERIFIED. externalEffects=NONE."
     },
     {
       "id": "T-X033",

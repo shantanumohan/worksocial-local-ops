@@ -50,6 +50,54 @@ describe("analytics — GA4 debug ≠ receipt", () => {
     const ok = interpretGa4DebugValidation({ debugEndpointAccepted: true });
     expect(ok.debugOk).toBe(true);
     expect(ok.deliveredConversionClaimed).toBe(false);
+    expect(ok.measuredReceiptClaimed).toBe(false);
+    expect(ok.liveProviderWiring).toBe("NOT_WIRED");
+    expect(ok.externalEffects).toBe("NONE");
+    expect(ok.fixtureOnly).toBe(true);
+    expect(ok.code).toBeNull();
+  });
+
+  it("refuses claimDeliveredConversion even when debug accepted", () => {
+    const claimed = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      claimDeliveredConversion: true,
+    });
+    expect(claimed.debugOk).toBe(true);
+    expect(claimed.deliveredConversionClaimed).toBe(false);
+    expect(claimed.code).toBe("DELIVERED_CONVERSION_CLAIM_REFUSED");
+  });
+
+  it("refuses LIVE debug wiring as NOT_WIRED", () => {
+    const live = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      environment: AnalyticsEnvironment.LIVE,
+    });
+    expect(live.debugOk).toBe(false);
+    expect(live.deliveredConversionClaimed).toBe(false);
+    expect(live.code).toBe("LIVE_DEBUG_WIRING_NOT_WIRED");
+    expect(live.liveProviderWiring).toBe("NOT_WIRED");
+    expect(live.environment).toBe(AnalyticsEnvironment.LIVE);
+    expect(live.fixtureOnly).toBe(false);
+  });
+
+  it("sandbox debug is allowed but not fixtureOnly", () => {
+    const sandbox = interpretGa4DebugValidation({
+      debugEndpointAccepted: true,
+      environment: AnalyticsEnvironment.SANDBOX,
+    });
+    expect(sandbox.debugOk).toBe(true);
+    expect(sandbox.deliveredConversionClaimed).toBe(false);
+    expect(sandbox.environment).toBe(AnalyticsEnvironment.SANDBOX);
+    expect(sandbox.fixtureOnly).toBe(false);
+  });
+
+  it("rejected debug still never claims delivery", () => {
+    const rejected = interpretGa4DebugValidation({
+      debugEndpointAccepted: false,
+    });
+    expect(rejected.debugOk).toBe(false);
+    expect(rejected.deliveredConversionClaimed).toBe(false);
+    expect(rejected.measuredReceiptClaimed).toBe(false);
   });
 });
 

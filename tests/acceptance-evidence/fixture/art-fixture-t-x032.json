@@ -3,13 +3,13 @@
   "caseId": "T-X032",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X032 (GA4 debug validation success only — not delivered conversion)\nproof=ga4_debug_not_delivered_conversion applyCount=1 :: Debug validation success → debugOk; deliveredConversionClaimed=false | Debug validation reject → debugOk=false; still no delivered conversion claim | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X032 (GA4 debug validation success only — not delivered conversion)\nproof=ga4_debug_not_delivered_conversion applyCount=1 :: Debug validation success → debugOk; deliveredConversionClaimed=false; measuredReceiptClaimed=false; liveProviderWiring=NOT_WIRED; environment=FIXTURE | Debug validation reject → debugOk=false; still no delivered conversion claim | claimDeliveredConversion=true → DELIVERED_CONVERSION_CLAIM_REFUSED; deliveredConversionClaimed=false | LIVE debug → LIVE_DEBUG_WIRING_NOT_WIRED; debugOk=false; no delivered conversion | SANDBOX debug → debugOk; fixtureOnly=false (not collapsed into fixture) | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "ga4_debug_not_delivered_conversion"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x032.json",
-  "createdAtIso": "2026-11-27T09:57:18.655Z",
+  "createdAtIso": "2026-11-27T10:22:19.717Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x032-38dba9b4676f"
+  "uniqueSourceArtifactId": "art-fixture-t-x032-bce67a764c05"
 }
