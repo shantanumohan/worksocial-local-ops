@@ -698,4 +698,22 @@ describe("host-lease", () => {
       expect(bad.message).not.toBe(HOST_LEASE_HELD_MESSAGE);
     }
   });
+
+  it("edge: whitespace-only hostId and generationId (T-X002 wipe15 321b71b2)", () => {
+    const bad = acquireHostLease(
+      null,
+      {
+        hostId: "\t  ",
+        holderPid: 1,
+        generationId: "  \n",
+        ttlMs: 5_000,
+      },
+      clockAt(1_000),
+    );
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) {
+      expect(bad.reason).toBe("INVALID_INPUT");
+      expect(bad.message).not.toBe(HOST_LEASE_HELD_MESSAGE);
+    }
+  });
 });
