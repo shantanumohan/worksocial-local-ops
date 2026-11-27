@@ -90,6 +90,7 @@ describe("crm eventual consistency (T-X023)", () => {
     expect(decision.action).toBe(CrmEmptyReadAction.BOUND_WAIT);
     expect(decision.situation).toBe("local_empty_within_window");
     expect(decision.withinConsistencyWindow).toBe(true);
+    expect(decision.createLead).toBe(false);
     expectHonesty(decision);
   });
 
@@ -110,6 +111,8 @@ describe("crm eventual consistency (T-X023)", () => {
     });
     expect(decision.action).toBe(CrmEmptyReadAction.BOUND_WAIT);
     expect(decision.situation).toBe("local_empty_within_window");
+    expect(decision.withinConsistencyWindow).toBe(true);
+    expect(decision.createLead).toBe(false);
     expectHonesty(decision);
   });
 
@@ -124,6 +127,10 @@ describe("crm eventual consistency (T-X023)", () => {
     });
     expect(decision.action).toBe(CrmEmptyReadAction.ESCALATE_MISSING);
     expect(decision.situation).toBe("local_empty_after_window");
+    expect(decision.withinConsistencyWindow).toBe(false);
+    expect(decision.createLead).toBe(false);
+    expect(decision.liveProviderSuccessClaimed).toBe(false);
+    expect(decision.externalEffects).toBe("NONE");
     expectHonesty(decision);
   });
 
@@ -138,6 +145,10 @@ describe("crm eventual consistency (T-X023)", () => {
     });
     expect(decision.action).toBe(CrmEmptyReadAction.REFUSE_CREATE);
     expect(decision.situation).toBe("local_nonempty_no_visible");
+    expect(decision.withinConsistencyWindow).toBe(true);
+    expect(decision.createLead).toBe(false);
+    expect(decision.liveProviderSuccessClaimed).toBe(false);
+    expect(decision.externalEffects).toBe("NONE");
     expectHonesty(decision);
   });
 
@@ -202,6 +213,10 @@ describe("crm eventual consistency (T-X023)", () => {
     });
     expect(within.action).toBe(CrmEmptyReadAction.BOUND_WAIT);
     expect(within.situation).toBe("no_local_empty_within_window");
+    expect(within.withinConsistencyWindow).toBe(true);
+    expect(within.createLead).toBe(false);
+    expect(within.liveProviderSuccessClaimed).toBe(false);
+    expect(within.externalEffects).toBe("NONE");
     expectHonesty(within);
 
     const after = decideCrmLeadRetryAfterEmptyRead({
@@ -214,6 +229,10 @@ describe("crm eventual consistency (T-X023)", () => {
     });
     expect(after.action).toBe(CrmEmptyReadAction.ESCALATE_MISSING);
     expect(after.situation).toBe("no_local_empty_after_window");
+    expect(after.withinConsistencyWindow).toBe(false);
+    expect(after.createLead).toBe(false);
+    expect(after.liveProviderSuccessClaimed).toBe(false);
+    expect(after.externalEffects).toBe("NONE");
     expectHonesty(after);
   });
 
@@ -228,6 +247,10 @@ describe("crm eventual consistency (T-X023)", () => {
     });
     expect(decision.action).toBe(CrmEmptyReadAction.RECONCILE);
     expect(decision.situation).toBe("visible_receipt");
+    expect(decision.withinConsistencyWindow).toBe(true);
+    expect(decision.createLead).toBe(false);
+    expect(decision.liveProviderSuccessClaimed).toBe(false);
+    expect(decision.externalEffects).toBe("NONE");
     expectHonesty(decision);
 
     const after = reconcileAfterConsistencyVisibility({
@@ -236,6 +259,8 @@ describe("crm eventual consistency (T-X023)", () => {
       expectedModuleId: "Leads",
     });
     expect(after.matched).toBe(true);
+    expect(after.createLead).toBe(false);
+    expect(after.liveProviderSuccessClaimed).toBe(false);
     expectHonesty(after);
     expect(after.reconcile.status).toBe(ReconciliationStatus.MATCHED);
     expect(after.reconcile.verdict).toBe(ProbeVerdict.SUCCESS);
@@ -249,7 +274,20 @@ describe("crm eventual consistency (T-X023)", () => {
     });
     expect(cf.wouldCreateLead).toBe(true);
     expect(cf.forbidden).toBe(true);
+    expect(cf.createLead).toBe(false);
+    expect(cf.liveProviderSuccessClaimed).toBe(false);
+    expect(cf.externalEffects).toBe("NONE");
     expectHonesty(cf);
+
+    const cfNeg = counterfactualUnsafeCreateOnEmptyRead({
+      remoteReadEmpty: false,
+      localWriteReceiptPresent: true,
+    });
+    expect(cfNeg.wouldCreateLead).toBe(false);
+    expect(cfNeg.forbidden).toBe(true);
+    expect(cfNeg.createLead).toBe(false);
+    expect(cfNeg.liveProviderSuccessClaimed).toBe(false);
+    expectHonesty(cfNeg);
   });
 
   it("refuseUnsafeSecondCrmCreate never authorizes create", () => {
@@ -261,7 +299,21 @@ describe("crm eventual consistency (T-X023)", () => {
     expect(refused.refused).toBe(true);
     expect(refused.writeAttemptCountUnchanged).toBe(true);
     expect(refused.priorWriteAttemptCount).toBe(1);
+    expect(refused.createLead).toBe(false);
+    expect(refused.liveProviderSuccessClaimed).toBe(false);
     expectHonesty(refused);
+
+    const emptyOnly = refuseUnsafeSecondCrmCreate({
+      localWriteReceiptPresent: false,
+      remoteReadEmpty: true,
+      priorWriteAttemptCount: 0,
+    });
+    expect(emptyOnly.refused).toBe(true);
+    expect(emptyOnly.createLead).toBe(false);
+    expect(emptyOnly.priorWriteAttemptCount).toBe(0);
+    expect(emptyOnly.writeAttemptCountUnchanged).toBe(true);
+    expect(emptyOnly.liveProviderSuccessClaimed).toBe(false);
+    expectHonesty(emptyOnly);
   });
 
   it("blank/whitespace correlationId never yields visible receipt or MATCHED", () => {
