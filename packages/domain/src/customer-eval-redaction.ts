@@ -201,8 +201,16 @@ export function prepareCustomerDataForEvaluation(input: {
   allowResidualPiiInPayload?: boolean;
   /** Forbidden — conversationId must stay redacted when it carries identifiers. */
   bypassConversationIdRedaction?: boolean;
+  /** Forbidden — intentLabel must stay scanned/redacted when it carries identifiers. */
+  bypassIntentLabelRedaction?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.bypassIntentLabelRedaction === true) {
+    return blockedLeak([
+      "Bypass intentLabel redaction refused — eval gate (T-X072)",
+    ]);
+  }
 
   if (input.bypassConversationIdRedaction === true) {
     return blockedLeak([

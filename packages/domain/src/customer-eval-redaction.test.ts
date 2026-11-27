@@ -145,6 +145,16 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses bypassIntentLabelRedaction", () => {
+    const bypass = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      bypassIntentLabelRedaction: true,
+    });
+    expect(bypass.allowed).toBe(false);
+    expect(bypass.reasons.some((r) => /intentLabel/.test(r))).toBe(true);
+  });
+
   it("refuses bypassConversationIdRedaction", () => {
     const bypass = prepareCustomerDataForEvaluation({
       source,

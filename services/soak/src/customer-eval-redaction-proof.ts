@@ -133,6 +133,21 @@ export function proofCustomerDataEvalRedactionBlocks(
     details.push(`raw passthrough unexpectedly ${JSON.stringify(raw)}`);
   }
 
+  const bypassIntent = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    bypassIntentLabelRedaction: true,
+  });
+  if (
+    !bypassIntent.allowed &&
+    bypassIntent.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("bypassIntentLabelRedaction → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`bypassIntent unexpectedly ${JSON.stringify(bypassIntent)}`);
+  }
+
   const bypassConv = prepareCustomerDataForEvaluation({
     source,
     mode: "redact",
