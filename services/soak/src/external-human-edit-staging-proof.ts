@@ -834,6 +834,78 @@ export function proofExternalHumanEditConflictRetained(
     );
   }
 
+  // N12: live verify "TRUE" alias → MATCHED_PENDING_ONLY; ownerAck false; post-ack overwrite; claimed "TRUE" alias.
+  let n12State = createExternalEditStagingState({
+    pageId: `page-n12-${randomUUID().slice(0, 8)}`,
+    fields: baseFields,
+    revision: "rev-1",
+    nowIso,
+  });
+  const n12Staged = stageAgentChangeAgainstBase(n12State, {
+    changeId: `chg-n12-${randomUUID().slice(0, 8)}`,
+    expectedBaseRevision: "rev-1",
+    desiredFields: agentDesired,
+    nowIso,
+  });
+  if (n12Staged.ok) {
+    n12State = n12Staged.state;
+  }
+  const n12AliasLiveVerify = independentVerifyStagingChange(n12State, {
+    nowIso: tHuman,
+    requestLiveTemporalWiring: "TRUE",
+  });
+  if (n12Staged.ok) {
+    n12State = applyExternalHumanEdit(n12State, {
+      fields: humanEdit,
+      nowIso: tHuman,
+    });
+  }
+  const ackFalse = refuseSilentConflictClear(n12State, {
+    ownerAcknowledged: false,
+    nowIso: tHuman,
+  });
+  const ackN12 = refuseSilentConflictClear(n12State, {
+    ownerAcknowledged: "true",
+    nowIso: tHuman,
+  });
+  const postAckOw =
+    ackN12.ok === true
+      ? attemptBlindAgentOverwrite(ackN12.state, { nowIso: tHuman })
+      : null;
+  const claimedAlias =
+    ackN12.ok === true
+      ? refuseClaimedVerifiedStaging(ackN12.state, {
+          claimedVerified: "TRUE",
+          nowIso: tHuman,
+        })
+      : null;
+  if (
+    n12Staged.ok &&
+    n12AliasLiveVerify.refusedLiveTemporalWiring === undefined &&
+    n12AliasLiveVerify.outcome === StagingVerifyOutcome.MATCHED_PENDING_ONLY &&
+    n12AliasLiveVerify.matched === true &&
+    n12AliasLiveVerify.verifiedClaimed === false &&
+    n12State.change?.status === StagingConflictStatus.CONFLICT_RETAINED &&
+    ackFalse.ok === false &&
+    ackFalse.code === "SILENT_CLEAR_FORBIDDEN" &&
+    ackN12.ok === true &&
+    postAckOw &&
+    postAckOw.ok === false &&
+    postAckOw.code === "OVERWRITE_FORBIDDEN" &&
+    claimedAlias &&
+    claimedAlias.code === "CLAIMED_VERIFIED_REFUSED" &&
+    /no live elevation path/.test(claimedAlias.reason)
+  ) {
+    details.push(
+      "N12 live verify TRUE alias → MATCHED_PENDING_ONLY (no LIVE refuse); ownerAck false SILENT_CLEAR; post-ack OVERWRITE_FORBIDDEN; claimed TRUE alias no elevation",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `N12 edges unexpectedly live=${n12AliasLiveVerify.outcome} ackF=${ackFalse.ok ? "ok" : ackFalse.code} post=${postAckOw && !postAckOw.ok ? postAckOw.code : "ok"} claimed=${claimedAlias?.code}`,
+    );
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE",
   );

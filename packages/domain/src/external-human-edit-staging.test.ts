@@ -868,4 +868,68 @@ describe("external human edit during staging (T-X025)", () => {
     expect(convergentVerify.externalEffects).toBe("NONE");
     expect(state.change?.status).toBe(StagingConflictStatus.CONFLICT_RETAINED);
   });
+
+  it("N12: live verify TRUE alias no refuse; ownerAck false; post-ack overwrite; claimed TRUE alias", () => {
+    const t0 = "2026-11-23T01:00:00.000Z";
+    let state = createExternalEditStagingState({
+      pageId: "page-n12",
+      fields: baseFields,
+      revision: "rev-1",
+      nowIso: t0,
+    });
+    const staged = stageAgentChangeAgainstBase(state, {
+      changeId: "chg-n12",
+      expectedBaseRevision: "rev-1",
+      desiredFields: agentDesired,
+      nowIso: t0,
+    });
+    expect(staged.ok).toBe(true);
+    if (!staged.ok) return;
+    state = staged.state;
+
+    const aliasLiveVerify = independentVerifyStagingChange(state, {
+      nowIso: "2026-11-23T01:01:00.000Z",
+      requestLiveTemporalWiring: "TRUE",
+    });
+    expect(aliasLiveVerify.refusedLiveTemporalWiring).toBeUndefined();
+    expect(aliasLiveVerify.outcome).toBe(StagingVerifyOutcome.MATCHED_PENDING_ONLY);
+    expect(aliasLiveVerify.matched).toBe(true);
+    expect(aliasLiveVerify.verifiedClaimed).toBe(false);
+    expect(aliasLiveVerify.liveTemporalWiring).toBe("NOT_WIRED");
+
+    state = applyExternalHumanEdit(state, {
+      fields: humanEdit,
+      nowIso: "2026-11-23T01:02:00.000Z",
+    });
+
+    const ackFalse = refuseSilentConflictClear(state, {
+      ownerAcknowledged: false,
+      nowIso: "2026-11-23T01:03:00.000Z",
+    });
+    expect(ackFalse.ok).toBe(false);
+    expect(ackFalse.code).toBe("SILENT_CLEAR_FORBIDDEN");
+
+    const ack = refuseSilentConflictClear(state, {
+      ownerAcknowledged: "true",
+      nowIso: "2026-11-23T01:04:00.000Z",
+    });
+    expect(ack.ok).toBe(true);
+    expect(ack.state.change?.status).toBe(StagingConflictStatus.CONFLICT_RETAINED);
+
+    const postAckOw = attemptBlindAgentOverwrite(ack.state, {
+      nowIso: "2026-11-23T01:05:00.000Z",
+    });
+    expect(postAckOw.ok).toBe(false);
+    if (postAckOw.ok) return;
+    expect(postAckOw.code).toBe("OVERWRITE_FORBIDDEN");
+    expect(postAckOw.state.page.fields.title).toBe("Human edited title");
+
+    const claimedAlias = refuseClaimedVerifiedStaging(ack.state, {
+      claimedVerified: "TRUE",
+      nowIso: "2026-11-23T01:06:00.000Z",
+    });
+    expect(claimedAlias.code).toBe("CLAIMED_VERIFIED_REFUSED");
+    expect(claimedAlias.verifiedClaimed).toBe(false);
+    expect(claimedAlias.reason).toMatch(/no live elevation path/);
+  });
 });

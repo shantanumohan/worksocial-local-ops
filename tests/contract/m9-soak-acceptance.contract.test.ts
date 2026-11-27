@@ -300,5 +300,8 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).toMatch(
       /N11 numeric live 1 → OVERWRITE_FORBIDDEN|convergent CONFLICT verify never elevates/,
     );
+    expect(art.summary).toMatch(
+      /N12 live verify TRUE alias → MATCHED_PENDING_ONLY|post-ack OVERWRITE_FORBIDDEN/,
+    );
   });
 });

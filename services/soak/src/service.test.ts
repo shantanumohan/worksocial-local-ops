@@ -346,6 +346,13 @@ describe("soak service (M9)", () => {
       ),
     ).toBe(true);
     expect(
+      extHumanEditProof?.details.some((d) =>
+        /N12 live verify TRUE alias → MATCHED_PENDING_ONLY|post-ack OVERWRITE_FORBIDDEN/.test(
+          d,
+        ),
+      ),
+    ).toBe(true);
+    expect(
       result.proofs.some(
         (p) => p.kind === SoakProofKind.OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS,
       ),
