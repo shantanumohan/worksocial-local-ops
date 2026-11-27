@@ -926,7 +926,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X050** is fixture ACCEPTED only via the public synthetic flag requires server grant proof (`PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT`) — client/public `ws_synthetic` / `is_synthetic` cannot authorize synthetic labeling without a server-issued canary grant; either field's positive claim wins (OR; dual-field mask refused); whitespace-normalized claims denied without grant; server grant wins over client `false`; browser submission boundary and fixture CRM enforce the gate; live wiring stays **NOT_WIRED**; `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 
-**T-X010** is fixture ACCEPTED only via the malicious prompt no shell injection proof (`MALICIOUS_PROMPT_NO_SHELL_INJECTION`) — prompt via stdin; fixed argv; `shell: false`. Not sandbox/prod VERIFIED.
+**T-X010** is fixture ACCEPTED only via the malicious prompt no shell injection proof (`MALICIOUS_PROMPT_NO_SHELL_INJECTION`) — prompt via stdin; fixed argv; `shell: false`; refuse prompt-via-argv / shell-metachar+NUL `extraArgs` / bare `--` / permission-mode / blank+overlong+unsafe modelId / NUL prompt / out-of-range+lowercase agent / MultiEdit tools; pinned structural overrides blocked; honesty stamps NOT_WIRED. Not sandbox/prod VERIFIED.
 
 **T-X016** is fixture ACCEPTED only via the stop-before-dispatch / no adapter mutation proof (`STOP_BEFORE_DISPATCH_NO_MUTATION`) — pre-apply AUTHORIZED/QUEUED may CANCELLED with durable `applyAttempts=0` and no fake-provider entry; outbound stop returns `OUTBOUND_STOPPED` before dispatch claim. Not sandbox/prod VERIFIED.
 
@@ -1036,7 +1036,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X007 | Wrong CMS environment | No production op *(fixture ACCEPTED — wrong CMS environment no production op proof; not sandbox/prod VERIFIED)* |
 | T-X008 | Fact changes after review | Stale; no publish *(fixture ACCEPTED — fact changes after review stale / no publish proof; not approved-payload-edit / not imported-doc quarantine; not sandbox/prod VERIFIED)* |
 | T-X009 | CLI error despite exit 0 | Job fails *(fixture ACCEPTED — CLI error despite exit 0 proof; not sandbox/prod VERIFIED)* |
-| T-X010 | Malicious prompt interpolation | No shell injection *(fixture ACCEPTED)* |
+| T-X010 | Malicious prompt interpolation | No shell injection *(fixture ACCEPTED — stdin-only; extraArgs shell-meta/NUL/permission-mode refused; NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X011 | Output bomb | Bounded/quarantined *(fixture ACCEPTED — OUTPUT_TOO_LARGE quarantine; non-finite max refused; close-path quarantine; idempotent reclaim+code drift; dual live-claim refuse; ACCEPTED≠VERIFIED; not sandbox/prod VERIFIED)* |
 | T-X012 | Orphan worker on deadline | Process tree stopped *(fixture ACCEPTED — orphan-worker deadline tree-stopped proof; GENERATION_REQUIRED + TREE_REQUIRED + INVALID_CLOCK + clock-skew/start-instant + partial orphan clear + foreign/dup-PID skip; WIRED refuse; liveProviderWiring NOT_WIRED; externalEffects NONE; not sandbox/prod VERIFIED)* |
 | T-X013 | Replay historical workflow | No repeated external I/O *(fixture ACCEPTED — replay historical no-repeat-I/O proof; second replay + empty-history fail-closed; not sandbox/prod VERIFIED)* |

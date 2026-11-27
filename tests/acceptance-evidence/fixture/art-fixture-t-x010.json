@@ -3,13 +3,13 @@
   "caseId": "T-X010",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X010 (Malicious prompt interpolation — no shell injection)\nproof=malicious_prompt_no_shell_injection applyCount=1 :: Malicious prompts planned with shell=false; prompt via stdin; argv clean | Bash tool string refused (FLAG_DENIED) | Permission-bypass flag refused | Path-like agent name refused (INVALID_AGENT) | Benign prompt also stdin-only (positive control) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X010 (Malicious prompt interpolation — no shell injection)\nproof=malicious_prompt_no_shell_injection applyCount=1 :: Malicious prompts planned with shell=false; prompt via stdin; argv clean; honesty stamps | Bash tool string refused (FLAG_DENIED) | Shell-metachar extraArgs refused (FLAG_DENIED) | Permission-bypass flag refused | Prompt-via-argv flag refused (stdin only) | NUL-in-prompt refused (PROMPT_NUL_REFUSED) | Unsafe modelId refused (INVALID_MODEL) | extraArgs --model override refused (FLAG_DENIED) | Coincidental argv-token prompts (json/4/A13/empty) accepted via stdin | Path-like agent name refused (INVALID_AGENT) | extraArgs shell-metachar token refused (FLAG_DENIED) | --append-system-prompt refused (prompt-via-argv) | Attached -p=… prompt-via-argv refused | Blank modelId refused (INVALID_MODEL) | Bare -- end-of-options refused in extraArgs | Overlong modelId refused (INVALID_MODEL) | Attached --system-prompt-file= refused (prompt-via-argv) | Out-of-range agent A00/A31 refused (INVALID_AGENT) | NUL in extraArgs refused (FLAG_DENIED) | --permission-mode=dontAsk refused in extraArgs | MultiEdit tool string refused (FLAG_DENIED) | Lowercase agent a13 refused (INVALID_AGENT) | Benign prompt also stdin-only (positive control) | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "malicious_prompt_no_shell_injection"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x010.json",
-  "createdAtIso": "2026-11-27T13:28:09.742Z",
+  "createdAtIso": "2026-11-27T13:46:47.741Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x010-76e5fc1c9893"
+  "uniqueSourceArtifactId": "art-fixture-t-x010-96033bb79ee2"
 }
