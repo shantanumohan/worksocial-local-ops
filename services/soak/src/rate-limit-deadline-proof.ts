@@ -22,6 +22,7 @@
  * Deepen (Q23): -0 Retry-After → WAIT 0; -1 → exponential (sign boundary).
  * Deepen (Q24): fractional attempt floors before exponential index.
  * Deepen (Q28): fractional maxAttempts floors (2.9 → cap at attempt 2 STOP).
+ * Deepen (Q31): maxAttempts=1.1 → first 429 STOP (no WAIT invent).
  */
 
 import { randomUUID } from "node:crypto";
@@ -550,6 +551,32 @@ export function proofRateLimitBoundedBackoffPreservesDeadline(
     details.push(
       `maxAttempts=1 STOP honesty failed: ${JSON.stringify(oneShot)}`,
     );
+  }
+
+  // Scenario P7 (Q31): maxAttempts=1.1 → attempt 1 STOP (no WAIT despite Retry-After).
+  const onePointOne = evaluateRateLimitWithDeadline(
+    {
+      httpStatus: 429,
+      retryAfterSeconds: 60,
+      observedAtIso: "2026-11-22T12:00:00.000Z",
+    },
+    {
+      attempt: 1,
+      deadlineAtIso: "2026-11-22T13:00:00.000Z",
+      maxAttempts: 1.1,
+    },
+  );
+  if (
+    onePointOne.action === "STOP_MAX_ATTEMPTS" &&
+    onePointOne.attempt === 1 &&
+    onePointOne.reason === "MAX_ATTEMPTS"
+  ) {
+    details.push(
+      "Fractional maxAttempts=1.1 → attempt 1 STOP_MAX_ATTEMPTS (no WAIT on first 429)",
+    );
+  } else {
+    passed = false;
+    details.push(`maxAttempts=1.1 STOP failed: ${JSON.stringify(onePointOne)}`);
   }
 
   // Scenario P6 (Q28): fractional maxAttempts=2.9 → attempt 2 STOP_MAX_ATTEMPTS.
