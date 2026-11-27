@@ -145,6 +145,16 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses reuseStaleRedactedEvalPayload", () => {
+    const stale = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      reuseStaleRedactedEvalPayload: true,
+    });
+    expect(stale.allowed).toBe(false);
+    expect(stale.reasons.some((r) => /stale redacted/.test(r))).toBe(true);
+  });
+
   it("refuses useEvalOnlyWithoutRedactionFence", () => {
     const naked = prepareCustomerDataForEvaluation({
       source,

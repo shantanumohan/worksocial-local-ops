@@ -221,8 +221,16 @@ export function prepareCustomerDataForEvaluation(input: {
   skipEvalPromptPiiScan?: boolean;
   /** Forbidden — EVAL_ONLY path must not bypass redaction fence. */
   useEvalOnlyWithoutRedactionFence?: boolean;
+  /** Forbidden — cannot reuse prior redacted eval payload without fresh PII scan. */
+  reuseStaleRedactedEvalPayload?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.reuseStaleRedactedEvalPayload === true) {
+    return blockedLeak([
+      "Reuse stale redacted eval payload refused — fresh scan required (T-X072)",
+    ]);
+  }
 
   if (input.useEvalOnlyWithoutRedactionFence === true) {
     return blockedLeak([
