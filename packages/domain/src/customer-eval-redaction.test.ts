@@ -145,6 +145,18 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses allowPartialRedactionForEval", () => {
+    const partial = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      allowPartialRedactionForEval: true,
+    });
+    expect(partial.allowed).toBe(false);
+    expect(partial.reasons.some((r) => /Partial customer redaction/.test(r))).toBe(
+      true,
+    );
+  });
+
   it("refuses reuseStaleRedactedEvalPayload", () => {
     const stale = prepareCustomerDataForEvaluation({
       source,

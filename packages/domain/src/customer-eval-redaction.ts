@@ -223,8 +223,16 @@ export function prepareCustomerDataForEvaluation(input: {
   useEvalOnlyWithoutRedactionFence?: boolean;
   /** Forbidden — cannot reuse prior redacted eval payload without fresh PII scan. */
   reuseStaleRedactedEvalPayload?: boolean;
+  /** Forbidden — eval gate must not accept partial redaction short-cuts. */
+  allowPartialRedactionForEval?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.allowPartialRedactionForEval === true) {
+    return blockedLeak([
+      "Partial customer redaction for eval refused — full gate required (T-X072)",
+    ]);
+  }
 
   if (input.reuseStaleRedactedEvalPayload === true) {
     return blockedLeak([
