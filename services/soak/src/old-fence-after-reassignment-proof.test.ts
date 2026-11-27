@@ -75,6 +75,12 @@ describe("proofOldFenceAfterReassignment (T-X024)", () => {
     expect(joined).toContain("liveProviderSuccessClaimed=false");
     expect(joined).toContain("externalEffects=NONE");
     expect(joined).toContain("acceptedNotVerified=true");
+    expect(joined).toMatch(/ACCEPTED_NOT_VERIFIED_OK/);
+    expect(joined).toMatch(/ACCEPTED_EQUALS_VERIFIED_CLAIM_REFUSED/);
+    expect(joined).toMatch(/LIVE_TEMPORAL_NOT_WIRED_OK/);
+    expect(joined).toMatch(/LIVE_TEMPORAL_WIRED_CLAIM_REFUSED/);
+    expect(joined).toMatch(/Post-fail lease cleared fenceCause=no_holder/);
+    expect(joined).toMatch(/Post-fail claimLease refused/);
     expect(joined).not.toMatch(/\bVERIFIED\b/);
     expect(OLD_FENCE_TEMPORAL_WIRING).toBe("NOT_WIRED");
   });

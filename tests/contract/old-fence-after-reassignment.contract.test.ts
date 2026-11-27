@@ -15,10 +15,12 @@ import {
 import {
   evaluateFixtureTemporalWiring,
   evaluateOldFenceAcceptanceLabel,
+  evaluateOldFenceAcceptedNotVerified,
   evaluateOldFenceCatalogCaseId,
   evaluateOldFenceChatgptAdsAccess,
   evaluateOldFenceExternalEffects,
   evaluateOldFenceLiveProviderSuccess,
+  evaluateOldFenceLiveTemporalNotWired,
   evaluateOldFenceRelatedCaseIds,
   evaluateOldFenceSoftSkipAdsCase,
   missionLeaseFenceFailedMessage,
@@ -97,6 +99,18 @@ describe("contract: T-X024 old fence after reassignment", () => {
     expect(evaluateOldFenceCatalogCaseId("T-X074").code).toBe(
       "CATALOG_CEILING_REFUSED",
     );
+    expect(evaluateOldFenceAcceptedNotVerified(true).code).toBe(
+      "ACCEPTED_NOT_VERIFIED_OK",
+    );
+    expect(evaluateOldFenceAcceptedNotVerified(false).code).toBe(
+      "ACCEPTED_EQUALS_VERIFIED_CLAIM_REFUSED",
+    );
+    expect(evaluateOldFenceLiveTemporalNotWired("NOT_WIRED").code).toBe(
+      "LIVE_TEMPORAL_NOT_WIRED_OK",
+    );
+    expect(evaluateOldFenceLiveTemporalNotWired("TEMPORAL").code).toBe(
+      "LIVE_TEMPORAL_WIRED_CLAIM_REFUSED",
+    );
     expect(
       parseMissionLeaseFenceCause(
         missionLeaseFenceFailedMessage("wf-c", "wrong_holder"),
@@ -113,9 +127,15 @@ describe("contract: T-X024 old fence after reassignment", () => {
     expect(art.summary).toMatch(/SOFT_SKIP_ADS_OK/);
     expect(art.summary).toMatch(/RELATED_CASES_OK/);
     expect(art.summary).toMatch(/CATALOG_CEILING_REFUSED/);
+    expect(art.summary).toMatch(/ACCEPTED_NOT_VERIFIED_OK/);
+    expect(art.summary).toMatch(/ACCEPTED_EQUALS_VERIFIED_CLAIM_REFUSED/);
+    expect(art.summary).toMatch(/LIVE_TEMPORAL_NOT_WIRED_OK/);
+    expect(art.summary).toMatch(/LIVE_TEMPORAL_WIRED_CLAIM_REFUSED/);
     expect(art.summary).toMatch(/Active holder operation mismatch/);
     expect(art.summary).toMatch(/Post-succeed lease cleared fenceCause=no_holder/);
     expect(art.summary).toMatch(/Post-succeed claimLease refused/);
+    expect(art.summary).toMatch(/Post-fail lease cleared fenceCause=no_holder/);
+    expect(art.summary).toMatch(/Post-fail claimLease refused/);
     expect(art.summary).toMatch(/1ms-before-expiry boundary/);
     expect(art.summary).toMatch(/fenceCause=expired/);
     expect(art.summary).toMatch(/fenceCause=wrong_holder/);

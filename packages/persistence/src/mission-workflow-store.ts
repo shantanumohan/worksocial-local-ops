@@ -516,7 +516,78 @@ export function evaluateOldFenceCatalogCaseId(
   };
 }
 
-/** Stable honesty detail line for soak evidence (O4–O9). */
+/**
+ * acceptedNotVerified boolean gate (T-X024 O10).
+ * Only `true` is allowed — `false` collapses ACCEPTED into VERIFIED → refused.
+ */
+export type OldFenceAcceptedNotVerifiedDecision = {
+  allowed: boolean;
+  code: "ACCEPTED_NOT_VERIFIED_OK" | "ACCEPTED_EQUALS_VERIFIED_CLAIM_REFUSED";
+  flag: boolean;
+  acceptedNotVerified: typeof OLD_FENCE_HONESTY.acceptedNotVerified;
+  liveTemporalWiring: typeof OLD_FENCE_HONESTY.liveTemporalWiring;
+};
+
+export function evaluateOldFenceAcceptedNotVerified(
+  flag: boolean,
+): OldFenceAcceptedNotVerifiedDecision {
+  const honesty = {
+    acceptedNotVerified: OLD_FENCE_HONESTY.acceptedNotVerified,
+    liveTemporalWiring: OLD_FENCE_HONESTY.liveTemporalWiring,
+  } as const;
+  if (flag === true) {
+    return {
+      allowed: true,
+      code: "ACCEPTED_NOT_VERIFIED_OK",
+      flag,
+      ...honesty,
+    };
+  }
+  return {
+    allowed: false,
+    code: "ACCEPTED_EQUALS_VERIFIED_CLAIM_REFUSED",
+    flag,
+    ...honesty,
+  };
+}
+
+/**
+ * Live Temporal wiring honesty gate (T-X024 O10).
+ * Only `"NOT_WIRED"` is allowed on the live claim — distinct from store-row
+ * `evaluateFixtureTemporalWiring` (`FIXTURE_OK` vs `LIVE_TEMPORAL_CLAIM_REFUSED`).
+ */
+export type OldFenceLiveTemporalNotWiredDecision = {
+  allowed: boolean;
+  code: "LIVE_TEMPORAL_NOT_WIRED_OK" | "LIVE_TEMPORAL_WIRED_CLAIM_REFUSED";
+  claim: string;
+  liveTemporalWiring: typeof OLD_FENCE_HONESTY.liveTemporalWiring;
+  acceptedNotVerified: typeof OLD_FENCE_HONESTY.acceptedNotVerified;
+};
+
+export function evaluateOldFenceLiveTemporalNotWired(
+  claim: string,
+): OldFenceLiveTemporalNotWiredDecision {
+  const honesty = {
+    liveTemporalWiring: OLD_FENCE_HONESTY.liveTemporalWiring,
+    acceptedNotVerified: OLD_FENCE_HONESTY.acceptedNotVerified,
+  } as const;
+  if (claim === "NOT_WIRED") {
+    return {
+      allowed: true,
+      code: "LIVE_TEMPORAL_NOT_WIRED_OK",
+      claim,
+      ...honesty,
+    };
+  }
+  return {
+    allowed: false,
+    code: "LIVE_TEMPORAL_WIRED_CLAIM_REFUSED",
+    claim,
+    ...honesty,
+  };
+}
+
+/** Stable honesty detail line for soak evidence (O4–O10). */
 export function formatOldFenceHonestyDetail(
   relatedCaseIds: readonly string[] = OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
 ): string {

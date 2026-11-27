@@ -13,7 +13,9 @@ import {
   evaluateOldFenceChatgptAdsAccess,
   evaluateOldFenceExternalEffects,
   evaluateOldFenceLiveProviderSuccess,
+  evaluateOldFenceAcceptedNotVerified,
   evaluateOldFenceRelatedCaseIds,
+  evaluateOldFenceLiveTemporalNotWired,
   evaluateOldFenceSoftSkipAdsCase,
   formatOldFenceHonestyDetail,
   isMissionLeaseActive,
@@ -229,6 +231,24 @@ describe("classifyMissionLeaseFence / isMissionLeaseActive (T-X024)", () => {
       "CATALOG_CASE_REFUSED",
     );
   });
+
+  it("locks acceptedNotVerified=true and live Temporal NOT_WIRED claim", () => {
+    expect(evaluateOldFenceAcceptedNotVerified(true).code).toBe(
+      "ACCEPTED_NOT_VERIFIED_OK",
+    );
+    expect(evaluateOldFenceAcceptedNotVerified(false).code).toBe(
+      "ACCEPTED_EQUALS_VERIFIED_CLAIM_REFUSED",
+    );
+    expect(evaluateOldFenceLiveTemporalNotWired("NOT_WIRED").code).toBe(
+      "LIVE_TEMPORAL_NOT_WIRED_OK",
+    );
+    expect(evaluateOldFenceLiveTemporalNotWired("TEMPORAL").code).toBe(
+      "LIVE_TEMPORAL_WIRED_CLAIM_REFUSED",
+    );
+    expect(evaluateOldFenceLiveTemporalNotWired("FIXTURE").code).toBe(
+      "LIVE_TEMPORAL_WIRED_CLAIM_REFUSED",
+    );
+  });
 });
 
 describe("memory mission workflow store lease fence", () => {
@@ -369,5 +389,45 @@ describe("memory mission workflow store lease fence", () => {
         "2026-11-21T18:00:02.000Z",
       ),
     ).toBe("active");
+  });
+
+  it("clears lease on fail → no_holder and refuses claimLease", async () => {
+    const store = createMemoryMissionWorkflowStore();
+    const workflowId = "wf-fail-clear";
+    await store.enqueue({
+      workflowId,
+      jobId: "job-fail-clear",
+      temporalWiring: "FIXTURE",
+      nowIso: "2026-11-21T18:00:00.000Z",
+    });
+    await store.claimLease({
+      workflowId,
+      holder: "worker-a",
+      leaseExpiresAtIso: "2026-11-21T18:00:01.000Z",
+      nowIso: "2026-11-21T18:00:00.000Z",
+    });
+    const failed = await store.fail({
+      workflowId,
+      retryCategory: "none",
+      lastError: "fixture-fail",
+      nowIso: "2026-11-21T18:00:02.000Z",
+    });
+    expect(failed.phase).toBe("failed");
+    expect(failed.leaseHolder).toBeNull();
+    expect(
+      classifyMissionLeaseFence(
+        failed,
+        "worker-a",
+        "2026-11-21T18:00:02.000Z",
+      ),
+    ).toBe("no_holder");
+    expect(
+      await store.claimLease({
+        workflowId,
+        holder: "worker-b",
+        leaseExpiresAtIso: "2026-11-21T18:00:30.000Z",
+        nowIso: "2026-11-21T18:00:02.000Z",
+      }),
+    ).toBeNull();
   });
 });

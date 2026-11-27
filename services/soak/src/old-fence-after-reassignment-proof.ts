@@ -25,6 +25,8 @@
  * active-holder operation mismatch distinct from fenceCause.
  * Hillclimb O9: RELATED_CASES_OK / CATALOG_CEILING_REFUSED; post-succeed
  * lease clear → fenceCause=no_holder; claimLease refused on terminal.
+ * Hillclimb O10: ACCEPTED_NOT_VERIFIED_OK / LIVE_TEMPORAL_NOT_WIRED_OK;
+ * post-fail lease clear → fenceCause=no_holder; claimLease refused.
  */
 
 import { randomUUID } from "node:crypto";
@@ -38,10 +40,12 @@ import {
   createMemoryMissionWorkflowStore,
   evaluateFixtureTemporalWiring,
   evaluateOldFenceAcceptanceLabel,
+  evaluateOldFenceAcceptedNotVerified,
   evaluateOldFenceCatalogCaseId,
   evaluateOldFenceChatgptAdsAccess,
   evaluateOldFenceExternalEffects,
   evaluateOldFenceLiveProviderSuccess,
+  evaluateOldFenceLiveTemporalNotWired,
   evaluateOldFenceRelatedCaseIds,
   evaluateOldFenceSoftSkipAdsCase,
   formatOldFenceHonestyDetail,
@@ -96,6 +100,12 @@ export async function proofOldFenceAfterReassignment(
   const relatedRefuse = evaluateOldFenceRelatedCaseIds(["T-X024", "T-X074"]);
   const catalogOk = evaluateOldFenceCatalogCaseId("T-X024");
   const catalogCeilingRefuse = evaluateOldFenceCatalogCaseId("T-X074");
+  const acceptedNotVerifiedOk = evaluateOldFenceAcceptedNotVerified(true);
+  const acceptedEqualsVerifiedRefuse = evaluateOldFenceAcceptedNotVerified(
+    false,
+  );
+  const liveNotWiredOk = evaluateOldFenceLiveTemporalNotWired("NOT_WIRED");
+  const liveWiredRefuse = evaluateOldFenceLiveTemporalNotWired("TEMPORAL");
   if (
     liveTemporalRefuse.code === "LIVE_TEMPORAL_CLAIM_REFUSED" &&
     liveTemporalRefuse.allowed === false &&
@@ -168,6 +178,25 @@ export async function proofOldFenceAfterReassignment(
   } else {
     passed = false;
     details.push("Fixture relatedCases/catalog ceiling honesty gate unexpected");
+  }
+  if (
+    acceptedNotVerifiedOk.code === "ACCEPTED_NOT_VERIFIED_OK" &&
+    acceptedNotVerifiedOk.allowed === true &&
+    acceptedEqualsVerifiedRefuse.code ===
+      "ACCEPTED_EQUALS_VERIFIED_CLAIM_REFUSED" &&
+    liveNotWiredOk.code === "LIVE_TEMPORAL_NOT_WIRED_OK" &&
+    liveWiredRefuse.code === "LIVE_TEMPORAL_WIRED_CLAIM_REFUSED" &&
+    OLD_FENCE_HONESTY.acceptedNotVerified === true &&
+    OLD_FENCE_HONESTY.liveTemporalWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "ACCEPTED_NOT_VERIFIED_OK for true; ACCEPTED_EQUALS_VERIFIED_CLAIM_REFUSED for false; LIVE_TEMPORAL_NOT_WIRED_OK; LIVE_TEMPORAL_WIRED_CLAIM_REFUSED for TEMPORAL",
+    );
+  } else {
+    passed = false;
+    details.push(
+      "Fixture acceptedNotVerified/liveTemporal NOT_WIRED honesty gate unexpected",
+    );
   }
 
   const enqueued = await store.enqueue({
@@ -745,6 +774,69 @@ export async function proofOldFenceAfterReassignment(
     details.push(
       `Unfenced recover honesty unexpected bindDenied=${sideStaleBindDenied} phase=${recovered?.phase}`,
     );
+  }
+
+  // 8. Side workflow: fail clears lease → fenceCause=no_holder (symmetric to succeed).
+  const sideFailStore = createMemoryMissionWorkflowStore();
+  const sideFailWf = `wf-fail-${randomUUID().slice(0, 8)}`;
+  await sideFailStore.enqueue({
+    workflowId: sideFailWf,
+    jobId: `job-fail-${randomUUID().slice(0, 8)}`,
+    temporalWiring: "FIXTURE",
+    nowIso: t0,
+  });
+  await sideFailStore.claimLease({
+    workflowId: sideFailWf,
+    holder: workerA,
+    leaseExpiresAtIso: tLeaseExpiry,
+    nowIso: t0,
+  });
+  await sideFailStore.claimLease({
+    workflowId: sideFailWf,
+    holder: workerB,
+    leaseExpiresAtIso: new Date(Date.parse(tAtExpiry) + 5_000).toISOString(),
+    nowIso: tAtExpiry,
+  });
+  let failed;
+  try {
+    failed = await sideFailStore.fail({
+      workflowId: sideFailWf,
+      retryCategory: "none",
+      lastError: "fixture-terminal-fail",
+      nowIso: tAfterExpiry,
+    });
+  } catch (err) {
+    passed = false;
+    details.push(
+      `fail unexpected: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+  if (
+    failed?.phase === "failed" &&
+    failed.leaseHolder == null &&
+    classifyMissionLeaseFence(failed, workerA, tAfterExpiry) === "no_holder" &&
+    classifyMissionLeaseFence(failed, workerB, tAfterExpiry) === "no_holder"
+  ) {
+    details.push(
+      "Post-fail lease cleared fenceCause=no_holder for A and B",
+    );
+  } else if (passed) {
+    passed = false;
+    details.push(
+      `Post-fail no_holder unexpected phase=${failed?.phase} holder=${failed?.leaseHolder}`,
+    );
+  }
+  const claimAfterFail = await sideFailStore.claimLease({
+    workflowId: sideFailWf,
+    holder: workerA,
+    leaseExpiresAtIso: new Date(Date.parse(tAfterExpiry) + 30_000).toISOString(),
+    nowIso: tAfterExpiry,
+  });
+  if (claimAfterFail === null) {
+    details.push("Post-fail claimLease refused (terminal failed phase)");
+  } else {
+    passed = false;
+    details.push("Post-fail claimLease unexpectedly succeeded");
   }
 
   details.push(
