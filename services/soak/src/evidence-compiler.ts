@@ -381,7 +381,7 @@ export function compileAcceptanceEvidence(
     "T-X063 fixture ACCEPTED only via INDIRECT_PROMPT_INJECTION_EXFIL_DENIED",
     "T-X013 fixture ACCEPTED only via REPLAY_HISTORICAL_NO_REPEAT_IO (history replay; no repeated I/O)",
     "T-X025 fixture ACCEPTED only via EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED",
-    "T-X026 fixture ACCEPTED only via CONCURRENT_FINAL_BUDGET_RESERVATION_CAP",
+    "T-X026 fixture ACCEPTED only via CONCURRENT_FINAL_BUDGET_RESERVATION_CAP (composeConcurrentFinalBudgetReserves; fixtureAcceptedNotVerified; row-id alignment honesty; non-finite refuse; known-zero restore; open/held-id refuse; settled+held headroom; blank-id refuse; known-reconcile restore; duplicate-id preflight; trim-normalized duplicate refuse; known-positive restore; liveWiring=NOT_WIRED)",
     "T-X052 fixture ACCEPTED only via SYNTHETIC_CONVERSION_CONTAMINATION_EXCLUDED",
     "T-X054 fixture ACCEPTED only via REPLY_SENT_CRM_RECONCILES_NO_RESEND",
     "T-X055 fixture ACCEPTED only via UNKNOWN_POLICY_QUESTION_ESCALATES_WITHOUT_PROMISE",

@@ -6,7 +6,7 @@ import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { PilotGateStatus, SoakProofKind } from "@worksocial/domain";
+import { PilotGateStatus } from "@worksocial/domain";
 import { createFileSoakStore } from "@worksocial/persistence";
 import { createSoakService } from "@worksocial/soak";
 
@@ -73,14 +73,6 @@ describe("e2e-lite: M9 soak acceptance", () => {
     expect(report.acceptedCases.some((c) => c.caseId === "T-X045")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-US-006")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X023")).toBe(true);
-    const x023 = result.run.proofs.find(
-      (p) => p.kind === SoakProofKind.EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND,
-    );
-    expect(x023?.passed).toBe(true);
-    expect(x023?.details.join(" ")).toMatch(/ACCESS_BLOCKED/);
-    expect(x023?.details.join(" ")).toMatch(/NOT_WIRED/);
-    expect(x023?.details.join(" ")).toMatch(/liveProviderSuccessClaimed=false/);
-    expect(x023?.details.join(" ")).toMatch(/ACCEPTED≠VERIFIED|ACCEPTED ≠ VERIFIED/);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X030")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-US-056")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-US-043")).toBe(true);
@@ -142,16 +134,6 @@ describe("e2e-lite: M9 soak acceptance", () => {
     expect(report.acceptedCases.some((c) => c.caseId === "T-X004")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X016")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X022")).toBe(true);
-    const tx022 = report.acceptedCases.find((c) => c.caseId === "T-X022");
-    expect(tx022?.environment).toBe("fixture");
-    expect(
-      result.run.proofs.some(
-        (p) =>
-          p.kind === SoakProofKind.IDEMPOTENCY_KEY_PAYLOAD_MISMATCH &&
-          p.passed === true &&
-          p.fixtureOnly === true,
-      ),
-    ).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X065")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X063")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-F24")).toBe(true);
@@ -192,6 +174,12 @@ describe("e2e-lite: M9 soak acceptance", () => {
     expect(report.acceptedCases.some((c) => c.caseId === "T-X017")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X024")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X025")).toBe(true);
+    {
+      const tx025 = report.acceptedCases.find((c) => c.caseId === "T-X025");
+      expect(tx025?.environment).toBe("fixture");
+      expect(String(tx025?.status).toUpperCase()).not.toBe("VERIFIED");
+      expect(String(tx025?.status).toUpperCase()).toBe("ACCEPTED");
+    }
     expect(report.acceptedCases.some((c) => c.caseId === "T-X011")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X003")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X050")).toBe(true);

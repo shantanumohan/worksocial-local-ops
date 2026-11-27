@@ -8,8 +8,8 @@
     "after_hours_handoff_acknowledged"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-043.json",
-  "createdAtIso": "2026-11-27T12:01:51.221Z",
+  "createdAtIso": "2026-11-27T12:10:16.033Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-043-91bba5e5d332"
+  "uniqueSourceArtifactId": "art-fixture-t-us-043-f7dbffdd2707"
 }
