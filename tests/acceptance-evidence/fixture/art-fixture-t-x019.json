@@ -8,8 +8,8 @@
     "approved_payload_edit_invalidated"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x019.json",
-  "createdAtIso": "2026-11-27T16:11:45.281Z",
+  "createdAtIso": "2026-11-27T16:18:43.346Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x019-753dbedcda58"
+  "uniqueSourceArtifactId": "art-fixture-t-x019-f45b160cfdc1"
 }

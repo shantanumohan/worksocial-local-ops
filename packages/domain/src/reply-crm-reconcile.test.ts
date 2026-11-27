@@ -56,6 +56,100 @@ describe("reply-crm-reconcile (T-X054)", () => {
     expect(d.externalEffects).toBe("NONE");
     expect(d.liveProviderSuccessClaimed).toBe(false);
     expect(d.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(d.crmAction).toBe("none");
+    expect(d.reconcile).toBeNull();
+    expect(d.replyAction).toBe("none");
+  });
+
+  it("refuses BLOCKED_TAKEOVER with ACCESS_BLOCKED and NOT_WIRED", () => {
+    const blocked = sentOutbound({
+      sendStatus: MessageSendStatus.BLOCKED_TAKEOVER,
+    });
+    const d = evaluateReplySentCrmFailure({
+      message: blocked,
+      crmAttempt: { ok: false, reason: "fixture CRM skipWrite" },
+    });
+    expect(d.allowed).toBe(false);
+    expect(d.code).toBe("REPLY_NOT_SENT");
+    expect(d.resendAllowed).toBe(false);
+    expect(d.externalEffects).toBe("NONE");
+    expect(d.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(d.liveCrmWiring).toBe("NOT_WIRED");
+    expect(d.liveProviderSuccessClaimed).toBe(false);
+    expect(d.crmAction).toBe("none");
+    expect(d.reconcile).toBeNull();
+    expect(d.replyAction).toBe("none");
+  });
+
+  it("refuses QUEUED outbound before CRM reconcile path", () => {
+    const queued = sentOutbound({ sendStatus: MessageSendStatus.QUEUED });
+    const d = evaluateReplySentCrmFailure({
+      message: queued,
+      crmAttempt: { ok: false, reason: "fixture CRM skipWrite" },
+    });
+    expect(d.allowed).toBe(false);
+    expect(d.code).toBe("REPLY_NOT_SENT");
+    expect(d.resendAllowed).toBe(false);
+    expect(d.externalEffects).toBe("NONE");
+    expect(d.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(d.liveCrmWiring).toBe("NOT_WIRED");
+    expect(d.crmAction).toBe("none");
+    expect(d.reconcile).toBeNull();
+    expect(d.replyAction).toBe("none");
+  });
+
+  it("refuses DRAFT outbound before CRM reconcile path", () => {
+    const draft = sentOutbound({ sendStatus: MessageSendStatus.DRAFT });
+    const d = evaluateReplySentCrmFailure({
+      message: draft,
+      crmAttempt: { ok: false, reason: "fixture CRM skipWrite" },
+    });
+    expect(d.allowed).toBe(false);
+    expect(d.code).toBe("REPLY_NOT_SENT");
+    expect(d.resendAllowed).toBe(false);
+    expect(d.liveCrmWiring).toBe("NOT_WIRED");
+    expect(d.externalEffects).toBe("NONE");
+    expect(d.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(d.liveProviderSuccessClaimed).toBe(false);
+    expect(d.crmAction).toBe("none");
+    expect(d.reconcile).toBeNull();
+    expect(d.replyAction).toBe("none");
+  });
+
+  it("refuses CANCELLED outbound before CRM reconcile path", () => {
+    const cancelled = sentOutbound({ sendStatus: MessageSendStatus.CANCELLED });
+    const d = evaluateReplySentCrmFailure({
+      message: cancelled,
+      crmAttempt: { ok: false, reason: "fixture CRM skipWrite" },
+    });
+    expect(d.allowed).toBe(false);
+    expect(d.code).toBe("REPLY_NOT_SENT");
+    expect(d.resendAllowed).toBe(false);
+    expect(d.liveCrmWiring).toBe("NOT_WIRED");
+    expect(d.externalEffects).toBe("NONE");
+    expect(d.liveProviderSuccessClaimed).toBe(false);
+    expect(d.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(d.crmAction).toBe("none");
+    expect(d.reconcile).toBeNull();
+    expect(d.replyAction).toBe("none");
+  });
+
+  it("refuses FAILED outbound before CRM reconcile path", () => {
+    const failed = sentOutbound({ sendStatus: MessageSendStatus.FAILED });
+    const d = evaluateReplySentCrmFailure({
+      message: failed,
+      crmAttempt: { ok: false, reason: "fixture CRM skipWrite" },
+    });
+    expect(d.allowed).toBe(false);
+    expect(d.code).toBe("REPLY_NOT_SENT");
+    expect(d.resendAllowed).toBe(false);
+    expect(d.liveCrmWiring).toBe("NOT_WIRED");
+    expect(d.externalEffects).toBe("NONE");
+    expect(d.liveProviderSuccessClaimed).toBe(false);
+    expect(d.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(d.crmAction).toBe("none");
+    expect(d.replyAction).toBe("none");
+    expect(d.reconcile).toBeNull();
   });
 
   it("refuses inbound messages", () => {
@@ -71,6 +165,12 @@ describe("reply-crm-reconcile (T-X054)", () => {
     expect(d.code).toBe("REPLY_NOT_SENT");
     expect(d.resendAllowed).toBe(false);
     expect(d.liveCrmWiring).toBe("NOT_WIRED");
+    expect(d.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(d.externalEffects).toBe("NONE");
+    expect(d.liveProviderSuccessClaimed).toBe(false);
+    expect(d.crmAction).toBe("none");
+    expect(d.replyAction).toBe("none");
+    expect(d.reconcile).toBeNull();
   });
 
   it("DELIVERED + CRM fail retains outbound and forbids resend", () => {
@@ -87,9 +187,15 @@ describe("reply-crm-reconcile (T-X054)", () => {
     expect(d.allowed).toBe(true);
     expect(d.code).toBe("CRM_RECONCILE_NO_RESEND");
     expect(d.replyAction).toBe("retain_sent");
+    expect(d.crmAction).toBe("reconcile_or_retry");
     expect(d.resendAllowed).toBe(false);
+    expect(d.reconcile).not.toBeNull();
+    expect(isMissingRemoteReconcile(d.reconcile)).toBe(true);
     expect(d.reasons.some((r) => /delivered/i.test(r))).toBe(true);
     expect(d.liveCrmWiring).toBe("NOT_WIRED");
+    expect(d.externalEffects).toBe("NONE");
+    expect(d.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(d.liveProviderSuccessClaimed).toBe(false);
   });
 
   it("on CRM fail retains SENT, reconciles CRM, forbids resend", () => {
@@ -105,6 +211,7 @@ describe("reply-crm-reconcile (T-X054)", () => {
     expect(d.replyAction).toBe("retain_sent");
     expect(d.crmAction).toBe("reconcile_or_retry");
     expect(d.resendAllowed).toBe(false);
+    expect(d.reconcile).not.toBeNull();
     expect(isMissingRemoteReconcile(d.reconcile)).toBe(true);
     expect(d.externalEffects).toBe("NONE");
     expect(d.liveCrmWiring).toBe("NOT_WIRED");
@@ -130,9 +237,14 @@ describe("reply-crm-reconcile (T-X054)", () => {
     expect(d.allowed).toBe(true);
     expect(d.code).toBe("CRM_RECONCILE_NO_RESEND");
     expect(d.replyAction).toBe("retain_sent");
+    expect(d.crmAction).toBe("reconcile_or_retry");
     expect(d.resendAllowed).toBe(false);
     expect(d.reconcile).toBeNull();
     expect(d.reasons.some((r) => /without intent/.test(r))).toBe(true);
+    expect(d.externalEffects).toBe("NONE");
+    expect(d.liveCrmWiring).toBe("NOT_WIRED");
+    expect(d.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(d.liveProviderSuccessClaimed).toBe(false);
   });
 
   it("module mismatch on reconcile still forbids outbound resend", () => {
@@ -160,10 +272,16 @@ describe("reply-crm-reconcile (T-X054)", () => {
       ],
     });
     expect(d.allowed).toBe(true);
+    expect(d.code).toBe("CRM_RECONCILE_NO_RESEND");
     expect(d.resendAllowed).toBe(false);
     expect(d.replyAction).toBe("retain_sent");
+    expect(d.crmAction).toBe("reconcile_or_retry");
     expect(d.reconcile).not.toBeNull();
     expect(d.reconcile?.status).not.toBe("MATCHED");
+    expect(d.externalEffects).toBe("NONE");
+    expect(d.liveCrmWiring).toBe("NOT_WIRED");
+    expect(d.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(d.liveProviderSuccessClaimed).toBe(false);
   });
 
   it("CRM success still forbids outbound resend", () => {
@@ -177,6 +295,11 @@ describe("reply-crm-reconcile (T-X054)", () => {
     expect(d.replyAction).toBe("retain_sent");
     expect(d.liveCrmWiring).toBe("NOT_WIRED");
     expect(d.liveProviderSuccessClaimed).toBe(false);
+    expect(d.externalEffects).toBe("NONE");
+    expect(d.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(d.crmAction).toBe("recorded");
+    expect(d.allowed).toBe(true);
+    expect(d.reconcile).toBeNull();
   });
 
   it("refuses claimLiveVerified and requestLiveCrmWire", () => {
@@ -190,6 +313,12 @@ describe("reply-crm-reconcile (T-X054)", () => {
     expect(verified.resendAllowed).toBe(false);
     expect(verified.reasons.some((r) => /VERIFIED/.test(r))).toBe(true);
     expect(verified.liveCrmWiring).toBe("NOT_WIRED");
+    expect(verified.externalEffects).toBe("NONE");
+    expect(verified.liveProviderSuccessClaimed).toBe(false);
+    expect(verified.crmAction).toBe("none");
+    expect(verified.reconcile).toBeNull();
+    expect(verified.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(verified.replyAction).toBe("none");
 
     const wire = evaluateReplySentCrmFailure({
       message: sentOutbound(),
@@ -200,6 +329,12 @@ describe("reply-crm-reconcile (T-X054)", () => {
     expect(wire.code).toBe("LIVE_CRM_CLAIM_REFUSED");
     expect(wire.reasons.some((r) => /NOT_WIRED/.test(r))).toBe(true);
     expect(wire.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(wire.externalEffects).toBe("NONE");
+    expect(wire.liveProviderSuccessClaimed).toBe(false);
+    expect(wire.crmAction).toBe("none");
+    expect(wire.reconcile).toBeNull();
+    expect(wire.resendAllowed).toBe(false);
+    expect(wire.replyAction).toBe("none");
   });
 
   it("refuses non-fixture messages before asserting fixture honesty", () => {
@@ -215,5 +350,8 @@ describe("reply-crm-reconcile (T-X054)", () => {
     expect(d.liveCrmWiring).toBe("NOT_WIRED");
     expect(d.liveProviderSuccessClaimed).toBe(false);
     expect(d.externalEffects).toBe("NONE");
+    expect(d.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(d.reconcile).toBeNull();
+    expect(d.replyAction).toBe("none");
   });
 });
