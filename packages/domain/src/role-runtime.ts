@@ -660,17 +660,292 @@ function parseTypedTaskRequest(
  * Classify Claude Code CLI completion from exit code + stdout.
  * Claude may exit 0 while `--output-format json` sets `is_error: true`
  * (or subtype/type "error"). That must fail the job — never treat as success.
- * Pure — no spawn/network.
+ * Pure — no spawn/network. Live CLI wiring stays NOT_WIRED (T-X009).
  */
 export type ClaudeCliCompletionClassification =
-  | { ok: true; jobShouldFail: false }
+  | { ok: true; jobShouldFail: false; externalEffects: "NONE" }
   | {
       ok: false;
       code: "NONZERO_EXIT" | "CLI_REPORTED_ERROR";
       reason: string;
       jobShouldFail: true;
       exitCode: number;
+      externalEffects: "NONE";
     };
+
+/** Live Claude CLI fleet remains unwired in fixture soak (T-X009). */
+export function claudeCliLiveWiringStatus(): "NOT_WIRED" {
+  return "NOT_WIRED";
+}
+
+/**
+ * Fail-closed is_error signal: boolean true, integer 1, or trimmed
+ * case-insensitive "true" / "1". Never invent success from ambiguous truthy junk.
+ */
+export function cliReportsIsError(value: unknown): boolean {
+  if (value === true || value === 1) return true;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "true" || normalized === "1";
+  }
+  return false;
+}
+
+function cliReportsErrorLabel(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "error" || normalized.startsWith("error_")) return true;
+  return (
+    normalized === "api_error" || normalized === "error_during_execution"
+  );
+}
+
+/** status=error|failed|failure (trimmed, case-insensitive). */
+function cliReportsFailedStatus(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  const normalized = value.trim().toLowerCase();
+  return (
+    normalized === "error" ||
+    normalized === "failed" ||
+    normalized === "failure"
+  );
+}
+
+/** stop_reason / stopReason abort-style labels. */
+function cliReportsAbortStopReason(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  const normalized = value.trim().toLowerCase();
+  return (
+    normalized === "error" ||
+    normalized === "refusal" ||
+    normalized === "aborted" ||
+    normalized === "cancelled" ||
+    normalized === "canceled"
+  );
+}
+
+function cliReportsNonzeroEmbeddedExit(value: unknown): boolean {
+  if (typeof value === "number" && Number.isFinite(value) && value !== 0) {
+    return true;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return false;
+    const asNum = Number(trimmed);
+    return Number.isFinite(asNum) && asNum !== 0;
+  }
+  return false;
+}
+
+function cliErrorsArrayPresent(value: unknown): boolean {
+  return Array.isArray(value) && value.length > 0;
+}
+
+function cliReportsSuccessFalse(value: unknown): boolean {
+  if (value === false || value === 0) return true;
+  if (typeof value === "string") {
+    return value.trim().toLowerCase() === "false";
+  }
+  return false;
+}
+
+function cliErrorFieldPresent(value: unknown): boolean {
+  if (value == null) return false;
+  if (typeof value === "string") return value.trim().length > 0;
+  if (typeof value === "object") return Object.keys(value as object).length > 0;
+  return true;
+}
+
+function asCliStdoutObject(value: unknown): Record<string, unknown> | null {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  if (Array.isArray(value)) {
+    for (let i = value.length - 1; i >= 0; i -= 1) {
+      const el = value[i];
+      if (el && typeof el === "object" && !Array.isArray(el)) {
+        return el as Record<string, unknown>;
+      }
+    }
+  }
+  return null;
+}
+
+/** Parse stdout as JSON object, last array element, or last NDJSON line. Strips BOM. */
+function parseClaudeCliStdoutJson(
+  raw: string,
+): Record<string, unknown> | null {
+  const stripped = raw.replace(/^\uFEFF/, "").trim();
+  try {
+    const parsed = JSON.parse(stripped) as unknown;
+    const asObject = asCliStdoutObject(parsed);
+    if (asObject) return asObject;
+  } catch {
+    // fall through to NDJSON last-line
+  }
+  const lines = stripped
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    try {
+      const parsed = JSON.parse(lines[i]!) as unknown;
+      const asObject = asCliStdoutObject(parsed);
+      if (asObject) return asObject;
+    } catch {
+      // try earlier line
+    }
+  }
+  return null;
+}
+
+function classifyParsedClaudeCliEnvelope(
+  parsed: Record<string, unknown>,
+  depth = 0,
+): ClaudeCliCompletionClassification | null {
+  if (
+    cliReportsIsError(parsed.is_error) ||
+    cliReportsIsError(parsed.isError)
+  ) {
+    const detail =
+      typeof parsed.result === "string" && parsed.result.trim().length > 0
+        ? parsed.result.trim().slice(0, 240)
+        : typeof parsed.error === "string" && parsed.error.trim().length > 0
+          ? parsed.error.trim().slice(0, 240)
+          : "is_error=true";
+    return {
+      ok: false,
+      code: "CLI_REPORTED_ERROR",
+      reason: `CLI error despite exit 0: ${detail}`,
+      jobShouldFail: true,
+      exitCode: 0,
+      externalEffects: "NONE",
+    };
+  }
+  if (
+    cliReportsErrorLabel(parsed.subtype) ||
+    cliReportsErrorLabel(parsed.type) ||
+    cliReportsFailedStatus(parsed.status)
+  ) {
+    return {
+      ok: false,
+      code: "CLI_REPORTED_ERROR",
+      reason: "CLI error subtype/type/status despite exit 0",
+      jobShouldFail: true,
+      exitCode: 0,
+      externalEffects: "NONE",
+    };
+  }
+  if (
+    cliReportsSuccessFalse(parsed.success) ||
+    cliReportsSuccessFalse(parsed.ok)
+  ) {
+    return {
+      ok: false,
+      code: "CLI_REPORTED_ERROR",
+      reason: "CLI success/ok=false despite exit 0",
+      jobShouldFail: true,
+      exitCode: 0,
+      externalEffects: "NONE",
+    };
+  }
+  if (
+    cliReportsIsError(parsed.failed) ||
+    cliReportsIsError(parsed.has_error) ||
+    cliReportsIsError(parsed.had_error) ||
+    cliReportsIsError(parsed.hadError) ||
+    cliReportsIsError(parsed.was_error) ||
+    cliReportsIsError(parsed.wasError) ||
+    cliReportsIsError(parsed.with_error) ||
+    cliReportsIsError(parsed.withError) ||
+    cliReportsIsError(parsed.errored) ||
+    cliReportsIsError(parsed.is_errored) ||
+    cliReportsIsError(parsed.isErrored) ||
+    cliReportsIsError(parsed.is_failure) ||
+    cliReportsIsError(parsed.isFailure) ||
+    cliReportsIsError(parsed.is_failed) ||
+    cliReportsIsError(parsed.isFailed) ||
+    cliReportsIsError(parsed.aborted) ||
+    cliReportsIsError(parsed.cancelled) ||
+    cliReportsIsError(parsed.canceled)
+  ) {
+    return {
+      ok: false,
+      code: "CLI_REPORTED_ERROR",
+      reason: "CLI failed/has_error/errored/aborted flag despite exit 0",
+      jobShouldFail: true,
+      exitCode: 0,
+      externalEffects: "NONE",
+    };
+  }
+  if (
+    cliReportsAbortStopReason(parsed.stop_reason) ||
+    cliReportsAbortStopReason(parsed.stopReason)
+  ) {
+    return {
+      ok: false,
+      code: "CLI_REPORTED_ERROR",
+      reason: "CLI abort stop_reason despite exit 0",
+      jobShouldFail: true,
+      exitCode: 0,
+      externalEffects: "NONE",
+    };
+  }
+  if (
+    cliReportsNonzeroEmbeddedExit(parsed.exit_code) ||
+    cliReportsNonzeroEmbeddedExit(parsed.exitCode)
+  ) {
+    return {
+      ok: false,
+      code: "CLI_REPORTED_ERROR",
+      reason: "CLI embedded nonzero exit_code despite process exit 0",
+      jobShouldFail: true,
+      exitCode: 0,
+      externalEffects: "NONE",
+    };
+  }
+  if (cliErrorsArrayPresent(parsed.errors)) {
+    return {
+      ok: false,
+      code: "CLI_REPORTED_ERROR",
+      reason: "CLI errors[] non-empty despite exit 0",
+      jobShouldFail: true,
+      exitCode: 0,
+      externalEffects: "NONE",
+    };
+  }
+  if (
+    cliErrorFieldPresent(parsed.error) ||
+    cliErrorFieldPresent(parsed.error_code) ||
+    cliErrorFieldPresent(parsed.errorCode)
+  ) {
+    return {
+      ok: false,
+      code: "CLI_REPORTED_ERROR",
+      reason: "CLI error field present despite exit 0",
+      jobShouldFail: true,
+      exitCode: 0,
+      externalEffects: "NONE",
+    };
+  }
+  // Nested result string/object may itself report is_error (poisoned envelope).
+  if (depth < 2) {
+    if (typeof parsed.result === "string" && parsed.result.trim().length > 0) {
+      const nested = parseClaudeCliStdoutJson(parsed.result);
+      if (nested) {
+        const nestedHit = classifyParsedClaudeCliEnvelope(nested, depth + 1);
+        if (nestedHit) return nestedHit;
+      }
+    } else if (parsed.result && typeof parsed.result === "object") {
+      const nestedObj = asCliStdoutObject(parsed.result);
+      if (nestedObj) {
+        const nestedHit = classifyParsedClaudeCliEnvelope(nestedObj, depth + 1);
+        if (nestedHit) return nestedHit;
+      }
+    }
+  }
+  return null;
+}
 
 export function classifyClaudeCliCompletion(input: {
   exitCode: number | null;
@@ -685,58 +960,138 @@ export function classifyClaudeCliCompletion(input: {
       reason: `CLI exited with code ${exitCode}`,
       jobShouldFail: true,
       exitCode,
+      externalEffects: "NONE",
     };
   }
 
-  const raw = input.stdout.trim();
-  if (!raw) {
-    return { ok: true, jobShouldFail: false };
+  const rawStdout = input.stdout.trim();
+  const parsedStdout = rawStdout ? parseClaudeCliStdoutJson(rawStdout) : null;
+  if (parsedStdout) {
+    const hit = classifyParsedClaudeCliEnvelope(parsedStdout);
+    if (hit) return hit;
+    // Parsed clean success envelope — do not fail on stderr chatter.
+    return { ok: true, jobShouldFail: false, externalEffects: "NONE" };
   }
 
-  try {
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-    if (parsed.is_error === true) {
-      const detail =
-        typeof parsed.result === "string" && parsed.result.trim().length > 0
-          ? parsed.result.trim().slice(0, 240)
-          : typeof parsed.error === "string" && parsed.error.trim().length > 0
-            ? parsed.error.trim().slice(0, 240)
-            : "is_error=true";
-      return {
-        ok: false,
-        code: "CLI_REPORTED_ERROR",
-        reason: `CLI error despite exit 0: ${detail}`,
-        jobShouldFail: true,
-        exitCode: 0,
-      };
+  // Empty/unparseable stdout: fail-closed on structured stderr error signals.
+  const rawStderr = (input.stderr ?? "").trim();
+  if (rawStderr) {
+    const parsedStderr = parseClaudeCliStdoutJson(rawStderr);
+    if (parsedStderr) {
+      const hit = classifyParsedClaudeCliEnvelope(parsedStderr);
+      if (hit) return hit;
     }
-    if (parsed.subtype === "error" || parsed.type === "error") {
-      return {
-        ok: false,
-        code: "CLI_REPORTED_ERROR",
-        reason: "CLI error subtype/type despite exit 0",
-        jobShouldFail: true,
-        exitCode: 0,
-      };
-    }
-  } catch {
-    // Non-JSON stdout with exit 0 — leave to structured-output validation.
   }
 
-  return { ok: true, jobShouldFail: false };
+  return { ok: true, jobShouldFail: false, externalEffects: "NONE" };
 }
 
-/** Map CLI completion classification to role-run status (job fails on CLI error). */
+/**
+ * Map CLI completion classification to role-run status (job fails on CLI error).
+ * Never invent SUCCEEDED when the classifier says the job must fail (T-X009).
+ */
 export function roleRunStatusForClaudeCliCompletion(
   classification: ClaudeCliCompletionClassification,
 ): RoleRunStatusValue {
-  if (classification.ok) {
-    return RoleRunStatus.SUCCEEDED;
-  }
-  if (classification.code === "NONZERO_EXIT") {
+  if (!classification.ok || classification.jobShouldFail) {
     return RoleRunStatus.FAILED;
   }
-  return RoleRunStatus.FAILED;
+  return RoleRunStatus.SUCCEEDED;
+}
+
+/**
+ * Default CLI error retry fence for fixture soak (T-X009) — one recorded
+ * failed apply; further starts are refused without inflating attemptCount.
+ */
+export const DEFAULT_CLI_ERROR_RETRY_MAX_ATTEMPTS = 1 as const;
+
+export type ClaudeCliErrorRetryBudgetDecision = {
+  allowed: boolean;
+  code: "RETRY_BUDGET_EXHAUSTED" | null;
+  reason: string;
+  attemptCount: number;
+  maxAttempts: number;
+  /**
+   * Whether a denial/failure at this gate should be persisted as another
+   * apply attempt. RETRY_BUDGET_EXHAUSTED → false (fence honesty).
+   */
+  recordAttempt: boolean;
+  jobShouldFail: boolean;
+  externalEffects: "NONE";
+  claudeCliLiveWiring: "NOT_WIRED";
+};
+
+/**
+ * T-X009 retry budget fence: CLI_REPORTED_ERROR / NONZERO_EXIT consume the
+ * attempt budget. Evaluating a start past maxAttempts → RETRY_BUDGET_EXHAUSTED
+ * without recording another apply (mirrors repair ATTEMPT_LIMIT honesty).
+ * Clean success does not open further retries. Live CLI stays NOT_WIRED.
+ */
+export function evaluateClaudeCliErrorRetryBudget(input: {
+  classification: ClaudeCliCompletionClassification;
+  /** Failed CLI applies already recorded (not including a refused start). */
+  attemptCount: number;
+  /** True when deciding whether to start another CLI apply. */
+  startingNewAttempt: boolean;
+  maxAttempts?: number;
+}): ClaudeCliErrorRetryBudgetDecision {
+  const maxAttempts = Math.max(
+    1,
+    Math.floor(input.maxAttempts ?? DEFAULT_CLI_ERROR_RETRY_MAX_ATTEMPTS),
+  );
+  const used = Math.max(0, Math.floor(input.attemptCount));
+  const wiring = claudeCliLiveWiringStatus();
+
+  if (input.classification.ok && !input.classification.jobShouldFail) {
+    return {
+      allowed: true,
+      code: null,
+      reason: "Clean CLI completion — retry budget not consumed",
+      attemptCount: used,
+      maxAttempts,
+      recordAttempt: false,
+      jobShouldFail: false,
+      externalEffects: "NONE",
+      claudeCliLiveWiring: wiring,
+    };
+  }
+
+  const next = input.startingNewAttempt ? used + 1 : used;
+  if (next > maxAttempts) {
+    return {
+      allowed: false,
+      code: "RETRY_BUDGET_EXHAUSTED",
+      reason: `CLI retry attempt ${next} exceeds max ${maxAttempts} — refuse without recording`,
+      attemptCount: used,
+      maxAttempts,
+      recordAttempt: false,
+      jobShouldFail: true,
+      externalEffects: "NONE",
+      claudeCliLiveWiring: wiring,
+    };
+  }
+
+  return {
+    allowed: true,
+    code: null,
+    reason: `CLI error attempt ${Math.max(next, 1)} within retry budget ${maxAttempts}`,
+    attemptCount: used,
+    maxAttempts,
+    recordAttempt: true,
+    jobShouldFail: true,
+    externalEffects: "NONE",
+    claudeCliLiveWiring: wiring,
+  };
+}
+
+/**
+ * T-X009: RETRY_BUDGET_EXHAUSTED denials must not be persisted as another
+ * apply attempt (would inflate attemptCount past maxAttempts).
+ */
+export function shouldRecordClaudeCliAttemptOnBudgetDenial(
+  code: string | null,
+): boolean {
+  return code !== "RETRY_BUDGET_EXHAUSTED";
 }
 
 /**
