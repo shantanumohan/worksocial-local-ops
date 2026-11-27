@@ -274,4 +274,13 @@ describe("evaluateStandingAuthority", () => {
     );
     expect(allowed.decision).toEqual({ allowed: true });
   });
+
+  it("omitted fence flag allows without held lease (T-X006 edge)", () => {
+    const allowed = evaluateStandingAuthority(
+      baseRequest({
+        supervisorLeaseHeld: false,
+      }),
+    );
+    expect(allowed.decision).toEqual({ allowed: true });
+  });
 });
