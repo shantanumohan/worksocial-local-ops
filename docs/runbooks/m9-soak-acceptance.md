@@ -120,7 +120,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-US-044** / **T-X053** map only to `TAKEOVER_CANCELS_UNSENT_REPLIES` (multi-queue cancel; SENT preserved; `VERSION_MISMATCH` via real takeover for stale prepare; `CONVERSATION_TAKEOVER` at matching post-takeover version; not live VERIFIED).
 
-**T-US-018** / **T-X037** map only to `EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN` (retry fence + effect/capability/attempt-envelope/outcome/side-effect/receipt honesty; ACCEPTED ≠ VERIFIED; live + Ads NOT_WIRED).
+**T-US-018** / **T-X037** map only to `EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN` (retry fence + effect/capability/attempt-envelope/outcome/side-effect/receipt honesty; B21/B22/B23 sandbox and combo receipt invent refuse; ACCEPTED ≠ VERIFIED; live + Ads NOT_WIRED).
 
 **T-X058** maps only to `REPAIR_ATTEMPT_LIMIT_ESCALATED` (MAX_REPAIR_ATTEMPTS=2; third automatic start ATTEMPT_LIMIT after ESCALATED; CMS repair NOT_WIRED; externalEffects NONE; not live VERIFIED).
 

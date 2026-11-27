@@ -404,6 +404,67 @@ describe("evaluation — EVAL_ONLY isolation", () => {
     expect(falseLive.liveReceiptClaimed).toBe(false);
   });
 
+  it("refuses sandbox-verified receipt invent (T-X037 B21)", () => {
+    const allowedEnv = resolveEvalToolAttemptEnvelope({
+      rawTool: EvalToolClass.JUDGE_ANSWER,
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const allowedOut = resolveEvalToolOutcomeClaim({ envelope: allowedEnv });
+    const allowedSide = resolveEvalToolSideEffectClaim({ outcome: allowedOut });
+    const falseSandbox = resolveEvalToolReceiptClaim({
+      sideEffect: allowedSide,
+      claimSandboxVerifiedReceipt: true,
+    });
+    expect(falseSandbox.receipt).toBe("NONE");
+    expect(falseSandbox.sandboxVerifiedClaimed).toBe(false);
+    expect(falseSandbox.inventedReceipt).toBe(false);
+    expect(falseSandbox.verifiedClaimed).toBe(false);
+    expect(falseSandbox.chatgptAdsWiring).toBe("NOT_WIRED");
+    expect(falseSandbox.reason).toContain("FALSE_LIVE_RECEIPT_REFUSED");
+  });
+
+  it("refuses combined sandbox+provider receipt invent (T-X037 B22)", () => {
+    const allowedEnv = resolveEvalToolAttemptEnvelope({
+      rawTool: EvalToolClass.JUDGE_ANSWER,
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const allowedOut = resolveEvalToolOutcomeClaim({ envelope: allowedEnv });
+    const allowedSide = resolveEvalToolSideEffectClaim({ outcome: allowedOut });
+    const combo = resolveEvalToolReceiptClaim({
+      sideEffect: allowedSide,
+      claimSandboxVerifiedReceipt: true,
+      claimProviderReceipt: true,
+    });
+    expect(combo.receipt).toBe("NONE");
+    expect(combo.sandboxVerifiedClaimed).toBe(false);
+    expect(combo.providerReceiptClaimed).toBe(false);
+    expect(combo.inventedReceipt).toBe(false);
+    expect(combo.acceptedIsNotVerified).toBe(true);
+    expect(combo.externalEffects).toBe("NONE");
+  });
+
+  it("refuses combined sandbox+measured receipt invent (T-X037 B23)", () => {
+    const allowedEnv = resolveEvalToolAttemptEnvelope({
+      rawTool: EvalToolClass.JUDGE_ANSWER,
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const allowedOut = resolveEvalToolOutcomeClaim({ envelope: allowedEnv });
+    const allowedSide = resolveEvalToolSideEffectClaim({ outcome: allowedOut });
+    const combo = resolveEvalToolReceiptClaim({
+      sideEffect: allowedSide,
+      claimSandboxVerifiedReceipt: true,
+      claimMeasuredReceipt: true,
+    });
+    expect(combo.receipt).toBe("NONE");
+    expect(combo.sandboxVerifiedClaimed).toBe(false);
+    expect(combo.measuredReceiptClaimed).toBe(false);
+    expect(combo.verifiedClaimed).toBe(false);
+    expect(combo.acceptedIsNotVerified).toBe(true);
+  });
+
   it("uses a separate eval budget account", () => {
     let state = emptyEvaluationState(now);
     const reserved = reserveEvalBudget(state.budget, "res-1", 100);
