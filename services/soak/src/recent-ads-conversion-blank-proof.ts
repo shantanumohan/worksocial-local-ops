@@ -15,6 +15,7 @@ import {
   classifyRecentAdsConversion,
   createPaidMediaProposal,
   diagnoseDelivery,
+  evaluateRecentAdsConversionAttackSuite,
   type SoakProofRecord,
 } from "@worksocial/domain";
 
@@ -39,9 +40,13 @@ export function proofRecentAdsConversionBlankPending(
     blank.freshness === AdsConversionFreshness.PENDING &&
     blank.displayValue === null &&
     blank.conversions.kind === "missing" &&
+    blank.liveProviderWiring === "NOT_WIRED" &&
+    blank.externalEffects === "NONE" &&
     /PENDING|not false zero/i.test(blank.reasons.join(" "))
   ) {
-    details.push("Blank Ads conversion → PENDING (displayValue null, not zero)");
+    details.push(
+      "Blank Ads conversion → PENDING (displayValue null, not zero) NOT_WIRED",
+    );
   } else {
     passed = false;
     details.push(`Blank classification unexpectedly ${JSON.stringify(blank)}`);
@@ -318,6 +323,15 @@ export function proofRecentAdsConversionBlankPending(
     details.push(
       `Expected PARTIAL_SPEND on LOW_CLICKS unsettled, got ${JSON.stringify(blockedLow)}`,
     );
+  }
+
+  // Hillclimb attack suite: blank/omitted/NaN/unsettled + honesty fields.
+  const suite = evaluateRecentAdsConversionAttackSuite();
+  if (suite.passed) {
+    details.push(...suite.details);
+  } else {
+    passed = false;
+    details.push(`Attack suite failed: ${suite.details.join(" | ")}`);
   }
 
   details.push("liveProviderSuccessClaimed=false externalEffects=NONE");

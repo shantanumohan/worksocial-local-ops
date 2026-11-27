@@ -96,6 +96,9 @@ export const PAID_MEDIA_RELATED_CASE_IDS = [
   "T-X036",
 ] as const;
 
+/** Catalog cases tied to recent Ads conversion blank → PENDING (T-X036). */
+export const RECENT_ADS_CONVERSION_RELATED_CASE_IDS = ["T-X036"] as const;
+
 export type AnalysisDefinition = {
   definitionId: string;
   siteId: string;
@@ -470,12 +473,16 @@ export type RecentAdsConversionClassification = {
    */
   displayValue: number | null;
   reasons: string[];
+  /** Fixture honesty — classifier never wires live Ads transport. */
+  liveProviderWiring: "NOT_WIRED";
+  externalEffects: "NONE";
 };
 
 /**
  * Recent Ads conversion blank → PENDING, not a false zero (T-X036).
- * Settled measured 0 remains an honest zero; blank/null/unsettled stay pending.
+ * Settled measured 0 remains an honest zero; blank/null/NaN/unsettled stay pending.
  * LIVE observations refuse a measured claim while Ads transport is NOT_WIRED.
+ * Fixture honesty: liveProviderWiring NOT_WIRED; externalEffects NONE.
  */
 export function classifyRecentAdsConversion(
   obs: RecentAdsConversionObservation,
@@ -501,10 +508,19 @@ export function classifyRecentAdsConversion(
       freshness: AdsConversionFreshness.UNAVAILABLE,
       displayValue: null,
       reasons: [message],
+      liveProviderWiring: "NOT_WIRED",
+      externalEffects: "NONE",
     };
   }
 
-  if (obs.blank || obs.conversions === null || !obs.attributionSettled) {
+  const nonFinite =
+    obs.conversions !== null && !Number.isFinite(obs.conversions);
+  if (
+    obs.blank ||
+    obs.conversions === null ||
+    nonFinite ||
+    !obs.attributionSettled
+  ) {
     const conversions = classifyMetric({
       metricId: `ads-conversions:${obs.campaignId}`,
       value: null,
@@ -517,10 +533,12 @@ export function classifyRecentAdsConversion(
       freshness: AdsConversionFreshness.PENDING,
       displayValue: null,
       reasons: [
-        obs.blank || obs.conversions === null
+        obs.blank || obs.conversions === null || nonFinite
           ? "Recent Ads conversion blank/omitted — PENDING, not false zero (T-X036)"
           : "Attribution window not settled — PENDING conversions, not false zero (T-X036)",
       ],
+      liveProviderWiring: "NOT_WIRED",
+      externalEffects: "NONE",
     };
   }
 
@@ -537,6 +555,8 @@ export function classifyRecentAdsConversion(
       freshness: AdsConversionFreshness.FIXTURE,
       displayValue: obs.conversions,
       reasons: ["FIXTURE Ads conversion sample — not live account data"],
+      liveProviderWiring: "NOT_WIRED",
+      externalEffects: "NONE",
     };
   }
   // SANDBOX only — LIVE already refused above while transport is NOT_WIRED.
@@ -548,7 +568,178 @@ export function classifyRecentAdsConversion(
     reasons: [
       "SANDBOX Ads conversion sample — not production LIVE; provenance preserved",
     ],
+    liveProviderWiring: "NOT_WIRED",
+    externalEffects: "NONE",
   };
+}
+
+/**
+ * Hillclimb suite (T-X036): blank/omitted/NaN/unsettled → PENDING with
+ * displayValue null; settled fixture zero stays honest measured 0;
+ * NOT_WIRED/LIVE/UNAVAILABLE stay unavailable; never invent false zero.
+ */
+export function evaluateRecentAdsConversionAttackSuite(): {
+  passed: boolean;
+  details: string[];
+  classifications: RecentAdsConversionClassification[];
+} {
+  const details: string[] = [];
+  const classifications: RecentAdsConversionClassification[] = [];
+  let passed = true;
+
+  const cases: Array<{
+    label: string;
+    obs: RecentAdsConversionObservation;
+    expectFreshness: AdsConversionFreshnessValue;
+    expectDisplayNull: boolean;
+  }> = [
+    {
+      label: "blank",
+      obs: {
+        campaignId: "suite-blank",
+        conversions: null,
+        blank: true,
+        attributionSettled: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      expectFreshness: AdsConversionFreshness.PENDING,
+      expectDisplayNull: true,
+    },
+    {
+      label: "omitted-null",
+      obs: {
+        campaignId: "suite-omitted",
+        conversions: null,
+        blank: false,
+        attributionSettled: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      expectFreshness: AdsConversionFreshness.PENDING,
+      expectDisplayNull: true,
+    },
+    {
+      label: "nan",
+      obs: {
+        campaignId: "suite-nan",
+        conversions: Number.NaN,
+        blank: false,
+        attributionSettled: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      expectFreshness: AdsConversionFreshness.PENDING,
+      expectDisplayNull: true,
+    },
+    {
+      label: "unsettled-zero",
+      obs: {
+        campaignId: "suite-unsettled",
+        conversions: 0,
+        blank: false,
+        attributionSettled: false,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      expectFreshness: AdsConversionFreshness.PENDING,
+      expectDisplayNull: true,
+    },
+    {
+      label: "settled-fixture-zero",
+      obs: {
+        campaignId: "suite-settled-zero",
+        conversions: 0,
+        blank: false,
+        attributionSettled: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      expectFreshness: AdsConversionFreshness.FIXTURE,
+      expectDisplayNull: false,
+    },
+    {
+      label: "not-wired",
+      obs: {
+        campaignId: "suite-nw",
+        conversions: 3,
+        blank: false,
+        attributionSettled: true,
+        environment: AnalyticsEnvironment.NOT_WIRED,
+      },
+      expectFreshness: AdsConversionFreshness.UNAVAILABLE,
+      expectDisplayNull: true,
+    },
+    {
+      label: "live-refused",
+      obs: {
+        campaignId: "suite-live",
+        conversions: 4,
+        blank: false,
+        attributionSettled: true,
+        environment: AnalyticsEnvironment.LIVE,
+      },
+      expectFreshness: AdsConversionFreshness.UNAVAILABLE,
+      expectDisplayNull: true,
+    },
+    {
+      label: "unavailable",
+      obs: {
+        campaignId: "suite-unavail",
+        conversions: 7,
+        blank: false,
+        attributionSettled: true,
+        environment: AnalyticsEnvironment.UNAVAILABLE,
+      },
+      expectFreshness: AdsConversionFreshness.UNAVAILABLE,
+      expectDisplayNull: true,
+    },
+    {
+      label: "sandbox",
+      obs: {
+        campaignId: "suite-sandbox",
+        conversions: 2,
+        blank: false,
+        attributionSettled: true,
+        environment: AnalyticsEnvironment.SANDBOX,
+      },
+      expectFreshness: AdsConversionFreshness.SANDBOX,
+      expectDisplayNull: false,
+    },
+  ];
+
+  for (const c of cases) {
+    const result = classifyRecentAdsConversion(c.obs);
+    classifications.push(result);
+    const displayOk = c.expectDisplayNull
+      ? result.displayValue === null
+      : result.displayValue === c.obs.conversions;
+    const pendingNeverZero =
+      result.freshness !== AdsConversionFreshness.PENDING ||
+      result.displayValue === null;
+    if (
+      result.freshness === c.expectFreshness &&
+      displayOk &&
+      pendingNeverZero &&
+      result.liveProviderWiring === "NOT_WIRED" &&
+      result.externalEffects === "NONE"
+    ) {
+      details.push(
+        `${c.label} → ${result.freshness} display=${JSON.stringify(result.displayValue)} NOT_WIRED`,
+      );
+    } else {
+      passed = false;
+      details.push(
+        `${c.label} unexpectedly ${JSON.stringify(result)} expected freshness=${c.expectFreshness}`,
+      );
+    }
+  }
+
+  if (passed) {
+    details.push(
+      "liveProviderWiring=NOT_WIRED externalEffects=NONE on every recent-Ads-conversion path",
+    );
+    details.push(
+      "PENDING paths never expose displayValue=0 (no false zero for blank/unsettled)",
+    );
+  }
+
+  return { passed, details, classifications };
 }
 
 export type CreatePaidProposalInput = {
