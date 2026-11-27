@@ -796,15 +796,17 @@ function sideEffectChainRefused(
 }
 
 /**
- * T-X037 receipt-claim honesty (E21): from a side-effect claim, never invent
- * live/provider/measured receipts or VERIFIED delivery. Fixture ACCEPTED only
- * when the chain executed under EVAL_ONLY; Ads stay NOT_WIRED.
+ * T-X037 receipt-claim honesty (E21/B21): from a side-effect claim, never invent
+ * live/provider/measured/sandbox receipts or VERIFIED delivery. Fixture ACCEPTED
+ * only when the chain executed under EVAL_ONLY; Ads stay NOT_WIRED.
  */
 export function resolveEvalToolReceiptClaim(input: {
   sideEffect: EvalToolSideEffectClaimDecision;
   claimLiveVerifiedReceipt?: boolean;
   claimProviderReceipt?: boolean;
   claimMeasuredReceipt?: boolean;
+  /** B21 — sandbox VERIFIED receipt invent refused with live/provider/measured. */
+  claimSandboxVerifiedReceipt?: boolean;
 }): EvalToolReceiptClaimDecision {
   const wiring = {
     inventedReceipt: false as const,
@@ -825,12 +827,13 @@ export function resolveEvalToolReceiptClaim(input: {
   if (
     input.claimLiveVerifiedReceipt ||
     input.claimProviderReceipt ||
-    input.claimMeasuredReceipt
+    input.claimMeasuredReceipt ||
+    input.claimSandboxVerifiedReceipt
   ) {
     return {
       receipt: "NONE",
       reason:
-        "FALSE_LIVE_RECEIPT_REFUSED — no invented live/provider/measured receipt under EVAL_ONLY",
+        "FALSE_LIVE_RECEIPT_REFUSED — no invented live/provider/measured/sandbox receipt under EVAL_ONLY",
       ...wiring,
     };
   }

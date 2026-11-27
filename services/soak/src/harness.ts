@@ -1707,7 +1707,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-024 fixture ACCEPTED via agent_cannot_widen_grant only — not live VERIFIED",
       "T-US-042/T-X057 fixture ACCEPTED via repair_weaken_test_rejected only — not live VERIFIED",
       "T-US-044/T-X053 fixture ACCEPTED via takeover_cancels_unsent_replies only — VERSION_MISMATCH via real takeover + multi-queue cancel; not live VERIFIED",
-      "T-US-018/T-X037 fixture ACCEPTED via eval_only_operational_tool_forbidden only — not live VERIFIED",
+      "T-US-018/T-X037 fixture ACCEPTED via eval_only_operational_tool_forbidden only — receipt B21/B22/B23 invent refuse; not live VERIFIED",
       "T-X058 fixture ACCEPTED via repair_attempt_limit_escalated only — not live VERIFIED",
       "T-X069 fixture ACCEPTED via imported_doc_quarantined_as_data only — not live VERIFIED",
       "T-X038 fixture ACCEPTED via eval_no_grounding_fail_closed only — not live VERIFIED",

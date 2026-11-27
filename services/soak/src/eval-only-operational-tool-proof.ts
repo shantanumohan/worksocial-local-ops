@@ -426,6 +426,75 @@ export function proofEvalOnlyOperationalToolForbidden(
     );
   }
 
+  // 16. B21 — sandbox-verified receipt invent refused on allowed chain.
+  const falseSandboxReceipt = resolveEvalToolReceiptClaim({
+    sideEffect: sideAllowed,
+    claimSandboxVerifiedReceipt: true,
+  });
+  if (
+    falseSandboxReceipt.receipt === "NONE" &&
+    falseSandboxReceipt.sandboxVerifiedClaimed === false &&
+    falseSandboxReceipt.inventedReceipt === false &&
+    falseSandboxReceipt.verifiedClaimed === false &&
+    falseSandboxReceipt.chatgptAdsWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "Receipt B21: sandbox-verified invent refused — ACCEPTED≠VERIFIED; Ads NOT_WIRED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Receipt B21 sandbox invent unexpectedly ${JSON.stringify(falseSandboxReceipt)}`,
+    );
+  }
+
+  // 17. B22 — combined sandbox+provider receipt invent refused on allowed chain.
+  const falseComboReceipt = resolveEvalToolReceiptClaim({
+    sideEffect: sideAllowed,
+    claimSandboxVerifiedReceipt: true,
+    claimProviderReceipt: true,
+  });
+  if (
+    falseComboReceipt.receipt === "NONE" &&
+    falseComboReceipt.sandboxVerifiedClaimed === false &&
+    falseComboReceipt.providerReceiptClaimed === false &&
+    falseComboReceipt.inventedReceipt === false &&
+    falseComboReceipt.acceptedIsNotVerified === true &&
+    falseComboReceipt.externalEffects === "NONE"
+  ) {
+    details.push(
+      "Receipt B22: sandbox+provider combo invent refused — ACCEPTED≠VERIFIED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Receipt B22 combo invent unexpectedly ${JSON.stringify(falseComboReceipt)}`,
+    );
+  }
+
+  // 18. B23 — combined sandbox+measured receipt invent refused on allowed chain.
+  const falseSandboxMeasuredReceipt = resolveEvalToolReceiptClaim({
+    sideEffect: sideAllowed,
+    claimSandboxVerifiedReceipt: true,
+    claimMeasuredReceipt: true,
+  });
+  if (
+    falseSandboxMeasuredReceipt.receipt === "NONE" &&
+    falseSandboxMeasuredReceipt.sandboxVerifiedClaimed === false &&
+    falseSandboxMeasuredReceipt.measuredReceiptClaimed === false &&
+    falseSandboxMeasuredReceipt.verifiedClaimed === false &&
+    falseSandboxMeasuredReceipt.acceptedIsNotVerified === true
+  ) {
+    details.push(
+      "Receipt B23: sandbox+measured combo invent refused — ACCEPTED≠VERIFIED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `Receipt B23 combo invent unexpectedly ${JSON.stringify(falseSandboxMeasuredReceipt)}`,
+    );
+  }
+
   details.push("liveProviderSuccessClaimed=false externalEffects=NONE");
 
   return {
