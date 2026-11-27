@@ -28,11 +28,11 @@ Honest fixture ACCEPTED cases: **T-X001**, **T-X014**, **T-X020**, **T-US-048**,
 
 **T-X016** maps only to `STOP_BEFORE_DISPATCH_NO_MUTATION`.
 
-**T-X022** maps only to `IDEMPOTENCY_KEY_PAYLOAD_MISMATCH` (ACCEPTED_PENDING + VERIFIED path Conflict; byte-exact incl. empty/NUL/tab/CRLF/CR-only/leading/NBSP/ZWSP/prefix/suffix/BOM/double-space/VT/FF/LS/PS/mid-NUL/soft-hyphen/LRM/RLM/ZWNJ/ZWJ/WJ/thin-space/hair-space/NNBSP/en-quad/em-space/ideographic-space/figure-space/punctuation-space/MMSP/en-space/three-per-em/four-per-em/six-per-em/ogham/leading-en-space/leading-NBSP/middle-dot/word-joiner/leading-thin-space/leading-hair-space/MVS/leading-figure-space/mid-NBSP/leading-NNBSP; same-digest new-op replay incl. concurrent + interleaved + post-VERIFIED same-digest; concurrent mismatch no orphans incl. post-VERIFIED + same-operationId + post-FAILED race; post-FAILED digest-B Conflict; countApplyAttempts=1; final integrity snapshot; gateDetails marker retained; business-key ≠ payload-mismatch; wrong-digest verify → FAILED applyCount=1; receipt integrity; re-verify after Conflict; live provider NOT_WIRED; Ads soft-skip; ACCEPTED ≠ VERIFIED).
+**T-X022** maps only to `IDEMPOTENCY_KEY_PAYLOAD_MISMATCH`.
 
 **T-X063** maps only to `INDIRECT_PROMPT_INJECTION_EXFIL_DENIED`.
 
-**T-X015** maps only to `DST_RECURRING_SCHEDULE_NO_DUPLICATES`.
+**T-X015** maps only to `DST_RECURRING_SCHEDULE_NO_DUPLICATES` (DST civil keys; spring gap skip; fall-back one claim; honesty fields on every resolve/claim; Lord Howe ±30m; third durable DUPLICATE; Europe/London spring/fall; blank keys fail closed then valid CLAIMED; LA spring gap; bad-zone key null; Phoenix no-DST one-per-day; inverted window empty; truncated primary recovers prior or fail-closed empty; wrong version/dual-corrupt/whitespace claimedKeys (G10); non-array/null-primary/mixed-type (G11); missing version/whitespace-primary/duplicate dedupe (G12); array-root/empty-object durable (G13); string version/null claimedKeys/numeric-root (G14); version zero/boolean-root (G15); live NOT_WIRED; ChatGPT Ads ACCESS_BLOCKED; not live VERIFIED).
 
 **T-X066** maps only to `BACKUP_OMIT_RECEIPT` (omit→restore→remote SoR reconcile→verify/retry). Retry-only `NO_DUPLICATE_EFFECTS`, `UNKNOWN_REMOTE_RECONCILE` (T-X020/T-US-048), and `RECOVER_ROTATE_RECONCILE` (T-F24/T-US-047) do not satisfy T-X066. Live backup/restore remains NOT_WIRED; ACCEPTED ≠ VERIFIED.
 
@@ -190,8 +190,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-US-006** maps only to `UNBOUND_WRITE_PATH_FAIL_CLOSED` (observe/create ok; unbound write fail closed; applyAttemptCount=0; not live VERIFIED).
 
-**T-X023** maps only to `EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND` (false not-found BOUND_WAIT; LIVE_CLAIM_REFUSED; parseable durable observedAtIso; durable moduleId; write-attempt sanitize; writeAttemptCount=1; live Zoho NOT_WIRED; Ads ACCESS_BLOCKED; liveProviderSuccessClaimed=false; externalEffects=NONE; ACCEPTED ≠ VERIFIED).
-
+**T-X023**, **T-US-052** maps only to `EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND`.
 
 **T-US-056** maps only to `HONEST_OUTAGE_HOSTED_CONTACT_PATH` (honest outage; durable hosted contact path; not live VERIFIED).
 
