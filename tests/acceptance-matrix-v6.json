@@ -2058,7 +2058,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x026",
-      "evidenceNote": "Fixture ACCEPTED via CONCURRENT_FINAL_BUDGET_RESERVATION_CAP only \u2014 same-snapshot finals compose to BUDGET_EXHAUSTED; reserved never exceeds daily limit. ACCEPTED \u2260 sandbox/prod VERIFIED. externalEffects=NONE."
+      "evidenceNote": "Fixture ACCEPTED via CONCURRENT_FINAL_BUDGET_RESERVATION_CAP only \u2014 same-snapshot finals compose to BUDGET_EXHAUSTED (exact-remaining + multi-way + settled-headroom + fit/zero/empty/oversize + duplicate-id refuse + heldMinor headroom + non-finite/non-positive/non-integer refuse + known-zero-release restore + settled-id refuse + open/held-id refuse + settled+held headroom + blank-id refuse + known-reconcile restore + all-exhaust immutability + duplicate-id preflight + trim-normalized duplicate refuse + known-positive restore + exhausted availableMinor + row-id alignment honesty; isolationWouldOversubscribe/acceptedSumMinor/fixtureAcceptedNotVerified/isConcurrentBudgetCompositionHonest); reserved+settled+held never exceeds daily limit; liveWiring=NOT_WIRED. ACCEPTED \u2260 sandbox/prod VERIFIED. externalEffects=NONE."
     },
     {
       "id": "T-X027",

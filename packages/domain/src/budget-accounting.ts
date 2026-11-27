@@ -3,6 +3,8 @@
  * Settlement is reservation-aware: each reservationId settles at most once.
  * Cancel with unknown usage holds residual cost — never silently zero (T-X027).
  * Actual > reserved posts full actual — overrun visible, never capped (T-X028).
+ * Concurrent final composition (T-X026): same-snapshot finals serialize through
+ * reserveBudget so reserved never exceeds the daily limit.
  *
  * Pure domain. External effects: NONE. Live budget/provider wiring stays
  * NOT_WIRED. Fixture ACCEPTED ≠ sandbox/prod VERIFIED. No invent past T-X073.
@@ -15,6 +17,10 @@ export const BUDGET_LIVE_PROVIDER_WIRING = "NOT_WIRED" as const;
 export const BUDGET_ACCOUNTING_LIVE_WIRING = BUDGET_LIVE_PROVIDER_WIRING;
 
 export const UNKNOWN_USAGE_CANCEL_RELATED_CASE_IDS = ["T-X027"] as const;
+
+/** T-X026 concurrent compose uses the same NOT_WIRED reservation wiring label. */
+export const BUDGET_RESERVATION_LIVE_WIRING = BUDGET_ACCOUNTING_LIVE_WIRING;
+export type BudgetReservationLiveWiring = typeof BUDGET_RESERVATION_LIVE_WIRING;
 
 /** Catalog cases owned by actual-cost overrun visibility. */
 export const ACTUAL_COST_OVERRUN_RELATED_CASE_IDS = ["T-X028"] as const;
@@ -389,6 +395,194 @@ export function reserveBudget(
  * amount and posts actual cost. Replaying the same reservationId with the
  * same actual is idempotent; conflicting replay throws.
  */
+export type ConcurrentFinalBudgetAttempt = {
+  reservationId: string;
+  amountMinor: number;
+};
+
+export type ConcurrentFinalBudgetExhausted = {
+  reservationId: string;
+  availableMinor: number;
+};
+
+export type ConcurrentFinalBudgetAccepted = {
+  reservationId: string;
+  amountMinor: number;
+};
+
+export type ConcurrentFinalBudgetComposition = {
+  account: BudgetAccount;
+  acceptedReservationIds: string[];
+  exhaustedReservationIds: string[];
+  /** Per-accept amounts applied by composition (mirror of exhausted[]). */
+  accepted: ConcurrentFinalBudgetAccepted[];
+  /** Per-refusal available headroom at the moment of BUDGET_EXHAUSTED. */
+  exhausted: ConcurrentFinalBudgetExhausted[];
+  /** Headroom observed on the input snapshot before any composed final. */
+  availableAtSnapshotMinor: number;
+  /** Sum of attempted final amounts (isolation oversubscribe signal). */
+  isolationSumMinor: number;
+  /** True when isolationSumMinor > availableAtSnapshotMinor. */
+  isolationWouldOversubscribe: boolean;
+  /** Sum of amounts accepted by composition (not isolation). */
+  acceptedSumMinor: number;
+  /**
+   * True when reserved+settled+held never exceeds limitMinor after composition.
+   */
+  reservedNeverExceedsLimit: boolean;
+  /** reserved+settled+held after composition. */
+  committedMinor: number;
+  /**
+   * True when availableMinor === limitMinor - committedMinor (identity check).
+   */
+  availableMatchesLimitMinusCommitted: boolean;
+  availableMinor: number;
+  liveWiring: BudgetReservationLiveWiring;
+  /** Fixture path honesty — never promote to sandbox/prod VERIFIED. */
+  fixtureAcceptedNotVerified: true;
+  externalEffects: "NONE";
+};
+
+export function committedBudgetMinor(account: BudgetAccount): number {
+  return (
+    account.reservedMinor +
+    account.settledMinor +
+    (account.heldMinor ?? 0)
+  );
+}
+
+/**
+ * Honesty predicate for T-X026 composition results (fixture path only).
+ */
+export function isConcurrentBudgetCompositionHonest(
+  composition: ConcurrentFinalBudgetComposition,
+): boolean {
+  const acceptedSumFromRows = composition.accepted.reduce(
+    (sum, row) => sum + row.amountMinor,
+    0,
+  );
+  return (
+    composition.liveWiring === BUDGET_RESERVATION_LIVE_WIRING &&
+    composition.fixtureAcceptedNotVerified === true &&
+    composition.externalEffects === "NONE" &&
+    composition.reservedNeverExceedsLimit &&
+    composition.availableMatchesLimitMinusCommitted &&
+    composition.committedMinor === committedBudgetMinor(composition.account) &&
+    composition.availableMinor === available(composition.account) &&
+    composition.acceptedSumMinor === acceptedSumFromRows &&
+    composition.acceptedReservationIds.length === composition.accepted.length &&
+    composition.accepted.every(
+      (row, i) => row.reservationId === composition.acceptedReservationIds[i],
+    ) &&
+    composition.exhausted.every(
+      (row, i) => row.reservationId === composition.exhaustedReservationIds[i],
+    ) &&
+    composition.exhaustedReservationIds.length === composition.exhausted.length &&
+    composition.isolationWouldOversubscribe ===
+      composition.isolationSumMinor > composition.availableAtSnapshotMinor
+  );
+}
+
+/**
+ * Compose same-snapshot concurrent finals by applying them serially through
+ * reserveBudget. Models T-X026: each final may succeed in isolation against the
+ * shared headroom snapshot, but composition refuses later finals with
+ * BUDGET_EXHAUSTED so reservedMinor never exceeds limitMinor.
+ * Does not mutate the input account (returns a new account tree).
+ * Live wiring stays NOT_WIRED; fixtureAcceptedNotVerified; externalEffects NONE.
+ * Open/held reservationId collisions refuse via reserveBudget (snap immutable).
+ */
+export function composeConcurrentFinalBudgetReserves(
+  account: BudgetAccount,
+  finals: readonly ConcurrentFinalBudgetAttempt[],
+): ConcurrentFinalBudgetComposition {
+  // Preflight: amounts positive, reservationIds non-blank, and no duplicate ids
+  // in finals[] before any apply so isolationSum stays honest and the input
+  // snapshot is never partially observed as applied.
+  const seenIds = new Set<string>();
+  for (const final of finals) {
+    const reservationId = final.reservationId.trim();
+    if (!reservationId) {
+      throw new Error("Reservation id must be non-blank");
+    }
+    if (seenIds.has(reservationId)) {
+      throw new Error(`Reservation ${reservationId} already exists`);
+    }
+    seenIds.add(reservationId);
+    if (
+      !Number.isFinite(final.amountMinor) ||
+      !Number.isInteger(final.amountMinor) ||
+      final.amountMinor <= 0
+    ) {
+      throw new Error(
+        "Reservation amount must be a finite positive integer minor unit",
+      );
+    }
+  }
+  const availableAtSnapshotMinor = available(account);
+  const isolationSumMinor = finals.reduce(
+    (sum, final) => sum + final.amountMinor,
+    0,
+  );
+  let current = account;
+  const acceptedReservationIds: string[] = [];
+  const exhaustedReservationIds: string[] = [];
+  const accepted: ConcurrentFinalBudgetAccepted[] = [];
+  const exhausted: ConcurrentFinalBudgetExhausted[] = [];
+  let acceptedSumMinor = 0;
+
+  for (const final of finals) {
+    const reservationId = final.reservationId.trim();
+    const result = reserveBudget(current, reservationId, final.amountMinor);
+    if (result.ok) {
+      current = result.account;
+      acceptedReservationIds.push(reservationId);
+      accepted.push({
+        reservationId,
+        amountMinor: final.amountMinor,
+      });
+      acceptedSumMinor += final.amountMinor;
+    } else {
+      exhaustedReservationIds.push(reservationId);
+      exhausted.push({
+        reservationId,
+        availableMinor: result.availableMinor,
+      });
+    }
+  }
+
+  const committedMinor = committedBudgetMinor(current);
+  const availableMinor = available(current);
+  return {
+    account: current,
+    acceptedReservationIds,
+    exhaustedReservationIds,
+    accepted,
+    exhausted,
+    availableAtSnapshotMinor,
+    isolationSumMinor,
+    isolationWouldOversubscribe: isolationSumMinor > availableAtSnapshotMinor,
+    acceptedSumMinor,
+    reservedNeverExceedsLimit: committedMinor <= current.limitMinor,
+    committedMinor,
+    availableMatchesLimitMinusCommitted:
+      availableMinor === current.limitMinor - committedMinor,
+    availableMinor,
+    liveWiring: BUDGET_RESERVATION_LIVE_WIRING,
+    fixtureAcceptedNotVerified: true,
+    externalEffects: "NONE",
+  };
+}
+
+/**
+ * Settles a reservation by identity: releases that reservation's reserved
+ * amount and posts actual cost. Replaying the same reservationId with the
+ * same actual is idempotent; conflicting replay throws.
+ */
+
+
+
+
 export function settleBudget(
   account: BudgetAccount,
   reservationId: string,

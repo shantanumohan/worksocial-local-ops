@@ -3,13 +3,13 @@
   "caseId": "T-X013",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X013 (Replay historical workflow — no repeated external I/O)\nproof=replay_historical_no_repeat_io applyCount=1 :: Recorded enqueue history for wf-soak-replay-hist-e3b1d3f6 | Recorded claimAndAccept providerCreated=true applyCount=1 | Recorded verify outcome=VERIFIED matched=true applyCount=1 | History replay outcome=VERIFIED applyCount=1 scheduledFromHistory=3 | Post-replay durable outcome=VERIFIED applyCount=1 opProviders=1 ledgerDelta=0 | Replay used recorded activity history only — no acceptPending/applyOnce during replay | Historical workflow replay: no repeated external I/O (externalEffects=NONE) | liveProviderSuccessClaimed=false catalogClaim=ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X013 (Replay historical workflow — no repeated external I/O)\nproof=replay_historical_no_repeat_io applyCount=1 :: Recorded enqueue history for wf-soak-replay-hist-d017d5ca | Recorded claimAndAccept providerCreated=true applyCount=1 | Recorded verify outcome=VERIFIED matched=true applyCount=1 | History replay outcome=VERIFIED applyCount=1 scheduledFromHistory=3 | Post-replay durable outcome=VERIFIED applyCount=1 opProviders=1 ledgerDelta=0 | Replay used recorded activity history only — no acceptPending/applyOnce during replay | Historical workflow replay: no repeated external I/O (externalEffects=NONE) | liveProviderSuccessClaimed=false catalogClaim=ACCEPTED≠VERIFIED\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "replay_historical_no_repeat_io"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x013.json",
-  "createdAtIso": "2026-11-27T12:15:58.780Z",
+  "createdAtIso": "2026-11-27T12:18:28.134Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x013-d6962c39ffa5"
+  "uniqueSourceArtifactId": "art-fixture-t-x013-799e96f17d46"
 }

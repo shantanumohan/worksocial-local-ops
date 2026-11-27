@@ -1116,7 +1116,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-F26 fixture ACCEPTED via calibrate_design_release_readiness only — not live VERIFIED",
       "T-X015 fixture ACCEPTED via dst_recurring_schedule_no_duplicates only — not live VERIFIED",
       "T-X025 fixture ACCEPTED via external_human_edit_conflict_retained only — silent clear forbidden; live verify NOT_WIRED; not live VERIFIED",
-      "T-X026 fixture ACCEPTED via concurrent_final_budget_reservation_cap only — not live VERIFIED",
+      "T-X026 fixture ACCEPTED via concurrent_final_budget_reservation_cap only — composeConcurrentFinalBudgetReserves; fixtureAcceptedNotVerified; row-id alignment honesty; non-finite refuse; known-zero restore; open/held-id refuse; settled+held headroom; blank-id refuse; known-reconcile restore; duplicate-id preflight; trim-normalized duplicate refuse; known-positive restore; liveWiring=NOT_WIRED; not live VERIFIED",
       "Live CMS/GSC/GA4/Zoho/Temporal remain NOT_WIRED",
       "T-F24/T-US-047 fixture ACCEPTED via recover_rotate_reconcile only — not live VERIFIED",
       "T-US-002/T-X002 fixture ACCEPTED via competing_supervisor_lease only — not live VERIFIED",

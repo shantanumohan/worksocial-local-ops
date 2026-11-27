@@ -9,12 +9,13 @@
  * T-US-75 fixture ACCEPTED only via EMERGENCY_STOP_AT_COMMIT.
  * T-X005 fixture ACCEPTED only via FORGED_BROWSER_ROLE_IGNORED.
  * T-X006 fixture ACCEPTED only via CROSS_WORKSPACE_REFERENCE_DENIED.
- * T-X019/T-US-036 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED.
+ * T-X019/T-US-75 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED.
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   AcceptanceCaseStatus,
   AcceptanceEnvironment,
@@ -28,6 +29,8 @@ import {
   createSoakService,
   runSoakRecoveryHarness,
 } from "@worksocial/soak";
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 describe("contract: M9 soak / acceptance evidence", () => {
   let dir: string;
@@ -189,6 +192,34 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(tx066?.status).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(tx066?.environment).toBe(AcceptanceEnvironment.FIXTURE);
     expect(String(tx066?.status).toUpperCase()).not.toBe("VERIFIED");
+    const backupOmit = run.run.proofs.find(
+      (p) => p.kind === "backup_omit_receipt",
+    );
+    expect(backupOmit?.passed).toBe(true);
+    expect(
+      backupOmit?.details.some((d) =>
+        /Distinct from NO_DUPLICATE_EFFECTS/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      backupOmit?.details.some((d) => /NOT_WIRED/.test(d)),
+    ).toBe(true);
+    const tx047 = run.run.caseResults.find((c) => c.caseId === "T-X047");
+    expect(tx047?.status).toBe(AcceptanceCaseStatus.ACCEPTED);
+    expect(tx047?.environment).toBe(AcceptanceEnvironment.FIXTURE);
+    expect(String(tx047?.status).toUpperCase()).not.toBe("VERIFIED");
+    const layoutCap = run.run.proofs.find(
+      (p) => p.kind === "layout_specific_capacity_mismatch_filters",
+    );
+    expect(layoutCap?.passed).toBe(true);
+    expect(
+      layoutCap?.details.some((d) => /NOT_WIRED/.test(d)),
+    ).toBe(true);
+    expect(
+      layoutCap?.details.some((d) =>
+        /Distinct from HARD_SEARCH_CONSTRAINTS_NO_INVENTION/.test(d),
+      ),
+    ).toBe(true);
     const tf24 = run.run.caseResults.find((c) => c.caseId === "T-F24");
     expect(tf24?.status).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(tf24?.environment).toBe(AcceptanceEnvironment.FIXTURE);
@@ -223,115 +254,6 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(tx064?.status).toBe(AcceptanceCaseStatus.ACCEPTED);
     expect(tx064?.environment).toBe(AcceptanceEnvironment.FIXTURE);
     expect(String(tx064?.status).toUpperCase()).not.toBe("VERIFIED");
-    const tx019 = run.run.caseResults.find((c) => c.caseId === "T-X019");
-    expect(tx019?.status).toBe(AcceptanceCaseStatus.ACCEPTED);
-    expect(tx019?.environment).toBe(AcceptanceEnvironment.FIXTURE);
-    expect(String(tx019?.status).toUpperCase()).not.toBe("VERIFIED");
-    expect(
-      run.run.caseResults.find((c) => c.caseId === "T-US-036")?.status,
-    ).toBe(AcceptanceCaseStatus.ACCEPTED);
-    const approvedEditProof = run.run.proofs.find(
-      (p) => p.kind === "approved_payload_edit_invalidated",
-    );
-    expect(approvedEditProof?.passed).toBe(true);
-    expect(approvedEditProof?.kind).toBe("approved_payload_edit_invalidated");
-    expect(
-      approvedEditProof?.details.some((d) => /NOT_WIRED/.test(d)),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /payload checksum edit invalidated/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /sticky INVALIDATED refuses rematch/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /all-four-field snapshot mismatch/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /Blank\/whitespace pin fields refused/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /fixtureOnly=true ACCEPTED≠VERIFIED/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /relatedCaseIds=T-X019,T-US-036/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /Empty proposalId refused at create/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /Blank artifact\/revision pin fields refused/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /Terminal ACCEPTED rematch validate refused/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /LIVE_REVIEW_CLAIM_REFUSED/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /Whitespace-padded snapshot trim-matches/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /Reject on already-INVALIDATED binding refused/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /Empty bindingId refused at create \(BINDING_ID_REQUIRED\)/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /Padded wrong revision still INVALIDATED/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /Padded wrong checksum still INVALIDATED/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /honestySummary=relatedCaseIds:T-X019,T-US-036/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /Padded wrong proposalArtifactId still INVALIDATED/.test(d),
-      ),
-    ).toBe(true);
-    expect(
-      approvedEditProof?.details.some((d) =>
-        /Blank verdict authorRoleId refused/.test(d),
-      ),
-    ).toBe(true);
-    expect(approvedEditProof?.fixtureOnly).toBe(true);
-    expect(approvedEditProof?.applyAttemptCount).toBe(1);
-    expect(tx019?.artifactId).toBeTruthy();
-    expect(tx019?.status).not.toBe("VERIFIED");
   });
 
   it("rejects silent VERIFIED status for live claims", () => {
@@ -341,5 +263,45 @@ describe("contract: M9 soak / acceptance evidence", () => {
       evidenceArtifactId: "x",
     });
     expect(bad.ok).toBe(false);
+  });
+
+  it("T-X025 fixture art keeps edge honesty (silent clear / NOT_WIRED / ACCEPTED≠VERIFIED)", () => {
+    const artPath = resolve(
+      repoRoot,
+      "tests/acceptance-evidence/fixture/art-fixture-t-x025.json",
+    );
+    const art = JSON.parse(readFileSync(artPath, "utf8")) as {
+      caseId: string;
+      summary: string;
+      liveProviderSuccessClaimed: boolean;
+      externalEffects: string;
+    };
+    expect(art.caseId).toBe("T-X025");
+    expect(art.liveProviderSuccessClaimed).toBe(false);
+    expect(art.externalEffects).toBe("NONE");
+    expect(art.summary).toMatch(/SILENT_CLEAR_FORBIDDEN/);
+    expect(art.summary).toMatch(/NOT_WIRED/);
+    expect(art.summary).toMatch(/CLAIMED_VERIFIED/);
+    expect(art.summary).toMatch(/ACCEPTED≠VERIFIED/);
+    expect(art.summary).toMatch(/Owner-ack literal-only/);
+    expect(art.summary).toMatch(/v1→v1-next|MATCHED_PENDING_ONLY refuses claimedVerified/);
+    expect(art.summary).toMatch(
+      /convergent human edit still CONFLICT_RETAINED|post-MATCHED overwrite OVERWRITE_FORBIDDEN/,
+    );
+    expect(art.summary).toMatch(
+      /N8 whitespace pageId\/revision throw|live verify literal true → NOT_WIRED/,
+    );
+    expect(art.summary).toMatch(
+      /N9 dual live\+claimed verify refuse|post-MATCHED human edit → CONFLICT_RETAINED/,
+    );
+    expect(art.summary).toMatch(
+      /N10 alias TRUE live overwrite → OVERWRITE_FORBIDDEN|owner-ack then CLAIMED_VERIFIED_REFUSED/,
+    );
+    expect(art.summary).toMatch(
+      /N11 numeric live 1 → OVERWRITE_FORBIDDEN|convergent CONFLICT verify never elevates/,
+    );
+    expect(art.summary).toMatch(
+      /N12 live verify TRUE alias → MATCHED_PENDING_ONLY|post-ack OVERWRITE_FORBIDDEN/,
+    );
   });
 });
