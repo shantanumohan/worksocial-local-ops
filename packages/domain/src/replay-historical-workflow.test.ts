@@ -651,6 +651,22 @@ describe("replay historical workflow (T-X013)", () => {
     ).toBe(true);
   });
 
+  it("fails closed on NaN claim applyAttemptCount (edge)", () => {
+    const history = sampleHistory();
+    const claim = history.events[1];
+    if (claim && claim.activity === "claimAndAccept") {
+      claim.applyAttemptCount = Number.NaN;
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_claim_shape_invalid"),
+      ),
+    ).toBe(true);
+  });
+
   it("fails closed on fractional claim applyAttemptCount (edge)", () => {
     const history = sampleHistory();
     const claim = history.events[1];
@@ -695,6 +711,39 @@ describe("replay historical workflow (T-X013)", () => {
     expect(
       summary().liveIoLabels.some((l) =>
         l.includes("history_verify_shape_invalid"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed on invalid claim phase (edge)", () => {
+    const history = sampleHistory();
+    const claim = history.events[1];
+    if (claim && claim.activity === "claimAndAccept") {
+      (claim as { phase: string }).phase = "effect_pending";
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_claim_shape_invalid"),
+      ),
+    ).toBe(true);
+  });
+
+  it("fails closed on non-number terminal applyAttemptCount (edge)", () => {
+    const history = sampleHistory();
+    history.terminal = {
+      outcome: "VERIFIED",
+      applyAttemptCount: "1" as unknown as number,
+      operationId: "op-1",
+    };
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_terminal_missing_or_incomplete"),
       ),
     ).toBe(true);
   });
