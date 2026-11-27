@@ -309,6 +309,30 @@ describe("platform-attribution (T-X059)", () => {
     expect(decision.platformClaimCount).toBe(2);
   });
 
+  it("refuses silent sum for same booking with distinct platform claims (Q34 wipe15 @ 578b1a08)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-google",
+        platformId: "google_ads",
+        bookingId: "booking-shared",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "c-meta",
+        platformId: "linkedin_ads",
+        bookingId: "booking-shared",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(projection.uniqueBookingCount).toBe(1);
+    expect(projection.distinctPlatformCount).toBe(2);
+    expect(projection.wouldDoubleCountIfSummed).toBe(true);
+    expect(refuseSilentPlatformSum(projection).code).toBe(
+      "SILENT_PLATFORM_SUM_REFUSED",
+    );
+    expect(projection.externalEffects).toBe("NONE");
+  });
+
   it("refuses claimedAtIso without timezone — no lexicographic chronology trap (Q34 wipe15)", () => {
     const projection = projectUniqueOutcomes([
       {
