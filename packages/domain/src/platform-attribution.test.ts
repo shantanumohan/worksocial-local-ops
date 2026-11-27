@@ -444,4 +444,43 @@ describe("platform-attribution (T-X059)", () => {
     expect(decision.code).toBe("INVALID_ATTRIBUTION_CLAIM");
     expect(decision.platformClaimCount).toBe(2);
   });
+
+  it("sorts retainedClaims by claimId when claimedAt instant ties (Q34 wipe15 @ e7226169)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-z",
+        platformId: "meta_ads",
+        bookingId: "booking-tie",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "c-a",
+        platformId: "google_ads",
+        bookingId: "booking-tie",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(projection.retainedClaims.map((c) => c.claimId)).toEqual([
+      "c-a",
+      "c-z",
+    ]);
+    expect(refuseSilentPlatformSum(projection).code).toBe(
+      "SILENT_PLATFORM_SUM_REFUSED",
+    );
+  });
+
+  it("accepts lowercase z timezone suffix in claimedAtIso (Q34 wipe15 @ e7226169)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-lower-z",
+        platformId: "google_ads",
+        bookingId: "booking-lower-z",
+        claimedAtIso: "2026-11-22T19:00:00.000z",
+      },
+    ]);
+    expect(projection.hasInvalidClaims).toBe(false);
+    expect(projection.platformClaimCount).toBe(1);
+    expect(projection.uniqueBookingCount).toBe(1);
+    expect(refuseSilentPlatformSum(projection).allowed).toBe(true);
+  });
 });
