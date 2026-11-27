@@ -1594,7 +1594,7 @@ describe("soak-acceptance domain", () => {
   });
 });
 
-describe("T-X066 backup omit receipt (idle hillclimb L36)", () => {
+describe("T-X066 backup omit receipt (idle hillclimb L36+ continue L63)", () => {
   it("T-X066 maps only BACKUP_OMIT_RECEIPT; sibling proofs exclude T-X066 (L36)", () => {
     expect(expectedProofsForFixtureCase("T-X066")).toEqual([
       SoakProofKind.BACKUP_OMIT_RECEIPT,
@@ -1941,6 +1941,147 @@ describe("T-X066 backup omit receipt (idle hillclimb L36)", () => {
     ).not.toContain("T-X066");
     expect(isAllowedAcceptanceStatus(FORBIDDEN_SILENT_LIVE_STATUS)).toBe(false);
     expect(REVIEW_BINDING_LIVE_CLAIM_REFUSED).toBe("LIVE_REVIEW_CLAIM_REFUSED");
+    expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
+      "T-X066",
+    ]);
+  });
+
+  it("T-X066 agent-widen and repair-weaken exclude; explicit-rebind unmapped (L56)", () => {
+    expect(
+      mapProofToFixtureCases(SoakProofKind.AGENT_CANNOT_WIDEN_GRANT),
+    ).not.toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.REPAIR_WEAKEN_TEST_REJECTED),
+    ).not.toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.EXPLICIT_ACCOUNT_REBIND),
+    ).not.toContain("T-X066");
+    expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
+      "T-X066",
+    ]);
+  });
+
+  it("T-X066 approved-payload-edit and cross-workspace-substitution exclude (L57)", () => {
+    expect(
+      mapProofToFixtureCases(SoakProofKind.APPROVED_PAYLOAD_EDIT_INVALIDATED),
+    ).not.toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.CROSS_WORKSPACE_RESOURCE_SUBSTITUTION,
+      ),
+    ).not.toContain("T-X066");
+    expect(soakNotWiredLiveWiring()).toEqual(SOAK_NOT_WIRED_LIVE_WIRING);
+    expect(SOAK_RELATED_CASE_IDS).toContain("T-X066");
+    expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
+      "T-X066",
+    ]);
+  });
+
+  it("T-X066 orphan-worker and stop-before-dispatch exclude; maps T-X012/T-X016 (L58)", () => {
+    const orphan = mapProofToFixtureCases(
+      SoakProofKind.ORPHAN_WORKER_DEADLINE_TREE_STOPPED,
+    );
+    expect(orphan).toContain("T-X012");
+    expect(orphan).not.toContain("T-X066");
+    const stopBefore = mapProofToFixtureCases(
+      SoakProofKind.STOP_BEFORE_DISPATCH_NO_MUTATION,
+    );
+    expect(stopBefore).toContain("T-X016");
+    expect(stopBefore).not.toContain("T-X066");
+    expect(expectedProofsForFixtureCase("T-X066")).not.toContain(
+      SoakProofKind.ORPHAN_WORKER_DEADLINE_TREE_STOPPED,
+    );
+    expect(expectedProofsForFixtureCase("T-X066")).toEqual([
+      SoakProofKind.BACKUP_OMIT_RECEIPT,
+    ]);
+  });
+
+  it("T-X066 unbound-write and wrong-cms-env exclude; maps T-US-006/T-X007 (L59)", () => {
+    const unbound = mapProofToFixtureCases(
+      SoakProofKind.UNBOUND_WRITE_PATH_FAIL_CLOSED,
+    );
+    expect(unbound).toContain("T-US-006");
+    expect(unbound).not.toContain("T-X066");
+    const cms = mapProofToFixtureCases(
+      SoakProofKind.WRONG_CMS_ENVIRONMENT_NO_PRODUCTION_OP,
+    );
+    expect(cms).toContain("T-X007");
+    expect(cms).not.toContain("T-X066");
+    expect(expectedProofsForFixtureCase("T-X066")).not.toContain(
+      SoakProofKind.UNBOUND_WRITE_PATH_FAIL_CLOSED,
+    );
+    expect(REVIEW_BINDING_LIVE_WIRING).toBe("NOT_WIRED");
+    expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
+      "T-X066",
+    ]);
+  });
+
+  it("T-X066 indirect-prompt-exfil and replay-historical exclude; T-X063/T-X013 (L60)", () => {
+    const exfil = mapProofToFixtureCases(
+      SoakProofKind.INDIRECT_PROMPT_INJECTION_EXFIL_DENIED,
+    );
+    expect(exfil).toContain("T-X063");
+    expect(exfil).not.toContain("T-X066");
+    const replay = mapProofToFixtureCases(
+      SoakProofKind.REPLAY_HISTORICAL_NO_REPEAT_IO,
+    );
+    expect(replay).toContain("T-X013");
+    expect(replay).not.toContain("T-X066");
+    expect(SOAK_CHATGPT_ADS_SOFT_SKIP_CASE_IDS).not.toContain("T-X066");
+    expect(expectedProofsForFixtureCase("T-X066")).toEqual([
+      SoakProofKind.BACKUP_OMIT_RECEIPT,
+    ]);
+  });
+
+  it("T-X066 output-bomb and old-fence exclude; maps T-X011/T-X024 (L61)", () => {
+    const bomb = mapProofToFixtureCases(
+      SoakProofKind.OUTPUT_BOMB_BOUNDED_QUARANTINED,
+    );
+    expect(bomb).toContain("T-X011");
+    expect(bomb).not.toContain("T-X066");
+    const fence = mapProofToFixtureCases(
+      SoakProofKind.OLD_FENCE_AFTER_REASSIGNMENT,
+    );
+    expect(fence).toContain("T-X024");
+    expect(fence).not.toContain("T-X066");
+    expect(expectedProofsForFixtureCase("T-X066")).not.toContain(
+      SoakProofKind.OUTPUT_BOMB_BOUNDED_QUARANTINED,
+    );
+    expect(soakNotWiredLiveWiring()).toEqual(SOAK_NOT_WIRED_LIVE_WIRING);
+    expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
+      "T-X066",
+    ]);
+  });
+
+  it("T-X066 symlink-escape and takeover-cancels exclude; T-X003/T-X053 (L62)", () => {
+    const symlink = mapProofToFixtureCases(
+      SoakProofKind.SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION,
+    );
+    expect(symlink).toContain("T-X003");
+    expect(symlink).not.toContain("T-X066");
+    const takeover = mapProofToFixtureCases(
+      SoakProofKind.TAKEOVER_CANCELS_UNSENT_REPLIES,
+    );
+    expect(takeover).toContain("T-X053");
+    expect(takeover).not.toContain("T-X066");
+    expect(SOAK_CHATGPT_ADS_SOFT_SKIP_CASE_IDS).not.toContain("T-X066");
+    expect(expectedProofsForFixtureCase("T-X066")).toEqual([
+      SoakProofKind.BACKUP_OMIT_RECEIPT,
+    ]);
+  });
+
+  it("T-X066 eval-only-tool and repair-attempt-limit exclude; T-X037/T-X058 (L63)", () => {
+    const evalOnly = mapProofToFixtureCases(
+      SoakProofKind.EVAL_ONLY_OPERATIONAL_TOOL_FORBIDDEN,
+    );
+    expect(evalOnly).toContain("T-X037");
+    expect(evalOnly).not.toContain("T-X066");
+    const repairLimit = mapProofToFixtureCases(
+      SoakProofKind.REPAIR_ATTEMPT_LIMIT_ESCALATED,
+    );
+    expect(repairLimit).toContain("T-X058");
+    expect(repairLimit).not.toContain("T-X066");
+    expect(soakNotWiredLiveWiring()).toEqual(SOAK_NOT_WIRED_LIVE_WIRING);
     expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
       "T-X066",
     ]);
