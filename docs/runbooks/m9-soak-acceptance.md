@@ -148,7 +148,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X003** maps only to `SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION`.
 
-**T-X010** maps only to `MALICIOUS_PROMPT_NO_SHELL_INJECTION`.
+**T-X010** maps only to `MALICIOUS_PROMPT_NO_SHELL_INJECTION` (stdin-only; refuse prompt-via-argv / shell-metachar+NUL extraArgs / bare `--` / permission-mode / blank+overlong+unsafe modelId / NUL prompt / A00–A31+lowercase agent / MultiEdit; pinned structural overrides blocked; NOT_WIRED; not live VERIFIED).
 
 **T-X009** maps only to `CLI_ERROR_DESPITE_EXIT_ZERO`.
 

@@ -84,7 +84,9 @@ export type ClaudeCliInvokeResult =
         | "SPAWN_FAILED"
         | "NONZERO_EXIT"
         | "CLI_REPORTED_ERROR"
-        | "INVALID_AGENT";
+        | "INVALID_AGENT"
+        | "INVALID_MODEL"
+        | "PROMPT_NUL_REFUSED";
       reason: string;
       stdout?: string;
       stderr?: string;
@@ -409,6 +411,7 @@ export function assertOutputBombBoundedHonest(input: {
 /**
  * Pure spawn plan for Claude CLI (T-X010).
  * Prompt is never placed on argv — delivery is stdin only; shell is always false.
+ * Live provider wiring stays NOT_WIRED; externalEffects NONE. ACCEPTED ≠ VERIFIED.
  */
 export type ClaudeCliInvocationPlan =
   | {
@@ -420,11 +423,19 @@ export type ClaudeCliInvocationPlan =
       prompt: string;
       agentName: string;
       modelId: string;
+      /** Explicit honesty: prompt body is never present in argv. */
+      argvContainsPrompt: false;
+      liveProviderWiring: "NOT_WIRED";
+      externalEffects: "NONE";
+      fixtureOnly: true;
     }
   | {
       ok: false;
-      code: "FLAG_DENIED" | "INVALID_AGENT";
+      code: "FLAG_DENIED" | "INVALID_AGENT" | "INVALID_MODEL" | "PROMPT_NUL_REFUSED";
       reason: string;
+      liveProviderWiring: "NOT_WIRED";
+      externalEffects: "NONE";
+      fixtureOnly: true;
     };
 
 export type PlanClaudeCliInvocationInput = {
@@ -434,6 +445,72 @@ export type PlanClaudeCliInvocationInput = {
   tools?: string;
   extraArgs?: readonly string[];
 };
+
+const cliPlanHonesty = {
+  liveProviderWiring: "NOT_WIRED" as const,
+  externalEffects: "NONE" as const,
+  fixtureOnly: true as const,
+};
+
+/** Model ids must be plain tokens — no shell metachar / whitespace injection. */
+const SAFE_MODEL_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
+
+/** Flags that would put the prompt on argv instead of stdin (T-X010). */
+const PROMPT_VIA_ARGV_FLAGS = new Set([
+  "-p",
+  "--prompt",
+  "--prompt-file",
+  "--system-prompt",
+  "--append-system-prompt",
+  "--system-prompt-file",
+]);
+
+/**
+ * Structural flags already pinned by the plan — extraArgs must not override
+ * them (esp. `--model=…` bypassing SAFE_MODEL_ID).
+ */
+const PINNED_STRUCTURAL_FLAGS = new Set([
+  "--print",
+  "--output-format",
+  "--model",
+  "--max-turns",
+  "--agent",
+  "--tools",
+  "--setting-sources",
+]);
+
+/** Shell metacharacters that must never appear as raw extraArgs tokens. */
+const EXTRA_ARGS_SHELL_META = /[;|&`$()<>\n\r]|&&|\|\|/;
+
+function extraArgsStructuralOverride(
+  extraArgs: readonly string[] | undefined,
+): string | null {
+  if (!extraArgs || extraArgs.length === 0) return null;
+  for (let i = 0; i < extraArgs.length; i++) {
+    const arg = extraArgs[i]!;
+    const flag = (arg.split("=")[0] ?? arg).toLowerCase();
+    if (PINNED_STRUCTURAL_FLAGS.has(flag)) {
+      return arg;
+    }
+  }
+  return null;
+}
+
+/**
+ * Non-flag extraArgs tokens with shell metacharacters would land on argv
+ * and look like injection even under shell:false (Codex harden / T-X010).
+ */
+function extraArgsShellMetacharToken(
+  extraArgs: readonly string[] | undefined,
+): string | null {
+  if (!extraArgs || extraArgs.length === 0) return null;
+  for (const arg of extraArgs) {
+    if (EXTRA_ARGS_SHELL_META.test(arg)) {
+      return arg;
+    }
+  }
+  return null;
+}
 
 /**
  * Build a fixed-argv CLI plan. Malicious prompt content cannot become shell
@@ -447,6 +524,84 @@ export function planClaudeCliInvocation(
       ok: false,
       code: "INVALID_AGENT",
       reason: `Agent name must be a registered role A01–A30, got '${input.agentName}'`,
+      ...cliPlanHonesty,
+    };
+  }
+
+  if (input.prompt.includes("\0")) {
+    return {
+      ok: false,
+      code: "PROMPT_NUL_REFUSED",
+      reason: "NUL byte in prompt refused — stdin framing must stay intact (T-X010)",
+      ...cliPlanHonesty,
+    };
+  }
+
+  const modelId = input.modelId.trim();
+  if (!modelId || !SAFE_MODEL_ID.test(modelId)) {
+    return {
+      ok: false,
+      code: "INVALID_MODEL",
+      reason: "modelId must be a plain token without shell metacharacters (T-X010)",
+      ...cliPlanHonesty,
+    };
+  }
+
+  for (const arg of input.extraArgs ?? []) {
+    // Bare `--` would end option parsing and risk positional/prompt leakage onto argv.
+    if (arg === "--" || arg === "-") {
+      return {
+        ok: false,
+        code: "FLAG_DENIED",
+        reason: `End-of-options / bare dash refused in extraArgs: ${arg} (T-X010)`,
+        ...cliPlanHonesty,
+      };
+    }
+    if (arg.includes("\0")) {
+      return {
+        ok: false,
+        code: "FLAG_DENIED",
+        reason: "NUL byte in extraArgs refused — argv framing must stay intact (T-X010)",
+        ...cliPlanHonesty,
+      };
+    }
+    const flag = (arg.split("=")[0] ?? arg).toLowerCase();
+    if (PROMPT_VIA_ARGV_FLAGS.has(flag) || PROMPT_VIA_ARGV_FLAGS.has(arg.toLowerCase())) {
+      return {
+        ok: false,
+        code: "FLAG_DENIED",
+        reason: `Prompt-via-argv flag refused: ${arg} (stdin delivery only; T-X010)`,
+        ...cliPlanHonesty,
+      };
+    }
+    // Permission-mode family must never ride in via extraArgs (wave-17 deepen).
+    if (flag === "--permission-mode" || flag.startsWith("--permission-mode")) {
+      return {
+        ok: false,
+        code: "FLAG_DENIED",
+        reason: `Permission-mode flag refused in extraArgs: ${arg} (T-X010)`,
+        ...cliPlanHonesty,
+      };
+    }
+  }
+
+  const structuralOverride = extraArgsStructuralOverride(input.extraArgs);
+  if (structuralOverride !== null) {
+    return {
+      ok: false,
+      code: "FLAG_DENIED",
+      reason: `Pinned structural flag override refused in extraArgs: ${structuralOverride} (T-X010)`,
+      ...cliPlanHonesty,
+    };
+  }
+
+  const shellMetaToken = extraArgsShellMetacharToken(input.extraArgs);
+  if (shellMetaToken !== null) {
+    return {
+      ok: false,
+      code: "FLAG_DENIED",
+      reason: `extraArgs shell-metachar token refused: ${shellMetaToken} (T-X010)`,
+      ...cliPlanHonesty,
     };
   }
 
@@ -456,15 +611,18 @@ export function planClaudeCliInvocation(
       ok: false,
       code: "FLAG_DENIED",
       reason: "Bash/Edit/Write tools are not permitted on the live CLI path",
+      ...cliPlanHonesty,
     };
   }
 
+  // Prompt is never placed on argv — only via stdin. Do not reject prompts that
+  // coincidentally match fixed argv tokens (e.g. "json", "4", agent name).
   const argv = [
     "--print",
     "--output-format",
     "json",
     "--model",
-    input.modelId,
+    modelId,
     "--max-turns",
     "4",
     "--agent",
@@ -482,6 +640,7 @@ export function planClaudeCliInvocation(
       ok: false,
       code: "FLAG_DENIED",
       reason: flagCheck.reason ?? "Flag denied",
+      ...cliPlanHonesty,
     };
   }
 
@@ -494,6 +653,7 @@ export function planClaudeCliInvocation(
       ok: false,
       code: "FLAG_DENIED",
       reason: "Permission bypass flags are never allowed",
+      ...cliPlanHonesty,
     };
   }
 
@@ -504,7 +664,9 @@ export function planClaudeCliInvocation(
     promptDelivery: "stdin",
     prompt: input.prompt,
     agentName: input.agentName,
-    modelId: input.modelId,
+    modelId,
+    argvContainsPrompt: false,
+    ...cliPlanHonesty,
   };
 }
 
@@ -519,11 +681,19 @@ export function defaultClaudeExecutableCandidates(): string[] {
   return [...new Set(candidates)];
 }
 
+const SHELL_METACHAR_IN_ARG = /[;|`]|&&|\|\|/;
+
 export function validateCliArgs(args: readonly string[]): {
   ok: boolean;
   reason?: string;
 } {
   for (const arg of args) {
+    if (SHELL_METACHAR_IN_ARG.test(arg)) {
+      return {
+        ok: false,
+        reason: `Shell metacharacter refused in CLI arg: ${arg}`,
+      };
+    }
     const lower = arg.toLowerCase();
     for (const forbidden of FORBIDDEN_CLI_FLAGS) {
       if (

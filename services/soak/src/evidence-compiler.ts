@@ -364,7 +364,7 @@ export function compileAcceptanceEvidence(
     "T-X011 fixture ACCEPTED only via OUTPUT_BOMB_BOUNDED_QUARANTINED",
     "T-X003 fixture ACCEPTED only via SYMLINK_ESCAPE_AFTER_ROOT_VERIFICATION",
     "T-X050 fixture ACCEPTED only via PUBLIC_SYNTHETIC_FLAG_REQUIRES_SERVER_GRANT",
-    "T-X010 fixture ACCEPTED only via MALICIOUS_PROMPT_NO_SHELL_INJECTION",
+    "T-X010 fixture ACCEPTED only via MALICIOUS_PROMPT_NO_SHELL_INJECTION (stdin-only; extraArgs shell-meta/NUL/permission-mode refused; MultiEdit refused; NOT_WIRED)",
     "T-X009 fixture ACCEPTED only via CLI_ERROR_DESPITE_EXIT_ZERO (job fails)",
     "T-X015 fixture ACCEPTED only via DST_RECURRING_SCHEDULE_NO_DUPLICATES (no unintended duplicates)",
     "T-X001 fixture ACCEPTED only via HOST_SLEEP_MONITORING_COVERAGE_GAP",

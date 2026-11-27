@@ -3,13 +3,13 @@
   "caseId": "T-X006",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X006 (Cross-workspace object reference — deny without leak)\nproof=cross_workspace_reference_denied applyCount=1 :: In-workspace channel/account/asset reference allowed | Foreign channel substitution denied GRANT_MISSING without leak | Foreign account substitution denied GRANT_MISSING without leak | Foreign asset substitution denied GRANT_MISSING without leak | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X006 (Cross-workspace object reference — deny without leak)\nproof=cross_workspace_reference_denied applyCount=1 :: In-workspace channel/account/asset reference allowed | Foreign channel substitution denied GRANT_MISSING without leak | Foreign account substitution denied GRANT_MISSING without leak | Foreign asset substitution denied GRANT_MISSING without leak | Whitespace-padded in-workspace ids allowed (normalized match) | Whitespace-padded foreign channel denied GRANT_MISSING without leak | Dual foreign channel+asset substitution denied GRANT_MISSING without leak | Whitespace-only object ids fail closed GRANT_MISSING | Write-gate whitespace-padded in-workspace channel/asset maps | Write-gate padded foreign channel denied without leaking foreign id | Supervisor lease fence held → in-workspace publish allowed | Supervisor lease fence missing → GRANT_MISSING without leak | Lease held + foreign channel still GRANT_MISSING without leak | honesty NOT_WIRED/NONE | liveProviderSuccessClaimed=false catalogClaim=ACCEPTED≠VERIFIED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "cross_workspace_reference_denied"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x006.json",
-  "createdAtIso": "2026-11-27T13:28:09.742Z",
+  "createdAtIso": "2026-11-27T13:46:47.741Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x006-76e5fc1c9893"
+  "uniqueSourceArtifactId": "art-fixture-t-x006-96033bb79ee2"
 }

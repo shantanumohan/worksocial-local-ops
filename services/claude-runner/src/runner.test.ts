@@ -62,6 +62,43 @@ describe("claude-runner (R1-04)", () => {
     expect(validateCliArgs(["--print", "--output-format", "json"]).ok).toBe(true);
   });
 
+  it("refuses shell metacharacters in extraArgs (A25)", () => {
+    expect(validateCliArgs([";rm", "-rf", "/"]).ok).toBe(false);
+    expect(validateCliArgs(["`id`"]).ok).toBe(false);
+    expect(validateCliArgs(["safe", "&&", "evil"]).ok).toBe(false);
+    expect(validateCliArgs(["safe", "||", "evil"]).ok).toBe(false);
+    expect(validateCliArgs(["safe;evil"]).ok).toBe(false);
+    expect(validateCliArgs(["safe|evil"]).ok).toBe(false);
+    expect(validateCliArgs([";"]).ok).toBe(false);
+    expect(validateCliArgs(["|"]).ok).toBe(false);
+    expect(validateCliArgs(["`"]).ok).toBe(false);
+    expect(validateCliArgs(["evil`more"]).ok).toBe(false);
+    expect(validateCliArgs(["safe", ";", "evil"]).ok).toBe(false);
+    expect(validateCliArgs(["safe", "|", "evil"]).ok).toBe(false);
+    expect(validateCliArgs(["safe", "`", "id"]).ok).toBe(false);
+    expect(validateCliArgs(["evil&&more"]).ok).toBe(false);
+    expect(validateCliArgs(["evil||more"]).ok).toBe(false);
+    expect(validateCliArgs(["&&"]).ok).toBe(false);
+    expect(validateCliArgs(["||"]).ok).toBe(false);
+    expect(validateCliArgs(["evil", "&&", "more"]).ok).toBe(false);
+    expect(validateCliArgs(["evil", "||", "more"]).ok).toBe(false);
+    expect(validateCliArgs(["evil", "|", "more"]).ok).toBe(false);
+    expect(validateCliArgs(["evil", ";", "more"]).ok).toBe(false);
+    expect(validateCliArgs(["evil", "`", "more"]).ok).toBe(false);
+    expect(validateCliArgs(["safe", "&&", "more"]).ok).toBe(false);
+    expect(validateCliArgs(["safe", "||", "more"]).ok).toBe(false);
+    expect(validateCliArgs(["safe", ";", "more"]).ok).toBe(false);
+    expect(validateCliArgs(["safe", "|", "more"]).ok).toBe(false);
+    expect(validateCliArgs(["safe", "`", "more"]).ok).toBe(false);
+    expect(validateCliArgs(["more", "&&", "evil"]).ok).toBe(false);
+    expect(validateCliArgs(["more", "||", "evil"]).ok).toBe(false);
+    expect(validateCliArgs(["more", ";", "evil"]).ok).toBe(false);
+    expect(validateCliArgs(["more", "|", "evil"]).ok).toBe(false);
+    expect(validateCliArgs(["more", "`", "evil"]).ok).toBe(false);
+    expect(validateCliArgs(["--output-format=evil;json"]).ok).toBe(false);
+    expect(validateCliArgs(["--print", "safe"]).ok).toBe(true);
+  });
+
   it("accepts only registered agent names, not paths", () => {
     expect(isRegisteredAgentName("A01")).toBe(true);
     expect(isRegisteredAgentName("/tmp/.claude/agents/A01.md")).toBe(false);
@@ -282,6 +319,215 @@ describe("claude-runner (R1-04)", () => {
         extraArgs: ["--dangerously-skip-permissions"],
       }).ok,
     ).toBe(false);
+
+    const stamped = planClaudeCliInvocation({
+      agentName: "A13",
+      modelId: "claude-fixture",
+      prompt: '"; rm -rf / #',
+    });
+    expect(stamped.ok).toBe(true);
+    if (stamped.ok) {
+      expect(stamped.argvContainsPrompt).toBe(false);
+      expect(stamped.liveProviderWiring).toBe("NOT_WIRED");
+      expect(stamped.externalEffects).toBe("NONE");
+      expect(stamped.fixtureOnly).toBe(true);
+    }
+
+    const promptViaArgv = planClaudeCliInvocation({
+      agentName: "A01",
+      modelId: "claude-fixture",
+      prompt: "benign",
+      extraArgs: ["--prompt", "evil"],
+    });
+    expect(promptViaArgv.ok).toBe(false);
+    if (!promptViaArgv.ok) {
+      expect(promptViaArgv.code).toBe("FLAG_DENIED");
+    }
+
+    const nulPrompt = planClaudeCliInvocation({
+      agentName: "A01",
+      modelId: "claude-fixture",
+      prompt: "hi\0there",
+    });
+    expect(nulPrompt.ok).toBe(false);
+    if (!nulPrompt.ok) {
+      expect(nulPrompt.code).toBe("PROMPT_NUL_REFUSED");
+    }
+
+    const badModel = planClaudeCliInvocation({
+      agentName: "A01",
+      modelId: "claude; reboot",
+      prompt: "benign",
+    });
+    expect(badModel.ok).toBe(false);
+    if (!badModel.ok) {
+      expect(badModel.code).toBe("INVALID_MODEL");
+    }
+
+    // Coincidental overlap with fixed argv tokens must not reject (Codex P2).
+    for (const prompt of ["json", "4", "A13", ""]) {
+      const coincidental = planClaudeCliInvocation({
+        agentName: "A13",
+        modelId: "claude-fixture",
+        prompt,
+      });
+      expect(coincidental.ok).toBe(true);
+      if (coincidental.ok) {
+        expect(coincidental.argvContainsPrompt).toBe(false);
+        expect(coincidental.promptDelivery).toBe("stdin");
+      }
+    }
+
+    const modelOverride = planClaudeCliInvocation({
+      agentName: "A01",
+      modelId: "claude-fixture",
+      prompt: "benign",
+      extraArgs: ["--model=claude;reboot"],
+    });
+    expect(modelOverride.ok).toBe(false);
+    if (!modelOverride.ok) {
+      expect(modelOverride.code).toBe("FLAG_DENIED");
+    }
+
+    // Wave-13 Codex harden: shell-metachar tokens in extraArgs.
+    const metaExtra = planClaudeCliInvocation({
+      agentName: "A01",
+      modelId: "claude-fixture",
+      prompt: "benign",
+      extraArgs: ["; rm -rf /"],
+    });
+    expect(metaExtra.ok).toBe(false);
+    if (!metaExtra.ok) {
+      expect(metaExtra.code).toBe("FLAG_DENIED");
+    }
+
+    const appendSystem = planClaudeCliInvocation({
+      agentName: "A01",
+      modelId: "claude-fixture",
+      prompt: "benign",
+      extraArgs: ["--append-system-prompt", "evil"],
+    });
+    expect(appendSystem.ok).toBe(false);
+    if (!appendSystem.ok) {
+      expect(appendSystem.code).toBe("FLAG_DENIED");
+    }
+
+    const attachedPrompt = planClaudeCliInvocation({
+      agentName: "A01",
+      modelId: "claude-fixture",
+      prompt: "benign",
+      extraArgs: ["-p=evil"],
+    });
+    expect(attachedPrompt.ok).toBe(false);
+    if (!attachedPrompt.ok) {
+      expect(attachedPrompt.code).toBe("FLAG_DENIED");
+    }
+
+    const blankModel = planClaudeCliInvocation({
+      agentName: "A01",
+      modelId: "   ",
+      prompt: "benign",
+    });
+    expect(blankModel.ok).toBe(false);
+    if (!blankModel.ok) {
+      expect(blankModel.code).toBe("INVALID_MODEL");
+    }
+
+    // Wave-15 deepen: bare -- / overlong model / system-prompt-file= / out-of-range agent.
+    const endOpts = planClaudeCliInvocation({
+      agentName: "A01",
+      modelId: "claude-fixture",
+      prompt: "benign",
+      extraArgs: ["--"],
+    });
+    expect(endOpts.ok).toBe(false);
+    if (!endOpts.ok) {
+      expect(endOpts.code).toBe("FLAG_DENIED");
+    }
+
+    const overlongModel = planClaudeCliInvocation({
+      agentName: "A01",
+      modelId: "a".repeat(129),
+      prompt: "benign",
+    });
+    expect(overlongModel.ok).toBe(false);
+    if (!overlongModel.ok) {
+      expect(overlongModel.code).toBe("INVALID_MODEL");
+    }
+
+    const sysPromptFile = planClaudeCliInvocation({
+      agentName: "A01",
+      modelId: "claude-fixture",
+      prompt: "benign",
+      extraArgs: ["--system-prompt-file=/tmp/evil"],
+    });
+    expect(sysPromptFile.ok).toBe(false);
+    if (!sysPromptFile.ok) {
+      expect(sysPromptFile.code).toBe("FLAG_DENIED");
+    }
+
+    const outOfRange = planClaudeCliInvocation({
+      agentName: "A31",
+      modelId: "claude-fixture",
+      prompt: "benign",
+    });
+    expect(outOfRange.ok).toBe(false);
+    if (!outOfRange.ok) {
+      expect(outOfRange.code).toBe("INVALID_AGENT");
+    }
+    const zeroAgent = planClaudeCliInvocation({
+      agentName: "A00",
+      modelId: "claude-fixture",
+      prompt: "benign",
+    });
+    expect(zeroAgent.ok).toBe(false);
+    if (!zeroAgent.ok) {
+      expect(zeroAgent.code).toBe("INVALID_AGENT");
+    }
+
+    // Wave-17 deepen: NUL extraArgs / permission-mode / MultiEdit / lowercase agent.
+    const nulExtra = planClaudeCliInvocation({
+      agentName: "A01",
+      modelId: "claude-fixture",
+      prompt: "benign",
+      extraArgs: ["safe\0evil"],
+    });
+    expect(nulExtra.ok).toBe(false);
+    if (!nulExtra.ok) {
+      expect(nulExtra.code).toBe("FLAG_DENIED");
+    }
+
+    const permMode = planClaudeCliInvocation({
+      agentName: "A01",
+      modelId: "claude-fixture",
+      prompt: "benign",
+      extraArgs: ["--permission-mode=dontAsk"],
+    });
+    expect(permMode.ok).toBe(false);
+    if (!permMode.ok) {
+      expect(permMode.code).toBe("FLAG_DENIED");
+    }
+
+    const multiEdit = planClaudeCliInvocation({
+      agentName: "A01",
+      modelId: "claude-fixture",
+      prompt: "benign",
+      tools: "MultiEdit",
+    });
+    expect(multiEdit.ok).toBe(false);
+    if (!multiEdit.ok) {
+      expect(multiEdit.code).toBe("FLAG_DENIED");
+    }
+
+    const lowerAgent = planClaudeCliInvocation({
+      agentName: "a13",
+      modelId: "claude-fixture",
+      prompt: "benign",
+    });
+    expect(lowerAgent.ok).toBe(false);
+    if (!lowerAgent.ok) {
+      expect(lowerAgent.code).toBe("INVALID_AGENT");
+    }
   });
 
   it("runs all 30 roles in fixture mode", async () => {
