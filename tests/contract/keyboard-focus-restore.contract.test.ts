@@ -258,6 +258,12 @@ describe("contract: T-X061 keyboard focus restore", () => {
       stateDir: dir,
       nowIso: now,
     });
+    if (!harness.allPassed) {
+      const failedKinds = harness.proofs
+        .filter((p) => !p.passed)
+        .map((p) => p.kind);
+      expect(failedKinds, "runSoakRecoveryHarness proof failures").toEqual([]);
+    }
     expect(harness.allPassed).toBe(true);
     const proof = harness.proofs.find(
       (p) => p.kind === SoakProofKind.KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG,

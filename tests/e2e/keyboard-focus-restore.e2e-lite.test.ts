@@ -32,6 +32,12 @@ describe("e2e-lite: T-X061 keyboard focus restore", () => {
     const result = await soak.runFixtureSoak({
       harnessNowIso: "2026-11-21T20:00:00.000Z",
     });
+    if (!result.ok) {
+      const failedKinds = result.run.proofs
+        .filter((p) => !p.passed)
+        .map((p) => p.kind);
+      expect(failedKinds, "runFixtureSoak proof failures").toEqual([]);
+    }
     expect(result.ok).toBe(true);
     expect(result.run.externalEffects).toBe("NONE");
     expect(result.run.chatgptAds.allowed).toBe(false);
