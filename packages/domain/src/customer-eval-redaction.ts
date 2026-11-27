@@ -213,8 +213,16 @@ export function prepareCustomerDataForEvaluation(input: {
   degradeToRawPassthrough?: boolean;
   /** Forbidden — redacted payload must not echo raw structured fields. */
   mirrorRawFieldsInRedactedPayload?: boolean;
+  /** Forbidden — eval may not treat customer redaction as optional. */
+  claimRedactionOptional?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.claimRedactionOptional === true) {
+    return blockedLeak([
+      "Optional customer redaction claims refused — eval gate (T-X072)",
+    ]);
+  }
 
   if (input.mirrorRawFieldsInRedactedPayload === true) {
     return blockedLeak([

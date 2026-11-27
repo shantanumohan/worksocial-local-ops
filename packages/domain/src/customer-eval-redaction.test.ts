@@ -145,6 +145,18 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses claimRedactionOptional", () => {
+    const optional = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      claimRedactionOptional: true,
+    });
+    expect(optional.allowed).toBe(false);
+    expect(optional.reasons.some((r) => /Optional customer redaction/.test(r))).toBe(
+      true,
+    );
+  });
+
   it("refuses mirrorRawFieldsInRedactedPayload", () => {
     const mirror = prepareCustomerDataForEvaluation({
       source,
