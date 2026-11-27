@@ -10,6 +10,7 @@
  * T-X005 fixture ACCEPTED only via FORGED_BROWSER_ROLE_IGNORED.
  * T-X006 fixture ACCEPTED only via CROSS_WORKSPACE_REFERENCE_DENIED.
  * T-X019/T-US-75 fixture ACCEPTED only via APPROVED_PAYLOAD_EDIT_INVALIDATED.
+ * T-X028 fixture ACCEPTED only via ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE.
  * T-X029 fixture ACCEPTED only via EXPLICIT_ACCOUNT_REBIND.
  * T-X031 fixture ACCEPTED only via GA4_WRONG_PROPERTY_KIND_REFUSED.
  */
@@ -458,6 +459,51 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.proofKinds).not.toContain("VERIFIED");
     expect(art.summary).toMatch(
       /New connection lease granted leaseId=lease-[0-9a-f-]+ \| Same-account rebind correctly denied/,
+    );
+  });
+
+  it("T-X028 fixture artifact names actual-cost overrun visibility (ACCEPTED ≠ VERIFIED)", () => {
+    const artPath = resolve(
+      repoRoot,
+      "tests/acceptance-evidence/fixture/art-fixture-t-x028.json",
+    );
+    const art = JSON.parse(readFileSync(artPath, "utf8")) as {
+      artifactId: string;
+      caseId: string;
+      environment: string;
+      redacted: boolean;
+      summary: string;
+      liveProviderSuccessClaimed: boolean;
+      externalEffects: string;
+      proofKinds: string[];
+      evidenceRef: string;
+      uniqueSourceArtifactId: string;
+      createdAtIso: string;
+    };
+    expect(art.artifactId).toBe("art-fixture-t-x028");
+    expect(art.caseId).toBe("T-X028");
+    expect(art.environment).toBe("fixture");
+    expect(art.redacted).toBe(true);
+    expect(art.evidenceRef).toBe("soak/evidence/art-fixture-t-x028.json");
+    expect(art.proofKinds).toEqual([
+      "actual_cost_exceeds_estimate_overrun_visible",
+    ]);
+    expect(art.summary).toMatch(/Fixture ACCEPTED/);
+    expect(art.summary).not.toMatch(/Fixture VERIFIED/);
+    expect(art.liveProviderSuccessClaimed).toBe(false);
+    expect(art.externalEffects).toBe("NONE");
+    expect(art.summary).toContain("proof=actual_cost_exceeds_estimate_overrun_visible");
+    expect(art.summary).toContain("overrunMinor=150 visible");
+    expect(art.summary).toContain("never capped");
+    expect(art.summary).toContain("liveProviderWiring=NOT_WIRED");
+    expect(art.summary).toContain("chatgptAdsAccess=ACCESS_BLOCKED");
+    expect(art.summary).toContain("ACTUAL_COST_OVERRUN_RELATED_CASE_IDS=[T-X028]");
+    expect(art.summary).toMatch(
+      /Fixture ACCEPTED for T-X028 \(Actual cost exceeds estimate — overrun visible\)/,
+    );
+    expect(art.proofKinds).not.toContain("VERIFIED");
+    expect(art.summary).toMatch(
+      /liveProviderSuccessClaimed=false externalEffects=NONE$/,
     );
   });
 
