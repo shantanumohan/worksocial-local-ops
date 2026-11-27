@@ -1173,7 +1173,7 @@ export async function runSoakRecoveryHarness(input: {
       "T-US-006 fixture ACCEPTED via unbound_write_path_fail_closed only — not live VERIFIED",
       "T-X023 fixture ACCEPTED via eventual_consistency_false_not_found only — not live VERIFIED",
       "T-US-052 fixture ACCEPTED via mocked_connector_not_production_ready only — not live VERIFIED",
-      "T-X030 fixture ACCEPTED via rate_limit_bounded_backoff_preserves_deadline only — not live VERIFIED",
+      "T-X030 fixture ACCEPTED via rate_limit_bounded_backoff_preserves_deadline only — every hop: Retry-After/exponential WAIT within deadline → STOP_DEADLINE on exact/overshoot/past-deadline → STOP_MAX_ATTEMPTS incl. maxAttempts=1 → 429→200 recovery honesty; fractional Retry-After ceil; exponential maxBackoff cap; partial WAIT progress then STOP invents no COMPLETED write; Retry-After preferred over exponential; Retry-After=0 WAIT; partial body still no live VERIFIED; distinct from grant RATE_LIMIT_EXCEEDED / no-dup / concurrent-idempotent / disk-full partial / campaign partial; live NOT_WIRED — not live VERIFIED",
       "T-US-056 fixture ACCEPTED via honest_outage_hosted_contact_path only — not live VERIFIED",
       "T-X040 fixture ACCEPTED via low_sample_trend_spike_insufficient_evidence only — not live VERIFIED",
       "T-US-012 fixture ACCEPTED via google_ads_test_production_access_separated only — not live VERIFIED",

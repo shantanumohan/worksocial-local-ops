@@ -700,6 +700,15 @@ describe("soak-acceptance domain", () => {
         SoakProofKind.RATE_LIMIT_BOUNDED_BACKOFF_PRESERVES_DEADLINE,
       ),
     ).toEqual(["T-X030"]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.NO_DUPLICATE_EFFECTS),
+    ).not.toContain("T-X030");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CONCURRENT_IDEMPOTENT_RELEASE),
+    ).not.toContain("T-X030");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.UNKNOWN_REMOTE_RECONCILE),
+    ).not.toContain("T-X030");
   });
 
   it("maps T-US-056 to HONEST_OUTAGE_HOSTED_CONTACT_PATH only", () => {

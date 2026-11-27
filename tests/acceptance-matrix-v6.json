@@ -2122,7 +2122,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x030",
-      "evidenceNote": "Fixture rate-limit-bounded-backoff-preserves-deadline proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture rate-limit-bounded-backoff-preserves-deadline proof only — fractional Retry-After ceil / maxAttempts=1 immediate STOP / exponential maxBackoff cap / past-deadline STOP / Retry-After-over-exponential / WAIT→STOP_MAX_ATTEMPTS / partial-progress STOP / Retry-After=0 / partial-body honesty invents no COMPLETED/VERIFIED write; not sandbox or production-canary VERIFIED; not grant RATE_LIMIT_EXCEEDED / not retry-only no-dup / not concurrent-idempotent / not disk-full partial / not campaign partial; not live VERIFIED"
     },
     {
       "id": "T-X031",
