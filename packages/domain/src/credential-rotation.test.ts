@@ -193,13 +193,34 @@ describe("credential rotation / revoke honesty", () => {
       previousAccountLabel: "fixture-account-alpha",
       observedAccountLabel: "fixture-account-beta",
     });
-    expect(silent).toMatchObject({ ok: false, code: "REBIND_REQUIRED" });
+    expect(silent).toMatchObject({
+      ok: false,
+      code: "REBIND_REQUIRED",
+      externalEffects: "NONE",
+      liveProviderWiring: "NOT_WIRED",
+    });
 
     const sameOk = evaluateSilentRotateAllowed({
       previousAccountLabel: "fixture-account-alpha",
       observedAccountLabel: "fixture-account-alpha",
     });
     expect(sameOk.ok).toBe(true);
+    expect(sameOk).toMatchObject({
+      externalEffects: "NONE",
+      liveProviderWiring: "NOT_WIRED",
+    });
+
+    const trimOk = evaluateSilentRotateAllowed({
+      previousAccountLabel: "  fixture-account-alpha  ",
+      observedAccountLabel: "fixture-account-alpha",
+    });
+    expect(trimOk.ok).toBe(true);
+
+    const caseOk = evaluateSilentRotateAllowed({
+      previousAccountLabel: "Fixture-Account-Alpha",
+      observedAccountLabel: "FIXTURE-ACCOUNT-ALPHA",
+    });
+    expect(caseOk.ok).toBe(true);
 
     const noClaim = evaluateSilentRotateAllowed({
       previousAccountLabel: "fixture-account-alpha",
@@ -208,6 +229,8 @@ describe("credential rotation / revoke honesty", () => {
     expect(noClaim).toMatchObject({
       ok: false,
       code: "ACCOUNT_IDENTITY_REQUIRED",
+      externalEffects: "NONE",
+      liveProviderWiring: "NOT_WIRED",
     });
 
     const blankClaim = evaluateSilentRotateAllowed({
@@ -219,6 +242,18 @@ describe("credential rotation / revoke honesty", () => {
       code: "ACCOUNT_IDENTITY_REQUIRED",
     });
 
+    const wiredSilent = evaluateSilentRotateAllowed({
+      previousAccountLabel: "fixture-account-alpha",
+      observedAccountLabel: "fixture-account-alpha",
+      liveProviderWiring: "WIRED",
+    });
+    expect(wiredSilent).toMatchObject({
+      ok: false,
+      code: "LIVE_TRANSPORT_NOT_WIRED",
+      liveProviderWiring: "NOT_WIRED",
+      externalEffects: "NONE",
+    });
+
     const conn = activeConnection();
     const rebindOk = evaluateExplicitRebind({
       connection: conn,
@@ -228,6 +263,33 @@ describe("credential rotation / revoke honesty", () => {
     expect(rebindOk).toMatchObject({
       ok: true,
       change: AccountTokenChange.DIFFERENT_ACCOUNT,
+      externalEffects: "NONE",
+      liveProviderWiring: "NOT_WIRED",
+    });
+
+    const blankRebindLabel = evaluateExplicitRebind({
+      connection: conn,
+      newAccountLabel: "   ",
+      approvedBy: "admin",
+    });
+    expect(blankRebindLabel).toMatchObject({
+      ok: false,
+      code: "ACCOUNT_LABEL_REQUIRED",
+      externalEffects: "NONE",
+      liveProviderWiring: "NOT_WIRED",
+    });
+
+    const wiredRebind = evaluateExplicitRebind({
+      connection: conn,
+      newAccountLabel: "fixture-account-beta",
+      approvedBy: "admin",
+      liveProviderWiring: "WIRED",
+    });
+    expect(wiredRebind).toMatchObject({
+      ok: false,
+      code: "LIVE_TRANSPORT_NOT_WIRED",
+      liveProviderWiring: "NOT_WIRED",
+      externalEffects: "NONE",
     });
 
     const sameDenied = evaluateExplicitRebind({
@@ -235,7 +297,11 @@ describe("credential rotation / revoke honesty", () => {
       newAccountLabel: "fixture-cms",
       approvedBy: "admin",
     });
-    expect(sameDenied).toMatchObject({ ok: false, code: "SAME_ACCOUNT" });
+    expect(sameDenied).toMatchObject({
+      ok: false,
+      code: "SAME_ACCOUNT",
+      liveProviderWiring: "NOT_WIRED",
+    });
 
     const rotatedAway = markConnectionRotatedAway(
       conn,

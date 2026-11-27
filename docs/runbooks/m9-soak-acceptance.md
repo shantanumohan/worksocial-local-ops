@@ -299,6 +299,8 @@ Suggested owner Windows flow (state off OneDrive):
 **T-US-041** maps only to `DIAGNOSE_REPAIR_DEFECT_RESOLVED_OR_HANDOFF` (verified resolution or acknowledged handoff; CMS repair NOT_WIRED; not live VERIFIED).
 
 
+**T-X029** maps only to `EXPLICIT_ACCOUNT_REBIND` (silent different-account REBIND_REQUIRED; blank/whitespace refuse; trim+case-fold; fixture+WIRED refuse; liveProviderWiring/liveProviderRevoke NOT_WIRED; externalEffects NONE; not live VERIFIED).
+
 **T-X042** maps only to `SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS`.
 
 **T-X046** maps only to `UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION` (unsupported blog destination; no fake publication; never invent PUBLISHED_VERIFIED; `classifyUnsupportedBlogDestination` honesty fields — FIXTURE≠live claim, preferLive-only live refuse, fixture OTHER_BLOG allowed; blank/padded destinationId + format mismatch fail closed; Hub FULL_ARTICLE unsupported; DST civil schedule spring-gap/fall-back still refuse invent (preferLive-on-schedule included); distinct from T-US-022/T-X045/T-X015; not live VERIFIED).

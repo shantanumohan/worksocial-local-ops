@@ -2,7 +2,10 @@
  * T-X029 fixture proof — explicit different-account rebind.
  * Produces a SoakProofRecord for the evidence compiler.
  * External effects: NONE. Live provider revoke: NOT_WIRED.
- * Never claims live VERIFIED.
+ * Never claims live VERIFIED. ACCEPTED ≠ VERIFIED.
+ *
+ * Additive hillclimb: honesty on silent/rebind decisions; whitespace blank;
+ * trim/case-fold match; blank newAccountLabel; fixture+WIRED refuse.
  *
  * applyAttemptCount is measured from broker putReference writes during the
  * successful rebind (not hard-coded). Proof fails unless the measured count is 1.
@@ -11,6 +14,8 @@
 import { randomUUID } from "node:crypto";
 import {
   SoakProofKind,
+  evaluateExplicitRebind,
+  evaluateSilentRotateAllowed,
   type SoakProofRecord,
 } from "@worksocial/domain";
 import {
@@ -145,6 +150,118 @@ export async function runExplicitAccountRebindProof(input: {
     }
     details.push(
       "Blank observedAccountLabel denied (ACCOUNT_IDENTITY_REQUIRED) — no silent different-account bind",
+    );
+
+    const whitespaceBlank = await svc.rotate({
+      connectionId: seeded.connection.connectionId,
+      approvedBy: "admin",
+      secretMaterial: `ws-blank-${operationId}`,
+      observedAccountLabel: "   ",
+      nowIso: input.nowIso,
+    });
+    if (
+      whitespaceBlank.ok ||
+      whitespaceBlank.code !== "ACCOUNT_IDENTITY_REQUIRED"
+    ) {
+      return failProof(
+        operationId,
+        input.nowIso,
+        measuredApplyAttempts,
+        details.concat([
+          `Whitespace blank observedAccountLabel expected ACCOUNT_IDENTITY_REQUIRED; got ok=${whitespaceBlank.ok} code=${"code" in whitespaceBlank ? whitespaceBlank.code : "n/a"}`,
+        ]),
+      );
+    }
+    details.push(
+      "Whitespace-only observedAccountLabel denied (ACCOUNT_IDENTITY_REQUIRED)",
+    );
+
+    const trimSilent = evaluateSilentRotateAllowed({
+      previousAccountLabel: "  fixture-account-alpha  ",
+      observedAccountLabel: "fixture-account-alpha",
+    });
+    if (
+      !trimSilent.ok ||
+      trimSilent.externalEffects !== "NONE" ||
+      trimSilent.liveProviderWiring !== "NOT_WIRED"
+    ) {
+      return failProof(
+        operationId,
+        input.nowIso,
+        measuredApplyAttempts,
+        details.concat([
+          `Trim same-account silent rotate expected ok+honesty; got ${JSON.stringify(trimSilent)}`,
+        ]),
+      );
+    }
+    details.push(
+      "Whitespace-trimmed account labels match → silent SAME_ACCOUNT allowed; honesty externalEffects=NONE liveProviderWiring=NOT_WIRED",
+    );
+
+    const caseSilent = evaluateSilentRotateAllowed({
+      previousAccountLabel: "Fixture-Account-Alpha",
+      observedAccountLabel: "FIXTURE-ACCOUNT-ALPHA",
+    });
+    if (!caseSilent.ok) {
+      return failProof(
+        operationId,
+        input.nowIso,
+        measuredApplyAttempts,
+        details.concat([
+          `Case-fold same-account silent rotate expected ok; got ${JSON.stringify(caseSilent)}`,
+        ]),
+      );
+    }
+    details.push(
+      "Case-fold account labels match → silent SAME_ACCOUNT (intentional fold)",
+    );
+
+    const blankRebindLabel = evaluateExplicitRebind({
+      connection: seeded.connection,
+      newAccountLabel: "   ",
+      approvedBy: "admin",
+    });
+    if (
+      blankRebindLabel.ok ||
+      blankRebindLabel.code !== "ACCOUNT_LABEL_REQUIRED" ||
+      blankRebindLabel.liveProviderWiring !== "NOT_WIRED"
+    ) {
+      return failProof(
+        operationId,
+        input.nowIso,
+        measuredApplyAttempts,
+        details.concat([
+          `Blank newAccountLabel expected ACCOUNT_LABEL_REQUIRED; got ${JSON.stringify(blankRebindLabel)}`,
+        ]),
+      );
+    }
+    details.push(
+      "Blank/whitespace newAccountLabel denied (ACCOUNT_LABEL_REQUIRED); honesty NOT_WIRED/NONE",
+    );
+
+    const wiredRebind = evaluateExplicitRebind({
+      connection: seeded.connection,
+      newAccountLabel: "fixture-account-beta",
+      approvedBy: "admin",
+      liveProviderWiring: "WIRED",
+    });
+    if (
+      wiredRebind.ok ||
+      wiredRebind.code !== "LIVE_TRANSPORT_NOT_WIRED" ||
+      wiredRebind.externalEffects !== "NONE" ||
+      wiredRebind.liveProviderWiring !== "NOT_WIRED"
+    ) {
+      return failProof(
+        operationId,
+        input.nowIso,
+        measuredApplyAttempts,
+        details.concat([
+          `Fixture+WIRED rebind expected LIVE_TRANSPORT_NOT_WIRED; got ${JSON.stringify(wiredRebind)}`,
+        ]),
+      );
+    }
+    details.push(
+      "Fixture match with liveProviderWiring=WIRED → LIVE_TRANSPORT_NOT_WIRED; no invented live revoke/rebind",
     );
 
     const rebound = await svc.rebind({
@@ -347,7 +464,7 @@ export async function runExplicitAccountRebindProof(input: {
       );
     }
     details.push(
-      "liveProviderRevocation=NOT_WIRED externalEffects=NONE — never silently VERIFIED for live",
+      "liveProviderRevocation=NOT_WIRED externalEffects=NONE liveProviderWiring=NOT_WIRED ACCEPTED≠VERIFIED — never silently VERIFIED for live",
     );
 
     return {

@@ -514,22 +514,40 @@ export function classifyAccountTokenChange(input: {
     : AccountTokenChange.DIFFERENT_ACCOUNT;
 }
 
+type RebindHonesty = {
+  externalEffects: "NONE";
+  liveProviderWiring: "NOT_WIRED";
+};
+
+function rebindHonesty(): RebindHonesty {
+  return {
+    externalEffects: "NONE",
+    liveProviderWiring: "NOT_WIRED",
+  };
+}
+
 /**
  * Same-account rotate requires a non-empty observed account identity that
  * matches the bound connection. Blank/missing identity cannot prove same-account
  * and must not allow silent different-account bind (T-X029).
+ * Every decision carries honesty: externalEffects=NONE, liveProviderWiring=NOT_WIRED.
  */
 export function evaluateSilentRotateAllowed(input: {
   previousAccountLabel: string;
   observedAccountLabel: string | null | undefined;
+  /** Live provider wiring — fixture proofs keep NOT_WIRED. */
+  liveProviderWiring?: "NOT_WIRED" | "WIRED";
 }):
-  | { ok: true; change: "SAME_ACCOUNT" }
-  | {
+  | ({ ok: true; change: "SAME_ACCOUNT" } & RebindHonesty)
+  | ({
       ok: false;
-      code: "ACCOUNT_IDENTITY_REQUIRED" | "REBIND_REQUIRED";
+      code:
+        | "ACCOUNT_IDENTITY_REQUIRED"
+        | "REBIND_REQUIRED"
+        | "LIVE_TRANSPORT_NOT_WIRED";
       change: "DIFFERENT_ACCOUNT" | null;
       reason: string;
-    } {
+    } & RebindHonesty) {
   if (
     input.observedAccountLabel === null ||
     input.observedAccountLabel === undefined ||
@@ -541,6 +559,7 @@ export function evaluateSilentRotateAllowed(input: {
       change: null,
       reason:
         "Same-account rotate requires a non-empty observedAccountLabel proving token identity (T-X029); blank identity cannot authorize silent refresh",
+      ...rebindHonesty(),
     };
   }
   const change = classifyAccountTokenChange({
@@ -554,9 +573,24 @@ export function evaluateSilentRotateAllowed(input: {
       change: AccountTokenChange.DIFFERENT_ACCOUNT,
       reason:
         "Token identity maps to a different account — explicit rebind required (T-X029); silent same-connection refresh denied",
+      ...rebindHonesty(),
     };
   }
-  return { ok: true, change: AccountTokenChange.SAME_ACCOUNT };
+  if ((input.liveProviderWiring ?? "NOT_WIRED") !== "NOT_WIRED") {
+    return {
+      ok: false,
+      code: "LIVE_TRANSPORT_NOT_WIRED",
+      change: null,
+      reason:
+        "Silent rotate refused while liveProviderWiring=WIRED — live transport NOT_WIRED; no invented live rotate success (T-X029)",
+      ...rebindHonesty(),
+    };
+  }
+  return {
+    ok: true,
+    change: AccountTokenChange.SAME_ACCOUNT,
+    ...rebindHonesty(),
+  };
 }
 
 /**
@@ -617,33 +651,39 @@ export function buildRebindRecord(input: {
 /**
  * Validate an explicit rebind request. Requires a different account label
  * and non-empty approval — never invents same-account rebind as ACCEPTED proof.
+ * Every decision carries honesty: externalEffects=NONE, liveProviderWiring=NOT_WIRED.
+ * Claimed WIRED paths refuse inventing live rebind/revoke success (T-X073 untouched).
  */
 export function evaluateExplicitRebind(input: {
   connection: FixtureCredentialConnection | null;
   newAccountLabel: string;
   approvedBy: string;
+  /** Live provider wiring — fixture proofs keep NOT_WIRED. */
+  liveProviderWiring?: "NOT_WIRED" | "WIRED";
 }):
-  | {
+  | ({
       ok: true;
       oldAccountLabel: string;
       newAccountLabel: string;
       change: "DIFFERENT_ACCOUNT";
-    }
-  | {
+    } & RebindHonesty)
+  | ({
       ok: false;
       code:
         | "CONNECTION_MISSING"
         | "CONNECTION_NOT_ACTIVE"
         | "SAME_ACCOUNT"
         | "APPROVAL_REQUIRED"
-        | "ACCOUNT_LABEL_REQUIRED";
+        | "ACCOUNT_LABEL_REQUIRED"
+        | "LIVE_TRANSPORT_NOT_WIRED";
       reason: string;
-    } {
+    } & RebindHonesty) {
   if (!input.connection) {
     return {
       ok: false,
       code: "CONNECTION_MISSING",
       reason: "Unknown credential connection",
+      ...rebindHonesty(),
     };
   }
   if (input.connection.status !== CredentialConnectionStatus.ACTIVE) {
@@ -651,6 +691,7 @@ export function evaluateExplicitRebind(input: {
       ok: false,
       code: "CONNECTION_NOT_ACTIVE",
       reason: `Cannot rebind connection in status ${input.connection.status}`,
+      ...rebindHonesty(),
     };
   }
   if (!input.approvedBy.trim()) {
@@ -658,6 +699,7 @@ export function evaluateExplicitRebind(input: {
       ok: false,
       code: "APPROVAL_REQUIRED",
       reason: "Explicit rebind requires approvedBy (T-X029)",
+      ...rebindHonesty(),
     };
   }
   const newLabel = input.newAccountLabel.trim();
@@ -666,6 +708,7 @@ export function evaluateExplicitRebind(input: {
       ok: false,
       code: "ACCOUNT_LABEL_REQUIRED",
       reason: "Explicit rebind requires newAccountLabel (T-X029)",
+      ...rebindHonesty(),
     };
   }
   const change = classifyAccountTokenChange({
@@ -678,6 +721,16 @@ export function evaluateExplicitRebind(input: {
       code: "SAME_ACCOUNT",
       reason:
         "Observed account matches the bound connection — use rotate for same-account local refresh, not rebind",
+      ...rebindHonesty(),
+    };
+  }
+  if ((input.liveProviderWiring ?? "NOT_WIRED") !== "NOT_WIRED") {
+    return {
+      ok: false,
+      code: "LIVE_TRANSPORT_NOT_WIRED",
+      reason:
+        "Explicit rebind refused while liveProviderWiring=WIRED — live transport NOT_WIRED; no invented live revoke/rebind success (T-X029)",
+      ...rebindHonesty(),
     };
   }
   return {
@@ -685,6 +738,7 @@ export function evaluateExplicitRebind(input: {
     oldAccountLabel: input.connection.accountLabel,
     newAccountLabel: newLabel,
     change: AccountTokenChange.DIFFERENT_ACCOUNT,
+    ...rebindHonesty(),
   };
 }
 

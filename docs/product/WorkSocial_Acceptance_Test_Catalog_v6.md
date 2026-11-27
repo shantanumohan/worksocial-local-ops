@@ -1055,9 +1055,9 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X026 | Concurrent final budget reservation | Cap enforced *(fixture ACCEPTED — concurrent final budget reservation cap proof; not sandbox/prod VERIFIED)* |
 | T-X027 | Unknown usage on cancelled request | Hold; not zero cost |
 | T-X028 | Actual cost exceeds estimate | Overrun visible *(fixture ACCEPTED — actual cost exceeds estimate overrun visible proof; not sandbox/prod VERIFIED)* |
-**T-X029** is fixture ACCEPTED only via the explicit different-account rebind proof (`EXPLICIT_ACCOUNT_REBIND`). Same-account local rotate does **not** satisfy this case. Not sandbox/prod VERIFIED.
+**T-X029** is fixture ACCEPTED only via the explicit different-account rebind proof (`EXPLICIT_ACCOUNT_REBIND`) — silent different-account rotate → `REBIND_REQUIRED`; blank/whitespace identity → `ACCOUNT_IDENTITY_REQUIRED`; blank rebind label refuse; trim+case-fold same-account match documented; fixture+`WIRED` refuse (`LIVE_TRANSPORT_NOT_WIRED`); `liveProviderRevoke`/`liveProviderWiring=NOT_WIRED`; `externalEffects=NONE`. Same-account local rotate does **not** satisfy this case. Not sandbox/prod VERIFIED.
 
-| T-X029 | Token rotates to different account | Explicit rebind |
+| T-X029 | Token rotates to different account | Explicit rebind *(fixture ACCEPTED — explicit account rebind proof; trim/blank/WIRED edges; liveProviderWiring NOT_WIRED; externalEffects NONE; not sandbox/prod VERIFIED)* |
 | T-X030 | Rate-limit with deadline | Bounded backoff *(fixture ACCEPTED — rate-limit bounded backoff preserves deadline proof; not sandbox/prod VERIFIED)* |
 | T-X031 | Wrong GA4 property kind | Validation fails *(fixture ACCEPTED)* |
 | T-X032 | GA4 debug validation success only | No delivered-conversion claim *(fixture ACCEPTED)* |
