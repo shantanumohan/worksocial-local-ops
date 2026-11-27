@@ -6,9 +6,14 @@
  * - On wake, repetitive missed probes coalesce into a single catch-up run (no burst)
  * - Catch-up only increments probeApplyCount after an actual fixture probe result
  * - lastVerifiedSuccessAtIso advances only on actual SUCCESS, monotonically
+ * - Live probe / Temporal / host-heartbeat reads stay NOT_WIRED offline
  *
  * Pure domain. External effects: NONE. No network / Temporal / credentials.
+ * Fixture ACCEPTED ≠ sandbox/prod VERIFIED.
  */
+
+/** Live host-sleep monitoring / probe transport — always NOT_WIRED offline. */
+export const HOST_SLEEP_LIVE_WIRING = "NOT_WIRED" as const;
 
 export const MonitoringSlotOutcome = {
   SUCCESS: "SUCCESS",
@@ -41,6 +46,8 @@ export type HostSleepMonitoringState = {
   /** Count of real probe executions (SUCCESS + executed catch-up). */
   probeApplyCount: number;
   externalEffects: "NONE";
+  /** Live probe / Temporal / host-heartbeat reads remain NOT_WIRED for fixture soak. */
+  liveMonitoringWiring: typeof HOST_SLEEP_LIVE_WIRING;
 };
 
 export type CatchupProbeResult = {
@@ -74,6 +81,66 @@ export function createHostSleepMonitoringState(input: {
     slots: [],
     probeApplyCount: 0,
     externalEffects: "NONE",
+    liveMonitoringWiring: HOST_SLEEP_LIVE_WIRING,
+  };
+}
+
+/** True when a slot is an open (not-yet-coalesced) coverage gap. */
+export function isOpenCoverageGap(slot: MonitoringSlotRecord): boolean {
+  return (
+    slot.outcome === MonitoringSlotOutcome.COVERAGE_GAP &&
+    slot.coalescedIntoSlotId === null &&
+    slot.executedAtIso === null
+  );
+}
+
+/** Open COVERAGE_GAP slots awaiting wake coalesce. */
+export function listOpenCoverageGaps(
+  state: HostSleepMonitoringState,
+): MonitoringSlotRecord[] {
+  return state.slots.filter(isOpenCoverageGap);
+}
+
+export type HostSleepMonitoringHonesty = {
+  honest: boolean;
+  externalEffects: "NONE";
+  liveMonitoringWiring: typeof HOST_SLEEP_LIVE_WIRING;
+  openGapCount: number;
+  reasons: string[];
+};
+
+/**
+ * Fixture honesty edges for T-X001 — never claim live VERIFIED or invent gap executes.
+ */
+export function evaluateHostSleepMonitoringHonesty(
+  state: HostSleepMonitoringState,
+): HostSleepMonitoringHonesty {
+  const reasons: string[] = [];
+  if (state.externalEffects !== "NONE") {
+    reasons.push(`externalEffects=${state.externalEffects} (expected NONE)`);
+  }
+  if (state.liveMonitoringWiring !== HOST_SLEEP_LIVE_WIRING) {
+    reasons.push(
+      `liveMonitoringWiring=${state.liveMonitoringWiring} (expected NOT_WIRED)`,
+    );
+  }
+  const dishonestGaps = state.slots.filter(
+    (s) =>
+      s.outcome === MonitoringSlotOutcome.COVERAGE_GAP &&
+      s.executedAtIso !== null,
+  );
+  if (dishonestGaps.length > 0) {
+    reasons.push(
+      `${dishonestGaps.length} COVERAGE_GAP slot(s) claim executedAtIso (invented probe)`,
+    );
+  }
+  const openGaps = listOpenCoverageGaps(state);
+  return {
+    honest: reasons.length === 0,
+    externalEffects: "NONE",
+    liveMonitoringWiring: HOST_SLEEP_LIVE_WIRING,
+    openGapCount: openGaps.length,
+    reasons,
   };
 }
 
@@ -191,17 +258,27 @@ export type CoalesceWakeCatchupResult =
       catchupSlotId: string;
       coalescedGapSlotIds: string[];
       probeAppliesThisWake: 1;
+      liveMonitoringWiring: typeof HOST_SLEEP_LIVE_WIRING;
+      externalEffects: "NONE";
     }
   | {
       ok: false;
-      code: "NO_OPEN_GAPS" | "BURST_FORBIDDEN" | "CATCHUP_PROBE_REQUIRED";
+      code:
+        | "NO_OPEN_GAPS"
+        | "BURST_FORBIDDEN"
+        | "CATCHUP_PROBE_REQUIRED"
+        | "DISK_FULL";
       reason: string;
+      liveMonitoringWiring: typeof HOST_SLEEP_LIVE_WIRING;
+      externalEffects: "NONE";
     };
 
 /**
  * On host wake, coalesce all open COVERAGE_GAP slots into one catch-up probe.
  * Requires an actual fixture catch-up probe result before counting an apply.
  * Refuses burst execution of each missed slot individually.
+ * Fixture ENOSPC / disk-full refuses without inventing SUCCESS or advancing lastVerified
+ * (distinct from T-X004 evidence-manifest disk-full).
  */
 export function coalesceWakeCatchup(
   state: HostSleepMonitoringState,
@@ -211,6 +288,11 @@ export function coalesceWakeCatchup(
     catchupProbe: CatchupProbeResult | null;
     /** If true, caller attempted one-probe-per-missed-slot — always refuse. */
     attemptedBurstPerMissedSlot?: boolean;
+    /**
+     * Fixture ENOSPC signal during wake catch-up persistence.
+     * When true, refuse with DISK_FULL — open gaps stay open; no invented SUCCESS.
+     */
+    fixtureDiskFull?: boolean;
   },
 ): CoalesceWakeCatchupResult {
   if (input.attemptedBurstPerMissedSlot) {
@@ -219,19 +301,30 @@ export function coalesceWakeCatchup(
       code: "BURST_FORBIDDEN",
       reason:
         "Missed monitoring slots must coalesce on wake — burst per-slot replay forbidden",
+      liveMonitoringWiring: HOST_SLEEP_LIVE_WIRING,
+      externalEffects: "NONE",
     };
   }
 
-  const openGaps = state.slots.filter(
-    (s) =>
-      s.outcome === MonitoringSlotOutcome.COVERAGE_GAP &&
-      s.coalescedIntoSlotId === null,
-  );
+  const openGaps = listOpenCoverageGaps(state);
   if (openGaps.length === 0) {
     return {
       ok: false,
       code: "NO_OPEN_GAPS",
       reason: "No open coverage gaps to coalesce",
+      liveMonitoringWiring: HOST_SLEEP_LIVE_WIRING,
+      externalEffects: "NONE",
+    };
+  }
+
+  if (input.fixtureDiskFull) {
+    return {
+      ok: false,
+      code: "DISK_FULL",
+      reason:
+        "ENOSPC during host-sleep wake catch-up — open coverage gaps stay open; no invented SUCCESS (distinct from T-X004 evidence disk-full)",
+      liveMonitoringWiring: HOST_SLEEP_LIVE_WIRING,
+      externalEffects: "NONE",
     };
   }
 
@@ -241,6 +334,8 @@ export function coalesceWakeCatchup(
       code: "CATCHUP_PROBE_REQUIRED",
       reason:
         "Catch-up coalesce requires an actual fixture probe result before counting an apply",
+      liveMonitoringWiring: HOST_SLEEP_LIVE_WIRING,
+      externalEffects: "NONE",
     };
   }
 
@@ -278,10 +373,14 @@ export function coalesceWakeCatchup(
       lastVerifiedSuccessAtIso: lastVerified,
       probeApplyCount: state.probeApplyCount + 1,
       slots: [...slots, catchup],
+      externalEffects: "NONE",
+      liveMonitoringWiring: HOST_SLEEP_LIVE_WIRING,
     },
     catchupSlotId,
     coalescedGapSlotIds,
     probeAppliesThisWake: 1,
+    liveMonitoringWiring: HOST_SLEEP_LIVE_WIRING,
+    externalEffects: "NONE",
   };
 }
 
