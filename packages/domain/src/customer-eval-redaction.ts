@@ -219,8 +219,16 @@ export function prepareCustomerDataForEvaluation(input: {
   trustUnredactedSourceAsSafe?: boolean;
   /** Forbidden — eval prompts must stay PII-scanned. */
   skipEvalPromptPiiScan?: boolean;
+  /** Forbidden — EVAL_ONLY path must not bypass redaction fence. */
+  useEvalOnlyWithoutRedactionFence?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.useEvalOnlyWithoutRedactionFence === true) {
+    return blockedLeak([
+      "EVAL_ONLY without redaction fence refused — T-X072",
+    ]);
+  }
 
   if (input.skipEvalPromptPiiScan === true) {
     return blockedLeak([

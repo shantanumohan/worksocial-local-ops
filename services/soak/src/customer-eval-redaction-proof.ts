@@ -133,6 +133,20 @@ export function proofCustomerDataEvalRedactionBlocks(
     details.push(`raw passthrough unexpectedly ${JSON.stringify(raw)}`);
   }
 
+  const nakedEval = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    useEvalOnlyWithoutRedactionFence: true,
+  });
+  if (!nakedEval.allowed && nakedEval.code === "CUSTOMER_DATA_LEAK_BLOCKED") {
+    details.push(
+      "useEvalOnlyWithoutRedactionFence → CUSTOMER_DATA_LEAK_BLOCKED",
+    );
+  } else {
+    passed = false;
+    details.push(`nakedEval unexpectedly ${JSON.stringify(nakedEval)}`);
+  }
+
   const skipScan = prepareCustomerDataForEvaluation({
     source,
     mode: "redact",

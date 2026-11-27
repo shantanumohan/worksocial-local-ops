@@ -145,6 +145,16 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses useEvalOnlyWithoutRedactionFence", () => {
+    const naked = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      useEvalOnlyWithoutRedactionFence: true,
+    });
+    expect(naked.allowed).toBe(false);
+    expect(naked.reasons.some((r) => /redaction fence/.test(r))).toBe(true);
+  });
+
   it("refuses skipEvalPromptPiiScan", () => {
     const skip = prepareCustomerDataForEvaluation({
       source,
