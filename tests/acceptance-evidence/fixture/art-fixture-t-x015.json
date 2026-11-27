@@ -8,8 +8,8 @@
     "dst_recurring_schedule_no_duplicates"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x015.json",
-  "createdAtIso": "2026-11-27T19:06:04.572Z",
+  "createdAtIso": "2026-11-27T19:15:03.433Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x015-950171faeac6"
+  "uniqueSourceArtifactId": "art-fixture-t-x015-34c711378f9e"
 }

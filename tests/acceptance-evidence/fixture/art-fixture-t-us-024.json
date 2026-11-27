@@ -8,8 +8,8 @@
     "agent_cannot_widen_grant"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-024.json",
-  "createdAtIso": "2026-11-27T19:06:04.572Z",
+  "createdAtIso": "2026-11-27T19:15:03.433Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-024-950171faeac6"
+  "uniqueSourceArtifactId": "art-fixture-t-us-024-34c711378f9e"
 }
