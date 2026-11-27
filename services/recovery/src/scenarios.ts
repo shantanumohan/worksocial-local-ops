@@ -12,6 +12,10 @@ import {
   RecoveryRunStatus,
   classifyRecoveryObservation,
   createCapabilityStop,
+  evaluateUnknownRemoteReconcile,
+  unknownRemoteHonestyPins,
+  isUnknownRemoteResumeAuthorized,
+  unknownRemoteDistinctFromUncertainPost,
   type CapabilityStopRecord,
   type HealthTimelineEvent,
   type QueuedWorkItem,
@@ -293,10 +297,11 @@ export async function runUnknownRemoteReconcile(
   const runId = `rec-${randomUUID()}`;
   const details: string[] = [];
 
+  const operationId = `op-uro-${runId}`;
   const work: QueuedWorkItem = {
     workId: `qw-uro-${runId}`,
     capabilityId: "gbp_publish",
-    operationId: `op-uro-${runId}`,
+    operationId,
     effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
     queuedAtIso: nowIso,
     summary: "Provider ack timeout — unknown remote; reconcile before retry",
@@ -332,13 +337,325 @@ export async function runUnknownRemoteReconcile(
     "Reconcile: fixture ledger read matched; verify transition allowed without second apply",
   );
 
+  const remoteRef = `fixture-remote-${runId}`;
+  const blind = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 1,
+    requestBlindResend: true,
+    reconciledRemoteRef: null,
+    independentVerifyMatched: false,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const live = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: null,
+    independentVerifyMatched: false,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: true,
+  });
+  const reconciled = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: remoteRef,
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const phaseEdge = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "ACCEPTED_PENDING",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: remoteRef,
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const sandboxVerified = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: remoteRef,
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+    claimSandboxOrProdVerified: true,
+  });
+  const verifyingNotUro = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.VERIFYING,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: remoteRef,
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const blankRef = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "  ",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const verifyMismatch = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: remoteRef,
+    independentVerifyMatched: false,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const neverApplied = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 0,
+    requestBlindResend: false,
+    reconciledRemoteRef: remoteRef,
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const negativeApply = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: -1,
+    requestBlindResend: false,
+    reconciledRemoteRef: remoteRef,
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const incoherentBlind = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 1,
+    requestBlindResend: true,
+    reconciledRemoteRef: remoteRef,
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const nonFiniteApply = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: Number.NaN,
+    requestBlindResend: false,
+    reconciledRemoteRef: remoteRef,
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const terminalComplete = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.COMPLETE,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: remoteRef,
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const infinityApply = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: Number.POSITIVE_INFINITY,
+    requestBlindResend: false,
+    reconciledRemoteRef: remoteRef,
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const retryableNotUro = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.FAILED_RETRYABLE,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: remoteRef,
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const pins = unknownRemoteHonestyPins();
+  const distinct = unknownRemoteDistinctFromUncertainPost();
+  const terminalCancelled = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.CANCELLED,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const negInfinityApply = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: Number.NEGATIVE_INFINITY,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const fractionalApply = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.UNKNOWN_REMOTE_OUTCOME,
+    applyAttemptCount: 1.5,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const waitingNotUro = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.WAITING_HUMAN,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const preApplyNotUro = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.RUNNING,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const applyingNotUro = evaluateUnknownRemoteReconcile({
+    operationId,
+    phase: "UNKNOWN_REMOTE_OUTCOME",
+    effectState: EffectState.APPLYING,
+    applyAttemptCount: 1,
+    requestBlindResend: false,
+    reconciledRemoteRef: "remote-edge",
+    independentVerifyMatched: true,
+    claimProviderSuccessDespiteUnknown: false,
+    requestLiveProviderWiring: false,
+  });
+  const domainGateOk =
+    blind.allowed === false &&
+    blind.code === "BLIND_RESEND_REFUSED" &&
+    live.allowed === false &&
+    live.code === "LIVE_PROVIDER_WIRING_NOT_WIRED" &&
+    live.liveProviderWiring === "NOT_WIRED" &&
+    phaseEdge.allowed === false &&
+    phaseEdge.code === "PHASE_ACCEPTED_PENDING_NOT_URO" &&
+    sandboxVerified.allowed === false &&
+    sandboxVerified.code === "SANDBOX_VERIFIED_CLAIM_REFUSED" &&
+    verifyingNotUro.allowed === false &&
+    verifyingNotUro.code === "EFFECT_STATE_VERIFYING_NOT_URO" &&
+    blankRef.allowed === false &&
+    blankRef.code === "REMOTE_REF_REQUIRED" &&
+    verifyMismatch.allowed === false &&
+    verifyMismatch.code === "INDEPENDENT_VERIFY_REQUIRED" &&
+    neverApplied.allowed === false &&
+    neverApplied.code === "APPLY_NEVER_HAPPENED" &&
+    negativeApply.allowed === false &&
+    negativeApply.code === "APPLY_COUNT_NEGATIVE" &&
+    incoherentBlind.allowed === false &&
+    incoherentBlind.code === "INCOHERENT_BLIND_WITH_RECONCILE" &&
+    nonFiniteApply.allowed === false &&
+    nonFiniteApply.code === "APPLY_COUNT_NON_FINITE" &&
+    infinityApply.allowed === false &&
+    infinityApply.code === "APPLY_COUNT_NON_FINITE" &&
+    terminalComplete.allowed === false &&
+    terminalComplete.code === "EFFECT_STATE_ALREADY_TERMINAL" &&
+    retryableNotUro.allowed === false &&
+    retryableNotUro.code === "EFFECT_STATE_RETRYABLE_NOT_URO" &&
+    terminalCancelled.allowed === false &&
+    terminalCancelled.code === "EFFECT_STATE_ALREADY_TERMINAL" &&
+    negInfinityApply.allowed === false &&
+    negInfinityApply.code === "APPLY_COUNT_NON_FINITE" &&
+    fractionalApply.allowed === false &&
+    fractionalApply.code === "APPLY_COUNT_NON_INTEGER" &&
+    waitingNotUro.allowed === false &&
+    waitingNotUro.code === "EFFECT_STATE_WAITING_NOT_URO" &&
+    preApplyNotUro.allowed === false &&
+    preApplyNotUro.code === "EFFECT_STATE_PRE_APPLY_NOT_URO" &&
+    applyingNotUro.allowed === false &&
+    applyingNotUro.code === "EFFECT_STATE_IN_FLIGHT_NOT_URO" &&
+    pins.fixtureOnly === true &&
+    pins.acceptedEqualsVerified === false &&
+    distinct.distinctFromCaseIds.includes("T-US-030") &&
+    distinct.distinctFromCaseIds.includes("T-US-060") &&
+    distinct.distinctFromCaseIds.includes("T-X005") &&
+    distinct.distinctFromCaseIds.includes("T-X006") &&
+    distinct.distinctFromCaseIds.includes("T-X007") &&
+    distinct.distinctFromCaseIds.includes("T-X016") &&
+    distinct.distinctFromCaseIds.includes("T-X017") &&
+    distinct.distinctFromCaseIds.includes("T-X018") &&
+    distinct.distinctFromCaseIds.includes("T-X021") &&
+    distinct.distinctFromCaseIds.includes("T-X022") &&
+    distinct.distinctFromCaseIds.includes("T-X023") &&
+    distinct.distinctFromCaseIds.includes("T-X024") &&
+    distinct.distinctFromCaseIds.includes("T-X025") &&
+    distinct.distinctFromCaseIds.includes("T-X026") &&
+    distinct.distinctFromCaseIds.includes("T-X027") &&
+    distinct.distinctFromCaseIds.includes("T-X028") &&
+    distinct.distinctFromCaseIds.includes("T-X029") &&
+    distinct.distinctFromCaseIds.includes("T-X030") &&
+    distinct.distinctFromCaseIds.includes("T-X066") &&
+    reconciled.allowed === true &&
+    reconciled.externalEffects === "NONE" &&
+    reconciled.fixtureOnly === true &&
+    isUnknownRemoteResumeAuthorized(reconciled);
+  if (domainGateOk) {
+    details.push(
+      "Domain gate: blind/live/phase/sandbox/VERIFYING/blankRef/verify/apply0/neg/incoherent/nonFinite/inf/terminal/retryable refused; distinct T-US-030; RECONCILED authorized",
+    );
+  } else {
+    details.push(
+      `Domain gate unexpected blind=${blind.code} live=${live.code} phase=${phaseEdge.code} sandbox=${sandboxVerified.code} blank=${blankRef.code} reconciled=${reconciled.code}`,
+    );
+  }
+
   const artifact: RecoveryEvidenceArtifact = {
     artifactId: `art-uro-${runId}`,
     scenarioId: "unknown_remote_reconcile",
     environment: "fixture",
     redacted: true,
     summary:
-      "UNKNOWN_REMOTE_OUTCOME classified distinctly; reconcile before retry; external effects NONE",
+      "UNKNOWN_REMOTE_OUTCOME classified distinctly; reconcile before retry; live NOT_WIRED; external effects NONE",
     classification: RecoveryObservationClass.UNKNOWN_REMOTE_OUTCOME,
     evidenceRef: `recovery/evidence/${runId}.json`,
     createdAtIso: nowIso,
@@ -348,7 +665,8 @@ export async function runUnknownRemoteReconcile(
   const passed =
     classified.classification ===
       RecoveryObservationClass.UNKNOWN_REMOTE_OUTCOME &&
-    classified.blocksProviderRetry;
+    classified.blocksProviderRetry &&
+    domainGateOk;
 
   const run = runShell({
     runId,

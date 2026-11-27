@@ -2072,3 +2072,17 @@ export {
   type EffectiveLayoutCapacity,
   type LayoutCapacityFilterResult,
 } from "./layout-capacity.js";
+export {
+  UNKNOWN_REMOTE_RECONCILE_RELATED_CASE_IDS,
+  UNKNOWN_REMOTE_LIVE_PROVIDER_WIRING,
+  evaluateUnknownRemoteReconcile,
+  recordTimeoutAfterProviderAcceptance,
+  unknownRemoteHonestyPins,
+  isUnknownRemoteResumeAuthorized,
+  unknownRemoteDistinctFromUncertainPost,
+  unknownRemoteBlocksBlindResend,
+  isUnknownRemoteCompatibleEffectState,
+  type UnknownRemotePhase,
+  type UnknownRemoteReconcileInput,
+  type UnknownRemoteReconcileDecision,
+} from "./unknown-remote-reconcile.js";

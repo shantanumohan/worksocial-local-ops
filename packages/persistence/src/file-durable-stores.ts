@@ -175,13 +175,16 @@ export function createFileDurableStores(stateDir: string): DurableExecutionStore
     },
   };
 
-  const TERMINAL = new Set(["VERIFIED", "FAILED", "DENIED"]);
+  // Align with SimulatedEffectLedger / memory EffectStore — allow
+  // ACCEPTED_PENDING → UNKNOWN_REMOTE_OUTCOME → VERIFIED (T-X020 timeout path).
+  const TERMINAL = new Set(["VERIFIED", "RECONCILED_SKIPPED"]);
   const OUTCOME_RANK: Record<string, number> = {
-    INTENDED: 1,
-    ACCEPTED_PENDING: 2,
-    VERIFIED: 3,
+    INTENDED: 0,
+    ACCEPTED_PENDING: 1,
+    UNKNOWN_REMOTE_OUTCOME: 2,
     FAILED: 3,
-    DENIED: 3,
+    RECONCILED_SKIPPED: 4,
+    VERIFIED: 5,
   };
 
   const effects: EffectStore = {
