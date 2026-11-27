@@ -8,8 +8,8 @@
     "ga4_debug_not_delivered_conversion"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-008.json",
-  "createdAtIso": "2026-11-27T15:56:50.674Z",
+  "createdAtIso": "2026-11-27T16:04:11.955Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-008-0702db0bc786"
+  "uniqueSourceArtifactId": "art-fixture-t-us-008-26051d73379c"
 }

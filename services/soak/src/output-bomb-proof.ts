@@ -1,6 +1,6 @@
 /**
  * Fixture proof for T-X011 — output bomb bounded/quarantined.
- * Hillclimb deepen I7–I9: idempotent reclaim; reason drift refused; empty stdout bound;
+ * Hillclimb deepen I7–F27: idempotent reclaim; assessment/quarantine drift refused; priorDeliverInvented drift; liveProviderSuccessClaimed/externalEffects/quarantinedStdout drift; invent-deliver on bomb refused; first/second-pass honesty drift; dual-pass dishonesty compound drift; dual-pass payload/code/withinBound/byteLength/reason/deliver drift; dual oversized deliver + cross-pass dishonesty compound; reason drift; empty stdout bound;
  * zero/negative/non-finite max refused; UTF-8 4-byte emoji bomb;
  * close-path one-shot bomb quarantine; live VERIFIED / force-deliver refused;
  * mismatched honesty; ACCEPTED≠VERIFIED.
@@ -406,6 +406,1146 @@ export async function proofOutputBombBoundedQuarantined(
       passed = false;
       details.push(
         `idempotent reclaim unexpectedly idem=${JSON.stringify(reclaimIdem)} r1=${JSON.stringify(reclaim1)} afterForce=${JSON.stringify(afterForce)} after=${JSON.stringify(reclaimAfterForce)}`,
+      );
+    }
+
+    const codeTampered: typeof reclaim2 = { ...reclaim2 };
+    if (
+      !reclaim2.assessment.withinBound &&
+      "code" in reclaim2.assessment
+    ) {
+      const tamperedAssessment = {
+        ...reclaim2.assessment,
+      } as { code: string; withinBound: false };
+      tamperedAssessment.code = "INVENTED_CODE";
+      codeTampered.assessment = tamperedAssessment as typeof reclaim2.assessment;
+    }
+    const codeDrift = assertOutputBombReclaimIdempotent({
+      first: reclaim1,
+      second: codeTampered,
+    });
+    if (
+      !codeDrift.ok &&
+      codeDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      codeDrift.reasons.includes("reclaim assessment.code drifted on over-bound")
+    ) {
+      details.push(
+        "reclaim assessment.code drift → OUTPUT_BOMB_RECLAIM_DRIFT (no invent deliver)",
+      );
+    } else {
+      passed = false;
+      details.push(`code drift unexpectedly ${JSON.stringify(codeDrift)}`);
+    }
+
+    const byteTampered: typeof reclaim2 = { ...reclaim2 };
+    if (!reclaim2.assessment.withinBound) {
+      byteTampered.assessment = {
+        ...reclaim2.assessment,
+        byteLength: reclaim2.assessment.byteLength + 1,
+      };
+    }
+    const byteDrift = assertOutputBombReclaimIdempotent({
+      first: reclaim1,
+      second: byteTampered,
+    });
+    if (
+      !byteDrift.ok &&
+      byteDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      byteDrift.reasons.includes("reclaim assessment.byteLength drifted")
+    ) {
+      details.push(
+        "reclaim assessment.byteLength drift → OUTPUT_BOMB_RECLAIM_DRIFT (no invent deliver)",
+      );
+    } else {
+      passed = false;
+      details.push(`byteLength drift unexpectedly ${JSON.stringify(byteDrift)}`);
+    }
+
+    const boundTampered: typeof reclaim2 = { ...reclaim2 };
+    if (
+      !reclaim2.assessment.withinBound &&
+      "code" in reclaim2.assessment
+    ) {
+      const tamperedBound = {
+        ...reclaim2.assessment,
+        withinBound: true,
+      };
+      boundTampered.assessment = tamperedBound as unknown as typeof reclaim2.assessment;
+    }
+    const boundDrift = assertOutputBombReclaimIdempotent({
+      first: reclaim1,
+      second: boundTampered,
+    });
+    if (
+      !boundDrift.ok &&
+      boundDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      boundDrift.reasons.includes("reclaim assessment.withinBound drifted")
+    ) {
+      details.push(
+        "reclaim assessment.withinBound drift → OUTPUT_BOMB_RECLAIM_DRIFT (no invent deliver)",
+      );
+    } else {
+      passed = false;
+      details.push(`withinBound drift unexpectedly ${JSON.stringify(boundDrift)}`);
+    }
+
+    const quarantineCodeTampered: typeof reclaim2 = { ...reclaim2 };
+    if (
+      !reclaim1.quarantine.deliver &&
+      !reclaim2.quarantine.deliver &&
+      reclaim1.quarantine.code === reclaim2.quarantine.code
+    ) {
+      quarantineCodeTampered.quarantine = {
+        ...reclaim2.quarantine,
+        code: "INVENTED_QUARANTINE_CODE",
+      } as unknown as typeof reclaim2.quarantine;
+    }
+    const quarantineCodeDrift = assertOutputBombReclaimIdempotent({
+      first: reclaim1,
+      second: quarantineCodeTampered,
+    });
+    if (
+      !quarantineCodeDrift.ok &&
+      quarantineCodeDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      quarantineCodeDrift.reasons.includes("reclaim quarantine.code drifted")
+    ) {
+      details.push(
+        "reclaim quarantine.code drift → OUTPUT_BOMB_RECLAIM_DRIFT (no invent deliver)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `quarantine.code drift unexpectedly ${JSON.stringify(quarantineCodeDrift)}`,
+      );
+    }
+
+    const deliverTampered: typeof reclaim2 = { ...reclaim2 };
+    if (!reclaim2.assessment.withinBound && !reclaim2.quarantine.deliver) {
+      deliverTampered.quarantine = {
+        ...reclaim2.quarantine,
+        deliver: true,
+      } as unknown as typeof reclaim2.quarantine;
+    }
+    const deliverDrift = assertOutputBombReclaimIdempotent({
+      first: reclaim1,
+      second: deliverTampered,
+    });
+    if (
+      !deliverDrift.ok &&
+      deliverDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      deliverDrift.reasons.includes("reclaim quarantine.deliver drifted")
+    ) {
+      details.push(
+        "reclaim quarantine.deliver drift → OUTPUT_BOMB_RECLAIM_DRIFT (no invent deliver)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `quarantine.deliver drift unexpectedly ${JSON.stringify(deliverDrift)}`,
+      );
+    }
+
+    const priorDeliverTampered = {
+      ...reclaim2,
+      priorDeliverInvented: true,
+    } as unknown as typeof reclaim2;
+    const priorDeliverDrift = assertOutputBombReclaimIdempotent({
+      first: reclaim1,
+      second: priorDeliverTampered,
+    });
+    if (
+      !priorDeliverDrift.ok &&
+      priorDeliverDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      priorDeliverDrift.reasons.includes(
+        "priorDeliverInvented must be false on both reclaim passes",
+      )
+    ) {
+      details.push(
+        "reclaim priorDeliverInvented drift → OUTPUT_BOMB_RECLAIM_DRIFT (no invent deliver)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `priorDeliverInvented drift unexpectedly ${JSON.stringify(priorDeliverDrift)}`,
+      );
+    }
+
+    const liveClaimTampered = {
+      ...reclaim2,
+      liveProviderSuccessClaimed: true,
+    } as unknown as typeof reclaim2;
+    const liveClaimDrift = assertOutputBombReclaimIdempotent({
+      first: reclaim1,
+      second: liveClaimTampered,
+    });
+    if (
+      !liveClaimDrift.ok &&
+      liveClaimDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      liveClaimDrift.reasons.includes(
+        "liveProviderSuccessClaimed must be false on reclaim",
+      )
+    ) {
+      details.push(
+        "reclaim liveProviderSuccessClaimed drift → OUTPUT_BOMB_RECLAIM_DRIFT (no invent deliver)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `liveProviderSuccessClaimed drift unexpectedly ${JSON.stringify(liveClaimDrift)}`,
+      );
+    }
+
+    const effectsTampered = {
+      ...reclaim2,
+      externalEffects: "LIVE" as const,
+    } as unknown as typeof reclaim2;
+    const effectsDrift = assertOutputBombReclaimIdempotent({
+      first: reclaim1,
+      second: effectsTampered,
+    });
+    if (
+      !effectsDrift.ok &&
+      effectsDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      effectsDrift.reasons.includes("externalEffects must be NONE on reclaim")
+    ) {
+      details.push(
+        "reclaim externalEffects drift → OUTPUT_BOMB_RECLAIM_DRIFT (no invent deliver)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `externalEffects drift unexpectedly ${JSON.stringify(effectsDrift)}`,
+      );
+    }
+
+    const payloadTampered: typeof reclaim2 = { ...reclaim2 };
+    if (!reclaim1.quarantine.deliver && !reclaim2.quarantine.deliver) {
+      payloadTampered.quarantine = {
+        ...reclaim2.quarantine,
+        quarantinedStdout: bombText.slice(0, 32),
+      } as unknown as typeof reclaim2.quarantine;
+    }
+    const payloadDrift = assertOutputBombReclaimIdempotent({
+      first: reclaim1,
+      second: payloadTampered,
+    });
+    if (
+      !payloadDrift.ok &&
+      payloadDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      payloadDrift.reasons.includes("reclaim must not retain bomb payload")
+    ) {
+      details.push(
+        "reclaim quarantinedStdout payload drift → OUTPUT_BOMB_RECLAIM_DRIFT (no invent deliver)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `quarantinedStdout drift unexpectedly ${JSON.stringify(payloadDrift)}`,
+      );
+    }
+
+    const inventDeliverTampered: typeof reclaim2 = { ...reclaim2 };
+    if (!reclaim1.assessment.withinBound && !reclaim2.assessment.withinBound) {
+      inventDeliverTampered.quarantine = {
+        ...reclaim2.quarantine,
+        deliver: true,
+      } as unknown as typeof reclaim2.quarantine;
+    }
+    const inventDeliverDrift = assertOutputBombReclaimIdempotent({
+      first: reclaim1,
+      second: inventDeliverTampered,
+    });
+    if (
+      !inventDeliverDrift.ok &&
+      inventDeliverDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      inventDeliverDrift.reasons.includes(
+        "idempotent reclaim must not deliver oversized stdout",
+      )
+    ) {
+      details.push(
+        "reclaim invent-deliver on bomb → OUTPUT_BOMB_RECLAIM_DRIFT (no invent deliver)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `invent-deliver drift unexpectedly ${JSON.stringify(inventDeliverDrift)}`,
+      );
+    }
+
+    const firstLiveTampered = {
+      ...reclaim1,
+      liveProviderSuccessClaimed: true,
+    } as unknown as typeof reclaim1;
+    const firstLiveDrift = assertOutputBombReclaimIdempotent({
+      first: firstLiveTampered,
+      second: reclaim2,
+    });
+    if (
+      !firstLiveDrift.ok &&
+      firstLiveDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      firstLiveDrift.reasons.includes(
+        "liveProviderSuccessClaimed must be false on reclaim",
+      )
+    ) {
+      details.push(
+        "reclaim first-pass liveProviderSuccessClaimed drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `first liveProviderSuccessClaimed drift unexpectedly ${JSON.stringify(firstLiveDrift)}`,
+      );
+    }
+
+    const firstEffectsTampered = {
+      ...reclaim1,
+      externalEffects: "SYNC" as const,
+    } as unknown as typeof reclaim1;
+    const firstEffectsDrift = assertOutputBombReclaimIdempotent({
+      first: firstEffectsTampered,
+      second: reclaim2,
+    });
+    if (
+      !firstEffectsDrift.ok &&
+      firstEffectsDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      firstEffectsDrift.reasons.includes("externalEffects must be NONE on reclaim")
+    ) {
+      details.push(
+        "reclaim first-pass externalEffects drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `first externalEffects drift unexpectedly ${JSON.stringify(firstEffectsDrift)}`,
+      );
+    }
+
+    const firstDeliverTampered: typeof reclaim1 = { ...reclaim1 };
+    if (!reclaim1.assessment.withinBound) {
+      firstDeliverTampered.quarantine = {
+        ...reclaim1.quarantine,
+        deliver: true,
+      } as unknown as typeof reclaim1.quarantine;
+    }
+    const firstDeliverDrift = assertOutputBombReclaimIdempotent({
+      first: firstDeliverTampered,
+      second: reclaim2,
+    });
+    if (
+      !firstDeliverDrift.ok &&
+      firstDeliverDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      (firstDeliverDrift.reasons.includes("reclaim quarantine.deliver drifted") ||
+        firstDeliverDrift.reasons.includes(
+          "idempotent reclaim must not deliver oversized stdout",
+        ))
+    ) {
+      details.push(
+        "reclaim first-pass invent deliver → OUTPUT_BOMB_RECLAIM_DRIFT (no invent deliver)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `first deliver drift unexpectedly ${JSON.stringify(firstDeliverDrift)}`,
+      );
+    }
+
+    const firstPayloadTampered: typeof reclaim1 = { ...reclaim1 };
+    if (!reclaim1.quarantine.deliver) {
+      firstPayloadTampered.quarantine = {
+        ...reclaim1.quarantine,
+        quarantinedStdout: bombText.slice(0, 16),
+      } as unknown as typeof reclaim1.quarantine;
+    }
+    const firstPayloadDrift = assertOutputBombReclaimIdempotent({
+      first: firstPayloadTampered,
+      second: reclaim2,
+    });
+    if (
+      !firstPayloadDrift.ok &&
+      firstPayloadDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      firstPayloadDrift.reasons.includes("reclaim must not retain bomb payload")
+    ) {
+      details.push(
+        "reclaim first-pass quarantinedStdout payload → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `first quarantinedStdout drift unexpectedly ${JSON.stringify(firstPayloadDrift)}`,
+      );
+    }
+
+    const firstPriorTampered = {
+      ...reclaim1,
+      priorDeliverInvented: true,
+    } as unknown as typeof reclaim1;
+    const firstPriorDrift = assertOutputBombReclaimIdempotent({
+      first: firstPriorTampered,
+      second: reclaim2,
+    });
+    if (
+      !firstPriorDrift.ok &&
+      firstPriorDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      firstPriorDrift.reasons.includes(
+        "priorDeliverInvented must be false on both reclaim passes",
+      )
+    ) {
+      details.push(
+        "reclaim first-pass priorDeliverInvented drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `first priorDeliverInvented drift unexpectedly ${JSON.stringify(firstPriorDrift)}`,
+      );
+    }
+
+    const firstCodeTampered: typeof reclaim1 = { ...reclaim1 };
+    if (!reclaim1.assessment.withinBound && "code" in reclaim1.assessment) {
+      const tampered = { ...reclaim1.assessment } as { code: string; withinBound: false };
+      tampered.code = "INVENTED_FIRST_CODE";
+      firstCodeTampered.assessment = tampered as typeof reclaim1.assessment;
+    }
+    const firstCodeDrift = assertOutputBombReclaimIdempotent({
+      first: firstCodeTampered,
+      second: reclaim2,
+    });
+    if (
+      !firstCodeDrift.ok &&
+      firstCodeDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      firstCodeDrift.reasons.includes("reclaim assessment.code drifted on over-bound")
+    ) {
+      details.push(
+        "reclaim first-pass assessment.code drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `first code drift unexpectedly ${JSON.stringify(firstCodeDrift)}`,
+      );
+    }
+
+    const firstByteTampered: typeof reclaim1 = { ...reclaim1 };
+    if (!reclaim1.assessment.withinBound) {
+      firstByteTampered.assessment = {
+        ...reclaim1.assessment,
+        byteLength: reclaim1.assessment.byteLength + 2,
+      };
+    }
+    const firstByteDrift = assertOutputBombReclaimIdempotent({
+      first: firstByteTampered,
+      second: reclaim2,
+    });
+    if (
+      !firstByteDrift.ok &&
+      firstByteDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      firstByteDrift.reasons.includes("reclaim assessment.byteLength drifted")
+    ) {
+      details.push(
+        "reclaim first-pass assessment.byteLength drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `first byteLength drift unexpectedly ${JSON.stringify(firstByteDrift)}`,
+      );
+    }
+
+    const firstQuarantineCodeTampered: typeof reclaim1 = { ...reclaim1 };
+    if (
+      !reclaim1.quarantine.deliver &&
+      !reclaim2.quarantine.deliver &&
+      reclaim1.quarantine.code === reclaim2.quarantine.code
+    ) {
+      firstQuarantineCodeTampered.quarantine = {
+        ...reclaim1.quarantine,
+        code: "INVENTED_FIRST_Q_CODE",
+      } as unknown as typeof reclaim1.quarantine;
+    }
+    const firstQCodeDrift = assertOutputBombReclaimIdempotent({
+      first: firstQuarantineCodeTampered,
+      second: reclaim2,
+    });
+    if (
+      !firstQCodeDrift.ok &&
+      firstQCodeDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      firstQCodeDrift.reasons.includes("reclaim quarantine.code drifted")
+    ) {
+      details.push(
+        "reclaim first-pass quarantine.code drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `first quarantine.code drift unexpectedly ${JSON.stringify(firstQCodeDrift)}`,
+      );
+    }
+
+    const firstWithinTampered: typeof reclaim1 = { ...reclaim1 };
+    if (!reclaim1.assessment.withinBound) {
+      firstWithinTampered.assessment = {
+        ...reclaim1.assessment,
+        withinBound: true,
+      } as unknown as typeof reclaim1.assessment;
+    }
+    const firstWithinDrift = assertOutputBombReclaimIdempotent({
+      first: firstWithinTampered,
+      second: reclaim2,
+    });
+    if (
+      !firstWithinDrift.ok &&
+      firstWithinDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      firstWithinDrift.reasons.includes("reclaim assessment.withinBound drifted")
+    ) {
+      details.push(
+        "reclaim first-pass assessment.withinBound drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `first withinBound drift unexpectedly ${JSON.stringify(firstWithinDrift)}`,
+      );
+    }
+
+    const firstReasonTampered: typeof reclaim1 = { ...reclaim1 };
+    if (
+      !reclaim1.quarantine.deliver &&
+      !reclaim2.quarantine.deliver &&
+      reclaim1.quarantine.code === reclaim2.quarantine.code
+    ) {
+      firstReasonTampered.quarantine = {
+        ...reclaim1.quarantine,
+        reason: `${reclaim1.quarantine.reason} (invent-first)`,
+      };
+    }
+    const firstReasonDrift = assertOutputBombReclaimIdempotent({
+      first: firstReasonTampered,
+      second: reclaim2,
+    });
+    if (
+      !firstReasonDrift.ok &&
+      firstReasonDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      firstReasonDrift.reasons.includes("reclaim quarantine.reason drifted")
+    ) {
+      details.push(
+        "reclaim first-pass quarantine.reason drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `first reason drift unexpectedly ${JSON.stringify(firstReasonDrift)}`,
+      );
+    }
+
+    const firstDeliverOnlyTampered: typeof reclaim2 = { ...reclaim2 };
+    if (!reclaim1.quarantine.deliver && !reclaim2.quarantine.deliver) {
+      firstDeliverOnlyTampered.quarantine = {
+        ...reclaim2.quarantine,
+        deliver: true,
+      } as unknown as typeof reclaim2.quarantine;
+    }
+    const secondDeliverOnlyDrift = assertOutputBombReclaimIdempotent({
+      first: reclaim1,
+      second: firstDeliverOnlyTampered,
+    });
+    if (
+      !secondDeliverOnlyDrift.ok &&
+      secondDeliverOnlyDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      (secondDeliverOnlyDrift.reasons.includes("reclaim quarantine.deliver drifted") ||
+        secondDeliverOnlyDrift.reasons.includes(
+          "idempotent reclaim must not deliver oversized stdout",
+        ))
+    ) {
+      details.push(
+        "reclaim second-only deliver drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `second-only deliver drift unexpectedly ${JSON.stringify(secondDeliverOnlyDrift)}`,
+      );
+    }
+
+    const dualPriorTampered = {
+      ...reclaim1,
+      priorDeliverInvented: true,
+    } as unknown as typeof reclaim1;
+    const dualPriorSecond = {
+      ...reclaim2,
+      priorDeliverInvented: true,
+    } as unknown as typeof reclaim2;
+    const dualPriorDrift = assertOutputBombReclaimIdempotent({
+      first: dualPriorTampered,
+      second: dualPriorSecond,
+    });
+    if (
+      !dualPriorDrift.ok &&
+      dualPriorDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      dualPriorDrift.reasons.includes(
+        "priorDeliverInvented must be false on both reclaim passes",
+      )
+    ) {
+      details.push(
+        "reclaim dual-pass priorDeliverInvented drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual priorDeliver drift unexpectedly ${JSON.stringify(dualPriorDrift)}`,
+      );
+    }
+
+    const dualLiveTampered = {
+      ...reclaim1,
+      liveProviderSuccessClaimed: true,
+    } as unknown as typeof reclaim1;
+    const dualLiveSecond = {
+      ...reclaim2,
+      liveProviderSuccessClaimed: true,
+    } as unknown as typeof reclaim2;
+    const dualLiveDrift = assertOutputBombReclaimIdempotent({
+      first: dualLiveTampered,
+      second: dualLiveSecond,
+    });
+    if (
+      !dualLiveDrift.ok &&
+      dualLiveDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      dualLiveDrift.reasons.includes(
+        "liveProviderSuccessClaimed must be false on reclaim",
+      )
+    ) {
+      details.push(
+        "reclaim dual-pass liveProviderSuccessClaimed drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual live claim drift unexpectedly ${JSON.stringify(dualLiveDrift)}`,
+      );
+    }
+
+    const dualEffectsTampered = {
+      ...reclaim1,
+      externalEffects: "LIVE" as const,
+    } as unknown as typeof reclaim1;
+    const dualEffectsSecond = {
+      ...reclaim2,
+      externalEffects: "SYNC" as const,
+    } as unknown as typeof reclaim2;
+    const dualEffectsDrift = assertOutputBombReclaimIdempotent({
+      first: dualEffectsTampered,
+      second: dualEffectsSecond,
+    });
+    if (
+      !dualEffectsDrift.ok &&
+      dualEffectsDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      dualEffectsDrift.reasons.includes("externalEffects must be NONE on reclaim")
+    ) {
+      details.push(
+        "reclaim dual-pass externalEffects drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual externalEffects drift unexpectedly ${JSON.stringify(dualEffectsDrift)}`,
+      );
+    }
+
+    const dualPayloadFirst: typeof reclaim1 = { ...reclaim1 };
+    const dualPayloadSecond: typeof reclaim2 = { ...reclaim2 };
+    if (!reclaim1.quarantine.deliver && !reclaim2.quarantine.deliver) {
+      dualPayloadFirst.quarantine = {
+        ...reclaim1.quarantine,
+        quarantinedStdout: bombText.slice(0, 8),
+      } as unknown as typeof reclaim1.quarantine;
+      dualPayloadSecond.quarantine = {
+        ...reclaim2.quarantine,
+        quarantinedStdout: bombText.slice(0, 12),
+      } as unknown as typeof reclaim2.quarantine;
+    }
+    const dualPayloadDrift = assertOutputBombReclaimIdempotent({
+      first: dualPayloadFirst,
+      second: dualPayloadSecond,
+    });
+    if (
+      !dualPayloadDrift.ok &&
+      dualPayloadDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      dualPayloadDrift.reasons.includes("reclaim must not retain bomb payload")
+    ) {
+      details.push(
+        "reclaim dual-pass quarantinedStdout payload → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual quarantinedStdout drift unexpectedly ${JSON.stringify(dualPayloadDrift)}`,
+      );
+    }
+
+    const dualQCodeFirst: typeof reclaim1 = { ...reclaim1 };
+    const dualQCodeSecond: typeof reclaim2 = { ...reclaim2 };
+    if (
+      !reclaim1.quarantine.deliver &&
+      !reclaim2.quarantine.deliver &&
+      reclaim1.quarantine.code === reclaim2.quarantine.code
+    ) {
+      dualQCodeFirst.quarantine = {
+        ...reclaim1.quarantine,
+        code: "INVENTED_DUAL_Q_A",
+      } as unknown as typeof reclaim1.quarantine;
+      dualQCodeSecond.quarantine = {
+        ...reclaim2.quarantine,
+        code: "INVENTED_DUAL_Q_B",
+      } as unknown as typeof reclaim2.quarantine;
+    }
+    const dualQCodeDrift = assertOutputBombReclaimIdempotent({
+      first: dualQCodeFirst,
+      second: dualQCodeSecond,
+    });
+    if (
+      !dualQCodeDrift.ok &&
+      dualQCodeDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      dualQCodeDrift.reasons.includes("reclaim quarantine.code drifted")
+    ) {
+      details.push(
+        "reclaim dual-pass quarantine.code drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual quarantine.code drift unexpectedly ${JSON.stringify(dualQCodeDrift)}`,
+      );
+    }
+
+    const dualAssessFirst: typeof reclaim1 = { ...reclaim1 };
+    const dualAssessSecond: typeof reclaim2 = { ...reclaim2 };
+    if (!reclaim1.assessment.withinBound && !reclaim2.assessment.withinBound) {
+      dualAssessFirst.assessment = {
+        ...reclaim1.assessment,
+        code: "INVENTED_DUAL_ASSESS_A",
+      } as unknown as typeof reclaim1.assessment;
+      dualAssessSecond.assessment = {
+        ...reclaim2.assessment,
+        code: "INVENTED_DUAL_ASSESS_B",
+      } as unknown as typeof reclaim2.assessment;
+    }
+    const dualAssessCodeDrift = assertOutputBombReclaimIdempotent({
+      first: dualAssessFirst,
+      second: dualAssessSecond,
+    });
+    if (
+      !dualAssessCodeDrift.ok &&
+      dualAssessCodeDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      dualAssessCodeDrift.reasons.includes(
+        "reclaim assessment.code drifted on over-bound",
+      )
+    ) {
+      details.push(
+        "reclaim dual-pass assessment.code drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual assessment.code drift unexpectedly ${JSON.stringify(dualAssessCodeDrift)}`,
+      );
+    }
+
+    const dualWithinFirst: typeof reclaim1 = { ...reclaim1 };
+    const dualWithinSecond: typeof reclaim2 = { ...reclaim2 };
+    if (reclaim1.assessment.withinBound === reclaim2.assessment.withinBound) {
+      dualWithinFirst.assessment = {
+        ...reclaim1.assessment,
+        withinBound: !reclaim1.assessment.withinBound,
+      } as unknown as typeof reclaim1.assessment;
+      dualWithinSecond.assessment = {
+        ...reclaim2.assessment,
+        withinBound: reclaim1.assessment.withinBound,
+      } as unknown as typeof reclaim2.assessment;
+    }
+    const dualWithinDrift = assertOutputBombReclaimIdempotent({
+      first: dualWithinFirst,
+      second: dualWithinSecond,
+    });
+    if (
+      !dualWithinDrift.ok &&
+      dualWithinDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      dualWithinDrift.reasons.includes("reclaim assessment.withinBound drifted")
+    ) {
+      details.push(
+        "reclaim dual-pass assessment.withinBound drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual withinBound drift unexpectedly ${JSON.stringify(dualWithinDrift)}`,
+      );
+    }
+
+    const dualByteFirst: typeof reclaim1 = { ...reclaim1 };
+    const dualByteSecond: typeof reclaim2 = { ...reclaim2 };
+    if (
+      reclaim1.assessment.withinBound === reclaim2.assessment.withinBound &&
+      reclaim1.assessment.byteLength === reclaim2.assessment.byteLength
+    ) {
+      dualByteFirst.assessment = {
+        ...reclaim1.assessment,
+        byteLength: reclaim1.assessment.byteLength + 1,
+      } as unknown as typeof reclaim1.assessment;
+      dualByteSecond.assessment = {
+        ...reclaim2.assessment,
+        byteLength: reclaim2.assessment.byteLength + 2,
+      } as unknown as typeof reclaim2.assessment;
+    }
+    const dualByteDrift = assertOutputBombReclaimIdempotent({
+      first: dualByteFirst,
+      second: dualByteSecond,
+    });
+    if (
+      !dualByteDrift.ok &&
+      dualByteDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      dualByteDrift.reasons.includes("reclaim assessment.byteLength drifted")
+    ) {
+      details.push(
+        "reclaim dual-pass assessment.byteLength drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual byteLength drift unexpectedly ${JSON.stringify(dualByteDrift)}`,
+      );
+    }
+
+    const dualReasonFirst: typeof reclaim1 = { ...reclaim1 };
+    const dualReasonSecond: typeof reclaim2 = { ...reclaim2 };
+    if (
+      !reclaim1.quarantine.deliver &&
+      !reclaim2.quarantine.deliver &&
+      reclaim1.quarantine.code === reclaim2.quarantine.code
+    ) {
+      dualReasonFirst.quarantine = {
+        ...reclaim1.quarantine,
+        reason: `${reclaim1.quarantine.reason} (dual-a)`,
+      };
+      dualReasonSecond.quarantine = {
+        ...reclaim2.quarantine,
+        reason: `${reclaim2.quarantine.reason} (dual-b)`,
+      };
+    }
+    const dualReasonOnlyDrift = assertOutputBombReclaimIdempotent({
+      first: dualReasonFirst,
+      second: dualReasonSecond,
+    });
+    if (
+      !dualReasonOnlyDrift.ok &&
+      dualReasonOnlyDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      dualReasonOnlyDrift.reasons.includes("reclaim quarantine.reason drifted")
+    ) {
+      details.push(
+        "reclaim dual-pass quarantine.reason drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual reason-only drift unexpectedly ${JSON.stringify(dualReasonOnlyDrift)}`,
+      );
+    }
+
+    const dualBothDeliverFirst: typeof reclaim1 = { ...reclaim1 };
+    const dualBothDeliverSecond: typeof reclaim2 = { ...reclaim2 };
+    if (!reclaim1.assessment.withinBound && !reclaim2.assessment.withinBound) {
+      dualBothDeliverFirst.quarantine = {
+        ...reclaim1.quarantine,
+        deliver: true,
+      } as unknown as typeof reclaim1.quarantine;
+      dualBothDeliverSecond.quarantine = {
+        ...reclaim2.quarantine,
+        deliver: true,
+      } as unknown as typeof reclaim2.quarantine;
+    }
+    const dualBothDeliverDrift = assertOutputBombReclaimIdempotent({
+      first: dualBothDeliverFirst,
+      second: dualBothDeliverSecond,
+    });
+    if (
+      !dualBothDeliverDrift.ok &&
+      dualBothDeliverDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      dualBothDeliverDrift.reasons.includes(
+        "idempotent reclaim must not deliver oversized stdout",
+      )
+    ) {
+      details.push(
+        "reclaim dual-pass oversized deliver → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual both-deliver drift unexpectedly ${JSON.stringify(dualBothDeliverDrift)}`,
+      );
+    }
+
+    const dualFirstOnlyDelFirst: typeof reclaim1 = { ...reclaim1 };
+    const dualFirstOnlyDelSecond: typeof reclaim2 = { ...reclaim2 };
+    if (!reclaim1.quarantine.deliver && !reclaim2.quarantine.deliver) {
+      dualFirstOnlyDelFirst.quarantine = {
+        ...reclaim1.quarantine,
+        deliver: true,
+      } as unknown as typeof reclaim1.quarantine;
+      dualFirstOnlyDelSecond.quarantine = {
+        ...reclaim2.quarantine,
+        deliver: false,
+      };
+    }
+    const dualFirstOnlyDeliverDrift = assertOutputBombReclaimIdempotent({
+      first: dualFirstOnlyDelFirst,
+      second: dualFirstOnlyDelSecond,
+    });
+    if (
+      !dualFirstOnlyDeliverDrift.ok &&
+      dualFirstOnlyDeliverDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      dualFirstOnlyDeliverDrift.reasons.includes("reclaim quarantine.deliver drifted")
+    ) {
+      details.push(
+        "reclaim dual-pass first-only deliver drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual first-only deliver drift unexpectedly ${JSON.stringify(dualFirstOnlyDeliverDrift)}`,
+      );
+    }
+
+    const dualCrossDishonestFirst = {
+      ...reclaim1,
+      priorDeliverInvented: true,
+    } as unknown as typeof reclaim1;
+    const dualCrossDishonestSecond = {
+      ...reclaim2,
+      liveProviderSuccessClaimed: true,
+    } as unknown as typeof reclaim2;
+    const dualCrossDishonestDrift = assertOutputBombReclaimIdempotent({
+      first: dualCrossDishonestFirst,
+      second: dualCrossDishonestSecond,
+    });
+    if (
+      !dualCrossDishonestDrift.ok &&
+      dualCrossDishonestDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      dualCrossDishonestDrift.reasons.includes(
+        "priorDeliverInvented must be false on both reclaim passes",
+      ) &&
+      dualCrossDishonestDrift.reasons.includes(
+        "liveProviderSuccessClaimed must be false on reclaim",
+      )
+    ) {
+      details.push(
+        "reclaim cross-pass priorDeliver+liveClaim compound drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual cross dishonesty drift unexpectedly ${JSON.stringify(dualCrossDishonestDrift)}`,
+      );
+    }
+
+    const dualSplitDeliverFirst: typeof reclaim1 = { ...reclaim1 };
+    const dualSplitDeliverSecond: typeof reclaim2 = { ...reclaim2 };
+    if (!reclaim1.assessment.withinBound && !reclaim2.assessment.withinBound) {
+      dualSplitDeliverFirst.quarantine = {
+        ...reclaim1.quarantine,
+        deliver: true,
+      } as unknown as typeof reclaim1.quarantine;
+      dualSplitDeliverSecond.quarantine = {
+        ...reclaim2.quarantine,
+        deliver: false,
+      } as unknown as typeof reclaim2.quarantine;
+    }
+    const dualSplitDeliverDrift = assertOutputBombReclaimIdempotent({
+      first: dualSplitDeliverFirst,
+      second: dualSplitDeliverSecond,
+    });
+    if (
+      !dualSplitDeliverDrift.ok &&
+      dualSplitDeliverDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      (dualSplitDeliverDrift.reasons.includes("reclaim quarantine.deliver drifted") ||
+        dualSplitDeliverDrift.reasons.includes(
+          "idempotent reclaim must not deliver oversized stdout",
+        ))
+    ) {
+      details.push(
+        "reclaim dual-pass oversized split deliver drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual split deliver drift unexpectedly ${JSON.stringify(dualSplitDeliverDrift)}`,
+      );
+    }
+
+    const dualCrossPriorEffectsFirst = {
+      ...reclaim1,
+      priorDeliverInvented: true,
+    } as unknown as typeof reclaim1;
+    const dualCrossPriorEffectsSecond = {
+      ...reclaim2,
+      externalEffects: "LIVE" as const,
+    } as unknown as typeof reclaim2;
+    const dualCrossPriorEffectsDrift = assertOutputBombReclaimIdempotent({
+      first: dualCrossPriorEffectsFirst,
+      second: dualCrossPriorEffectsSecond,
+    });
+    if (
+      !dualCrossPriorEffectsDrift.ok &&
+      dualCrossPriorEffectsDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      dualCrossPriorEffectsDrift.reasons.includes(
+        "priorDeliverInvented must be false on both reclaim passes",
+      ) &&
+      dualCrossPriorEffectsDrift.reasons.includes(
+        "externalEffects must be NONE on reclaim",
+      )
+    ) {
+      details.push(
+        "reclaim cross-pass priorDeliver+externalEffects drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual cross prior+effects drift unexpectedly ${JSON.stringify(dualCrossPriorEffectsDrift)}`,
+      );
+    }
+
+    const dualCrossEffectsLiveFirst = {
+      ...reclaim1,
+      externalEffects: "SYNC" as const,
+    } as unknown as typeof reclaim1;
+    const dualCrossEffectsLiveSecond = {
+      ...reclaim2,
+      liveProviderSuccessClaimed: true,
+    } as unknown as typeof reclaim2;
+    const dualCrossEffectsLiveDrift = assertOutputBombReclaimIdempotent({
+      first: dualCrossEffectsLiveFirst,
+      second: dualCrossEffectsLiveSecond,
+    });
+    if (
+      !dualCrossEffectsLiveDrift.ok &&
+      dualCrossEffectsLiveDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      dualCrossEffectsLiveDrift.reasons.includes(
+        "externalEffects must be NONE on reclaim",
+      ) &&
+      dualCrossEffectsLiveDrift.reasons.includes(
+        "liveProviderSuccessClaimed must be false on reclaim",
+      )
+    ) {
+      details.push(
+        "reclaim cross-pass externalEffects+liveClaim drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual cross effects+live drift unexpectedly ${JSON.stringify(dualCrossEffectsLiveDrift)}`,
+      );
+    }
+
+    const dualCrossLivePriorFirst = {
+      ...reclaim1,
+      liveProviderSuccessClaimed: true,
+    } as unknown as typeof reclaim1;
+    const dualCrossLivePriorSecond = {
+      ...reclaim2,
+      priorDeliverInvented: true,
+    } as unknown as typeof reclaim2;
+    const dualCrossLivePriorDrift = assertOutputBombReclaimIdempotent({
+      first: dualCrossLivePriorFirst,
+      second: dualCrossLivePriorSecond,
+    });
+    if (
+      !dualCrossLivePriorDrift.ok &&
+      dualCrossLivePriorDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      dualCrossLivePriorDrift.reasons.includes(
+        "liveProviderSuccessClaimed must be false on reclaim",
+      ) &&
+      dualCrossLivePriorDrift.reasons.includes(
+        "priorDeliverInvented must be false on both reclaim passes",
+      )
+    ) {
+      details.push(
+        "reclaim cross-pass liveClaim+priorDeliver swap drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual cross live+prior swap drift unexpectedly ${JSON.stringify(dualCrossLivePriorDrift)}`,
+      );
+    }
+
+    const dualCrossPayloadLiveFirst: typeof reclaim1 = { ...reclaim1 };
+    if (!reclaim1.quarantine.deliver) {
+      dualCrossPayloadLiveFirst.quarantine = {
+        ...reclaim1.quarantine,
+        quarantinedStdout: bombText.slice(0, 4),
+      } as unknown as typeof reclaim1.quarantine;
+    }
+    const dualCrossPayloadLiveSecond = {
+      ...reclaim2,
+      liveProviderSuccessClaimed: true,
+    } as unknown as typeof reclaim2;
+    const dualCrossPayloadLiveDrift = assertOutputBombReclaimIdempotent({
+      first: dualCrossPayloadLiveFirst,
+      second: dualCrossPayloadLiveSecond,
+    });
+    if (
+      !dualCrossPayloadLiveDrift.ok &&
+      dualCrossPayloadLiveDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      dualCrossPayloadLiveDrift.reasons.includes(
+        "reclaim must not retain bomb payload",
+      ) &&
+      dualCrossPayloadLiveDrift.reasons.includes(
+        "liveProviderSuccessClaimed must be false on reclaim",
+      )
+    ) {
+      details.push(
+        "reclaim cross-pass payload+liveClaim drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual cross payload+live drift unexpectedly ${JSON.stringify(dualCrossPayloadLiveDrift)}`,
+      );
+    }
+
+    const dualCrossReasonCodeFirst: typeof reclaim1 = { ...reclaim1 };
+    const dualCrossReasonCodeSecond: typeof reclaim2 = { ...reclaim2 };
+    if (
+      !reclaim1.quarantine.deliver &&
+      !reclaim2.quarantine.deliver &&
+      reclaim1.quarantine.code === reclaim2.quarantine.code
+    ) {
+      dualCrossReasonCodeFirst.quarantine = {
+        ...reclaim1.quarantine,
+        reason: `${reclaim1.quarantine.reason} (cross-r)`,
+      };
+      dualCrossReasonCodeSecond.quarantine = {
+        ...reclaim2.quarantine,
+        code: "INVENTED_CROSS_Q_CODE",
+      } as unknown as typeof reclaim2.quarantine;
+    }
+    const dualCrossReasonCodeDrift = assertOutputBombReclaimIdempotent({
+      first: dualCrossReasonCodeFirst,
+      second: dualCrossReasonCodeSecond,
+    });
+    if (
+      !dualCrossReasonCodeDrift.ok &&
+      dualCrossReasonCodeDrift.code === "OUTPUT_BOMB_RECLAIM_DRIFT" &&
+      (dualCrossReasonCodeDrift.reasons.includes(
+        "reclaim quarantine.reason drifted",
+      ) ||
+        dualCrossReasonCodeDrift.reasons.includes("reclaim quarantine.code drifted"))
+    ) {
+      details.push(
+        "reclaim cross-pass reason+code drift → OUTPUT_BOMB_RECLAIM_DRIFT",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `dual cross reason+code drift unexpectedly ${JSON.stringify(dualCrossReasonCodeDrift)}`,
       );
     }
 
