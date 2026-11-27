@@ -3,13 +3,13 @@
   "caseId": "T-X070",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X070 (Validated payload not collected — separate failure states)\nproof=validated_payload_not_collected_separate_states applyCount=1 :: Valid signature+schema + durable write → COLLECTED (validated=true collected=true); liveProviderWiring=NOT_WIRED | Bad webhook signature → VALIDATION_FAILED (collectionAttempted=false); liveProviderWiring=NOT_WIRED | Validated payload not collected → COLLECTION_FAILED (validated=true collected=false; not VALIDATION_FAILED) | Collector throw → COLLECTION_FAILED (validated=true; not VALIDATION_FAILED) | Empty collector recordId → COLLECTION_FAILED (validated=true; not VALIDATION_FAILED) | Envelope/body eventId mismatch → VALIDATION_FAILED (collectionAttempted=false) | Non-hex signature suffix → VALIDATION_FAILED | Separate failure states: VALIDATION_FAILED ≠ COLLECTION_FAILED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X070 (Validated payload not collected — separate failure states)\nproof=validated_payload_not_collected_separate_states applyCount=1 :: Valid signature+schema + durable write → COLLECTED (validated=true collected=true); liveProviderWiring=NOT_WIRED | Bad webhook signature → VALIDATION_FAILED (collectionAttempted=false); liveProviderWiring=NOT_WIRED | Validated payload not collected → COLLECTION_FAILED (validated=true collected=false; not VALIDATION_FAILED) | Collector throw → COLLECTION_FAILED (validated=true; not VALIDATION_FAILED) | Empty collector recordId → COLLECTION_FAILED (validated=true; not VALIDATION_FAILED) | Short signature hex (B31, 57 chars) → VALIDATION_FAILED (collectionAttempted=false) | Short signature hex (B30, 58 chars) → VALIDATION_FAILED (collectionAttempted=false) | Short signature hex (B29, 59 chars) → VALIDATION_FAILED (collectionAttempted=false) | Short signature hex (B28, 60 chars) → VALIDATION_FAILED (collectionAttempted=false) | Short signature hex (B27, 61 chars) → VALIDATION_FAILED (collectionAttempted=false) | Short signature hex (B26, 62 chars) → VALIDATION_FAILED (collectionAttempted=false) | Extended signature hex (B25, 65 chars) → VALIDATION_FAILED (collectionAttempted=false) | Truncated signature hex (B24) → VALIDATION_FAILED (collectionAttempted=false) | Envelope/body eventId mismatch → VALIDATION_FAILED (collectionAttempted=false) | Non-hex signature suffix → VALIDATION_FAILED | Separate failure states: VALIDATION_FAILED ≠ COLLECTION_FAILED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "validated_payload_not_collected_separate_states"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x070.json",
-  "createdAtIso": "2026-11-27T21:45:35.084Z",
+  "createdAtIso": "2026-11-27T21:51:09.337Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x070-4ceba78fdfc6"
+  "uniqueSourceArtifactId": "art-fixture-t-x070-22db2cd0a632"
 }
