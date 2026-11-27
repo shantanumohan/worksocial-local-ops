@@ -143,6 +143,174 @@ describe("evaluation store (memory/file)", () => {
     expect(raw.budget.heldMinor).toBeUndefined();
   });
 
+  it("derives heldMinor from heldReservations map when omitted or stale (T-X027)", async () => {
+    const evalDir = join(dir, "evaluation");
+    mkdirSync(evalDir, { recursive: true });
+    const statePath = join(evalDir, "evaluation-state.json");
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        version: 1,
+        updatedAtIso: now,
+        connections: [],
+        suites: [],
+        runs: [],
+        budget: {
+          dayKey: "2026-11-21",
+          currency: "USD",
+          limitMinor: 1000,
+          reservedMinor: 0,
+          settledMinor: 0,
+          // Stale/omitted heldMinor must not invent zero capacity.
+          heldMinor: 0,
+          openReservations: {},
+          heldReservations: { "legacy-hold": 450 },
+          settledReservations: {},
+        },
+        liveEvalWiring: "NOT_WIRED",
+        chatgptAdsWiring: "NOT_WIRED",
+      }),
+      "utf8",
+    );
+    const store = createFileEvaluationStore(dir);
+    const state = await store.read();
+    expect(state.budget.heldReservations).toEqual({ "legacy-hold": 450 });
+    expect(state.budget.heldMinor).toBe(450);
+    expect(availableBudgetMinor(state.budget)).toBe(550);
+    expect(state.chatgptAdsWiring).toBe("NOT_WIRED");
+    expect(state.liveEvalWiring).toBe("NOT_WIRED");
+    const blocked = reserveBudget(state.budget, "over", 600);
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.code).toBe("BUDGET_EXHAUSTED");
+      expect(blocked.availableMinor).toBe(550);
+    }
+  });
+
+  it("parseBudget drops 0/NaN ghost hold keys (T-X027)", async () => {
+    const evalDir = join(dir, "evaluation");
+    mkdirSync(evalDir, { recursive: true });
+    const statePath = join(evalDir, "evaluation-state.json");
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        version: 1,
+        updatedAtIso: now,
+        connections: [],
+        suites: [],
+        runs: [],
+        budget: {
+          dayKey: "2026-11-21",
+          currency: "USD",
+          limitMinor: 1000,
+          reservedMinor: 0,
+          settledMinor: 0,
+          heldMinor: 0,
+          openReservations: {},
+          heldReservations: {
+            "real-hold": 200,
+            "ghost-zero": 0,
+            "ghost-nan": null,
+          },
+          settledReservations: {},
+        },
+        liveEvalWiring: "NOT_WIRED",
+        chatgptAdsWiring: "NOT_WIRED",
+      }),
+      "utf8",
+    );
+    const store = createFileEvaluationStore(dir);
+    const state = await store.read();
+    expect(state.budget.heldReservations).toEqual({ "real-hold": 200 });
+    expect(state.budget.heldMinor).toBe(200);
+    expect(availableBudgetMinor(state.budget)).toBe(800);
+  });
+
+  it("parseBudget normalize syncs stale reservedMinor/settledMinor from maps (T-X027)", async () => {
+    const evalDir = join(dir, "evaluation");
+    mkdirSync(evalDir, { recursive: true });
+    const statePath = join(evalDir, "evaluation-state.json");
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        version: 1,
+        updatedAtIso: now,
+        connections: [],
+        suites: [],
+        runs: [],
+        budget: {
+          dayKey: "2026-11-21",
+          currency: "USD",
+          limitMinor: 1000,
+          reservedMinor: 0,
+          settledMinor: 0,
+          heldMinor: 0,
+          openReservations: { "legacy-open": 300, "ghost-open": 0 },
+          heldReservations: {},
+          settledReservations: {
+            "legacy-settled": {
+              reservedMinor: 300,
+              actualMinor: 120,
+              overrunMinor: 0,
+            },
+          },
+        },
+        liveEvalWiring: "NOT_WIRED",
+        chatgptAdsWiring: "NOT_WIRED",
+      }),
+      "utf8",
+    );
+    const store = createFileEvaluationStore(dir);
+    const state = await store.read();
+    expect(state.budget.reservedMinor).toBe(300);
+    expect(state.budget.settledMinor).toBe(120);
+    expect(state.budget.openReservations).toEqual({ "legacy-open": 300 });
+    expect(availableBudgetMinor(state.budget)).toBe(580);
+    const blocked = reserveBudget(state.budget, "over", 600);
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.availableMinor).toBe(580);
+    }
+  });
+
+  it("parseBudget honors legacy scalar-only eval budget on load (L13)", async () => {
+    const evalDir = join(dir, "evaluation");
+    mkdirSync(evalDir, { recursive: true });
+    const statePath = join(evalDir, "evaluation-state.json");
+    writeFileSync(
+      statePath,
+      JSON.stringify({
+        version: 1,
+        updatedAtIso: now,
+        connections: [],
+        suites: [],
+        runs: [],
+        budget: {
+          dayKey: "2026-11-21",
+          currency: "USD",
+          limitMinor: 2000,
+          reservedMinor: 150,
+          settledMinor: 220,
+          heldMinor: 0,
+          openReservations: {},
+          heldReservations: {},
+          settledReservations: {},
+        },
+        liveEvalWiring: "NOT_WIRED",
+        chatgptAdsWiring: "NOT_WIRED",
+      }),
+      "utf8",
+    );
+    const store = createFileEvaluationStore(dir);
+    const state = await store.read();
+    expect(availableBudgetMinor(state.budget)).toBe(1630);
+    const blocked = reserveBudget(state.budget, "over", 1700);
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.availableMinor).toBe(1630);
+    }
+  });
+
   it("openEvaluationStore forceMemory ignores DATABASE_URL", () => {
     const opened = openEvaluationStore({
       stateDir: dir,

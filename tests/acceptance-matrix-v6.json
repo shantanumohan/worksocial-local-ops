@@ -2074,7 +2074,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x027",
-      "evidenceNote": "Fixture unknown-usage-cancel hold residual proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture unknown-usage-cancel hold residual proof only — liveBudgetProvider NOT_WIRED; not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X028",

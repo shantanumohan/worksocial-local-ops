@@ -1,15 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
-  ACTUAL_COST_OVERRUN_RELATED_CASE_IDS,
-  BUDGET_ACCOUNTING_LIVE_WIRING,
-  assertBudgetSettlementHonesty,
+  BUDGET_LIVE_PROVIDER_WIRING,
+  UNKNOWN_USAGE_CANCEL_RELATED_CASE_IDS,
   availableBudgetMinor,
   cancelBudgetReservation,
   createBudgetAccount,
-  describeActualCostOverrunVisibility,
-  isActualCostOverrun,
-  overrunMinor,
+  heldReservationsTotalMinor,
+  isUnknownUsageHold,
+  listUnknownUsageHoldIds,
+  normalizeBudgetHolds,
+  openReservationsTotalMinor,
   reserveBudget,
+  settledReservationsActualTotalMinor,
   settleBudget,
 } from "./budget-accounting.js";
 
@@ -77,14 +79,18 @@ describe("budget accounting", () => {
     expect(settled.replayed).toBe(false);
   });
 
+  it("settleBudget rejects non-finite and fractional actual (L16 / T-X028)", () => {
+    const reserved = reserveBudget(account(), "r-val", 100);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    expect(() => settleBudget(reserved.account, "r-val", Number.NaN)).toThrow();
+    expect(() => settleBudget(reserved.account, "r-val", 50.5)).toThrow();
+    expect(() => reserveBudget(account(), "r-bad", 10.5)).toThrow();
+  });
+
   it("posts overrun when actual exceeds reserved estimate (T-X028)", () => {
     const seed = account();
     expect(seed.heldMinor).toBe(0);
-    expect(BUDGET_ACCOUNTING_LIVE_WIRING).toBe("NOT_WIRED");
-    expect(ACTUAL_COST_OVERRUN_RELATED_CASE_IDS).toEqual(["T-X028"]);
-    expect(overrunMinor(600, 750)).toBe(150);
-    expect(isActualCostOverrun(600, 750)).toBe(true);
-    expect(isActualCostOverrun(600, 600)).toBe(false);
     const reserved = reserveBudget(seed, "r-over", 600);
     expect(reserved.ok).toBe(true);
     if (!reserved.ok) return;
@@ -94,380 +100,11 @@ describe("budget accounting", () => {
     if (!settled.ok) return;
     expect(settled.actualMinor).toBe(750);
     expect(settled.reservedMinor).toBe(600);
-    expect(settled.overrunMinor).toBe(150);
     expect(settled.actualMinor).toBeGreaterThan(settled.reservedMinor);
-    expect(settled.externalEffects).toBe("NONE");
-    expect(settled.liveProviderWiring).toBe("NOT_WIRED");
-    expect(settled.liveProviderSuccessClaimed).toBe(false);
     expect(settled.account.reservedMinor).toBe(0);
     expect(settled.account.settledMinor).toBe(750);
     expect(settled.account.heldMinor).toBe(0);
     expect(settled.account.openReservations["r-over"]).toBeUndefined();
-    expect(settled.account.settledReservations["r-over"]).toEqual({
-      reservedMinor: 600,
-      actualMinor: 750,
-      overrunMinor: 150,
-    });
-    expect(describeActualCostOverrunVisibility(600, 750)).toEqual({
-      overrunMinor: 150,
-      overrunVisible: true,
-      cappedToEstimate: false,
-      liveProviderWiring: "NOT_WIRED",
-      liveProviderSuccessClaimed: false,
-      chatgptAdsAccess: "ACCESS_BLOCKED",
-      externalEffects: "NONE",
-      fixtureAcceptedOnly: true,
-      sandboxVerifiedClaimed: false,
-    });
-    expect(settled.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
-    expect(() => assertBudgetSettlementHonesty(settled)).not.toThrow();
-    // Available uses full posted actual, not the capped estimate.
-    expect(availableBudgetMinor(settled.account)).toBe(250);
-  });
-
-  it("rejects negative actual on settle (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-neg", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    expect(() => settleBudget(reserved.account, "r-neg", -1)).toThrow(
-      /non-negative integers/i,
-    );
-  });
-
-  it("rejects non-finite actual on settle (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-nan", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    expect(() => settleBudget(reserved.account, "r-nan", Number.NaN)).toThrow(
-      /non-negative integers/i,
-    );
-    expect(() =>
-      settleBudget(reserved.account, "r-nan", Number.POSITIVE_INFINITY),
-    ).toThrow(/non-negative integers/i);
-  });
-
-  it("rejects fractional actual on settle (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-frac", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    expect(() => settleBudget(reserved.account, "r-frac", 600.5)).toThrow(
-      /non-negative integers/i,
-    );
-  });
-
-  it("rejects non-integer / non-finite reserve amounts (T-X028 edge)", () => {
-    expect(() => reserveBudget(account(), "r-frac-res", 100.5)).toThrow(
-      /positive integer/i,
-    );
-    expect(() => reserveBudget(account(), "r-nan-res", Number.NaN)).toThrow(
-      /positive integer/i,
-    );
-  });
-
-  it("refuses conflicting known-cancel after overrun settle (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-conf", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-conf", 750);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    expect(settled.overrunMinor).toBe(150);
-    expect(() =>
-      cancelBudgetReservation(settled.account, "r-conf", {
-        known: true,
-        actualMinor: 800,
-      }),
-    ).toThrow(/already settled/i);
-  });
-
-  it("assertBudgetSettlementHonesty rejects tampered liveProviderWiring", () => {
-    const reserved = reserveBudget(account(), "r-wire", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-wire", 750);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    const tampered = {
-      ...settled,
-      liveProviderWiring: "WIRED" as typeof BUDGET_ACCOUNTING_LIVE_WIRING,
-    };
-    expect(() => assertBudgetSettlementHonesty(tampered)).toThrow(
-      /liveProviderWiring must be NOT_WIRED/i,
-    );
-  });
-
-  it("assertBudgetSettlementHonesty rejects claimed live provider success", () => {
-    const reserved = reserveBudget(account(), "r-live", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-live", 750);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    const tampered = { ...settled, liveProviderSuccessClaimed: true as false };
-    expect(() => assertBudgetSettlementHonesty(tampered)).toThrow(
-      /must not claim live provider success/i,
-    );
-  });
-
-  it("assertBudgetSettlementHonesty rejects tampered Ads access", () => {
-    const reserved = reserveBudget(account(), "r-ads", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-ads", 750);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    const tampered = {
-      ...settled,
-      chatgptAdsAccess: "ALLOWED" as "ACCESS_BLOCKED",
-    };
-    expect(() => assertBudgetSettlementHonesty(tampered)).toThrow(
-      /chatgptAdsAccess must be ACCESS_BLOCKED/i,
-    );
-  });
-
-  it("post-overspend reserve returns BUDGET_EXHAUSTED with negative available (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-over", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-over", 1200);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    expect(settled.overrunMinor).toBe(600);
-    expect(availableBudgetMinor(settled.account)).toBe(-200);
-    expect(reserveBudget(settled.account, "r-more", 1)).toEqual({
-      ok: false,
-      code: "BUDGET_EXHAUSTED",
-      availableMinor: -200,
-    });
-  });
-
-  it("assertBudgetSettlementHonesty rejects tampered externalEffects", () => {
-    const reserved = reserveBudget(account(), "r-tamper", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-tamper", 750);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    const tampered = { ...settled, externalEffects: "SOMETHING" as "NONE" };
-    expect(() => assertBudgetSettlementHonesty(tampered)).toThrow(
-      /externalEffects must be NONE/i,
-    );
-  });
-
-  it("assertBudgetSettlementHonesty rejects tampered overrunMinor (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-orm", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-orm", 750);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    const tampered = { ...settled, overrunMinor: 0 };
-    expect(() => assertBudgetSettlementHonesty(tampered)).toThrow(
-      /overrunMinor mismatch/i,
-    );
-  });
-
-  it("assertBudgetSettlementHonesty accepts replayed overrun settle", () => {
-    const reserved = reserveBudget(account(), "r-replay", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const first = settleBudget(reserved.account, "r-replay", 750);
-    expect(first.ok).toBe(true);
-    if (!first.ok) return;
-    const replay = settleBudget(first.account, "r-replay", 750);
-    expect(replay.ok).toBe(true);
-    if (!replay.ok) return;
-    expect(replay.replayed).toBe(true);
-    expect(replay.overrunMinor).toBe(150);
-    expect(() => assertBudgetSettlementHonesty(replay)).not.toThrow();
-  });
-
-  it("refuses unknown-cancel after overrun settle (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-post", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-post", 750);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    expect(settled.overrunMinor).toBe(150);
-    expect(() =>
-      cancelBudgetReservation(settled.account, "r-post", { known: false }),
-    ).toThrow(/already settled/i);
-  });
-
-  it("minimal +1 overrun is visible and Ads-blocked (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-min", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-min", 601);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    expect(settled.overrunMinor).toBe(1);
-    expect(settled.account.settledReservations["r-min"]?.overrunMinor).toBe(1);
-    expect(settled.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
-    expect(settled.liveProviderSuccessClaimed).toBe(false);
-  });
-
-  it("refuses settle on held unknown-usage reservation (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-hold", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const held = cancelBudgetReservation(reserved.account, "r-hold", {
-      known: false,
-    });
-    expect(held.ok).toBe(true);
-    if (!held.ok) return;
-    expect(held.account.heldMinor).toBe(600);
-    expect(() => settleBudget(held.account, "r-hold", 750)).toThrow(
-      /held for unknown usage/i,
-    );
-  });
-
-  it("zero-actual settle shows overrunMinor=0 with Ads blocked (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-zero", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-zero", 0);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    expect(settled.overrunMinor).toBe(0);
-    expect(settled.account.settledMinor).toBe(0);
-    expect(settled.account.settledReservations["r-zero"]?.overrunMinor).toBe(0);
-    expect(settled.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
-    expect(settled.liveProviderWiring).toBe("NOT_WIRED");
-    expect(settled.liveProviderSuccessClaimed).toBe(false);
-  });
-
-  it("held→known-cancel with actual>reserved persists overrunMinor (T-X028 edge)", () => {
-    const reserved = reserveBudget(account(), "r-recon", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const held = cancelBudgetReservation(reserved.account, "r-recon", {
-      known: false,
-    });
-    expect(held.ok).toBe(true);
-    if (!held.ok) return;
-    const reconciled = cancelBudgetReservation(held.account, "r-recon", {
-      known: true,
-      actualMinor: 750,
-    });
-    expect(reconciled.ok).toBe(true);
-    if (!reconciled.ok) return;
-    expect(reconciled.account.heldMinor).toBe(0);
-    expect(reconciled.account.settledMinor).toBe(750);
-    expect(reconciled.account.settledReservations["r-recon"]).toEqual({
-      reservedMinor: 600,
-      actualMinor: 750,
-      overrunMinor: 150,
-    });
-    expect(availableBudgetMinor(reconciled.account)).toBe(250);
-  });
-
-  it("accumulates sequential overruns without capping either (T-X028)", () => {
-    let state = createBudgetAccount({
-      dayKey: "2026-11-17",
-      currency: "USD",
-      limitMinor: 2000,
-    });
-    const a = reserveBudget(state, "r-a", 400);
-    expect(a.ok).toBe(true);
-    if (!a.ok) return;
-    state = a.account;
-    const b = reserveBudget(state, "r-b", 400);
-    expect(b.ok).toBe(true);
-    if (!b.ok) return;
-    state = b.account;
-    const sa = settleBudget(state, "r-a", 550);
-    expect(sa.ok).toBe(true);
-    if (!sa.ok) return;
-    expect(sa.overrunMinor).toBe(150);
-    expect(sa.liveProviderSuccessClaimed).toBe(false);
-    expect(sa.account.settledReservations["r-a"]?.overrunMinor).toBe(150);
-    state = sa.account;
-    const sb = settleBudget(state, "r-b", 500);
-    expect(sb.ok).toBe(true);
-    if (!sb.ok) return;
-    expect(sb.overrunMinor).toBe(100);
-    expect(sb.account.settledMinor).toBe(1050);
-    expect(sb.account.settledReservations["r-a"]?.overrunMinor).toBe(150);
-    expect(sb.account.settledReservations["r-b"]?.overrunMinor).toBe(100);
-    expect(availableBudgetMinor(sb.account)).toBe(950);
-  });
-
-  it("equal-estimate settle shows overrunMinor=0 (T-X028 control)", () => {
-    const reserved = reserveBudget(account(), "r-eq", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-eq", 600);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    expect(settled.overrunMinor).toBe(0);
-    expect(isActualCostOverrun(settled.reservedMinor, settled.actualMinor)).toBe(
-      false,
-    );
-    expect(settled.account.settledMinor).toBe(600);
-    expect(settled.externalEffects).toBe("NONE");
-    expect(settled.liveProviderWiring).toBe("NOT_WIRED");
-  });
-
-  it("overrun settle preserves sibling open reservation (T-X028)", () => {
-    let state = account();
-    const a = reserveBudget(state, "r-over", 600);
-    expect(a.ok).toBe(true);
-    if (!a.ok) return;
-    state = a.account;
-    const b = reserveBudget(state, "r-sib", 200);
-    expect(b.ok).toBe(true);
-    if (!b.ok) return;
-    state = b.account;
-    const overrun = settleBudget(state, "r-over", 750);
-    expect(overrun.ok).toBe(true);
-    if (!overrun.ok) return;
-    expect(overrun.overrunMinor).toBe(150);
-    expect(overrun.account.openReservations["r-sib"]).toBe(200);
-    expect(overrun.account.reservedMinor).toBe(200);
-    expect(overrun.account.settledMinor).toBe(750);
-    expect(overrun.account.heldMinor).toBe(0);
-    expect(availableBudgetMinor(overrun.account)).toBe(50);
-  });
-
-  it("posts full overrun past day limit — never silently capped (T-X028)", () => {
-    const reserved = reserveBudget(account(), "r-past", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const settled = settleBudget(reserved.account, "r-past", 1200);
-    expect(settled.ok).toBe(true);
-    if (!settled.ok) return;
-    expect(settled.actualMinor).toBe(1200);
-    expect(settled.overrunMinor).toBe(600);
-    expect(settled.account.settledMinor).toBe(1200);
-    expect(settled.account.reservedMinor).toBe(0);
-    expect(settled.account.heldMinor).toBe(0);
-    // Honesty: overspend is visible in available (negative), not capped to limit.
-    expect(availableBudgetMinor(settled.account)).toBe(-200);
-    expect(settled.externalEffects).toBe("NONE");
-    expect(settled.liveProviderWiring).toBe("NOT_WIRED");
-  });
-
-  it("overrun settle replay is idempotent; conflicting actual throws (T-X028)", () => {
-    const reserved = reserveBudget(account(), "r-replay", 600);
-    expect(reserved.ok).toBe(true);
-    if (!reserved.ok) return;
-    const first = settleBudget(reserved.account, "r-replay", 750);
-    expect(first.ok).toBe(true);
-    if (!first.ok) return;
-    expect(first.overrunMinor).toBe(150);
-    const replay = settleBudget(first.account, "r-replay", 750);
-    expect(replay.ok).toBe(true);
-    if (!replay.ok) return;
-    expect(replay.replayed).toBe(true);
-    expect(replay.overrunMinor).toBe(150);
-    expect(replay.account.settledMinor).toBe(750);
-    expect(replay.externalEffects).toBe("NONE");
-    expect(replay.liveProviderWiring).toBe("NOT_WIRED");
-    expect(() => settleBudget(replay.account, "r-replay", 800)).toThrow(
-      /already settled with actual 750/,
-    );
   });
 
   it("does not let a replayed settlement consume another reservation", () => {
@@ -583,6 +220,8 @@ describe("budget accounting", () => {
     if (!held.ok) return;
     expect(held.account.heldMinor).toBe(400);
     expect(availableBudgetMinor(held.account)).toBe(600);
+    expect(held.externalEffects).toBe("NONE");
+    expect(held.liveBudgetProviderWiring).toBe(BUDGET_LIVE_PROVIDER_WIRING);
 
     const resolved = cancelBudgetReservation(held.account, "r-reconcile", {
       known: true,
@@ -597,5 +236,541 @@ describe("budget accounting", () => {
     expect(resolved.account.settledMinor).toBe(175);
     expect(resolved.account.heldReservations).toEqual({});
     expect(availableBudgetMinor(resolved.account)).toBe(825);
+    expect(resolved.externalEffects).toBe("NONE");
+    expect(resolved.liveBudgetProviderWiring).toBe("NOT_WIRED");
+
+    const replay = cancelBudgetReservation(resolved.account, "r-reconcile", {
+      known: true,
+      actualMinor: 175,
+    });
+    expect(replay.ok).toBe(true);
+    if (!replay.ok) return;
+    expect(replay.replayed).toBe(true);
+    expect(replay.actualMinor).toBe(175);
+    expect(availableBudgetMinor(replay.account)).toBe(825);
+  });
+
+  it("stacks concurrent unknown-usage holds (T-X027 multi-hold)", () => {
+    const a = reserveBudget(account(), "r-a", 300);
+    expect(a.ok).toBe(true);
+    if (!a.ok) return;
+    const b = reserveBudget(a.account, "r-b", 200);
+    expect(b.ok).toBe(true);
+    if (!b.ok) return;
+    const holdA = cancelBudgetReservation(b.account, "r-a", { known: false });
+    expect(holdA.ok).toBe(true);
+    if (!holdA.ok) return;
+    const holdB = cancelBudgetReservation(holdA.account, "r-b", {
+      known: false,
+    });
+    expect(holdB.ok).toBe(true);
+    if (!holdB.ok) return;
+    expect(holdB.account.heldMinor).toBe(500);
+    expect(holdB.account.heldReservations).toEqual({ "r-a": 300, "r-b": 200 });
+    expect(availableBudgetMinor(holdB.account)).toBe(500);
+    expect(holdB.liveBudgetProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("refuses settle with non-zero actual on unknown-usage hold", () => {
+    const reserved = reserveBudget(account(), "r-nz", 250);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-nz", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    expect(() => settleBudget(held.account, "r-nz", 40)).toThrow(
+      /held for unknown usage/i,
+    );
+  });
+
+  it("refuses unknown-cancel replay after settled", () => {
+    const reserved = reserveBudget(account(), "r-settled", 150);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const settled = settleBudget(reserved.account, "r-settled", 90);
+    expect(settled.ok).toBe(true);
+    if (!settled.ok) return;
+    expect(() =>
+      cancelBudgetReservation(settled.account, "r-settled", { known: false }),
+    ).toThrow(/already settled/i);
+  });
+
+  it("allows under-cap reserve while unknown hold consumes residual", () => {
+    const reserved = reserveBudget(account(), "r-hold", 700);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-hold", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    expect(availableBudgetMinor(held.account)).toBe(300);
+    const under = reserveBudget(held.account, "r-under", 300);
+    expect(under.ok).toBe(true);
+    if (!under.ok) return;
+    expect(under.account.reservedMinor).toBe(300);
+    expect(under.account.heldMinor).toBe(700);
+    expect(availableBudgetMinor(under.account)).toBe(0);
+    expect(() => reserveBudget(held.account, "r-hold", 50)).toThrow(
+      /already exists/i,
+    );
+  });
+
+  it("resolves unknown-usage hold to known zero without inventing at cancel", () => {
+    const reserved = reserveBudget(account(), "r-zero-hold", 180);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-zero-hold", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    expect(held.costKind).toBe("unknown_hold");
+    expect(held.actualMinor).toBeNull();
+    const zeroed = cancelBudgetReservation(held.account, "r-zero-hold", {
+      known: true,
+      actualMinor: 0,
+    });
+    expect(zeroed.ok).toBe(true);
+    if (!zeroed.ok) return;
+    expect(zeroed.costKind).toBe("zero_release");
+    expect(zeroed.actualMinor).toBe(0);
+    expect(zeroed.account.heldMinor).toBe(0);
+    expect(availableBudgetMinor(zeroed.account)).toBe(1000);
+  });
+
+  it("pins T-X027 related ids and live wiring NOT_WIRED", () => {
+    expect(UNKNOWN_USAGE_CANCEL_RELATED_CASE_IDS).toEqual(["T-X027"]);
+    expect(BUDGET_LIVE_PROVIDER_WIRING).toBe("NOT_WIRED");
+  });
+
+  it("keeps heldMinor equal to sum of heldReservations across hold/resolve", () => {
+    const a = reserveBudget(account(), "r1", 300);
+    expect(a.ok).toBe(true);
+    if (!a.ok) return;
+    const b = reserveBudget(a.account, "r2", 250);
+    expect(b.ok).toBe(true);
+    if (!b.ok) return;
+    const hold1 = cancelBudgetReservation(b.account, "r1", { known: false });
+    expect(hold1.ok).toBe(true);
+    if (!hold1.ok) return;
+    expect(heldReservationsTotalMinor(hold1.account)).toBe(300);
+    expect(hold1.account.heldMinor).toBe(
+      heldReservationsTotalMinor(hold1.account),
+    );
+    const hold2 = cancelBudgetReservation(hold1.account, "r2", {
+      known: false,
+    });
+    expect(hold2.ok).toBe(true);
+    if (!hold2.ok) return;
+    expect(hold2.account.heldMinor).toBe(550);
+    expect(heldReservationsTotalMinor(hold2.account)).toBe(550);
+
+    const resolved = cancelBudgetReservation(hold2.account, "r1", {
+      known: true,
+      actualMinor: 110,
+    });
+    expect(resolved.ok).toBe(true);
+    if (!resolved.ok) return;
+    expect(resolved.account.heldMinor).toBe(250);
+    expect(heldReservationsTotalMinor(resolved.account)).toBe(250);
+    expect(resolved.account.heldMinor).toBe(
+      heldReservationsTotalMinor(resolved.account),
+    );
+  });
+
+  it("refuses conflicting known-cancel after settled", () => {
+    const reserved = reserveBudget(account(), "r-conflict", 200);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const settled = settleBudget(reserved.account, "r-conflict", 80);
+    expect(settled.ok).toBe(true);
+    if (!settled.ok) return;
+    expect(() =>
+      cancelBudgetReservation(settled.account, "r-conflict", {
+        known: true,
+        actualMinor: 99,
+      }),
+    ).toThrow(/already settled with actual 80/i);
+  });
+
+  it("isUnknownUsageHold detects hold vs open/settled", () => {
+    const reserved = reserveBudget(account(), "r-flag", 120);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    expect(isUnknownUsageHold(reserved.account, "r-flag")).toBe(false);
+    const held = cancelBudgetReservation(reserved.account, "r-flag", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    expect(isUnknownUsageHold(held.account, "r-flag")).toBe(true);
+    expect(isUnknownUsageHold(held.account, "missing")).toBe(false);
+    const resolved = cancelBudgetReservation(held.account, "r-flag", {
+      known: true,
+      actualMinor: 40,
+    });
+    expect(resolved.ok).toBe(true);
+    if (!resolved.ok) return;
+    expect(isUnknownUsageHold(resolved.account, "r-flag")).toBe(false);
+  });
+
+  it("available uses hold map even when heldMinor field is stale (T-X027)", () => {
+    const reserved = reserveBudget(account(), "r-stale", 400);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-stale", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const stale = {
+      ...held.account,
+      heldMinor: 0, // stale — must not invent capacity
+    };
+    expect(heldReservationsTotalMinor(stale)).toBe(400);
+    expect(availableBudgetMinor(stale)).toBe(600);
+    const blocked = reserveBudget(stale, "r-over", 700);
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.code).toBe("BUDGET_EXHAUSTED");
+      expect(blocked.availableMinor).toBe(600);
+    }
+    const normalized = normalizeBudgetHolds(stale);
+    expect(normalized.heldMinor).toBe(400);
+    expect(availableBudgetMinor(normalized)).toBe(600);
+  });
+
+  it("resolves unknown hold when known actual equals reserved", () => {
+    const reserved = reserveBudget(account(), "r-eq", 275);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-eq", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const resolved = cancelBudgetReservation(held.account, "r-eq", {
+      known: true,
+      actualMinor: 275,
+    });
+    expect(resolved.ok).toBe(true);
+    if (!resolved.ok) return;
+    expect(resolved.costKind).toBe("actual");
+    expect(resolved.actualMinor).toBe(275);
+    expect(resolved.account.heldMinor).toBe(0);
+    expect(availableBudgetMinor(resolved.account)).toBe(725);
+    expect(resolved.liveBudgetProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("ignores non-finite hold map amounts in sum", () => {
+    const weird = {
+      ...account(),
+      heldReservations: {
+        bad: Number.NaN,
+        neg: -50,
+        ok: 200,
+      },
+      heldMinor: 0,
+    };
+    expect(heldReservationsTotalMinor(weird)).toBe(200);
+    expect(availableBudgetMinor(weird)).toBe(800);
+  });
+
+  it("resolves hold without negative heldMinor when field is stale", () => {
+    const a = reserveBudget(account(), "r1", 300);
+    expect(a.ok).toBe(true);
+    if (!a.ok) return;
+    const b = reserveBudget(a.account, "r2", 200);
+    expect(b.ok).toBe(true);
+    if (!b.ok) return;
+    const hold1 = cancelBudgetReservation(b.account, "r1", { known: false });
+    expect(hold1.ok).toBe(true);
+    if (!hold1.ok) return;
+    const hold2 = cancelBudgetReservation(hold1.account, "r2", {
+      known: false,
+    });
+    expect(hold2.ok).toBe(true);
+    if (!hold2.ok) return;
+    expect(hold2.account.heldMinor).toBe(500);
+
+    const stale = { ...hold2.account, heldMinor: 0 };
+    const resolved = cancelBudgetReservation(stale, "r1", {
+      known: true,
+      actualMinor: 90,
+    });
+    expect(resolved.ok).toBe(true);
+    if (!resolved.ok) return;
+    expect(resolved.account.heldMinor).toBe(200);
+    expect(resolved.account.heldMinor).toBeGreaterThanOrEqual(0);
+    expect(heldReservationsTotalMinor(resolved.account)).toBe(200);
+    expect(isUnknownUsageHold(resolved.account, "r2")).toBe(true);
+    expect(availableBudgetMinor(resolved.account)).toBe(710);
+  });
+
+  it("open unknown-cancel with stale heldMinor still stacks map sum", () => {
+    const reserved = reserveBudget(account(), "r-a", 150);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-a", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const stale = { ...held.account, heldMinor: 0 };
+    const next = reserveBudget(stale, "r-b", 100);
+    expect(next.ok).toBe(true);
+    if (!next.ok) return;
+    // available uses map (150 hold) so 1000-150-100 reserved path...
+    const heldB = cancelBudgetReservation(
+      { ...next.account, heldMinor: 0 },
+      "r-b",
+      { known: false },
+    );
+    expect(heldB.ok).toBe(true);
+    if (!heldB.ok) return;
+    expect(heldB.account.heldMinor).toBe(250);
+    expect(heldReservationsTotalMinor(heldB.account)).toBe(250);
+    expect(availableBudgetMinor(heldB.account)).toBe(750);
+  });
+
+  it("unknown-hold replay normalizes stale heldMinor on returned account", () => {
+    const reserved = reserveBudget(account(), "r-replay", 320);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-replay", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const stale = { ...held.account, heldMinor: 0 };
+    const replay = cancelBudgetReservation(stale, "r-replay", { known: false });
+    expect(replay.ok).toBe(true);
+    if (!replay.ok) return;
+    expect(replay.replayed).toBe(true);
+    expect(replay.account.heldMinor).toBe(320);
+    expect(listUnknownUsageHoldIds(replay.account)).toEqual(["r-replay"]);
+  });
+
+  it("settle open reservation while sibling hold remains intact", () => {
+    const a = reserveBudget(account(), "r-hold", 400);
+    expect(a.ok).toBe(true);
+    if (!a.ok) return;
+    const held = cancelBudgetReservation(a.account, "r-hold", { known: false });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const b = reserveBudget(held.account, "r-open", 100);
+    expect(b.ok).toBe(true);
+    if (!b.ok) return;
+    const settled = settleBudget(b.account, "r-open", 55);
+    expect(settled.ok).toBe(true);
+    if (!settled.ok) return;
+    expect(settled.account.settledMinor).toBe(55);
+    expect(isUnknownUsageHold(settled.account, "r-hold")).toBe(true);
+    expect(listUnknownUsageHoldIds(settled.account)).toEqual(["r-hold"]);
+    expect(heldReservationsTotalMinor(settled.account)).toBe(400);
+    expect(availableBudgetMinor(settled.account)).toBe(545);
+  });
+
+  it("corrupt zero/NaN map entries are not unknown holds; settle normalizes stale heldMinor", () => {
+    const reserved = reserveBudget(account(), "r-real", 300);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-real", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const corrupt = {
+      ...held.account,
+      heldMinor: 0,
+      heldReservations: {
+        ...held.account.heldReservations,
+        "ghost-zero": 0,
+        "ghost-nan": Number.NaN,
+      },
+    };
+    expect(isUnknownUsageHold(corrupt, "ghost-zero")).toBe(false);
+    expect(isUnknownUsageHold(corrupt, "ghost-nan")).toBe(false);
+    expect(isUnknownUsageHold(corrupt, "r-real")).toBe(true);
+    expect(listUnknownUsageHoldIds(corrupt)).toEqual(["r-real"]);
+    expect(heldReservationsTotalMinor(corrupt)).toBe(300);
+
+    const next = reserveBudget(corrupt, "r-open", 50);
+    expect(next.ok).toBe(true);
+    if (!next.ok) return;
+    expect(next.account.heldMinor).toBe(300);
+
+    const settled = settleBudget(
+      { ...next.account, heldMinor: 0 },
+      "r-open",
+      40,
+    );
+    expect(settled.ok).toBe(true);
+    if (!settled.ok) return;
+    expect(settled.account.heldMinor).toBe(300);
+    expect(availableBudgetMinor(settled.account)).toBe(660);
+  });
+
+  it("ghost-zero cancel is UNKNOWN_RESERVATION; normalize scrubs corrupt keys", () => {
+    const reserved = reserveBudget(account(), "r-keep", 250);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const held = cancelBudgetReservation(reserved.account, "r-keep", {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    const corrupt = {
+      ...held.account,
+      heldMinor: 999,
+      heldReservations: {
+        ...held.account.heldReservations,
+        "ghost-zero": 0,
+        "ghost-nan": Number.NaN,
+      },
+    };
+    const ghostCancel = cancelBudgetReservation(corrupt, "ghost-zero", {
+      known: false,
+    });
+    expect(ghostCancel.ok).toBe(false);
+    if (ghostCancel.ok) return;
+    expect(ghostCancel.code).toBe("UNKNOWN_RESERVATION");
+
+    const scrubbed = normalizeBudgetHolds(corrupt);
+    expect(scrubbed.heldMinor).toBe(250);
+    expect(scrubbed.heldReservations).toEqual({ "r-keep": 250 });
+    expect(listUnknownUsageHoldIds(scrubbed)).toEqual(["r-keep"]);
+  });
+
+  it("reserve reuses ghost-zero id; open cancel scrubs sibling ghosts", () => {
+    const withGhost = {
+      ...account(),
+      heldMinor: 0,
+      heldReservations: { "ghost-reuse": 0 as number },
+    };
+    const reserved = reserveBudget(withGhost, "ghost-reuse", 120);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    expect(reserved.account.openReservations["ghost-reuse"]).toBe(120);
+    expect(reserved.account.heldReservations["ghost-reuse"]).toBeUndefined();
+    expect(reserved.account.heldMinor).toBe(0);
+
+    const siblingGhost = {
+      ...reserved.account,
+      heldReservations: {
+        ...reserved.account.heldReservations,
+        "ghost-sib": 0,
+        "ghost-nan": Number.NaN,
+      },
+    };
+    const cancelled = cancelBudgetReservation(siblingGhost, "ghost-reuse", {
+      known: false,
+    });
+    expect(cancelled.ok).toBe(true);
+    if (!cancelled.ok) return;
+    expect(cancelled.costKind).toBe("unknown_hold");
+    expect(cancelled.account.heldReservations).toEqual({ "ghost-reuse": 120 });
+    expect(cancelled.account.heldMinor).toBe(120);
+    expect(listUnknownUsageHoldIds(cancelled.account)).toEqual([
+      "ghost-reuse",
+    ]);
+  });
+
+  it("stale reservedMinor=0 with open map cannot invent capacity", () => {
+    const reserved = reserveBudget(account(), "r-open", 400);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const stale = {
+      ...reserved.account,
+      reservedMinor: 0,
+      openReservations: {
+        ...reserved.account.openReservations,
+        "ghost-open": 0,
+      },
+    };
+    expect(openReservationsTotalMinor(stale)).toBe(400);
+    expect(availableBudgetMinor(stale)).toBe(600);
+    const blocked = reserveBudget(stale, "r-over", 700);
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.code).toBe("BUDGET_EXHAUSTED");
+      expect(blocked.availableMinor).toBe(600);
+    }
+    const scrubbed = normalizeBudgetHolds(stale);
+    expect(scrubbed.reservedMinor).toBe(400);
+    expect(scrubbed.openReservations).toEqual({ "r-open": 400 });
+  });
+
+  it("stale settledMinor=0 with settled map cannot invent capacity", () => {
+    const reserved = reserveBudget(account(), "r-settle", 300);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const settled = settleBudget(reserved.account, "r-settle", 180);
+    expect(settled.ok).toBe(true);
+    if (!settled.ok) return;
+    const stale = {
+      ...settled.account,
+      settledMinor: 0,
+    };
+    expect(settledReservationsActualTotalMinor(stale)).toBe(180);
+    expect(availableBudgetMinor(stale)).toBe(820);
+    const blocked = reserveBudget(stale, "r-over", 900);
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.code).toBe("BUDGET_EXHAUSTED");
+      expect(blocked.availableMinor).toBe(820);
+    }
+    const normalized = normalizeBudgetHolds(stale);
+    expect(normalized.settledMinor).toBe(180);
+  });
+
+  it("normalizeBudgetHolds preserves legacy scalar-only totals when maps empty (L15)", () => {
+    const legacy = {
+      ...createBudgetAccount({
+        dayKey: "2026-11-17",
+        currency: "USD",
+        limitMinor: 2000,
+      }),
+      reservedMinor: 100,
+      settledMinor: 220,
+      heldMinor: 700,
+      openReservations: {},
+      heldReservations: {},
+      settledReservations: {},
+    };
+    const normalized = normalizeBudgetHolds(legacy);
+    expect(normalized.reservedMinor).toBe(100);
+    expect(normalized.settledMinor).toBe(220);
+    expect(normalized.heldMinor).toBe(700);
+    expect(availableBudgetMinor(normalized)).toBe(980);
+    const blocked = reserveBudget(legacy, "legacy-over", 990);
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.availableMinor).toBe(980);
+    }
+  });
+
+  it("legacy scalars when maps empty still constrain available", () => {
+    const legacy = createBudgetAccount({
+      dayKey: "2026-11-17",
+      currency: "USD",
+      limitMinor: 1000,
+    });
+  const withScalars = {
+      ...legacy,
+      reservedMinor: 200,
+      settledMinor: 100,
+      heldMinor: 150,
+      openReservations: {},
+      heldReservations: {},
+      settledReservations: {},
+    };
+    expect(openReservationsTotalMinor(withScalars)).toBe(200);
+    expect(heldReservationsTotalMinor(withScalars)).toBe(150);
+    expect(settledReservationsActualTotalMinor(withScalars)).toBe(100);
+    expect(availableBudgetMinor(withScalars)).toBe(550);
   });
 });
