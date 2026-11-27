@@ -619,6 +619,22 @@ describe("replay historical workflow (T-X013)", () => {
     ).toBe(true);
   });
 
+  it("fails closed on fractional verify applyAttemptCount (edge)", () => {
+    const history = sampleHistory();
+    const verify = history.events[2];
+    if (verify && verify.activity === "verify") {
+      verify.applyAttemptCount = 1.5;
+    }
+    const { hooks, summary } = createHistoryOnlyReplayHooks();
+    const result = replayMissionWorkflowHistory(history, hooks);
+    expect(result.outcome).toBe("FAILED");
+    expect(
+      summary().liveIoLabels.some((l) =>
+        l.includes("history_verify_shape_invalid"),
+      ),
+    ).toBe(true);
+  });
+
   it("fails closed on invalid verify phase (edge)", () => {
     const history = sampleHistory();
     const verify = history.events[2];
