@@ -133,6 +133,21 @@ export function proofCustomerDataEvalRedactionBlocks(
     details.push(`raw passthrough unexpectedly ${JSON.stringify(raw)}`);
   }
 
+  const exportLive = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    exportToLiveProvider: true,
+  });
+  if (
+    !exportLive.allowed &&
+    exportLive.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("exportToLiveProvider → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`exportToLive unexpectedly ${JSON.stringify(exportLive)}`);
+  }
+
   const skipRedaction = prepareCustomerDataForEvaluation({
     source,
     mode: "redact",

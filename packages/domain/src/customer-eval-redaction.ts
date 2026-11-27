@@ -195,8 +195,16 @@ export function prepareCustomerDataForEvaluation(input: {
   forceDeliverDespiteLeak?: boolean;
   /** Forbidden — eval gate must redact, not skip. */
   skipRedactionForEval?: boolean;
+  /** Forbidden — fixture must not export eval payload to live provider. */
+  exportToLiveProvider?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.exportToLiveProvider === true) {
+    return blockedLeak([
+      "Export customer eval payload to live provider refused — NOT_WIRED (T-X072)",
+    ]);
+  }
 
   if (input.skipRedactionForEval === true) {
     return blockedLeak([

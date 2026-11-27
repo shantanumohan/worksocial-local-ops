@@ -145,6 +145,16 @@ describe("customer eval redaction (T-X072)", () => {
     expect(drift.reasons).toContain("reclaim block reasons drifted");
   });
 
+  it("refuses exportToLiveProvider", () => {
+    const live = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      exportToLiveProvider: true,
+    });
+    expect(live.allowed).toBe(false);
+    expect(live.reasons.some((r) => /NOT_WIRED/.test(r))).toBe(true);
+  });
+
   it("refuses skipRedactionForEval", () => {
     const skip = prepareCustomerDataForEvaluation({
       source,
