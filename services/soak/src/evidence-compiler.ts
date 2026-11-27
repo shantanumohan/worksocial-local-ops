@@ -375,7 +375,7 @@ export function compileAcceptanceEvidence(
     "T-X016 fixture ACCEPTED only via STOP_BEFORE_DISPATCH_NO_MUTATION",
     "T-X022 fixture ACCEPTED only via IDEMPOTENCY_KEY_PAYLOAD_MISMATCH (ACCEPTED_PENDING+VERIFIED Conflict; live NOT_WIRED)",
     "T-X065 fixture ACCEPTED only via WORKER_BROWSER_AUTH_STATE_OS_DENIED",
-    "T-X004 fixture ACCEPTED only via DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED (no partial COMPLETED manifest)",
+    "T-X004 fixture ACCEPTED only via DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED (ENOSPC/EDQUOT write|rename|mkdir; EIO/EACCES/EPERM no-partial; safe runId; prior preserved; empty/live-claim refused; NOT_WIRED)",
     "T-X027 fixture ACCEPTED only via UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL",
     "T-X028 fixture ACCEPTED only via ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE (overrunMinor; liveProviderWiring=NOT_WIRED; chatgptAdsAccess=ACCESS_BLOCKED; fixtureAcceptedOnly; externalEffects=NONE)",
     "T-X063 fixture ACCEPTED only via INDIRECT_PROMPT_INJECTION_EXFIL_DENIED",

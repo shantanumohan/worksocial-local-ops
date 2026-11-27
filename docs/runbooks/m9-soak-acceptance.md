@@ -165,7 +165,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X013** maps only to `REPLAY_HISTORICAL_NO_REPEAT_IO` (history replay; second replay history-only; empty/partial/two-event fail-closed; terminal + claim/verify opId/apply cross-bind; blank workflowId/opId / enqueue+claim+verify shape / apply≥1+typed / providerCreated / terminal outcome / matched=false refuse; padded trim; not live VERIFIED).
 
-**T-X004** maps only to `DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED`.
+**T-X004** maps only to `DISK_FULL_EVIDENCE_NO_PARTIAL_COMPLETED` (ENOSPC/EDQUOT write|rename|mkdir → no partial final; EIO/EACCES/EPERM≠disk-full still no partial; safe runId incl. slash/backslash/whitespace/leading-dash/dot-edge/../overlong/NUL/C0/DEL refuse; prior COMPLETED preserved incl. write/rename/mkdir-EPERM and EIO write/rename; corrupt/empty/junk/live-claim ignored; NOT_WIRED; not live VERIFIED).
 
 **T-X043** maps only to `OPTIMIZATION_BREAKS_CTA_JOURNEY_FAILS` (SEO/content optimization that breaks CTA → journey regression fails / release blocked; href-only break blocked; empty journey steps → JOURNEY_STEPS_REQUIRED; live NOT_WIRED; not live VERIFIED).
 

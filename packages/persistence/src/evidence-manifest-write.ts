@@ -1,10 +1,11 @@
 /**
  * Atomic evidence writer (T-X004).
  *
- * Disk-full (ENOSPC) during evidence write must never publish a *new*
- * COMPLETED/partial final file via direct write. Staging goes to a temp
- * file; only a successful rename publishes. Failures clean up the temp
- * from this attempt and never delete a previously committed final path.
+ * Disk-full (ENOSPC / EDQUOT) during evidence write must never publish a
+ * *new* COMPLETED/partial final file via direct write. Staging goes to a
+ * temp file; only a successful rename publishes. Failures clean up the
+ * temp from this attempt and never delete a previously committed final
+ * path. Live provider wiring stays NOT_WIRED. ACCEPTED ≠ VERIFIED.
  *
  * Used by release:evidence and soak evidence paths — not a standalone
  * unused helper. Fixture / LOCAL_DURABLE only — never invents live VERIFIED.
@@ -61,9 +62,11 @@ const realFs: EvidenceWriteFs = {
   readFileSync: (path, encoding) => readFileSync(path, encoding),
 };
 
+/** ENOSPC and EDQUOT both mean "no room to publish a new final". */
 export function isDiskFullError(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
-  return (err as { code?: string }).code === "ENOSPC";
+  const code = (err as { code?: string }).code;
+  return code === "ENOSPC" || code === "EDQUOT";
 }
 
 export function classifyEvidenceWriteFailure(err: unknown): {
@@ -71,9 +74,10 @@ export function classifyEvidenceWriteFailure(err: unknown): {
   reason: string;
 } {
   if (isDiskFullError(err)) {
+    const code = (err as { code?: string }).code ?? "ENOSPC";
     return {
       code: "DISK_FULL",
-      reason: "ENOSPC during evidence write — no new completed manifest published",
+      reason: `${code} during evidence write — no new completed manifest published`,
     };
   }
   const message =
@@ -95,11 +99,22 @@ export function stagingEvidenceManifestPath(
   return join(directory, `${runId}.completed.json.tmp`);
 }
 
+const evidenceWriteHonesty = {
+  liveProviderWiring: "NOT_WIRED" as const,
+  externalEffects: "NONE" as const,
+  fixtureOnly: true as const,
+};
+
 export type AtomicWriteEvidenceResult =
   | {
       ok: true;
       filePath: string;
       tmpPath: string;
+      liveProviderWiring: "NOT_WIRED";
+      externalEffects: "NONE";
+      fixtureOnly: true;
+      /** Ok path publishes only via rename — never a partial final. */
+      partialFinalPublished: false;
     }
   | {
       ok: false;
@@ -110,6 +125,11 @@ export type AtomicWriteEvidenceResult =
       tmpCleaned: boolean;
       /** Prior final file left intact when this attempt failed. */
       priorFilePreserved: boolean;
+      /** Failures must never leave a new truncated final. */
+      partialFinalPublished: false;
+      liveProviderWiring: "NOT_WIRED";
+      externalEffects: "NONE";
+      fixtureOnly: true;
     };
 
 /**
@@ -133,7 +153,13 @@ export function atomicWriteEvidenceJson(input: {
     // Never write directly to the final path (avoids truncated/partial finals).
     fs.writeFileSync(tmpPath, payload, "utf8");
     fs.renameSync(tmpPath, filePath);
-    return { ok: true, filePath, tmpPath };
+    return {
+      ok: true,
+      filePath,
+      tmpPath,
+      partialFinalPublished: false,
+      ...evidenceWriteHonesty,
+    };
   } catch (err) {
     const classified = classifyEvidenceWriteFailure(err);
     let tmpCleaned = false;
@@ -155,6 +181,8 @@ export function atomicWriteEvidenceJson(input: {
       tmpPath,
       tmpCleaned,
       priorFilePreserved,
+      partialFinalPublished: false,
+      ...evidenceWriteHonesty,
     };
   }
 }
@@ -167,10 +195,14 @@ export type WriteEvidenceManifestResult =
       status: typeof EvidenceManifestStatus.COMPLETED;
       completedManifestExists: true;
       manifest: CompletedEvidenceManifest;
+      liveProviderWiring: "NOT_WIRED";
+      externalEffects: "NONE";
+      fixtureOnly: true;
+      partialFinalPublished: false;
     }
   | {
       ok: false;
-      code: "DISK_FULL" | "WRITE_FAILED";
+      code: "DISK_FULL" | "WRITE_FAILED" | "INVALID_RUN_ID";
       reason: string;
       manifestPath: string;
       tmpPath: string;
@@ -181,12 +213,23 @@ export type WriteEvidenceManifestResult =
       completedManifestExists: boolean;
       tmpCleaned: boolean;
       priorCompletedPreserved: boolean;
+      partialFinalPublished: false;
+      liveProviderWiring: "NOT_WIRED";
+      externalEffects: "NONE";
+      fixtureOnly: true;
     };
+
+/** Safe run ids only — no path separators / traversal (T-X004 deepen). */
+const SAFE_RUN_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
+
+export function isSafeEvidenceRunId(runId: string): boolean {
+  return SAFE_RUN_ID.test(runId);
+}
 
 /**
  * Write a COMPLETED evidence manifest via the shared atomic writer.
- * On ENOSPC (or any write/rename failure): clean temp from this attempt;
- * leave any previously committed COMPLETED intact.
+ * On ENOSPC/EDQUOT (or any write/rename failure): clean temp from this
+ * attempt; leave any previously committed COMPLETED intact.
  */
 export function writeCompletedEvidenceManifest(input: {
   directory: string;
@@ -196,12 +239,45 @@ export function writeCompletedEvidenceManifest(input: {
   fs?: EvidenceWriteFs;
 }): WriteEvidenceManifestResult {
   const fs = input.fs ?? realFs;
+  const runId = input.runId.trim();
   const manifestPath = completedEvidenceManifestPath(
     input.directory,
-    input.runId,
+    runId || "invalid",
   );
+  const tmpPath = stagingEvidenceManifestPath(
+    input.directory,
+    runId || "invalid",
+  );
+
+  if (
+    !runId ||
+    runId.includes("\0") ||
+    runId.includes("\\") ||
+    /\s/.test(runId) ||
+    /[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(runId) ||
+    runId.startsWith("-") ||
+    runId.startsWith(".") ||
+    runId.endsWith(".") ||
+    runId.includes("..") ||
+    !isSafeEvidenceRunId(runId)
+  ) {
+    return {
+      ok: false,
+      code: "INVALID_RUN_ID",
+      reason:
+        "runId must be a plain token without path separators/traversal/NUL/whitespace/control/dot-edge/.. (T-X004)",
+      manifestPath,
+      tmpPath,
+      completedManifestExists: false,
+      tmpCleaned: true,
+      priorCompletedPreserved: false,
+      partialFinalPublished: false,
+      ...evidenceWriteHonesty,
+    };
+  }
+
   const manifest: CompletedEvidenceManifest = {
-    runId: input.runId,
+    runId,
     status: EvidenceManifestStatus.COMPLETED,
     createdAtIso: input.createdAtIso,
     summary: input.summary,
@@ -223,6 +299,8 @@ export function writeCompletedEvidenceManifest(input: {
       status: EvidenceManifestStatus.COMPLETED,
       completedManifestExists: true,
       manifest,
+      partialFinalPublished: false,
+      ...evidenceWriteHonesty,
     };
   }
 
@@ -239,6 +317,8 @@ export function writeCompletedEvidenceManifest(input: {
     completedManifestExists: completedStillThere,
     tmpCleaned: written.tmpCleaned,
     priorCompletedPreserved: written.priorFilePreserved,
+    partialFinalPublished: false,
+    ...evidenceWriteHonesty,
   };
 }
 
@@ -272,6 +352,10 @@ export function readCompletedEvidenceManifest(
     ) {
       return null;
     }
+    // Honesty: never treat a live-success claim as a completed fixture manifest.
+    if (parsed.liveProviderSuccessClaimed === true) {
+      return null;
+    }
     return {
       runId: parsed.runId,
       status: EvidenceManifestStatus.COMPLETED,
@@ -285,6 +369,14 @@ export function readCompletedEvidenceManifest(
   }
 }
 
+function diskFullError(code: "ENOSPC" | "EDQUOT", message: string): Error & {
+  code: string;
+} {
+  const err = new Error(message) as Error & { code: string };
+  err.code = code;
+  return err;
+}
+
 /**
  * Fixture helper: create an EvidenceWriteFs that throws ENOSPC on writeFileSync.
  */
@@ -294,10 +386,247 @@ export function createDiskFullInjectedFs(
   return {
     ...base,
     writeFileSync() {
-      const err = new Error("ENOSPC: no space left on device") as Error & {
+      throw diskFullError("ENOSPC", "ENOSPC: no space left on device");
+    },
+  };
+}
+
+/**
+ * Fixture helper: staging write succeeds; rename throws ENOSPC (T-X004).
+ * Must still clean tmp and never publish a partial final.
+ */
+export function createDiskFullOnRenameInjectedFs(
+  base: EvidenceWriteFs = realFs,
+): EvidenceWriteFs {
+  return {
+    ...base,
+    renameSync() {
+      throw diskFullError("ENOSPC", "ENOSPC: no space left on device (rename)");
+    },
+  };
+}
+
+/**
+ * Fixture helper: quota exhaustion (EDQUOT) on write — same as disk-full.
+ */
+export function createEdquotInjectedFs(
+  base: EvidenceWriteFs = realFs,
+): EvidenceWriteFs {
+  return {
+    ...base,
+    writeFileSync() {
+      throw diskFullError("EDQUOT", "EDQUOT: disk quota exceeded");
+    },
+  };
+}
+
+/**
+ * Fixture helper: mkdir throws ENOSPC before any staging write (T-X004 deepen).
+ */
+export function createDiskFullOnMkdirInjectedFs(
+  base: EvidenceWriteFs = realFs,
+): EvidenceWriteFs {
+  return {
+    ...base,
+    mkdirSync() {
+      throw diskFullError("ENOSPC", "ENOSPC: no space left on device (mkdir)");
+    },
+  };
+}
+
+/**
+ * Fixture helper: rename throws EIO (not disk-full) — WRITE_FAILED, still no
+ * partial final; tmp cleaned (T-X004 deepen).
+ */
+export function createEioOnRenameInjectedFs(
+  base: EvidenceWriteFs = realFs,
+): EvidenceWriteFs {
+  return {
+    ...base,
+    renameSync() {
+      const err = new Error("EIO: i/o error (rename)") as Error & {
         code: string;
       };
-      err.code = "ENOSPC";
+      err.code = "EIO";
+      throw err;
+    },
+  };
+}
+
+/**
+ * Fixture helper: EDQUOT on rename — same DISK_FULL honesty as write EDQUOT
+ * (T-X004 wave-12 deepen).
+ */
+export function createEdquotOnRenameInjectedFs(
+  base: EvidenceWriteFs = realFs,
+): EvidenceWriteFs {
+  return {
+    ...base,
+    renameSync() {
+      throw diskFullError("EDQUOT", "EDQUOT: disk quota exceeded (rename)");
+    },
+  };
+}
+
+/**
+ * Fixture helper: EIO on staging writeFileSync — WRITE_FAILED; no final
+ * (T-X004 wave-12 deepen).
+ */
+export function createEioOnWriteInjectedFs(
+  base: EvidenceWriteFs = realFs,
+): EvidenceWriteFs {
+  return {
+    ...base,
+    writeFileSync() {
+      const err = new Error("EIO: i/o error (write)") as Error & {
+        code: string;
+      };
+      err.code = "EIO";
+      throw err;
+    },
+  };
+}
+
+/**
+ * Fixture helper: EDQUOT on mkdir (T-X004 wave-14 deepen).
+ */
+export function createEdquotOnMkdirInjectedFs(
+  base: EvidenceWriteFs = realFs,
+): EvidenceWriteFs {
+  return {
+    ...base,
+    mkdirSync() {
+      throw diskFullError("EDQUOT", "EDQUOT: disk quota exceeded (mkdir)");
+    },
+  };
+}
+
+/**
+ * Fixture helper: EACCES on staging write — WRITE_FAILED; no final
+ * (T-X004 wave-14 deepen).
+ */
+export function createEaccesOnWriteInjectedFs(
+  base: EvidenceWriteFs = realFs,
+): EvidenceWriteFs {
+  return {
+    ...base,
+    writeFileSync() {
+      const err = new Error("EACCES: permission denied (write)") as Error & {
+        code: string;
+      };
+      err.code = "EACCES";
+      throw err;
+    },
+  };
+}
+
+/**
+ * Fixture helper: EACCES on mkdir (T-X004 wave-16 deepen).
+ */
+export function createEaccesOnMkdirInjectedFs(
+  base: EvidenceWriteFs = realFs,
+): EvidenceWriteFs {
+  return {
+    ...base,
+    mkdirSync() {
+      const err = new Error("EACCES: permission denied (mkdir)") as Error & {
+        code: string;
+      };
+      err.code = "EACCES";
+      throw err;
+    },
+  };
+}
+
+/**
+ * Fixture helper: EACCES on rename — WRITE_FAILED; tmp cleaned
+ * (T-X004 wave-16 deepen).
+ */
+export function createEaccesOnRenameInjectedFs(
+  base: EvidenceWriteFs = realFs,
+): EvidenceWriteFs {
+  return {
+    ...base,
+    renameSync() {
+      const err = new Error("EACCES: permission denied (rename)") as Error & {
+        code: string;
+      };
+      err.code = "EACCES";
+      throw err;
+    },
+  };
+}
+
+/**
+ * Fixture helper: EIO on mkdir (T-X004 wave-18 deepen).
+ */
+export function createEioOnMkdirInjectedFs(
+  base: EvidenceWriteFs = realFs,
+): EvidenceWriteFs {
+  return {
+    ...base,
+    mkdirSync() {
+      const err = new Error("EIO: i/o error (mkdir)") as Error & {
+        code: string;
+      };
+      err.code = "EIO";
+      throw err;
+    },
+  };
+}
+
+/**
+ * Fixture helper: EPERM on staging write — WRITE_FAILED; no final
+ * (T-X004 wave-18 deepen).
+ */
+export function createEpermOnWriteInjectedFs(
+  base: EvidenceWriteFs = realFs,
+): EvidenceWriteFs {
+  return {
+    ...base,
+    writeFileSync() {
+      const err = new Error("EPERM: operation not permitted (write)") as Error & {
+        code: string;
+      };
+      err.code = "EPERM";
+      throw err;
+    },
+  };
+}
+
+/**
+ * Fixture helper: EPERM on rename — WRITE_FAILED; tmp cleaned
+ * (T-X004 wave-20 deepen).
+ */
+export function createEpermOnRenameInjectedFs(
+  base: EvidenceWriteFs = realFs,
+): EvidenceWriteFs {
+  return {
+    ...base,
+    renameSync() {
+      const err = new Error("EPERM: operation not permitted (rename)") as Error & {
+        code: string;
+      };
+      err.code = "EPERM";
+      throw err;
+    },
+  };
+}
+
+/**
+ * Fixture helper: EPERM on mkdir — WRITE_FAILED; no partial final
+ * (T-X004 wave-20 deepen).
+ */
+export function createEpermOnMkdirInjectedFs(
+  base: EvidenceWriteFs = realFs,
+): EvidenceWriteFs {
+  return {
+    ...base,
+    mkdirSync() {
+      const err = new Error("EPERM: operation not permitted (mkdir)") as Error & {
+        code: string;
+      };
+      err.code = "EPERM";
       throw err;
     },
   };
