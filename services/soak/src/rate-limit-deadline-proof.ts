@@ -17,6 +17,7 @@
  * STOP_MAX_ATTEMPTS; exponential capped at maxBackoff when Retry-After null.
  *
  * Deepen (Q16 idle): negative Retry-After is not honored — exponential only.
+ * Deepen (Q17 wipe15): NaN Retry-After → exponential (non-finite refuse).
  */
 
 import { randomUUID } from "node:crypto";
@@ -544,6 +545,25 @@ export function proofRateLimitBoundedBackoffPreservesDeadline(
     details.push(
       `maxAttempts=1 STOP honesty failed: ${JSON.stringify(oneShot)}`,
     );
+  }
+
+  // Scenario P2 (Q17): NaN Retry-After → exponential (non-finite refuse).
+  const nanRetry = computeBackoffWaitSeconds({
+    attempt: 3,
+    retryAfterSeconds: Number.NaN,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 2,
+  });
+  if (
+    nanRetry.source === "exponential" &&
+    nanRetry.waitSeconds === 4
+  ) {
+    details.push(
+      "NaN Retry-After refused → exponential WAIT attempt=3 (non-finite provider header)",
+    );
+  } else {
+    passed = false;
+    details.push(`NaN Retry-After refuse failed: ${JSON.stringify(nanRetry)}`);
   }
 
   // Scenario P (Q16): negative Retry-After ignored → exponential wait (no invent).
