@@ -14,6 +14,7 @@
  * T-X029 fixture ACCEPTED only via EXPLICIT_ACCOUNT_REBIND.
  * T-X031 fixture ACCEPTED only via GA4_WRONG_PROPERTY_KIND_REFUSED.
  * T-X020 fixture ACCEPTED only via UNKNOWN_REMOTE_RECONCILE.
+ * T-X022 fixture ACCEPTED only via IDEMPOTENCY_KEY_PAYLOAD_MISMATCH.
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -671,5 +672,32 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).toMatch(
       /liveProviderSuccessClaimed=false externalEffects=NONE$/,
     );
+  });
+
+  it("T-X022 fixture artifact names idempotency payload mismatch (ACCEPTED ≠ VERIFIED)", () => {
+    const artPath = resolve(
+      repoRoot,
+      "tests/acceptance-evidence/fixture/art-fixture-t-x022.json",
+    );
+    const art = JSON.parse(readFileSync(artPath, "utf8")) as {
+      artifactId: string;
+      caseId: string;
+      environment: string;
+      summary: string;
+      liveProviderSuccessClaimed: boolean;
+      externalEffects: string;
+      proofKinds: string[];
+    };
+    expect(art.artifactId).toBe("art-fixture-t-x022");
+    expect(art.caseId).toBe("T-X022");
+    expect(art.environment).toBe("fixture");
+    expect(art.proofKinds).toEqual(["idempotency_key_payload_mismatch"]);
+    expect(art.summary).toMatch(/Fixture ACCEPTED for T-X022/);
+    expect(art.summary).not.toMatch(/Fixture VERIFIED/);
+    expect(art.liveProviderSuccessClaimed).toBe(false);
+    expect(art.externalEffects).toBe("NONE");
+    expect(art.summary).toContain("proof=idempotency_key_payload_mismatch");
+    expect(art.summary).toMatch(/liveProviderWiring=NOT_WIRED/);
+    expect(art.proofKinds).not.toContain("VERIFIED");
   });
 });
