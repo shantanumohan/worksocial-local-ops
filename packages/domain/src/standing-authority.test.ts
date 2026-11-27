@@ -386,4 +386,18 @@ describe("evaluateStandingAuthority", () => {
     });
     expect(denied.match).toBeNull();
   });
+
+  it("fence on treats empty string held as deny (T-X006 wipe15)", () => {
+    const denied = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: "" as unknown as boolean,
+      }),
+    );
+    expect(denied.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(denied.match).toBeNull();
+  });
 });
