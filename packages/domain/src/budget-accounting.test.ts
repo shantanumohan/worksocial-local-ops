@@ -749,7 +749,7 @@ describe("budget accounting", () => {
     ).toBe(false);
   });
 
-  it("fails honesty when accepted rows shortened vs acceptedReservationIds (T-X026 S21)", () => {
+  it("fails honesty when accepted rows shortened vs acceptedReservationIds (M21)", () => {
     const honest = composeConcurrentFinalBudgetReserves(account(), [
       { reservationId: "r-a", amountMinor: 100 },
       { reservationId: "r-b", amountMinor: 200 },
@@ -763,7 +763,7 @@ describe("budget accounting", () => {
     ).toBe(false);
   });
 
-  it("fails honesty when exhausted rows shortened vs exhaustedReservationIds (T-X026 S22)", () => {
+  it("fails honesty when exhausted rows shortened vs exhaustedReservationIds (M22)", () => {
     const honest = composeConcurrentFinalBudgetReserves(
       createBudgetAccount({
         dayKey: "2026-11-22-exh-short",
@@ -785,7 +785,7 @@ describe("budget accounting", () => {
     ).toBe(false);
   });
 
-  it("fails honesty when composition availableMinor drifts from account (T-X026 S23)", () => {
+  it("fails honesty when composition availableMinor drifts from account (M23)", () => {
     const honest = composeConcurrentFinalBudgetReserves(account(), [
       { reservationId: "r-a", amountMinor: 150 },
     ]);
@@ -797,7 +797,7 @@ describe("budget accounting", () => {
     ).toBe(false);
   });
 
-  it("fails honesty when availableMatchesLimitMinusCommitted is forged (T-X026 S24)", () => {
+  it("fails honesty when availableMatchesLimitMinusCommitted is forged (M24)", () => {
     const honest = composeConcurrentFinalBudgetReserves(account(), [
       { reservationId: "r-a", amountMinor: 100 },
     ]);
@@ -810,7 +810,7 @@ describe("budget accounting", () => {
     ).toBe(false);
   });
 
-  it("fails honesty when isolationWouldOversubscribe flag mismatches isolationSum (T-X026 S25)", () => {
+  it("fails honesty when isolationWouldOversubscribe flag mismatches isolationSum (M25)", () => {
     const honest = composeConcurrentFinalBudgetReserves(account(), [
       { reservationId: "r-a", amountMinor: 600 },
       { reservationId: "r-b", amountMinor: 600 },
@@ -827,7 +827,7 @@ describe("budget accounting", () => {
     ).toBe(false);
   });
 
-  it("fails honesty when isolationSumMinor inconsistent with oversubscribe flag (T-X026 S26)", () => {
+  it("fails honesty when isolationSumMinor inconsistent with oversubscribe flag (M26)", () => {
     const honest = composeConcurrentFinalBudgetReserves(account(), [
       { reservationId: "r-a", amountMinor: 600 },
       { reservationId: "r-b", amountMinor: 600 },
@@ -842,7 +842,7 @@ describe("budget accounting", () => {
     ).toBe(false);
   });
 
-  it("throws on non-finite amountMinor before apply (T-X026 S29)", () => {
+  it("throws on non-finite amountMinor before apply (M13)", () => {
     const snap = account();
     for (const amountMinor of [Number.NaN, Number.POSITIVE_INFINITY, -0]) {
       expect(() =>
@@ -854,7 +854,7 @@ describe("budget accounting", () => {
     }
   });
 
-  it("throws on non-integer amountMinor before apply (T-X026 S28)", () => {
+  it("throws on non-integer amountMinor before apply (M12)", () => {
     const snap = account();
     expect(() =>
       composeConcurrentFinalBudgetReserves(snap, [
@@ -864,7 +864,7 @@ describe("budget accounting", () => {
     expect(snap.reservedMinor).toBe(0);
   });
 
-  it("throws on trim-normalized duplicate ids before apply (T-X026 S27)", () => {
+  it("throws on trim-normalized duplicate ids before apply (M11)", () => {
     const snap = account();
     expect(() =>
       composeConcurrentFinalBudgetReserves(snap, [
@@ -880,7 +880,7 @@ describe("budget accounting", () => {
     expect(isConcurrentBudgetCompositionHonest(ok)).toBe(true);
   });
 
-  it("composes after known-positive cancel restores headroom (T-X026 S30)", () => {
+  it("composes after known-positive cancel restores headroom (M10)", () => {
     const reserved = reserveBudget(account(), "r-pos", 400);
     expect(reserved.ok).toBe(true);
     if (!reserved.ok) return;
@@ -1777,5 +1777,68 @@ describe("budget accounting", () => {
     expect(heldReservationsTotalMinor(withScalars)).toBe(150);
     expect(settledReservationsActualTotalMinor(withScalars)).toBe(100);
     expect(availableBudgetMinor(withScalars)).toBe(550);
+  });
+
+  it("refuses padded and case-mutated reservationId without inventing hold (T-X027 J26)", () => {
+    const canonicalId = "req-cancel-unknown";
+    const reserved = reserveBudget(account(), canonicalId, 700);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    expect(availableBudgetMinor(reserved.account)).toBe(300);
+    for (const mutated of [
+      ` ${canonicalId} `,
+      canonicalId.toUpperCase(),
+      `${canonicalId}\u00ad`,
+    ]) {
+      const refuse = cancelBudgetReservation(reserved.account, mutated, {
+        known: false,
+      });
+      expect(refuse.ok).toBe(false);
+      if (!refuse.ok) {
+        expect(refuse.code).toBe("UNKNOWN_RESERVATION");
+        expect(refuse.reservationId).toBe(mutated);
+      }
+      expect(reserved.account.openReservations[canonicalId]).toBe(700);
+      expect(listUnknownUsageHoldIds(reserved.account)).toEqual([]);
+      expect(availableBudgetMinor(reserved.account)).toBe(300);
+    }
+    const held = cancelBudgetReservation(reserved.account, canonicalId, {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    expect(held.costKind).toBe("unknown_hold");
+    expect(held.account.heldMinor).toBe(700);
+    expect(held.externalEffects).toBe("NONE");
+    expect(held.liveBudgetProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("refuses ZWSP- and BOM-wrapped reservationId without inventing hold (T-X027 J27)", () => {
+    const canonicalId = "req-j27";
+    const reserved = reserveBudget(account(), canonicalId, 500);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    for (const mutated of [
+      `\u200b${canonicalId}`,
+      `${canonicalId}\u200b`,
+      `\ufeff${canonicalId}`,
+    ]) {
+      const refuse = cancelBudgetReservation(reserved.account, mutated, {
+        known: false,
+      });
+      expect(refuse.ok).toBe(false);
+      if (!refuse.ok) {
+        expect(refuse.code).toBe("UNKNOWN_RESERVATION");
+      }
+      expect(listUnknownUsageHoldIds(reserved.account)).toEqual([]);
+    }
+    const held = cancelBudgetReservation(reserved.account, canonicalId, {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    expect(isUnknownUsageHold(held.account, canonicalId)).toBe(true);
+    expect(heldReservationsTotalMinor(held.account)).toBe(500);
+    expect(held.externalEffects).toBe("NONE");
   });
 });
