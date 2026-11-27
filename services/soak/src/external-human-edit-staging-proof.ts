@@ -634,6 +634,206 @@ export function proofExternalHumanEditConflictRetained(
     );
   }
 
+  // N9: dual live+claimed verify refuse; post-MATCHED human edit CONFLICT; live overwrite literal.
+  let n9State = createExternalEditStagingState({
+    pageId: `page-n9-${randomUUID().slice(0, 8)}`,
+    fields: baseFields,
+    revision: "rev-1",
+    nowIso,
+  });
+  const n9Staged = stageAgentChangeAgainstBase(n9State, {
+    changeId: `chg-n9-${randomUUID().slice(0, 8)}`,
+    expectedBaseRevision: "rev-1",
+    desiredFields: agentDesired,
+    nowIso,
+  });
+  if (n9Staged.ok) {
+    n9State = n9Staged.state;
+  }
+  const dual = independentVerifyStagingChange(n9State, {
+    nowIso: tHuman,
+    requestLiveTemporalWiring: true,
+    claimedVerified: true,
+  });
+  const liveOverwriteLiteral = attemptBlindAgentOverwrite(n9State, {
+    nowIso: tHuman,
+    requestLiveTemporalWiring: "true",
+  });
+  const matchedN9 = independentVerifyStagingChange(n9State, { nowIso: tHuman });
+  if (matchedN9.outcome === StagingVerifyOutcome.MATCHED_PENDING_ONLY) {
+    n9State = matchedN9.state;
+    n9State = applyExternalHumanEdit(n9State, {
+      fields: humanEdit,
+      nowIso: tHuman,
+    });
+  }
+  const afterEditVerify = independentVerifyStagingChange(n9State, {
+    nowIso: tHuman,
+    claimedVerified: "true",
+  });
+  if (
+    n9Staged.ok &&
+    dual.refusedLiveTemporalWiring === true &&
+    dual.refusedClaimedVerified === true &&
+    dual.verifiedClaimed === false &&
+    dual.details.some((d) => /LIVE_TEMPORAL_WIRING_NOT_WIRED/.test(d)) &&
+    dual.details.some((d) => /CLAIMED_VERIFIED_REFUSED/.test(d)) &&
+    liveOverwriteLiteral.ok === false &&
+    liveOverwriteLiteral.code === "LIVE_TEMPORAL_WIRING_NOT_WIRED" &&
+    matchedN9.outcome === StagingVerifyOutcome.MATCHED_PENDING_ONLY &&
+    n9State.change?.status === StagingConflictStatus.CONFLICT_RETAINED &&
+    n9State.change.humanObservedDigest === digestFields(humanEdit) &&
+    afterEditVerify.outcome === StagingVerifyOutcome.CONFLICT_RETAINED &&
+    afterEditVerify.matched === false &&
+    afterEditVerify.refusedClaimedVerified === true &&
+    afterEditVerify.verifiedClaimed === false
+  ) {
+    details.push(
+      "N9 dual live+claimed verify refuse; live overwrite literal true → NOT_WIRED; post-MATCHED human edit → CONFLICT_RETAINED (never elevates)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `N9 edges unexpectedly dual=${dual.refusedLiveTemporalWiring}/${dual.refusedClaimedVerified} liveOw=${!liveOverwriteLiteral.ok ? liveOverwriteLiteral.code : "ok"} post=${n9State.change?.status} after=${afterEditVerify.outcome}`,
+    );
+  }
+
+  // N10: alias live overwrite → OVERWRITE_FORBIDDEN; empty-field human CONFLICT; owner-ack then claimed refuse.
+  let n10State = createExternalEditStagingState({
+    pageId: `page-n10-${randomUUID().slice(0, 8)}`,
+    fields: baseFields,
+    revision: "rev-1",
+    nowIso,
+  });
+  const n10Staged = stageAgentChangeAgainstBase(n10State, {
+    changeId: `chg-n10-${randomUUID().slice(0, 8)}`,
+    expectedBaseRevision: "rev-1",
+    desiredFields: agentDesired,
+    nowIso,
+  });
+  if (n10Staged.ok) {
+    n10State = n10Staged.state;
+  }
+  const aliasLiveOverwrite = attemptBlindAgentOverwrite(n10State, {
+    nowIso: tHuman,
+    requestLiveTemporalWiring: "TRUE",
+  });
+  const emptyHuman = {
+    title: "",
+    metaDescription: "",
+    h1: "",
+    bodyExcerpt: "",
+  };
+  if (n10Staged.ok) {
+    n10State = applyExternalHumanEdit(n10State, {
+      fields: emptyHuman,
+      nowIso: tHuman,
+    });
+  }
+  const ackN10 = refuseSilentConflictClear(n10State, {
+    ownerAcknowledged: "true",
+    nowIso: tHuman,
+  });
+  const claimedAfterAck =
+    ackN10.ok === true
+      ? refuseClaimedVerifiedStaging(ackN10.state, {
+          claimedVerified: true,
+          nowIso: tHuman,
+        })
+      : null;
+  if (
+    n10Staged.ok &&
+    aliasLiveOverwrite.ok === false &&
+    aliasLiveOverwrite.code === "OVERWRITE_FORBIDDEN" &&
+    n10State.change?.status === StagingConflictStatus.CONFLICT_RETAINED &&
+    n10State.change.humanObservedDigest === digestFields(emptyHuman) &&
+    n10State.liveProviderSuccessClaimed === false &&
+    n10State.externalEffects === "NONE" &&
+    ackN10.ok === true &&
+    ackN10.code === "OWNER_ACK_RECORDED_CONFLICT_KEPT" &&
+    ackN10.state.change?.status === StagingConflictStatus.CONFLICT_RETAINED &&
+    claimedAfterAck &&
+    claimedAfterAck.code === "CLAIMED_VERIFIED_REFUSED" &&
+    claimedAfterAck.verifiedClaimed === false &&
+    /CONFLICT_RETAINED cannot elevate/.test(claimedAfterAck.reason) &&
+    claimedAfterAck.liveTemporalWiring === "NOT_WIRED" &&
+    claimedAfterAck.externalEffects === "NONE"
+  ) {
+    details.push(
+      "N10 alias TRUE live overwrite → OVERWRITE_FORBIDDEN (no live refuse invented); empty-field human edit CONFLICT_RETAINED; owner-ack then CLAIMED_VERIFIED_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `N10 edges unexpectedly alias=${!aliasLiveOverwrite.ok ? aliasLiveOverwrite.code : "ok"} empty=${n10State.change?.status} ack=${ackN10.ok ? ackN10.code : (!ackN10.ok ? ackN10.code : "?")} claimed=${claimedAfterAck?.code}`,
+    );
+  }
+
+  // N11: numeric live alias; owner-ack 1/TRUE silent forbid; convergent verify stays CONFLICT.
+  let n11State = createExternalEditStagingState({
+    pageId: `page-n11-${randomUUID().slice(0, 8)}`,
+    fields: baseFields,
+    revision: "rev-1",
+    nowIso,
+  });
+  const n11Staged = stageAgentChangeAgainstBase(n11State, {
+    changeId: `chg-n11-${randomUUID().slice(0, 8)}`,
+    expectedBaseRevision: "rev-1",
+    desiredFields: agentDesired,
+    nowIso,
+  });
+  if (n11Staged.ok) {
+    n11State = n11Staged.state;
+  }
+  const numericLiveOw = attemptBlindAgentOverwrite(n11State, {
+    nowIso: tHuman,
+    requestLiveTemporalWiring: 1,
+  });
+  if (n11Staged.ok) {
+    n11State = applyExternalHumanEdit(n11State, {
+      fields: agentDesired,
+      nowIso: tHuman,
+    });
+  }
+  const ackNum = refuseSilentConflictClear(n11State, {
+    ownerAcknowledged: 1,
+    nowIso: tHuman,
+  });
+  const ackUpper = refuseSilentConflictClear(n11State, {
+    ownerAcknowledged: "TRUE",
+    nowIso: tHuman,
+  });
+  const convergentVerify = independentVerifyStagingChange(n11State, {
+    nowIso: tHuman,
+    claimedVerified: 1,
+  });
+  if (
+    n11Staged.ok &&
+    numericLiveOw.ok === false &&
+    numericLiveOw.code === "OVERWRITE_FORBIDDEN" &&
+    n11State.change?.status === StagingConflictStatus.CONFLICT_RETAINED &&
+    n11State.change.humanObservedDigest === n11State.change.desiredDigest &&
+    ackNum.ok === false &&
+    ackNum.code === "SILENT_CLEAR_FORBIDDEN" &&
+    ackUpper.ok === false &&
+    ackUpper.code === "SILENT_CLEAR_FORBIDDEN" &&
+    convergentVerify.outcome === StagingVerifyOutcome.CONFLICT_RETAINED &&
+    convergentVerify.matched === false &&
+    convergentVerify.verifiedClaimed === false &&
+    convergentVerify.refusedClaimedVerified === undefined &&
+    convergentVerify.liveTemporalWiring === "NOT_WIRED" &&
+    convergentVerify.externalEffects === "NONE"
+  ) {
+    details.push(
+      "N11 numeric live 1 → OVERWRITE_FORBIDDEN; owner-ack 1/TRUE → SILENT_CLEAR_FORBIDDEN; convergent CONFLICT verify never elevates",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `N11 edges unexpectedly numLive=${!numericLiveOw.ok ? numericLiveOw.code : "ok"} ack1=${ackNum.ok ? "ok" : ackNum.code} ackU=${ackUpper.ok ? "ok" : ackUpper.code} conv=${convergentVerify.outcome}`,
+    );
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false liveTemporalWiring=NOT_WIRED externalEffects=NONE",
   );

@@ -674,4 +674,198 @@ describe("external human edit during staging (T-X025)", () => {
     expect(verify.details.join(" ")).not.toMatch(/MATCHED_PENDING_ONLY/);
     expect(verify.liveTemporalWiring).toBe("NOT_WIRED");
   });
+
+  it("dual live+claimed verify refuse; post-MATCHED human edit CONFLICT; live overwrite literal true", () => {
+    const t0 = "2026-11-22T22:00:00.000Z";
+    let state = createExternalEditStagingState({
+      pageId: "page-n9",
+      fields: baseFields,
+      revision: "rev-1",
+      nowIso: t0,
+    });
+    const staged = stageAgentChangeAgainstBase(state, {
+      changeId: "chg-n9",
+      expectedBaseRevision: "rev-1",
+      desiredFields: agentDesired,
+      nowIso: t0,
+    });
+    expect(staged.ok).toBe(true);
+    if (!staged.ok) return;
+    state = staged.state;
+
+    const dual = independentVerifyStagingChange(state, {
+      nowIso: "2026-11-22T22:01:00.000Z",
+      requestLiveTemporalWiring: true,
+      claimedVerified: true,
+    });
+    expect(dual.matched).toBe(false);
+    expect(dual.refusedLiveTemporalWiring).toBe(true);
+    expect(dual.refusedClaimedVerified).toBe(true);
+    expect(dual.verifiedClaimed).toBe(false);
+    expect(dual.details.join(" ")).toMatch(/LIVE_TEMPORAL_WIRING_NOT_WIRED/);
+    expect(dual.details.join(" ")).toMatch(/CLAIMED_VERIFIED_REFUSED/);
+    expect(dual.liveTemporalWiring).toBe("NOT_WIRED");
+    expect(dual.externalEffects).toBe("NONE");
+
+    const liveOverwriteLiteral = attemptBlindAgentOverwrite(state, {
+      nowIso: "2026-11-22T22:02:00.000Z",
+      requestLiveTemporalWiring: "true",
+    });
+    expect(liveOverwriteLiteral.ok).toBe(false);
+    if (liveOverwriteLiteral.ok) return;
+    expect(liveOverwriteLiteral.code).toBe("LIVE_TEMPORAL_WIRING_NOT_WIRED");
+    expect(liveOverwriteLiteral.liveTemporalWiring).toBe("NOT_WIRED");
+    expect(liveOverwriteLiteral.state.change?.status).toBe(
+      StagingConflictStatus.STAGED_PENDING,
+    );
+
+    const matched = independentVerifyStagingChange(state, {
+      nowIso: "2026-11-22T22:03:00.000Z",
+    });
+    expect(matched.outcome).toBe(StagingVerifyOutcome.MATCHED_PENDING_ONLY);
+    state = matched.state;
+    state = applyExternalHumanEdit(state, {
+      fields: humanEdit,
+      nowIso: "2026-11-22T22:04:00.000Z",
+    });
+    expect(state.change?.status).toBe(StagingConflictStatus.CONFLICT_RETAINED);
+    expect(state.change?.humanObservedDigest).toBe(digestFields(humanEdit));
+    expect(state.liveProviderSuccessClaimed).toBe(false);
+    expect(state.externalEffects).toBe("NONE");
+
+    const afterEditVerify = independentVerifyStagingChange(state, {
+      nowIso: "2026-11-22T22:05:00.000Z",
+      claimedVerified: "true",
+    });
+    expect(afterEditVerify.outcome).toBe(StagingVerifyOutcome.CONFLICT_RETAINED);
+    expect(afterEditVerify.matched).toBe(false);
+    expect(afterEditVerify.verifiedClaimed).toBe(false);
+    expect(afterEditVerify.refusedClaimedVerified).toBe(true);
+  });
+
+  it("alias live overwrite invents no live refuse; owner-ack then claimed refuse; empty-field human CONFLICT", () => {
+    const t0 = "2026-11-22T23:00:00.000Z";
+    let state = createExternalEditStagingState({
+      pageId: "page-n10",
+      fields: baseFields,
+      revision: "rev-1",
+      nowIso: t0,
+    });
+    const staged = stageAgentChangeAgainstBase(state, {
+      changeId: "chg-n10",
+      expectedBaseRevision: "rev-1",
+      desiredFields: agentDesired,
+      nowIso: t0,
+    });
+    expect(staged.ok).toBe(true);
+    if (!staged.ok) return;
+    state = staged.state;
+
+    const aliasLiveOverwrite = attemptBlindAgentOverwrite(state, {
+      nowIso: "2026-11-22T23:01:00.000Z",
+      requestLiveTemporalWiring: "TRUE",
+    });
+    expect(aliasLiveOverwrite.ok).toBe(false);
+    if (aliasLiveOverwrite.ok) return;
+    expect(aliasLiveOverwrite.code).toBe("OVERWRITE_FORBIDDEN");
+    expect(aliasLiveOverwrite.code).not.toBe("LIVE_TEMPORAL_WIRING_NOT_WIRED");
+    expect(aliasLiveOverwrite.liveTemporalWiring).toBe("NOT_WIRED");
+    expect(aliasLiveOverwrite.state.change?.status).toBe(
+      StagingConflictStatus.STAGED_PENDING,
+    );
+
+    const emptyHuman = {
+      title: "",
+      metaDescription: "",
+      h1: "",
+      bodyExcerpt: "",
+    };
+    state = applyExternalHumanEdit(state, {
+      fields: emptyHuman,
+      nowIso: "2026-11-22T23:02:00.000Z",
+    });
+    expect(state.change?.status).toBe(StagingConflictStatus.CONFLICT_RETAINED);
+    expect(state.change?.humanObservedDigest).toBe(digestFields(emptyHuman));
+    expect(state.liveProviderSuccessClaimed).toBe(false);
+    expect(state.externalEffects).toBe("NONE");
+
+    const ack = refuseSilentConflictClear(state, {
+      ownerAcknowledged: "true",
+      nowIso: "2026-11-22T23:03:00.000Z",
+    });
+    expect(ack.ok).toBe(true);
+    expect(ack.code).toBe("OWNER_ACK_RECORDED_CONFLICT_KEPT");
+    expect(ack.state.change?.status).toBe(StagingConflictStatus.CONFLICT_RETAINED);
+
+    const claimedAfterAck = refuseClaimedVerifiedStaging(ack.state, {
+      claimedVerified: true,
+      nowIso: "2026-11-22T23:04:00.000Z",
+    });
+    expect(claimedAfterAck.code).toBe("CLAIMED_VERIFIED_REFUSED");
+    expect(claimedAfterAck.verifiedClaimed).toBe(false);
+    expect(claimedAfterAck.reason).toMatch(/CONFLICT_RETAINED cannot elevate/);
+    expect(claimedAfterAck.liveTemporalWiring).toBe("NOT_WIRED");
+    expect(claimedAfterAck.externalEffects).toBe("NONE");
+  });
+
+  it("N11 numeric aliases: owner-ack 1/TRUE silent forbid; live 1 overwrite; convergent verify CONFLICT", () => {
+    const t0 = "2026-11-23T00:00:00.000Z";
+    let state = createExternalEditStagingState({
+      pageId: "page-n11",
+      fields: baseFields,
+      revision: "rev-1",
+      nowIso: t0,
+    });
+    const staged = stageAgentChangeAgainstBase(state, {
+      changeId: "chg-n11",
+      expectedBaseRevision: "rev-1",
+      desiredFields: agentDesired,
+      nowIso: t0,
+    });
+    expect(staged.ok).toBe(true);
+    if (!staged.ok) return;
+    state = staged.state;
+
+    const numericLiveOw = attemptBlindAgentOverwrite(state, {
+      nowIso: "2026-11-23T00:01:00.000Z",
+      requestLiveTemporalWiring: 1,
+    });
+    expect(numericLiveOw.ok).toBe(false);
+    if (numericLiveOw.ok) return;
+    expect(numericLiveOw.code).toBe("OVERWRITE_FORBIDDEN");
+    expect(numericLiveOw.code).not.toBe("LIVE_TEMPORAL_WIRING_NOT_WIRED");
+
+    state = applyExternalHumanEdit(state, {
+      fields: agentDesired,
+      nowIso: "2026-11-23T00:02:00.000Z",
+    });
+    expect(state.change?.status).toBe(StagingConflictStatus.CONFLICT_RETAINED);
+    expect(state.change?.humanObservedDigest).toBe(state.change?.desiredDigest);
+
+    const ackAlias1 = refuseSilentConflictClear(state, {
+      ownerAcknowledged: 1,
+      nowIso: "2026-11-23T00:03:00.000Z",
+    });
+    expect(ackAlias1.ok).toBe(false);
+    expect(ackAlias1.code).toBe("SILENT_CLEAR_FORBIDDEN");
+
+    const ackAliasTrue = refuseSilentConflictClear(state, {
+      ownerAcknowledged: "TRUE",
+      nowIso: "2026-11-23T00:04:00.000Z",
+    });
+    expect(ackAliasTrue.ok).toBe(false);
+    expect(ackAliasTrue.code).toBe("SILENT_CLEAR_FORBIDDEN");
+
+    const convergentVerify = independentVerifyStagingChange(state, {
+      nowIso: "2026-11-23T00:05:00.000Z",
+      claimedVerified: 1,
+    });
+    expect(convergentVerify.outcome).toBe(StagingVerifyOutcome.CONFLICT_RETAINED);
+    expect(convergentVerify.matched).toBe(false);
+    expect(convergentVerify.verifiedClaimed).toBe(false);
+    expect(convergentVerify.refusedClaimedVerified).toBeUndefined();
+    expect(convergentVerify.liveTemporalWiring).toBe("NOT_WIRED");
+    expect(convergentVerify.externalEffects).toBe("NONE");
+    expect(state.change?.status).toBe(StagingConflictStatus.CONFLICT_RETAINED);
+  });
 });

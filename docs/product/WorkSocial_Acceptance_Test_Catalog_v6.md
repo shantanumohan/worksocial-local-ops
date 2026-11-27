@@ -804,7 +804,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X021** is fixture ACCEPTED only via `CONCURRENT_IDEMPOTENT_RELEASE` (barrier+mutex one dispatch; not retry-only NO_DUPLICATE_EFFECTS). Not sandbox/prod VERIFIED.
 
-**T-X025** is fixture ACCEPTED only via the external human edit during staging conflict-retained proof (`EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED`) — base-revision pin (incl. non-rev `v1→v1-next`), human edit retains CONFLICT (incl. convergent digest == desired), blind overwrite forbidden (incl. STAGED_PENDING force / multi-overwrite / after owner-ack / post-MATCHED_PENDING_ONLY), blank changeId refused, whitespace pageId/revision refused, silent conflict clear forbidden (owner-ack literal-only; STAGED_PENDING → NO_CONFLICT), live Temporal NOT_WIRED (literal-only request normalize; live verify refused incl. string `"true"`), claimed VERIFIED refused (stage and MATCHED_PENDING_ONLY / CONFLICT verify); ACCEPTED ≠ VERIFIED. Not sandbox/prod VERIFIED.
+**T-X025** is fixture ACCEPTED only via the external human edit during staging conflict-retained proof (`EXTERNAL_HUMAN_EDIT_CONFLICT_RETAINED`) — base-revision pin (incl. non-rev `v1→v1-next`), human edit retains CONFLICT (incl. convergent digest == desired; convergent independent verify never elevates; post-MATCHED_PENDING_ONLY human edit reopens CONFLICT; empty-field human edit), blind overwrite forbidden (incl. STAGED_PENDING force / multi-overwrite / after owner-ack / post-MATCHED_PENDING_ONLY; live overwrite literal `"true"` refused; alias `"TRUE"`/`1` invents no live refuse → OVERWRITE_FORBIDDEN), blank changeId refused, whitespace pageId/revision refused, silent conflict clear forbidden (owner-ack literal-only; `1`/`"TRUE"` alias refuse; STAGED_PENDING → NO_CONFLICT; after ack claimed VERIFIED still refused), live Temporal NOT_WIRED (literal-only request normalize; live+claimed dual verify refuse), claimed VERIFIED refused (stage and MATCHED_PENDING_ONLY / CONFLICT verify; numeric alias does not invent claim); ACCEPTED ≠ VERIFIED. Not sandbox/prod VERIFIED.
 
 **T-X001** is fixture ACCEPTED only via the host-sleep monitoring coverage-gap coalesce proof (`HOST_SLEEP_MONITORING_COVERAGE_GAP`) — cadence-derived misses, catch-up probe required, no burst. Not sandbox/prod VERIFIED.
 
@@ -886,7 +886,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X018 / T-US-054** are fixture ACCEPTED only via the self-approval rejected / independent A25 proof (`SELF_APPROVAL_REJECTED`) — ordinary self-approval cannot bind or approve; independent reviewer required. Not sandbox/prod VERIFIED.
 
-**T-X073** is fixture ACCEPTED only via the offboard ACTIVE_TOKEN residual proof (`OFFBOARD_ACTIVE_TOKEN_RESIDUAL`) — offboarding remains incomplete until live provider revoke is wired/performed (`ACTIVE_TOKEN` + `PROVIDER_REVOKE` residuals `BLOCKED_NOT_WIRED`). Live revoke stays **NOT_WIRED**; never silently VERIFIED for live.
+**T-X073** is fixture ACCEPTED only via the offboard ACTIVE_TOKEN residual proof (`OFFBOARD_ACTIVE_TOKEN_RESIDUAL`) — offboarding remains incomplete until live provider revoke is wired/performed (`ACTIVE_TOKEN` + `PROVIDER_REVOKE` residuals `BLOCKED_NOT_WIRED`). Live revoke stays **NOT_WIRED**; claimLiveVerified / force-complete / dual / claim-on-padded / force-on-padded / blank-id claim/force / blank-ref force refuse; invent ACTIVE_TOKEN closed / all-residuals-closed / SCHEDULE re-enabled / QUEUED_WORK live-delivered / offboarding-complete / AUDIT purged / BACKUP_COPY closed remotely / secrets exported live / ACCEPTED=VERIFIED / liveProviderRevoke WIRED / externalEffects APPLIED / production activated / sandbox VERIFIED / revokedLocally=false / catalogClaim ACCEPTED dishonest; reclaim drift; padded ids stay NOT_WIRED; idempotent residual reclaim; ACCEPTED≠VERIFIED; never silently VERIFIED for live.
 
 **T-US-060** is fixture ACCEPTED only via the emergency-stop / outbound-stop at commit proof (`EMERGENCY_STOP_AT_COMMIT`). Not sandbox/prod VERIFIED.
 
@@ -918,9 +918,9 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-US-010** / **T-X033** are fixture ACCEPTED only via the GSC omitted rows unknown not zero proof (`GSC_OMITTED_ROWS_UNKNOWN_NOT_ZERO`). Not sandbox/prod VERIFIED.
 
-**T-US-008** / **T-X032** are fixture ACCEPTED only via the GA4 debug not delivered conversion proof (`GA4_DEBUG_NOT_DELIVERED_CONVERSION`). Not sandbox/prod VERIFIED.
+**T-US-008** / **T-X032** are fixture ACCEPTED only via the GA4 debug not delivered conversion proof (`GA4_DEBUG_NOT_DELIVERED_CONVERSION`) — debug success never claims delivered conversion or measured receipt; LIVE debug / claimDeliveredConversion refused; live `NOT_WIRED`. Not sandbox/prod VERIFIED.
 
-**T-X031** is fixture ACCEPTED only via the GA4 wrong property kind refused proof (`GA4_WRONG_PROPERTY_KIND_REFUSED`). Not sandbox/prod VERIFIED.
+**T-X031** is fixture ACCEPTED only via the GA4 wrong property kind refused proof (`GA4_WRONG_PROPERTY_KIND_REFUSED`) — UA / measurement-id-only / unknown / UA-shaped / measurement-id-shaped / whitespace-padded / UNAVAILABLE refuse; idempotent reclaim; dual live-claim refuse; live GA4 transport stays **NOT_WIRED**; ACCEPTED≠VERIFIED. Not sandbox/prod VERIFIED.
 
 **T-US-040** / **T-X049** are fixture ACCEPTED only via the thank-you without CRM fails delivery proof (`THANK_YOU_WITHOUT_CRM_FAILS_DELIVERY`) — DOM thank-you SUCCESS is independent of CRM and never implies delivery; empty/`MISSING_REMOTE` receipts fail at delivery (`CRM_MISSING_FAILS_DELIVERY`); other non-success reconcile → `CRM_RECONCILE_NOT_DELIVERY`; `isBrowserStageNotCrmDelivery` restricted to `BROWSER`/`FORM_ACCEPT`; `evaluateThankYouWithoutCrmDelivery` keeps `liveZohoWiring=NOT_WIRED`, `liveProviderSuccessClaimed=false`, `externalEffects=NONE`. Distinct from reply-sent CRM reconcile (T-X054). Not sandbox/prod VERIFIED.
 
@@ -973,7 +973,7 @@ Level as labeled | Status: NOT_RUN unless listed under fixture ACCEPTED below | 
 
 **T-X041** is fixture ACCEPTED only via the incomparable trend indices reject/label proof (`INCOMPARABLE_TREND_INDICES_REJECTED`) — never divides arbitrary indices from different data extracts; mismatched or missing comparability group/unit/source is rejected and labeled; unit/source matching is trim + case-insensitive; whitespace-only group, zero baseline, non-trend, and missing value are rejected; live wiring stays **NOT_WIRED**; `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 
-**T-X042** is fixture ACCEPTED only via the schema differs from page gate fails proof (`SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS`) — schema.org property values absent from visible page content yield `SCHEMA_VISIBLE_MISMATCH` / PARTIAL; persisted SEO `approveProposal`/`releasePilotPage` reject with no gateway decision. Not sandbox/prod VERIFIED.
+**T-X042** is fixture ACCEPTED only via the schema differs from page gate fails proof (`SCHEMA_DIFFERS_FROM_PAGE_GATE_FAILS`) — schema.org property values absent from visible page content yield `SCHEMA_VISIBLE_MISMATCH` / PARTIAL; empty/whitespace properties refuse silent PASS; trim + case-fold match documented; multi-property mismatches counted; fixture+`WIRED` / non-fixture matched refuse (`LIVE_TRANSPORT_NOT_WIRED`); persisted SEO `approveProposal`/`releasePilotPage` reject with no gateway decision; `liveProviderWiring=NOT_WIRED`; `externalEffects=NONE`. Not sandbox/prod VERIFIED.
 
 **T-X046** is fixture ACCEPTED only via the unsupported blog destination no fake publication proof (`UNSUPPORTED_BLOG_DESTINATION_NO_FAKE_PUBLICATION`) — OTHER_BLOG / Hub without adapter → `UNSUPPORTED_ACTION` / FAILED with null receipt; never invents `PUBLISHED_VERIFIED`. Domain classifier (`classifyUnsupportedBlogDestination`) returns honesty fields (`liveProviderWiring` mirrors destination wiring — `FIXTURE` is not a live claim; `chatgptAdsAccess=ACCESS_BLOCKED`; `externalEffects=NONE`; `inventPublishedVerified=false`); only `preferLive` triggers live-claim refuse; fixture-backed OTHER_BLOG may classify allowed; blank/whitespace-padded destinationId and format mismatch fail closed; DST civil schedule (`classifyUnsupportedBlogScheduledPublish`) spring-gap refuses schedule and fall-back resolves once without unlocking unsupported publish (including when `preferLive` is set). Distinct from T-US-022 / T-X045 / T-X015. Not sandbox/prod VERIFIED.
 
@@ -1059,8 +1059,8 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 
 | T-X029 | Token rotates to different account | Explicit rebind *(fixture ACCEPTED — explicit account rebind proof; trim/blank/WIRED edges; liveProviderWiring NOT_WIRED; externalEffects NONE; not sandbox/prod VERIFIED)* |
 | T-X030 | Rate-limit with deadline | Bounded backoff *(fixture ACCEPTED — rate-limit bounded backoff preserves deadline proof; not sandbox/prod VERIFIED)* |
-| T-X031 | Wrong GA4 property kind | Validation fails *(fixture ACCEPTED)* |
-| T-X032 | GA4 debug validation success only | No delivered-conversion claim *(fixture ACCEPTED)* |
+| T-X031 | Wrong GA4 property kind | Validation fails *(fixture ACCEPTED — UA/mid-shaped/padded/UNAVAILABLE refuse; idempotent reclaim; dual live-claim refuse; live transport NOT_WIRED; ACCEPTED≠VERIFIED; not sandbox/prod VERIFIED)* |
+| T-X032 | GA4 debug validation success only | No delivered-conversion claim *(fixture ACCEPTED — debug≠delivered; LIVE/claim refused; NOT_WIRED)* |
 | T-X033 | Omitted GSC rows | Unknown ≠ zero *(fixture ACCEPTED)* |
 | T-X034 | Test-only Ads project vs production | Blocked *(fixture ACCEPTED — test Ads project vs production blocked proof; not sandbox/prod VERIFIED)* |
 | T-X035 | Shared ad budget changed externally | Proposal invalidated *(fixture ACCEPTED — shared ad budget external change invalidates proof; not sandbox/prod VERIFIED)* |
@@ -1070,7 +1070,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X039 | Provider error vs answer failure | Separate denominators *(fixture ACCEPTED — metric denominators honest; liveMetricsWiring NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X040 | Low-sample trend spike | Insufficient evidence *(fixture ACCEPTED — low-sample trend spike insufficient-evidence proof; not sandbox/prod VERIFIED)* |
 | T-X041 | Incomparable trend indices | Reject/label *(fixture ACCEPTED — incomparable trend indices reject/label proof; case-normalized unit/source; not sandbox/prod VERIFIED)* |
-| T-X042 | Schema differs from page | Gate fails *(fixture ACCEPTED — schema differs from page gate fails proof; not sandbox/prod VERIFIED)* |
+| T-X042 | Schema differs from page | Gate fails *(fixture ACCEPTED — schema differs from page gate fails proof; trim/empty/multi/WIRED edges; liveProviderWiring NOT_WIRED; externalEffects NONE; not sandbox/prod VERIFIED)* |
 | T-X043 | Optimization breaks CTA | Journey regression fails *(fixture ACCEPTED — optimization breaks CTA journey fails proof; href-only / empty-steps / NOT_WIRED; not sandbox/prod VERIFIED)* |
 | T-X044 | Unlicensed venue media | Publish blocked *(fixture ACCEPTED — unlicensed venue media publish-blocked proof; not sandbox/prod VERIFIED)* |
 | T-X045 | Partial campaign destinations | Per-destination states *(fixture ACCEPTED — partial destinations / NOT_WIRED attack suite; not sandbox/prod VERIFIED)* |
@@ -1101,7 +1101,7 @@ Shared evidence for each: actual state before/after; instrumented provider call 
 | T-X070 | Validated payload not collected | Separate failure states *(fixture ACCEPTED — validated payload not collected separate failure states proof; not sandbox/prod VERIFIED)* |
 | T-X071 | Local host offline public discovery | Honest unavailability *(fixture ACCEPTED — host-offline public discovery unavailable proof; not sandbox/prod VERIFIED)* |
 | T-X072 | Customer data leaks into evaluation | Redaction blocks *(fixture ACCEPTED — customer data eval redaction blocks proof; not sandbox/prod VERIFIED)* |
-| T-X073 | Offboarding retains active token | Incomplete until revoked *(fixture ACCEPTED — offboard ACTIVE_TOKEN residual; live revoke NOT_WIRED; not sandbox/prod VERIFIED)* |
+| T-X073 | Offboarding retains active token | Incomplete until revoked *(fixture ACCEPTED — blank-ref force refuse; invent externalEffects APPLIED / production-activated / sandbox VERIFIED dishonest; ACCEPTED≠VERIFIED; not sandbox/prod VERIFIED)* |
 
 ## Counts
 

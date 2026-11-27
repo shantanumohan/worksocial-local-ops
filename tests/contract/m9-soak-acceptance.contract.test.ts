@@ -291,5 +291,14 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).toMatch(
       /N8 whitespace pageId\/revision throw|live verify literal true → NOT_WIRED/,
     );
+    expect(art.summary).toMatch(
+      /N9 dual live\+claimed verify refuse|post-MATCHED human edit → CONFLICT_RETAINED/,
+    );
+    expect(art.summary).toMatch(
+      /N10 alias TRUE live overwrite → OVERWRITE_FORBIDDEN|owner-ack then CLAIMED_VERIFIED_REFUSED/,
+    );
+    expect(art.summary).toMatch(
+      /N11 numeric live 1 → OVERWRITE_FORBIDDEN|convergent CONFLICT verify never elevates/,
+    );
   });
 });
