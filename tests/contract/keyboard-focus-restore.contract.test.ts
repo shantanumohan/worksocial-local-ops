@@ -26,6 +26,7 @@ import { createFileSoakStore } from "@worksocial/persistence";
 import {
   compileAcceptanceEvidence,
   createSoakService,
+  proofKeyboardFocusRestoreAfterDialog,
   runSoakRecoveryHarness,
 } from "@worksocial/soak";
 
@@ -91,6 +92,59 @@ describe("contract: T-X061 keyboard focus restore", () => {
     expect(lost.ok).toBe(false);
     expect(lost.code).toBe("FOCUS_LOST");
     expect(lost.session.activeFocusId).toBeNull();
+  });
+
+  it("evaluateKeyboardFocusRestoreReview refuses empty dialogFocusables", () => {
+    const review = evaluateKeyboardFocusRestoreReview({
+      triggerId: "btn-keyboard-review",
+      dialogFocusables: [],
+    });
+    expect(review.passed).toBe(false);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG),
+    ).toEqual(["T-X061"]);
+  });
+
+  it("proofKeyboardFocusRestoreAfterDialog stays fixture-only with honest labels", () => {
+    const proof = proofKeyboardFocusRestoreAfterDialog(now);
+    expect(proof.passed).toBe(true);
+    expect(proof.fixtureOnly).toBe(true);
+    expect(proof.kind).toBe(SoakProofKind.KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG);
+    expect(String(proof.kind).toUpperCase()).not.toBe("VERIFIED");
+  });
+
+  it("cycleDialogFocus fails closed when overlay is not open", () => {
+    const tab = cycleDialogFocus({
+      session: emptyFocusSession(),
+      direction: "forward",
+    });
+    expect(tab.ok).toBe(false);
+    expect(tab.reasons.join(" ")).toMatch(/not open/i);
+  });
+
+  it("cycleDialogFocus re-anchors from stale activeFocusId without losing savedTrigger", () => {
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-keyboard-review",
+      dialogFocusables: dialog,
+    });
+    const step = cycleDialogFocus({
+      session: { ...opened.session, activeFocusId: "dlg-removed" },
+      direction: "forward",
+    });
+    expect(step.ok).toBe(true);
+    expect(step.session.activeFocusId).toBe("dlg-primary");
+    expect(step.session.savedTriggerId).toBe("btn-keyboard-review");
+  });
+
+  it("openOverlayFocus fails closed on empty dialog (externalEffects NONE model)", () => {
+    const decision = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-keyboard-review",
+      dialogFocusables: [],
+    });
+    expect(decision.ok).toBe(false);
+    expect(decision.reasons.join(" ")).toMatch(/no focusable/i);
   });
 
   it("evaluateKeyboardFocusRestoreReview passes and maps T-X061 only", () => {
