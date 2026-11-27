@@ -41,6 +41,7 @@
  * Hillclimb R21: AUTHORIZED_PRODUCTION_VERIFIED_CLAIM_REFUSED — authorized prod path VERIFIED.
  * Hillclimb R22: PRODUCTION_CANARY_VERIFIED_CLAIM_REFUSED — combined prod/canary VERIFIED.
  * Hillclimb R23: SANDBOX_PRODUCTION_VERIFIED_CLAIM_REFUSED — sandbox+production VERIFIED bundle.
+ * Hillclimb G34: FALSE_ONE_DISPATCH_PASS — createCount 0 or unmeasured must refuse PASS.
  */
 
 export const CONCURRENT_IDEMPOTENT_RELEASE_RELATED_CASE_IDS = [
