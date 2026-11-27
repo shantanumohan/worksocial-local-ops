@@ -237,8 +237,16 @@ export function prepareCustomerDataForEvaluation(input: {
   useUnredactedConversationIdInEval?: boolean;
   /** Forbidden — eval must not consume unredacted customerEmail from source. */
   useUnredactedCustomerEmailInEval?: boolean;
+  /** Forbidden — eval must not consume unredacted customerPhone from source. */
+  useUnredactedCustomerPhoneInEval?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.useUnredactedCustomerPhoneInEval === true) {
+    return blockedLeak([
+      "Unredacted customer phone in eval refused — T-X072",
+    ]);
+  }
 
   if (input.useUnredactedCustomerEmailInEval === true) {
     return blockedLeak([
