@@ -57,6 +57,11 @@ export type ZohoCrmFixtureAdapter = {
   readonly liveZohoWiring: "NOT_WIRED";
   /** Counts every writeSyntheticLead call (including skipWrite). */
   writeAttemptCount(): number;
+  /**
+   * Remaining EC lag reads for a correlation (T-X023). 0 when visible /
+   * never lagged. Does not consume a lag read.
+   */
+  visibilityLagRemaining(correlationId: string): number;
   writeSyntheticLead(input: FixtureCrmWriteInput): CanaryRemoteReceipt | null;
   verifyFields(input: {
     correlationId: string;
@@ -85,6 +90,10 @@ export function createZohoCrmFixtureAdapter(): ZohoCrmFixtureAdapter {
 
     writeAttemptCount() {
       return writeAttempts;
+    },
+
+    visibilityLagRemaining(correlationId) {
+      return visibilityLagReads.get(correlationId) ?? 0;
     },
 
     writeSyntheticLead(input) {

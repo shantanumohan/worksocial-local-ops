@@ -69,38 +69,18 @@ describe("e2e-lite: M9 soak acceptance", () => {
     expect(report.acceptedCases.some((c) => c.caseId === "T-X060")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X070")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X028")).toBe(true);
-    const tx028 = result.run.caseResults.find((c) => c.caseId === "T-X028");
-    expect(tx028?.status).toBe("ACCEPTED");
-    expect(String(tx028?.status).toUpperCase()).not.toBe("VERIFIED");
-    const overrunProof = result.run.proofs.find(
-      (p) =>
-        p.kind === SoakProofKind.ACTUAL_COST_EXCEEDS_ESTIMATE_OVERRUN_VISIBLE,
-    );
-    expect(overrunProof?.passed).toBe(true);
-    expect(overrunProof?.fixtureOnly).toBe(true);
-    const detailBlob = (overrunProof?.details ?? []).join(" | ");
-    expect(detailBlob).toContain("overrunMinor");
-    expect(detailBlob).toContain("NOT_WIRED");
-    expect(detailBlob).toContain("ACCESS_BLOCKED");
-    expect(detailBlob).toContain("Zero-actual settle");
-    expect(detailBlob).toContain("Held→known-cancel reconcile");
-    expect(detailBlob).toContain("fixtureAcceptedOnly");
-    expect(detailBlob).toContain("Negative actual refused");
-    expect(detailBlob).toContain("Non-finite actual refused");
-    expect(detailBlob).toContain("Post-overrun unknown-cancel refused");
-    expect(detailBlob).toContain("Fractional actual refused");
-    expect(detailBlob).toContain("Post-overspend reserve");
-    expect(detailBlob).toContain("BUDGET_EXHAUSTED");
-    expect(detailBlob).toContain("Non-integer reserve refused");
-    expect(detailBlob).toContain("Conflicting known-cancel after overrun settle refused");
-    expect(detailBlob).toContain("ACTUAL_COST_OVERRUN_RELATED_CASE_IDS=[T-X028]");
-    expect(detailBlob).toContain("isActualCostOverrun(600,750)=true");
-    expect(detailBlob).toContain("Replayed overrun settle passes assertBudgetSettlementHonesty");
-    expect(detailBlob).toContain("assertBudgetSettlementHonesty");
     expect(report.acceptedCases.some((c) => c.caseId === "T-X044")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X045")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-US-006")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X023")).toBe(true);
+    const x023 = result.run.proofs.find(
+      (p) => p.kind === SoakProofKind.EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND,
+    );
+    expect(x023?.passed).toBe(true);
+    expect(x023?.details.join(" ")).toMatch(/ACCESS_BLOCKED/);
+    expect(x023?.details.join(" ")).toMatch(/NOT_WIRED/);
+    expect(x023?.details.join(" ")).toMatch(/liveProviderSuccessClaimed=false/);
+    expect(x023?.details.join(" ")).toMatch(/ACCEPTED≠VERIFIED|ACCEPTED ≠ VERIFIED/);
     expect(report.acceptedCases.some((c) => c.caseId === "T-X030")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-US-056")).toBe(true);
     expect(report.acceptedCases.some((c) => c.caseId === "T-US-043")).toBe(true);

@@ -75,10 +75,14 @@ describe("zoho-crm-fixture adapter", () => {
     });
     expect(receipt?.recordId).toBeTruthy();
     expect(crm.listAll()).toHaveLength(1);
+    expect(crm.visibilityLagRemaining(corr)).toBe(2);
     expect(crm.getByCorrelation(corr)).toBeNull();
+    expect(crm.visibilityLagRemaining(corr)).toBe(1);
     expect(crm.getByCorrelation(corr)).toBeNull();
+    expect(crm.visibilityLagRemaining(corr)).toBe(0);
     const visible = crm.getByCorrelation(corr);
     expect(visible?.receipt.recordId).toBe(receipt?.recordId);
+    expect(crm.visibilityLagRemaining(corr)).toBe(0);
     expect(crm.writeAttemptCount()).toBe(1);
   });
 });

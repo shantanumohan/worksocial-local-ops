@@ -44,7 +44,7 @@ Fixture soak / recovery harness and acceptance evidence compiler.
 
 | T-X044 unlicensed venue media | Fixture **ACCEPTED** via `UNLICENSED_VENUE_MEDIA_PUBLISH_BLOCKED` (not live VERIFIED) |
 
-| T-X023 eventual consistency false not-found | Fixture **ACCEPTED** via `EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND` (lagging CRM read; no unsafe create; not live VERIFIED) |
+| T-X023 eventual consistency false not-found | Fixture **ACCEPTED** via `EVENTUAL_CONSISTENCY_FALSE_NOT_FOUND` (lagging CRM read; LIVE_CLAIM_REFUSED; durable observedAtIso; CRM_EXTERNAL_EFFECTS=NONE; live Zoho NOT_WIRED; Ads ACCESS_BLOCKED; liveProviderSuccessClaimed=false; ACCEPTED ≠ VERIFIED) |
 | T-US-006 unbound write path fail closed | Fixture **ACCEPTED** via `UNBOUND_WRITE_PATH_FAIL_CLOSED` (applyAttemptCount=0; not live VERIFIED) |
 | T-US-052 mocked connector not production-ready | Fixture **ACCEPTED** via `MOCKED_CONNECTOR_NOT_PRODUCTION_READY` (not live VERIFIED) |
 | T-X040 low-sample trend spike | Fixture **ACCEPTED** via `LOW_SAMPLE_TREND_SPIKE_INSUFFICIENT_EVIDENCE` (not live VERIFIED) |

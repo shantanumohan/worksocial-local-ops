@@ -1234,8 +1234,8 @@
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-27T11:10:56.011Z",
-      "uniqueSourceArtifactId": "art-fixture-t-x023-bfc92d94bfcc"
+      "updatedAtIso": "2026-11-27T11:16:01.346Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x023-e34c7d30e747"
     },
     {
       "caseId": "T-US-052",
@@ -3402,15 +3402,15 @@
       "caseId": "T-X023",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X023 (Eventual consistency false not-found — no unsafe retry)\nproof=eventual_consistency_false_not_found applyCount=1 :: Fixture CRM write → ledger size 1; writeAttemptCount=1; lag reads scheduled | getByCorrelation empty under lag → BOUND_WAIT createLead=false (false not-found) | Counterfactual empty→create documented as forbidden | No second writeSyntheticLead; writeAttemptCount remains 1 | After visibility → fixture read-back RECONCILE MATCHED; createLead=false; writeAttemptCount=1 | Window exceeded empty → ESCALATE_MISSING createLead=false | Fixture CRM only — live Zoho NOT_WIRED; externalEffects NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X023 (Eventual consistency false not-found — no unsafe retry)\nproof=eventual_consistency_false_not_found applyCount=1 :: Fixture CRM write → ledger size 1; writeAttemptCount=1; lag reads scheduled | getByCorrelation empty under lag → BOUND_WAIT createLead=false (false not-found) | Counterfactual empty→create documented as forbidden | No second writeSyntheticLead; writeAttemptCount remains 1 | After visibility → fixture read-back RECONCILE MATCHED; createLead=false; writeAttemptCount=1 | Empty-string recordId ignored — REFUSE_CREATE (not durable visibility) | Live/Ads/effects/providerSuccess/sandbox refused; fixture_crm source+snapshot+moduleId gates | Window exceeded empty → ESCALATE_MISSING createLead=false | Fixture CRM only — live Zoho NOT_WIRED; externalEffects NONE | ACCEPTED≠VERIFIED — fixture eventual-consistency proof only; live Zoho NOT_WIRED; chatgptAdsAccess=ACCESS_BLOCKED; liveProviderSuccessClaimed=false; externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "eventual_consistency_false_not_found"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-x023.json",
-      "createdAtIso": "2026-11-27T11:10:56.011Z",
+      "createdAtIso": "2026-11-27T11:16:01.346Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-x023-bfc92d94bfcc"
+      "uniqueSourceArtifactId": "art-fixture-t-x023-e34c7d30e747"
     },
     {
       "artifactId": "art-fixture-t-us-052",
@@ -5642,16 +5642,16 @@
       "externalEffects": "NONE"
     },
     {
-      "artifactId": "art-fixture-t-x023-bfc92d94bfcc",
+      "artifactId": "art-fixture-t-x023-e34c7d30e747",
       "caseId": "T-X023",
       "environment": "fixture",
       "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X023 (Eventual consistency false not-found — no unsafe retry)\nproof=eventual_consistency_false_not_found applyCount=1 :: Fixture CRM write → ledger size 1; writeAttemptCount=1; lag reads scheduled | getByCorrelation empty under lag → BOUND_WAIT createLead=false (false not-found) | Counterfactual empty→create documented as forbidden | No second writeSyntheticLead; writeAttemptCount remains 1 | After visibility → fixture read-back RECONCILE MATCHED; createLead=false; writeAttemptCount=1 | Window exceeded empty → ESCALATE_MISSING createLead=false | Fixture CRM only — live Zoho NOT_WIRED; externalEffects NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+      "summary": "Fixture ACCEPTED for T-X023 (Eventual consistency false not-found — no unsafe retry)\nproof=eventual_consistency_false_not_found applyCount=1 :: Fixture CRM write → ledger size 1; writeAttemptCount=1; lag reads scheduled | getByCorrelation empty under lag → BOUND_WAIT createLead=false (false not-found) | Counterfactual empty→create documented as forbidden | No second writeSyntheticLead; writeAttemptCount remains 1 | After visibility → fixture read-back RECONCILE MATCHED; createLead=false; writeAttemptCount=1 | Empty-string recordId ignored — REFUSE_CREATE (not durable visibility) | Live/Ads/effects/providerSuccess/sandbox refused; fixture_crm source+snapshot+moduleId gates | Window exceeded empty → ESCALATE_MISSING createLead=false | Fixture CRM only — live Zoho NOT_WIRED; externalEffects NONE | ACCEPTED≠VERIFIED — fixture eventual-consistency proof only; live Zoho NOT_WIRED; chatgptAdsAccess=ACCESS_BLOCKED; liveProviderSuccessClaimed=false; externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
       "proofKinds": [
         "eventual_consistency_false_not_found"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-x023-bfc92d94bfcc.json",
-      "createdAtIso": "2026-11-27T11:10:56.011Z",
+      "evidenceRef": "soak/evidence/art-fixture-t-x023-e34c7d30e747.json",
+      "createdAtIso": "2026-11-27T11:16:01.346Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"
     },
