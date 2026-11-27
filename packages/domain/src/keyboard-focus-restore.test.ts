@@ -330,6 +330,17 @@ describe("keyboard focus restore (T-X061)", () => {
     expect(result.lost.code).toBe("FOCUS_LOST");
   });
 
+  it("evaluateKeyboardFocusRestoreReview details pin boundary trap lines (T49)", () => {
+    const result = evaluateKeyboardFocusRestoreReview({
+      triggerId: "btn-review",
+      dialogFocusables: dialog,
+    });
+    expect(result.passed).toBe(true);
+    expect(result.details.some((d) => /Tab backward/i.test(d))).toBe(true);
+    expect(result.details.some((d) => /Tab forward/i.test(d))).toBe(true);
+    expect(result.details.some((d) => /Re-open refused/i.test(d))).toBe(true);
+  });
+
   it("evaluateKeyboardFocusRestoreReview passes open/trap/restore + lost control", () => {
     const result = evaluateKeyboardFocusRestoreReview({
       triggerId: "btn-review",
