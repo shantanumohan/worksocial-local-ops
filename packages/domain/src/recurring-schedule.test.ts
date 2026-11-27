@@ -606,4 +606,14 @@ describe("recurring-schedule (T-X015 DST)", () => {
     expect(parsed.keys).toEqual([]);
     expectHonesty(parsed);
   });
+
+  it("rejects fractional durable version field (T-X015 wipe15 321b71b2)", () => {
+    const key = occurrenceKeyFor("sched-frac", "2025-11-09", 9, 0);
+    const parsed = parseOccurrenceClaimDurableBody(
+      JSON.stringify({ version: 1.5, claimedKeys: [key] }),
+    );
+    expect(parsed.status).toBe(DurableOccurrenceClaimParseStatus.CORRUPT_OR_PARTIAL);
+    expect(parsed.keys).toEqual([]);
+    expectHonesty(parsed);
+  });
 });
