@@ -81,7 +81,7 @@ function available(account: BudgetAccount): number {
   return (
     account.limitMinor -
     openReservationsTotalMinor(account) -
-    account.settledMinor -
+    settledReservationsActualTotalMinor(account) -
     heldReservationsTotalMinor(account)
   );
 }
@@ -117,6 +117,25 @@ export function heldReservationsTotalMinor(account: BudgetAccount): number {
   for (const amount of Object.values(held)) {
     const n = Number(amount);
     if (Number.isFinite(n) && n > 0) {
+      total += n;
+    }
+  }
+  return total;
+}
+
+/**
+ * Sum of posted actuals from settled reservation snapshots. Non-finite /
+ * negative map values are ignored — stale `settledMinor` must not invent
+ * capacity (T-X027 twin of open/hold map honesty).
+ */
+export function settledReservationsActualTotalMinor(
+  account: BudgetAccount,
+): number {
+  const settled = account.settledReservations ?? {};
+  let total = 0;
+  for (const snap of Object.values(settled)) {
+    const n = Number(snap?.actualMinor);
+    if (Number.isFinite(n) && n >= 0) {
       total += n;
     }
   }
@@ -176,11 +195,13 @@ export function normalizeBudgetHolds(account: BudgetAccount): BudgetAccount {
   };
   const heldMinor = heldReservationsTotalMinor(next);
   const reservedMinor = openReservationsTotalMinor(next);
+  const settledMinor = settledReservationsActualTotalMinor(next);
   if (
     !heldMapChanged &&
     !openMapChanged &&
     account.heldMinor === heldMinor &&
-    account.reservedMinor === reservedMinor
+    account.reservedMinor === reservedMinor &&
+    account.settledMinor === settledMinor
   ) {
     return account;
   }
@@ -188,6 +209,7 @@ export function normalizeBudgetHolds(account: BudgetAccount): BudgetAccount {
     ...next,
     heldMinor,
     reservedMinor,
+    settledMinor,
   };
 }
 

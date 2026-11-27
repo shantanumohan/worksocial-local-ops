@@ -11,6 +11,7 @@ import {
   normalizeBudgetHolds,
   openReservationsTotalMinor,
   reserveBudget,
+  settledReservationsActualTotalMinor,
   settleBudget,
 } from "./budget-accounting.js";
 
@@ -692,5 +693,28 @@ describe("budget accounting", () => {
     const scrubbed = normalizeBudgetHolds(stale);
     expect(scrubbed.reservedMinor).toBe(400);
     expect(scrubbed.openReservations).toEqual({ "r-open": 400 });
+  });
+
+  it("stale settledMinor=0 with settled map cannot invent capacity", () => {
+    const reserved = reserveBudget(account(), "r-settle", 300);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const settled = settleBudget(reserved.account, "r-settle", 180);
+    expect(settled.ok).toBe(true);
+    if (!settled.ok) return;
+    const stale = {
+      ...settled.account,
+      settledMinor: 0,
+    };
+    expect(settledReservationsActualTotalMinor(stale)).toBe(180);
+    expect(availableBudgetMinor(stale)).toBe(820);
+    const blocked = reserveBudget(stale, "r-over", 900);
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) {
+      expect(blocked.code).toBe("BUDGET_EXHAUSTED");
+      expect(blocked.availableMinor).toBe(820);
+    }
+    const normalized = normalizeBudgetHolds(stale);
+    expect(normalized.settledMinor).toBe(180);
   });
 });
