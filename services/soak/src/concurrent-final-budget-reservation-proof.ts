@@ -970,7 +970,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
           isConcurrentBudgetCompositionHonest(pos)
         ) {
           details.push(
-            "known-positive restore: concurrent compose accepts 500 then BUDGET_EXHAUSTED; committed=650; compositionHonest",
+            "S30 known-positive cancel restores headroom; compose 500+exhaust 500; committed=650; compositionHonest",
           );
         } else {
           passed = false;
@@ -1254,6 +1254,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
       );
     }
 
+    // S21 (Slot S greenfield): shortened accepted rows vs acceptedReservationIds → honesty refuse.
     const accShortSample = composeConcurrentFinalBudgetReserves(
       createBudgetAccount({
         dayKey: "2026-11-22-acc-short",
@@ -1274,7 +1275,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
       !isConcurrentBudgetCompositionHonest(shortAccRows)
     ) {
       details.push(
-        "Honesty predicate rejects shortened accepted rows vs acceptedReservationIds",
+        "S21 honesty refuses shortened accepted rows vs acceptedReservationIds",
       );
     } else if (accShortSample.accepted.length < 2) {
       passed = false;
@@ -1286,6 +1287,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
       );
     }
 
+    // S22 (tip-moved-275 train): shortened exhausted rows vs exhaustedReservationIds.
     const exhShortSample = composeConcurrentFinalBudgetReserves(
       createBudgetAccount({
         dayKey: "2026-11-22-exh-short",
@@ -1307,7 +1309,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
       !isConcurrentBudgetCompositionHonest(shortExhRows)
     ) {
       details.push(
-        "Honesty predicate rejects shortened exhausted rows vs exhaustedReservationIds",
+        "S22 honesty refuses shortened exhausted rows vs exhaustedReservationIds",
       );
     } else if (exhShortSample.exhausted.length < 2) {
       passed = false;
@@ -1319,6 +1321,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
       );
     }
 
+    // S23 (tip-moved-277 train): forged composition availableMinor vs account.
     const availMinorSample = composeConcurrentFinalBudgetReserves(
       createBudgetAccount({
         dayKey: "2026-11-22-avail-forge",
@@ -1333,7 +1336,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
     };
     if (!isConcurrentBudgetCompositionHonest(forgedAvailMinor)) {
       details.push(
-        "Honesty predicate rejects forged composition availableMinor vs account",
+        "S23 honesty refuses forged composition availableMinor vs account",
       );
     } else {
       passed = false;
@@ -1342,6 +1345,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
       );
     }
 
+    // S24 (tip-moved-278 train): forged availableMatchesLimitMinusCommitted.
     const matchIdentitySample = composeConcurrentFinalBudgetReserves(
       createBudgetAccount({
         dayKey: "2026-11-22-avail-match",
@@ -1359,7 +1363,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
       !isConcurrentBudgetCompositionHonest(forgedAvailIdentityMatch)
     ) {
       details.push(
-        "Honesty predicate rejects forged availableMatchesLimitMinusCommitted",
+        "S24 honesty refuses forged availableMatchesLimitMinusCommitted",
       );
     } else if (!matchIdentitySample.availableMatchesLimitMinusCommitted) {
       passed = false;
@@ -1371,6 +1375,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
       );
     }
 
+    // S25 (tip-moved-279 train): forged isolationWouldOversubscribe vs isolationSum.
     const isolationSample = composeConcurrentFinalBudgetReserves(
       createBudgetAccount({
         dayKey: "2026-11-22-iso-flag",
@@ -1391,7 +1396,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
       !isConcurrentBudgetCompositionHonest(forgedIsolationFlag)
     ) {
       details.push(
-        "Honesty predicate rejects forged isolationWouldOversubscribe vs isolationSum",
+        "S25 honesty refuses forged isolationWouldOversubscribe vs isolationSum",
       );
     } else if (
       isolationSample.isolationSumMinor <= isolationSample.availableAtSnapshotMinor
@@ -1405,6 +1410,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
       );
     }
 
+    // S26 (tip-moved-280 train): forged isolationSumMinor vs oversubscribe flag.
     const isolationSumForge = {
       ...isolationSample,
       isolationSumMinor: isolationSample.availableAtSnapshotMinor,
@@ -1415,7 +1421,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
       !isConcurrentBudgetCompositionHonest(isolationSumForge)
     ) {
       details.push(
-        "Honesty predicate rejects forged isolationSumMinor vs oversubscribe flag",
+        "S26 honesty refuses forged isolationSumMinor vs oversubscribe flag",
       );
     } else if (!isolationSample.isolationWouldOversubscribe) {
       passed = false;
@@ -1427,6 +1433,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
       );
     }
 
+    // S27 (tip-moved-281 train): trim-normalized duplicate-id preflight.
     const trimNormSeed = createBudgetAccount({
       dayKey: "2026-11-22-trim-norm",
       currency: "USD",
@@ -1455,7 +1462,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
       isConcurrentBudgetCompositionHonest(trimPad)
     ) {
       details.push(
-        "Trim-normalized duplicate-id preflight; padded id composes as trimmed",
+        "S27 trim-normalized duplicate-id preflight; padded id composes trimmed",
       );
     } else {
       passed = false;
@@ -1464,6 +1471,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
       );
     }
 
+    // S28 (tip-moved-282 train): non-integer amountMinor preflight.
     const fracSeed = createBudgetAccount({
       dayKey: "2026-11-22-frac-amount",
       currency: "USD",
@@ -1479,7 +1487,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
     }
     if (fracThrew && fracSeed.reservedMinor === 0) {
       details.push(
-        "Non-integer amountMinor preflight refuses before apply; snap immutable",
+        "S28 non-integer amountMinor preflight refuses before apply; snap immutable",
       );
     } else {
       passed = false;
@@ -1488,6 +1496,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
       );
     }
 
+    // S29 (tip-moved-283 train): non-finite amountMinor (NaN) preflight.
     const nanSeed = createBudgetAccount({
       dayKey: "2026-11-22-nan-amount",
       currency: "USD",
@@ -1503,7 +1512,7 @@ export async function proofConcurrentFinalBudgetReservationCap(
     }
     if (nanThrew && nanSeed.reservedMinor === 0) {
       details.push(
-        "Non-finite amountMinor (NaN) preflight refuses; snap immutable",
+        "S29 non-finite amountMinor (NaN) preflight refuses; snap immutable",
       );
     } else {
       passed = false;
