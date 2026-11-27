@@ -4,6 +4,7 @@ import {
   assertCustomerEvalRedactionDecisionHonest,
   assertCustomerEvalRedactionIdempotent,
   reclaimCustomerEvalRedactionDecision,
+  assertEvalPromptCheckIdempotent,
   assertEvalPromptHasNoCustomerPii,
   buildEvalSafePromptFromPayload,
   containsRawCustomerPii,
@@ -267,6 +268,19 @@ describe("customer eval redaction (T-X072)", () => {
     const prompt = buildEvalSafePromptFromPayload(decision.payload);
     expect(prompt).not.toMatch(/jordan\.lee@example\.com/i);
     expect(prompt).toMatch(/\[REDACTED_CONVERSATION_ID\]/);
+  });
+
+  it("prompt PII check is idempotent", () => {
+    const clean = assertEvalPromptCheckIdempotent(
+      "Judge fixture answer for tour_request",
+      { displayName: source.customerDisplayName },
+    );
+    expect(clean.ok).toBe(true);
+    const dirty = assertEvalPromptCheckIdempotent(
+      `mention ${source.customerEmail}`,
+      { email: source.customerEmail },
+    );
+    expect(dirty.ok).toBe(true);
   });
 
   it("detects and redacts PII in free text including known names", () => {

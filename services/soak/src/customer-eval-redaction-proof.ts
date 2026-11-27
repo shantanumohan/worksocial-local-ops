@@ -11,6 +11,7 @@ import {
   assertCustomerEvalRedactionDecisionHonest,
   assertCustomerEvalRedactionIdempotent,
   reclaimCustomerEvalRedactionDecision,
+  assertEvalPromptCheckIdempotent,
   assertEvalPromptHasNoCustomerPii,
   buildEvalSafePromptFromPayload,
   prepareCustomerDataForEvaluation,
@@ -335,6 +336,19 @@ export function proofCustomerDataEvalRedactionBlocks(
   } else {
     passed = false;
     details.push(`dirty email prompt unexpectedly ${JSON.stringify(dirtyEmail)}`);
+  }
+
+  const promptIdempotent = assertEvalPromptCheckIdempotent(
+    "Judge fixture answer intent=tour_request",
+    known,
+  );
+  if (promptIdempotent.ok) {
+    details.push("assertEvalPromptCheckIdempotent stable on clean prompt");
+  } else {
+    passed = false;
+    details.push(
+      `prompt idempotent failed: ${promptIdempotent.reasons.join("; ")}`,
+    );
   }
 
   const dirtyName = assertEvalPromptHasNoCustomerPii(

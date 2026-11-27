@@ -333,6 +333,30 @@ export function assertEvalPromptHasNoCustomerPii(
   };
 }
 
+/** Idempotent re-check of the same eval prompt must not drift clean/blocked code. */
+export function assertEvalPromptCheckIdempotent(
+  prompt: string,
+  known?: KnownCustomerIdentifiers | null,
+): { ok: boolean; reasons: string[] } {
+  const first = assertEvalPromptHasNoCustomerPii(prompt, known);
+  const second = assertEvalPromptHasNoCustomerPii(prompt, known);
+  const reasons: string[] = [];
+  if (first.ok !== second.ok) reasons.push("prompt check ok drifted");
+  if (first.code !== second.code) reasons.push("prompt check code drifted");
+  if (first.liveEvalWiring !== second.liveEvalWiring) {
+    reasons.push("prompt check liveEvalWiring drifted");
+  }
+  if (
+    !first.ok &&
+    !second.ok &&
+    first.code === second.code &&
+    first.reasons.join("|") !== second.reasons.join("|")
+  ) {
+    reasons.push("prompt check block reasons drifted");
+  }
+  return { ok: reasons.length === 0, reasons };
+}
+
 /**
  * Re-verify a prior fixture decision against a fresh prepare() — refuse reason/code drift.
  */
