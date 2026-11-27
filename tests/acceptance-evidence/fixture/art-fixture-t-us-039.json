@@ -3,13 +3,13 @@
   "caseId": "T-US-039",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-US-039 (Form→CRM continuous verify — cadence/heartbeat)\nproof=form_crm_continuous_verify_cadence_heartbeat applyCount=1 :: Cadence heartbeat SUCCESS scheduled=2026-11-21T19:19:40.000Z executed=2026-11-21T19:19:45.000Z; cadence anchored to schedule; applyCount=1 | Missing CRM receipt → STAGE_FAILURE naming CRM_WRITE; lastVerified unchanged | Coverage gaps skip executed STAGE_FAILURE slot; recorded 2 later COVERAGE_GAP(s) | Derived 3 missed form→CRM cadence slots (interval=60000ms) | Missed cadence → 3 COVERAGE_GAP heartbeats; not SUCCESS; applyCount unchanged | Post-gap on-cadence MATCHED SUCCESS at 2026-11-21T19:23:40.000Z; heartbeat history retained | liveZohoWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE | Exercised canary operations (4): op-corr-ok-62d5d6a2,op-corr-fail-593bb3ce,op-corr-gap-4d7611e1,op-corr-rec-2a3b1870; canaryApplyCount=4\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-US-039 (Form→CRM continuous verify — cadence/heartbeat)\nproof=form_crm_continuous_verify_cadence_heartbeat applyCount=1 :: Cadence heartbeat SUCCESS scheduled=2026-11-21T19:19:40.000Z executed=2026-11-21T19:19:45.000Z; cadence anchored to schedule; applyCount=1 | Missing CRM receipt → STAGE_FAILURE naming CRM_WRITE; lastVerified unchanged | Coverage gaps skip executed STAGE_FAILURE slot; recorded 2 later COVERAGE_GAP(s) | Derived 3 missed form→CRM cadence slots (interval=60000ms) | Missed cadence → 3 COVERAGE_GAP heartbeats; not SUCCESS; applyCount unchanged | Post-gap on-cadence MATCHED SUCCESS at 2026-11-21T19:23:40.000Z; heartbeat history retained | liveZohoWiring=NOT_WIRED liveProviderSuccessClaimed=false externalEffects=NONE | Exercised canary operations (4): op-corr-ok-24fdb13c,op-corr-fail-bc3434dc,op-corr-gap-d964fd10,op-corr-rec-da6451d8; canaryApplyCount=4\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "form_crm_continuous_verify_cadence_heartbeat"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-039.json",
-  "createdAtIso": "2026-11-27T14:45:18.591Z",
+  "createdAtIso": "2026-11-27T15:00:55.479Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-039-9f5927b2a171"
+  "uniqueSourceArtifactId": "art-fixture-t-us-039-000b2d940aa9"
 }

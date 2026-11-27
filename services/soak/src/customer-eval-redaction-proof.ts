@@ -8,6 +8,10 @@
 import { randomUUID } from "node:crypto";
 import {
   SoakProofKind,
+  assertCustomerEvalRedactionDecisionHonest,
+  assertCustomerEvalRedactionIdempotent,
+  reclaimCustomerEvalRedactionDecision,
+  assertEvalPromptCheckIdempotent,
   assertEvalPromptHasNoCustomerPii,
   buildEvalSafePromptFromPayload,
   prepareCustomerDataForEvaluation,
@@ -129,6 +133,479 @@ export function proofCustomerDataEvalRedactionBlocks(
     details.push(`raw passthrough unexpectedly ${JSON.stringify(raw)}`);
   }
 
+  const rawNameEval = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    useUnredactedCustomerDisplayNameInEval: true,
+  });
+  if (
+    !rawNameEval.allowed &&
+    rawNameEval.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push(
+      "useUnredactedCustomerDisplayNameInEval → CUSTOMER_DATA_LEAK_BLOCKED",
+    );
+  } else {
+    passed = false;
+    details.push(`rawNameEval unexpectedly ${JSON.stringify(rawNameEval)}`);
+  }
+
+  const rawPhoneEval = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    useUnredactedCustomerPhoneInEval: true,
+  });
+  if (
+    !rawPhoneEval.allowed &&
+    rawPhoneEval.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push(
+      "useUnredactedCustomerPhoneInEval → CUSTOMER_DATA_LEAK_BLOCKED",
+    );
+  } else {
+    passed = false;
+    details.push(`rawPhoneEval unexpectedly ${JSON.stringify(rawPhoneEval)}`);
+  }
+
+  const rawEmailEval = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    useUnredactedCustomerEmailInEval: true,
+  });
+  if (
+    !rawEmailEval.allowed &&
+    rawEmailEval.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push(
+      "useUnredactedCustomerEmailInEval → CUSTOMER_DATA_LEAK_BLOCKED",
+    );
+  } else {
+    passed = false;
+    details.push(`rawEmailEval unexpectedly ${JSON.stringify(rawEmailEval)}`);
+  }
+
+  const rawConvEval = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    useUnredactedConversationIdInEval: true,
+  });
+  if (
+    !rawConvEval.allowed &&
+    rawConvEval.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push(
+      "useUnredactedConversationIdInEval → CUSTOMER_DATA_LEAK_BLOCKED",
+    );
+  } else {
+    passed = false;
+    details.push(`rawConvEval unexpectedly ${JSON.stringify(rawConvEval)}`);
+  }
+
+  const rawIntentEval = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    useUnredactedIntentLabelInEval: true,
+  });
+  if (
+    !rawIntentEval.allowed &&
+    rawIntentEval.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push(
+      "useUnredactedIntentLabelInEval → CUSTOMER_DATA_LEAK_BLOCKED",
+    );
+  } else {
+    passed = false;
+    details.push(`rawIntentEval unexpectedly ${JSON.stringify(rawIntentEval)}`);
+  }
+
+  const rawBodyEval = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    useUnredactedMessageBodyInEval: true,
+  });
+  if (
+    !rawBodyEval.allowed &&
+    rawBodyEval.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push(
+      "useUnredactedMessageBodyInEval → CUSTOMER_DATA_LEAK_BLOCKED",
+    );
+  } else {
+    passed = false;
+    details.push(`rawBodyEval unexpectedly ${JSON.stringify(rawBodyEval)}`);
+  }
+
+  const stripTokens = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    stripRedactionTokensFromEvalPrompt: true,
+  });
+  if (
+    !stripTokens.allowed &&
+    stripTokens.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push(
+      "stripRedactionTokensFromEvalPrompt → CUSTOMER_DATA_LEAK_BLOCKED",
+    );
+  } else {
+    passed = false;
+    details.push(`stripTokens unexpectedly ${JSON.stringify(stripTokens)}`);
+  }
+
+  const deferRedact = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    deferCustomerRedactionUntilAfterEval: true,
+  });
+  if (
+    !deferRedact.allowed &&
+    deferRedact.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push(
+      "deferCustomerRedactionUntilAfterEval → CUSTOMER_DATA_LEAK_BLOCKED",
+    );
+  } else {
+    passed = false;
+    details.push(`deferRedact unexpectedly ${JSON.stringify(deferRedact)}`);
+  }
+
+  const partialRedact = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    allowPartialRedactionForEval: true,
+  });
+  if (
+    !partialRedact.allowed &&
+    partialRedact.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push(
+      "allowPartialRedactionForEval → CUSTOMER_DATA_LEAK_BLOCKED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `partialRedact unexpectedly ${JSON.stringify(partialRedact)}`,
+    );
+  }
+
+  const staleCache = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    reuseStaleRedactedEvalPayload: true,
+  });
+  if (
+    !staleCache.allowed &&
+    staleCache.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push(
+      "reuseStaleRedactedEvalPayload → CUSTOMER_DATA_LEAK_BLOCKED",
+    );
+  } else {
+    passed = false;
+    details.push(`staleCache unexpectedly ${JSON.stringify(staleCache)}`);
+  }
+
+  const nakedEval = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    useEvalOnlyWithoutRedactionFence: true,
+  });
+  if (!nakedEval.allowed && nakedEval.code === "CUSTOMER_DATA_LEAK_BLOCKED") {
+    details.push(
+      "useEvalOnlyWithoutRedactionFence → CUSTOMER_DATA_LEAK_BLOCKED",
+    );
+  } else {
+    passed = false;
+    details.push(`nakedEval unexpectedly ${JSON.stringify(nakedEval)}`);
+  }
+
+  const skipScan = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    skipEvalPromptPiiScan: true,
+  });
+  if (!skipScan.allowed && skipScan.code === "CUSTOMER_DATA_LEAK_BLOCKED") {
+    details.push("skipEvalPromptPiiScan → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`skipScan unexpectedly ${JSON.stringify(skipScan)}`);
+  }
+
+  const trustRaw = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    trustUnredactedSourceAsSafe: true,
+  });
+  if (!trustRaw.allowed && trustRaw.code === "CUSTOMER_DATA_LEAK_BLOCKED") {
+    details.push("trustUnredactedSourceAsSafe → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`trustRaw unexpectedly ${JSON.stringify(trustRaw)}`);
+  }
+
+  const optionalRedact = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    claimRedactionOptional: true,
+  });
+  if (
+    !optionalRedact.allowed &&
+    optionalRedact.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("claimRedactionOptional → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(
+      `optionalRedact unexpectedly ${JSON.stringify(optionalRedact)}`,
+    );
+  }
+
+  const mirrorRaw = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    mirrorRawFieldsInRedactedPayload: true,
+  });
+  if (
+    !mirrorRaw.allowed &&
+    mirrorRaw.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push(
+      "mirrorRawFieldsInRedactedPayload → CUSTOMER_DATA_LEAK_BLOCKED",
+    );
+  } else {
+    passed = false;
+    details.push(`mirrorRaw unexpectedly ${JSON.stringify(mirrorRaw)}`);
+  }
+
+  const degradeRaw = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    degradeToRawPassthrough: true,
+  });
+  if (
+    !degradeRaw.allowed &&
+    degradeRaw.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("degradeToRawPassthrough → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`degradeRaw unexpectedly ${JSON.stringify(degradeRaw)}`);
+  }
+
+  const rawPromptPath = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    buildPromptFromRawSource: true,
+  });
+  if (
+    !rawPromptPath.allowed &&
+    rawPromptPath.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("buildPromptFromRawSource → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`rawPromptPath unexpectedly ${JSON.stringify(rawPromptPath)}`);
+  }
+
+  const bypassStructured = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    bypassStructuredFieldRedaction: true,
+  });
+  if (
+    !bypassStructured.allowed &&
+    bypassStructured.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push(
+      "bypassStructuredFieldRedaction → CUSTOMER_DATA_LEAK_BLOCKED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `bypassStructured unexpectedly ${JSON.stringify(bypassStructured)}`,
+    );
+  }
+
+  const bypassBody = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    bypassMessageBodyRedaction: true,
+  });
+  if (
+    !bypassBody.allowed &&
+    bypassBody.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("bypassMessageBodyRedaction → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`bypassBody unexpectedly ${JSON.stringify(bypassBody)}`);
+  }
+
+  const bypassIntent = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    bypassIntentLabelRedaction: true,
+  });
+  if (
+    !bypassIntent.allowed &&
+    bypassIntent.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("bypassIntentLabelRedaction → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`bypassIntent unexpectedly ${JSON.stringify(bypassIntent)}`);
+  }
+
+  const bypassConv = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    bypassConversationIdRedaction: true,
+  });
+  if (
+    !bypassConv.allowed &&
+    bypassConv.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("bypassConversationIdRedaction → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`bypassConv unexpectedly ${JSON.stringify(bypassConv)}`);
+  }
+
+  const waiveResidual = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    allowResidualPiiInPayload: true,
+  });
+  if (
+    !waiveResidual.allowed &&
+    waiveResidual.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("allowResidualPiiInPayload → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`waiveResidual unexpectedly ${JSON.stringify(waiveResidual)}`);
+  }
+
+  const exportLive = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    exportToLiveProvider: true,
+  });
+  if (
+    !exportLive.allowed &&
+    exportLive.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("exportToLiveProvider → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`exportToLive unexpectedly ${JSON.stringify(exportLive)}`);
+  }
+
+  const skipRedaction = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    skipRedactionForEval: true,
+  });
+  if (
+    !skipRedaction.allowed &&
+    skipRedaction.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("skipRedactionForEval → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`skipRedaction unexpectedly ${JSON.stringify(skipRedaction)}`);
+  }
+
+  const forceDeliver = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    forceDeliverDespiteLeak: true,
+  });
+  if (
+    !forceDeliver.allowed &&
+    forceDeliver.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("forceDeliverDespiteLeak → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`forceDeliver unexpectedly ${JSON.stringify(forceDeliver)}`);
+  }
+
+  // 2a. Simultaneous live VERIFIED + live fleet refused.
+  const dualLive = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    claimLiveVerified: true,
+    requestLiveEvalFleet: true,
+  });
+  if (
+    !dualLive.allowed &&
+    dualLive.code === "CUSTOMER_DATA_LEAK_BLOCKED" &&
+    dualLive.reasons.some((r) => /LIVE_CLAIM_REFUSED/.test(r))
+  ) {
+    details.push(
+      "simultaneous claimLiveVerified+requestLiveEvalFleet → LIVE_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(`dual live claims unexpectedly ${JSON.stringify(dualLive)}`);
+  }
+
+  const idempotent = assertCustomerEvalRedactionIdempotent({
+    source,
+    mode: "redact",
+  });
+  if (idempotent.ok) {
+    details.push("reapply redact path idempotent (code/payload fields stable)");
+  } else {
+    passed = false;
+    details.push(`idempotent redact failed: ${idempotent.reasons.join("; ")}`);
+  }
+
+  const idempotentRaw = assertCustomerEvalRedactionIdempotent({
+    source,
+    mode: "raw_passthrough",
+  });
+  const idempotentDualLive = assertCustomerEvalRedactionIdempotent({
+    source,
+    mode: "redact",
+    claimLiveVerified: true,
+    requestLiveEvalFleet: true,
+  });
+  if (idempotentRaw.ok && idempotentDualLive.ok) {
+    details.push(
+      "reapply idempotent on raw_passthrough block and dual-live refuse",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `idempotent block paths failed raw=${idempotentRaw.reasons} dual=${idempotentDualLive.reasons}`,
+    );
+  }
+
+  if (redacted.allowed) {
+    const reclaim = reclaimCustomerEvalRedactionDecision(
+      { source, mode: "redact" },
+      redacted,
+    );
+    if (reclaim.ok) {
+      details.push("reclaimCustomerEvalRedactionDecision stable on redact path");
+    } else {
+      passed = false;
+      details.push(`reclaim redact failed: ${reclaim.reasons.join("; ")}`);
+    }
+  }
+
+  if (redacted.allowed) {
+    const honest = assertCustomerEvalRedactionDecisionHonest(redacted);
+    if (honest.ok) {
+      details.push("fixture decision honesty (liveEvalWiring/externalEffects)");
+    } else {
+      passed = false;
+      details.push(`honesty check failed: ${honest.reasons.join("; ")}`);
+    }
+  }
+
   // 2b. Live VERIFIED / live fleet claims refused.
   const liveVerified = prepareCustomerDataForEvaluation({
     source,
@@ -242,6 +719,19 @@ export function proofCustomerDataEvalRedactionBlocks(
   } else {
     passed = false;
     details.push(`dirty email prompt unexpectedly ${JSON.stringify(dirtyEmail)}`);
+  }
+
+  const promptIdempotent = assertEvalPromptCheckIdempotent(
+    "Judge fixture answer intent=tour_request",
+    known,
+  );
+  if (promptIdempotent.ok) {
+    details.push("assertEvalPromptCheckIdempotent stable on clean prompt");
+  } else {
+    passed = false;
+    details.push(
+      `prompt idempotent failed: ${promptIdempotent.reasons.join("; ")}`,
+    );
   }
 
   const dirtyName = assertEvalPromptHasNoCustomerPii(

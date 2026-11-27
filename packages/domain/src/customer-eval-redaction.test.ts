@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   CUSTOMER_EVAL_LIVE_WIRING,
+  assertCustomerEvalRedactionDecisionHonest,
+  assertCustomerEvalRedactionIdempotent,
+  reclaimCustomerEvalRedactionDecision,
+  assertEvalPromptCheckIdempotent,
   assertEvalPromptHasNoCustomerPii,
   buildEvalSafePromptFromPayload,
   containsRawCustomerPii,
@@ -115,6 +119,343 @@ describe("customer eval redaction (T-X072)", () => {
     expect(decision.reasons.some((r) => /No identifiable/.test(r))).toBe(true);
   });
 
+  it("reclaim refuses tampered prior decision drift", () => {
+    const prior = prepareCustomerDataForEvaluation({ source, mode: "redact" });
+    expect(prior.allowed).toBe(true);
+    const ok = reclaimCustomerEvalRedactionDecision(
+      { source, mode: "redact" },
+      prior,
+    );
+    expect(ok.ok).toBe(true);
+
+    const blocked = prepareCustomerDataForEvaluation({
+      source,
+      mode: "raw_passthrough",
+    });
+    expect(blocked.allowed).toBe(false);
+    const tampered = {
+      ...blocked,
+      reasons: ["invented reason"],
+    };
+    const drift = reclaimCustomerEvalRedactionDecision(
+      { source, mode: "raw_passthrough" },
+      tampered,
+    );
+    expect(drift.ok).toBe(false);
+    expect(drift.reasons).toContain("reclaim block reasons drifted");
+  });
+
+  it("refuses useUnredactedCustomerDisplayNameInEval", () => {
+    const rawName = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      useUnredactedCustomerDisplayNameInEval: true,
+    });
+    expect(rawName.allowed).toBe(false);
+    expect(
+      rawName.reasons.some((r) => /Unredacted customer display name/.test(r)),
+    ).toBe(true);
+  });
+
+  it("refuses useUnredactedCustomerPhoneInEval", () => {
+    const rawPhone = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      useUnredactedCustomerPhoneInEval: true,
+    });
+    expect(rawPhone.allowed).toBe(false);
+    expect(rawPhone.reasons.some((r) => /Unredacted customer phone/.test(r))).toBe(
+      true,
+    );
+  });
+
+  it("refuses useUnredactedCustomerEmailInEval", () => {
+    const rawEmail = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      useUnredactedCustomerEmailInEval: true,
+    });
+    expect(rawEmail.allowed).toBe(false);
+    expect(rawEmail.reasons.some((r) => /Unredacted customer email/.test(r))).toBe(
+      true,
+    );
+  });
+
+  it("refuses useUnredactedConversationIdInEval", () => {
+    const rawConv = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      useUnredactedConversationIdInEval: true,
+    });
+    expect(rawConv.allowed).toBe(false);
+    expect(
+      rawConv.reasons.some((r) => /Unredacted customer conversationId/.test(r)),
+    ).toBe(true);
+  });
+
+  it("refuses useUnredactedIntentLabelInEval", () => {
+    const rawIntent = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      useUnredactedIntentLabelInEval: true,
+    });
+    expect(rawIntent.allowed).toBe(false);
+    expect(
+      rawIntent.reasons.some((r) => /Unredacted customer intentLabel/.test(r)),
+    ).toBe(true);
+  });
+
+  it("refuses useUnredactedMessageBodyInEval", () => {
+    const rawBody = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      useUnredactedMessageBodyInEval: true,
+    });
+    expect(rawBody.allowed).toBe(false);
+    expect(
+      rawBody.reasons.some((r) => /Unredacted customer messageBody/.test(r)),
+    ).toBe(true);
+  });
+
+  it("refuses stripRedactionTokensFromEvalPrompt", () => {
+    const strip = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      stripRedactionTokensFromEvalPrompt: true,
+    });
+    expect(strip.allowed).toBe(false);
+    expect(strip.reasons.some((r) => /Strip redaction tokens/.test(r))).toBe(true);
+  });
+
+  it("refuses deferCustomerRedactionUntilAfterEval", () => {
+    const deferred = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      deferCustomerRedactionUntilAfterEval: true,
+    });
+    expect(deferred.allowed).toBe(false);
+    expect(
+      deferred.reasons.some((r) => /Defer customer redaction/.test(r)),
+    ).toBe(true);
+  });
+
+  it("refuses allowPartialRedactionForEval", () => {
+    const partial = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      allowPartialRedactionForEval: true,
+    });
+    expect(partial.allowed).toBe(false);
+    expect(partial.reasons.some((r) => /Partial customer redaction/.test(r))).toBe(
+      true,
+    );
+  });
+
+  it("refuses reuseStaleRedactedEvalPayload", () => {
+    const stale = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      reuseStaleRedactedEvalPayload: true,
+    });
+    expect(stale.allowed).toBe(false);
+    expect(stale.reasons.some((r) => /stale redacted/.test(r))).toBe(true);
+  });
+
+  it("refuses useEvalOnlyWithoutRedactionFence", () => {
+    const naked = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      useEvalOnlyWithoutRedactionFence: true,
+    });
+    expect(naked.allowed).toBe(false);
+    expect(naked.reasons.some((r) => /redaction fence/.test(r))).toBe(true);
+  });
+
+  it("refuses skipEvalPromptPiiScan", () => {
+    const skip = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      skipEvalPromptPiiScan: true,
+    });
+    expect(skip.allowed).toBe(false);
+    expect(skip.reasons.some((r) => /PII scan/.test(r))).toBe(true);
+  });
+
+  it("refuses trustUnredactedSourceAsSafe", () => {
+    const trust = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      trustUnredactedSourceAsSafe: true,
+    });
+    expect(trust.allowed).toBe(false);
+    expect(trust.reasons.some((r) => /Trust unredacted/.test(r))).toBe(true);
+  });
+
+  it("refuses claimRedactionOptional", () => {
+    const optional = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      claimRedactionOptional: true,
+    });
+    expect(optional.allowed).toBe(false);
+    expect(optional.reasons.some((r) => /Optional customer redaction/.test(r))).toBe(
+      true,
+    );
+  });
+
+  it("refuses mirrorRawFieldsInRedactedPayload", () => {
+    const mirror = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      mirrorRawFieldsInRedactedPayload: true,
+    });
+    expect(mirror.allowed).toBe(false);
+    expect(mirror.reasons.some((r) => /Mirror raw/.test(r))).toBe(true);
+  });
+
+  it("refuses degradeToRawPassthrough", () => {
+    const degrade = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      degradeToRawPassthrough: true,
+    });
+    expect(degrade.allowed).toBe(false);
+    expect(degrade.reasons.some((r) => /Degrade redact/.test(r))).toBe(true);
+  });
+
+  it("refuses buildPromptFromRawSource", () => {
+    const rawPrompt = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      buildPromptFromRawSource: true,
+    });
+    expect(rawPrompt.allowed).toBe(false);
+    expect(rawPrompt.reasons.some((r) => /raw customer source/i.test(r))).toBe(
+      true,
+    );
+  });
+
+  it("refuses bypassStructuredFieldRedaction", () => {
+    const bypass = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      bypassStructuredFieldRedaction: true,
+    });
+    expect(bypass.allowed).toBe(false);
+    expect(bypass.reasons.some((r) => /structured customer field/i.test(r))).toBe(
+      true,
+    );
+  });
+
+  it("refuses bypassMessageBodyRedaction", () => {
+    const bypass = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      bypassMessageBodyRedaction: true,
+    });
+    expect(bypass.allowed).toBe(false);
+    expect(bypass.reasons.some((r) => /messageBody/.test(r))).toBe(true);
+  });
+
+  it("refuses bypassIntentLabelRedaction", () => {
+    const bypass = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      bypassIntentLabelRedaction: true,
+    });
+    expect(bypass.allowed).toBe(false);
+    expect(bypass.reasons.some((r) => /intentLabel/.test(r))).toBe(true);
+  });
+
+  it("refuses bypassConversationIdRedaction", () => {
+    const bypass = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      bypassConversationIdRedaction: true,
+    });
+    expect(bypass.allowed).toBe(false);
+    expect(bypass.reasons.some((r) => /conversationId/.test(r))).toBe(true);
+  });
+
+  it("refuses allowResidualPiiInPayload", () => {
+    const waive = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      allowResidualPiiInPayload: true,
+    });
+    expect(waive.allowed).toBe(false);
+    expect(waive.reasons.some((r) => /residual PII/i.test(r))).toBe(true);
+  });
+
+  it("refuses exportToLiveProvider", () => {
+    const live = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      exportToLiveProvider: true,
+    });
+    expect(live.allowed).toBe(false);
+    expect(live.reasons.some((r) => /NOT_WIRED/.test(r))).toBe(true);
+  });
+
+  it("refuses skipRedactionForEval", () => {
+    const skip = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      skipRedactionForEval: true,
+    });
+    expect(skip.allowed).toBe(false);
+    expect(skip.code).toBe("CUSTOMER_DATA_LEAK_BLOCKED");
+    expect(skip.reasons.some((r) => /Skip redaction/.test(r))).toBe(true);
+  });
+
+  it("refuses forceDeliverDespiteLeak", () => {
+    const forced = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      forceDeliverDespiteLeak: true,
+    });
+    expect(forced.allowed).toBe(false);
+    expect(forced.code).toBe("CUSTOMER_DATA_LEAK_BLOCKED");
+    expect(forced.reasons.some((r) => /Force-deliver/.test(r))).toBe(true);
+  });
+
+  it("refuses simultaneous claimLiveVerified and requestLiveEvalFleet", () => {
+    const dual = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      claimLiveVerified: true,
+      requestLiveEvalFleet: true,
+    });
+    expect(dual.allowed).toBe(false);
+    expect(dual.code).toBe("CUSTOMER_DATA_LEAK_BLOCKED");
+    expect(dual.reasons.some((r) => /LIVE_CLAIM_REFUSED/.test(r))).toBe(true);
+  });
+
+  it("reapply is idempotent for redact and block paths", () => {
+    const redactOk = assertCustomerEvalRedactionIdempotent({
+      source,
+      mode: "redact",
+    });
+    expect(redactOk.ok).toBe(true);
+    const rawBlock = assertCustomerEvalRedactionIdempotent({
+      source,
+      mode: "raw_passthrough",
+    });
+    expect(rawBlock.ok).toBe(true);
+
+    const first = prepareCustomerDataForEvaluation({ source, mode: "redact" });
+    if (!first.allowed || !first.payload) throw new Error("expected redact");
+    const tampered = {
+      ...first,
+      liveProviderSuccessClaimed: true as false,
+    };
+    const honesty = assertCustomerEvalRedactionDecisionHonest(
+      tampered as typeof first,
+    );
+    expect(honesty.ok).toBe(false);
+    expect(honesty.code).toBe("DISHONEST_LIVE_CLAIM");
+  });
+
   it("refuses claimLiveVerified and requestLiveEvalFleet", () => {
     const verified = prepareCustomerDataForEvaluation({
       source,
@@ -190,6 +531,19 @@ describe("customer eval redaction (T-X072)", () => {
     const prompt = buildEvalSafePromptFromPayload(decision.payload);
     expect(prompt).not.toMatch(/jordan\.lee@example\.com/i);
     expect(prompt).toMatch(/\[REDACTED_CONVERSATION_ID\]/);
+  });
+
+  it("prompt PII check is idempotent", () => {
+    const clean = assertEvalPromptCheckIdempotent(
+      "Judge fixture answer for tour_request",
+      { displayName: source.customerDisplayName },
+    );
+    expect(clean.ok).toBe(true);
+    const dirty = assertEvalPromptCheckIdempotent(
+      `mention ${source.customerEmail}`,
+      { email: source.customerEmail },
+    );
+    expect(dirty.ok).toBe(true);
   });
 
   it("detects and redacts PII in free text including known names", () => {

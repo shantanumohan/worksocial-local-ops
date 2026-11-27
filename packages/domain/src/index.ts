@@ -1283,6 +1283,10 @@ export {
   type PublicDiscoveryObservation,
 } from "./host-offline-public-discovery.js";
 export {
+  assertCustomerEvalRedactionDecisionHonest,
+  assertCustomerEvalRedactionIdempotent,
+  reclaimCustomerEvalRedactionDecision,
+  assertEvalPromptCheckIdempotent,
   assertEvalPromptHasNoCustomerPii,
   buildEvalSafePromptFromPayload,
   containsRawCustomerPii,

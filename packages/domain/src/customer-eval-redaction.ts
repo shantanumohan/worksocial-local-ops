@@ -191,8 +191,214 @@ export function prepareCustomerDataForEvaluation(input: {
   claimLiveVerified?: boolean;
   /** Forbidden — live EVAL fleet stays NOT_WIRED. */
   requestLiveEvalFleet?: boolean;
+  /** Forbidden — fixture must not deliver raw PII despite leak detection. */
+  forceDeliverDespiteLeak?: boolean;
+  /** Forbidden — eval gate must redact, not skip. */
+  skipRedactionForEval?: boolean;
+  /** Forbidden — fixture must not export eval payload to live provider. */
+  exportToLiveProvider?: boolean;
+  /** Forbidden — must not waive residual-PII post-check. */
+  allowResidualPiiInPayload?: boolean;
+  /** Forbidden — conversationId must stay redacted when it carries identifiers. */
+  bypassConversationIdRedaction?: boolean;
+  /** Forbidden — intentLabel must stay scanned/redacted when it carries identifiers. */
+  bypassIntentLabelRedaction?: boolean;
+  /** Forbidden — messageBody must stay scanned/redacted when it carries identifiers. */
+  bypassMessageBodyRedaction?: boolean;
+  /** Forbidden — structured name/email/phone fields must stay tokenized. */
+  bypassStructuredFieldRedaction?: boolean;
+  /** Forbidden — prompts must come from redacted payload builder only. */
+  buildPromptFromRawSource?: boolean;
+  /** Forbidden — must not downgrade redact mode into raw passthrough. */
+  degradeToRawPassthrough?: boolean;
+  /** Forbidden — redacted payload must not echo raw structured fields. */
+  mirrorRawFieldsInRedactedPayload?: boolean;
+  /** Forbidden — eval may not treat customer redaction as optional. */
+  claimRedactionOptional?: boolean;
+  /** Forbidden — cannot trust raw source as already eval-safe. */
+  trustUnredactedSourceAsSafe?: boolean;
+  /** Forbidden — eval prompts must stay PII-scanned. */
+  skipEvalPromptPiiScan?: boolean;
+  /** Forbidden — EVAL_ONLY path must not bypass redaction fence. */
+  useEvalOnlyWithoutRedactionFence?: boolean;
+  /** Forbidden — cannot reuse prior redacted eval payload without fresh PII scan. */
+  reuseStaleRedactedEvalPayload?: boolean;
+  /** Forbidden — eval gate must not accept partial redaction short-cuts. */
+  allowPartialRedactionForEval?: boolean;
+  /** Forbidden — redaction cannot be deferred until after eval consumes data. */
+  deferCustomerRedactionUntilAfterEval?: boolean;
+  /** Forbidden — eval prompts must not strip redaction tokens to recover PII. */
+  stripRedactionTokensFromEvalPrompt?: boolean;
+  /** Forbidden — eval must not consume unredacted messageBody from customer source. */
+  useUnredactedMessageBodyInEval?: boolean;
+  /** Forbidden — eval must not consume unredacted intentLabel from customer source. */
+  useUnredactedIntentLabelInEval?: boolean;
+  /** Forbidden — eval must not echo raw conversationId from customer source. */
+  useUnredactedConversationIdInEval?: boolean;
+  /** Forbidden — eval must not consume unredacted customerEmail from source. */
+  useUnredactedCustomerEmailInEval?: boolean;
+  /** Forbidden — eval must not consume unredacted customerPhone from source. */
+  useUnredactedCustomerPhoneInEval?: boolean;
+  /** Forbidden — eval must not consume unredacted customer display name from source. */
+  useUnredactedCustomerDisplayNameInEval?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.useUnredactedCustomerDisplayNameInEval === true) {
+    return blockedLeak([
+      "Unredacted customer display name in eval refused — T-X072",
+    ]);
+  }
+
+  if (input.useUnredactedCustomerPhoneInEval === true) {
+    return blockedLeak([
+      "Unredacted customer phone in eval refused — T-X072",
+    ]);
+  }
+
+  if (input.useUnredactedCustomerEmailInEval === true) {
+    return blockedLeak([
+      "Unredacted customer email in eval refused — T-X072",
+    ]);
+  }
+
+  if (input.useUnredactedConversationIdInEval === true) {
+    return blockedLeak([
+      "Unredacted customer conversationId in eval refused — T-X072",
+    ]);
+  }
+
+  if (input.useUnredactedIntentLabelInEval === true) {
+    return blockedLeak([
+      "Unredacted customer intentLabel in eval refused — T-X072",
+    ]);
+  }
+
+  if (input.useUnredactedMessageBodyInEval === true) {
+    return blockedLeak([
+      "Unredacted customer messageBody in eval refused — T-X072",
+    ]);
+  }
+
+  if (input.stripRedactionTokensFromEvalPrompt === true) {
+    return blockedLeak([
+      "Strip redaction tokens from eval prompt refused — T-X072",
+    ]);
+  }
+
+  if (input.deferCustomerRedactionUntilAfterEval === true) {
+    return blockedLeak([
+      "Defer customer redaction until after eval refused — pre-eval gate (T-X072)",
+    ]);
+  }
+
+  if (input.allowPartialRedactionForEval === true) {
+    return blockedLeak([
+      "Partial customer redaction for eval refused — full gate required (T-X072)",
+    ]);
+  }
+
+  if (input.reuseStaleRedactedEvalPayload === true) {
+    return blockedLeak([
+      "Reuse stale redacted eval payload refused — fresh scan required (T-X072)",
+    ]);
+  }
+
+  if (input.useEvalOnlyWithoutRedactionFence === true) {
+    return blockedLeak([
+      "EVAL_ONLY without redaction fence refused — T-X072",
+    ]);
+  }
+
+  if (input.skipEvalPromptPiiScan === true) {
+    return blockedLeak([
+      "Skip eval prompt PII scan refused — fixture gate (T-X072)",
+    ]);
+  }
+
+  if (input.trustUnredactedSourceAsSafe === true) {
+    return blockedLeak([
+      "Trust unredacted customer source as eval-safe refused — T-X072",
+    ]);
+  }
+
+  if (input.claimRedactionOptional === true) {
+    return blockedLeak([
+      "Optional customer redaction claims refused — eval gate (T-X072)",
+    ]);
+  }
+
+  if (input.mirrorRawFieldsInRedactedPayload === true) {
+    return blockedLeak([
+      "Mirror raw customer fields in redacted payload refused — T-X072",
+    ]);
+  }
+
+  if (input.degradeToRawPassthrough === true) {
+    return blockedLeak([
+      "Degrade redact mode to raw passthrough refused — T-X072",
+    ]);
+  }
+
+  if (input.buildPromptFromRawSource === true) {
+    return blockedLeak([
+      "Build eval prompt from raw customer source refused — T-X072",
+    ]);
+  }
+
+  if (input.bypassStructuredFieldRedaction === true) {
+    return blockedLeak([
+      "Bypass structured customer field redaction refused — eval gate (T-X072)",
+    ]);
+  }
+
+  if (input.bypassMessageBodyRedaction === true) {
+    return blockedLeak([
+      "Bypass messageBody redaction refused — eval gate (T-X072)",
+    ]);
+  }
+
+  if (input.bypassIntentLabelRedaction === true) {
+    return blockedLeak([
+      "Bypass intentLabel redaction refused — eval gate (T-X072)",
+    ]);
+  }
+
+  if (input.bypassConversationIdRedaction === true) {
+    return blockedLeak([
+      "Bypass conversationId redaction refused — eval gate (T-X072)",
+    ]);
+  }
+
+  if (input.allowResidualPiiInPayload === true) {
+    return blockedLeak([
+      "Waive residual PII in eval payload refused — redaction gate (T-X072)",
+    ]);
+  }
+
+  if (input.exportToLiveProvider === true) {
+    return blockedLeak([
+      "Export customer eval payload to live provider refused — NOT_WIRED (T-X072)",
+    ]);
+  }
+
+  if (input.skipRedactionForEval === true) {
+    return blockedLeak([
+      "Skip redaction for eval refused — customer data must be redacted (T-X072)",
+    ]);
+  }
+
+  if (input.forceDeliverDespiteLeak === true) {
+    return blockedLeak([
+      "Force-deliver despite customer PII leak refused — fixture eval gate (T-X072)",
+    ]);
+  }
+
+  if (input.claimLiveVerified === true && input.requestLiveEvalFleet === true) {
+    return blockedLeak([
+      "Simultaneous live VERIFIED and live-fleet claims refused — LIVE_CLAIM_REFUSED (T-X072)",
+    ]);
+  }
 
   if (input.claimLiveVerified === true) {
     return blockedLeak([
@@ -316,6 +522,163 @@ export function assertEvalPromptHasNoCustomerPii(
     code: "EVAL_PROMPT_CLEAN",
     reasons: ["Evaluation prompt has no raw customer identifiers"],
     liveEvalWiring: CUSTOMER_EVAL_LIVE_WIRING,
+  };
+}
+
+/** Idempotent re-check of the same eval prompt must not drift clean/blocked code. */
+export function assertEvalPromptCheckIdempotent(
+  prompt: string,
+  known?: KnownCustomerIdentifiers | null,
+): { ok: boolean; reasons: string[] } {
+  const first = assertEvalPromptHasNoCustomerPii(prompt, known);
+  const second = assertEvalPromptHasNoCustomerPii(prompt, known);
+  const reasons: string[] = [];
+  if (first.ok !== second.ok) reasons.push("prompt check ok drifted");
+  if (first.code !== second.code) reasons.push("prompt check code drifted");
+  if (first.liveEvalWiring !== second.liveEvalWiring) {
+    reasons.push("prompt check liveEvalWiring drifted");
+  }
+  if (
+    !first.ok &&
+    !second.ok &&
+    first.code === second.code &&
+    first.reasons.join("|") !== second.reasons.join("|")
+  ) {
+    reasons.push("prompt check block reasons drifted");
+  }
+  return { ok: reasons.length === 0, reasons };
+}
+
+/**
+ * Re-verify a prior fixture decision against a fresh prepare() — refuse reason/code drift.
+ */
+export function reclaimCustomerEvalRedactionDecision(
+  input: Parameters<typeof prepareCustomerDataForEvaluation>[0],
+  prior: CustomerEvalRedactionDecision,
+): { ok: boolean; reasons: string[] } {
+  const next = prepareCustomerDataForEvaluation(input);
+  const reasons: string[] = [];
+
+  if (prior.allowed !== next.allowed) {
+    reasons.push("reclaim allowed drifted");
+  }
+  if (prior.code !== next.code) {
+    reasons.push("reclaim code drifted");
+  }
+  if (prior.liveEvalWiring !== next.liveEvalWiring) {
+    reasons.push("reclaim liveEvalWiring drifted");
+  }
+  if (
+    prior.liveProviderSuccessClaimed !== next.liveProviderSuccessClaimed
+  ) {
+    reasons.push("reclaim liveProviderSuccessClaimed drifted");
+  }
+  if (
+    !prior.allowed &&
+    !next.allowed &&
+    prior.code === next.code &&
+    prior.reasons.join("|") !== next.reasons.join("|")
+  ) {
+    reasons.push("reclaim block reasons drifted");
+  }
+
+  if (prior.allowed && next.allowed && prior.payload && next.payload) {
+    if (prior.payload.messageBody !== next.payload.messageBody) {
+      reasons.push("reclaim messageBody drifted");
+    }
+    if (prior.payload.intentLabel !== next.payload.intentLabel) {
+      reasons.push("reclaim intentLabel drifted");
+    }
+  }
+
+  return { ok: reasons.length === 0, reasons };
+}
+
+/** Idempotent re-apply of the same source/mode must not drift codes or redacted payload shape. */
+export function assertCustomerEvalRedactionIdempotent(
+  input: Parameters<typeof prepareCustomerDataForEvaluation>[0],
+): { ok: boolean; reasons: string[] } {
+  const first = prepareCustomerDataForEvaluation(input);
+  const second = prepareCustomerDataForEvaluation(input);
+  const reasons: string[] = [];
+
+  if (first.allowed !== second.allowed) {
+    reasons.push("reapply allowed drifted");
+  }
+  if (first.code !== second.code) {
+    reasons.push("reapply code drifted");
+  }
+  if (first.liveEvalWiring !== second.liveEvalWiring) {
+    reasons.push("reapply liveEvalWiring drifted");
+  }
+  if (
+    first.liveProviderSuccessClaimed !== second.liveProviderSuccessClaimed
+  ) {
+    reasons.push("reapply liveProviderSuccessClaimed drifted");
+  }
+
+  if (first.allowed && second.allowed && first.payload && second.payload) {
+    if (
+      first.payload.redactedFields.join(",") !==
+      second.payload.redactedFields.join(",")
+    ) {
+      reasons.push("reapply redactedFields drifted");
+    }
+    if (first.payload.messageBody !== second.payload.messageBody) {
+      reasons.push("reapply messageBody drifted");
+    }
+    if (first.payload.intentLabel !== second.payload.intentLabel) {
+      reasons.push("reapply intentLabel drifted");
+    }
+    if (first.payload.conversationId !== second.payload.conversationId) {
+      reasons.push("reapply conversationId drifted");
+    }
+  }
+
+  if (
+    !first.allowed &&
+    !second.allowed &&
+    first.reasons.join("|") !== second.reasons.join("|")
+  ) {
+    reasons.push("reapply block reasons drifted");
+  }
+
+  return { ok: reasons.length === 0, reasons };
+}
+
+/**
+ * Refuse dishonest post-hoc tampering on fixture decisions (live success scrub).
+ */
+export function assertCustomerEvalRedactionDecisionHonest(
+  decision: CustomerEvalRedactionDecision,
+): { ok: boolean; code: "HONEST" | "DISHONEST_LIVE_CLAIM"; reasons: string[] } {
+  if (decision.liveProviderSuccessClaimed !== false) {
+    return {
+      ok: false,
+      code: "DISHONEST_LIVE_CLAIM",
+      reasons: [
+        "liveProviderSuccessClaimed must stay false on T-X072 fixture decisions",
+      ],
+    };
+  }
+  if (decision.liveEvalWiring !== CUSTOMER_EVAL_LIVE_WIRING) {
+    return {
+      ok: false,
+      code: "DISHONEST_LIVE_CLAIM",
+      reasons: ["liveEvalWiring must stay NOT_WIRED (T-X072)"],
+    };
+  }
+  if (decision.externalEffects !== "NONE") {
+    return {
+      ok: false,
+      code: "DISHONEST_LIVE_CLAIM",
+      reasons: ["externalEffects must stay NONE (T-X072)"],
+    };
+  }
+  return {
+    ok: true,
+    code: "HONEST",
+    reasons: ["fixture decision fields honest"],
   };
 }
 
