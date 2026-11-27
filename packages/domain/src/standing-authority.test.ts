@@ -358,4 +358,32 @@ describe("evaluateStandingAuthority", () => {
     });
     expect(denied.match).toBeNull();
   });
+
+  it("fence on treats numeric 1 held as deny (T-X006 edge)", () => {
+    const denied = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: 1 as unknown as boolean,
+      }),
+    );
+    expect(denied.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(denied.match).toBeNull();
+  });
+
+  it("fence on treats numeric 0 held as deny (T-X006 edge)", () => {
+    const denied = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: true,
+        supervisorLeaseHeld: 0 as unknown as boolean,
+      }),
+    );
+    expect(denied.decision).toMatchObject({
+      allowed: false,
+      code: "GRANT_MISSING",
+    });
+    expect(denied.match).toBeNull();
+  });
 });
