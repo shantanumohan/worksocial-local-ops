@@ -4,6 +4,7 @@ import {
   UNKNOWN_REMOTE_LIVE_PROVIDER_WIRING,
   UNKNOWN_REMOTE_RECONCILE_RELATED_CASE_IDS,
   evaluateUnknownRemoteReconcile,
+  isUnknownRemoteCompatibleEffectState,
   isUnknownRemoteResumeAuthorized,
   recordTimeoutAfterProviderAcceptance,
   unknownRemoteBlocksBlindResend,
@@ -409,5 +410,53 @@ describe("unknown-remote-reconcile (T-X020 / T-US-048)", () => {
     expect(d.code).toBe("SANDBOX_VERIFIED_CLAIM_REFUSED");
     expect(d.fixtureOnly).toBe(true);
     expect(d.externalEffects).toBe("NONE");
+  });
+
+  it("refuses blank operationId as INPUT_INCOMPLETE (Q33/S17)", () => {
+    for (const operationId of ["", "   ", "\t"]) {
+      const d = evaluateUnknownRemoteReconcile(
+        baseInput({ operationId }),
+      );
+      expect(d.allowed).toBe(false);
+      if (d.allowed) return;
+      expect(d.code).toBe("INPUT_INCOMPLETE");
+      expect(d.blindResendRefused).toBe(true);
+      expect(d.externalEffects).toBe("NONE");
+    }
+  });
+
+  it("refuses positive Infinity applyAttemptCount as non-finite (Q33/S18)", () => {
+    const d = evaluateUnknownRemoteReconcile(
+      baseInput({ applyAttemptCount: Number.POSITIVE_INFINITY }),
+    );
+    expect(d.allowed).toBe(false);
+    if (d.allowed) return;
+    expect(d.code).toBe("APPLY_COUNT_NON_FINITE");
+    expect(d.evidence?.blockingDecision).toBe("APPLY_COUNT_NON_FINITE");
+  });
+
+  it("isUnknownRemoteCompatibleEffectState distinguishes URO path from QUEUED (Q33/S19)", () => {
+    expect(
+      isUnknownRemoteCompatibleEffectState(EffectState.UNKNOWN_REMOTE_OUTCOME),
+    ).toBe(true);
+    expect(isUnknownRemoteCompatibleEffectState(EffectState.APPLYING)).toBe(
+      true,
+    );
+    expect(isUnknownRemoteCompatibleEffectState(EffectState.VERIFYING)).toBe(
+      true,
+    );
+    expect(isUnknownRemoteCompatibleEffectState(EffectState.QUEUED)).toBe(
+      false,
+    );
+  });
+
+  it("allow path pins recoveryPath and applyCount=1 on success reasons (Q33/S20)", () => {
+    const d = evaluateUnknownRemoteReconcile(baseInput());
+    expect(d.allowed).toBe(true);
+    if (!d.allowed) return;
+    expect(d.evidence.recoveryPath).toBe("UNKNOWN_REMOTE_RECONCILE");
+    expect(d.applyAttemptCount).toBe(1);
+    expect(d.reasons.join(" ")).toContain("applyCount=1");
+    expect(d.reasons.join(" ")).toContain("T-X020");
   });
 });
