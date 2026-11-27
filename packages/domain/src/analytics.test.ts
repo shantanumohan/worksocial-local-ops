@@ -299,354 +299,6 @@ describe("analytics — GA4 debug ≠ receipt", () => {
     expect(claimed.code).toBe("DELIVERED_CONVERSION_CLAIM_REFUSED");
   });
 
-  it("refuses claimSandboxVerified on fixture debug (T-X032 P5)", () => {
-    const sandbox = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimSandboxVerified: true,
-    });
-    expect(sandbox.code).toBe("SANDBOX_VERIFIED_CLAIM_REFUSED");
-    expect(sandbox.debugOk).toBe(true);
-    expect(sandbox.deliveredConversionClaimed).toBe(false);
-    expect(sandbox.liveProviderWiring).toBe("NOT_WIRED");
-  });
-
-  it("delivered-conversion claim wins over measured-receipt when both set (P5)", () => {
-    const dual = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimDeliveredConversion: true,
-      claimMeasuredReceipt: true,
-    });
-    expect(dual.code).toBe("DELIVERED_CONVERSION_CLAIM_REFUSED");
-  });
-
-  it("refuses claimLiveProviderSuccess without inventing VERIFIED (T-X032 P3)", () => {
-    const liveClaim = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimLiveProviderSuccess: true,
-    });
-    expect(liveClaim.debugOk).toBe(true);
-    expect(liveClaim.code).toBe("LIVE_CLAIM_REFUSED");
-    expect(liveClaim.deliveredConversionClaimed).toBe(false);
-    expect(liveClaim.measuredReceiptClaimed).toBe(false);
-    expect(liveClaim.liveProviderWiring).toBe("NOT_WIRED");
-  });
-
-  it("ignores non-boolean claimSandboxVerified literals (P9)", () => {
-    const padded = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimSandboxVerified: "true" as unknown as boolean,
-    });
-    expect(padded.code).toBeNull();
-    expect(padded.debugOk).toBe(true);
-  });
-
-  it("refuses claimExternalEffects from debug (T-X032 P9)", () => {
-    const fx = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimExternalEffects: true,
-    });
-    expect(fx.code).toBe("EXTERNAL_EFFECTS_CLAIM_REFUSED");
-    expect(fx.externalEffects).toBe("NONE");
-  });
-
-  it("refuses claimDebugVerified on fixture debug (T-X032 P12)", () => {
-    const verified = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimDebugVerified: true,
-    });
-    expect(verified.code).toBe("DEBUG_VERIFIED_CLAIM_REFUSED");
-    expect(verified.debugOk).toBe(true);
-    expect(verified.deliveredConversionClaimed).toBe(false);
-    expect(verified.measuredReceiptClaimed).toBe(false);
-  });
-
-  it("live-provider claim wins over debug-verified when both set (P12)", () => {
-    const dual = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimLiveProviderSuccess: true,
-      claimDebugVerified: true,
-    });
-    expect(dual.code).toBe("LIVE_CLAIM_REFUSED");
-  });
-
-  it("refuses claimIntegrationVerified on fixture debug (T-X032 P13)", () => {
-    const integration = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimIntegrationVerified: true,
-    });
-    expect(integration.code).toBe("INTEGRATION_VERIFIED_CLAIM_REFUSED");
-    expect(integration.externalEffects).toBe("NONE");
-  });
-
-  it("refuses claimMeasurementProtocolVerified on fixture debug (T-X032 P14)", () => {
-    const protocol = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimMeasurementProtocolVerified: true,
-    });
-    expect(protocol.code).toBe("MEASUREMENT_PROTOCOL_VERIFIED_CLAIM_REFUSED");
-    expect(protocol.debugOk).toBe(true);
-    expect(protocol.deliveredConversionClaimed).toBe(false);
-    expect(protocol.liveProviderWiring).toBe("NOT_WIRED");
-  });
-
-  it("integration-verified claim wins over measurement-protocol when both set (P14)", () => {
-    const dual = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimIntegrationVerified: true,
-      claimMeasurementProtocolVerified: true,
-    });
-    expect(dual.code).toBe("INTEGRATION_VERIFIED_CLAIM_REFUSED");
-  });
-
-  it("refuses claimReportingAccessVerified on fixture debug (T-X032 P15)", () => {
-    const reporting = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimReportingAccessVerified: true,
-    });
-    expect(reporting.code).toBe("REPORTING_ACCESS_VERIFIED_CLAIM_REFUSED");
-    expect(reporting.measuredReceiptClaimed).toBe(false);
-    expect(reporting.liveProviderWiring).toBe("NOT_WIRED");
-  });
-
-  it("measurement-protocol claim wins over reporting-access when both set (P15)", () => {
-    const dual = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimMeasurementProtocolVerified: true,
-      claimReportingAccessVerified: true,
-    });
-    expect(dual.code).toBe("MEASUREMENT_PROTOCOL_VERIFIED_CLAIM_REFUSED");
-  });
-
-  it("refuses claimDataIngestVerified on fixture debug (T-X032 P16)", () => {
-    const ingest = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimDataIngestVerified: true,
-    });
-    expect(ingest.code).toBe("DATA_INGEST_VERIFIED_CLAIM_REFUSED");
-    expect(ingest.externalEffects).toBe("NONE");
-    expect(ingest.deliveredConversionClaimed).toBe(false);
-  });
-
-  it("reporting-access claim wins over data-ingest when both set (P16)", () => {
-    const dual = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimReportingAccessVerified: true,
-      claimDataIngestVerified: true,
-    });
-    expect(dual.code).toBe("REPORTING_ACCESS_VERIFIED_CLAIM_REFUSED");
-  });
-
-  it("refuses claimPayloadShapeVerified on fixture debug (T-X032 P17)", () => {
-    const shape = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimPayloadShapeVerified: true,
-    });
-    expect(shape.code).toBe("PAYLOAD_SHAPE_VERIFIED_CLAIM_REFUSED");
-    expect(shape.debugOk).toBe(true);
-    expect(shape.fixtureOnly).toBe(true);
-  });
-
-  it("data-ingest claim wins over payload-shape when both set (P17)", () => {
-    const dual = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimDataIngestVerified: true,
-      claimPayloadShapeVerified: true,
-    });
-    expect(dual.code).toBe("DATA_INGEST_VERIFIED_CLAIM_REFUSED");
-  });
-
-  it("refuses claimEventDeliveryVerified on fixture debug (T-X032 P18)", () => {
-    const delivery = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimEventDeliveryVerified: true,
-    });
-    expect(delivery.code).toBe("EVENT_DELIVERY_VERIFIED_CLAIM_REFUSED");
-    expect(delivery.deliveredConversionClaimed).toBe(false);
-    expect(delivery.liveProviderWiring).toBe("NOT_WIRED");
-  });
-
-  it("payload-shape claim wins over event-delivery when both set (P18)", () => {
-    const dual = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimPayloadShapeVerified: true,
-      claimEventDeliveryVerified: true,
-    });
-    expect(dual.code).toBe("PAYLOAD_SHAPE_VERIFIED_CLAIM_REFUSED");
-  });
-
-  it("refuses claimHitCollectionVerified on fixture debug (T-X032 P19)", () => {
-    const hits = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimHitCollectionVerified: true,
-    });
-    expect(hits.code).toBe("HIT_COLLECTION_VERIFIED_CLAIM_REFUSED");
-    expect(hits.measuredReceiptClaimed).toBe(false);
-    expect(hits.externalEffects).toBe("NONE");
-  });
-
-  it("event-delivery claim wins over hit-collection when both set (P19)", () => {
-    const dual = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimEventDeliveryVerified: true,
-      claimHitCollectionVerified: true,
-    });
-    expect(dual.code).toBe("EVENT_DELIVERY_VERIFIED_CLAIM_REFUSED");
-  });
-
-  it("refuses claimBatchExportVerified on fixture debug (T-X032 P20)", () => {
-    const batch = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimBatchExportVerified: true,
-    });
-    expect(batch.code).toBe("BATCH_EXPORT_VERIFIED_CLAIM_REFUSED");
-    expect(batch.externalEffects).toBe("NONE");
-    expect(batch.liveProviderWiring).toBe("NOT_WIRED");
-  });
-
-  it("hit-collection claim wins over batch-export when both set (P20)", () => {
-    const dual = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimHitCollectionVerified: true,
-      claimBatchExportVerified: true,
-    });
-    expect(dual.code).toBe("HIT_COLLECTION_VERIFIED_CLAIM_REFUSED");
-  });
-
-  it("refuses claimRealtimeIngestVerified on fixture debug (T-X032 P21)", () => {
-    const realtime = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimRealtimeIngestVerified: true,
-    });
-    expect(realtime.code).toBe("REALTIME_INGEST_VERIFIED_CLAIM_REFUSED");
-    expect(realtime.debugOk).toBe(true);
-    expect(realtime.deliveredConversionClaimed).toBe(false);
-  });
-
-  it("batch-export claim wins over realtime-ingest when both set (P21)", () => {
-    const dual = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimBatchExportVerified: true,
-      claimRealtimeIngestVerified: true,
-    });
-    expect(dual.code).toBe("BATCH_EXPORT_VERIFIED_CLAIM_REFUSED");
-  });
-
-  it("refuses claimStreamingExportVerified on fixture debug (T-X032 P22)", () => {
-    const streaming = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimStreamingExportVerified: true,
-    });
-    expect(streaming.code).toBe("STREAMING_EXPORT_VERIFIED_CLAIM_REFUSED");
-    expect(streaming.debugOk).toBe(true);
-    expect(streaming.measuredReceiptClaimed).toBe(false);
-  });
-
-  it("realtime-ingest claim wins over streaming-export when both set (P22)", () => {
-    const dual = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimRealtimeIngestVerified: true,
-      claimStreamingExportVerified: true,
-    });
-    expect(dual.code).toBe("REALTIME_INGEST_VERIFIED_CLAIM_REFUSED");
-  });
-
-  it("refuses claimAudienceExportVerified on fixture debug (T-X032 P23)", () => {
-    const audience = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimAudienceExportVerified: true,
-    });
-    expect(audience.code).toBe("AUDIENCE_EXPORT_VERIFIED_CLAIM_REFUSED");
-    expect(audience.debugOk).toBe(true);
-    expect(audience.externalEffects).toBe("NONE");
-  });
-
-  it("streaming-export claim wins over audience-export when both set (P23)", () => {
-    const dual = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimStreamingExportVerified: true,
-      claimAudienceExportVerified: true,
-    });
-    expect(dual.code).toBe("STREAMING_EXPORT_VERIFIED_CLAIM_REFUSED");
-  });
-
-  it("debug-verified claim wins over integration-verified when both set (P13)", () => {
-    const dual = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimDebugVerified: true,
-      claimIntegrationVerified: true,
-    });
-    expect(dual.code).toBe("DEBUG_VERIFIED_CLAIM_REFUSED");
-  });
-
-  it("ignores non-boolean claimDebugVerified literals (P13)", () => {
-    const padded = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimDebugVerified: "true" as unknown as boolean,
-    });
-    expect(padded.code).toBeNull();
-    expect(padded.debugOk).toBe(true);
-  });
-
-  it("ignores non-boolean claimFixtureVerified literals (P11)", () => {
-    const paddedFixture = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimFixtureVerified: 1 as unknown as boolean,
-    });
-    expect(paddedFixture.code).toBeNull();
-    expect(paddedFixture.debugOk).toBe(true);
-  });
-
-  it("refuses claimFixtureVerified on fixture debug (T-X032 P11)", () => {
-    const fixture = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimFixtureVerified: true,
-    });
-    expect(fixture.code).toBe("FIXTURE_VERIFIED_CLAIM_REFUSED");
-    expect(fixture.debugOk).toBe(true);
-    expect(fixture.deliveredConversionClaimed).toBe(false);
-    expect(fixture.measuredReceiptClaimed).toBe(false);
-  });
-
-  it("sandbox-verified claim wins over fixture-verified when both set (P11)", () => {
-    const dual = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimSandboxVerified: true,
-      claimFixtureVerified: true,
-    });
-    expect(dual.code).toBe("SANDBOX_VERIFIED_CLAIM_REFUSED");
-  });
-
-  it("external-effects claim wins over delivered when both set (P11)", () => {
-    const dual = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimExternalEffects: true,
-      claimDeliveredConversion: true,
-    });
-    expect(dual.code).toBe("EXTERNAL_EFFECTS_CLAIM_REFUSED");
-  });
-
-  it("ignores non-boolean claimExternalEffects literals (P11)", () => {
-    const padded = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimExternalEffects: "true" as unknown as boolean,
-    });
-    expect(padded.code).toBeNull();
-    expect(padded.debugOk).toBe(true);
-  });
-
-  it("refuses claimMeasuredReceipt even when debug accepted (T-X032 P1)", () => {
-    const receipt = interpretGa4DebugValidation({
-      debugEndpointAccepted: true,
-      claimMeasuredReceipt: true,
-    });
-    expect(receipt.debugOk).toBe(true);
-    expect(receipt.measuredReceiptClaimed).toBe(false);
-    expect(receipt.deliveredConversionClaimed).toBe(false);
-    expect(receipt.code).toBe("MEASURED_RECEIPT_CLAIM_REFUSED");
-    expect(receipt.liveProviderWiring).toBe("NOT_WIRED");
-    expect(receipt.externalEffects).toBe("NONE");
-  });
-
   it("refuses LIVE debug wiring as NOT_WIRED", () => {
     const live = interpretGa4DebugValidation({
       debugEndpointAccepted: true,
@@ -696,6 +348,578 @@ describe("analytics — GSC omitted rows", () => {
     expect(classified.externalEffects).toBe("NONE");
     expect(classified.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
     expect(classified.reasons.join(" ")).toMatch(/UNKNOWN|not zero/i);
+  });
+
+  it("omitted row with whitespace-only query stays UNKNOWN; treatOmittedAsZero refused (L1)", () => {
+    const blankQuery = classifyGscDemand({
+      query: "   ",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(blankQuery.demandLabel).toBe("unknown");
+    expect(blankQuery.clicks.kind).toBe("missing");
+    expect(blankQuery.liveGscWiring).toBe("NOT_WIRED");
+
+    const refused = evaluateGscDemandHonesty({
+      row: {
+        query: "\t\n",
+        clicks: 0,
+        impressions: 0,
+        omitted: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      treatOmittedAsZero: true,
+    });
+    expect(refused.allowed).toBe(false);
+    expect(refused.code).toBe("INVALID_GSC_QUERY");
+    expect(refused.countsAsMeasuredDemand).toBe(false);
+    expect(refused.liveProviderSuccessClaimed).toBe(false);
+  });
+
+  it("omitted SANDBOX row stays UNKNOWN; treatOmittedAsZero refused (L2)", () => {
+    const omittedSandbox = classifyGscDemand({
+      query: "sandbox-omitted",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.SANDBOX,
+    });
+    expect(omittedSandbox.demandLabel).toBe("unknown");
+    expect(omittedSandbox.clicks.kind).toBe("missing");
+    expect(omittedSandbox.liveGscWiring).toBe("NOT_WIRED");
+    expect(omittedSandbox.externalEffects).toBe("NONE");
+
+    const refused = evaluateGscDemandHonesty({
+      row: {
+        query: "sandbox-omitted",
+        clicks: 0,
+        impressions: 0,
+        omitted: true,
+        environment: AnalyticsEnvironment.SANDBOX,
+      },
+      treatOmittedAsZero: true,
+    });
+    expect(refused.allowed).toBe(false);
+    expect(refused.code).toBe("OMITTED_AS_ZERO_REFUSED");
+    expect(refused.countsAsMeasuredDemand).toBe(false);
+  });
+
+  it("omitted row with invisible-only query stays UNKNOWN; treatOmittedAsZero refused (L3)", () => {
+    const invisibleQuery = "\u200B\u200D";
+    const omittedInvisible = classifyGscDemand({
+      query: invisibleQuery,
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(omittedInvisible.demandLabel).toBe("unknown");
+    expect(omittedInvisible.clicks.kind).toBe("missing");
+    expect(omittedInvisible.reasons.join(" ")).toMatch(/invisible|zero-width/i);
+
+    const refused = evaluateGscDemandHonesty({
+      row: {
+        query: invisibleQuery,
+        clicks: 0,
+        impressions: 0,
+        omitted: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      treatOmittedAsZero: true,
+    });
+    expect(refused.allowed).toBe(false);
+    expect(refused.code).toBe("INVALID_GSC_QUERY");
+    expect(refused.countsAsMeasuredDemand).toBe(false);
+    expect(refused.liveProviderSuccessClaimed).toBe(false);
+  });
+
+  it("honest omitted FIXTURE row allows UNKNOWN_OMITTED without treatOmittedAsZero (L4)", () => {
+    const classified = classifyGscDemand({
+      query: "honest-omitted",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(classified.demandLabel).toBe("unknown");
+    expect(classified.externalEffects).toBe("NONE");
+
+    const honest = evaluateGscDemandHonesty({
+      row: {
+        query: "honest-omitted",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+    });
+    expect(honest.allowed).toBe(true);
+    expect(honest.code).toBe("UNKNOWN_OMITTED");
+    expect(honest.countsAsMeasuredDemand).toBe(false);
+    expect(honest.liveProviderSuccessClaimed).toBe(false);
+  });
+
+  it("omitted row with wrong wait-manifest schema stays UNKNOWN; invent refused (L5)", () => {
+    const wrongSchema = classifyGscDemand({
+      query: "omitted-wrong-schema",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.FIXTURE,
+      schema: "gsc-row-v0",
+    });
+    expect(wrongSchema.demandLabel).toBe("unknown");
+    expect(wrongSchema.clicks.kind).toBe("missing");
+    expect(wrongSchema.reasons.join(" ")).toMatch(/schema/i);
+
+    const refused = evaluateGscDemandHonesty({
+      row: {
+        query: "omitted-wrong-schema",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+        schema: "gsc-row-v0",
+      },
+      treatOmittedAsZero: true,
+    });
+    expect(refused.allowed).toBe(false);
+    expect(refused.code).toBe("WRONG_GSC_ROW_SCHEMA");
+    expect(refused.countsAsMeasuredDemand).toBe(false);
+  });
+
+  it("omitted NOT_WIRED row unavailable; honest vs treatOmittedAsZero refused (L6)", () => {
+    const notWired = classifyGscDemand({
+      query: "omitted-not-wired",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.NOT_WIRED,
+    });
+    expect(notWired.demandLabel).toBe("unavailable");
+    expect(notWired.liveGscWiring).toBe("NOT_WIRED");
+    expect(notWired.externalEffects).toBe("NONE");
+
+    const honest = evaluateGscDemandHonesty({
+      row: {
+        query: "omitted-not-wired",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.NOT_WIRED,
+      },
+    });
+    expect(honest.allowed).toBe(true);
+    expect(honest.code).toBe("UNAVAILABLE_NOT_WIRED");
+    expect(honest.countsAsMeasuredDemand).toBe(false);
+
+    const refused = evaluateGscDemandHonesty({
+      row: {
+        query: "omitted-not-wired",
+        clicks: 0,
+        impressions: 0,
+        omitted: true,
+        environment: AnalyticsEnvironment.NOT_WIRED,
+      },
+      treatOmittedAsZero: true,
+    });
+    expect(refused.allowed).toBe(false);
+    expect(refused.code).toBe("OMITTED_AS_ZERO_REFUSED");
+    expect(refused.countsAsMeasuredDemand).toBe(false);
+  });
+
+  it("honest omitted SANDBOX row allows UNKNOWN_OMITTED; invent CTR refused (L7)", () => {
+    const classified = classifyGscDemand({
+      query: "sandbox-honest-omitted",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.SANDBOX,
+    });
+    expect(classified.demandLabel).toBe("unknown");
+    expect(classified.liveGscWiring).toBe("NOT_WIRED");
+    expect(classified.externalEffects).toBe("NONE");
+
+    const honest = evaluateGscDemandHonesty({
+      row: {
+        query: "sandbox-honest-omitted",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.SANDBOX,
+      },
+    });
+    expect(honest.allowed).toBe(true);
+    expect(honest.code).toBe("UNKNOWN_OMITTED");
+    expect(honest.countsAsMeasuredDemand).toBe(false);
+    expect(honest.liveProviderSuccessClaimed).toBe(false);
+
+    const inventCtr = evaluateGscDemandHonesty({
+      row: {
+        query: "sandbox-honest-omitted",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.SANDBOX,
+      },
+      inventCtrFromOmitted: true,
+    });
+    expect(inventCtr.allowed).toBe(false);
+    expect(inventCtr.code).toBe("INVENT_CTR_REFUSED");
+    expect(inventCtr.countsAsMeasuredDemand).toBe(false);
+  });
+
+  it("omitted FIXTURE row refuses aggregate and position invent from UNKNOWN (L8)", () => {
+    const classified = classifyGscDemand({
+      query: "omitted-aggregate",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(classified.demandLabel).toBe("unknown");
+    expect(classified.externalEffects).toBe("NONE");
+
+    const inventAgg = evaluateGscDemandHonesty({
+      row: {
+        query: "omitted-aggregate",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      inventAggregateFromUnknown: true,
+    });
+    expect(inventAgg.allowed).toBe(false);
+    expect(inventAgg.code).toBe("INVENT_AGGREGATE_FROM_UNKNOWN");
+    expect(inventAgg.countsAsMeasuredDemand).toBe(false);
+    expect(inventAgg.liveProviderSuccessClaimed).toBe(false);
+
+    const inventPos = evaluateGscDemandHonesty({
+      row: {
+        query: "omitted-aggregate",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      inventPositionFromUnknown: true,
+    });
+    expect(inventPos.allowed).toBe(false);
+    expect(inventPos.code).toBe("INVENT_POSITION_REFUSED");
+    expect(inventPos.countsAsMeasuredDemand).toBe(false);
+  });
+
+  it("omitted NOT_WIRED unavailable; inventMeasuredDespiteUnknown refused (L9)", () => {
+    const classified = classifyGscDemand({
+      query: "omitted-unavailable-invent",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.NOT_WIRED,
+    });
+    expect(classified.demandLabel).toBe("unavailable");
+    expect(classified.liveGscWiring).toBe("NOT_WIRED");
+    expect(classified.externalEffects).toBe("NONE");
+
+    const inventMeasured = evaluateGscDemandHonesty({
+      row: {
+        query: "omitted-unavailable-invent",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.NOT_WIRED,
+      },
+      inventMeasuredDespiteUnknown: true,
+    });
+    expect(inventMeasured.allowed).toBe(false);
+    expect(inventMeasured.code).toBe("INVENT_MEASURED_DESPITE_UNKNOWN");
+    expect(inventMeasured.countsAsMeasuredDemand).toBe(false);
+    expect(inventMeasured.liveProviderSuccessClaimed).toBe(false);
+  });
+
+  it("omitted SANDBOX row refuses promote to live measured (L10)", () => {
+    const classified = classifyGscDemand({
+      query: "sandbox-omitted-promote",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.SANDBOX,
+    });
+    expect(classified.demandLabel).toBe("unknown");
+    expect(classified.liveGscWiring).toBe("NOT_WIRED");
+    expect(classified.externalEffects).toBe("NONE");
+
+    const refused = evaluateGscDemandHonesty({
+      row: {
+        query: "sandbox-omitted-promote",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.SANDBOX,
+      },
+      inventMeasuredFromSandbox: true,
+    });
+    expect(refused.allowed).toBe(false);
+    expect(refused.code).toBe("INVENT_MEASURED_FROM_SANDBOX");
+    expect(refused.countsAsMeasuredDemand).toBe(false);
+    expect(refused.liveProviderSuccessClaimed).toBe(false);
+  });
+
+  it("omitted FIXTURE row refuses invent from corrupt wait-manifest (L11)", () => {
+    const classified = classifyGscDemand({
+      query: "omitted-corrupt-manifest",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(classified.demandLabel).toBe("unknown");
+    expect(classified.externalEffects).toBe("NONE");
+
+    const missing = inspectGscRowManifest({ raw: null });
+    expect(missing.integrity).toBe(
+      GscRowManifestIntegrity.MISSING_REQUIRED_FIELDS,
+    );
+
+    const refused = evaluateGscDemandHonesty({
+      row: {
+        query: "omitted-corrupt-manifest",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      inventMeasuredFromCorruptManifest: true,
+      corruptManifestIntegrity: missing.integrity,
+    });
+    expect(refused.allowed).toBe(false);
+    expect(refused.code).toBe("INVENT_FROM_CORRUPT_MANIFEST");
+    expect(refused.countsAsMeasuredDemand).toBe(false);
+    expect(refused.liveProviderSuccessClaimed).toBe(false);
+  });
+
+  it("omitted NOT_WIRED row refuses aggregate invent from unavailable (L12)", () => {
+    const classified = classifyGscDemand({
+      query: "omitted-unavail-aggregate",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.NOT_WIRED,
+    });
+    expect(classified.demandLabel).toBe("unavailable");
+    expect(classified.liveGscWiring).toBe("NOT_WIRED");
+
+    const inventAgg = evaluateGscDemandHonesty({
+      row: {
+        query: "omitted-unavail-aggregate",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.NOT_WIRED,
+      },
+      inventAggregateFromUnknown: true,
+    });
+    expect(inventAgg.allowed).toBe(false);
+    expect(inventAgg.code).toBe("INVENT_AGGREGATE_FROM_UNKNOWN");
+    expect(inventAgg.countsAsMeasuredDemand).toBe(false);
+    expect(inventAgg.liveProviderSuccessClaimed).toBe(false);
+  });
+
+  it("omitted NOT_WIRED row refuses position invent from unavailable (L13)", () => {
+    const classified = classifyGscDemand({
+      query: "omitted-unavail-position",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.NOT_WIRED,
+    });
+    expect(classified.demandLabel).toBe("unavailable");
+    expect(classified.externalEffects).toBe("NONE");
+
+    const inventPos = evaluateGscDemandHonesty({
+      row: {
+        query: "omitted-unavail-position",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.NOT_WIRED,
+      },
+      inventPositionFromUnknown: true,
+    });
+    expect(inventPos.allowed).toBe(false);
+    expect(inventPos.code).toBe("INVENT_POSITION_REFUSED");
+    expect(inventPos.countsAsMeasuredDemand).toBe(false);
+    expect(inventPos.liveProviderSuccessClaimed).toBe(false);
+  });
+
+  it("omitted NOT_WIRED row refuses CTR invent from unavailable (L14)", () => {
+    const classified = classifyGscDemand({
+      query: "omitted-unavail-ctr",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.NOT_WIRED,
+    });
+    expect(classified.demandLabel).toBe("unavailable");
+    expect(classified.liveGscWiring).toBe("NOT_WIRED");
+    expect(classified.externalEffects).toBe("NONE");
+
+    const inventCtr = evaluateGscDemandHonesty({
+      row: {
+        query: "omitted-unavail-ctr",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.NOT_WIRED,
+      },
+      inventCtrFromOmitted: true,
+    });
+    expect(inventCtr.allowed).toBe(false);
+    expect(inventCtr.code).toBe("INVENT_CTR_REFUSED");
+    expect(inventCtr.countsAsMeasuredDemand).toBe(false);
+    expect(inventCtr.liveProviderSuccessClaimed).toBe(false);
+  });
+
+  it("omitted SANDBOX row refuses aggregate invent from UNKNOWN (L15)", () => {
+    const classified = classifyGscDemand({
+      query: "sandbox-omitted-aggregate",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.SANDBOX,
+    });
+    expect(classified.demandLabel).toBe("unknown");
+    expect(classified.liveGscWiring).toBe("NOT_WIRED");
+    expect(classified.externalEffects).toBe("NONE");
+
+    const inventAgg = evaluateGscDemandHonesty({
+      row: {
+        query: "sandbox-omitted-aggregate",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.SANDBOX,
+      },
+      inventAggregateFromUnknown: true,
+    });
+    expect(inventAgg.allowed).toBe(false);
+    expect(inventAgg.code).toBe("INVENT_AGGREGATE_FROM_UNKNOWN");
+    expect(inventAgg.countsAsMeasuredDemand).toBe(false);
+    expect(inventAgg.liveProviderSuccessClaimed).toBe(false);
+  });
+
+  it("omitted SANDBOX row refuses position invent from UNKNOWN (L16)", () => {
+    const classified = classifyGscDemand({
+      query: "sandbox-omitted-position",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.SANDBOX,
+    });
+    expect(classified.demandLabel).toBe("unknown");
+    expect(classified.externalEffects).toBe("NONE");
+
+    const inventPos = evaluateGscDemandHonesty({
+      row: {
+        query: "sandbox-omitted-position",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.SANDBOX,
+      },
+      inventPositionFromUnknown: true,
+    });
+    expect(inventPos.allowed).toBe(false);
+    expect(inventPos.code).toBe("INVENT_POSITION_REFUSED");
+    expect(inventPos.countsAsMeasuredDemand).toBe(false);
+    expect(inventPos.liveProviderSuccessClaimed).toBe(false);
+  });
+
+  it("omitted FIXTURE row refuses measured invent from UNKNOWN (L17)", () => {
+    const classified = classifyGscDemand({
+      query: "omitted-fixture-invent-measured",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(classified.demandLabel).toBe("unknown");
+    expect(classified.liveGscWiring).toBe("NOT_WIRED");
+    expect(classified.externalEffects).toBe("NONE");
+
+    const inventMeasured = evaluateGscDemandHonesty({
+      row: {
+        query: "omitted-fixture-invent-measured",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      inventMeasuredDespiteUnknown: true,
+    });
+    expect(inventMeasured.allowed).toBe(false);
+    expect(inventMeasured.code).toBe("INVENT_MEASURED_DESPITE_UNKNOWN");
+    expect(inventMeasured.countsAsMeasuredDemand).toBe(false);
+    expect(inventMeasured.liveProviderSuccessClaimed).toBe(false);
+  });
+
+  it("omitted SANDBOX row refuses measured invent from UNKNOWN (L18)", () => {
+    const classified = classifyGscDemand({
+      query: "sandbox-omitted-invent-measured",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.SANDBOX,
+    });
+    expect(classified.demandLabel).toBe("unknown");
+    expect(classified.liveGscWiring).toBe("NOT_WIRED");
+    expect(classified.externalEffects).toBe("NONE");
+
+    const inventMeasured = evaluateGscDemandHonesty({
+      row: {
+        query: "sandbox-omitted-invent-measured",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.SANDBOX,
+      },
+      inventMeasuredDespiteUnknown: true,
+    });
+    expect(inventMeasured.allowed).toBe(false);
+    expect(inventMeasured.code).toBe("INVENT_MEASURED_DESPITE_UNKNOWN");
+    expect(inventMeasured.countsAsMeasuredDemand).toBe(false);
+    expect(inventMeasured.liveProviderSuccessClaimed).toBe(false);
+  });
+
+  it("omitted FIXTURE row refuses CTR invent from UNKNOWN (L19)", () => {
+    const classified = classifyGscDemand({
+      query: "omitted-fixture-invent-ctr",
+      clicks: null,
+      impressions: null,
+      omitted: true,
+      environment: AnalyticsEnvironment.FIXTURE,
+    });
+    expect(classified.demandLabel).toBe("unknown");
+    expect(classified.liveGscWiring).toBe("NOT_WIRED");
+    expect(classified.externalEffects).toBe("NONE");
+
+    const inventCtr = evaluateGscDemandHonesty({
+      row: {
+        query: "omitted-fixture-invent-ctr",
+        clicks: null,
+        impressions: null,
+        omitted: true,
+        environment: AnalyticsEnvironment.FIXTURE,
+      },
+      inventCtrFromOmitted: true,
+    });
+    expect(inventCtr.allowed).toBe(false);
+    expect(inventCtr.code).toBe("INVENT_CTR_REFUSED");
+    expect(inventCtr.countsAsMeasuredDemand).toBe(false);
+    expect(inventCtr.liveProviderSuccessClaimed).toBe(false);
   });
 
   it("keeps invented zeros on omitted rows as UNKNOWN (not measured)", () => {
