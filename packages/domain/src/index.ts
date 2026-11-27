@@ -335,6 +335,24 @@ export {
   type ReviewBindingHonestySummary,
 } from "./review-binding.js";
 export {
+  FORGED_BROWSER_ROLE_RELATED_CASE_IDS,
+  MAX_FORGED_ESCALATION_ATTEMPTS,
+  bindActorRoleFromSession,
+  clampForgedEscalationMaxAttempts,
+  coerceClientActorRoleClaim,
+  normalizeForgedActorRoleClaim,
+  resolveClientActorRoleClaim,
+  evaluateForgedBrowserRoleHonesty,
+  isForgedRoleEscalationAttempt,
+  createForgedEscalationBudgetState,
+  evaluateForgedEscalationBudgetGate,
+  applyForgedEscalationBudget,
+  type ForgedBrowserRoleCode,
+  type ForgedBrowserRoleDecision,
+  type ForgedEscalationBudgetState,
+  type ForgedEscalationBudgetResult,
+} from "./forged-browser-role.js";
+export {
   SELF_APPROVAL_RELATED_CASE_IDS,
   assertSelfApprovalRefusedAcrossSurfaces,
   evaluateSelfApprovalHonesty,
