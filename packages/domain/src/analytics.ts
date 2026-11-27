@@ -382,8 +382,28 @@ export type Ga4DebugValidationResult = {
   fixtureOnly: boolean;
   /** Environment used for evidence labeling (defaults to FIXTURE). */
   environment: AnalyticsEnvironmentValue;
-  /** Set when a LIVE debug / delivered-conversion claim was refused. */
-  code: "LIVE_DEBUG_WIRING_NOT_WIRED" | "DELIVERED_CONVERSION_CLAIM_REFUSED" | null;
+  /** Set when a LIVE debug / conversion / receipt claim was refused. */
+  code:
+    | "LIVE_DEBUG_WIRING_NOT_WIRED"
+    | "LIVE_CLAIM_REFUSED"
+    | "SANDBOX_VERIFIED_CLAIM_REFUSED"
+    | "DELIVERED_CONVERSION_CLAIM_REFUSED"
+    | "MEASURED_RECEIPT_CLAIM_REFUSED"
+    | "EXTERNAL_EFFECTS_CLAIM_REFUSED"
+    | "FIXTURE_VERIFIED_CLAIM_REFUSED"
+    | "DEBUG_VERIFIED_CLAIM_REFUSED"
+    | "INTEGRATION_VERIFIED_CLAIM_REFUSED"
+    | "MEASUREMENT_PROTOCOL_VERIFIED_CLAIM_REFUSED"
+    | "REPORTING_ACCESS_VERIFIED_CLAIM_REFUSED"
+    | "DATA_INGEST_VERIFIED_CLAIM_REFUSED"
+    | "PAYLOAD_SHAPE_VERIFIED_CLAIM_REFUSED"
+    | "EVENT_DELIVERY_VERIFIED_CLAIM_REFUSED"
+    | "HIT_COLLECTION_VERIFIED_CLAIM_REFUSED"
+    | "BATCH_EXPORT_VERIFIED_CLAIM_REFUSED"
+    | "REALTIME_INGEST_VERIFIED_CLAIM_REFUSED"
+    | "STREAMING_EXPORT_VERIFIED_CLAIM_REFUSED"
+    | "AUDIENCE_EXPORT_VERIFIED_CLAIM_REFUSED"
+    | null;
   reasons: string[];
 };
 
@@ -417,6 +437,42 @@ export function interpretGa4DebugValidation(input: {
   debugEndpointAccepted: boolean;
   /** Attempt to elevate debug success into a delivered conversion — refused. */
   claimDeliveredConversion?: boolean;
+  /** Attempt to elevate debug success into a measured receipt — refused. */
+  claimMeasuredReceipt?: boolean;
+  /** Attempt to treat debug ACCEPTED as VERIFIED — refused. */
+  claimDebugVerified?: boolean;
+  /** Attempt to claim integration VERIFIED from debug — refused. */
+  claimIntegrationVerified?: boolean;
+  /**
+   * Attempt to claim Measurement Protocol VERIFIED from debug ACCEPTED — refused.
+   */
+  claimMeasurementProtocolVerified?: boolean;
+  /** Attempt to claim GA4 reporting access VERIFIED from debug — refused. */
+  claimReportingAccessVerified?: boolean;
+  /** Attempt to claim GA4 data-ingest VERIFIED from debug — refused. */
+  claimDataIngestVerified?: boolean;
+  /** Attempt to claim payload-shape VERIFIED from debug ACCEPTED — refused. */
+  claimPayloadShapeVerified?: boolean;
+  /** Attempt to claim event-delivery VERIFIED from debug — refused. */
+  claimEventDeliveryVerified?: boolean;
+  /** Attempt to claim hit-collection VERIFIED from debug — refused. */
+  claimHitCollectionVerified?: boolean;
+  /** Attempt to claim batch-export VERIFIED from debug — refused. */
+  claimBatchExportVerified?: boolean;
+  /** Attempt to claim realtime-ingest VERIFIED from debug — refused. */
+  claimRealtimeIngestVerified?: boolean;
+  /** Attempt to claim streaming-export VERIFIED from debug — refused. */
+  claimStreamingExportVerified?: boolean;
+  /** Attempt to claim audience-export VERIFIED from debug — refused. */
+  claimAudienceExportVerified?: boolean;
+  /** Attempt to claim live provider VERIFIED success from debug — refused. */
+  claimLiveProviderSuccess?: boolean;
+  /** Attempt to promote fixture ACCEPTED into sandbox VERIFIED — refused. */
+  claimSandboxVerified?: boolean;
+  /** Attempt to promote fixture ACCEPTED into fixture VERIFIED — refused. */
+  claimFixtureVerified?: boolean;
+  /** Attempt to claim non-NONE external effects from debug — refused. */
+  claimExternalEffects?: boolean;
   /**
    * Canonical analytics environment. LIVE stays NOT_WIRED.
    * Omitted defaults to FIXTURE (fixtureOnly=true). SANDBOX is allowed
@@ -439,6 +495,214 @@ export function interpretGa4DebugValidation(input: {
     };
   }
 
+  if (input.claimLiveProviderSuccess === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "LIVE_CLAIM_REFUSED",
+      reasons: [
+        "Live provider success claim from GA4 debug refused — ACCEPTED≠VERIFIED (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimDebugVerified === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "DEBUG_VERIFIED_CLAIM_REFUSED",
+      reasons: [
+        "Debug VERIFIED claim refused — GA4 debug ACCEPTED≠VERIFIED (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimIntegrationVerified === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "INTEGRATION_VERIFIED_CLAIM_REFUSED",
+      reasons: [
+        "Integration VERIFIED claim from GA4 debug refused — ACCEPTED≠VERIFIED (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimMeasurementProtocolVerified === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "MEASUREMENT_PROTOCOL_VERIFIED_CLAIM_REFUSED",
+      reasons: [
+        "Measurement Protocol VERIFIED claim from GA4 debug refused — debug ACCEPTED≠protocol VERIFIED (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimReportingAccessVerified === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "REPORTING_ACCESS_VERIFIED_CLAIM_REFUSED",
+      reasons: [
+        "Reporting-access VERIFIED claim from GA4 debug refused — debug≠reporting VERIFIED (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimDataIngestVerified === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "DATA_INGEST_VERIFIED_CLAIM_REFUSED",
+      reasons: [
+        "Data-ingest VERIFIED claim from GA4 debug refused — debug ACCEPTED≠ingest VERIFIED (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimPayloadShapeVerified === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "PAYLOAD_SHAPE_VERIFIED_CLAIM_REFUSED",
+      reasons: [
+        "Payload-shape VERIFIED claim from GA4 debug refused — debug ACCEPTED≠payload VERIFIED (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimEventDeliveryVerified === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "EVENT_DELIVERY_VERIFIED_CLAIM_REFUSED",
+      reasons: [
+        "Event-delivery VERIFIED claim from GA4 debug refused — debug≠delivered event VERIFIED (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimHitCollectionVerified === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "HIT_COLLECTION_VERIFIED_CLAIM_REFUSED",
+      reasons: [
+        "Hit-collection VERIFIED claim from GA4 debug refused — debug ACCEPTED≠collection VERIFIED (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimBatchExportVerified === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "BATCH_EXPORT_VERIFIED_CLAIM_REFUSED",
+      reasons: [
+        "Batch-export VERIFIED claim from GA4 debug refused — debug≠export VERIFIED (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimRealtimeIngestVerified === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "REALTIME_INGEST_VERIFIED_CLAIM_REFUSED",
+      reasons: [
+        "Realtime-ingest VERIFIED claim from GA4 debug refused — debug ACCEPTED≠realtime VERIFIED (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimStreamingExportVerified === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "STREAMING_EXPORT_VERIFIED_CLAIM_REFUSED",
+      reasons: [
+        "Streaming-export VERIFIED claim from GA4 debug refused — debug ACCEPTED≠streaming export VERIFIED (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimAudienceExportVerified === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "AUDIENCE_EXPORT_VERIFIED_CLAIM_REFUSED",
+      reasons: [
+        "Audience-export VERIFIED claim from GA4 debug refused — debug ACCEPTED≠audience export VERIFIED (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimSandboxVerified === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "SANDBOX_VERIFIED_CLAIM_REFUSED",
+      reasons: [
+        "Sandbox VERIFIED claim from GA4 debug refused — fixture ACCEPTED≠sandbox VERIFIED (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimFixtureVerified === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "FIXTURE_VERIFIED_CLAIM_REFUSED",
+      reasons: [
+        "Fixture VERIFIED claim from GA4 debug refused — ACCEPTED≠VERIFIED (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimExternalEffects === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "EXTERNAL_EFFECTS_CLAIM_REFUSED",
+      reasons: [
+        "External-effects mutation claim from GA4 debug refused — externalEffects=NONE (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
   if (input.claimDeliveredConversion === true) {
     return {
       kind: Ga4ValidationKind.DEBUG_VALIDATION,
@@ -446,6 +710,19 @@ export function interpretGa4DebugValidation(input: {
       code: "DELIVERED_CONVERSION_CLAIM_REFUSED",
       reasons: [
         "Delivered-conversion claim from GA4 debug refused — debug≠delivered (T-US-008 / T-X032)",
+      ],
+      ...ga4DebugHonestyBase,
+      ...evidence,
+    };
+  }
+
+  if (input.claimMeasuredReceipt === true) {
+    return {
+      kind: Ga4ValidationKind.DEBUG_VALIDATION,
+      debugOk: input.debugEndpointAccepted,
+      code: "MEASURED_RECEIPT_CLAIM_REFUSED",
+      reasons: [
+        "Measured-receipt claim from GA4 debug refused — debug≠measured receipt (T-US-008 / T-X032)",
       ],
       ...ga4DebugHonestyBase,
       ...evidence,
