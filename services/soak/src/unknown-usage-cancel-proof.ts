@@ -52,6 +52,69 @@ export function proofUnknownUsageCancelHoldsResidual(
     return finish(passed, details, nowIso);
   }
 
+  // 1b. J26 — refuse padded/case/hyphen-mutated reservationId without inventing hold.
+  const j26Mutations = [
+    " req-cancel-unknown ",
+    "REQ-CANCEL-UNKNOWN",
+    "req-cancel-unknown\u00ad",
+  ];
+  let j26Ok = true;
+  for (const mutated of j26Mutations) {
+    const refused = cancelBudgetReservation(reserved.account, mutated, {
+      known: false,
+    });
+    if (
+      !(
+        !refused.ok &&
+        refused.code === "UNKNOWN_RESERVATION" &&
+        reserved.account.openReservations["req-cancel-unknown"] === 700 &&
+        availableBudgetMinor(reserved.account) === 300
+      )
+    ) {
+      j26Ok = false;
+      details.push(`J26 mutation refuse failed id=${JSON.stringify(mutated)}`);
+    }
+  }
+  if (j26Ok) {
+    details.push(
+      "J26: padded/case/soft-hyphen reservationId → UNKNOWN_RESERVATION; open reservation intact",
+    );
+  } else {
+    passed = false;
+    return finish(passed, details, nowIso);
+  }
+
+  // 1c. J27 — ZWSP/BOM-wrapped reservationId → UNKNOWN_RESERVATION.
+  const j27Wrappers = [
+    `\u200breq-cancel-unknown`,
+    `req-cancel-unknown\u200b`,
+    `\ufeffreq-cancel-unknown`,
+  ];
+  let j27Ok = true;
+  for (const wrapped of j27Wrappers) {
+    const refused = cancelBudgetReservation(reserved.account, wrapped, {
+      known: false,
+    });
+    if (
+      !(
+        !refused.ok &&
+        refused.code === "UNKNOWN_RESERVATION" &&
+        reserved.account.openReservations["req-cancel-unknown"] === 700
+      )
+    ) {
+      j27Ok = false;
+      details.push(`J27 wrapper refuse failed id=${JSON.stringify(wrapped)}`);
+    }
+  }
+  if (j27Ok) {
+    details.push(
+      "J27: ZWSP/BOM-wrapped reservationId → UNKNOWN_RESERVATION; open intact",
+    );
+  } else {
+    passed = false;
+    return finish(passed, details, nowIso);
+  }
+
   // 2. Cancel with unknown usage → hold residual, not zero cost.
   const cancelled = cancelBudgetReservation(
     reserved.account,

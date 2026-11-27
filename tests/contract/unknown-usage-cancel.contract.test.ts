@@ -139,6 +139,55 @@ describe("contract: T-X027 unknown usage cancel holds residual", () => {
     });
   });
 
+  it("refuses ZWSP/BOM reservationId wrappers (T-X027 J27)", () => {
+    const base = createBudgetAccount({
+      dayKey: "2026-11-22",
+      currency: "USD",
+      limitMinor: 1000,
+    });
+    const id = "req-wrap";
+    const reserved = reserveBudget(base, id, 250);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const zwsp = cancelBudgetReservation(
+      reserved.account,
+      `\u200b${id}`,
+      { known: false },
+    );
+    expect(zwsp.ok).toBe(false);
+    if (!zwsp.ok) expect(zwsp.code).toBe("UNKNOWN_RESERVATION");
+    expect(listUnknownUsageHoldIds(reserved.account)).toEqual([]);
+  });
+
+  it("refuses mutated reservationId before unknown hold (T-X027 J26)", () => {
+    const base = createBudgetAccount({
+      dayKey: "2026-11-22",
+      currency: "USD",
+      limitMinor: 1000,
+    });
+    const canonical = "req-j26";
+    const reserved = reserveBudget(base, canonical, 400);
+    expect(reserved.ok).toBe(true);
+    if (!reserved.ok) return;
+    const padded = cancelBudgetReservation(
+      reserved.account,
+      ` ${canonical} `,
+      { known: false },
+    );
+    expect(padded.ok).toBe(false);
+    if (!padded.ok) {
+      expect(padded.code).toBe("UNKNOWN_RESERVATION");
+    }
+    expect(listUnknownUsageHoldIds(reserved.account)).toEqual([]);
+    const held = cancelBudgetReservation(reserved.account, canonical, {
+      known: false,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    expect(isUnknownUsageHold(held.account, canonical)).toBe(true);
+    expect(heldReservationsTotalMinor(held.account)).toBe(400);
+  });
+
   it("maps T-X027 only to UNKNOWN_USAGE_CANCEL_HOLDS_RESIDUAL", () => {
     expect([...UNKNOWN_USAGE_CANCEL_RELATED_CASE_IDS]).toEqual(["T-X027"]);
     expect(expectedProofsForFixtureCase("T-X027")).toEqual([
