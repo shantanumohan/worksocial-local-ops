@@ -24,6 +24,7 @@
  * Deepen (Q28): fractional maxAttempts floors (2.9 → cap at attempt 2 STOP).
  * Deepen (Q31): maxAttempts=1.1 → first 429 STOP (no WAIT invent).
  * Deepen (Q34): negative/zero attempt floors to 1 for exponential index.
+ * Deepen (Q35): subnormal Retry-After ceils to 1s (not exponential fallback).
  */
 
 import { randomUUID } from "node:crypto";
@@ -552,6 +553,23 @@ export function proofRateLimitBoundedBackoffPreservesDeadline(
     details.push(
       `maxAttempts=1 STOP honesty failed: ${JSON.stringify(oneShot)}`,
     );
+  }
+
+  // Scenario P9 (Q35): subnormal Retry-After ceils to WAIT 1s.
+  const subnormalRetry = computeBackoffWaitSeconds({
+    attempt: 1,
+    retryAfterSeconds: Number.MIN_VALUE,
+  });
+  if (
+    subnormalRetry.source === "retry_after" &&
+    subnormalRetry.waitSeconds === 1
+  ) {
+    details.push(
+      "Subnormal Retry-After ceiled to WAIT 1s retry_after (not exponential invent)",
+    );
+  } else {
+    passed = false;
+    details.push(`Subnormal Retry-After failed: ${JSON.stringify(subnormalRetry)}`);
   }
 
   // Scenario P8 (Q34): attempt -1 floors to exponential attempt 1 (wait 1s).

@@ -429,6 +429,15 @@ describe("rate-limit-backoff (T-X030)", () => {
     ).toEqual({ waitSeconds: 3, source: "retry_after" });
   });
 
+  it("ceils subnormal Retry-After to 1s (Q35 wipe15)", () => {
+    const subnormal = computeBackoffWaitSeconds({
+      attempt: 1,
+      retryAfterSeconds: Number.MIN_VALUE,
+    });
+    expect(subnormal.source).toBe("retry_after");
+    expect(subnormal.waitSeconds).toBe(1);
+  });
+
   it("floors negative attempt index to 1 for backoff (Q34 wipe15)", () => {
     expect(
       computeBackoffWaitSeconds({
