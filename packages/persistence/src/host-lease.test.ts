@@ -644,4 +644,22 @@ describe("host-lease", () => {
       expect(bad.message).not.toBe(HOST_LEASE_HELD_MESSAGE);
     }
   });
+
+  it("edge: non-number ttlMs fails INVALID_INPUT without LEASE_HELD (T-X002)", () => {
+    const bad = acquireHostLease(
+      null,
+      {
+        hostId: "host-ttl-str",
+        holderPid: 1,
+        generationId: "gen-ttl-str",
+        ttlMs: "5000" as unknown as number,
+      },
+      clockAt(1_000),
+    );
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) {
+      expect(bad.reason).toBe("INVALID_INPUT");
+      expect(bad.message).not.toBe(HOST_LEASE_HELD_MESSAGE);
+    }
+  });
 });
