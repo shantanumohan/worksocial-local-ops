@@ -168,9 +168,103 @@ describe("soak service (M9)", () => {
         (p) => p.kind === SoakProofKind.EVAL_NO_GROUNDING_FAIL_CLOSED,
       ),
     ).toBe(true);
+    const metricDenomProof = result.proofs.find(
+      (p) => p.kind === SoakProofKind.METRIC_DENOMINATORS_HONEST,
+    );
+    expect(metricDenomProof).toBeDefined();
     expect(
-      result.proofs.some(
-        (p) => p.kind === SoakProofKind.METRIC_DENOMINATORS_HONEST,
+      metricDenomProof?.details.some((d) =>
+        /missing sourceStatus → missing/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /non_finite value → missing/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /insufficient_sample → missing/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /unsupported → unavailable/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /MEASURED; countsInDenominator=true/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /EXCLUDED_SYNTHETIC/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /null sampleSize on ok → non_finite/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /treatUnavailableAsZero on unsupported/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /missingCount=2/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /minSample=5 sampleSize=3/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /minSample=5 → denominator=10/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /non-finite minSample → MISSING/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /unavailableCount=2/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /excludedCount=2/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /unsupported-only batch → denominator=0/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /treatUnavailableAsZero on provider_error/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /partial-only batch → denominator=0/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /provider_error-only batch → denominator=0/.test(d),
+      ),
+    ).toBe(true);
+    expect(
+      metricDenomProof?.details.some((d) =>
+        /treatUnavailableAsZero on partial/.test(d),
       ),
     ).toBe(true);
     expect(
