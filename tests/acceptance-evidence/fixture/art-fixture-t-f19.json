@@ -8,8 +8,8 @@
     "analyze_performance_and_test_hypothesis"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-f19.json",
-  "createdAtIso": "2026-11-27T15:07:22.352Z",
+  "createdAtIso": "2026-11-27T15:13:20.299Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-f19-331f949d3f75"
+  "uniqueSourceArtifactId": "art-fixture-t-f19-dec2fbec695b"
 }
