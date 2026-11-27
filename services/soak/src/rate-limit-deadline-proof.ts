@@ -32,6 +32,7 @@
  * Deepen (Q49): fractional initialBackoffSeconds ceils (0.4 → WAIT 1s).
  * Deepen (Q51): Retry-After=EPSILON ceils to 1s retry_after.
  * Deepen (Q53): backoffMultiplier=1 → flat exponential wait (no growth invent).
+ * Deepen (Q56): fractional backoffMultiplier 1.5 ceils (attempt 2 → 2s).
  */
 
 import { randomUUID } from "node:crypto";
@@ -560,6 +561,25 @@ export function proofRateLimitBoundedBackoffPreservesDeadline(
     details.push(
       `maxAttempts=1 STOP honesty failed: ${JSON.stringify(oneShot)}`,
     );
+  }
+
+  // Scenario P17 (Q56): backoffMultiplier=1.5 attempt 2 → WAIT 2s exponential.
+  const fracMult = computeBackoffWaitSeconds({
+    attempt: 2,
+    retryAfterSeconds: null,
+    initialBackoffSeconds: 1,
+    backoffMultiplier: 1.5,
+  });
+  if (
+    fracMult.source === "exponential" &&
+    fracMult.waitSeconds === 2
+  ) {
+    details.push(
+      "backoffMultiplier=1.5 attempt 2 → exponential WAIT 2s (ceil 1.5; not truncate)",
+    );
+  } else {
+    passed = false;
+    details.push(`Fractional multiplier failed: ${JSON.stringify(fracMult)}`);
   }
 
   // Scenario P16 (Q53): backoffMultiplier=1 → flat exponential wait (attempt 5 still initial).

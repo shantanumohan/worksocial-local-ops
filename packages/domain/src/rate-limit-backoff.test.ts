@@ -457,6 +457,25 @@ describe("rate-limit-backoff (T-X030)", () => {
     ).toEqual({ waitSeconds: 1, source: "exponential" });
   });
 
+  it("ceils fractional backoffMultiplier growth (Q56 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 2,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 1.5,
+      }),
+    ).toEqual({ waitSeconds: 2, source: "exponential" });
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 3,
+        retryAfterSeconds: null,
+        initialBackoffSeconds: 1,
+        backoffMultiplier: 1.5,
+      }),
+    ).toEqual({ waitSeconds: 3, source: "exponential" });
+  });
+
   it("keeps flat exponential wait when backoffMultiplier is 1 (Q53 wipe15)", () => {
     expect(
       computeBackoffWaitSeconds({
