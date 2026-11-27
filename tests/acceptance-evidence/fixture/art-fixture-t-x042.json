@@ -8,8 +8,8 @@
     "schema_differs_from_page_gate_fails"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x042.json",
-  "createdAtIso": "2026-11-27T15:00:55.479Z",
+  "createdAtIso": "2026-11-27T15:07:22.352Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x042-000b2d940aa9"
+  "uniqueSourceArtifactId": "art-fixture-t-x042-331f949d3f75"
 }
