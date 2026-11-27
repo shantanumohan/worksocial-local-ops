@@ -6,6 +6,9 @@
  * evidence digest. Editing any of those invalidates the binding; a prior
  * acceptance cannot be reused. External effects: NONE. Live wiring: NOT_WIRED.
  * Fixture ACCEPTED ≠ VERIFIED. Avoids credential rebind (#43) lane.
+ *
+ * Deepen (R25 idle): triple revision+checksum+evidence edit — repeat
+ * validateReviewBinding still INVALIDATED (idempotent; applyAttemptCount=1).
  */
 
 import { randomUUID } from "node:crypto";
@@ -1399,6 +1402,55 @@ export function proofApprovedPayloadEditInvalidated(
     details.push(
       "Failed to create binding for padded verdict authorRoleId check",
     );
+  }
+
+  // 39. R25 idle: triple revision+checksum+evidence mismatch repeat gate.
+  const r25Snapshot = {
+    proposalArtifactId: "art-draft-1",
+    proposalRevision: "rev-r25",
+    proposalChecksum: "r5".repeat(32),
+    evidencePackageDigest: "pkg:r25:1",
+  };
+  const r25Bind = createReviewBinding({
+    bindingId: `bind-r25-${randomUUID().slice(0, 8)}`,
+    proposal: baseProposal({
+      proposalId: `prop-r25-${randomUUID().slice(0, 8)}`,
+    }),
+    ...r25Snapshot,
+    createdAtIso: nowIso,
+  });
+  if (r25Bind.ok) {
+    const edited = {
+      proposalArtifactId: "art-draft-1",
+      proposalRevision: "rev-r25b",
+      proposalChecksum: "5r".repeat(32),
+      evidencePackageDigest: "pkg:r25:2",
+    };
+    const r25Pass1 = validateReviewBinding(r25Bind.binding, edited);
+    const r25Pass2 = validateReviewBinding(
+      r25Pass1.ok ? r25Bind.binding : r25Pass1.binding,
+      edited,
+    );
+    if (
+      !r25Pass1.ok &&
+      !r25Pass2.ok &&
+      r25Pass1.code === "BINDING_INVALIDATED" &&
+      r25Pass2.code === "BINDING_INVALIDATED" &&
+      r25Pass1.mismatchedFields?.length === 3 &&
+      r25Pass1.mismatchedFields.includes("proposalRevision") &&
+      r25Pass1.mismatchedFields.includes("proposalChecksum") &&
+      r25Pass1.mismatchedFields.includes("evidencePackageDigest")
+    ) {
+      details.push(
+        "T-X019 R25: triple revision+checksum+evidence mismatch repeat gate idempotent (two passes; applyAttemptCount=1)",
+      );
+    } else {
+      passed = false;
+      details.push("T-X019 R25 triple mismatch repeat gate failed");
+    }
+  } else {
+    passed = false;
+    details.push("Failed to create binding for R25 triple mismatch repeat");
   }
 
   const honesty = summarizeReviewBindingHonesty();

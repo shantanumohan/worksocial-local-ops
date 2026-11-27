@@ -298,6 +298,42 @@ describe("A25 review binding (M3/NEXT-12)", () => {
     }
   });
 
+  // T-X019 R25 idle: triple-field digest conflict idempotent on re-validate.
+  it("R25: triple revision+checksum+evidence mismatch is stable across two validates", () => {
+    const created = createReviewBinding({
+      bindingId: "bind-r25",
+      proposal: proposal(),
+      proposalArtifactId: "art-draft-1",
+      proposalRevision: "rev-r25",
+      proposalChecksum: "r5".repeat(32),
+      evidencePackageDigest: "pkg:r25:1",
+      createdAtIso: "2026-11-20T03:00:00.000Z",
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    const edited = {
+      proposalArtifactId: "art-draft-1",
+      proposalRevision: "rev-r25b",
+      proposalChecksum: "5r".repeat(32),
+      evidencePackageDigest: "pkg:r25:2",
+    };
+    const pass1 = validateReviewBinding(created.binding, edited);
+    expect(pass1.ok).toBe(false);
+    if (!pass1.ok) {
+      expect(pass1.code).toBe("BINDING_INVALIDATED");
+      expect(pass1.mismatchedFields).toEqual([
+        "proposalRevision",
+        "proposalChecksum",
+        "evidencePackageDigest",
+      ]);
+    }
+    const pass2 = validateReviewBinding(pass1.ok ? created.binding : pass1.binding, edited);
+    expect(pass2.ok).toBe(false);
+    if (!pass2.ok) {
+      expect(pass2.code).toBe("BINDING_INVALIDATED");
+    }
+  });
+
   it("pins honesty constants for T-X019 / T-US-036", () => {
     expect(REVIEW_BINDING_LIVE_WIRING).toBe("NOT_WIRED");
     expect(REVIEW_BINDING_EXTERNAL_EFFECTS).toBe("NONE");
