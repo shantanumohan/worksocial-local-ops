@@ -21,4 +21,11 @@ describe("T-X061 soak proof builder", () => {
       true,
     );
   });
+
+  it("proof details include re-open refused and FOCUS_LOST control (T46)", () => {
+    const proof = proofKeyboardFocusRestoreAfterDialog(now);
+    expect(proof.passed).toBe(true);
+    expect(proof.details.some((d) => /Re-open refused/i.test(d))).toBe(true);
+    expect(proof.details.some((d) => /FOCUS_LOST/i.test(d))).toBe(true);
+  });
 });

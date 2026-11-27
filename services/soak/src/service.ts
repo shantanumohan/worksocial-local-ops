@@ -4,6 +4,7 @@
  */
 
 import { randomUUID } from "node:crypto";
+import { join } from "node:path";
 import {
   AcceptanceEnvironment,
   PILOT_SOAK_REQUIRED_MS,
@@ -119,7 +120,12 @@ export function createSoakService(store: SoakStore): SoakService {
       });
 
       const harness = await runSoakRecoveryHarness({
-        stateDir: store.stateDir,
+        // Isolate harness durable/temp work from soak evidence paths (CI e2e flakes).
+        stateDir: join(
+          store.stateDir,
+          "harness-work",
+          `run-${randomUUID().slice(0, 8)}`,
+        ),
         // Fixture proofs that consult after-hours coverage must not depend on
         // wall-clock weekday business hours; pilot gate still uses server clock.
         nowIso: input.harnessNowIso ?? SOAK_FIXTURE_HARNESS_NOW_ISO,
