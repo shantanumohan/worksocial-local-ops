@@ -719,7 +719,7 @@ describe("replay historical workflow (T-X013)", () => {
     const history = sampleHistory();
     const claim = history.events[1];
     if (claim && claim.activity === "claimAndAccept") {
-      (claim as { phase: string }).phase = "effect_pending";
+      (claim as { phase: string }).phase = "succeeded";
     }
     const { hooks, summary } = createHistoryOnlyReplayHooks();
     const result = replayMissionWorkflowHistory(history, hooks);
