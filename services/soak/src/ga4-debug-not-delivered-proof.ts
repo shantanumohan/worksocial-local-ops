@@ -441,6 +441,97 @@ export function proofGa4DebugNotDeliveredConversion(
     details.push(`SANDBOX debug unexpectedly ${JSON.stringify(sandboxOk)}`);
   }
 
+  const a20Delivered1 = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimDeliveredConversion: true,
+  });
+  const a20Delivered2 = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimDeliveredConversion: true,
+  });
+  const a20Delivered3 = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimDeliveredConversion: true,
+  });
+  if (
+    a20Delivered1.code === "DELIVERED_CONVERSION_CLAIM_REFUSED" &&
+    a20Delivered2.code === "DELIVERED_CONVERSION_CLAIM_REFUSED" &&
+    a20Delivered3.code === "DELIVERED_CONVERSION_CLAIM_REFUSED" &&
+    a20Delivered3.deliveredConversionClaimed === false &&
+    a20Delivered3.measuredReceiptClaimed === false &&
+    a20Delivered3.liveProviderWiring === "NOT_WIRED" &&
+    a20Delivered3.externalEffects === "NONE"
+  ) {
+    details.push(
+      "A20 tip-moved-293 train: triple repeat claimDeliveredConversion → DELIVERED_CONVERSION_CLAIM_REFUSED; no delivery/receipt",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `A20 triple delivered unexpectedly ${JSON.stringify({ a20Delivered3 })}`,
+    );
+  }
+
+  const a20Rejected1 = interpretGa4DebugValidation({
+    debugEndpointAccepted: false,
+    claimDeliveredConversion: true,
+  });
+  const a20Rejected2 = interpretGa4DebugValidation({
+    debugEndpointAccepted: false,
+    claimDeliveredConversion: true,
+  });
+  const a20Rejected3 = interpretGa4DebugValidation({
+    debugEndpointAccepted: false,
+    claimDeliveredConversion: true,
+  });
+  if (
+    a20Rejected1.code === "DELIVERED_CONVERSION_CLAIM_REFUSED" &&
+    a20Rejected2.code === "DELIVERED_CONVERSION_CLAIM_REFUSED" &&
+    a20Rejected3.code === "DELIVERED_CONVERSION_CLAIM_REFUSED" &&
+    a20Rejected3.debugOk === false &&
+    a20Rejected3.deliveredConversionClaimed === false &&
+    a20Rejected3.externalEffects === "NONE"
+  ) {
+    details.push(
+      "A20 tip-moved-293 edge: rejected-debug triple claimDeliveredConversion → DELIVERED_CONVERSION_CLAIM_REFUSED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `A20 rejected-debug triple unexpectedly ${JSON.stringify({ a20Rejected3 })}`,
+    );
+  }
+
+  const a20Receipt1 = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimMeasuredReceipt: true,
+  });
+  const a20Receipt2 = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimMeasuredReceipt: true,
+  });
+  const a20Receipt3 = interpretGa4DebugValidation({
+    debugEndpointAccepted: true,
+    claimMeasuredReceipt: true,
+  });
+  if (
+    a20Receipt1.code === "MEASURED_RECEIPT_CLAIM_REFUSED" &&
+    a20Receipt2.code === "MEASURED_RECEIPT_CLAIM_REFUSED" &&
+    a20Receipt3.code === "MEASURED_RECEIPT_CLAIM_REFUSED" &&
+    a20Receipt3.measuredReceiptClaimed === false &&
+    a20Receipt3.deliveredConversionClaimed === false &&
+    a20Receipt3.externalEffects === "NONE"
+  ) {
+    details.push(
+      "A20 tip-moved-293 edge measured-receipt: triple claimMeasuredReceipt → MEASURED_RECEIPT_CLAIM_REFUSED; no receipt",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `A20 measured-receipt triple unexpectedly ${JSON.stringify({ a20Receipt3 })}`,
+    );
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE",
   );
