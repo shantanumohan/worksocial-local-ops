@@ -280,6 +280,272 @@ export function proofIncompatibleWorkflowUpgradeBlockedOrRetained(
     );
   }
 
+  // S31: COMPLETE + breakingChange=true → retain; no silent rebind.
+  const completeBreaking = createWorkflowInstance({
+    workflowId: `wf-tx067-complete-bc-${randomUUID().slice(0, 8)}`,
+    definitionId: "def-fixture-publish",
+    definitionVersion: "1.0.0",
+    compatibilityEpoch: "epoch-a",
+    phase: WorkflowInstancePhase.COMPLETE,
+    nowIso,
+  });
+  const completeBc = evaluateWorkflowDefinitionUpgrade({
+    instance: completeBreaking,
+    proposed: {
+      definitionVersion: "1.0.0",
+      compatibilityEpoch: "epoch-a",
+      breakingRevision: 0,
+      breakingChange: true,
+    },
+    nowIso,
+  });
+  if (
+    completeBc.allowed === false &&
+    completeBc.code === WorkflowUpgradeCode.COMPATIBLE_DEFINITION_RETAINED &&
+    completeBc.retainedPin.definitionVersion === "1.0.0" &&
+    completeBc.reasons.some((r) => r.includes("breakingChange"))
+  ) {
+    details.push(
+      "S31 COMPLETE+breakingChange → COMPATIBLE_DEFINITION_RETAINED; pin retained",
+    );
+  } else {
+    passed = false;
+    details.push(`S31 COMPLETE+bc unexpectedly ${JSON.stringify(completeBc)}`);
+  }
+
+  const idleBreaking = createWorkflowInstance({
+    workflowId: `wf-tx067-idle-bc-${randomUUID().slice(0, 8)}`,
+    definitionId: "def-fixture-publish",
+    definitionVersion: "1.0.0",
+    compatibilityEpoch: "epoch-a",
+    phase: WorkflowInstancePhase.IDLE,
+    nowIso,
+  });
+  const idleBc = evaluateWorkflowDefinitionUpgrade({
+    instance: idleBreaking,
+    proposed: {
+      definitionVersion: "1.0.0",
+      compatibilityEpoch: "epoch-a",
+      breakingRevision: 0,
+      breakingChange: true,
+    },
+    nowIso,
+  });
+  if (
+    idleBc.allowed === false &&
+    idleBc.code === WorkflowUpgradeCode.COMPATIBLE_DEFINITION_RETAINED &&
+    idleBc.retainedPin.definitionVersion === "1.0.0" &&
+    idleBc.reasons.some((r) => r.includes("breakingChange"))
+  ) {
+    details.push(
+      "S32 IDLE+breakingChange → COMPATIBLE_DEFINITION_RETAINED; pin retained",
+    );
+  } else {
+    passed = false;
+    details.push(`S32 IDLE+bc unexpectedly ${JSON.stringify(idleBc)}`);
+  }
+
+  const applyingBreaking = createWorkflowInstance({
+    workflowId: `wf-tx067-applying-bc-${randomUUID().slice(0, 8)}`,
+    definitionId: "def-fixture-publish",
+    definitionVersion: "1.0.0",
+    compatibilityEpoch: "epoch-a",
+    phase: WorkflowInstancePhase.APPLYING,
+    nowIso,
+  });
+  const applyingBc = evaluateWorkflowDefinitionUpgrade({
+    instance: applyingBreaking,
+    proposed: {
+      definitionVersion: "1.0.0",
+      compatibilityEpoch: "epoch-a",
+      breakingRevision: 0,
+      breakingChange: true,
+    },
+    nowIso,
+  });
+  if (
+    isWorkflowInFlight(applyingBreaking.phase) &&
+    applyingBc.allowed === false &&
+    applyingBc.code === WorkflowUpgradeCode.INCOMPATIBLE_UPGRADE_BLOCKED &&
+    applyingBc.retainedPin.definitionVersion === "1.0.0"
+  ) {
+    details.push(
+      "S33 APPLYING+breakingChange → INCOMPATIBLE_UPGRADE_BLOCKED; pin retained",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `S33 APPLYING+bc unexpectedly ${JSON.stringify(applyingBc)}`,
+    );
+  }
+
+  const applyingEpoch = createWorkflowInstance({
+    workflowId: `wf-tx067-applying-epoch-${randomUUID().slice(0, 8)}`,
+    definitionId: "def-fixture-publish",
+    definitionVersion: "1.0.0",
+    compatibilityEpoch: "epoch-a",
+    phase: WorkflowInstancePhase.APPLYING,
+    nowIso,
+  });
+  const applyingEpochBlock = evaluateWorkflowDefinitionUpgrade({
+    instance: applyingEpoch,
+    proposed: {
+      definitionVersion: "1.2.0",
+      compatibilityEpoch: "epoch-b",
+      breakingRevision: 0,
+      breakingChange: false,
+    },
+    nowIso,
+  });
+  if (
+    isWorkflowInFlight(applyingEpoch.phase) &&
+    applyingEpochBlock.allowed === false &&
+    applyingEpochBlock.code === WorkflowUpgradeCode.INCOMPATIBLE_UPGRADE_BLOCKED &&
+    applyingEpochBlock.retainedPin.compatibilityEpoch === "epoch-a"
+  ) {
+    details.push(
+      "S35 APPLYING+epoch mismatch → INCOMPATIBLE_UPGRADE_BLOCKED; pin retained",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `S35 APPLYING+epoch unexpectedly ${JSON.stringify(applyingEpochBlock)}`,
+    );
+  }
+
+  const runningRev = createWorkflowInstance({
+    workflowId: `wf-tx067-running-rev-${randomUUID().slice(0, 8)}`,
+    definitionId: "def-fixture-publish",
+    definitionVersion: "1.0.0",
+    compatibilityEpoch: "epoch-a",
+    breakingRevision: 0,
+    phase: WorkflowInstancePhase.RUNNING,
+    nowIso,
+  });
+  const runningRevBlock = evaluateWorkflowDefinitionUpgrade({
+    instance: runningRev,
+    proposed: {
+      definitionVersion: "1.1.0",
+      compatibilityEpoch: "epoch-a",
+      breakingRevision: 2,
+      breakingChange: false,
+    },
+    nowIso,
+  });
+  if (
+    isWorkflowInFlight(runningRev.phase) &&
+    runningRevBlock.allowed === false &&
+    runningRevBlock.code === WorkflowUpgradeCode.INCOMPATIBLE_UPGRADE_BLOCKED &&
+    runningRevBlock.retainedPin.breakingRevision === 0
+  ) {
+    details.push(
+      "S36 RUNNING+breakingRevision mismatch → INCOMPATIBLE_UPGRADE_BLOCKED",
+    );
+  } else {
+    passed = false;
+    details.push(`S36 RUNNING+rev unexpectedly ${JSON.stringify(runningRevBlock)}`);
+  }
+
+  const runningBreaking = createWorkflowInstance({
+    workflowId: `wf-tx067-running-bc-${randomUUID().slice(0, 8)}`,
+    definitionId: "def-fixture-publish",
+    definitionVersion: "1.0.0",
+    compatibilityEpoch: "epoch-a",
+    phase: WorkflowInstancePhase.RUNNING,
+    nowIso,
+  });
+  const runningBc = evaluateWorkflowDefinitionUpgrade({
+    instance: runningBreaking,
+    proposed: {
+      definitionVersion: "1.0.0",
+      compatibilityEpoch: "epoch-a",
+      breakingRevision: 0,
+      breakingChange: true,
+    },
+    nowIso,
+  });
+  if (
+    isWorkflowInFlight(runningBreaking.phase) &&
+    runningBc.allowed === false &&
+    runningBc.code === WorkflowUpgradeCode.INCOMPATIBLE_UPGRADE_BLOCKED &&
+    runningBc.retainedPin.definitionVersion === "1.0.0" &&
+    runningBc.reasons.some((r) => r.includes("breakingChange"))
+  ) {
+    details.push(
+      "S34 RUNNING+breakingChange → INCOMPATIBLE_UPGRADE_BLOCKED; pin retained",
+    );
+  } else {
+    passed = false;
+    details.push(`S34 RUNNING+bc unexpectedly ${JSON.stringify(runningBc)}`);
+  }
+
+  const idleEpoch = createWorkflowInstance({
+    workflowId: `wf-tx067-idle-epoch-${randomUUID().slice(0, 8)}`,
+    definitionId: "def-fixture-publish",
+    definitionVersion: "1.0.0",
+    compatibilityEpoch: "epoch-a",
+    phase: WorkflowInstancePhase.IDLE,
+    nowIso,
+  });
+  const idleEpochRetain = evaluateWorkflowDefinitionUpgrade({
+    instance: idleEpoch,
+    proposed: {
+      definitionVersion: "1.2.0",
+      compatibilityEpoch: "epoch-b",
+      breakingRevision: 0,
+      breakingChange: false,
+    },
+    nowIso,
+  });
+  if (
+    !isWorkflowInFlight(idleEpoch.phase) &&
+    idleEpochRetain.allowed === false &&
+    idleEpochRetain.code === WorkflowUpgradeCode.COMPATIBLE_DEFINITION_RETAINED &&
+    idleEpochRetain.retainedPin.compatibilityEpoch === "epoch-a"
+  ) {
+    details.push(
+      "S37 IDLE+epoch mismatch → COMPATIBLE_DEFINITION_RETAINED; pin retained",
+    );
+  } else {
+    passed = false;
+    details.push(`S37 IDLE+epoch unexpectedly ${JSON.stringify(idleEpochRetain)}`);
+  }
+
+  const completeEpoch = createWorkflowInstance({
+    workflowId: `wf-tx067-complete-epoch-${randomUUID().slice(0, 8)}`,
+    definitionId: "def-fixture-publish",
+    definitionVersion: "1.0.0",
+    compatibilityEpoch: "epoch-a",
+    phase: WorkflowInstancePhase.COMPLETE,
+    nowIso,
+  });
+  const completeEpochRetain = evaluateWorkflowDefinitionUpgrade({
+    instance: completeEpoch,
+    proposed: {
+      definitionVersion: "2.0.0",
+      compatibilityEpoch: "epoch-b",
+      breakingRevision: 0,
+      breakingChange: false,
+    },
+    nowIso,
+  });
+  if (
+    !isWorkflowInFlight(completeEpoch.phase) &&
+    completeEpochRetain.allowed === false &&
+    completeEpochRetain.code ===
+      WorkflowUpgradeCode.COMPATIBLE_DEFINITION_RETAINED &&
+    completeEpochRetain.retainedPin.compatibilityEpoch === "epoch-a"
+  ) {
+    details.push(
+      "S38 COMPLETE+epoch mismatch → COMPATIBLE_DEFINITION_RETAINED; pin retained",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `S38 COMPLETE+epoch unexpectedly ${JSON.stringify(completeEpochRetain)}`,
+    );
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false externalEffects=NONE temporalWiring=NOT_WIRED",
   );
