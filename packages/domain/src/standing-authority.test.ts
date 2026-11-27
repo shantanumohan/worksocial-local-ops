@@ -297,4 +297,14 @@ describe("evaluateStandingAuthority", () => {
     });
     expect(denied.match).toBeNull();
   });
+
+  it("undefined held allowed when fence explicitly off (T-X006 edge)", () => {
+    const allowed = evaluateStandingAuthority(
+      baseRequest({
+        requireSupervisorLeaseFence: false,
+        supervisorLeaseHeld: undefined,
+      }),
+    );
+    expect(allowed.decision).toEqual({ allowed: true });
+  });
 });
