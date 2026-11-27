@@ -672,6 +672,69 @@ export function proofUnknownUsageCancelHoldsResidual(
     );
   }
 
+  // 20. Multi-hold overrun reconcile posts overrunMinor snapshot; sibling hold intact (L21).
+  const l21Base = createBudgetAccount({
+    dayKey: "2026-11-22",
+    currency: "USD",
+    limitMinor: 1000,
+  });
+  const l21A = reserveBudget(l21Base, "l21-over", 300);
+  if (!l21A.ok) {
+    passed = false;
+    details.push(`L21 over reserve failed: ${JSON.stringify(l21A)}`);
+    return finish(passed, details, nowIso);
+  }
+  const l21B = reserveBudget(l21A.account, "l21-sib", 80);
+  if (!l21B.ok) {
+    passed = false;
+    details.push(`L21 sibling reserve failed: ${JSON.stringify(l21B)}`);
+    return finish(passed, details, nowIso);
+  }
+  const l21HoldA = cancelBudgetReservation(l21B.account, "l21-over", {
+    known: false,
+  });
+  if (!l21HoldA.ok) {
+    passed = false;
+    details.push(`L21 over hold failed: ${JSON.stringify(l21HoldA)}`);
+    return finish(passed, details, nowIso);
+  }
+  const l21HoldB = cancelBudgetReservation(l21HoldA.account, "l21-sib", {
+    known: false,
+  });
+  if (!l21HoldB.ok) {
+    passed = false;
+    details.push(`L21 sibling hold failed: ${JSON.stringify(l21HoldB)}`);
+    return finish(passed, details, nowIso);
+  }
+  const l21Over = cancelBudgetReservation(l21HoldB.account, "l21-over", {
+    known: true,
+    actualMinor: 380,
+  });
+  const overSnap = l21Over.ok
+    ? l21Over.account.settledReservations["l21-over"]
+    : undefined;
+  if (
+    l21Over.ok &&
+    overSnap &&
+    overSnap.reservedMinor === 300 &&
+    overSnap.actualMinor === 380 &&
+    overSnap.overrunMinor === 80 &&
+    isUnknownUsageHold(l21Over.account, "l21-sib") &&
+    l21Over.account.heldMinor === 80 &&
+    l21Over.account.settledMinor === 380 &&
+    availableBudgetMinor(l21Over.account) === 540 &&
+    l21Over.liveBudgetProviderWiring === BUDGET_LIVE_PROVIDER_WIRING
+  ) {
+    details.push(
+      "Multi-hold overrun reconcile → snapshot overrunMinor=80; sibling hold 80 intact; available=540",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `L21 overrun multi-hold failed: ${JSON.stringify(l21Over)} snap=${JSON.stringify(overSnap)}`,
+    );
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false externalEffects=NONE liveBudgetProviderWiring=NOT_WIRED ACCEPTED≠VERIFIED",
   );

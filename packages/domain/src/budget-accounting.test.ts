@@ -242,6 +242,41 @@ describe("budget accounting", () => {
     expect(underRun.liveBudgetProviderWiring).toBe("NOT_WIRED");
   });
 
+  it("multi-hold overrun reconcile persists overrunMinor; sibling hold intact (L21)", () => {
+    const a = reserveBudget(account(), "r-over", 300);
+    expect(a.ok).toBe(true);
+    if (!a.ok) return;
+    const b = reserveBudget(a.account, "r-sib", 80);
+    expect(b.ok).toBe(true);
+    if (!b.ok) return;
+    const holdOver = cancelBudgetReservation(b.account, "r-over", {
+      known: false,
+    });
+    expect(holdOver.ok).toBe(true);
+    if (!holdOver.ok) return;
+    const holdSib = cancelBudgetReservation(holdOver.account, "r-sib", {
+      known: false,
+    });
+    expect(holdSib.ok).toBe(true);
+    if (!holdSib.ok) return;
+    const overrun = cancelBudgetReservation(holdSib.account, "r-over", {
+      known: true,
+      actualMinor: 380,
+    });
+    expect(overrun.ok).toBe(true);
+    if (!overrun.ok) return;
+    expect(overrun.account.settledReservations["r-over"]).toEqual({
+      reservedMinor: 300,
+      actualMinor: 380,
+      overrunMinor: 80,
+    });
+    expect(isUnknownUsageHold(overrun.account, "r-sib")).toBe(true);
+    expect(overrun.account.heldMinor).toBe(80);
+    expect(overrun.account.settledMinor).toBe(380);
+    expect(availableBudgetMinor(overrun.account)).toBe(540);
+    expect(overrun.liveBudgetProviderWiring).toBe("NOT_WIRED");
+  });
+
   it("known-zero release after hold posts explicit zero settled snapshot (L19)", () => {
     const reserved = reserveBudget(account(), "r-zrelease", 180);
     expect(reserved.ok).toBe(true);
