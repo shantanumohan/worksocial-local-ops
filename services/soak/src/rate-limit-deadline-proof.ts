@@ -33,6 +33,7 @@
  * Deepen (Q51): Retry-After=EPSILON ceils to 1s retry_after.
  * Deepen (Q53): backoffMultiplier=1 → flat exponential wait (no growth invent).
  * Deepen (Q56): fractional backoffMultiplier 1.5 ceils (attempt 2 → 2s).
+ * Deepen (Q58): Retry-After 0.001s ceils to 1s retry_after.
  */
 
 import { randomUUID } from "node:crypto";
@@ -561,6 +562,23 @@ export function proofRateLimitBoundedBackoffPreservesDeadline(
     details.push(
       `maxAttempts=1 STOP honesty failed: ${JSON.stringify(oneShot)}`,
     );
+  }
+
+  // Scenario P18 (Q58): Retry-After 0.001s ceils to 1s retry_after.
+  const millisRetry = computeBackoffWaitSeconds({
+    attempt: 1,
+    retryAfterSeconds: 0.001,
+  });
+  if (
+    millisRetry.source === "retry_after" &&
+    millisRetry.waitSeconds === 1
+  ) {
+    details.push(
+      "Retry-After=0.001s ceiled to WAIT 1s retry_after (sub-millisecond honored)",
+    );
+  } else {
+    passed = false;
+    details.push(`Sub-ms Retry-After failed: ${JSON.stringify(millisRetry)}`);
   }
 
   // Scenario P17 (Q56): backoffMultiplier=1.5 attempt 2 → WAIT 2s exponential.

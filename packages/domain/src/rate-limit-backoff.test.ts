@@ -457,6 +457,15 @@ describe("rate-limit-backoff (T-X030)", () => {
     ).toEqual({ waitSeconds: 1, source: "exponential" });
   });
 
+  it("ceils sub-millisecond Retry-After to 1s (Q58 wipe15)", () => {
+    expect(
+      computeBackoffWaitSeconds({
+        attempt: 1,
+        retryAfterSeconds: 0.001,
+      }),
+    ).toEqual({ waitSeconds: 1, source: "retry_after" });
+  });
+
   it("ceils fractional backoffMultiplier growth (Q56 wipe15)", () => {
     expect(
       computeBackoffWaitSeconds({
