@@ -36,6 +36,7 @@
  * (tip #221 companion).
  * Hillclimb R11: FALSE_PER_KEY_OVERLAP_PASS_REFUSED.
  * Hillclimb R12: CONCURRENT_RETRY_ONLY_CLAIM_REFUSED.
+ * Hillclimb G34 (Slot G): createCount 0 / unmeasured + claimedOneDispatchPass → refuse.
  */
 
 import { randomBytes, randomUUID } from "node:crypto";
@@ -962,6 +963,13 @@ export async function proofConcurrentIdempotentRelease(
     claimedOneDispatchPass: true,
     createCount: 12,
   });
+  const falseOneDispatchZeroCreates = evaluateConcurrentReleaseLiveClaim({
+    claimedOneDispatchPass: true,
+    createCount: 0,
+  });
+  const falseOneDispatchUnmeasured = evaluateConcurrentReleaseLiveClaim({
+    claimedOneDispatchPass: true,
+  });
   const trueOneDispatchPassOk =
     evaluateConcurrentReleaseLiveClaim({
       claimedOneDispatchPass: true,
@@ -1061,6 +1069,10 @@ export async function proofConcurrentIdempotentRelease(
       ConcurrentReleaseOutcome.OVERLAP_AS_VERIFIED_REFUSED &&
     falseOneDispatchPassRefuse?.code ===
       ConcurrentReleaseOutcome.FALSE_ONE_DISPATCH_PASS_REFUSED &&
+    falseOneDispatchZeroCreates?.code ===
+      ConcurrentReleaseOutcome.FALSE_ONE_DISPATCH_PASS_REFUSED &&
+    falseOneDispatchUnmeasured?.code ===
+      ConcurrentReleaseOutcome.FALSE_ONE_DISPATCH_PASS_REFUSED &&
     trueOneDispatchPassOk &&
     falsePerKeyOverlapPassRefuse?.code ===
       ConcurrentReleaseOutcome.FALSE_PER_KEY_OVERLAP_PASS_REFUSED &&
@@ -1090,7 +1102,7 @@ export async function proofConcurrentIdempotentRelease(
     `Offline async race-window + per-key serializer; pgRaceNotClaimed=${honesty.pgRaceNotClaimed}; liveWiring=${honesty.liveWiring}; chatgptAdsAccess=${honesty.chatgptAdsAccess}; adsSoftSkip=[${honesty.adsSoftSkipCaseIds.join(",")}]; refuseLiveVerified=${honesty.refuseLiveVerified}`,
   );
   details.push(
-    `liveProviderSuccessClaimed=false externalEffects=${honesty.externalEffects} concurrentReleaseLiveWiring=${CONCURRENT_RELEASE_LIVE_WIRING}`,
+    `liveProviderSuccessClaimed=false externalEffects=${honesty.externalEffects} concurrentReleaseLiveWiring=${CONCURRENT_RELEASE_LIVE_WIRING} deepen=G34 hillclimb=falseOneDispatchZeroAndUnmeasured`,
   );
 
   if (!proofDetailsHonest(details)) {

@@ -1978,7 +1978,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x021",
-      "evidenceNote": "Fixture concurrent-idempotent-release proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture concurrent-idempotent-release proof only \u2014 not sandbox or production-canary VERIFIED; Slot G G34: claimedOneDispatchPass refuses createCount 0 and unmeasured"
     },
     {
       "id": "T-X022",

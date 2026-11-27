@@ -246,6 +246,17 @@ describe("concurrent idempotent release honesty (T-X021)", () => {
     ).toBeNull();
     expect(
       evaluateConcurrentReleaseLiveClaim({
+        claimedOneDispatchPass: true,
+        createCount: 0,
+      })?.code,
+    ).toBe(ConcurrentReleaseOutcome.FALSE_ONE_DISPATCH_PASS_REFUSED);
+    expect(
+      evaluateConcurrentReleaseLiveClaim({
+        claimedOneDispatchPass: true,
+      })?.code,
+    ).toBe(ConcurrentReleaseOutcome.FALSE_ONE_DISPATCH_PASS_REFUSED);
+    expect(
+      evaluateConcurrentReleaseLiveClaim({
         claimedPerKeyOverlapPass: true,
         keyBCompletedWhileAHeld: false,
       })?.code,
