@@ -95,47 +95,148 @@ export function proofWorkerBrowserAuthStateOsDenied(
     }
   }
 
-  // Domain helper honesty for each worker principal.
+  // Wipe15 edge: absent consent on every system read still OS_DENY for workers.
+  for (const principal of workers) {
+    for (const stateKind of systemKinds) {
+      const noConsent = broker.requestBrowserAuthState({
+        principal,
+        stateKind,
+      });
+      if (
+        noConsent.allowed === false &&
+        noConsent.code === BrowserAuthAccessCode.OS_DENY &&
+        noConsent.authMaterial === null &&
+        noConsent.materialPresentInVault === true
+      ) {
+        details.push(
+          `boundary ${principal} → ${stateKind}: OS_DENY (no-consent path)`,
+        );
+      } else {
+        passed = false;
+        details.push(
+          `no-consent ${principal} → ${stateKind} unexpectedly ${JSON.stringify(noConsent)}`,
+        );
+      }
+    }
+  }
+
+  const allStateKinds = [
+    ...systemKinds,
+    BrowserAuthStateKind.WORKSPACE_BROWSER_PARTITION,
+  ] as const;
+
+  // Domain helper honesty: every worker × every auth-state kind (M16 matrix).
   for (const principal of workerDomainPrincipals) {
-    const domainDeny = evaluateBrowserAuthStateAccess({
+    for (const stateKind of allStateKinds) {
+      const domainDeny = evaluateBrowserAuthStateAccess({
+        principal,
+        stateKind,
+        explicitUserConsent: true,
+      });
+      if (
+        isWorkerBrowserAuthOsDeny(domainDeny) &&
+        domainDeny.liveBrowserAuthWiring === BROWSER_AUTH_LIVE_WIRING
+      ) {
+        details.push(
+          `domain ${principal} → ${stateKind}: OS_DENY; liveBrowserAuthWiring=NOT_WIRED`,
+        );
+      } else {
+        passed = false;
+        details.push(
+          `domain ${principal} → ${stateKind} deny unexpectedly ${JSON.stringify(domainDeny)}`,
+        );
+      }
+    }
+  }
+
+  // Wipe15 edge: workers without consent on workspace partition stay OS_DENY (not CONSENT_REQUIRED).
+  for (const principal of workers) {
+    const partitionNoConsent = broker.requestBrowserAuthState({
       principal,
-      stateKind: BrowserAuthStateKind.SYSTEM_CHROME_COOKIES,
-      explicitUserConsent: true,
+      stateKind: BrowserAuthStateKind.WORKSPACE_BROWSER_PARTITION,
     });
     if (
-      isWorkerBrowserAuthOsDeny(domainDeny) &&
-      domainDeny.liveBrowserAuthWiring === BROWSER_AUTH_LIVE_WIRING
+      partitionNoConsent.allowed === false &&
+      partitionNoConsent.code === BrowserAuthAccessCode.OS_DENY &&
+      partitionNoConsent.authMaterial === null &&
+      partitionNoConsent.materialPresentInVault === true
     ) {
       details.push(
-        `domain ${principal} → system_chrome_cookies: OS_DENY; liveBrowserAuthWiring=NOT_WIRED`,
+        `boundary ${principal} → workspace_browser_partition: OS_DENY (no-consent path)`,
       );
     } else {
       passed = false;
       details.push(
-        `domain ${principal} deny unexpectedly ${JSON.stringify(domainDeny)}`,
+        `worker partition no-consent ${principal} unexpectedly ${JSON.stringify(partitionNoConsent)}`,
       );
     }
   }
 
-  // 2. Worker cannot escalate via forged consent on workspace partition.
-  const workerPartition = broker.requestBrowserAuthState({
-    principal: "workflow-worker",
+  // 2. No worker can escalate via forged consent on workspace partition (M16: all workers).
+  for (const principal of workers) {
+    const workerPartition = broker.requestBrowserAuthState({
+      principal,
+      stateKind: BrowserAuthStateKind.WORKSPACE_BROWSER_PARTITION,
+      explicitUserConsent: true,
+    });
+    if (
+      workerPartition.allowed === false &&
+      workerPartition.code === BrowserAuthAccessCode.OS_DENY &&
+      workerPartition.authMaterial === null &&
+      workerPartition.materialPresentInVault === true
+    ) {
+      details.push(
+        `boundary ${principal} → workspace_browser_partition: OS_DENY (consent cannot escalate)`,
+      );
+    } else {
+      passed = false;
+      details.push(
+        `${principal} workspace partition unexpectedly ${JSON.stringify(workerPartition)}`,
+      );
+    }
+  }
+
+  // Wipe15 edge: host-admin workspace partition without consent stays OS_DENY.
+  const adminPartitionNoConsent = broker.requestBrowserAuthState({
+    principal: "host-admin",
     stateKind: BrowserAuthStateKind.WORKSPACE_BROWSER_PARTITION,
-    explicitUserConsent: true,
   });
   if (
-    workerPartition.allowed === false &&
-    workerPartition.code === BrowserAuthAccessCode.OS_DENY &&
-    workerPartition.authMaterial === null &&
-    workerPartition.materialPresentInVault === true
+    adminPartitionNoConsent.allowed === false &&
+    adminPartitionNoConsent.code === BrowserAuthAccessCode.OS_DENY &&
+    adminPartitionNoConsent.authMaterial === null &&
+    adminPartitionNoConsent.sealedRef === null &&
+    adminPartitionNoConsent.materialPresentInVault === true
   ) {
     details.push(
-      "boundary workflow-worker → workspace_browser_partition: OS_DENY (consent cannot escalate)",
+      "boundary host-admin → workspace_browser_partition: OS_DENY (no-consent path)",
     );
   } else {
     passed = false;
     details.push(
-      `workflow-worker workspace partition unexpectedly ${JSON.stringify(workerPartition)}`,
+      `host-admin partition no-consent unexpectedly ${JSON.stringify(adminPartitionNoConsent)}`,
+    );
+  }
+
+  // Host-admin cannot mount workspace partition (not browser-pool).
+  const adminWorkspace = broker.requestBrowserAuthState({
+    principal: "host-admin",
+    stateKind: BrowserAuthStateKind.WORKSPACE_BROWSER_PARTITION,
+    explicitUserConsent: true,
+  });
+  if (
+    adminWorkspace.allowed === false &&
+    adminWorkspace.code === BrowserAuthAccessCode.OS_DENY &&
+    adminWorkspace.authMaterial === null &&
+    adminWorkspace.materialPresentInVault === true
+  ) {
+    details.push(
+      "boundary host-admin → workspace_browser_partition: OS_DENY (not browser-pool)",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `host-admin workspace partition unexpectedly ${JSON.stringify(adminWorkspace)}`,
     );
   }
 
@@ -164,6 +265,52 @@ export function proofWorkerBrowserAuthStateOsDenied(
       passed = false;
       details.push(
         `browser-pool ${stateKind} unexpectedly ${JSON.stringify(poolDenied)}`,
+      );
+    }
+  }
+
+  // Wipe15 edge: browser-pool system reads without consent stay OS_DENY (not CONSENT_REQUIRED).
+  for (const stateKind of systemKinds) {
+    const poolNoConsent = broker.requestBrowserAuthState({
+      principal: "browser-pool",
+      stateKind,
+    });
+    if (
+      poolNoConsent.allowed === false &&
+      poolNoConsent.code === BrowserAuthAccessCode.OS_DENY &&
+      poolNoConsent.authMaterial === null &&
+      poolNoConsent.materialPresentInVault === true
+    ) {
+      details.push(
+        `boundary browser-pool → ${stateKind}: OS_DENY (no-consent path)`,
+      );
+    } else {
+      passed = false;
+      details.push(
+        `browser-pool no-consent ${stateKind} unexpectedly ${JSON.stringify(poolNoConsent)}`,
+      );
+    }
+  }
+
+  // Wipe15 edge: host-admin system reads without consent still OS_DENY.
+  for (const stateKind of systemKinds) {
+    const adminNoConsent = broker.requestBrowserAuthState({
+      principal: "host-admin",
+      stateKind,
+    });
+    if (
+      adminNoConsent.allowed === false &&
+      adminNoConsent.code === BrowserAuthAccessCode.OS_DENY &&
+      adminNoConsent.authMaterial === null &&
+      adminNoConsent.materialPresentInVault === true
+    ) {
+      details.push(
+        `boundary host-admin → ${stateKind}: OS_DENY (no-consent path)`,
+      );
+    } else {
+      passed = false;
+      details.push(
+        `host-admin no-consent ${stateKind} unexpectedly ${JSON.stringify(adminNoConsent)}`,
       );
     }
   }
