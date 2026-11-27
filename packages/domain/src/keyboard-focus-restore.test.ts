@@ -217,6 +217,19 @@ describe("keyboard focus restore (T-X061)", () => {
     expect(tab.session.overlayOpen).toBe(false);
   });
 
+  it("openOverlayFocus snapshots dialogFocusables against later mutation (T47)", () => {
+    const list = ["dlg-a", "dlg-b"] as const;
+    const mutable: string[] = [...list];
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-review",
+      dialogFocusables: mutable,
+    });
+    mutable.push("dlg-injected");
+    expect(opened.session.dialogFocusables).toEqual(["dlg-a", "dlg-b"]);
+    expect(opened.session.dialogFocusables).not.toContain("dlg-injected");
+  });
+
   it("markTriggerUnrestorable keeps trap active until close (T45)", () => {
     const opened = openOverlayFocus({
       session: emptyFocusSession(),
