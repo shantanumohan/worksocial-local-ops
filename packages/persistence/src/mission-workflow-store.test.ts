@@ -15,6 +15,7 @@ import {
   evaluateOldFenceLiveProviderSuccess,
   evaluateOldFenceAcceptedNotVerified,
   evaluateOldFenceAssignedCaseId,
+  evaluateOldFenceCohort2MergeHold,
   evaluateOldFenceRelatedCaseIds,
   evaluateOldFenceLiveTemporalNotWired,
   evaluateOldFenceSoftSkipAdsCase,
@@ -241,6 +242,17 @@ describe("classifyMissionLeaseFence / isMissionLeaseActive (T-X024)", () => {
     expect(evaluateOldFenceAssignedCaseId("T-X074").code).toBe(
       "ASSIGNED_CASE_REFUSED",
     );
+  });
+
+  it("keeps Cohort-2 merge on HOLD until sequencer go-ahead", () => {
+    expect(evaluateOldFenceCohort2MergeHold(false).code).toBe(
+      "COHORT2_MERGE_HOLD_OK",
+    );
+    expect(evaluateOldFenceCohort2MergeHold(false).allowed).toBe(true);
+    expect(evaluateOldFenceCohort2MergeHold(true).code).toBe(
+      "COHORT2_MERGE_AUTHORIZED_REFUSED",
+    );
+    expect(evaluateOldFenceCohort2MergeHold(true).cohort).toBe("2");
   });
 
   it("locks acceptedNotVerified=true and live Temporal NOT_WIRED claim", () => {

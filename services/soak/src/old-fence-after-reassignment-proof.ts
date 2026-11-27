@@ -28,6 +28,7 @@
  * Hillclimb O10: ACCEPTED_NOT_VERIFIED_OK / LIVE_TEMPORAL_NOT_WIRED_OK;
  * post-fail lease clear → fenceCause=no_holder; claimLease refused.
  * Hillclimb O11: ASSIGNED_CASE_OK only T-X024; post-succeed bind phase fence.
+ * Hillclimb O12 (fixture-wipe15): COHORT2_MERGE_HOLD_OK; post-fail bind phase fence.
  */
 
 import { randomUUID } from "node:crypto";
@@ -43,6 +44,7 @@ import {
   evaluateOldFenceAcceptanceLabel,
   evaluateOldFenceAcceptedNotVerified,
   evaluateOldFenceAssignedCaseId,
+  evaluateOldFenceCohort2MergeHold,
   evaluateOldFenceCatalogCaseId,
   evaluateOldFenceChatgptAdsAccess,
   evaluateOldFenceExternalEffects,
@@ -110,6 +112,8 @@ export async function proofOldFenceAfterReassignment(
   const liveWiredRefuse = evaluateOldFenceLiveTemporalNotWired("TEMPORAL");
   const assignedOk = evaluateOldFenceAssignedCaseId("T-X024");
   const assignedRefuse = evaluateOldFenceAssignedCaseId("T-X025");
+  const mergeHoldOk = evaluateOldFenceCohort2MergeHold(false);
+  const mergeAuthorizedRefuse = evaluateOldFenceCohort2MergeHold(true);
   if (
     liveTemporalRefuse.code === "LIVE_TEMPORAL_CLAIM_REFUSED" &&
     liveTemporalRefuse.allowed === false &&
@@ -213,6 +217,20 @@ export async function proofOldFenceAfterReassignment(
   } else {
     passed = false;
     details.push("Fixture assigned case-id honesty gate unexpected");
+  }
+  if (
+    mergeHoldOk.code === "COHORT2_MERGE_HOLD_OK" &&
+    mergeHoldOk.allowed === true &&
+    mergeAuthorizedRefuse.code === "COHORT2_MERGE_AUTHORIZED_REFUSED" &&
+    mergeAuthorizedRefuse.allowed === false &&
+    mergeHoldOk.cohort === "2"
+  ) {
+    details.push(
+      "COHORT2_MERGE_HOLD_OK for mergeAuthorized=false; COHORT2_MERGE_AUTHORIZED_REFUSED for true",
+    );
+  } else {
+    passed = false;
+    details.push("Fixture Cohort-2 merge HOLD honesty gate unexpected");
   }
 
   const enqueued = await store.enqueue({
@@ -877,6 +895,30 @@ export async function proofOldFenceAfterReassignment(
   } else {
     passed = false;
     details.push("Post-fail claimLease unexpectedly succeeded");
+  }
+  let postFailBindDenied = false;
+  try {
+    await sideFailStore.bindOperationWhileLeased({
+      workflowId: sideFailWf,
+      operationId: `op-post-fail-${randomUUID().slice(0, 8)}`,
+      holder: workerB,
+      nowIso: tAfterExpiry,
+      payloadDigest: "digest-fail-terminal",
+      businessIdempotencyKey: "biz-fail-terminal",
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/must be leased/i.test(msg)) {
+      postFailBindDenied = true;
+      details.push(`Post-fail old B bind denied phase fence: ${msg}`);
+    } else {
+      passed = false;
+      details.push(`Post-fail bind unexpected error: ${msg}`);
+    }
+  }
+  if (!postFailBindDenied) {
+    passed = false;
+    details.push("Post-fail old B bind unexpectedly succeeded");
   }
 
   details.push(

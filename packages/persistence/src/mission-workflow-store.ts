@@ -612,6 +612,38 @@ export function evaluateOldFenceAssignedCaseId(
   };
 }
 
+/** AA-209 Cohort-2 slot O: squash-merge only when sequencer names this PR. */
+export type OldFenceCohort2MergeHoldDecision = {
+  allowed: boolean;
+  code: "COHORT2_MERGE_HOLD_OK" | "COHORT2_MERGE_AUTHORIZED_REFUSED";
+  mergeAuthorized: boolean;
+  assignedCaseId: "T-X024";
+  cohort: "2";
+};
+
+export function evaluateOldFenceCohort2MergeHold(
+  mergeAuthorized: boolean,
+): OldFenceCohort2MergeHoldDecision {
+  const meta = {
+    assignedCaseId: "T-X024" as const,
+    cohort: "2" as const,
+  };
+  if (mergeAuthorized === false) {
+    return {
+      allowed: true,
+      code: "COHORT2_MERGE_HOLD_OK",
+      mergeAuthorized,
+      ...meta,
+    };
+  }
+  return {
+    allowed: false,
+    code: "COHORT2_MERGE_AUTHORIZED_REFUSED",
+    mergeAuthorized,
+    ...meta,
+  };
+}
+
 /** Stable honesty detail line for soak evidence (O4–O11). */
 export function formatOldFenceHonestyDetail(
   relatedCaseIds: readonly string[] = OLD_FENCE_AFTER_REASSIGNMENT_RELATED_CASE_IDS,
