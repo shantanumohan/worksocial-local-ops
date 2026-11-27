@@ -191,8 +191,16 @@ export function prepareCustomerDataForEvaluation(input: {
   claimLiveVerified?: boolean;
   /** Forbidden — live EVAL fleet stays NOT_WIRED. */
   requestLiveEvalFleet?: boolean;
+  /** Forbidden — fixture must not deliver raw PII despite leak detection. */
+  forceDeliverDespiteLeak?: boolean;
 }): CustomerEvalRedactionDecision {
   const { source, mode } = input;
+
+  if (input.forceDeliverDespiteLeak === true) {
+    return blockedLeak([
+      "Force-deliver despite customer PII leak refused — fixture eval gate (T-X072)",
+    ]);
+  }
 
   if (input.claimLiveVerified === true && input.requestLiveEvalFleet === true) {
     return blockedLeak([

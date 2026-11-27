@@ -131,6 +131,21 @@ export function proofCustomerDataEvalRedactionBlocks(
     details.push(`raw passthrough unexpectedly ${JSON.stringify(raw)}`);
   }
 
+  const forceDeliver = prepareCustomerDataForEvaluation({
+    source,
+    mode: "redact",
+    forceDeliverDespiteLeak: true,
+  });
+  if (
+    !forceDeliver.allowed &&
+    forceDeliver.code === "CUSTOMER_DATA_LEAK_BLOCKED"
+  ) {
+    details.push("forceDeliverDespiteLeak → CUSTOMER_DATA_LEAK_BLOCKED");
+  } else {
+    passed = false;
+    details.push(`forceDeliver unexpectedly ${JSON.stringify(forceDeliver)}`);
+  }
+
   // 2a. Simultaneous live VERIFIED + live fleet refused.
   const dualLive = prepareCustomerDataForEvaluation({
     source,

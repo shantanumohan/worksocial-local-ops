@@ -117,6 +117,17 @@ describe("customer eval redaction (T-X072)", () => {
     expect(decision.reasons.some((r) => /No identifiable/.test(r))).toBe(true);
   });
 
+  it("refuses forceDeliverDespiteLeak", () => {
+    const forced = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      forceDeliverDespiteLeak: true,
+    });
+    expect(forced.allowed).toBe(false);
+    expect(forced.code).toBe("CUSTOMER_DATA_LEAK_BLOCKED");
+    expect(forced.reasons.some((r) => /Force-deliver/.test(r))).toBe(true);
+  });
+
   it("refuses simultaneous claimLiveVerified and requestLiveEvalFleet", () => {
     const dual = prepareCustomerDataForEvaluation({
       source,
