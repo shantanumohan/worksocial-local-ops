@@ -763,6 +763,7 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).toMatch(/liveProviderWiring=NOT_WIRED/);
     expect(art.proofKinds).not.toContain("VERIFIED");
   });
+
   it("T-X057 fixture artifact names repair weaken-test rejection honesty (ACCEPTED ≠ VERIFIED)", () => {
     const artPath = resolve(
       repoRoot,
@@ -886,35 +887,6 @@ describe("contract: M9 soak / acceptance evidence", () => {
     // K52: post-#298 tip — repair weaken not T-X043 optimization-breaks-CTA drift
     expect(art.proofKinds).not.toContain("optimization_breaks_cta_journey_fails");
     expect(art.summary).not.toMatch(/optimization_breaks_cta_journey_fails/);
-  });
- * T-X059 fixture ACCEPTED only via DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING.
- */
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import {
-  AcceptanceCaseStatus,
-  AcceptanceEnvironment,
-  PilotGateStatus,
-  SOAK_FIXTURE_CASE_IDS,
-  validateAcceptanceCaseStatus,
-} from "@worksocial/domain";
-import { createFileSoakStore } from "@worksocial/persistence";
-import {
-  compileAcceptanceEvidence,
-  createSoakService,
-  runSoakRecoveryHarness,
-} from "@worksocial/soak";
-
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-
-describe("contract: M9 soak / acceptance evidence", () => {
-  let dir: string;
-
-  beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), "ws-m9-contract-"));
   });
   it("T-X059 fixture artifact names duplicate platform attribution (ACCEPTED ≠ VERIFIED)", () => {
     const artPath = resolve(
