@@ -1,7 +1,7 @@
 /**
- * Contract: T-X073 offboard ACTIVE_TOKEN residual (O52 retip c5d1a31d promoted-315 SOLE exclusive).
+ * Contract: T-X073 offboard ACTIVE_TOKEN residual (O70 promoted-332 @ 79a4fc8f SOLE exclusive).
  * Catalog ceiling T-X073. ACCEPTED ≠ VERIFIED. externalEffects NONE. NOT_WIRED.
- * Soft-skip Ads. Does not edit catalog docs.
+ * Soft-skip Ads. Does not edit catalog docs. #332 Slot O — SOLE exclusive T-X073.
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -11,8 +11,10 @@ import {
   ResidualObligationStatus,
   SoakProofKind,
   assertOffboardActiveTokenResidualHonest,
+  assertOffboardActiveTokenResidualReclaimIdempotent,
   expectedProofsForFixtureCase,
   mapProofToFixtureCases,
+  reclaimOffboardActiveTokenResidual,
   SOAK_FIXTURE_CASE_IDS,
 } from "@worksocial/domain";
 
@@ -360,5 +362,365 @@ describe("contract: T-X073 offboard ACTIVE_TOKEN residual", () => {
     expect(expectedProofsForFixtureCase("T-X073")).toEqual([
       SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL,
     ]);
+  });
+
+  it("continue HOLD: NO_DUPLICATE_EFFECTS stays unmapped from T-X073 ceiling", () => {
+    expect(
+      mapProofToFixtureCases(SoakProofKind.NO_DUPLICATE_EFFECTS),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).toEqual(["T-X073"]);
+  });
+
+  it("retip-316 continue HOLD: T-X057/T-X058 repair proofs stay off T-X073 ceiling", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X057");
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X058");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.REPAIR_WEAKEN_TEST_REJECTED),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.REPAIR_ATTEMPT_LIMIT_ESCALATED),
+    ).not.toContain("T-X073");
+  });
+
+  it("O55 edge-deepen HOLD: reclaim idempotent; pool ≤ T-X073; exclusive #317 unclaimed", () => {
+    const honestManifest = {
+      offboardId: "ob-o55",
+      connectionId: "conn-o55",
+      revokedLocally: true,
+      auditRetained: true,
+      schedulesDisabled: true,
+      secretsExported: false,
+      catalogClaim: "NOT_RUN" as const,
+      liveProviderRevoke: "NOT_WIRED" as const,
+      externalEffects: "NONE" as const,
+      productionActivated: false,
+      summary: "T-X073 O55 reclaim; ACCEPTED≠VERIFIED; NONE/NOT_WIRED",
+      residualObligations: [
+        {
+          kind: "ACTIVE_TOKEN" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "provider token may still be active",
+        },
+        {
+          kind: "PROVIDER_REVOKE" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "live revoke not wired",
+        },
+      ],
+    };
+    const r1 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const r2 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const reclaim = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: r2,
+    });
+    expect(reclaim.ok).toBe(true);
+    expect(reclaim.code).toBe("OFFBOARD_RECLAIM_IDEMPOTENT");
+    expect(reclaim.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(reclaim.externalEffects).toBe("NONE");
+    expect(r1.priorLiveRevokeInvented).toBe(false);
+    expect(r1.honesty.ok).toBe(true);
+
+    // Pool ceiling ≤ T-X073 — never invent T-X074+.
+    expect(SOAK_FIXTURE_CASE_IDS).not.toContain("T-X074");
+    expect(SOAK_FIXTURE_CASE_IDS).not.toContain("T-X075");
+    for (const id of SOAK_FIXTURE_CASE_IDS) {
+      const m = /^T-X(\d+)$/.exec(id);
+      if (m) {
+        expect(Number(m[1])).toBeLessThanOrEqual(73);
+      }
+    }
+
+    // Exclusive #317 Slot P owns T-X058 — Slot O does not claim.
+    expect(expectedProofsForFixtureCase("T-X058")).toEqual([
+      SoakProofKind.REPAIR_ATTEMPT_LIMIT_ESCALATED,
+    ]);
+    expect(expectedProofsForFixtureCase("T-X058")).not.toContain(
+      SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL,
+    );
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X058");
+
+    // Soft-skip Ads remain off T-X073 residual mapping.
+    for (const adsCase of ["T-F07", "T-US-013", "T-US-014"] as const) {
+      expect(
+        mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+      ).not.toContain(adsCase);
+    }
+  });
+
+  it("retip-317 continue HOLD: T-X059 attribution off T-X073; exclusive #318 unclaimed", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X059");
+    expect(expectedProofsForFixtureCase("T-X059")).toEqual([
+      SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING,
+      ),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X059");
+  });
+
+  it("retip-318 continue HOLD: T-X060 currency/timezone off T-X073; exclusive #319 unclaimed", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X060");
+    expect(expectedProofsForFixtureCase("T-X060")).toEqual([
+      SoakProofKind.CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM,
+      ),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X060");
+  });
+
+  it("retip-319 continue HOLD: T-X061 keyboard focus off T-X073; exclusive #320 unclaimed", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X061");
+    expect(expectedProofsForFixtureCase("T-X061")).toEqual([
+      SoakProofKind.KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG,
+      ),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X061");
+  });
+
+  it("retip-320 continue HOLD: T-X062 SSE resync off T-X073; exclusive #321 unclaimed", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X062");
+    expect(expectedProofsForFixtureCase("T-X062")).toEqual([
+      SoakProofKind.SSE_GAP_FULL_STATE_RESYNC,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.SSE_GAP_FULL_STATE_RESYNC),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X062");
+  });
+
+  it("retip-321 continue HOLD: T-X063 prompt-injection off T-X073; exclusive #322 unclaimed", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X063");
+    expect(expectedProofsForFixtureCase("T-X063")).toEqual([
+      SoakProofKind.INDIRECT_PROMPT_INJECTION_EXFIL_DENIED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.INDIRECT_PROMPT_INJECTION_EXFIL_DENIED,
+      ),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X063");
+  });
+
+  it("O61 tip-moved-322 HOLD: T-X064 SSRF off T-X073; exclusive #323 unclaimed; residual sole", () => {
+    // Exclusive #323 Slot D owns T-X064 — Slot O does not claim.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X064");
+    expect(expectedProofsForFixtureCase("T-X064")).toEqual([
+      SoakProofKind.SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP,
+      ),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X064");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).toEqual(["T-X073"]);
+
+    // Soft-skip Ads + NONE/NOT_WIRED reclaim honesty.
+    for (const adsCase of ["T-F07", "T-US-013", "T-US-014"] as const) {
+      expect(
+        mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+      ).not.toContain(adsCase);
+    }
+    const honestManifest = {
+      offboardId: "ob-o61",
+      connectionId: "conn-o61",
+      revokedLocally: true,
+      auditRetained: true,
+      schedulesDisabled: true,
+      secretsExported: false,
+      catalogClaim: "NOT_RUN" as const,
+      liveProviderRevoke: "NOT_WIRED" as const,
+      externalEffects: "NONE" as const,
+      productionActivated: false,
+      summary: "T-X073 O61; ACCEPTED≠VERIFIED; NONE/NOT_WIRED",
+      residualObligations: [
+        {
+          kind: "ACTIVE_TOKEN" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "provider token may still be active",
+        },
+        {
+          kind: "PROVIDER_REVOKE" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "live revoke not wired",
+        },
+      ],
+    };
+    const honesty = assertOffboardActiveTokenResidualHonest(honestManifest);
+    expect(honesty.ok).toBe(true);
+    expect(honesty.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(honesty.externalEffects).toBe("NONE");
+    const r1 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const r2 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const reclaim = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: r2,
+    });
+    expect(reclaim.ok).toBe(true);
+    expect(reclaim.code).toBe("OFFBOARD_RECLAIM_IDEMPOTENT");
+  });
+
+  it("O62 tip-moved-323 HOLD: T-X065 browser-auth off T-X073; exclusive #324 unclaimed; residual sole", () => {
+    // Exclusive #324 Slot M owns T-X065 — Slot O does not claim.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X065");
+    expect(expectedProofsForFixtureCase("T-X065")).toEqual([
+      SoakProofKind.WORKER_BROWSER_AUTH_STATE_OS_DENIED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.WORKER_BROWSER_AUTH_STATE_OS_DENIED,
+      ),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X065");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).toEqual(["T-X073"]);
+
+    // Soft-skip Ads remain off residual mapping.
+    for (const adsCase of ["T-F07", "T-US-013", "T-US-014"] as const) {
+      expect(
+        mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+      ).not.toContain(adsCase);
+    }
+  });
+
+  it("retip-324 continue HOLD: T-X066 backup omit off T-X073; exclusive #325 unclaimed", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X066");
+    expect(expectedProofsForFixtureCase("T-X066")).toEqual([
+      SoakProofKind.BACKUP_OMIT_RECEIPT,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X066");
+  });
+
+  it("retip-325 continue HOLD: T-X067 workflow upgrade off T-X073; exclusive #326 unclaimed", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X067");
+    expect(expectedProofsForFixtureCase("T-X067")).toEqual([
+      SoakProofKind.INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED,
+      ),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X067");
+  });
+
+  it("retip-326 continue HOLD: T-X068 thirty-alerts off T-X073; exclusive #327 unclaimed", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X068");
+    expect(expectedProofsForFixtureCase("T-X068")).toEqual([
+      SoakProofKind.THIRTY_ALERTS_ONE_OUTAGE_GROUPED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.THIRTY_ALERTS_ONE_OUTAGE_GROUPED),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X068");
+  });
+
+  it("retip-327 continue HOLD: T-X069 imported doc off T-X073; exclusive #328 unclaimed", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X069");
+    expect(expectedProofsForFixtureCase("T-X069")).toEqual([
+      SoakProofKind.IMPORTED_DOC_QUARANTINED_AS_DATA,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.IMPORTED_DOC_QUARANTINED_AS_DATA),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X069");
+  });
+
+  it("retip-328 continue HOLD: T-X070 validated-payload off T-X073; exclusive #329 unclaimed", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X070");
+    expect(expectedProofsForFixtureCase("T-X070")).toEqual([
+      SoakProofKind.VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES,
+      ),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X070");
+  });
+
+  it("retip-329 continue HOLD: T-X071 host-offline off T-X073; exclusive #330 unclaimed", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X071");
+    expect(expectedProofsForFixtureCase("T-X071")).toEqual([
+      SoakProofKind.HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE,
+      ),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X071");
+  });
+
+  it("retip-330 continue HOLD: T-X072 eval-redaction off T-X073; exclusive #331 unclaimed", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X072");
+    expect(expectedProofsForFixtureCase("T-X072")).toEqual([
+      SoakProofKind.CUSTOMER_DATA_EVAL_REDACTION_BLOCKS,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CUSTOMER_DATA_EVAL_REDACTION_BLOCKS),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X072");
+  });
+
+  it("promoted-332 SOLE exclusive: post-#331 pool ceiling; OFFBOARD_ACTIVE_TOKEN_RESIDUAL ↔ T-X073 only", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).toEqual(["T-X073"]);
+    expect(expectedProofsForFixtureCase("T-X073")).toEqual([
+      SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.CUSTOMER_DATA_EVAL_REDACTION_BLOCKS),
+    ).not.toContain("T-X073");
   });
 });
