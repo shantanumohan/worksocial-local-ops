@@ -942,4 +942,21 @@ describe("customer eval redaction idle hillclimb (T-X072)", () => {
     expect(decision.liveProviderSuccessClaimed).toBe(false);
     expectEvalHonesty(decision);
   });
+
+  it("continue N116: redacts customer fields for evaluation (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({ source, mode: "redact" });
+    expect(decision.allowed).toBe(true);
+    expect(decision.code).toBe("REDACTED_FOR_EVAL");
+    if (!decision.payload) throw new Error("expected payload");
+    expect(decision.payload.redacted).toBe(true);
+    expect(decision.payload.customerDisplayName).toBe("[REDACTED_NAME]");
+    expect(decision.payload.customerEmail).toBe("[REDACTED_EMAIL]");
+    expect(decision.payload.customerPhone).toBe("[REDACTED_PHONE]");
+    expect(decision.payload.messageBody).not.toMatch(/jordan\.lee@example\.com/i);
+    expect(decision.payload.messageBody).not.toMatch(/415\s*555/i);
+    expect(decision.payload.intentLabel).toBe("tour_request");
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.liveEvalWiring).toBe(CUSTOMER_EVAL_LIVE_WIRING);
+    expect(decision.liveProviderSuccessClaimed).toBe(false);
+  });
 });
