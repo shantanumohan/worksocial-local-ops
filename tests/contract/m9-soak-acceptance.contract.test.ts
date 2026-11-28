@@ -1355,6 +1355,44 @@ describe("contract: M9 soak / acceptance evidence", () => {
     // Pool ≤ T-X073 — no invented fixture past offboard residual
     expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X073");
     expect(SOAK_FIXTURE_CASE_IDS).not.toContain("T-X074");
+    // Q37/S59 tip-moved-342 @ b106092f — not T-X060 currency/timezone drift (#336)
+    expect(art.proofKinds).not.toContain(
+      "currency_timezone_mismatch_no_silent_sum",
+    );
+    expect(art.summary).not.toMatch(
+      /currency_timezone_mismatch_no_silent_sum/,
+    );
+    // Q37/S62 — not T-X061 keyboard-focus drift (#337)
+    expect(art.proofKinds).not.toContain("keyboard_focus_restore_after_dialog");
+    expect(art.summary).not.toMatch(/keyboard_focus_restore_after_dialog/);
+    // Q37/S63 — not T-X062 SSE-gap drift (#338)
+    expect(art.proofKinds).not.toContain("sse_gap_full_state_resync");
+    expect(art.summary).not.toMatch(/sse_gap_full_state_resync/);
+    // Q37/S64 — not T-X063 injection-exfil drift (#339)
+    expect(art.proofKinds).not.toContain(
+      "indirect_prompt_injection_exfil_denied",
+    );
+    expect(art.summary).not.toMatch(/indirect_prompt_injection_exfil_denied/);
+    // Q37/S65 — not T-X064 SSRF drift (#340)
+    expect(art.proofKinds).not.toContain(
+      "ssrf_redirect_dns_rebind_blocked_every_hop",
+    );
+    expect(art.summary).not.toMatch(/ssrf_redirect_dns_rebind/);
+    // Q37/S66 — not T-X065 browser-auth drift (#341)
+    expect(art.proofKinds).not.toContain(
+      "worker_browser_auth_state_os_denied",
+    );
+    expect(art.summary).not.toMatch(/worker_browser_auth_state_os_denied/);
+    // Q37/S67 — not T-X066 backup-omit drift (#342 merged)
+    expect(art.proofKinds).not.toContain("backup_omit_receipt");
+    expect(art.summary).not.toMatch(/backup_omit_receipt/);
+    // Q37/S68 — fence exclusive T-X067 (#343 Slot S) without claiming it
+    expect(art.proofKinds).not.toContain(
+      "incompatible_workflow_upgrade_blocked_or_retained",
+    );
+    expect(art.summary).not.toMatch(
+      /incompatible_workflow_upgrade_blocked_or_retained/,
+    );
     // Honesty pins — ACCEPTED≠VERIFIED; NONE/NOT_WIRED
     expect(art.summary).toContain("ACCEPTED≠VERIFIED");
     expect(art.externalEffects).toBe("NONE");

@@ -1023,4 +1023,98 @@ describe("platform-attribution (T-X059)", () => {
       "T-US-038",
     ]);
   });
+
+  it("excludes T-X060 from attribution wiring (Q37/S59 tip-moved-342 @ b106092f)", () => {
+    // Drift fence — T-X060 merged #336; current exclusive #343 Slot S (do not claim).
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X060",
+    );
+  });
+
+  it("breaks claimId ties when claimedAtMs matches (Q37/S60)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-b",
+        platformId: "meta_ads",
+        bookingId: "booking-tie",
+        claimedAtIso: "2026-11-22T19:00:00.000Z",
+      },
+      {
+        claimId: "c-a",
+        platformId: "google_ads",
+        bookingId: "booking-tie",
+        claimedAtIso: "2026-11-22T19:00:00.000Z",
+      },
+    ]);
+    expect(projection.retainedClaims.map((c) => c.claimId)).toEqual([
+      "c-a",
+      "c-b",
+    ]);
+    expect(projection.wouldDoubleCountIfSummed).toBe(true);
+  });
+
+  it("exposes reasons on allowed single-booking path (Q37/S61)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-single",
+        platformId: "google_ads",
+        bookingId: "booking-single",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(true);
+    if (!decision.allowed) return;
+    expect(decision.reasons.join(" ")).toMatch(/uniqueBookingCount=1/);
+    expect(decision.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("excludes T-X061 keyboard-focus from attribution wiring (Q37/S62 tip-moved-342)", () => {
+    // Drift fence — T-X061 merged #337; current exclusive #343 Slot S (do not claim).
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X061",
+    );
+  });
+
+  it("excludes T-X062 SSE-gap from attribution wiring (Q37/S63 tip-moved-342)", () => {
+    // Drift fence — T-X062 merged #338; current exclusive #343 Slot S (do not claim).
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X062",
+    );
+  });
+
+  it("excludes T-X063 injection-exfil from attribution wiring (Q37/S64 tip-moved-342)", () => {
+    // Drift fence — T-X063 merged #339; current exclusive #343 Slot S (do not claim).
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X063",
+    );
+  });
+
+  it("excludes T-X064 SSRF from attribution wiring (Q37/S65 tip-moved-342)", () => {
+    // Drift fence — T-X064 merged #340; current exclusive #343 Slot S (do not claim).
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X064",
+    );
+  });
+
+  it("excludes T-X065 browser-auth from attribution wiring (Q37/S66 tip-moved-342)", () => {
+    // Drift fence — T-X065 merged #341; current exclusive #343 Slot S (do not claim).
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X065",
+    );
+  });
+
+  it("excludes T-X066 backup-omit from attribution wiring (Q37/S67 tip-moved-342)", () => {
+    // Drift fence — T-X066 merged #342; current exclusive #343 Slot S (do not claim).
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X066",
+    );
+  });
+
+  it("excludes exclusive T-X067 workflow-upgrade from attribution wiring (Q37/S68 tip-moved-342)", () => {
+    // Fence only — exclusive elsewhere is #343 Slot S; do not claim.
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X067",
+    );
+  });
 });
