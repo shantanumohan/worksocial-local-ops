@@ -181,6 +181,342 @@ export function proofValidatedPayloadNotCollectedSeparateStates(
     details.push(`Empty recordId unexpectedly ${JSON.stringify(emptyId)}`);
   }
 
+  // B47 — short hex signature (41 chars) → VALIDATION_FAILED without collection.
+  const b47Env = signedEnvelope({
+    eventId: `evt-b47-${randomUUID().slice(0, 8)}`,
+    kind: "lead.created",
+  });
+  const b47Sig = evaluateValidatedPayloadCollection({
+    payload: {
+      ...b47Env,
+      signatureHex: b47Env.signatureHex.slice(0, 41),
+    },
+    secret: FIXTURE_SECRET,
+    collect: () => {
+      throw new Error("collect must not run on VALIDATION_FAILED");
+    },
+  });
+  if (
+    b47Sig.code === "VALIDATION_FAILED" &&
+    b47Sig.collectionAttempted === false &&
+    honestyOk(b47Sig)
+  ) {
+    details.push(
+      "Short signature hex (B47, 41 chars) → VALIDATION_FAILED (collectionAttempted=false)",
+    );
+  } else {
+    passed = false;
+    details.push(`B47 short signature unexpectedly ${JSON.stringify(b47Sig)}`);
+  }
+
+  // B46 — short hex signature (42 chars) → VALIDATION_FAILED without collection.
+  const b46Env = signedEnvelope({
+    eventId: `evt-b46-${randomUUID().slice(0, 8)}`,
+    kind: "lead.created",
+  });
+  const b46Sig = evaluateValidatedPayloadCollection({
+    payload: {
+      ...b46Env,
+      signatureHex: b46Env.signatureHex.slice(0, 42),
+    },
+    secret: FIXTURE_SECRET,
+    collect: () => {
+      throw new Error("collect must not run on VALIDATION_FAILED");
+    },
+  });
+  if (
+    b46Sig.code === "VALIDATION_FAILED" &&
+    b46Sig.collectionAttempted === false &&
+    honestyOk(b46Sig)
+  ) {
+    details.push(
+      "Short signature hex (B46, 42 chars) → VALIDATION_FAILED (collectionAttempted=false)",
+    );
+  } else {
+    passed = false;
+    details.push(`B46 short signature unexpectedly ${JSON.stringify(b46Sig)}`);
+  }
+
+  // B45 — short hex signature (43 chars) → VALIDATION_FAILED without collection.
+  const b45Env = signedEnvelope({
+    eventId: `evt-b45-${randomUUID().slice(0, 8)}`,
+    kind: "lead.created",
+  });
+  const b45Sig = evaluateValidatedPayloadCollection({
+    payload: {
+      ...b45Env,
+      signatureHex: b45Env.signatureHex.slice(0, 43),
+    },
+    secret: FIXTURE_SECRET,
+    collect: () => {
+      throw new Error("collect must not run on VALIDATION_FAILED");
+    },
+  });
+  if (
+    b45Sig.code === "VALIDATION_FAILED" &&
+    b45Sig.collectionAttempted === false &&
+    honestyOk(b45Sig)
+  ) {
+    details.push(
+      "Short signature hex (B45, 43 chars) → VALIDATION_FAILED (collectionAttempted=false)",
+    );
+  } else {
+    passed = false;
+    details.push(`B45 short signature unexpectedly ${JSON.stringify(b45Sig)}`);
+  }
+
+  // B44 — short hex signature (44 chars) → VALIDATION_FAILED without collection.
+  const b44Env = signedEnvelope({
+    eventId: `evt-b44-${randomUUID().slice(0, 8)}`,
+    kind: "lead.created",
+  });
+  const b44Sig = evaluateValidatedPayloadCollection({
+    payload: {
+      ...b44Env,
+      signatureHex: b44Env.signatureHex.slice(0, 44),
+    },
+    secret: FIXTURE_SECRET,
+    collect: () => {
+      throw new Error("collect must not run on VALIDATION_FAILED");
+    },
+  });
+  if (
+    b44Sig.code === "VALIDATION_FAILED" &&
+    b44Sig.collectionAttempted === false &&
+    honestyOk(b44Sig)
+  ) {
+    details.push(
+      "Short signature hex (B44, 44 chars) → VALIDATION_FAILED (collectionAttempted=false)",
+    );
+  } else {
+    passed = false;
+    details.push(`B44 short signature unexpectedly ${JSON.stringify(b44Sig)}`);
+  }
+
+  // B43 — short hex signature (45 chars) → VALIDATION_FAILED without collection.
+  const b43Env = signedEnvelope({
+    eventId: `evt-b43-${randomUUID().slice(0, 8)}`,
+    kind: "lead.created",
+  });
+  const b43Sig = evaluateValidatedPayloadCollection({
+    payload: {
+      ...b43Env,
+      signatureHex: b43Env.signatureHex.slice(0, 45),
+    },
+    secret: FIXTURE_SECRET,
+    collect: () => {
+      throw new Error("collect must not run on VALIDATION_FAILED");
+    },
+  });
+  if (
+    b43Sig.code === "VALIDATION_FAILED" &&
+    b43Sig.collectionAttempted === false &&
+    honestyOk(b43Sig)
+  ) {
+    details.push(
+      "Short signature hex (B43, 45 chars) → VALIDATION_FAILED (collectionAttempted=false)",
+    );
+  } else {
+    passed = false;
+    details.push(`B43 short signature unexpectedly ${JSON.stringify(b43Sig)}`);
+  }
+
+  // B42 — short hex signature (46 chars) → VALIDATION_FAILED without collection.
+  const b42Env = signedEnvelope({
+    eventId: `evt-b42-${randomUUID().slice(0, 8)}`,
+    kind: "lead.created",
+  });
+  const b42Sig = evaluateValidatedPayloadCollection({
+    payload: {
+      ...b42Env,
+      signatureHex: b42Env.signatureHex.slice(0, 46),
+    },
+    secret: FIXTURE_SECRET,
+    collect: () => {
+      throw new Error("collect must not run on VALIDATION_FAILED");
+    },
+  });
+  if (
+    b42Sig.code === "VALIDATION_FAILED" &&
+    b42Sig.collectionAttempted === false &&
+    honestyOk(b42Sig)
+  ) {
+    details.push(
+      "Short signature hex (B42, 46 chars) → VALIDATION_FAILED (collectionAttempted=false)",
+    );
+  } else {
+    passed = false;
+    details.push(`B42 short signature unexpectedly ${JSON.stringify(b42Sig)}`);
+  }
+
+  // B41 — short hex signature (47 chars) → VALIDATION_FAILED without collection.
+  const b41Env = signedEnvelope({
+    eventId: `evt-b41-${randomUUID().slice(0, 8)}`,
+    kind: "lead.created",
+  });
+  const b41Sig = evaluateValidatedPayloadCollection({
+    payload: {
+      ...b41Env,
+      signatureHex: b41Env.signatureHex.slice(0, 47),
+    },
+    secret: FIXTURE_SECRET,
+    collect: () => {
+      throw new Error("collect must not run on VALIDATION_FAILED");
+    },
+  });
+  if (
+    b41Sig.code === "VALIDATION_FAILED" &&
+    b41Sig.collectionAttempted === false &&
+    honestyOk(b41Sig)
+  ) {
+    details.push(
+      "Short signature hex (B41, 47 chars) → VALIDATION_FAILED (collectionAttempted=false)",
+    );
+  } else {
+    passed = false;
+    details.push(`B41 short signature unexpectedly ${JSON.stringify(b41Sig)}`);
+  }
+
+  // B40 — short hex signature (48 chars) → VALIDATION_FAILED without collection.
+  const b40Env = signedEnvelope({
+    eventId: `evt-b40-${randomUUID().slice(0, 8)}`,
+    kind: "lead.created",
+  });
+  const b40Sig = evaluateValidatedPayloadCollection({
+    payload: {
+      ...b40Env,
+      signatureHex: b40Env.signatureHex.slice(0, 48),
+    },
+    secret: FIXTURE_SECRET,
+    collect: () => {
+      throw new Error("collect must not run on VALIDATION_FAILED");
+    },
+  });
+  if (
+    b40Sig.code === "VALIDATION_FAILED" &&
+    b40Sig.collectionAttempted === false &&
+    honestyOk(b40Sig)
+  ) {
+    details.push(
+      "Short signature hex (B40, 48 chars) → VALIDATION_FAILED (collectionAttempted=false)",
+    );
+  } else {
+    passed = false;
+    details.push(`B40 short signature unexpectedly ${JSON.stringify(b40Sig)}`);
+  }
+
+  // B39 — short hex signature (49 chars) → VALIDATION_FAILED without collection.
+  const b39Env = signedEnvelope({
+    eventId: `evt-b39-${randomUUID().slice(0, 8)}`,
+    kind: "lead.created",
+  });
+  const b39Sig = evaluateValidatedPayloadCollection({
+    payload: {
+      ...b39Env,
+      signatureHex: b39Env.signatureHex.slice(0, 49),
+    },
+    secret: FIXTURE_SECRET,
+    collect: () => {
+      throw new Error("collect must not run on VALIDATION_FAILED");
+    },
+  });
+  if (
+    b39Sig.code === "VALIDATION_FAILED" &&
+    b39Sig.collectionAttempted === false &&
+    honestyOk(b39Sig)
+  ) {
+    details.push(
+      "Short signature hex (B39, 49 chars) → VALIDATION_FAILED (collectionAttempted=false)",
+    );
+  } else {
+    passed = false;
+    details.push(`B39 short signature unexpectedly ${JSON.stringify(b39Sig)}`);
+  }
+
+  // B38 — short hex signature (50 chars) → VALIDATION_FAILED without collection.
+  const b38Env = signedEnvelope({
+    eventId: `evt-b38-${randomUUID().slice(0, 8)}`,
+    kind: "lead.created",
+  });
+  const b38Sig = evaluateValidatedPayloadCollection({
+    payload: {
+      ...b38Env,
+      signatureHex: b38Env.signatureHex.slice(0, 50),
+    },
+    secret: FIXTURE_SECRET,
+    collect: () => {
+      throw new Error("collect must not run on VALIDATION_FAILED");
+    },
+  });
+  if (
+    b38Sig.code === "VALIDATION_FAILED" &&
+    b38Sig.collectionAttempted === false &&
+    honestyOk(b38Sig)
+  ) {
+    details.push(
+      "Short signature hex (B38, 50 chars) → VALIDATION_FAILED (collectionAttempted=false)",
+    );
+  } else {
+    passed = false;
+    details.push(`B38 short signature unexpectedly ${JSON.stringify(b38Sig)}`);
+  }
+
+  // B37 — short hex signature (51 chars) → VALIDATION_FAILED without collection.
+  const b37Env = signedEnvelope({
+    eventId: `evt-b37-${randomUUID().slice(0, 8)}`,
+    kind: "lead.created",
+  });
+  const b37Sig = evaluateValidatedPayloadCollection({
+    payload: {
+      ...b37Env,
+      signatureHex: b37Env.signatureHex.slice(0, 51),
+    },
+    secret: FIXTURE_SECRET,
+    collect: () => {
+      throw new Error("collect must not run on VALIDATION_FAILED");
+    },
+  });
+  if (
+    b37Sig.code === "VALIDATION_FAILED" &&
+    b37Sig.collectionAttempted === false &&
+    honestyOk(b37Sig)
+  ) {
+    details.push(
+      "Short signature hex (B37, 51 chars) → VALIDATION_FAILED (collectionAttempted=false)",
+    );
+  } else {
+    passed = false;
+    details.push(`B37 short signature unexpectedly ${JSON.stringify(b37Sig)}`);
+  }
+
+  // B36 — short hex signature (52 chars) → VALIDATION_FAILED without collection.
+  const b36Env = signedEnvelope({
+    eventId: `evt-b36-${randomUUID().slice(0, 8)}`,
+    kind: "lead.created",
+  });
+  const b36Sig = evaluateValidatedPayloadCollection({
+    payload: {
+      ...b36Env,
+      signatureHex: b36Env.signatureHex.slice(0, 52),
+    },
+    secret: FIXTURE_SECRET,
+    collect: () => {
+      throw new Error("collect must not run on VALIDATION_FAILED");
+    },
+  });
+  if (
+    b36Sig.code === "VALIDATION_FAILED" &&
+    b36Sig.collectionAttempted === false &&
+    honestyOk(b36Sig)
+  ) {
+    details.push(
+      "Short signature hex (B36, 52 chars) → VALIDATION_FAILED (collectionAttempted=false)",
+    );
+  } else {
+    passed = false;
+    details.push(`B36 short signature unexpectedly ${JSON.stringify(b36Sig)}`);
+  }
+
   // B35 — short hex signature (53 chars) → VALIDATION_FAILED without collection.
   const b35Env = signedEnvelope({
     eventId: `evt-b35-${randomUUID().slice(0, 8)}`,

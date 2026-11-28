@@ -177,7 +177,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X059** maps only to `DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING` (one booking; separate claims; liveProviderWiring NOT_WIRED; not live VERIFIED). Shared map with T-US-038.
 
-**T-X070** maps only to `VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES` (VALIDATION_FAILED ≠ COLLECTION_FAILED; B24–B35 sig-hex length edges; empty recordId → COLLECTION_FAILED; live NOT_WIRED; not live VERIFIED).
+**T-X070** maps only to `VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES` (VALIDATION_FAILED ≠ COLLECTION_FAILED; B24–B47 sig-hex length edges; empty recordId → COLLECTION_FAILED; live NOT_WIRED; not live VERIFIED).
 
 **T-X060** maps only to `CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM` (whitespace-normalized match; blank → INVALID_DIMENSION; heterogeneous refuse silent sum; live NOT_WIRED; not live VERIFIED).
 
