@@ -272,6 +272,131 @@ export function proofWorkerBrowserAuthStateOsDenied(
     }
   }
 
+  // M19: broker false-consent ≡ absent — workers stay OS_DENY (no sealedRef / material).
+  for (const principal of workers) {
+    for (const stateKind of allStateKinds) {
+      const falseConsent = broker.requestBrowserAuthState({
+        principal,
+        stateKind,
+        explicitUserConsent: false,
+      });
+      if (
+        falseConsent.allowed === false &&
+        falseConsent.code === BrowserAuthAccessCode.OS_DENY &&
+        falseConsent.authMaterial === null &&
+        falseConsent.sealedRef === null &&
+        falseConsent.materialPresentInVault === true &&
+        falseConsent.externalEffects === "NONE"
+      ) {
+        details.push(
+          `boundary ${principal} → ${stateKind}: OS_DENY (explicitUserConsent=false)`,
+        );
+      } else {
+        passed = false;
+        details.push(
+          `boundary false-consent ${principal} → ${stateKind} unexpectedly ${JSON.stringify(falseConsent)}`,
+        );
+      }
+    }
+  }
+
+  // M19: browser-pool false consent — system OS_DENY; workspace CONSENT_REQUIRED only.
+  for (const stateKind of SYSTEM_BROWSER_AUTH_STATE_KINDS) {
+    const poolFalse = broker.requestBrowserAuthState({
+      principal: "browser-pool",
+      stateKind,
+      explicitUserConsent: false,
+    });
+    if (
+      poolFalse.allowed === false &&
+      poolFalse.code === BrowserAuthAccessCode.OS_DENY &&
+      poolFalse.authMaterial === null &&
+      poolFalse.sealedRef === null &&
+      poolFalse.externalEffects === "NONE"
+    ) {
+      details.push(
+        `boundary browser-pool → ${stateKind}: OS_DENY (explicitUserConsent=false)`,
+      );
+    } else {
+      passed = false;
+      details.push(
+        `boundary browser-pool false ${stateKind} unexpectedly ${JSON.stringify(poolFalse)}`,
+      );
+    }
+  }
+  {
+    const poolPartitionFalse = broker.requestBrowserAuthState({
+      principal: "browser-pool",
+      stateKind: BrowserAuthStateKind.WORKSPACE_BROWSER_PARTITION,
+      explicitUserConsent: false,
+    });
+    if (
+      poolPartitionFalse.allowed === false &&
+      poolPartitionFalse.code === BrowserAuthAccessCode.CONSENT_REQUIRED &&
+      poolPartitionFalse.authMaterial === null &&
+      poolPartitionFalse.sealedRef === null &&
+      poolPartitionFalse.externalEffects === "NONE"
+    ) {
+      details.push(
+        "boundary browser-pool → workspace_browser_partition: CONSENT_REQUIRED (explicitUserConsent=false)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `boundary browser-pool partition false unexpectedly ${JSON.stringify(poolPartitionFalse)}`,
+      );
+    }
+  }
+
+  // M19: host-admin false consent on system kinds stays OS_DENY at broker.
+  for (const stateKind of systemKinds) {
+    const adminFalse = broker.requestBrowserAuthState({
+      principal: "host-admin",
+      stateKind,
+      explicitUserConsent: false,
+    });
+    if (
+      adminFalse.allowed === false &&
+      adminFalse.code === BrowserAuthAccessCode.OS_DENY &&
+      adminFalse.authMaterial === null &&
+      adminFalse.sealedRef === null &&
+      adminFalse.externalEffects === "NONE"
+    ) {
+      details.push(
+        `boundary host-admin → ${stateKind}: OS_DENY (explicitUserConsent=false)`,
+      );
+    } else {
+      passed = false;
+      details.push(
+        `boundary host-admin false ${stateKind} unexpectedly ${JSON.stringify(adminFalse)}`,
+      );
+    }
+  }
+  {
+    const adminPartitionFalse = broker.requestBrowserAuthState({
+      principal: "host-admin",
+      stateKind: BrowserAuthStateKind.WORKSPACE_BROWSER_PARTITION,
+      explicitUserConsent: false,
+    });
+    if (
+      adminPartitionFalse.allowed === false &&
+      adminPartitionFalse.code === BrowserAuthAccessCode.OS_DENY &&
+      adminPartitionFalse.authMaterial === null &&
+      adminPartitionFalse.sealedRef === null &&
+      adminPartitionFalse.materialPresentInVault === true &&
+      adminPartitionFalse.externalEffects === "NONE"
+    ) {
+      details.push(
+        "boundary host-admin → workspace_browser_partition: OS_DENY (explicitUserConsent=false)",
+      );
+    } else {
+      passed = false;
+      details.push(
+        `boundary host-admin partition false unexpectedly ${JSON.stringify(adminPartitionFalse)}`,
+      );
+    }
+  }
+
   // Wipe15 edge: workers without consent on workspace partition stay OS_DENY (not CONSENT_REQUIRED).
   for (const principal of workers) {
     const partitionNoConsent = broker.requestBrowserAuthState({
