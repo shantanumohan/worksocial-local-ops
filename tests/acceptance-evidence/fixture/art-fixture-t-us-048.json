@@ -3,13 +3,13 @@
   "caseId": "T-US-048",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-US-048 (Unknown remote effects reconciled before resume)\nproof=unknown_remote_reconcile applyCount=1 :: Domain gate: blind/false/live/phase/sandbox/blankRef/verify/apply0/neg/incoherent/nonFinite/inf/terminal/retryable refused; distinct-from T-US-030/T-X017/T-X066; cancelled/quarantined/-inf/frac/waiting/preApply/applying/verifying; honesty pins OK (T-X020/T-US-048) | Left ACCEPTED_PENDING after provider ack apply=1 | Recovery classification UNKNOWN_REMOTE_OUTCOME blocksProviderRetry=true | Persisted UNKNOWN_REMOTE_OUTCOME after timeout (effectState=UNKNOWN_REMOTE_OUTCOME applyCount=1) — reconcile before resume | UNKNOWN_REMOTE_OUTCOME survived restart (decision ACCEPTED_PENDING+URO effectState; no re-apply) | Reconciled remoteRef=remote-21618b5e without re-apply | Post-reconcile verified matched=true applyCount=1 | Domain gate: RECONCILED_VERIFIED_NO_RESEND authorized helper fixtureOnly externalEffects=NONE live NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-US-048 (Unknown remote effects reconciled before resume)\nproof=unknown_remote_reconcile applyCount=1 :: Domain gate: blind/false/live/phase/sandbox/blankRef/verify/apply0/neg/incoherent/nonFinite/inf/terminal/retryable refused; distinct-from T-US-030/T-X017/T-X066; cancelled/quarantined/-inf/frac/waiting/preApply/applying/verifying; honesty pins OK (T-X020/T-US-048) | Left ACCEPTED_PENDING after provider ack apply=1 | Recovery classification UNKNOWN_REMOTE_OUTCOME blocksProviderRetry=true | Persisted UNKNOWN_REMOTE_OUTCOME after timeout (effectState=UNKNOWN_REMOTE_OUTCOME applyCount=1) — reconcile before resume | UNKNOWN_REMOTE_OUTCOME survived restart (decision ACCEPTED_PENDING+URO effectState; no re-apply) | Reconciled remoteRef=remote-b17d856a without re-apply | Post-reconcile verified matched=true applyCount=1 | Domain gate: RECONCILED_VERIFIED_NO_RESEND authorized helper fixtureOnly externalEffects=NONE live NOT_WIRED | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "unknown_remote_reconcile"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-048.json",
-  "createdAtIso": "2026-11-28T00:07:38.955Z",
+  "createdAtIso": "2026-11-28T00:14:33.293Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-048-6b6dcc411eae"
+  "uniqueSourceArtifactId": "art-fixture-t-us-048-4d8d13501d0f"
 }
