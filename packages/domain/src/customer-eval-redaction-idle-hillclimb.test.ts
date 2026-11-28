@@ -552,4 +552,394 @@ describe("customer eval redaction idle hillclimb (T-X072)", () => {
     expect(trust.reasons.some((r) => /Trust unredacted/.test(r))).toBe(true);
     expectEvalHonesty(trust);
   });
+
+  it("continue N97: raw prompt and structured bypass refused (T-X072)", () => {
+    const rawPrompt = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      buildPromptFromRawSource: true,
+    });
+    expect(rawPrompt.allowed).toBe(false);
+    expect(rawPrompt.reasons.some((r) => /raw customer source/i.test(r))).toBe(true);
+    expectEvalHonesty(rawPrompt);
+
+    const bypass = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      bypassStructuredFieldRedaction: true,
+    });
+    expect(bypass.allowed).toBe(false);
+    expect(bypass.reasons.some((r) => /structured customer field/i.test(r))).toBe(
+      true,
+    );
+    expectEvalHonesty(bypass);
+  });
+
+  it("retip N98: messageBody and intentLabel bypass refused (T-X072)", () => {
+    const bodyBypass = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      bypassMessageBodyRedaction: true,
+    });
+    expect(bodyBypass.allowed).toBe(false);
+    expect(bodyBypass.reasons.some((r) => /messageBody/.test(r))).toBe(true);
+    expectEvalHonesty(bodyBypass);
+
+    const intentBypass = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      bypassIntentLabelRedaction: true,
+    });
+    expect(intentBypass.allowed).toBe(false);
+    expect(intentBypass.reasons.some((r) => /intentLabel/.test(r))).toBe(true);
+    expectEvalHonesty(intentBypass);
+  });
+
+  it("retip N99: conversationId bypass and residual PII refused (T-X072)", () => {
+    const convBypass = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      bypassConversationIdRedaction: true,
+    });
+    expect(convBypass.allowed).toBe(false);
+    expect(convBypass.reasons.some((r) => /conversationId/.test(r))).toBe(true);
+    expectEvalHonesty(convBypass);
+
+    const residual = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      allowResidualPiiInPayload: true,
+    });
+    expect(residual.allowed).toBe(false);
+    expect(residual.reasons.some((r) => /residual PII/i.test(r))).toBe(true);
+    expectEvalHonesty(residual);
+  });
+
+  it("edge-deepen N100: strip/defer/partial and live-export fences refused (T-X072)", () => {
+    const strip = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      stripRedactionTokensFromEvalPrompt: true,
+    });
+    expect(strip.allowed).toBe(false);
+    expect(strip.reasons.some((r) => /Strip redaction tokens/.test(r))).toBe(true);
+    expectEvalHonesty(strip);
+
+    const defer = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      deferCustomerRedactionUntilAfterEval: true,
+    });
+    expect(defer.allowed).toBe(false);
+    expect(defer.reasons.some((r) => /Defer customer redaction/.test(r))).toBe(true);
+    expectEvalHonesty(defer);
+
+    const partial = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      allowPartialRedactionForEval: true,
+    });
+    expect(partial.allowed).toBe(false);
+    expect(partial.reasons.some((r) => /Partial customer redaction/.test(r))).toBe(
+      true,
+    );
+    expectEvalHonesty(partial);
+
+    const exportLive = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      exportToLiveProvider: true,
+    });
+    expect(exportLive.allowed).toBe(false);
+    expect(exportLive.reasons.some((r) => /NOT_WIRED/.test(r))).toBe(true);
+    expectEvalHonesty(exportLive);
+
+    const forceDeliver = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      forceDeliverDespiteLeak: true,
+    });
+    expect(forceDeliver.allowed).toBe(false);
+    expect(forceDeliver.reasons.some((r) => /Force-deliver/.test(r))).toBe(true);
+    expectEvalHonesty(forceDeliver);
+  });
+
+  it("retip N101: live VERIFIED and fleet wiring refused (T-X072)", () => {
+    const verified = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      claimLiveVerified: true,
+    });
+    expect(verified.allowed).toBe(false);
+    expect(verified.code).toBe("CUSTOMER_DATA_LEAK_BLOCKED");
+    expect(verified.reasons.some((r) => /VERIFIED/.test(r))).toBe(true);
+    expectEvalHonesty(verified);
+
+    const fleet = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      requestLiveEvalFleet: true,
+    });
+    expect(fleet.allowed).toBe(false);
+    expect(fleet.reasons.some((r) => /NOT_WIRED/.test(r))).toBe(true);
+    expect(fleet.liveEvalWiring).toBe("NOT_WIRED");
+    expectEvalHonesty(fleet);
+  });
+
+  it("retip N102: unredacted intentLabel and messageBody refused (T-X072)", () => {
+    const rawIntent = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      useUnredactedIntentLabelInEval: true,
+    });
+    expect(rawIntent.allowed).toBe(false);
+    expect(
+      rawIntent.reasons.some((r) => /Unredacted customer intentLabel/.test(r)),
+    ).toBe(true);
+    expectEvalHonesty(rawIntent);
+
+    const rawBody = prepareCustomerDataForEvaluation({
+      source,
+      mode: "redact",
+      useUnredactedMessageBodyInEval: true,
+    });
+    expect(rawBody.allowed).toBe(false);
+    expect(
+      rawBody.reasons.some((r) => /Unredacted customer messageBody/.test(r)),
+    ).toBe(true);
+    expectEvalHonesty(rawBody);
+  });
+
+  it("retip N103: short display name does not substring-redact intentLabel (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        customerDisplayName: "Tour",
+        customerEmail: null,
+        customerPhone: null,
+        messageBody: "Looking for availability.",
+        conversationId: "conv-tour",
+        intentLabel: "tour_request",
+      },
+      mode: "redact",
+    });
+    expect(decision.allowed).toBe(true);
+    expect(decision.payload?.intentLabel).toBe("tour_request");
+    expect(decision.payload?.redactedFields).not.toContain("intentLabel");
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N104: eval prompt PII check idempotent (T-X072)", () => {
+    const clean = assertEvalPromptCheckIdempotent(
+      "Judge fixture answer for tour_request",
+      { displayName: source.customerDisplayName },
+    );
+    expect(clean.ok).toBe(true);
+
+    const dirty = assertEvalPromptCheckIdempotent(
+      `mention ${source.customerEmail}`,
+      { email: source.customerEmail },
+    );
+    expect(dirty.ok).toBe(true);
+  });
+
+  it("retip N105: eval prompt blocks raw email and display name (T-X072)", () => {
+    const known = { displayName: source.customerDisplayName, email: source.customerEmail };
+    const dirtyEmail = assertEvalPromptHasNoCustomerPii(
+      "Judge reply for jordan.lee@example.com",
+    );
+    expect(dirtyEmail.ok).toBe(false);
+    expect(dirtyEmail.code).toBe("CUSTOMER_DATA_LEAK_BLOCKED");
+
+    const dirtyName = assertEvalPromptHasNoCustomerPii(
+      "Judge reply mentioning Jordan Lee",
+      known,
+    );
+    expect(dirtyName.ok).toBe(false);
+    expect(dirtyName.code).toBe("CUSTOMER_DATA_LEAK_BLOCKED");
+  });
+
+  it("retip N106: eval-safe prompt uses redaction tokens (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({ source, mode: "redact" });
+    expect(decision.allowed).toBe(true);
+    if (!decision.payload) throw new Error("expected payload");
+    const prompt = buildEvalSafePromptFromPayload(decision.payload);
+    expect(prompt).not.toMatch(/jordan\.lee@example\.com/i);
+    expect(prompt).not.toMatch(/Jordan Lee/i);
+    expect(prompt).not.toMatch(/conv-jordan\.lee@example\.com-thread/);
+    expect(prompt).toMatch(/\[REDACTED_NAME\]/);
+    expect(prompt).toMatch(/\[REDACTED_CONVERSATION_ID\]/);
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N107: free-text PII detect and redact helpers (T-X072)", () => {
+    const known = { displayName: source.customerDisplayName };
+    expect(containsRawCustomerPii("reach a@b.co")).toBe(true);
+    expect(containsRawCustomerPii(`I'm ${source.customerDisplayName}`, known)).toBe(
+      true,
+    );
+    expect(redactTextForEvaluation("reach a@b.co")).toBe("reach [REDACTED_EMAIL]");
+    expect(redactTextForEvaluation(`I'm ${source.customerDisplayName}`, known)).toBe(
+      "I'm [REDACTED_NAME]",
+    );
+    expect(redactTextForEvaluation("call 415.555.0199")).toMatch(/\[REDACTED_PHONE\]/);
+    const clean = assertEvalPromptHasNoCustomerPii(
+      "Judge fixture answer for tour_request without customer identifiers",
+      known,
+    );
+    expect(clean.ok).toBe(true);
+  });
+
+  it("assist N108: ACCEPTED≠VERIFIED pin + reclaim honesty (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({ source, mode: "redact" });
+    expect(decision.allowed).toBe(true);
+    expect(decision.code).toBe("REDACTED_FOR_EVAL");
+    expect(decision.reasons.some((r) => r === "ACCEPTED≠VERIFIED")).toBe(true);
+    expect(decision.reasons.some((r) => /liveEvalWiring=NOT_WIRED/.test(r))).toBe(true);
+    expectEvalHonesty(decision);
+
+    const reclaim = reclaimCustomerEvalRedactionDecision(
+      { source, mode: "redact" },
+      decision,
+    );
+    expect(reclaim.ok).toBe(true);
+    expect(reclaim.reasons).toEqual([]);
+
+    const honesty = assertCustomerEvalRedactionDecisionHonest(decision);
+    expect(honesty.ok).toBe(true);
+    expect(honesty.code).toBe("HONEST");
+  });
+
+  it("retip N109: reclaim refuses tampered prior decision drift (T-X072)", () => {
+    const prior = prepareCustomerDataForEvaluation({ source, mode: "redact" });
+    expect(prior.allowed).toBe(true);
+    const ok = reclaimCustomerEvalRedactionDecision(
+      { source, mode: "redact" },
+      prior,
+    );
+    expect(ok.ok).toBe(true);
+
+    const blocked = prepareCustomerDataForEvaluation({
+      source,
+      mode: "raw_passthrough",
+    });
+    expect(blocked.allowed).toBe(false);
+    const tampered = {
+      ...blocked,
+      reasons: ["invented reason"],
+    };
+    const drift = reclaimCustomerEvalRedactionDecision(
+      { source, mode: "raw_passthrough" },
+      tampered as typeof blocked,
+    );
+    expect(drift.ok).toBe(false);
+    expect(drift.reasons).toContain("reclaim block reasons drifted");
+    expectEvalHonesty(blocked);
+  });
+
+  it("retip N110: eval-safe prompt passes full PII scan (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({ source, mode: "redact" });
+    expect(decision.allowed).toBe(true);
+    if (!decision.payload) throw new Error("expected payload");
+    const prompt = buildEvalSafePromptFromPayload(decision.payload);
+    expect(prompt).not.toMatch(/jordan\.lee@example\.com/i);
+    expect(prompt).not.toMatch(/Jordan Lee/i);
+    expect(prompt).not.toMatch(/conv-jordan\.lee@example\.com-thread/);
+    const check = assertEvalPromptHasNoCustomerPii(prompt, {
+      displayName: source.customerDisplayName,
+      email: source.customerEmail,
+      phone: source.customerPhone,
+    });
+    expect(check.ok).toBe(true);
+    expect(check.liveEvalWiring).toBe("NOT_WIRED");
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N111: redact and block paths idempotent reapply (T-X072)", () => {
+    const redactOk = assertCustomerEvalRedactionIdempotent({
+      source,
+      mode: "redact",
+    });
+    expect(redactOk.ok).toBe(true);
+    const rawBlock = assertCustomerEvalRedactionIdempotent({
+      source,
+      mode: "raw_passthrough",
+    });
+    expect(rawBlock.ok).toBe(true);
+
+    const first = prepareCustomerDataForEvaluation({ source, mode: "redact" });
+    if (!first.allowed || !first.payload) throw new Error("expected redact");
+    const tampered = {
+      ...first,
+      liveProviderSuccessClaimed: true as false,
+    };
+    const honesty = assertCustomerEvalRedactionDecisionHonest(
+      tampered as typeof first,
+    );
+    expect(honesty.ok).toBe(false);
+    expect(honesty.code).toBe("DISHONEST_LIVE_CLAIM");
+    expectEvalHonesty(first);
+  });
+
+  it("retip N112: raw passthrough blocked when only intentLabel has PII (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        customerDisplayName: "   ",
+        customerEmail: null,
+        customerPhone: null,
+        messageBody: "Looking for a day pass.",
+        conversationId: "conv-clean",
+        intentLabel: "reach me at jordan.lee@example.com",
+      },
+      mode: "raw_passthrough",
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("CUSTOMER_DATA_LEAK_BLOCKED");
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N113: redacts display name embedded in messageBody (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        ...source,
+        messageBody: `I'm ${source.customerDisplayName} — please book Suite B.`,
+      },
+      mode: "redact",
+    });
+    expect(decision.allowed).toBe(true);
+    if (!decision.payload) throw new Error("expected payload");
+    expect(decision.payload.messageBody).not.toMatch(/Jordan Lee/i);
+    expect(decision.payload.messageBody).toMatch(/\[REDACTED_NAME\]/);
+    expect(decision.payload.redactedFields).toContain("messageBody");
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N114: redacts PII embedded in intentLabel (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        ...source,
+        intentLabel: `follow_up ${source.customerEmail}`,
+      },
+      mode: "redact",
+    });
+    expect(decision.allowed).toBe(true);
+    if (!decision.payload) throw new Error("expected payload");
+    expect(decision.payload.intentLabel).not.toMatch(/jordan\.lee@example\.com/i);
+    expect(decision.payload.intentLabel).toMatch(/\[REDACTED_EMAIL\]/);
+    expect(decision.payload.redactedFields).toContain("intentLabel");
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N115: blocks raw passthrough of customer PII (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source,
+      mode: "raw_passthrough",
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("CUSTOMER_DATA_LEAK_BLOCKED");
+    expect(decision.payload).toBeNull();
+    expect(decision.reasons.some((r) => /T-X072/.test(r))).toBe(true);
+    expect(decision.liveEvalWiring).toBe("NOT_WIRED");
+    expect(decision.liveProviderSuccessClaimed).toBe(false);
+    expectEvalHonesty(decision);
+  });
 });
