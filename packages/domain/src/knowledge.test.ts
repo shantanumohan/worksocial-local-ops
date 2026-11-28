@@ -505,6 +505,54 @@ describe("instruction ingestion", () => {
       InstructionIngestionStatus.PENDING_CLASSIFICATION,
     );
   });
+
+  it("sept repeat instructionVersion claim while pending stays refused (A23 bind-bfed7a60 continue)", () => {
+    for (let i = 0; i < 7; i++) {
+      const repeat = createInstructionIngestion({
+        ingestionId: `ing-a23-bfed-${i}`,
+        sourcePath: `incoming/a23-bfed-${i}.md`,
+        checksum: `sha256:a23-bfed-${i}`,
+        status: InstructionIngestionStatus.PENDING_CLASSIFICATION,
+        instructionVersion: "v-a23-bfed",
+        fixtureOnly: true,
+        createdAtIso: now,
+      });
+      expect(repeat.instructionVersion).toBeNull();
+      expect(repeat.classifierNotes.join(" ")).toMatch(
+        /Refused instructionVersion/i,
+      );
+    }
+  });
+
+  it("webhook semver instructionVersion stays refused while rejected (A23 integration edge)", () => {
+    const webhook = createInstructionIngestion({
+      ingestionId: "ing-a23-webhook-semver",
+      sourcePath: "incoming/a23-webhook-sync.json",
+      checksum: "sha256:a23-webhook-semver",
+      status: InstructionIngestionStatus.REJECTED,
+      instructionVersion: "v2.14.0+webhook",
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    expect(webhook.instructionVersion).toBeNull();
+    expect(webhook.classifierNotes.join(" ")).toMatch(
+      /Refused instructionVersion/i,
+    );
+  });
+
+  it("zero-width padded instructionVersion refused while quarantined (A23 integration edge)", () => {
+    const zw = createInstructionIngestion({
+      ingestionId: "ing-a23-zw-quarantine",
+      sourcePath: "incoming/a23-zw-quarantine.md",
+      checksum: "sha256:a23-zw-quarantine",
+      status: InstructionIngestionStatus.QUARANTINED,
+      instructionVersion: "\u200bv-integration",
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    expect(zw.instructionVersion).toBeNull();
+    expect(zw.classifierNotes.join(" ")).toMatch(/Refused instructionVersion/i);
+  });
 });
 
 describe("demand observations", () => {
