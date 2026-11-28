@@ -1413,6 +1413,167 @@ export function proofIncompatibleWorkflowUpgradeBlockedOrRetained(
     );
   }
 
+  const completeRetainNone = createWorkflowInstance({
+    workflowId: `wf-tx067-complete-none-${randomUUID().slice(0, 8)}`,
+    definitionId: "def-fixture-publish",
+    definitionVersion: "1.0.0",
+    compatibilityEpoch: "epoch-a",
+    phase: WorkflowInstancePhase.COMPLETE,
+    nowIso,
+  });
+  const completeRetainNoneDecision = evaluateWorkflowDefinitionUpgrade({
+    instance: completeRetainNone,
+    proposed: {
+      definitionVersion: "2.0.0",
+      compatibilityEpoch: "epoch-b",
+      breakingRevision: 3,
+      breakingChange: true,
+    },
+    nowIso,
+  });
+  if (
+    completeRetainNoneDecision.code ===
+      WorkflowUpgradeCode.COMPATIBLE_DEFINITION_RETAINED &&
+    completeRetainNoneDecision.externalEffects === "NONE" &&
+    completeRetainNoneDecision.upgradeApplied === false
+  ) {
+    details.push("S64 COMPLETE retain externalEffects=NONE");
+  } else {
+    passed = false;
+    details.push(
+      `S64 COMPLETE+retain unexpectedly ${JSON.stringify(completeRetainNoneDecision)}`,
+    );
+  }
+
+  const runningMatch = createWorkflowInstance({
+    workflowId: `wf-tx067-running-match-${randomUUID().slice(0, 8)}`,
+    definitionId: "def-fixture-publish",
+    definitionVersion: "1.0.0",
+    compatibilityEpoch: "epoch-a",
+    phase: WorkflowInstancePhase.RUNNING,
+    nowIso,
+  });
+  const runningMatchRetain = evaluateWorkflowDefinitionUpgrade({
+    instance: runningMatch,
+    proposed: {
+      definitionVersion: "1.0.0",
+      compatibilityEpoch: "epoch-a",
+      breakingRevision: 0,
+      breakingChange: false,
+    },
+    nowIso,
+  });
+  if (
+    isWorkflowInFlight(runningMatch.phase) &&
+    runningMatchRetain.code ===
+      WorkflowUpgradeCode.COMPATIBLE_DEFINITION_RETAINED &&
+    runningMatchRetain.upgradeApplied === false
+  ) {
+    details.push("S65 RUNNING matching proposal → retain; no upgrade");
+  } else {
+    passed = false;
+    details.push(
+      `S65 RUNNING+match unexpectedly ${JSON.stringify(runningMatchRetain)}`,
+    );
+  }
+
+  const completePhaseReason = createWorkflowInstance({
+    workflowId: `wf-tx067-complete-phase-${randomUUID().slice(0, 8)}`,
+    definitionId: "def-fixture-publish",
+    definitionVersion: "1.0.0",
+    compatibilityEpoch: "epoch-a",
+    phase: WorkflowInstancePhase.COMPLETE,
+    nowIso,
+  });
+  const completePhaseReasonDecision = evaluateWorkflowDefinitionUpgrade({
+    instance: completePhaseReason,
+    proposed: {
+      definitionVersion: "2.0.0",
+      compatibilityEpoch: "epoch-b",
+      breakingRevision: 0,
+      breakingChange: false,
+    },
+    nowIso,
+  });
+  if (
+    completePhaseReasonDecision.code ===
+      WorkflowUpgradeCode.COMPATIBLE_DEFINITION_RETAINED &&
+    completePhaseReasonDecision.reasons.some((r) => r.includes("phase=COMPLETE"))
+  ) {
+    details.push("S66 COMPLETE retain reasons name phase=COMPLETE");
+  } else {
+    passed = false;
+    details.push(
+      `S66 COMPLETE+phase unexpectedly ${JSON.stringify(completePhaseReasonDecision)}`,
+    );
+  }
+
+  const applyingPhaseReason = createWorkflowInstance({
+    workflowId: `wf-tx067-applying-phase-${randomUUID().slice(0, 8)}`,
+    definitionId: "def-fixture-publish",
+    definitionVersion: "1.0.0",
+    compatibilityEpoch: "epoch-a",
+    phase: WorkflowInstancePhase.APPLYING,
+    nowIso,
+  });
+  const applyingPhaseReasonDecision = evaluateWorkflowDefinitionUpgrade({
+    instance: applyingPhaseReason,
+    proposed: {
+      definitionVersion: "2.0.0",
+      compatibilityEpoch: "epoch-b",
+      breakingRevision: 0,
+      breakingChange: false,
+    },
+    nowIso,
+  });
+  if (
+    applyingPhaseReasonDecision.code ===
+      WorkflowUpgradeCode.INCOMPATIBLE_UPGRADE_BLOCKED &&
+    applyingPhaseReasonDecision.reasons.some((r) =>
+      r.includes("phase=APPLYING"),
+    ) &&
+    applyingPhaseReasonDecision.externalEffects === "NONE"
+  ) {
+    details.push("S67 APPLYING block reasons name phase=APPLYING");
+  } else {
+    passed = false;
+    details.push(
+      `S67 APPLYING+phase unexpectedly ${JSON.stringify(applyingPhaseReasonDecision)}`,
+    );
+  }
+
+  const idleCompatStamp = createWorkflowInstance({
+    workflowId: `wf-tx067-idle-stamp-${randomUUID().slice(0, 8)}`,
+    definitionId: "def-fixture-publish",
+    definitionVersion: "1.0.0",
+    compatibilityEpoch: "epoch-a",
+    phase: WorkflowInstancePhase.IDLE,
+    nowIso,
+  });
+  const idleCompatStampIso = "2026-11-22T23:00:00.000Z";
+  const idleCompatStampDecision = evaluateWorkflowDefinitionUpgrade({
+    instance: idleCompatStamp,
+    proposed: {
+      definitionVersion: "1.3.0",
+      compatibilityEpoch: "epoch-a",
+      breakingRevision: 0,
+      breakingChange: false,
+    },
+    nowIso: idleCompatStampIso,
+  });
+  if (
+    idleCompatStampDecision.code ===
+      WorkflowUpgradeCode.COMPATIBLE_UPGRADE_APPLIED &&
+    idleCompatStampDecision.instance.updatedAtIso === idleCompatStampIso
+  ) {
+    details.push("S68 IDLE compatible upgrade stamps updatedAtIso");
+  } else {
+    passed = false;
+    details.push(
+      `S68 IDLE+stamp unexpectedly ${JSON.stringify(idleCompatStampDecision)}`,
+    );
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false externalEffects=NONE temporalWiring=NOT_WIRED",
   );
