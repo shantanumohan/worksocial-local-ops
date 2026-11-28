@@ -1256,7 +1256,7 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).not.toMatch(/Positive control: browser-pool \+ consent/);
     expect(art.summary).not.toMatch(/no silent reuse/);
     // K103: post-#342 tip b106092f — repair weaken not T-X066 L64 backup-omit-receipt ledger drift
-    expect(art.summary).not.toMatch(/remote-967348a6/);
+    expect(art.summary).not.toMatch(/remote-4040e3c5/);
     expect(art.summary).not.toMatch(/remote ledger preserved separately/);
     expect(art.summary).not.toMatch(/T-F24\/T-US-047/);
     expect(art.summary).not.toMatch(/T-X020\/T-US-048/);
