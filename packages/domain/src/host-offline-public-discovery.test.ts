@@ -482,6 +482,47 @@ describe("host offline public discovery (T-X071)", () => {
     expect(obs.inventedDiscoveryRank).toBeNull();
   });
 
+  it("continue I75 BIND: geo OFFLINE null prior refuses AVAILABLE claim (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i75-geo-null-claim",
+      surface: "geo_presence",
+      hostLiveness: HostDiscoveryLiveness.OFFLINE,
+      nowIso: now,
+      claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+      lastSuccessfulDiscoveryAtIso: null,
+    });
+    expect(obs.code).toBe(
+      PublicDiscoveryDecisionCode.CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED,
+    );
+    expect(obs.unavailableReason).toBe(
+      PublicDiscoveryUnavailableReason.HOST_OFFLINE,
+    );
+    expect(obs.activeCoverageClaimed).toBe(false);
+    expect(obs.inventedDiscoveryRank).toBeNull();
+    expect(obs.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(obs.liveProviderWiring).toBe("NOT_WIRED");
+    expect(obs.externalEffects).toBe("NONE");
+  });
+
+  it("continue I75: chatgpt ONLINE+prior ignores UNAVAILABLE claim (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i75-chatgpt-prior-unavail-claim",
+      surface: "chatgpt_business",
+      hostLiveness: HostDiscoveryLiveness.ONLINE,
+      nowIso: now,
+      claimedAvailability: PublicDiscoveryAvailability.UNAVAILABLE,
+      // Earlier than suite `now` (2026-11-22T19:00Z) and harness nowIso.
+      lastSuccessfulDiscoveryAtIso: "2026-11-21T17:00:00.000Z",
+    });
+    expect(obs.code).toBe(PublicDiscoveryDecisionCode.HOST_ONLINE_AVAILABLE);
+    expect(obs.availability).toBe(PublicDiscoveryAvailability.AVAILABLE);
+    expect(obs.activeCoverageClaimed).toBe(true);
+    expect(obs.inventedDiscoveryRank).toBeNull();
+    expect(obs.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+    expect(obs.liveProviderWiring).toBe("NOT_WIRED");
+    expect(obs.externalEffects).toBe("NONE");
+  });
+
   it("applies HOST_OFFLINE honestly across all public-discovery surfaces", () => {
     const surfaces = [
       "geo_presence",

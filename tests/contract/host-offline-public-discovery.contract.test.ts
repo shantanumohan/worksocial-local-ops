@@ -546,4 +546,36 @@ describe("contract: T-X071 host offline public discovery", () => {
     expect(obs.code).toBe(PublicDiscoveryDecisionCode.HOST_ONLINE_AVAILABLE);
     expect(obs.externalEffects).toBe("NONE");
   });
+
+  it("continue I75 BIND: geo OFFLINE null prior claim refused (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i75-contract-geo-null",
+      surface: "geo_presence",
+      hostLiveness: HostDiscoveryLiveness.OFFLINE,
+      nowIso: "2026-11-21T18:00:00.000Z",
+      claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+      lastSuccessfulDiscoveryAtIso: null,
+    });
+    expect(obs.code).toBe(
+      PublicDiscoveryDecisionCode.CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED,
+    );
+    expect(obs.activeCoverageClaimed).toBe(false);
+    expect(obs.liveProviderWiring).toBe("NOT_WIRED");
+    expect(obs.externalEffects).toBe("NONE");
+  });
+
+  it("continue I75: chatgpt ONLINE+prior ignores UNAVAILABLE claim (T-X071)", () => {
+    const obs = evaluateHostOfflinePublicDiscovery({
+      observationId: "obs-i75-contract-chatgpt-prior",
+      surface: "chatgpt_business",
+      hostLiveness: HostDiscoveryLiveness.ONLINE,
+      nowIso: "2026-11-21T18:00:00.000Z",
+      claimedAvailability: PublicDiscoveryAvailability.UNAVAILABLE,
+      // Earlier than contract nowIso (2026-11-21T18:00Z) and harness nowIso.
+      lastSuccessfulDiscoveryAtIso: "2026-11-21T17:00:00.000Z",
+    });
+    expect(obs.code).toBe(PublicDiscoveryDecisionCode.HOST_ONLINE_AVAILABLE);
+    expect(obs.activeCoverageClaimed).toBe(true);
+    expect(obs.chatgptAdsAccess).toBe("ACCESS_BLOCKED");
+  });
 });
