@@ -8,8 +8,8 @@
     "shared_ad_budget_external_change_invalidates"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x035.json",
-  "createdAtIso": "2026-11-28T00:02:31.633Z",
+  "createdAtIso": "2026-11-28T00:07:38.955Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x035-cf7341a35c64"
+  "uniqueSourceArtifactId": "art-fixture-t-x035-6b6dcc411eae"
 }

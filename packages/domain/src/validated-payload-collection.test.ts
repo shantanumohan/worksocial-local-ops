@@ -214,6 +214,82 @@ describe("validated payload collection (T-X070)", () => {
     expectHonesty(decision);
   });
 
+  it("rejects 56-char hex signature (eight nibbles short) (T-X070 B32)", () => {
+    const { body, signatureHex, eventId } = signedBody({
+      eventId: "evt-b32",
+      kind: "lead.created",
+    });
+    const decision = evaluateValidatedPayloadCollection({
+      payload: {
+        eventId,
+        body,
+        signatureHex: signatureHex.slice(0, 56),
+      },
+      secret,
+      collect: () => ({ ok: true, recordId: "must-not-collect" }),
+    });
+    expect(decision.code).toBe("VALIDATION_FAILED");
+    expect(decision.collectionAttempted).toBe(false);
+    expectHonesty(decision);
+  });
+
+  it("rejects 55-char hex signature (nine nibbles short) (T-X070 B33)", () => {
+    const { body, signatureHex, eventId } = signedBody({
+      eventId: "evt-b33",
+      kind: "lead.created",
+    });
+    const decision = evaluateValidatedPayloadCollection({
+      payload: {
+        eventId,
+        body,
+        signatureHex: signatureHex.slice(0, 55),
+      },
+      secret,
+      collect: () => ({ ok: true, recordId: "must-not-collect" }),
+    });
+    expect(decision.code).toBe("VALIDATION_FAILED");
+    expect(decision.collectionAttempted).toBe(false);
+    expectHonesty(decision);
+  });
+
+  it("rejects 54-char hex signature (ten nibbles short) (T-X070 B34)", () => {
+    const { body, signatureHex, eventId } = signedBody({
+      eventId: "evt-b34",
+      kind: "lead.created",
+    });
+    const decision = evaluateValidatedPayloadCollection({
+      payload: {
+        eventId,
+        body,
+        signatureHex: signatureHex.slice(0, 54),
+      },
+      secret,
+      collect: () => ({ ok: true, recordId: "must-not-collect" }),
+    });
+    expect(decision.code).toBe("VALIDATION_FAILED");
+    expect(decision.collectionAttempted).toBe(false);
+    expectHonesty(decision);
+  });
+
+  it("rejects 53-char hex signature (eleven nibbles short) (T-X070 B35)", () => {
+    const { body, signatureHex, eventId } = signedBody({
+      eventId: "evt-b35",
+      kind: "lead.created",
+    });
+    const decision = evaluateValidatedPayloadCollection({
+      payload: {
+        eventId,
+        body,
+        signatureHex: signatureHex.slice(0, 53),
+      },
+      secret,
+      collect: () => ({ ok: true, recordId: "must-not-collect" }),
+    });
+    expect(decision.code).toBe("VALIDATION_FAILED");
+    expect(decision.collectionAttempted).toBe(false);
+    expectHonesty(decision);
+  });
+
   it("rejects signature with non-hex suffix even when prefix matches", () => {
     const { body, signatureHex, eventId } = signedBody({
       eventId: "evt-suffix",
