@@ -412,6 +412,99 @@ describe("instruction ingestion", () => {
       );
     }
   });
+
+  it("sext repeat instructionVersion claim while pending stays refused (A22 bind-c27aaaa0 continue)", () => {
+    for (let i = 0; i < 6; i++) {
+      const repeat = createInstructionIngestion({
+        ingestionId: `ing-a22-c27-${i}`,
+        sourcePath: `incoming/a22-c27-${i}.md`,
+        checksum: `sha256:a22-c27-${i}`,
+        status: InstructionIngestionStatus.PENDING_CLASSIFICATION,
+        instructionVersion: "v-a22-c27",
+        fixtureOnly: true,
+        createdAtIso: now,
+      });
+      expect(repeat.instructionVersion).toBeNull();
+      expect(repeat.classifierNotes.join(" ")).toMatch(
+        /Refused instructionVersion/i,
+      );
+    }
+  });
+
+  it("sext repeat instructionVersion claim while rejected stays refused (A22 wipe15-579ffaf8 edge)", () => {
+    for (let i = 0; i < 6; i++) {
+      const repeat = createInstructionIngestion({
+        ingestionId: `ing-a22-w15r6-${i}`,
+        sourcePath: `incoming/a22-w15r6-${i}.md`,
+        checksum: `sha256:a22-w15r6-${i}`,
+        status: InstructionIngestionStatus.REJECTED,
+        instructionVersion: "v-a22-w15r6",
+        fixtureOnly: true,
+        createdAtIso: now,
+      });
+      expect(repeat.instructionVersion).toBeNull();
+      expect(repeat.classifierNotes.join(" ")).toMatch(
+        /Refused instructionVersion/i,
+      );
+    }
+  });
+
+  it("sext repeat instructionVersion claim while quarantined stays refused (A22 wipe15-579ffaf8 quarantine edge)", () => {
+    for (let i = 0; i < 6; i++) {
+      const repeat = createInstructionIngestion({
+        ingestionId: `ing-a22-w15q6-${i}`,
+        sourcePath: `incoming/a22-w15q6-${i}.md`,
+        checksum: `sha256:a22-w15q6-${i}`,
+        status: InstructionIngestionStatus.QUARANTINED,
+        instructionVersion: "v-a22-w15q6",
+        fixtureOnly: true,
+        createdAtIso: now,
+      });
+      expect(repeat.instructionVersion).toBeNull();
+      expect(repeat.classifierNotes.join(" ")).toMatch(
+        /Refused instructionVersion/i,
+      );
+    }
+  });
+
+  it("padded instructionVersion claims stay refused across non-ingested statuses (A22 tip-moved-316 edge)", () => {
+    const statuses = [
+      InstructionIngestionStatus.PENDING_CLASSIFICATION,
+      InstructionIngestionStatus.REJECTED,
+      InstructionIngestionStatus.QUARANTINED,
+    ] as const;
+    for (const status of statuses) {
+      const padded = createInstructionIngestion({
+        ingestionId: `ing-a22-tip316-pad-${status}`,
+        sourcePath: `incoming/a22-tip316-pad-${status}.md`,
+        checksum: `sha256:a22-tip316-pad-${status}`,
+        status,
+        instructionVersion: "  v-tip316-pad  ",
+        fixtureOnly: true,
+        createdAtIso: now,
+      });
+      expect(padded.instructionVersion).toBeNull();
+      expect(padded.classifierNotes.join(" ")).toMatch(
+        /Refused instructionVersion/i,
+      );
+    }
+  });
+
+  it("whitespace-only instructionVersion never pins while pending (A22 tip-moved-316 whitespace edge)", () => {
+    const blank = createInstructionIngestion({
+      ingestionId: "ing-a22-tip316-ws",
+      sourcePath: "incoming/a22-tip316-ws.md",
+      checksum: "sha256:a22-tip316-ws",
+      status: InstructionIngestionStatus.PENDING_CLASSIFICATION,
+      instructionVersion: " \t  ",
+      fixtureOnly: true,
+      createdAtIso: now,
+    });
+    expect(blank.instructionVersion).toBeNull();
+    expect(blank.status).toBe(
+      InstructionIngestionStatus.PENDING_CLASSIFICATION,
+    );
+  });
 });
 
 describe("demand observations", () => {

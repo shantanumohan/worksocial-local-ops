@@ -12,6 +12,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import {
   ArtifactTrustLabel,
+  IndirectInjectionChannel,
   InstructionIngestionStatus,
   SoakProofKind,
   compileInputPackage,
@@ -582,6 +583,167 @@ export function proofImportedDocQuarantinedAsData(
     passed = false;
     details.push(
       `A21 wipe15 quint quarantine unexpectedly ${JSON.stringify({ last: a21W15Q5[4] })}`,
+    );
+  }
+
+  const a22C27 = [];
+  for (let i = 0; i < 6; i++) {
+    a22C27.push(
+      createInstructionIngestion({
+        ingestionId: `ing-a22-c27-${i}`,
+        sourcePath: `incoming/a22-c27-${i}.md`,
+        checksum: sha256(`a22-c27-${i}`),
+        status: InstructionIngestionStatus.PENDING_CLASSIFICATION,
+        instructionVersion: `v-a22-c27-${i}`,
+        fixtureOnly: true,
+        createdAtIso: nowIso,
+      }),
+    );
+  }
+  if (
+    a22C27.every((r) => r.instructionVersion === null) &&
+    a22C27[5]!.classifierNotes.some((n) => /Refused instructionVersion/i.test(n))
+  ) {
+    details.push(
+      "A22 bind-c27aaaa0 continue: sext PENDING claim instructionVersion → refused; remains null",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `A22 sext pending unexpectedly ${JSON.stringify({ last: a22C27[5] })}`,
+    );
+  }
+
+  const a22W15R6 = [];
+  for (let i = 0; i < 6; i++) {
+    a22W15R6.push(
+      createInstructionIngestion({
+        ingestionId: `ing-a22-w15r6-${i}`,
+        sourcePath: `incoming/a22-w15r6-${i}.md`,
+        checksum: sha256(`a22-w15r6-${i}`),
+        status: InstructionIngestionStatus.REJECTED,
+        instructionVersion: `v-a22-w15r6-${i}`,
+        fixtureOnly: true,
+        createdAtIso: nowIso,
+      }),
+    );
+  }
+  if (
+    a22W15R6.every((r) => r.instructionVersion === null) &&
+    a22W15R6[5]!.classifierNotes.some((n) => /Refused instructionVersion/i.test(n))
+  ) {
+    details.push(
+      "A22 wipe15-579ffaf8 edge: sext REJECTED claim instructionVersion → refused; remains null",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `A22 wipe15 sext rejected unexpectedly ${JSON.stringify({ last: a22W15R6[5] })}`,
+    );
+  }
+
+  const a22W15Q6 = [];
+  for (let i = 0; i < 6; i++) {
+    a22W15Q6.push(
+      createInstructionIngestion({
+        ingestionId: `ing-a22-w15q6-${i}`,
+        sourcePath: `incoming/a22-w15q6-${i}.md`,
+        checksum: sha256(`a22-w15q6-${i}`),
+        status: InstructionIngestionStatus.QUARANTINED,
+        instructionVersion: `v-a22-w15q6-${i}`,
+        fixtureOnly: true,
+        createdAtIso: nowIso,
+      }),
+    );
+  }
+  if (
+    a22W15Q6.every((r) => r.instructionVersion === null) &&
+    a22W15Q6[5]!.classifierNotes.some((n) => /Refused instructionVersion/i.test(n))
+  ) {
+    details.push(
+      "A22 wipe15-579ffaf8 quarantine edge: sext QUARANTINED claim instructionVersion → refused; remains null",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `A22 wipe15 sext quarantine unexpectedly ${JSON.stringify({ last: a22W15Q6[5] })}`,
+    );
+  }
+
+  // A22 tip-moved-316 @ 60b4b782 — padded version refuse + multi-channel boundary
+  const tip316Statuses = [
+    InstructionIngestionStatus.PENDING_CLASSIFICATION,
+    InstructionIngestionStatus.REJECTED,
+    InstructionIngestionStatus.QUARANTINED,
+  ] as const;
+  const tip316Padded = tip316Statuses.map((status, i) =>
+    createInstructionIngestion({
+      ingestionId: `ing-a22-tip316-pad-${i}`,
+      sourcePath: `incoming/a22-tip316-pad-${i}.md`,
+      checksum: sha256(`a22-tip316-pad-${i}`),
+      status,
+      instructionVersion: "  v-tip316-pad  ",
+      fixtureOnly: true,
+      createdAtIso: nowIso,
+    }),
+  );
+  const tip316Whitespace = createInstructionIngestion({
+    ingestionId: "ing-a22-tip316-ws",
+    sourcePath: "incoming/a22-tip316-ws.md",
+    checksum: sha256("a22-tip316-ws"),
+    status: InstructionIngestionStatus.PENDING_CLASSIFICATION,
+    instructionVersion: " \t  ",
+    fixtureOnly: true,
+    createdAtIso: nowIso,
+  });
+  if (
+    tip316Padded.every(
+      (r) =>
+        r.instructionVersion === null &&
+        r.classifierNotes.some((n) => /Refused instructionVersion/i.test(n)),
+    ) &&
+    tip316Whitespace.instructionVersion === null &&
+    tip316Whitespace.status ===
+      InstructionIngestionStatus.PENDING_CLASSIFICATION
+  ) {
+    details.push(
+      "A22 tip-moved-316 edge: padded instructionVersion refused across PENDING/REJECTED/QUARANTINED; whitespace-only never pins",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `A22 tip-moved-316 padded/whitespace unexpectedly ${JSON.stringify({ tip316Padded, tip316Whitespace })}`,
+    );
+  }
+
+  const tip316Channels = [
+    IndirectInjectionChannel.EMAIL,
+    IndirectInjectionChannel.WEB,
+  ] as const;
+  const tip316Boundaries = tip316Channels.map((channel) =>
+    evaluateIndirectPromptInjectionBoundary({
+      trustLabel: ArtifactTrustLabel.UNTRUSTED_SOURCE,
+      channel,
+      attemptedEffect: "tool_widening",
+    }),
+  );
+  if (
+    tip316Boundaries.every(
+      (b) =>
+        b.allowed === false &&
+        b.code === "UNTRUSTED_SOURCE_NOT_INSTRUCTION" &&
+        b.instructionEligible === false &&
+        b.externalEffects === "NONE" &&
+        b.liveProviderWiring === "NOT_WIRED",
+    )
+  ) {
+    details.push(
+      "A22 tip-moved-316 channel edge: untrusted email+web → UNTRUSTED_SOURCE_NOT_INSTRUCTION; externalEffects=NONE; NOT_WIRED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `A22 tip-moved-316 channel boundary unexpectedly ${JSON.stringify(tip316Boundaries)}`,
     );
   }
 
