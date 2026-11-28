@@ -625,6 +625,56 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).not.toMatch(/offboard_active_token_residual/);
     expect(art.summary).toContain("TESTS_FAILED");
     expect(art.summary).toContain("CMS repair wiring NOT_WIRED");
+    // P35 D11: FULL wipe+retip #353 @b106092f — soft-skip Ads + pool + exclusive drifts
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X058");
+    expect(SOAK_FIXTURE_CASE_IDS).not.toContain("T-X074");
+    expect(Number(art.caseId.slice(3))).toBeLessThanOrEqual(73);
+    expect(art.summary).toContain("chatgptAdsAccess=ACCESS_BLOCKED");
+    expect(art.externalEffects).toBe("NONE");
+    expect(art.liveProviderSuccessClaimed).toBe(false);
+    expect(art.proofKinds).toEqual(["repair_attempt_limit_escalated"]);
+    expect(art.summary).toContain("ticket status=ESCALATED");
+    expect(art.summary).toMatch(/Third automatic attempt denied \(ATTEMPT_LIMIT\)/);
+    // HOLD — exclusive #343 Slot S; fence #335–#342 merged without claiming
+    expect(art.proofKinds).not.toContain("backup_omit_receipt");
+    expect(art.summary).not.toMatch(/backup_omit_receipt/);
+    expect(art.summary).not.toMatch(/localProvider=omitted receipts=0/);
+    expect(art.proofKinds).not.toContain(
+      "worker_browser_auth_state_os_denied",
+    );
+    expect(art.summary).not.toMatch(/worker_browser_auth_state_os_denied/);
+    expect(art.summary).not.toMatch(/OS_DENY \(consent cannot escalate\)/);
+    expect(art.proofKinds).not.toContain(
+      "ssrf_redirect_dns_rebind_blocked_every_hop",
+    );
+    expect(art.summary).not.toMatch(/ssrf_redirect_dns_rebind/);
+    expect(art.summary).not.toMatch(/Expanded IPv4-mapped/);
+    expect(art.proofKinds).not.toContain(
+      "indirect_prompt_injection_exfil_denied",
+    );
+    expect(art.proofKinds).not.toContain("sse_gap_full_state_resync");
+    expect(art.proofKinds).not.toContain(
+      "keyboard_focus_restore_after_dialog",
+    );
+    expect(art.proofKinds).not.toContain(
+      "currency_timezone_mismatch_no_silent_sum",
+    );
+    expect(art.proofKinds).not.toContain(
+      "duplicate_platform_attribution_one_booking",
+    );
+    expect(art.proofKinds).not.toContain("repair_weaken_test_rejected");
+    expect(art.summary).not.toMatch(/repair_weaken_test_rejected/);
+    expect(art.proofKinds).not.toContain(
+      "host_offline_public_discovery_unavailable",
+    );
+    expect(art.summary).not.toMatch(/host_offline_public_discovery/);
+    expect(art.proofKinds).not.toContain("customer_data_eval_redaction_blocks");
+    expect(art.summary).not.toMatch(/customer_data_eval_redaction/);
+    expect(art.proofKinds).not.toContain(
+      "validated_payload_not_collected_separate_states",
+    );
+    expect(art.summary).toContain("cmsRepairWiring=NOT_WIRED");
+    expect(art.summary).toContain("externalEffects=NONE");
   });
 
   it("T-X031 fixture artifact names GA4 wrong property kind honesty (ACCEPTED ≠ VERIFIED)", () => {
