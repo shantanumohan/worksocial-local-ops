@@ -177,7 +177,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X059** maps only to `DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING` (one booking; separate claims; liveProviderWiring NOT_WIRED; not live VERIFIED). Shared map with T-US-038.
 
-**T-X070** maps only to `VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES` (VALIDATION_FAILED ≠ COLLECTION_FAILED; B24–B35 sig-hex length edges; empty recordId → COLLECTION_FAILED; live NOT_WIRED; not live VERIFIED).
+**T-X070** maps only to `VALIDATED_PAYLOAD_NOT_COLLECTED_SEPARATE_STATES` (VALIDATION_FAILED ≠ COLLECTION_FAILED; empty recordId → COLLECTION_FAILED; live NOT_WIRED; not live VERIFIED).
 
 **T-X060** maps only to `CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM` (whitespace-normalized match; blank → INVALID_DIMENSION; heterogeneous refuse silent sum; live NOT_WIRED; not live VERIFIED).
 
@@ -319,7 +319,7 @@ Suggested owner Windows flow (state off OneDrive):
 
 **T-X061** maps only to `KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG` (dialog open/trap/restore or FOCUS_LOST; not live VERIFIED).
 
-**T-X068** maps only to `THIRTY_ALERTS_ONE_OUTAGE_GROUPED` (thirty alerts sharing one whitespace-normalized outageKey → one grouped incident with chronological alertIds / max severity / uniqueSources; live NOT_WIRED; not live VERIFIED).
+**T-X068** maps only to `THIRTY_ALERTS_ONE_OUTAGE_GROUPED` (thirty alerts sharing one normalized outageKey — whitespace / invisible Unicode / narrow-space / en-quad / three-per-em / ogham / MVS / bidi embedding+isolate+format / hangul filler collapse — → one grouped incident with chronological alertIds / max severity / uniqueSources; no case-fold merge; live NOT_WIRED; not live VERIFIED).
 
 **T-X064** maps only to `SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP` (redirect + DNS rebind blocked every hop; fixture only; not live VERIFIED).
 
