@@ -706,8 +706,9 @@
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-28T01:32:43.099Z",
-      "uniqueSourceArtifactId": "art-fixture-t-us-046-d81665e75686"
+      "updatedAtIso": "2026-11-27T14:30:41.754Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-046-5d861303111d",
+      "summary": "Fixture ACCEPTED for T-US-046 (Hard search constraints enforced; no invented availability)\nproof=hard_search_constraints_no_invention applyCount=1 :: Unknown constraints → UNKNOWN no-match (no invented hits) | Hard constraints filter before ranking → room-20 only | Price bound preserved as unresolved (not invented free) | Unresolved price/negation → CLARIFY abstain (no invention) | Negation preserved; not inverted into required amenity | priceKnown=false entry retains null priceLabel (no invention) | Grounded answer may attach booking handoff URL | HYPOTHESIS-only → no hits and no invented booking handoff | Availability/bookable/open → UNKNOWN no-match (no invented open/bookable) | free/budget → unresolved price (not invented $0); catalogPriceIsHonest enforced | Price aliases up-to-$/≤ unresolved; capacity 'up to N people' not priced | Grounded http:// booking handoff refused (HTTPS-only) | Inaccessible inventory → no hits (not invented available) | semanticSearchLiveWiringStatus=NOT_WIRED cmsPublishWiringStatus=NOT_WIRED | Hard-search retry fence (E19 cms NOT_WIRED): first abstain recorded; second RETRY_BUDGET_EXHAUSTED | Booking handoff honesty: exhausted/abstain/http refuse; grounded HTTPS only | Inventory-claim honesty (E16–E18): GROUNDED→NO_RESULT; CLARIFY preserved; abstain clear | E24: CLARIFY within budget refuses handoff + clears hits (cms NOT_WIRED) | E25: javascript: handoff refused within budget (HTTPS-only; no invent) | E26: data: handoff refused within budget (HTTPS-only; no invent) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE"
     },
     {
       "caseId": "T-X048",
@@ -718,8 +719,9 @@
         "Fixture evidence compiled from complete proof set (1)",
         "Not sandbox-verified; not production-canary-verified"
       ],
-      "updatedAtIso": "2026-11-28T01:32:43.099Z",
-      "uniqueSourceArtifactId": "art-fixture-t-x048-d81665e75686"
+      "updatedAtIso": "2026-11-27T14:30:41.754Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x048-668e764ed7f5",
+      "summary": "Fixture ACCEPTED for T-X048 (Unknown price or availability — no invention)\nproof=hard_search_constraints_no_invention applyCount=1 :: Unknown constraints → UNKNOWN no-match (no invented hits) | Hard constraints filter before ranking → room-20 only | Price bound preserved as unresolved (not invented free) | Unresolved price/negation → CLARIFY abstain (no invention) | Negation preserved; not inverted into required amenity | priceKnown=false entry retains null priceLabel (no invention) | Grounded answer may attach booking handoff URL | HYPOTHESIS-only → no hits and no invented booking handoff | Availability/bookable/open → UNKNOWN no-match (no invented open/bookable) | free/budget → unresolved price (not invented $0); catalogPriceIsHonest enforced | Price aliases up-to-$/≤ unresolved; capacity 'up to N people' not priced | Grounded http:// booking handoff refused (HTTPS-only) | Inaccessible inventory → no hits (not invented available) | semanticSearchLiveWiringStatus=NOT_WIRED cmsPublishWiringStatus=NOT_WIRED | Hard-search retry fence (E19 cms NOT_WIRED): first abstain recorded; second RETRY_BUDGET_EXHAUSTED | Booking handoff honesty: exhausted/abstain/http refuse; grounded HTTPS only | Inventory-claim honesty (E16–E18): GROUNDED→NO_RESULT; CLARIFY preserved; abstain clear | E22: NO_RESULT within budget refuses handoff + clears hits (cms NOT_WIRED) | E23: UNKNOWN within budget refuses handoff + clears hits (live NOT_WIRED) | E24: CLARIFY within budget refuses handoff + clears hits (cms NOT_WIRED) | E25: javascript: handoff refused within budget (HTTPS-only; no invent) | E26: data: handoff refused within budget (HTTPS-only; no invent) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE"
     },
     {
       "caseId": "T-US-010",
@@ -2738,34 +2740,30 @@
       "uniqueSourceArtifactId": "art-fixture-t-us-045-d81665e75686"
     },
     {
-      "artifactId": "art-fixture-t-us-046",
       "caseId": "T-US-046",
+      "status": "ACCEPTED",
       "environment": "fixture",
-      "redacted": true,
-      "summary": "Fixture ACCEPTED for T-US-046 (Hard search constraints enforced; no invented availability)\nproof=hard_search_constraints_no_invention applyCount=1 :: Unknown constraints → UNKNOWN no-match (no invented hits) | Hard constraints filter before ranking → room-20 only | Price bound preserved as unresolved (not invented free) | Unresolved price/negation → CLARIFY abstain (no invention) | Negation preserved; not inverted into required amenity | priceKnown=false entry retains null priceLabel (no invention) | Grounded answer may attach booking handoff URL | HYPOTHESIS-only → no hits and no invented booking handoff | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
-        "hard_search_constraints_no_invention"
+      "artifactId": "art-fixture-t-us-046",
+      "reasons": [
+        "Fixture evidence compiled from complete proof set (1)",
+        "Not sandbox-verified; not production-canary-verified"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-us-046.json",
-      "createdAtIso": "2026-11-28T01:32:43.099Z",
-      "liveProviderSuccessClaimed": false,
-      "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-us-046-d81665e75686"
+      "updatedAtIso": "2026-11-27T14:30:41.754Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-046-5d861303111d",
+      "summary": "Fixture ACCEPTED for T-US-046 (Hard search constraints enforced; no invented availability)\nproof=hard_search_constraints_no_invention applyCount=1 :: Unknown constraints → UNKNOWN no-match (no invented hits) | Hard constraints filter before ranking → room-20 only | Price bound preserved as unresolved (not invented free) | Unresolved price/negation → CLARIFY abstain (no invention) | Negation preserved; not inverted into required amenity | priceKnown=false entry retains null priceLabel (no invention) | Grounded answer may attach booking handoff URL | HYPOTHESIS-only → no hits and no invented booking handoff | Availability/bookable/open → UNKNOWN no-match (no invented open/bookable) | free/budget → unresolved price (not invented $0); catalogPriceIsHonest enforced | Price aliases up-to-$/≤ unresolved; capacity 'up to N people' not priced | Grounded http:// booking handoff refused (HTTPS-only) | Inaccessible inventory → no hits (not invented available) | semanticSearchLiveWiringStatus=NOT_WIRED cmsPublishWiringStatus=NOT_WIRED | Hard-search retry fence (E19 cms NOT_WIRED): first abstain recorded; second RETRY_BUDGET_EXHAUSTED | Booking handoff honesty: exhausted/abstain/http refuse; grounded HTTPS only | Inventory-claim honesty (E16–E18): GROUNDED→NO_RESULT; CLARIFY preserved; abstain clear | E24: CLARIFY within budget refuses handoff + clears hits (cms NOT_WIRED) | E25: javascript: handoff refused within budget (HTTPS-only; no invent) | E26: data: handoff refused within budget (HTTPS-only; no invent) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE"
     },
     {
-      "artifactId": "art-fixture-t-x048",
       "caseId": "T-X048",
+      "status": "ACCEPTED",
       "environment": "fixture",
-      "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X048 (Unknown price or availability — no invention)\nproof=hard_search_constraints_no_invention applyCount=1 :: Unknown constraints → UNKNOWN no-match (no invented hits) | Hard constraints filter before ranking → room-20 only | Price bound preserved as unresolved (not invented free) | Unresolved price/negation → CLARIFY abstain (no invention) | Negation preserved; not inverted into required amenity | priceKnown=false entry retains null priceLabel (no invention) | Grounded answer may attach booking handoff URL | HYPOTHESIS-only → no hits and no invented booking handoff | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
-        "hard_search_constraints_no_invention"
+      "artifactId": "art-fixture-t-x048",
+      "reasons": [
+        "Fixture evidence compiled from complete proof set (1)",
+        "Not sandbox-verified; not production-canary-verified"
       ],
-      "evidenceRef": "soak/evidence/art-fixture-t-x048.json",
-      "createdAtIso": "2026-11-28T01:32:43.099Z",
-      "liveProviderSuccessClaimed": false,
-      "externalEffects": "NONE",
-      "uniqueSourceArtifactId": "art-fixture-t-x048-d81665e75686"
+      "updatedAtIso": "2026-11-27T14:30:41.754Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x048-668e764ed7f5",
+      "summary": "Fixture ACCEPTED for T-X048 (Unknown price or availability — no invention)\nproof=hard_search_constraints_no_invention applyCount=1 :: Unknown constraints → UNKNOWN no-match (no invented hits) | Hard constraints filter before ranking → room-20 only | Price bound preserved as unresolved (not invented free) | Unresolved price/negation → CLARIFY abstain (no invention) | Negation preserved; not inverted into required amenity | priceKnown=false entry retains null priceLabel (no invention) | Grounded answer may attach booking handoff URL | HYPOTHESIS-only → no hits and no invented booking handoff | Availability/bookable/open → UNKNOWN no-match (no invented open/bookable) | free/budget → unresolved price (not invented $0); catalogPriceIsHonest enforced | Price aliases up-to-$/≤ unresolved; capacity 'up to N people' not priced | Grounded http:// booking handoff refused (HTTPS-only) | Inaccessible inventory → no hits (not invented available) | semanticSearchLiveWiringStatus=NOT_WIRED cmsPublishWiringStatus=NOT_WIRED | Hard-search retry fence (E19 cms NOT_WIRED): first abstain recorded; second RETRY_BUDGET_EXHAUSTED | Booking handoff honesty: exhausted/abstain/http refuse; grounded HTTPS only | Inventory-claim honesty (E16–E18): GROUNDED→NO_RESULT; CLARIFY preserved; abstain clear | E22: NO_RESULT within budget refuses handoff + clears hits (cms NOT_WIRED) | E23: UNKNOWN within budget refuses handoff + clears hits (live NOT_WIRED) | E24: CLARIFY within budget refuses handoff + clears hits (cms NOT_WIRED) | E25: javascript: handoff refused within budget (HTTPS-only; no invent) | E26: data: handoff refused within budget (HTTPS-only; no invent) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE"
     },
     {
       "artifactId": "art-fixture-t-us-010",
@@ -4255,6 +4253,32 @@
   ],
   "uniqueRunArtifacts": [
     {
+      "caseId": "T-US-046",
+      "status": "ACCEPTED",
+      "environment": "fixture",
+      "artifactId": "art-fixture-t-us-046",
+      "reasons": [
+        "Fixture evidence compiled from complete proof set (1)",
+        "Not sandbox-verified; not production-canary-verified"
+      ],
+      "updatedAtIso": "2026-11-27T14:30:41.754Z",
+      "uniqueSourceArtifactId": "art-fixture-t-us-046-5d861303111d",
+      "summary": "Fixture ACCEPTED for T-US-046 (Hard search constraints enforced; no invented availability)\nproof=hard_search_constraints_no_invention applyCount=1 :: Unknown constraints → UNKNOWN no-match (no invented hits) | Hard constraints filter before ranking → room-20 only | Price bound preserved as unresolved (not invented free) | Unresolved price/negation → CLARIFY abstain (no invention) | Negation preserved; not inverted into required amenity | priceKnown=false entry retains null priceLabel (no invention) | Grounded answer may attach booking handoff URL | HYPOTHESIS-only → no hits and no invented booking handoff | Availability/bookable/open → UNKNOWN no-match (no invented open/bookable) | free/budget → unresolved price (not invented $0); catalogPriceIsHonest enforced | Price aliases up-to-$/≤ unresolved; capacity 'up to N people' not priced | Grounded http:// booking handoff refused (HTTPS-only) | Inaccessible inventory → no hits (not invented available) | semanticSearchLiveWiringStatus=NOT_WIRED cmsPublishWiringStatus=NOT_WIRED | Hard-search retry fence (E19 cms NOT_WIRED): first abstain recorded; second RETRY_BUDGET_EXHAUSTED | Booking handoff honesty: exhausted/abstain/http refuse; grounded HTTPS only | Inventory-claim honesty (E16–E18): GROUNDED→NO_RESULT; CLARIFY preserved; abstain clear | E24: CLARIFY within budget refuses handoff + clears hits (cms NOT_WIRED) | E25: javascript: handoff refused within budget (HTTPS-only; no invent) | E26: data: handoff refused within budget (HTTPS-only; no invent) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE"
+    },
+    {
+      "caseId": "T-X048",
+      "status": "ACCEPTED",
+      "environment": "fixture",
+      "artifactId": "art-fixture-t-x048",
+      "reasons": [
+        "Fixture evidence compiled from complete proof set (1)",
+        "Not sandbox-verified; not production-canary-verified"
+      ],
+      "updatedAtIso": "2026-11-27T14:30:41.754Z",
+      "uniqueSourceArtifactId": "art-fixture-t-x048-668e764ed7f5",
+      "summary": "Fixture ACCEPTED for T-X048 (Unknown price or availability — no invention)\nproof=hard_search_constraints_no_invention applyCount=1 :: Unknown constraints → UNKNOWN no-match (no invented hits) | Hard constraints filter before ranking → room-20 only | Price bound preserved as unresolved (not invented free) | Unresolved price/negation → CLARIFY abstain (no invention) | Negation preserved; not inverted into required amenity | priceKnown=false entry retains null priceLabel (no invention) | Grounded answer may attach booking handoff URL | HYPOTHESIS-only → no hits and no invented booking handoff | Availability/bookable/open → UNKNOWN no-match (no invented open/bookable) | free/budget → unresolved price (not invented $0); catalogPriceIsHonest enforced | Price aliases up-to-$/≤ unresolved; capacity 'up to N people' not priced | Grounded http:// booking handoff refused (HTTPS-only) | Inaccessible inventory → no hits (not invented available) | semanticSearchLiveWiringStatus=NOT_WIRED cmsPublishWiringStatus=NOT_WIRED | Hard-search retry fence (E19 cms NOT_WIRED): first abstain recorded; second RETRY_BUDGET_EXHAUSTED | Booking handoff honesty: exhausted/abstain/http refuse; grounded HTTPS only | Inventory-claim honesty (E16–E18): GROUNDED→NO_RESULT; CLARIFY preserved; abstain clear | E22: NO_RESULT within budget refuses handoff + clears hits (cms NOT_WIRED) | E23: UNKNOWN within budget refuses handoff + clears hits (live NOT_WIRED) | E24: CLARIFY within budget refuses handoff + clears hits (cms NOT_WIRED) | E25: javascript: handoff refused within budget (HTTPS-only; no invent) | E26: data: handoff refused within budget (HTTPS-only; no invent) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE"
+    },
+    {
       "artifactId": "art-fixture-t-x014-d81665e75686",
       "caseId": "T-X014",
       "environment": "fixture",
@@ -5021,34 +5045,6 @@
         "semantic_search_no_result_eval_comparison"
       ],
       "evidenceRef": "soak/evidence/art-fixture-t-us-045-d81665e75686.json",
-      "createdAtIso": "2026-11-28T01:32:43.099Z",
-      "liveProviderSuccessClaimed": false,
-      "externalEffects": "NONE"
-    },
-    {
-      "artifactId": "art-fixture-t-us-046-d81665e75686",
-      "caseId": "T-US-046",
-      "environment": "fixture",
-      "redacted": true,
-      "summary": "Fixture ACCEPTED for T-US-046 (Hard search constraints enforced; no invented availability)\nproof=hard_search_constraints_no_invention applyCount=1 :: Unknown constraints → UNKNOWN no-match (no invented hits) | Hard constraints filter before ranking → room-20 only | Price bound preserved as unresolved (not invented free) | Unresolved price/negation → CLARIFY abstain (no invention) | Negation preserved; not inverted into required amenity | priceKnown=false entry retains null priceLabel (no invention) | Grounded answer may attach booking handoff URL | HYPOTHESIS-only → no hits and no invented booking handoff | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
-        "hard_search_constraints_no_invention"
-      ],
-      "evidenceRef": "soak/evidence/art-fixture-t-us-046-d81665e75686.json",
-      "createdAtIso": "2026-11-28T01:32:43.099Z",
-      "liveProviderSuccessClaimed": false,
-      "externalEffects": "NONE"
-    },
-    {
-      "artifactId": "art-fixture-t-x048-d81665e75686",
-      "caseId": "T-X048",
-      "environment": "fixture",
-      "redacted": true,
-      "summary": "Fixture ACCEPTED for T-X048 (Unknown price or availability — no invention)\nproof=hard_search_constraints_no_invention applyCount=1 :: Unknown constraints → UNKNOWN no-match (no invented hits) | Hard constraints filter before ranking → room-20 only | Price bound preserved as unresolved (not invented free) | Unresolved price/negation → CLARIFY abstain (no invention) | Negation preserved; not inverted into required amenity | priceKnown=false entry retains null priceLabel (no invention) | Grounded answer may attach booking handoff URL | HYPOTHESIS-only → no hits and no invented booking handoff | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
-      "proofKinds": [
-        "hard_search_constraints_no_invention"
-      ],
-      "evidenceRef": "soak/evidence/art-fixture-t-x048-d81665e75686.json",
       "createdAtIso": "2026-11-28T01:32:43.099Z",
       "liveProviderSuccessClaimed": false,
       "externalEffects": "NONE"

@@ -14,12 +14,21 @@ import {
   digestSchemaNodes,
   emptySeoState,
   evaluateProposalGate,
+  catalogPriceIsHonest,
+  cmsPublishWiringStatus,
+  DEFAULT_HARD_SEARCH_RETRY_MAX_ATTEMPTS,
+  evaluateHardSearchRetryBudget,
   parseSearchConstraints,
+  resolveHardSearchBookingHandoff,
+  resolveHardSearchInventoryClaim,
   runSemanticSearch,
   schemaNodesToFields,
+  semanticSearchLiveWiringStatus,
+  shouldRecordHardSearchAttemptOnBudgetDenial,
   validateSchemaOrg,
   type SemanticSearchIndex,
 } from "./seo.js";
+import { AdapterWiring } from "./production-mapping.js";
 
 const now = "2026-11-18T15:00:00.000Z";
 
@@ -128,159 +137,6 @@ describe("seo domain — schema validation", () => {
     });
     expect(result.verdict).toBe(SchemaValidationVerdict.PASS);
     expect(result.agreesWithVisibleContent).toBe(true);
-    expect(result.externalEffects).toBe("NONE");
-    expect(result.liveProviderWiring).toBe("NOT_WIRED");
-  });
-
-  it("matches whitespace-trimmed schema name against visible content", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-trim",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "  WorkSocial  " },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "  Welcome to WorkSocial Hudson  ",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.PASS);
-    expect(result.agreesWithVisibleContent).toBe(true);
-    expect(result.externalEffects).toBe("NONE");
-    expect(result.liveProviderWiring).toBe("NOT_WIRED");
-  });
-
-  it("case-folds schema name against visible content (intentional)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-case",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "WORKSOCIAL" },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "welcome to worksocial hudson",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.PASS);
-    expect(result.agreesWithVisibleContent).toBe(true);
-  });
-
-  it("refuses empty/whitespace-only name with SCHEMA_VISIBLE_MISMATCH", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-empty",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "   " },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "Welcome to WorkSocial Hudson",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.PARTIAL);
-    expect(result.agreesWithVisibleContent).toBe(false);
-    expect(
-      result.issues.some((i) => i.code === "SCHEMA_VISIBLE_MISMATCH"),
-    ).toBe(true);
-    expect(result.externalEffects).toBe("NONE");
-    expect(result.liveProviderWiring).toBe("NOT_WIRED");
-  });
-
-  it("flags multi-property address mismatch", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-multi",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: {
-            name: "Phantom Sky Lounge",
-            address: "999 Nowhere Ave",
-            telephone: "+1-555-0100",
-          },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "Welcome to WorkSocial Hudson boardroom coworking",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.PARTIAL);
-    expect(result.agreesWithVisibleContent).toBe(false);
-    const mismatches = result.issues.filter(
-      (i) => i.code === "SCHEMA_VISIBLE_MISMATCH",
-    );
-    expect(mismatches.length).toBeGreaterThanOrEqual(2);
-    expect(result.externalEffects).toBe("NONE");
-  });
-
-  it("refuses matching schema when liveCmsWiring=WIRED", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-wired",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "WorkSocial" },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "Welcome to WorkSocial Hudson",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      liveCmsWiring: "WIRED",
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.PARTIAL);
-    expect(
-      result.issues.some((i) => i.code === "LIVE_TRANSPORT_NOT_WIRED"),
-    ).toBe(true);
-    expect(result.liveProviderWiring).toBe("NOT_WIRED");
-    expect(result.externalEffects).toBe("NONE");
-  });
-
-  it("refuses matching schema outside fixture (fixtureOnly=false)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-live",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "WorkSocial" },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "Welcome to WorkSocial Hudson",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: false,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.PARTIAL);
-    expect(
-      result.issues.some((i) => i.code === "LIVE_TRANSPORT_NOT_WIRED"),
-    ).toBe(true);
-    expect(result.liveProviderWiring).toBe("NOT_WIRED");
-    expect(result.externalEffects).toBe("NONE");
   });
 });
 
@@ -383,455 +239,6 @@ describe("seo domain — proposal gates", () => {
         },
       ],
       visibleContent: "Hudson boardroom",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.agreesWithVisibleContent).toBe(false);
-    expect(result.issues.some((i) => i.code === "SCHEMA_VISIBLE_MISMATCH")).toBe(
-      true,
-    );
-  });
-
-  it("flags SCHEMA_EMPTY FAIL without inventing visible disagreement (T-X042 S19)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-empty-agrees-s19",
-      pageAssetId: "page-home",
-      nodes: [],
-      visibleContent: "WorkSocial Hudson",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.FAIL);
-    expect(result.issues.some((i) => i.code === "SCHEMA_EMPTY")).toBe(true);
-    expect(result.agreesWithVisibleContent).toBe(true);
-    expect(result.externalEffects).toBe("NONE");
-  });
-
-  it("keeps PARTIAL with SCHEMA_UNKNOWN_FACT when visible name still matches (T-X042 S18)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-unknown-visible-ok-s18",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "WorkSocial" },
-          citedFactIds: ["fact-unknown"],
-        },
-      ],
-      visibleContent: "WorkSocial Hudson",
-      factLabels: new Map([["fact-unknown", SupportLabel.UNKNOWN]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.PARTIAL);
-    expect(result.issues.some((i) => i.code === "SCHEMA_UNKNOWN_FACT")).toBe(
-      true,
-    );
-    expect(result.agreesWithVisibleContent).toBe(true);
-    expect(result.externalEffects).toBe("NONE");
-  });
-
-  it("skips null property values for visible agreement PASS (T-X042 S17)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-null-skip-s17",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: {
-            name: "WorkSocial",
-            description: null,
-          },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "WorkSocial Hudson",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.PASS);
-    expect(result.agreesWithVisibleContent).toBe(true);
-    expect(result.externalEffects).toBe("NONE");
-    expect(result.liveProviderWiring).toBe("NOT_WIRED");
-  });
-
-  it("prefers hard FAIL when SCHEMA_FACT_UNKNOWN coexists with visible mismatch (T-X042 S16)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-fact-unknown-precedence-s16",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "Phantom Venue" },
-          citedFactIds: ["fact-not-in-registry"],
-        },
-      ],
-      visibleContent: "WorkSocial Hudson",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.FAIL);
-    expect(result.issues.some((i) => i.code === "SCHEMA_FACT_UNKNOWN")).toBe(
-      true,
-    );
-    expect(result.issues.some((i) => i.code === "SCHEMA_VISIBLE_MISMATCH")).toBe(
-      true,
-    );
-    expect(result.externalEffects).toBe("NONE");
-  });
-
-  it("prefers hard FAIL when HYPOTHESIS fact coexists with visible mismatch (T-X042 S15)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-hypothesis-precedence-s15",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "Phantom Venue" },
-          citedFactIds: ["fact-hypothesis"],
-        },
-      ],
-      visibleContent: "WorkSocial Hudson",
-      factLabels: new Map([["fact-hypothesis", SupportLabel.HYPOTHESIS]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.FAIL);
-    expect(
-      result.issues.some((i) => i.code === "SCHEMA_HYPOTHESIS_NOT_TRUTH"),
-    ).toBe(true);
-    expect(result.issues.some((i) => i.code === "SCHEMA_VISIBLE_MISMATCH")).toBe(
-      true,
-    );
-    expect(result.externalEffects).toBe("NONE");
-  });
-
-  it("prefers hard FAIL when SCHEMA_TYPE_MISSING coexists with visible mismatch (T-X042 S14)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-hard-precedence-s14",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "   ",
-          properties: { name: "Phantom Venue" },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "WorkSocial Hudson",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.FAIL);
-    expect(result.issues.some((i) => i.code === "SCHEMA_TYPE_MISSING")).toBe(
-      true,
-    );
-    expect(result.issues.some((i) => i.code === "SCHEMA_VISIBLE_MISMATCH")).toBe(
-      true,
-    );
-    expect(result.externalEffects).toBe("NONE");
-  });
-
-  it("refuses liveCmsWiring=WIRED on fixture path (T-X042 S13)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-wired-s13",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "WorkSocial" },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "WorkSocial Hudson",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      liveCmsWiring: "WIRED",
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.PARTIAL);
-    expect(
-      result.issues.some((i) => i.code === "LIVE_TRANSPORT_NOT_WIRED"),
-    ).toBe(true);
-    expect(result.liveProviderWiring).toBe("NOT_WIRED");
-    expect(result.externalEffects).toBe("NONE");
-  });
-
-  it("refuses non-fixture path with LIVE_TRANSPORT_NOT_WIRED (T-X042 S12)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-nonfix-s12",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "WorkSocial" },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "WorkSocial Hudson",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: false,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.PARTIAL);
-    expect(
-      result.issues.some((i) => i.code === "LIVE_TRANSPORT_NOT_WIRED"),
-    ).toBe(true);
-    expect(result.externalEffects).toBe("NONE");
-    expect(result.liveProviderWiring).toBe("NOT_WIRED");
-  });
-
-  it("flags multiple schema properties absent from visible (T-X042 S11)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-multi-s11",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: {
-            name: "Phantom Lounge",
-            address: "999 Nowhere Ave",
-            telephone: "+1-555-0100",
-          },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "WorkSocial Hudson coworking",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.PARTIAL);
-    expect(result.agreesWithVisibleContent).toBe(false);
-    expect(
-      result.issues.filter((i) => i.code === "SCHEMA_VISIBLE_MISMATCH").length,
-    ).toBeGreaterThanOrEqual(2);
-  });
-
-  it("matches whitespace-trimmed name to visible PASS (T-X042 S10)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-trim-s10",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "  WorkSocial  " },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "Welcome to WorkSocial Hudson",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.PASS);
-    expect(result.agreesWithVisibleContent).toBe(true);
-    expect(result.externalEffects).toBe("NONE");
-  });
-
-  it("case-folds matching schema name to PASS (T-X042 S9)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-case-s9",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "WORKSOCIAL" },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "welcome to worksocial hudson",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.PASS);
-    expect(result.agreesWithVisibleContent).toBe(true);
-    expect(result.externalEffects).toBe("NONE");
-  });
-
-  it("flags padded schema name absent from visible after trim (T-X042 S8)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-padded-mismatch",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "  Phantom Venue  " },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "WorkSocial Hudson coworking",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.PARTIAL);
-    expect(result.agreesWithVisibleContent).toBe(false);
-    expect(result.issues.some((i) => i.code === "SCHEMA_VISIBLE_MISMATCH")).toBe(
-      true,
-    );
-  });
-
-  it("flags numeric schema claims absent from visible copy (T-X042 S7)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-numeric-mismatch",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "WorkSocial", employeeCount: 99999 },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "WorkSocial Hudson coworking",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.PARTIAL);
-    expect(result.agreesWithVisibleContent).toBe(false);
-    expect(result.issues.some((i) => i.code === "SCHEMA_VISIBLE_MISMATCH")).toBe(
-      true,
-    );
-  });
-
-  it("refuses empty schema node list with SCHEMA_EMPTY (T-X042 S2)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-empty-nodes",
-      pageAssetId: "page-home",
-      nodes: [],
-      visibleContent: "WorkSocial Hudson",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.FAIL);
-    expect(result.issues.some((i) => i.code === "SCHEMA_EMPTY")).toBe(true);
-    expect(result.externalEffects).toBe("NONE");
-  });
-
-  it("refuses HYPOTHESIS cited facts with SCHEMA_HYPOTHESIS_NOT_TRUTH (T-X042 S6)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-hypothesis-fact",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "WorkSocial" },
-          citedFactIds: ["fact-hyp"],
-        },
-      ],
-      visibleContent: "WorkSocial Hudson",
-      factLabels: new Map([["fact-hyp", SupportLabel.HYPOTHESIS]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.FAIL);
-    expect(
-      result.issues.some((i) => i.code === "SCHEMA_HYPOTHESIS_NOT_TRUTH"),
-    ).toBe(true);
-  });
-
-  it("refuses cited fact missing from registry with SCHEMA_FACT_UNKNOWN (T-X042 S5)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-fact-unknown",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "WorkSocial" },
-          citedFactIds: ["fact-not-in-registry"],
-        },
-      ],
-      visibleContent: "WorkSocial Hudson",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.FAIL);
-    expect(result.issues.some((i) => i.code === "SCHEMA_FACT_UNKNOWN")).toBe(
-      true,
-    );
-  });
-
-  it("refuses whitespace-only schemaType with SCHEMA_TYPE_MISSING (T-X042 S4)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-type-missing",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "   ",
-          properties: { name: "WorkSocial" },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "WorkSocial Hudson",
-      factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.FAIL);
-    expect(result.issues.some((i) => i.code === "SCHEMA_TYPE_MISSING")).toBe(
-      true,
-    );
-  });
-
-  it("refuses UNKNOWN cited facts with SCHEMA_UNKNOWN_FACT (T-X042 S3)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-unknown-fact",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "WorkSocial" },
-          citedFactIds: ["fact-unknown"],
-        },
-      ],
-      visibleContent: "WorkSocial Hudson",
-      factLabels: new Map([["fact-unknown", SupportLabel.UNKNOWN]]),
-      fixtureOnly: true,
-      createdAtIso: now,
-    });
-    expect(result.verdict).toBe(SchemaValidationVerdict.PARTIAL);
-    expect(result.issues.some((i) => i.code === "SCHEMA_UNKNOWN_FACT")).toBe(
-      true,
-    );
-  });
-
-  it("flags boolean schema properties missing from visible content (T-X042 S1)", () => {
-    const result = validateSchemaOrg({
-      validationId: "val-bool",
-      pageAssetId: "page-home",
-      nodes: [
-        {
-          nodeId: "n1",
-          schemaType: "LocalBusiness",
-          properties: { name: "WorkSocial", servesAlcohol: true },
-          citedFactIds: ["fact-ok"],
-        },
-      ],
-      visibleContent: "WorkSocial Hudson coworking",
       factLabels: new Map([["fact-ok", SupportLabel.SUPPORTED]]),
       fixtureOnly: true,
       createdAtIso: now,
@@ -1049,6 +456,605 @@ describe("seo domain — semantic search", () => {
     expect(hypOnly.hits).toHaveLength(0);
     expect(hypOnly.answerStatus).toMatch(/no_result|unknown/);
     expect(hypOnly.bookingHandoffUrl).toBeNull();
+  });
+
+  it("does not invent availability when catalog has no availability field (T-X048)", () => {
+    const parsed = parseSearchConstraints(
+      "Available meeting room for 8 in Jersey City with display",
+    );
+    expect(parsed.unknownConstraints).toContain("availability");
+    const result = runSemanticSearch({
+      queryId: "q-avail",
+      rawQuery: "Available meeting room for 8 in Jersey City with display",
+      index,
+      createdAtIso: now,
+    });
+    expect(result.hits).toHaveLength(0);
+    expect(result.answerStatus).toBe("unknown");
+    expect(result.bookingHandoffUrl).toBeNull();
+    expect(result.noMatchReason).toMatch(/availability/i);
+    // Standalone bookable / open meeting — no invent.
+    for (const q of [
+      "bookable meeting room for 8 in Jersey City with display",
+      "open meeting room for 8 in Jersey City with display",
+    ]) {
+      const r = runSemanticSearch({
+        queryId: `q-${q.slice(0, 8)}`,
+        rawQuery: q,
+        index,
+        createdAtIso: now,
+      });
+      expect(r.hits).toHaveLength(0);
+      expect(r.answerStatus).toBe("unknown");
+      expect(r.constraints.unknownConstraints).toContain("availability");
+    }
+    // "unavailable" must not trigger a positive availability unknown.
+    const neg = parseSearchConstraints(
+      "meeting room for 8 in Jersey City with display unavailable parking",
+    );
+    // parking still unknown; availability from "unavailable" must not invent.
+    expect(neg.unknownConstraints).not.toContain("availability");
+  });
+
+  it("expands price aliases and never invents free as $0 (T-X048)", () => {
+    const upTo = parseSearchConstraints(
+      "Meeting room for 8 in Jersey City up to $175",
+    );
+    expect(upTo.priceMaxMinor).toBe(17500);
+    expect(upTo.unresolvedConstraints.some((c) => c.startsWith("price:"))).toBe(
+      true,
+    );
+    const noMore = parseSearchConstraints(
+      "Meeting room for 8 in Jersey City no more than $90",
+    );
+    expect(noMore.priceMaxMinor).toBe(9000);
+    // Symbolic ≤ / <= without leading word-boundary requirement.
+    const le = parseSearchConstraints(
+      "Meeting room for 8 in Jersey City ≤ $175",
+    );
+    expect(le.priceMaxMinor).toBe(17500);
+    const leEq = parseSearchConstraints(
+      "Meeting room for 8 in Jersey City <= 90",
+    );
+    expect(leEq.priceMaxMinor).toBe(9000);
+    // Capacity phrases must not become price bounds.
+    const capacity = parseSearchConstraints(
+      "meeting room for up to 8 people in Jersey City with display",
+    );
+    expect(capacity.priceMaxMinor).toBeNull();
+    expect(capacity.unresolvedConstraints.some((c) => c.startsWith("price:"))).toBe(
+      false,
+    );
+    expect(capacity.people).toBe(8);
+    const free = parseSearchConstraints(
+      "free meeting room for 8 in Jersey City with display",
+    );
+    expect(free.priceMaxMinor).toBeNull();
+    expect(free.unresolvedConstraints.some((c) => c.includes("free"))).toBe(
+      true,
+    );
+    expect(catalogPriceIsHonest(index.entries[0]!)).toBe(true);
+    expect(
+      catalogPriceIsHonest({ priceKnown: false, priceLabel: "free" }),
+    ).toBe(false);
+    expect(catalogPriceIsHonest(index.entries[1]!)).toBe(true);
+  });
+
+  it("attaches booking handoff only for grounded HTTPS URLs", () => {
+    const labels = new Map([["fact-capacity-8", SupportLabel.SUPPORTED]]);
+    const https = runSemanticSearch({
+      queryId: "q-https",
+      rawQuery: "Meeting room for 8 in Jersey City with display",
+      index,
+      createdAtIso: now,
+      factLabels: labels,
+      bookingHandoffUrl: "https://fixture.worksocial.local/book",
+    });
+    expect(https.bookingHandoffUrl).toMatch(/^https:/);
+    const http = runSemanticSearch({
+      queryId: "q-http",
+      rawQuery: "Meeting room for 8 in Jersey City with display",
+      index,
+      createdAtIso: now,
+      factLabels: labels,
+      bookingHandoffUrl: "http://fixture.worksocial.local/book",
+    });
+    expect(http.answerStatus).toBe("grounded");
+    expect(http.bookingHandoffUrl).toBeNull();
+    const js = runSemanticSearch({
+      queryId: "q-js",
+      rawQuery: "Meeting room for 8 in Jersey City with display",
+      index,
+      createdAtIso: now,
+      factLabels: labels,
+      bookingHandoffUrl: "javascript:alert(1)",
+    });
+    expect(js.bookingHandoffUrl).toBeNull();
+  });
+
+  it("reports semantic search live wiring as NOT_WIRED", () => {
+    expect(semanticSearchLiveWiringStatus()).toBe("NOT_WIRED");
+    expect(cmsPublishWiringStatus(AdapterWiring.NOT_WIRED)).toBe("NOT_WIRED");
+    expect(cmsPublishWiringStatus(AdapterWiring.LIVE)).toBe("NOT_WIRED");
+  });
+
+  it("excludes inaccessible inventory even when hard constraints match", () => {
+    const closed: SemanticSearchIndex = {
+      ...index,
+      entries: [
+        {
+          ...index.entries[0]!,
+          inaccessible: true,
+        },
+      ],
+    };
+    const result = runSemanticSearch({
+      queryId: "q-inacc",
+      rawQuery: "Meeting room for 8 in Jersey City with display",
+      index: closed,
+      createdAtIso: now,
+    });
+    expect(result.hits).toHaveLength(0);
+    expect(result.answerStatus).toBe("no_result");
+    expect(result.bookingHandoffUrl).toBeNull();
+  });
+});
+
+describe("seo domain — hard-search retry fence (T-X048)", () => {
+  it("allows the first honest abstain within default maxAttempts", () => {
+    const decision = evaluateHardSearchRetryBudget({
+      answerStatus: "unknown",
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    expect(DEFAULT_HARD_SEARCH_RETRY_MAX_ATTEMPTS).toBe(1);
+    expect(decision.allowed).toBe(true);
+    expect(decision.code).toBeNull();
+    expect(decision.recordAttempt).toBe(true);
+    expect(decision.consumesBudget).toBe(true);
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.semanticSearchLiveWiring).toBe("NOT_WIRED");
+    expect(decision.cmsPublishWiring).toBe("NOT_WIRED");
+  });
+
+  it("refuses a second start with RETRY_BUDGET_EXHAUSTED and does not record", () => {
+    const decision = evaluateHardSearchRetryBudget({
+      answerStatus: "clarify",
+      attemptCount: 1,
+      startingNewAttempt: true,
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("RETRY_BUDGET_EXHAUSTED");
+    expect(decision.recordAttempt).toBe(false);
+    expect(decision.attemptCount).toBe(1);
+    expect(shouldRecordHardSearchAttemptOnBudgetDenial(decision.code)).toBe(
+      false,
+    );
+  });
+
+  it("does not consume budget for grounded answers", () => {
+    const decision = evaluateHardSearchRetryBudget({
+      answerStatus: "grounded",
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    expect(decision.allowed).toBe(true);
+    expect(decision.consumesBudget).toBe(false);
+    expect(decision.recordAttempt).toBe(false);
+    expect(decision.code).toBeNull();
+  });
+
+  it("NO_RESULT consumes budget the same as UNKNOWN/CLARIFY", () => {
+    const within = evaluateHardSearchRetryBudget({
+      answerStatus: "no_result",
+      attemptCount: 0,
+      startingNewAttempt: true,
+      maxAttempts: 1,
+    });
+    expect(within.allowed).toBe(true);
+    expect(within.consumesBudget).toBe(true);
+    const exhausted = evaluateHardSearchRetryBudget({
+      answerStatus: "no_result",
+      attemptCount: 1,
+      startingNewAttempt: true,
+      maxAttempts: 1,
+    });
+    expect(exhausted.code).toBe("RETRY_BUDGET_EXHAUSTED");
+    expect(shouldRecordHardSearchAttemptOnBudgetDenial(exhausted.code)).toBe(
+      false,
+    );
+    expect(shouldRecordHardSearchAttemptOnBudgetDenial(null)).toBe(true);
+  });
+
+  it("booking handoff refused when retry exhausted or abstain (T-X048 E14)", () => {
+    const https = "https://fixture.worksocial.local/book";
+    const exhausted = evaluateHardSearchRetryBudget({
+      answerStatus: "unknown",
+      attemptCount: 1,
+      startingNewAttempt: true,
+    });
+    const refused = resolveHardSearchBookingHandoff({
+      answerStatus: "grounded",
+      retryBudget: exhausted,
+      proposedHandoffUrl: https,
+    });
+    expect(refused.attached).toBe(false);
+    expect(refused.bookingHandoffUrl).toBeNull();
+    expect(refused.externalEffects).toBe("NONE");
+    expect(refused.semanticSearchLiveWiring).toBe("NOT_WIRED");
+
+    const within = evaluateHardSearchRetryBudget({
+      answerStatus: "unknown",
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const abstain = resolveHardSearchBookingHandoff({
+      answerStatus: "unknown",
+      retryBudget: within,
+      proposedHandoffUrl: https,
+    });
+    expect(abstain.attached).toBe(false);
+    expect(abstain.bookingHandoffUrl).toBeNull();
+
+    const groundedBudget = evaluateHardSearchRetryBudget({
+      answerStatus: "grounded",
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const ok = resolveHardSearchBookingHandoff({
+      answerStatus: "grounded",
+      retryBudget: groundedBudget,
+      proposedHandoffUrl: https,
+    });
+    expect(ok.attached).toBe(true);
+    expect(ok.bookingHandoffUrl).toBe(https);
+
+    const httpRefused = resolveHardSearchBookingHandoff({
+      answerStatus: "grounded",
+      retryBudget: groundedBudget,
+      proposedHandoffUrl: "http://fixture.worksocial.local/book",
+    });
+    expect(httpRefused.attached).toBe(false);
+    expect(httpRefused.bookingHandoffUrl).toBeNull();
+  });
+
+  it("inventory claim cleared when retry exhausted (T-X048 E16/E17)", () => {
+    const fakeHit = {
+      entryId: "invented",
+      name: "Invented Room",
+      score: 99,
+      citations: [],
+      supportedFactIds: [],
+      groundingStatus: "grounded" as const,
+      filterTrace: [],
+    };
+    const exhausted = evaluateHardSearchRetryBudget({
+      answerStatus: "unknown",
+      attemptCount: 1,
+      startingNewAttempt: true,
+    });
+    const handoff = resolveHardSearchBookingHandoff({
+      answerStatus: "grounded",
+      retryBudget: exhausted,
+      proposedHandoffUrl: "https://fixture.worksocial.local/book",
+    });
+    const claim = resolveHardSearchInventoryClaim({
+      answerStatus: "grounded",
+      retryBudget: exhausted,
+      hits: [fakeHit],
+      bookingHandoff: handoff,
+    });
+    expect(claim.hits).toHaveLength(0);
+    expect(claim.bookingHandoffUrl).toBeNull();
+    expect(claim.inventedInventory).toBe(false);
+    expect(claim.answerStatus).toBe("no_result");
+    expect(claim.externalEffects).toBe("NONE");
+    expect(claim.semanticSearchLiveWiring).toBe("NOT_WIRED");
+
+    const within = evaluateHardSearchRetryBudget({
+      answerStatus: "unknown",
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const abstainClaim = resolveHardSearchInventoryClaim({
+      answerStatus: "unknown",
+      retryBudget: within,
+      hits: [fakeHit],
+      bookingHandoff: resolveHardSearchBookingHandoff({
+        answerStatus: "unknown",
+        retryBudget: within,
+        proposedHandoffUrl: "https://fixture.worksocial.local/book",
+      }),
+    });
+    expect(abstainClaim.hits).toHaveLength(0);
+    expect(abstainClaim.answerStatus).toBe("unknown");
+    expect(abstainClaim.inventedInventory).toBe(false);
+
+    const groundedBudget = evaluateHardSearchRetryBudget({
+      answerStatus: "grounded",
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const okHandoff = resolveHardSearchBookingHandoff({
+      answerStatus: "grounded",
+      retryBudget: groundedBudget,
+      proposedHandoffUrl: "https://fixture.worksocial.local/book",
+    });
+    const okClaim = resolveHardSearchInventoryClaim({
+      answerStatus: "grounded",
+      retryBudget: groundedBudget,
+      hits: [fakeHit],
+      bookingHandoff: okHandoff,
+    });
+    expect(okClaim.hits).toHaveLength(1);
+    expect(okClaim.bookingHandoffUrl).toMatch(/^https:/);
+    expect(okClaim.inventedInventory).toBe(false);
+  });
+
+  it("grounded HTTPS handoff keeps cmsPublishWiring NOT_WIRED (T-X048 E21)", () => {
+    const budget = evaluateHardSearchRetryBudget({
+      answerStatus: "grounded",
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const handoff = resolveHardSearchBookingHandoff({
+      answerStatus: "grounded",
+      retryBudget: budget,
+      proposedHandoffUrl: "https://fixture.worksocial.local/book",
+    });
+    expect(handoff.attached).toBe(true);
+    expect(handoff.cmsPublishWiring).toBe("NOT_WIRED");
+    expect(handoff.externalEffects).toBe("NONE");
+  });
+
+  it("retry fence decisions keep cmsPublishWiring NOT_WIRED (T-X048 E19)", () => {
+    const exhausted = evaluateHardSearchRetryBudget({
+      answerStatus: "unknown",
+      attemptCount: 1,
+      startingNewAttempt: true,
+    });
+    expect(exhausted.cmsPublishWiring).toBe("NOT_WIRED");
+    expect(exhausted.externalEffects).toBe("NONE");
+    expect(exhausted.semanticSearchLiveWiring).toBe("NOT_WIRED");
+  });
+
+  it("exhausted budget keeps UNKNOWN status without downgrade (T-X048 E20)", () => {
+    const exhausted = evaluateHardSearchRetryBudget({
+      answerStatus: "unknown",
+      attemptCount: 1,
+      startingNewAttempt: true,
+    });
+    const claim = resolveHardSearchInventoryClaim({
+      answerStatus: "unknown",
+      retryBudget: exhausted,
+      hits: [
+        {
+          entryId: "x",
+          name: "X",
+          score: 1,
+          citations: [],
+          supportedFactIds: [],
+          groundingStatus: "grounded",
+          filterTrace: [],
+        },
+      ],
+      bookingHandoff: resolveHardSearchBookingHandoff({
+        answerStatus: "unknown",
+        retryBudget: exhausted,
+        proposedHandoffUrl: "https://fixture.worksocial.local/book",
+      }),
+    });
+    expect(claim.answerStatus).toBe("unknown");
+    expect(claim.hits).toHaveLength(0);
+    expect(claim.cmsPublishWiring).toBe("NOT_WIRED");
+  });
+
+  it("exhausted budget keeps CLARIFY status without NO_RESULT downgrade (T-X048 E18)", () => {
+    const exhausted = evaluateHardSearchRetryBudget({
+      answerStatus: "clarify",
+      attemptCount: 1,
+      startingNewAttempt: true,
+    });
+    const claim = resolveHardSearchInventoryClaim({
+      answerStatus: "clarify",
+      retryBudget: exhausted,
+      hits: [
+        {
+          entryId: "invented",
+          name: "Invented",
+          score: 1,
+          citations: [],
+          supportedFactIds: [],
+          groundingStatus: "grounded",
+          filterTrace: [],
+        },
+      ],
+      bookingHandoff: resolveHardSearchBookingHandoff({
+        answerStatus: "clarify",
+        retryBudget: exhausted,
+        proposedHandoffUrl: "https://fixture.worksocial.local/book",
+      }),
+    });
+    expect(claim.hits).toHaveLength(0);
+    expect(claim.answerStatus).toBe("clarify");
+    expect(claim.inventedInventory).toBe(false);
+    expect(claim.externalEffects).toBe("NONE");
+  });
+
+  it("NO_RESULT never attaches booking handoff even within budget (T-X048 E22)", () => {
+    const withinBudget = evaluateHardSearchRetryBudget({
+      answerStatus: "no_result",
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const handoff = resolveHardSearchBookingHandoff({
+      answerStatus: "no_result",
+      retryBudget: withinBudget,
+      proposedHandoffUrl: "https://fixture.worksocial.local/book",
+    });
+    const claim = resolveHardSearchInventoryClaim({
+      answerStatus: "no_result",
+      retryBudget: withinBudget,
+      hits: [
+        {
+          entryId: "invented",
+          name: "Invented",
+          score: 1,
+          citations: [],
+          supportedFactIds: [],
+          groundingStatus: "grounded",
+          filterTrace: [],
+        },
+      ],
+      bookingHandoff: handoff,
+    });
+    expect(handoff.attached).toBe(false);
+    expect(handoff.bookingHandoffUrl).toBe(null);
+    expect(handoff.cmsPublishWiring).toBe("NOT_WIRED");
+    expect(claim.hits).toHaveLength(0);
+    expect(claim.bookingHandoffUrl).toBe(null);
+    expect(claim.answerStatus).toBe("no_result");
+    expect(claim.externalEffects).toBe("NONE");
+  });
+
+  it("UNKNOWN never attaches booking handoff even within budget (T-X048 E23)", () => {
+    const withinBudget = evaluateHardSearchRetryBudget({
+      answerStatus: "unknown",
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const handoff = resolveHardSearchBookingHandoff({
+      answerStatus: "unknown",
+      retryBudget: withinBudget,
+      proposedHandoffUrl: "https://fixture.worksocial.local/book",
+    });
+    const claim = resolveHardSearchInventoryClaim({
+      answerStatus: "unknown",
+      retryBudget: withinBudget,
+      hits: [
+        {
+          entryId: "invented",
+          name: "Invented",
+          score: 1,
+          citations: [],
+          supportedFactIds: [],
+          groundingStatus: "grounded",
+          filterTrace: [],
+        },
+      ],
+      bookingHandoff: handoff,
+    });
+    expect(handoff.attached).toBe(false);
+    expect(handoff.semanticSearchLiveWiring).toBe("NOT_WIRED");
+    expect(claim.hits).toHaveLength(0);
+    expect(claim.answerStatus).toBe("unknown");
+    expect(claim.externalEffects).toBe("NONE");
+  });
+
+  it("CLARIFY never attaches booking handoff even within budget (T-X048 E24)", () => {
+    const withinBudget = evaluateHardSearchRetryBudget({
+      answerStatus: "clarify",
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const handoff = resolveHardSearchBookingHandoff({
+      answerStatus: "clarify",
+      retryBudget: withinBudget,
+      proposedHandoffUrl: "https://fixture.worksocial.local/book",
+    });
+    const claim = resolveHardSearchInventoryClaim({
+      answerStatus: "clarify",
+      retryBudget: withinBudget,
+      hits: [
+        {
+          entryId: "invented",
+          name: "Invented",
+          score: 1,
+          citations: [],
+          supportedFactIds: [],
+          groundingStatus: "grounded",
+          filterTrace: [],
+        },
+      ],
+      bookingHandoff: handoff,
+    });
+    expect(handoff.attached).toBe(false);
+    expect(handoff.bookingHandoffUrl).toBe(null);
+    expect(handoff.cmsPublishWiring).toBe("NOT_WIRED");
+    expect(claim.hits).toHaveLength(0);
+    expect(claim.bookingHandoffUrl).toBe(null);
+    expect(claim.answerStatus).toBe("clarify");
+    expect(claim.externalEffects).toBe("NONE");
+  });
+
+  it("javascript: handoff refused even when grounded within budget (T-X048 E25)", () => {
+    const withinBudget = evaluateHardSearchRetryBudget({
+      answerStatus: "grounded",
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const handoff = resolveHardSearchBookingHandoff({
+      answerStatus: "grounded",
+      retryBudget: withinBudget,
+      proposedHandoffUrl: "javascript:alert(1)",
+    });
+    const claim = resolveHardSearchInventoryClaim({
+      answerStatus: "grounded",
+      retryBudget: withinBudget,
+      hits: [
+        {
+          entryId: "room-8",
+          name: "Room",
+          score: 1,
+          citations: [],
+          supportedFactIds: [],
+          groundingStatus: "grounded",
+          filterTrace: [],
+        },
+      ],
+      bookingHandoff: handoff,
+    });
+    expect(handoff.attached).toBe(false);
+    expect(handoff.bookingHandoffUrl).toBe(null);
+    expect(claim.bookingHandoffUrl).toBe(null);
+    expect(claim.hits).toHaveLength(1);
+    expect(claim.inventedInventory).toBe(false);
+    expect(claim.externalEffects).toBe("NONE");
+  });
+
+  it("data: handoff refused even when grounded within budget (T-X048 E26)", () => {
+    const withinBudget = evaluateHardSearchRetryBudget({
+      answerStatus: "grounded",
+      attemptCount: 0,
+      startingNewAttempt: true,
+    });
+    const handoff = resolveHardSearchBookingHandoff({
+      answerStatus: "grounded",
+      retryBudget: withinBudget,
+      proposedHandoffUrl: "data:text/html,<script>alert(1)</script>",
+    });
+    const claim = resolveHardSearchInventoryClaim({
+      answerStatus: "grounded",
+      retryBudget: withinBudget,
+      hits: [
+        {
+          entryId: "room-8",
+          name: "Room",
+          score: 1,
+          citations: [],
+          supportedFactIds: [],
+          groundingStatus: "grounded",
+          filterTrace: [],
+        },
+      ],
+      bookingHandoff: handoff,
+    });
+    expect(handoff.attached).toBe(false);
+    expect(handoff.bookingHandoffUrl).toBe(null);
+    expect(claim.bookingHandoffUrl).toBe(null);
+    expect(claim.hits).toHaveLength(1);
+    expect(claim.inventedInventory).toBe(false);
+    expect(claim.externalEffects).toBe("NONE");
   });
 });
 

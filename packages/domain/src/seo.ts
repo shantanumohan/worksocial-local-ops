@@ -867,22 +867,47 @@ export function parseSearchConstraints(rawQuery: string): ParsedSearchConstraint
     requiredAmenities.push("whiteboard");
   }
 
-  // Price — preserve; do not invent "free" or drop the bound.
+  // Price — preserve; do not invent "free"/`$0` or drop the bound.
+  // "up to" / "no more than" require currency so capacity phrases
+  // ("up to 8 people") are not mistaken for price bounds.
   let priceMaxMinor: number | null = null;
   let priceRaw: string | null = null;
+  const peopleOrTimeUnit =
+    "(?:people|persons|person|attendees|guests|pax|hours?|hrs?|mins?|minutes?|days?|weeks?)";
   const priceMatch =
     q.match(
       /\b(?:under|below|less than|at most|max(?:imum)?)\s*\$?\s*(\d{1,6})(?:\s*(?:usd|dollars?))?\b/,
-    ) ?? q.match(/\$\s*(\d{1,6})\s*(?:or less|max|maximum)?\b/);
+    ) ??
+    // Currency-required aliases — never treat capacity/time bounds as price.
+    q.match(
+      new RegExp(
+        String.raw`\b(?:no more than|up to|upto)\s*\$\s*(\d{1,6})(?:\s*(?:usd|dollars?))?\b`,
+      ),
+    ) ??
+    q.match(
+      new RegExp(
+        String.raw`\b(?:no more than|up to|upto)\s*(\d{1,6})\s*(?:usd|dollars?)\b`,
+      ),
+    ) ??
+    q.match(/\$\s*(\d{1,6})\s*(?:or less|max|maximum)?\b/) ??
+    // Symbolic ≤ / <= — no leading \b (symbols are non-word chars).
+    q.match(/(?:≤|<=)\s*\$?\s*(\d{1,6})\b/);
   if (priceMatch) {
-    priceRaw = priceMatch[0]!.trim();
-    priceMaxMinor = Number(priceMatch[1]) * 100;
-    // Catalog often lacks comparable numeric prices — keep unresolved for clarify.
-    unresolvedConstraints.push(`price:${priceRaw}`);
+    const after = q.slice(
+      (priceMatch.index ?? 0) + priceMatch[0]!.length,
+    );
+    // Defense in depth: reject if immediately followed by capacity/time units.
+    if (!new RegExp(String.raw`^\s*${peopleOrTimeUnit}\b`).test(after)) {
+      priceRaw = priceMatch[0]!.trim();
+      priceMaxMinor = Number(priceMatch[1]) * 100;
+      // Catalog often lacks comparable numeric prices — keep unresolved for clarify.
+      unresolvedConstraints.push(`price:${priceRaw}`);
+    }
   } else if (/\b(?:cheap|inexpensive|budget|affordable|free)\b/.test(q)) {
     priceRaw = (q.match(/\b(?:cheap|inexpensive|budget|affordable|free)\b/) ?? [
       "price",
     ])[0]!;
+    // Never invent priceMaxMinor=0 from "free"/budget language.
     unresolvedConstraints.push(`price:${priceRaw}`);
   }
 
@@ -948,6 +973,12 @@ export function parseSearchConstraints(rawQuery: string): ParsedSearchConstraint
     [/cater/, "catering"],
     [/pool|beach|hotel|bed/, "lodging"],
     [/recording|podcast/, "recording"],
+    // Availability is not in the fixture catalog — never invent open/bookable.
+    // Avoid matching "unavailable". Standalone bookable/open (room/meeting) count.
+    [
+      /\b(?!un)(?:available|availability)\b|\bbookable\b|\bopen now\b|\bvacanc(?:y|ies)\b|\bopen\b(?=\s+(?:meeting|room|space|training|boardroom)\b)/,
+      "availability",
+    ],
   ];
   for (const [re, label] of unknownPatterns) {
     if (!re.test(q)) continue;
@@ -1208,10 +1239,11 @@ export function runSemanticSearch(input: {
     noMatchReason = "No eligible inventory matched the hard constraints";
   }
 
+  // Booking handoff only on grounded HTTPS URLs — never invent http/javascript/data.
   const bookingHandoffUrl =
     answerStatus === SearchAnswerStatus.GROUNDED &&
     input.bookingHandoffUrl &&
-    /^https?:\/\//i.test(input.bookingHandoffUrl)
+    /^https:\/\//i.test(input.bookingHandoffUrl)
       ? input.bookingHandoffUrl
       : null;
 
@@ -1416,6 +1448,280 @@ export function cmsPublishWiringStatus(
   return "NOT_WIRED";
 }
 
+/**
+ * Live semantic search / booking providers stay NOT_WIRED for fixture evidence
+ * (T-US-046 / T-X048). Never claim live verified search from soak fixtures.
+ */
+export function semanticSearchLiveWiringStatus(): "NOT_WIRED" {
+  return "NOT_WIRED";
+}
+
+/**
+ * Catalog price honesty: unknown price must retain a null label (never invent
+ * "free" / "$0"). Known opaque quotes (e.g. "contact for quote") are allowed.
+ */
+export function catalogPriceIsHonest(
+  entry: Pick<SemanticCatalogEntry, "priceKnown" | "priceLabel">,
+): boolean {
+  if (!entry.priceKnown) {
+    return entry.priceLabel === null;
+  }
+  return true;
+}
+
+/**
+ * Default hard-search retry fence (T-X048 / T-US-046) — one recorded honest
+ * abstain/no-result; further starts refuse without inventing inventory.
+ */
+export const DEFAULT_HARD_SEARCH_RETRY_MAX_ATTEMPTS = 1 as const;
+
+export type HardSearchRetryBudgetDecision = {
+  allowed: boolean;
+  code: "RETRY_BUDGET_EXHAUSTED" | null;
+  reason: string;
+  attemptCount: number;
+  maxAttempts: number;
+  recordAttempt: boolean;
+  /** True when the observed answer is an honest abstain/no-result (not GROUNDED). */
+  consumesBudget: boolean;
+  externalEffects: "NONE";
+  semanticSearchLiveWiring: "NOT_WIRED";
+  cmsPublishWiring: "NOT_WIRED" | "FIXTURE";
+};
+
+function hardSearchAnswerConsumesRetryBudget(
+  answerStatus: SearchAnswerStatusValue,
+): boolean {
+  return (
+    answerStatus === SearchAnswerStatus.UNKNOWN ||
+    answerStatus === SearchAnswerStatus.CLARIFY ||
+    answerStatus === SearchAnswerStatus.NO_RESULT
+  );
+}
+
+/**
+ * T-X048 retry fence: honest UNKNOWN / CLARIFY / NO_RESULT consumes budget.
+ * Starting another search past maxAttempts → RETRY_BUDGET_EXHAUSTED without
+ * recording (never invent inventory to "recover"). GROUNDED does not open
+ * further retries. Live search + CMS publish stay NOT_WIRED.
+ */
+export function evaluateHardSearchRetryBudget(input: {
+  answerStatus: SearchAnswerStatusValue;
+  /** Honest abstain/no-result searches already recorded. */
+  attemptCount: number;
+  /** True when deciding whether to start another hard-constraint search. */
+  startingNewAttempt: boolean;
+  maxAttempts?: number;
+}): HardSearchRetryBudgetDecision {
+  const maxAttempts = Math.max(
+    1,
+    Math.floor(input.maxAttempts ?? DEFAULT_HARD_SEARCH_RETRY_MAX_ATTEMPTS),
+  );
+  const used = Math.max(0, Math.floor(input.attemptCount));
+  const consumesBudget = hardSearchAnswerConsumesRetryBudget(input.answerStatus);
+  const wiring = semanticSearchLiveWiringStatus();
+  const cms = cmsPublishWiringStatus(AdapterWiring.NOT_WIRED);
+
+  if (!consumesBudget) {
+    return {
+      allowed: true,
+      code: null,
+      reason: "Grounded hard-search answer — retry budget not consumed",
+      attemptCount: used,
+      maxAttempts,
+      recordAttempt: false,
+      consumesBudget: false,
+      externalEffects: "NONE",
+      semanticSearchLiveWiring: wiring,
+      cmsPublishWiring: cms,
+    };
+  }
+
+  const next = input.startingNewAttempt ? used + 1 : used;
+  if (next > maxAttempts) {
+    return {
+      allowed: false,
+      code: "RETRY_BUDGET_EXHAUSTED",
+      reason: `Hard-search retry attempt ${next} exceeds max ${maxAttempts} — refuse without inventing inventory`,
+      attemptCount: used,
+      maxAttempts,
+      recordAttempt: false,
+      consumesBudget: true,
+      externalEffects: "NONE",
+      semanticSearchLiveWiring: wiring,
+      cmsPublishWiring: cms,
+    };
+  }
+
+  return {
+    allowed: true,
+    code: null,
+    reason: `Hard-search abstain attempt ${Math.max(next, 1)} within retry budget ${maxAttempts}`,
+    attemptCount: used,
+    maxAttempts,
+    recordAttempt: true,
+    consumesBudget: true,
+    externalEffects: "NONE",
+    semanticSearchLiveWiring: wiring,
+    cmsPublishWiring: cms,
+  };
+}
+
+/**
+ * T-X048: RETRY_BUDGET_EXHAUSTED denials must not be persisted as another
+ * search attempt (would inflate attemptCount past maxAttempts).
+ */
+export function shouldRecordHardSearchAttemptOnBudgetDenial(
+  code: string | null,
+): boolean {
+  return code !== "RETRY_BUDGET_EXHAUSTED";
+}
+
+export type HardSearchBookingHandoffDecision = {
+  bookingHandoffUrl: string | null;
+  attached: boolean;
+  reason: string;
+  externalEffects: "NONE";
+  semanticSearchLiveWiring: "NOT_WIRED";
+  cmsPublishWiring: "NOT_WIRED" | "FIXTURE";
+};
+
+/**
+ * T-X048 booking-handoff honesty under the retry fence: never invent a booking
+ * URL when the answer is abstain/no-result, when retry budget is exhausted, or
+ * when the proposed URL is not HTTPS. GROUNDED + allowed budget + https only.
+ */
+export function resolveHardSearchBookingHandoff(input: {
+  answerStatus: SearchAnswerStatusValue;
+  retryBudget: HardSearchRetryBudgetDecision;
+  proposedHandoffUrl: string | null | undefined;
+}): HardSearchBookingHandoffDecision {
+  const wiring = semanticSearchLiveWiringStatus();
+  const cms = cmsPublishWiringStatus(AdapterWiring.NOT_WIRED);
+  const base = {
+    externalEffects: "NONE" as const,
+    semanticSearchLiveWiring: wiring,
+    cmsPublishWiring: cms,
+  };
+
+  if (
+    !input.retryBudget.allowed ||
+    input.retryBudget.code === "RETRY_BUDGET_EXHAUSTED"
+  ) {
+    return {
+      bookingHandoffUrl: null,
+      attached: false,
+      reason:
+        "Retry budget exhausted / refused — no invented booking handoff",
+      ...base,
+    };
+  }
+
+  if (hardSearchAnswerConsumesRetryBudget(input.answerStatus)) {
+    return {
+      bookingHandoffUrl: null,
+      attached: false,
+      reason:
+        "Abstain/no-result answer — booking handoff refused (no invention)",
+      ...base,
+    };
+  }
+
+  const proposed = input.proposedHandoffUrl ?? null;
+  if (
+    input.answerStatus === SearchAnswerStatus.GROUNDED &&
+    proposed &&
+    /^https:\/\//i.test(proposed)
+  ) {
+    return {
+      bookingHandoffUrl: proposed,
+      attached: true,
+      reason: "Grounded HTTPS booking handoff attached",
+      ...base,
+    };
+  }
+
+  return {
+    bookingHandoffUrl: null,
+    attached: false,
+    reason:
+      "Booking handoff refused — require GROUNDED + HTTPS (no http/javascript invent)",
+    ...base,
+  };
+}
+
+export type HardSearchInventoryClaimDecision = {
+  hits: SemanticSearchHit[];
+  answerStatus: SearchAnswerStatusValue;
+  bookingHandoffUrl: string | null;
+  /** Always false — exhausted/abstain paths never invent inventory. */
+  inventedInventory: false;
+  reason: string;
+  externalEffects: "NONE";
+  semanticSearchLiveWiring: "NOT_WIRED";
+  cmsPublishWiring: "NOT_WIRED" | "FIXTURE";
+};
+
+/**
+ * T-X048 inventory-claim honesty under the retry fence: when budget is
+ * exhausted, strip hits and booking and refuse GROUNDED upgrades (no invented
+ * availability). Abstain/no-result answers keep honest empty inventory.
+ * GROUNDED + allowed budget may expose provided hits + resolved handoff.
+ */
+export function resolveHardSearchInventoryClaim(input: {
+  answerStatus: SearchAnswerStatusValue;
+  retryBudget: HardSearchRetryBudgetDecision;
+  hits: readonly SemanticSearchHit[];
+  bookingHandoff: HardSearchBookingHandoffDecision;
+}): HardSearchInventoryClaimDecision {
+  const wiring = semanticSearchLiveWiringStatus();
+  const cms = cmsPublishWiringStatus(AdapterWiring.NOT_WIRED);
+  const base = {
+    inventedInventory: false as const,
+    externalEffects: "NONE" as const,
+    semanticSearchLiveWiring: wiring,
+    cmsPublishWiring: cms,
+  };
+
+  if (
+    !input.retryBudget.allowed ||
+    input.retryBudget.code === "RETRY_BUDGET_EXHAUSTED"
+  ) {
+    return {
+      hits: [],
+      answerStatus: hardSearchAnswerConsumesRetryBudget(input.answerStatus)
+        ? input.answerStatus
+        : SearchAnswerStatus.NO_RESULT,
+      bookingHandoffUrl: null,
+      reason:
+        "Retry budget exhausted / refused — inventory claim cleared (no invent)",
+      ...base,
+    };
+  }
+
+  if (hardSearchAnswerConsumesRetryBudget(input.answerStatus)) {
+    return {
+      hits: [],
+      answerStatus: input.answerStatus,
+      bookingHandoffUrl: null,
+      reason:
+        "Abstain/no-result answer — no invented inventory or booking handoff",
+      ...base,
+    };
+  }
+
+  const handoffUrl = input.bookingHandoff.attached
+    ? input.bookingHandoff.bookingHandoffUrl
+    : null;
+  return {
+    hits: [...input.hits],
+    answerStatus: input.answerStatus,
+    bookingHandoffUrl: handoffUrl,
+    reason: "Grounded inventory claim within retry budget (no invention)",
+    ...base,
+  };
+}
+
 /** Catalog case ids related to SEO/search (do not mark VERIFIED without evidence). */
 export const SEO_RELATED_CASE_IDS = [
   "T-S01", // page audit golden suite
@@ -1425,5 +1731,5 @@ export const SEO_RELATED_CASE_IDS = [
   "T-F23", // judged retrieval / no-result (M8)
   "T-US-045",
   "T-US-046",
-  "T-X042", // schema differs from page — gate fails (fixture ACCEPTED ≠ VERIFIED)
+  "T-X048",
 ] as const;
