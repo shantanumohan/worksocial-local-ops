@@ -413,6 +413,25 @@ describe("keyboard focus restore (T-X061)", () => {
     expect(refused.session.overlayOpen).toBe(true);
   });
 
+  it("markTriggerUnrestorable is idempotent before close (T54)", () => {
+    const opened = openOverlayFocus({
+      session: emptyFocusSession(),
+      triggerId: "btn-review",
+      dialogFocusables: dialog,
+    });
+    expect(opened.session.triggerRestorable).toBe(true);
+    const once = markTriggerUnrestorable(opened.session);
+    expect(once.triggerRestorable).toBe(false);
+    expect(once.savedTriggerId).toBe("btn-review");
+    expect(once.overlayOpen).toBe(true);
+    expect(once.dialogFocusables).toEqual(opened.session.dialogFocusables);
+    expect(once.activeFocusId).toBe(opened.session.activeFocusId);
+    const twice = markTriggerUnrestorable(once);
+    expect(twice).toEqual(once);
+    const closed = closeOverlayRestoreFocus({ session: twice });
+    expect(closed.code).toBe("FOCUS_LOST");
+  });
+
   it("cycleDialogFocus fails closed when open session has empty focusables (T52)", () => {
     const opened = openOverlayFocus({
       session: emptyFocusSession(),
