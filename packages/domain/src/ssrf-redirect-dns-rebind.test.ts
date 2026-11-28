@@ -1354,6 +1354,91 @@ describe("SSRF redirect + DNS rebind (T-X064)", () => {
     }
   });
 
+  it("blocks hex IPv4-mapped 10.0.0.9 ::ffff:a00:9 on redirect hop 1", () => {
+    const decision = evaluateSsrfRedirectDnsRebindChain({
+      allowedHosts: ALLOWED,
+      hops: [
+        {
+          hopIndex: 0,
+          url: "https://worksocial.com/start",
+          resolvedAddresses: ["93.184.216.34"],
+        },
+        {
+          hopIndex: 1,
+          url: "https://cdn.worksocial.com/hex-mapped-ten-hop1",
+          resolvedAddresses: ["::ffff:a00:9"],
+        },
+      ],
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.blockedHopIndex).toBe(1);
+    expect(decision.blockedCode).toBe("DNS_REBIND_PRIVATE_ADDRESS");
+    const hexMappedHop1 = decision.hopVerdicts[1];
+    if (hexMappedHop1 && !hexMappedHop1.allowed) {
+      expect(hexMappedHop1.code).toBe("DNS_REBIND_PRIVATE_ADDRESS");
+      expect(hexMappedHop1.hostname).toBe("cdn.worksocial.com");
+      expect(hexMappedHop1.resolvedAddresses).toEqual(["::ffff:a00:9"]);
+    }
+  });
+
+  it("blocks expanded IPv4-mapped 172.16.x on redirect hop 1", () => {
+    const decision = evaluateSsrfRedirectDnsRebindChain({
+      allowedHosts: ALLOWED,
+      hops: [
+        {
+          hopIndex: 0,
+          url: "https://worksocial.com/start",
+          resolvedAddresses: ["93.184.216.34"],
+        },
+        {
+          hopIndex: 1,
+          url: "https://cdn.worksocial.com/expanded-172-hop1",
+          resolvedAddresses: ["0:0:0:0:0:ffff:172.16.0.1"],
+        },
+      ],
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.blockedHopIndex).toBe(1);
+    expect(decision.blockedCode).toBe("DNS_REBIND_PRIVATE_ADDRESS");
+    const expanded172Hop1 = decision.hopVerdicts[1];
+    if (expanded172Hop1 && !expanded172Hop1.allowed) {
+      expect(expanded172Hop1.code).toBe("DNS_REBIND_PRIVATE_ADDRESS");
+      expect(expanded172Hop1.hostname).toBe("cdn.worksocial.com");
+      expect(expanded172Hop1.resolvedAddresses).toEqual([
+        "0:0:0:0:0:ffff:172.16.0.1",
+      ]);
+    }
+  });
+
+  it("blocks expanded IPv4-mapped 10.0.0.0/8 on redirect hop 1", () => {
+    const decision = evaluateSsrfRedirectDnsRebindChain({
+      allowedHosts: ALLOWED,
+      hops: [
+        {
+          hopIndex: 0,
+          url: "https://worksocial.com/start",
+          resolvedAddresses: ["93.184.216.34"],
+        },
+        {
+          hopIndex: 1,
+          url: "https://cdn.worksocial.com/expanded-ten-hop1",
+          resolvedAddresses: ["0:0:0:0:0:ffff:10.0.0.9"],
+        },
+      ],
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.blockedHopIndex).toBe(1);
+    expect(decision.blockedCode).toBe("DNS_REBIND_PRIVATE_ADDRESS");
+    const expandedTenHop1 = decision.hopVerdicts[1];
+    if (expandedTenHop1 && !expandedTenHop1.allowed) {
+      expect(expandedTenHop1.code).toBe("DNS_REBIND_PRIVATE_ADDRESS");
+      expect(expandedTenHop1.hostname).toBe("cdn.worksocial.com");
+      expect(expandedTenHop1.resolvedAddresses).toEqual([
+        "0:0:0:0:0:ffff:10.0.0.9",
+      ]);
+    }
+  });
+
   it("blocks expanded IPv4-mapped loopback on redirect hop 1", () => {
     const decision = evaluateSsrfRedirectDnsRebindChain({
       allowedHosts: ALLOWED,
