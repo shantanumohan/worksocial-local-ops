@@ -942,4 +942,254 @@ describe("customer eval redaction idle hillclimb (T-X072)", () => {
     expect(decision.liveProviderSuccessClaimed).toBe(false);
     expectEvalHonesty(decision);
   });
+
+  it("continue N116: redacts phone embedded in messageBody (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        ...source,
+        messageBody: `Call me at ${source.customerPhone} about Suite B.`,
+      },
+      mode: "redact",
+    });
+    expect(decision.allowed).toBe(true);
+    if (!decision.payload) throw new Error("expected payload");
+    expect(decision.payload.messageBody).not.toMatch(/415/);
+    expect(decision.payload.messageBody).toMatch(/\[REDACTED_PHONE\]/);
+    expect(decision.payload.redactedFields).toContain("messageBody");
+    expect(decision.reasons.some((r) => r === "ACCEPTED≠VERIFIED")).toBe(true);
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N117: allows redact when no identifiable PII (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        customerDisplayName: "  ",
+        customerEmail: null,
+        customerPhone: null,
+        messageBody: "Generic fixture question about hours.",
+        conversationId: "conv-anon",
+        intentLabel: "hours_question",
+      },
+      mode: "redact",
+    });
+    expect(decision.allowed).toBe(true);
+    expect(decision.code).toBe("REDACTED_FOR_EVAL");
+    if (!decision.payload) throw new Error("expected payload");
+    expect(decision.payload.redacted).toBe(true);
+    expect(decision.payload.customerEmail).toBeNull();
+    expect(decision.payload.customerPhone).toBeNull();
+    expect(decision.payload.redactedFields).toEqual([]);
+    expect(decision.reasons.some((r) => /No identifiable/.test(r))).toBe(true);
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N118: redacts customer fields for evaluation (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({ source, mode: "redact" });
+    expect(decision.allowed).toBe(true);
+    expect(decision.code).toBe("REDACTED_FOR_EVAL");
+    if (!decision.payload) throw new Error("expected payload");
+    expect(decision.payload.redacted).toBe(true);
+    expect(decision.payload.customerDisplayName).toBe("[REDACTED_NAME]");
+    expect(decision.payload.customerEmail).toBe("[REDACTED_EMAIL]");
+    expect(decision.payload.customerPhone).toBe("[REDACTED_PHONE]");
+    expect(decision.payload.messageBody).not.toMatch(/jordan\.lee@example\.com/i);
+    expect(decision.payload.messageBody).not.toMatch(/415\s*555/i);
+    expect(decision.payload.intentLabel).toBe("tour_request");
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.liveEvalWiring).toBe(CUSTOMER_EVAL_LIVE_WIRING);
+    expect(decision.liveProviderSuccessClaimed).toBe(false);
+  });
+
+  it("retip N119: redacts email embedded in messageBody (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        ...source,
+        messageBody: `Email me at ${source.customerEmail} about Suite B.`,
+      },
+      mode: "redact",
+    });
+    expect(decision.allowed).toBe(true);
+    if (!decision.payload) throw new Error("expected payload");
+    expect(decision.payload.messageBody).not.toMatch(/jordan\.lee@example\.com/i);
+    expect(decision.payload.messageBody).toMatch(/\[REDACTED_EMAIL\]/);
+    expect(decision.payload.redactedFields).toContain("messageBody");
+    expect(decision.reasons.some((r) => r === "ACCEPTED≠VERIFIED")).toBe(true);
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N120: redacts phone embedded in intentLabel (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        ...source,
+        intentLabel: `callback ${source.customerPhone}`,
+      },
+      mode: "redact",
+    });
+    expect(decision.allowed).toBe(true);
+    if (!decision.payload) throw new Error("expected payload");
+    expect(decision.payload.intentLabel).not.toMatch(/415/);
+    expect(decision.payload.intentLabel).toMatch(/\[REDACTED_PHONE\]/);
+    expect(decision.payload.redactedFields).toContain("intentLabel");
+    expect(decision.reasons.some((r) => r === "ACCEPTED≠VERIFIED")).toBe(true);
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N121: redacts display name embedded in intentLabel (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        ...source,
+        intentLabel: `follow_up for ${source.customerDisplayName}`,
+      },
+      mode: "redact",
+    });
+    expect(decision.allowed).toBe(true);
+    if (!decision.payload) throw new Error("expected payload");
+    expect(decision.payload.intentLabel).not.toMatch(/Jordan Lee/i);
+    expect(decision.payload.intentLabel).toMatch(/\[REDACTED_NAME\]/);
+    expect(decision.payload.redactedFields).toContain("intentLabel");
+    expect(decision.reasons.some((r) => r === "ACCEPTED≠VERIFIED")).toBe(true);
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N122: conversationId with phone digits is redacted (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        ...source,
+        conversationId: `conv-4155550199-thread`,
+      },
+      mode: "redact",
+    });
+    expect(decision.allowed).toBe(true);
+    if (!decision.payload) throw new Error("expected payload");
+    expect(decision.payload.conversationId).not.toMatch(/4155550199/);
+    expect(decision.payload.conversationId).toMatch(/REDACTED/);
+    expect(decision.payload.redactedFields).toContain("conversationId");
+    expect(decision.reasons.some((r) => r === "ACCEPTED≠VERIFIED")).toBe(true);
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N123: conversationId with email is redacted (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        ...source,
+        conversationId: `conv-${source.customerEmail}-thread`,
+      },
+      mode: "redact",
+    });
+    expect(decision.allowed).toBe(true);
+    if (!decision.payload) throw new Error("expected payload");
+    expect(decision.payload.conversationId).not.toMatch(/jordan\.lee@example\.com/i);
+    expect(decision.payload.conversationId).toMatch(/REDACTED/);
+    expect(decision.payload.redactedFields).toContain("conversationId");
+    expect(decision.reasons.some((r) => r === "ACCEPTED≠VERIFIED")).toBe(true);
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N124: conversationId with display name is redacted (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        ...source,
+        conversationId: `conv-${source.customerDisplayName}-thread`,
+      },
+      mode: "redact",
+    });
+    expect(decision.allowed).toBe(true);
+    if (!decision.payload) throw new Error("expected payload");
+    expect(decision.payload.conversationId).not.toMatch(/Jordan/i);
+    expect(decision.payload.conversationId).toMatch(/REDACTED/);
+    expect(decision.payload.redactedFields).toContain("conversationId");
+    expect(decision.reasons.some((r) => r === "ACCEPTED≠VERIFIED")).toBe(true);
+    expectEvalHonesty(decision);
+  });
+
+
+  it("retip N125: raw passthrough blocked when only conversationId has phone (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        customerDisplayName: "   ",
+        customerEmail: null,
+        customerPhone: null,
+        messageBody: "Looking for a day pass.",
+        conversationId: "conv-4155550199-thread",
+        intentLabel: "hours_question",
+      },
+      mode: "raw_passthrough",
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("CUSTOMER_DATA_LEAK_BLOCKED");
+    expect(decision.payload).toBeNull();
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N126: raw passthrough blocked when only conversationId has email (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        customerDisplayName: "   ",
+        customerEmail: null,
+        customerPhone: null,
+        messageBody: "Looking for a day pass.",
+        conversationId: "conv-jordan.lee@example.com-thread",
+        intentLabel: "hours_question",
+      },
+      mode: "raw_passthrough",
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("CUSTOMER_DATA_LEAK_BLOCKED");
+    expect(decision.payload).toBeNull();
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N127: raw passthrough blocked when only messageBody has phone (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        customerDisplayName: "   ",
+        customerEmail: null,
+        customerPhone: null,
+        messageBody: "Call me at 415-555-0199 about Suite B.",
+        conversationId: "conv-clean",
+        intentLabel: "hours_question",
+      },
+      mode: "raw_passthrough",
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("CUSTOMER_DATA_LEAK_BLOCKED");
+    expect(decision.payload).toBeNull();
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N128: raw passthrough blocked when only messageBody has email (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        customerDisplayName: "   ",
+        customerEmail: null,
+        customerPhone: null,
+        messageBody: "Email me at jordan.lee@example.com about Suite B.",
+        conversationId: "conv-clean",
+        intentLabel: "hours_question",
+      },
+      mode: "raw_passthrough",
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("CUSTOMER_DATA_LEAK_BLOCKED");
+    expect(decision.payload).toBeNull();
+    expectEvalHonesty(decision);
+  });
+
+  it("retip N129: raw passthrough blocked when only intentLabel has phone (T-X072)", () => {
+    const decision = prepareCustomerDataForEvaluation({
+      source: {
+        customerDisplayName: "   ",
+        customerEmail: null,
+        customerPhone: null,
+        messageBody: "Looking for a day pass.",
+        conversationId: "conv-clean",
+        intentLabel: "callback 415-555-0199",
+      },
+      mode: "raw_passthrough",
+    });
+    expect(decision.allowed).toBe(false);
+    expect(decision.code).toBe("CUSTOMER_DATA_LEAK_BLOCKED");
+    expect(decision.payload).toBeNull();
+    expectEvalHonesty(decision);
+  });
 });

@@ -3,13 +3,13 @@
   "caseId": "T-X058",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-X058 (Third automatic repair attempt — escalate)\nproof=repair_attempt_limit_escalated applyCount=1 :: MAX_REPAIR_ATTEMPTS=2 | CMS repair wiring NOT_WIRED | First automatic attempt allowed | Attempt 1 recorded (TESTS_FAILED) | Second automatic attempt allowed (at max) | Attempt 2 recorded; ticket status=ESCALATED | Third automatic attempt denied (ATTEMPT_LIMIT) — escalate without recording attempt; cmsRepairWiring=NOT_WIRED externalEffects=NONE | GATE_DENIED ×2 → ESCALATED; third attempt ATTEMPT_LIMIT | RELEASED within limit → RELEASED_PENDING (no premature escalate) | liveProviderSuccessClaimed=false cmsRepairWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-X058 (Third automatic repair attempt \u2014 escalate)\nproof=repair_attempt_limit_escalated applyCount=1 :: MAX_REPAIR_ATTEMPTS=2 | CMS repair wiring NOT_WIRED | First automatic attempt allowed | Attempt 1 recorded (TESTS_FAILED) | Second automatic attempt allowed (at max) | Attempt 2 recorded; ticket status=ESCALATED | Third automatic attempt denied (ATTEMPT_LIMIT) \u2014 escalate without recording attempt; cmsRepairWiring=NOT_WIRED externalEffects=NONE | GATE_DENIED \u00d72 \u2192 ESCALATED; third attempt ATTEMPT_LIMIT | RELEASED within limit \u2192 RELEASED_PENDING (no premature escalate) | liveProviderSuccessClaimed=false cmsRepairWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "repair_attempt_limit_escalated"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-x058.json",
-  "createdAtIso": "2026-11-28T00:19:47.913Z",
+  "createdAtIso": "2026-11-28T01:39:45.769Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-x058-4efacaa1e979"
+  "uniqueSourceArtifactId": "art-fixture-t-x058-2246f3f3af52"
 }
