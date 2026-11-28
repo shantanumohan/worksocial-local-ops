@@ -3,13 +3,13 @@
   "caseId": "T-US-046",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-US-046 (Hard search constraints enforced; no invented availability)\nproof=hard_search_constraints_no_invention applyCount=1 :: Unknown constraints → UNKNOWN no-match (no invented hits) | Hard constraints filter before ranking → room-20 only | Price bound preserved as unresolved (not invented free) | Unresolved price/negation → CLARIFY abstain (no invention) | Negation preserved; not inverted into required amenity | priceKnown=false entry retains null priceLabel (no invention) | Grounded answer may attach booking handoff URL | HYPOTHESIS-only → no hits and no invented booking handoff | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-US-046 (Hard search constraints enforced; no invented availability)\nproof=hard_search_constraints_no_invention applyCount=1 :: Unknown constraints → UNKNOWN no-match (no invented hits) | Hard constraints filter before ranking → room-20 only | Price bound preserved as unresolved (not invented free) | Unresolved price/negation → CLARIFY abstain (no invention) | Negation preserved; not inverted into required amenity | priceKnown=false entry retains null priceLabel (no invention) | Grounded answer may attach booking handoff URL | HYPOTHESIS-only → no hits and no invented booking handoff | Availability/bookable/open → UNKNOWN no-match (no invented open/bookable) | free/budget → unresolved price (not invented $0); catalogPriceIsHonest enforced | Price aliases up-to-$/≤ unresolved; capacity 'up to N people' not priced | Grounded http:// booking handoff refused (HTTPS-only) | Inaccessible inventory → no hits (not invented available) | semanticSearchLiveWiringStatus=NOT_WIRED cmsPublishWiringStatus=NOT_WIRED | Hard-search retry fence (E19 cms NOT_WIRED): first abstain recorded; second RETRY_BUDGET_EXHAUSTED | Booking handoff honesty: exhausted/abstain/http refuse; grounded HTTPS only | Inventory-claim honesty (E16–E18): GROUNDED→NO_RESULT; CLARIFY preserved; abstain clear | E24: CLARIFY within budget refuses handoff + clears hits (cms NOT_WIRED) | E25: javascript: handoff refused within budget (HTTPS-only; no invent) | E26: data: handoff refused within budget (HTTPS-only; no invent) | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "hard_search_constraints_no_invention"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-046.json",
-  "createdAtIso": "2026-11-28T01:32:43.099Z",
+  "createdAtIso": "2026-11-27T14:30:41.754Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-046-d81665e75686"
+  "uniqueSourceArtifactId": "art-fixture-t-us-046-5d861303111d"
 }
