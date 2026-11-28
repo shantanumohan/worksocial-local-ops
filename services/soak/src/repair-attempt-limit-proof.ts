@@ -234,7 +234,7 @@ export function proofRepairAttemptLimitEscalated(
   }
 
   details.push(
-    "liveProviderSuccessClaimed=false cmsRepairWiring=NOT_WIRED externalEffects=NONE",
+    "liveProviderSuccessClaimed=false cmsRepairWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
   );
 
   return {

@@ -487,6 +487,46 @@ export function proofHostOfflinePublicDiscoveryUnavailable(
     details.push("I74 chatgpt-null/public-prior-claim unexpectedly failed");
   }
 
+  // continue I75 BIND wipe+retip @ b106092f (post tip-moved-342; HOLD — exclusive #343 Slot S)
+  const geoNullOfflineClaim = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i75-geo-${randomUUID().slice(0, 8)}`,
+    surface: "geo_presence",
+    hostLiveness: HostDiscoveryLiveness.OFFLINE,
+    nowIso,
+    claimedAvailability: PublicDiscoveryAvailability.AVAILABLE,
+    lastSuccessfulDiscoveryAtIso: null,
+  });
+  // Prior must be earlier than harness nowIso (release evidence ~2026-11-21T19:23Z).
+  const i75PriorSuccessIso = new Date(
+    Date.parse(nowIso) - 2 * 60 * 60 * 1000,
+  ).toISOString();
+  const chatgptPriorUnavailClaim = evaluateHostOfflinePublicDiscovery({
+    observationId: `obs-i75-chatgpt-${randomUUID().slice(0, 8)}`,
+    surface: "chatgpt_business",
+    hostLiveness: HostDiscoveryLiveness.ONLINE,
+    nowIso,
+    claimedAvailability: PublicDiscoveryAvailability.UNAVAILABLE,
+    lastSuccessfulDiscoveryAtIso: i75PriorSuccessIso,
+  });
+  if (
+    geoNullOfflineClaim.code ===
+      PublicDiscoveryDecisionCode.CLAIMED_AVAILABLE_WHILE_OFFLINE_REFUSED &&
+    geoNullOfflineClaim.activeCoverageClaimed === false &&
+    geoNullOfflineClaim.liveProviderWiring === "NOT_WIRED" &&
+    geoNullOfflineClaim.externalEffects === "NONE" &&
+    chatgptPriorUnavailClaim.code ===
+      PublicDiscoveryDecisionCode.HOST_ONLINE_AVAILABLE &&
+    chatgptPriorUnavailClaim.activeCoverageClaimed === true &&
+    chatgptPriorUnavailClaim.chatgptAdsAccess === "ACCESS_BLOCKED"
+  ) {
+    details.push(
+      "continue I75 BIND: geo OFFLINE null-prior claim refused; chatgpt ONLINE+prior ignores UNAVAILABLE claim (HOLD; exclusive #343 Slot S)",
+    );
+  } else {
+    passed = false;
+    details.push("I75 geo-null/chatgpt-prior-claim unexpectedly failed");
+  }
+
   // Claimed AVAILABLE while offline is refused.
   const refused = evaluateHostOfflinePublicDiscovery({
     observationId: `obs-refuse-${randomUUID().slice(0, 8)}`,
