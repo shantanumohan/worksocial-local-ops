@@ -2202,7 +2202,7 @@
       "definitionShape": "table_row",
       "resultEnvironment": "fixture",
       "evidenceArtifactId": "art-fixture-t-x035",
-      "evidenceNote": "Fixture shared-ad-budget-external-change-invalidates proof only \u2014 not sandbox or production-canary VERIFIED"
+      "evidenceNote": "Fixture shared-ad-budget-external-change-invalidates proof only \u2014 shared/campaign/identity/revision drift INVALIDATES; zero shared-budget; null\u2194number campaign both directions; partial/negative/whitespace-padded ledger fail-closed (blank/padded accountId/campaignId/sharedBudgetId/entityRevision + unparseable readAtIso + non-finite \u00b1Infinity shared + negative/NaN/Infinity campaign daily); stale snapshot refuse; already-INVALIDATED never MATCHES; equal-instant MATCHES; honesty fields; liveProviderWiring=NOT_WIRED; ChatGPT Ads ACCESS_BLOCKED; not sandbox or production-canary VERIFIED"
     },
     {
       "id": "T-X036",
