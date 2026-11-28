@@ -1594,7 +1594,7 @@ describe("soak-acceptance domain", () => {
   });
 });
 
-describe("T-X066 backup omit receipt (idle hillclimb L36+ continue L63)", () => {
+describe("T-X066 backup omit receipt (idle hillclimb L36+ continue L64)", () => {
   it("T-X066 maps only BACKUP_OMIT_RECEIPT; sibling proofs exclude T-X066 (L36)", () => {
     expect(expectedProofsForFixtureCase("T-X066")).toEqual([
       SoakProofKind.BACKUP_OMIT_RECEIPT,
@@ -2081,6 +2081,23 @@ describe("T-X066 backup omit receipt (idle hillclimb L36+ continue L63)", () => 
     );
     expect(repairLimit).toContain("T-X058");
     expect(repairLimit).not.toContain("T-X066");
+    expect(soakNotWiredLiveWiring()).toEqual(SOAK_NOT_WIRED_LIVE_WIRING);
+    expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
+      "T-X066",
+    ]);
+  });
+
+  it("T-X066 worker-browser-auth and keyboard-focus proofs exclude; T-X065/T-X061 (L64)", () => {
+    const workerBrowser = mapProofToFixtureCases(
+      SoakProofKind.WORKER_BROWSER_AUTH_STATE_OS_DENIED,
+    );
+    expect(workerBrowser).toContain("T-X065");
+    expect(workerBrowser).not.toContain("T-X066");
+    const keyboardFocus = mapProofToFixtureCases(
+      SoakProofKind.KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG,
+    );
+    expect(keyboardFocus).toContain("T-X061");
+    expect(keyboardFocus).not.toContain("T-X066");
     expect(soakNotWiredLiveWiring()).toEqual(SOAK_NOT_WIRED_LIVE_WIRING);
     expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
       "T-X066",
