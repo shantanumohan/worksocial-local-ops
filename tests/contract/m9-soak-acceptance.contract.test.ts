@@ -571,7 +571,7 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).toContain("RELEASED within limit");
     expect(art.summary).toMatch(/third attempt ATTEMPT_LIMIT/);
     expect(art.summary).toContain(
-      "liveProviderSuccessClaimed=false cmsRepairWiring=NOT_WIRED externalEffects=NONE",
+      "liveProviderSuccessClaimed=false cmsRepairWiring=NOT_WIRED chatgptAdsAccess=ACCESS_BLOCKED externalEffects=NONE",
     );
     expect(art.proofKinds).toHaveLength(1);
     // P34 D6: applyCount fence + RELEASED_PENDING arrow (wipe15 @d6731fcd)
@@ -605,6 +605,26 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).toMatch(
       /liveProviderSuccessClaimed=false externalEffects=NONE$/,
     );
+    // P34 D10: soft-skip Ads + pool ≤T-X073 + cross-proof drift fences (SOLE #334 @e8323165)
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X058");
+    expect(Number(art.caseId.slice(3))).toBeLessThanOrEqual(73);
+    for (const id of SOAK_FIXTURE_CASE_IDS) {
+      const tx = /^T-X(\d+)$/.exec(id);
+      if (tx) {
+        expect(Number(tx[1])).toBeLessThanOrEqual(73);
+      }
+    }
+    expect(art.summary).toContain("chatgptAdsAccess=ACCESS_BLOCKED");
+    expect(art.proofKinds).not.toContain(
+      "duplicate_platform_attribution_one_booking",
+    );
+    expect(art.summary).not.toMatch(
+      /duplicate_platform_attribution_one_booking/,
+    );
+    expect(art.proofKinds).not.toContain("offboard_active_token_residual");
+    expect(art.summary).not.toMatch(/offboard_active_token_residual/);
+    expect(art.summary).toContain("TESTS_FAILED");
+    expect(art.summary).toContain("CMS repair wiring NOT_WIRED");
   });
 
   it("T-X031 fixture artifact names GA4 wrong property kind honesty (ACCEPTED ≠ VERIFIED)", () => {
