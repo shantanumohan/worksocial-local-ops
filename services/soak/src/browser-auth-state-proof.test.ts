@@ -1,5 +1,5 @@
 /**
- * T-X065 worker browser auth — soak proof (M16+ / M18 / M19 edge deepen).
+ * T-X065 worker browser auth — soak proof (M16+ / M18 / M19 / M20 edge deepen).
  */
 
 import { describe, expect, it } from "vitest";
@@ -73,6 +73,9 @@ describe("proofWorkerBrowserAuthStateOsDenied (T-X065 M16+)", () => {
     );
     expect(joined).toMatch(
       /boundary host-admin → workspace_browser_partition: OS_DENY \(explicitUserConsent=false\)/,
+    );
+    expect(joined).toMatch(
+      /boundary workflow-worker → system_chrome_cookies: OS_DENY \(forged consent on system\)/,
     );
     expect(joined).toMatch(/fixture vault intact after OS_DENY matrix/);
     expect(joined).toMatch(/liveBrowserAuthWiring=NOT_WIRED/);

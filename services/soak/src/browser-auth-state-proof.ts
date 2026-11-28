@@ -563,6 +563,33 @@ export function proofWorkerBrowserAuthStateOsDenied(
     }
   }
 
+  // M20: worker forged consent on system kinds — OS_DENY (not workspace-only escalation).
+  for (const principal of workers) {
+    for (const stateKind of SYSTEM_BROWSER_AUTH_STATE_KINDS) {
+      const workerForged = broker.requestBrowserAuthState({
+        principal,
+        stateKind,
+        explicitUserConsent: true,
+      });
+      if (
+        workerForged.allowed === false &&
+        workerForged.code === BrowserAuthAccessCode.OS_DENY &&
+        workerForged.authMaterial === null &&
+        workerForged.sealedRef === null &&
+        workerForged.externalEffects === "NONE"
+      ) {
+        details.push(
+          `boundary ${principal} → ${stateKind}: OS_DENY (forged consent on system)`,
+        );
+      } else {
+        passed = false;
+        details.push(
+          `boundary ${principal} forged system ${stateKind} unexpectedly ${JSON.stringify(workerForged)}`,
+        );
+      }
+    }
+  }
+
   // 4. Host-admin cannot silently reuse system Chrome / OS profile / OAuth.
   for (const stateKind of systemKinds) {
     const adminDenied = broker.requestBrowserAuthState({

@@ -245,6 +245,22 @@ describe("browser-auth-isolation (T-X065)", () => {
     expect(allowed.liveBrowserAuthWiring).toBe("NOT_WIRED");
   });
 
+  it("M20: forged consent cannot elevate browser-pool past system OS deny", () => {
+    for (const stateKind of SYSTEM_BROWSER_AUTH_STATE_KINDS) {
+      const decision = evaluateBrowserAuthStateAccess({
+        principal: BrowserAuthPrincipal.BROWSER_POOL,
+        stateKind,
+        explicitUserConsent: true,
+      });
+      expect(decision.allowed).toBe(false);
+      expect(decision.code).toBe(BrowserAuthAccessCode.OS_DENY);
+      expect(decision.code).not.toBe(BrowserAuthAccessCode.ALLOWED);
+      expect(decision.authMaterialReturned).toBe(false);
+      expect(decision.externalEffects).toBe("NONE");
+      expect(decision.liveBrowserAuthWiring).toBe("NOT_WIRED");
+    }
+  });
+
   it("locks host-admin false consent on system kinds and workspace (M19)", () => {
     for (const stateKind of SYSTEM_BROWSER_AUTH_STATE_KINDS) {
       const decision = evaluateBrowserAuthStateAccess({
