@@ -1198,6 +1198,69 @@ describe("contract: M9 soak / acceptance evidence", () => {
     expect(art.summary).not.toMatch(/manifest=ob-/);
     expect(art.summary).not.toMatch(/I17 edges:/);
     expect(art.summary).not.toMatch(/double liveProviderRevoke/);
+    // K94: post-#333 tip e8323165 — repair weaken not T-X058 repair-attempt-limit proof drift (HOLD #334)
+    expect(art.proofKinds).not.toContain("repair_attempt_limit_escalated");
+    expect(art.summary).not.toMatch(/repair_attempt_limit_escalated/);
+    expect(art.summary).not.toMatch(/MAX_REPAIR_ATTEMPTS=2/);
+    expect(art.summary).not.toMatch(/ticket status=ESCALATED/);
+    expect(art.summary).not.toMatch(/RELEASED_PENDING/);
+    expect(art.summary).not.toMatch(/Third automatic repair attempt/);
+    // K95: post-#334 tip 27a872ed — repair weaken not T-X058 P34 D10 repair-attempt ledger drift
+    expect(art.summary).not.toMatch(/chatgptAdsAccess=ACCESS_BLOCKED/);
+    expect(art.summary).not.toMatch(/GATE_DENIED ×2/);
+    expect(art.summary).not.toMatch(/cmsRepairWiring=NOT_WIRED/);
+    expect(art.summary).not.toMatch(/Second automatic attempt allowed \(at max\)/);
+    expect(art.summary).not.toMatch(/Third automatic attempt denied/);
+    // K96: post-#335 tip 360889c7 — repair weaken not T-X059 Q36 duplicate-attribution ledger drift
+    expect(art.proofKinds).not.toContain("duplicate_platform_attribution_one_booking");
+    expect(art.summary).not.toMatch(/duplicate_platform_attribution_one_booking/);
+    expect(art.summary).not.toMatch(/SILENT_PLATFORM_SUM_REFUSED/);
+    expect(art.summary).not.toMatch(/INVALID_ATTRIBUTION_CLAIM/);
+    expect(art.summary).not.toMatch(/uniqueBookingCount=1/);
+    expect(art.summary).not.toMatch(/offset timestamps sorted by parsed instant/);
+    // K97: post-#336 tip d4348d7e — repair weaken not T-X060 G45+ currency/timezone ledger drift
+    expect(art.summary).not.toMatch(/CURRENCY_MISMATCH/);
+    expect(art.summary).not.toMatch(/TIMEZONE_MISMATCH/);
+    expect(art.summary).not.toMatch(/SILENT_SUM refused/);
+    expect(art.summary).not.toMatch(/Signed-zero amountMinor/);
+    expect(art.summary).not.toMatch(/America\/New_York \(whitespace-normalized\)/);
+    expect(art.summary).not.toMatch(/Fractional amountMinor/);
+    // K98: post-#337 tip 4ab21ddb — repair weaken not T-X061 T53–T54 keyboard-focus ledger drift
+    expect(art.summary).not.toMatch(/Overlay opened; savedTrigger=btn-keyboard-review/);
+    expect(art.summary).not.toMatch(/Tab backward: dlg-close → dlg-secondary/);
+    expect(art.summary).not.toMatch(/Focus restored to trigger btn-keyboard-review/);
+    expect(art.summary).not.toMatch(/Trigger btn-keyboard-review unrestorable — FOCUS_LOST/);
+    expect(art.summary).not.toMatch(/fixtureOnly keyboard\/focus model/);
+    // K99: post-#338 tip 183592cf — repair weaken not T-X062 F45+ SSE gap-resync ledger drift
+    expect(art.summary).not.toMatch(/SSE_GAP_FULL_RESYNC_REQUIRED/);
+    expect(art.summary).not.toMatch(/Outstanding gap blocks contiguous seq=102 invent/);
+    expect(art.summary).not.toMatch(/F35 coversThroughSeq=13 equals minResyncThroughSeq=13/);
+    expect(art.summary).not.toMatch(/SNAPSHOT_INSUFFICIENT_COVERAGE/);
+    expect(art.summary).not.toMatch(/Online contiguous seq=101 → INCREMENTAL_APPLY/);
+    // K100: post-#339 tip 2bad2127 — repair weaken not T-X063 R40+ injection-exfil ledger drift
+    expect(art.summary).not.toMatch(/T-X063 R35:/);
+    expect(art.summary).not.toMatch(/attack suite nonet repeat gate/);
+    expect(art.summary).not.toMatch(/trusted near-miss exact-match-only/);
+    expect(art.summary).not.toMatch(/CREDENTIAL_ACCESS_DENIED/);
+    expect(art.summary).not.toMatch(/Absolute exfil denied across 3 channels/);
+    // K101: post-#340 tip c4b3aeb2 — repair weaken not T-X064 D86–D102 SSRF redirect/DNS-rebind ledger drift
+    expect(art.summary).not.toMatch(/169\.254\.169\.254/);
+    expect(art.summary).not.toMatch(/cdn\.worksocial\.com/);
+    expect(art.summary).not.toMatch(/Initial hop credentials in URL/);
+    expect(art.summary).not.toMatch(/IPv6 link-local/);
+    expect(art.summary).not.toMatch(/liveFetch=NOT_WIRED/);
+    // K102: post-#341 tip 3bd3caab — repair weaken not T-X065 M browser-auth OS_DENY ledger drift
+    expect(art.summary).not.toMatch(/liveBrowserAuthRead=NOT_WIRED/);
+    expect(art.summary).not.toMatch(/sealed workspace ref/);
+    expect(art.summary).not.toMatch(/fixture vault intact after OS_DENY matrix/);
+    expect(art.summary).not.toMatch(/Positive control: browser-pool \+ consent/);
+    expect(art.summary).not.toMatch(/no silent reuse/);
+    // K103: post-#342 tip b106092f — repair weaken not T-X066 L64 backup-omit-receipt ledger drift
+    expect(art.summary).not.toMatch(/remote-967348a6/);
+    expect(art.summary).not.toMatch(/remote ledger preserved separately/);
+    expect(art.summary).not.toMatch(/T-F24\/T-US-047/);
+    expect(art.summary).not.toMatch(/T-X020\/T-US-048/);
+    expect(art.summary).not.toMatch(/Backup omits remote receipt/);
   });
   it("T-X059 fixture artifact names duplicate platform attribution (ACCEPTED ≠ VERIFIED)", () => {
     const artPath = resolve(
