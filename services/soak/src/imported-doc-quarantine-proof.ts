@@ -747,6 +747,80 @@ export function proofImportedDocQuarantinedAsData(
     );
   }
 
+  // A23 bind-bfed7a60 @ bfed7a609 — sept pending refuse + ATTACHMENT channel boundary
+  const a23Bfed = [];
+  for (let i = 0; i < 7; i++) {
+    a23Bfed.push(
+      createInstructionIngestion({
+        ingestionId: `ing-a23-bfed-${i}`,
+        sourcePath: `incoming/a23-bfed-${i}.md`,
+        checksum: sha256(`a23-bfed-${i}`),
+        status: InstructionIngestionStatus.PENDING_CLASSIFICATION,
+        instructionVersion: `v-a23-bfed-${i}`,
+        fixtureOnly: true,
+        createdAtIso: nowIso,
+      }),
+    );
+  }
+  if (
+    a23Bfed.every((r) => r.instructionVersion === null) &&
+    a23Bfed[6]!.classifierNotes.some((n) => /Refused instructionVersion/i.test(n))
+  ) {
+    details.push(
+      "A23 bind-bfed7a60 continue: sept PENDING claim instructionVersion → refused; remains null",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `A23 bind-bfed sept pending unexpectedly ${JSON.stringify({ last: a23Bfed[6] })}`,
+    );
+  }
+
+  const a23Webhook = createInstructionIngestion({
+    ingestionId: "ing-a23-webhook-soak",
+    sourcePath: "incoming/a23-webhook-sync.json",
+    checksum: sha256("a23-webhook-sync"),
+    status: InstructionIngestionStatus.REJECTED,
+    instructionVersion: "v2.14.0+webhook",
+    fixtureOnly: true,
+    createdAtIso: nowIso,
+  });
+  if (
+    a23Webhook.instructionVersion === null &&
+    a23Webhook.classifierNotes.some((n) => /Refused instructionVersion/i.test(n))
+  ) {
+    details.push(
+      "A23 integration edge: webhook semver instructionVersion while REJECTED → refused",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `A23 webhook semver unexpectedly ${JSON.stringify(a23Webhook)}`,
+    );
+  }
+
+  const a23AttachmentBoundary = evaluateIndirectPromptInjectionBoundary({
+    trustLabel: ArtifactTrustLabel.UNTRUSTED_SOURCE,
+    channel: IndirectInjectionChannel.ATTACHMENT,
+    attemptedEffect: "tool_widening",
+  });
+  if (
+    a23AttachmentBoundary.allowed === false &&
+    a23AttachmentBoundary.code === "UNTRUSTED_SOURCE_NOT_INSTRUCTION" &&
+    a23AttachmentBoundary.instructionEligible === false &&
+    a23AttachmentBoundary.externalEffects === "NONE" &&
+    a23AttachmentBoundary.liveProviderWiring === "NOT_WIRED"
+  ) {
+    details.push(
+      "A23 bind-bfed7a60 channel edge: untrusted ATTACHMENT → UNTRUSTED_SOURCE_NOT_INSTRUCTION; externalEffects=NONE; NOT_WIRED",
+    );
+  } else {
+    passed = false;
+    details.push(
+      `A23 ATTACHMENT boundary unexpectedly ${JSON.stringify(a23AttachmentBoundary)}`,
+    );
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE",
   );

@@ -3,13 +3,13 @@
   "caseId": "T-US-026",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-US-026 (Missed schedules coalesce; no burst republish)\nproof=missed_schedule_coalesce_no_burst applyCount=1 :: Pre-downtime PUBLISHED recorded at 2026-11-21T19:12:40.000Z | Derived 3 missed publish slots from cadence=3600000ms | Downtime → 3 MISSED slots; lastPublished unchanged; publishApplyCount=1 | Burst republish refused: Missed content/social schedule slots must coalesce on recovery — burst republish of every missed post forbidden (T-US-026) | Catch-up without decision refused: Catch-up coalesce requires an actual fixture publish decision before counting an apply | Live wiring refused: Live missed-schedule catch-up remains NOT_WIRED — refuse live wiring (T-US-026) | Recovery coalesce catchup=sched-us026-8050ec6a:2026-11-21T22:42:40.000Z misses=3 publishAppliesThisRecovery=1 totalApplies=2 fixtureDecision=2026-11-21T22:42:40.000Z | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-X001 (monitoring probe coalesce), T-X015 (DST no duplicates), and T-US-025 (workstream launch)\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-US-026 (Missed schedules coalesce; no burst republish)\nproof=missed_schedule_coalesce_no_burst applyCount=1 :: Pre-downtime PUBLISHED recorded at 2026-11-21T19:12:40.000Z | Derived 3 missed publish slots from cadence=3600000ms | Downtime → 3 MISSED slots; lastPublished unchanged; publishApplyCount=1 | Burst republish refused: Missed content/social schedule slots must coalesce on recovery — burst republish of every missed post forbidden (T-US-026) | Catch-up without decision refused: Catch-up coalesce requires an actual fixture publish decision before counting an apply | Live wiring refused: Live missed-schedule catch-up remains NOT_WIRED — refuse live wiring (T-US-026) | Recovery coalesce catchup=sched-us026-137023b7:2026-11-21T22:42:40.000Z misses=3 publishAppliesThisRecovery=1 totalApplies=2 fixtureDecision=2026-11-21T22:42:40.000Z | liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE | Distinct from T-X001 (monitoring probe coalesce), T-X015 (DST no duplicates), and T-US-025 (workstream launch)\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "missed_schedule_coalesce_no_burst"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-026.json",
-  "createdAtIso": "2026-11-28T01:32:43.099Z",
+  "createdAtIso": "2026-11-28T01:39:43.914Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-026-d81665e75686"
+  "uniqueSourceArtifactId": "art-fixture-t-us-026-3709759c89b2"
 }
