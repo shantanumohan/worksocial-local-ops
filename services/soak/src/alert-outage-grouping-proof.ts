@@ -743,6 +743,117 @@ export function proofThirtyAlertsOneOutageGrouped(
     details.push(`J42 grouping unexpectedly ${JSON.stringify(j42Incidents)}`);
   }
 
+  const j43Key = primaryOutage;
+  const j43Split = `host:\u206alocal\u206b-1`;
+  const j43Alerts = [
+    createProbeAlert({
+      alertId: "j43-a1",
+      outageKey: j43Split,
+      source: "probe-j43",
+      raisedAtIso: new Date(baseMs + 47_000).toISOString(),
+      severity: AlertSeverity.P2,
+      message: "J43 bidi format",
+    }),
+    createProbeAlert({
+      alertId: "j43-a2",
+      outageKey: j43Key,
+      source: "probe-j43",
+      raisedAtIso: new Date(baseMs + 47_500).toISOString(),
+      severity: AlertSeverity.P1,
+      message: "J43 canonical",
+    }),
+  ];
+  const j43Incidents = groupAlertsIntoIncidents({
+    alerts: j43Alerts,
+    incidentIdForOutageKey: (k) => `inc-${k.replace(/[^a-z0-9-]/gi, "-")}`,
+  });
+  if (
+    j43Incidents.length === 1 &&
+    j43Incidents[0]!.outageKey === j43Key &&
+    j43Incidents[0]!.alertCount === 2
+  ) {
+    details.push(
+      "J43: bidi format-character outageKey collapsed — no split incident",
+    );
+  } else {
+    passed = false;
+    details.push(`J43 grouping unexpectedly ${JSON.stringify(j43Incidents)}`);
+  }
+
+  const j44Key = "capability:gsc-fetch";
+  const j44Split = `capability:\u115fgsc\u1160-fetch`;
+  const j44Alerts = [
+    createProbeAlert({
+      alertId: "j44-a1",
+      outageKey: j44Split,
+      source: "probe-j44",
+      raisedAtIso: new Date(baseMs + 48_000).toISOString(),
+      severity: AlertSeverity.P2,
+      message: "J44 hangul filler",
+    }),
+    createProbeAlert({
+      alertId: "j44-a2",
+      outageKey: j44Key,
+      source: "probe-j44",
+      raisedAtIso: new Date(baseMs + 48_500).toISOString(),
+      severity: AlertSeverity.P1,
+      message: "J44 canonical",
+    }),
+  ];
+  const j44Incidents = groupAlertsIntoIncidents({
+    alerts: j44Alerts,
+    incidentIdForOutageKey: (k) => `inc-${k.replace(/[^a-z0-9-]/gi, "-")}`,
+  });
+  if (
+    j44Incidents.length === 1 &&
+    j44Incidents[0]!.outageKey === j44Key &&
+    j44Incidents[0]!.alertCount === 2
+  ) {
+    details.push(
+      "J44: hangul-filler outageKey collapsed — no split incident",
+    );
+  } else {
+    passed = false;
+    details.push(`J44 grouping unexpectedly ${JSON.stringify(j44Incidents)}`);
+  }
+
+  const j45Key = primaryOutage;
+  const j45Split = `\u206a ${j45Key} `;
+  const j45Alerts = [
+    createProbeAlert({
+      alertId: "j45-a1",
+      outageKey: j45Split,
+      source: "probe-j45",
+      raisedAtIso: new Date(baseMs + 49_000).toISOString(),
+      severity: AlertSeverity.P2,
+      message: "J45 masked whitespace",
+    }),
+    createProbeAlert({
+      alertId: "j45-a2",
+      outageKey: j45Key,
+      source: "probe-j45",
+      raisedAtIso: new Date(baseMs + 49_500).toISOString(),
+      severity: AlertSeverity.P1,
+      message: "J45 canonical",
+    }),
+  ];
+  const j45Incidents = groupAlertsIntoIncidents({
+    alerts: j45Alerts,
+    incidentIdForOutageKey: (k) => `inc-${k.replace(/[^a-z0-9-]/gi, "-")}`,
+  });
+  if (
+    j45Incidents.length === 1 &&
+    j45Incidents[0]!.outageKey === j45Key &&
+    j45Incidents[0]!.alertCount === 2
+  ) {
+    details.push(
+      "J45: post-strip re-trim outageKey collapsed — no split incident",
+    );
+  } else {
+    passed = false;
+    details.push(`J45 grouping unexpectedly ${JSON.stringify(j45Incidents)}`);
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE",
   );

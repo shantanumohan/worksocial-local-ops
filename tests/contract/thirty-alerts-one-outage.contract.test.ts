@@ -1,5 +1,5 @@
 /**
- * Contract: T-X068 thirty alerts one outage — grouped incident (hillclimb J28–J42).
+ * Contract: T-X068 thirty alerts one outage — grouped incident (hillclimb J28–J44).
  * ACCEPTED ≠ VERIFIED. externalEffects NONE. live provider NOT_WIRED. Ads soft-skip.
  */
 import { readFileSync } from "node:fs";
@@ -130,6 +130,9 @@ describe("contract: T-X068 thirty alerts one outage grouped", () => {
     expect(proof?.details.some((d) => /J40:/i.test(d))).toBe(true);
     expect(proof?.details.some((d) => /J41:/i.test(d))).toBe(true);
     expect(proof?.details.some((d) => /J42:/i.test(d))).toBe(true);
+    expect(proof?.details.some((d) => /J43:/i.test(d))).toBe(true);
+    expect(proof?.details.some((d) => /J44:/i.test(d))).toBe(true);
+    expect(proof?.details.some((d) => /J45:/i.test(d))).toBe(true);
     expect(
       proof?.details.some((d) => /externalEffects=NONE/i.test(d)),
     ).toBe(true);

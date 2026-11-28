@@ -428,6 +428,64 @@ describe("alert outage grouping (T-X068)", () => {
     expect(incidents[0]!.externalEffects).toBe("NONE");
   });
 
+  it("collapses bidi format-character splits (T-X068 J43)", () => {
+    const key = "host:local-1";
+    const split = `host:\u206alocal\u206b-1`;
+    expect(normalizeOutageKey(split)).toBe(key);
+    const split2 = `host:lo\u206ccal\u206d-1`;
+    expect(normalizeOutageKey(split2)).toBe(key);
+    const split3 = `\u206e${key}\u206f`;
+    expect(normalizeOutageKey(split3)).toBe(key);
+    const alerts = [
+      alertAt(1, split, 0),
+      alertAt(2, key, 1000, AlertSeverity.P0),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(key);
+    expect(incidents[0]!.severity).toBe(AlertSeverity.P0);
+  });
+
+  it("re-trims after invisible strip when padding was masked (T-X068 J45)", () => {
+    const key = "host:local-1";
+    const split = `\u206a ${key} `;
+    expect(normalizeOutageKey(split)).toBe(key);
+    const split2 = `  \u206f${key}\u200b  `;
+    expect(normalizeOutageKey(split2)).toBe(key);
+    const alerts = [
+      alertAt(1, split, 0),
+      alertAt(2, key, 1000),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(key);
+  });
+
+  it("collapses hangul filler splits in outageKey (T-X068 J44)", () => {
+    const key = "capability:gsc-fetch";
+    const split = `capability:\u115fgsc\u1160-fetch`;
+    expect(normalizeOutageKey(split)).toBe(key);
+    const split2 = `\u3164${key}`;
+    expect(normalizeOutageKey(split2)).toBe(key);
+    const alerts = [
+      alertAt(1, split, 0),
+      alertAt(2, key, 1000),
+    ];
+    const incidents = groupAlertsIntoIncidents({
+      alerts,
+      incidentIdForOutageKey: (k) => `inc-${k}`,
+    });
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]!.outageKey).toBe(key);
+    expect(incidents[0]!.externalEffects).toBe("NONE");
+  });
+
   it("collapses bidi isolate splits in outageKey (T-X068 J42)", () => {
     const key = "provider:fixture-crm";
     const split = `provider:\u2066fix\u2069ture-crm`;
