@@ -1,5 +1,5 @@
 /**
- * Contract: T-X068 thirty alerts one outage — grouped incident (hillclimb J28–J29).
+ * Contract: T-X068 thirty alerts one outage — grouped incident (hillclimb J28–J42).
  * ACCEPTED ≠ VERIFIED. externalEffects NONE. live provider NOT_WIRED. Ads soft-skip.
  */
 import { readFileSync } from "node:fs";
@@ -63,7 +63,9 @@ describe("contract: T-X068 thirty alerts one outage grouped", () => {
     expect(row?.evidenceNote).toMatch(/no case-fold merge/i);
     expect(row?.evidenceNote).toMatch(/line-separator/i);
     expect(row?.evidenceNote).toMatch(/word-joiner/i);
-    expect(row?.evidenceNote).toMatch(/narrow\/thin\/en-space/i);
+    expect(row?.evidenceNote).toMatch(/control-char/i);
+    expect(row?.evidenceNote).toMatch(/en-quad|three-per-em|ogham/i);
+    expect(row?.evidenceNote).toMatch(/bidi embedding|bidi-isolate|isolate/i);
     expect(row?.evidenceNote).toMatch(/externalEffects=NONE/i);
     expect(row?.evidenceNote).toMatch(/ACCEPTED/);
   });
@@ -121,6 +123,13 @@ describe("contract: T-X068 thirty alerts one outage grouped", () => {
     expect(proof?.details.some((d) => /J33:/i.test(d))).toBe(true);
     expect(proof?.details.some((d) => /J34:/i.test(d))).toBe(true);
     expect(proof?.details.some((d) => /J35:/i.test(d))).toBe(true);
+    expect(proof?.details.some((d) => /J36:/i.test(d))).toBe(true);
+    expect(proof?.details.some((d) => /J37:/i.test(d))).toBe(true);
+    expect(proof?.details.some((d) => /J38:/i.test(d))).toBe(true);
+    expect(proof?.details.some((d) => /J39:/i.test(d))).toBe(true);
+    expect(proof?.details.some((d) => /J40:/i.test(d))).toBe(true);
+    expect(proof?.details.some((d) => /J41:/i.test(d))).toBe(true);
+    expect(proof?.details.some((d) => /J42:/i.test(d))).toBe(true);
     expect(
       proof?.details.some((d) => /externalEffects=NONE/i.test(d)),
     ).toBe(true);

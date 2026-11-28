@@ -484,6 +484,265 @@ export function proofThirtyAlertsOneOutageGrouped(
     details.push(`J35 grouping unexpectedly ${JSON.stringify(j35Incidents)}`);
   }
 
+  const j36Key = secondaryOutage;
+  const j36Split = `provider:\u2005fix\u2008ture-crm`;
+  const j36Alerts = [
+    createProbeAlert({
+      alertId: "j36-a1",
+      outageKey: j36Split,
+      source: "probe-j36",
+      raisedAtIso: new Date(baseMs + 40_000).toISOString(),
+      severity: AlertSeverity.P2,
+      message: "J36 four-per-em/punctuation space",
+    }),
+    createProbeAlert({
+      alertId: "j36-a2",
+      outageKey: j36Key,
+      source: "probe-j36",
+      raisedAtIso: new Date(baseMs + 40_500).toISOString(),
+      severity: AlertSeverity.P1,
+      message: "J36 canonical",
+    }),
+  ];
+  const j36Incidents = groupAlertsIntoIncidents({
+    alerts: j36Alerts,
+    incidentIdForOutageKey: (k) => `inc-${k.replace(/[^a-z0-9-]/gi, "-")}`,
+  });
+  if (
+    j36Incidents.length === 1 &&
+    j36Incidents[0]!.outageKey === j36Key &&
+    j36Incidents[0]!.alertCount === 2
+  ) {
+    details.push(
+      "J36: four-per-em/punctuation-space outageKey collapsed — no split incident",
+    );
+  } else {
+    passed = false;
+    details.push(`J36 grouping unexpectedly ${JSON.stringify(j36Incidents)}`);
+  }
+
+  const j37Key = primaryOutage;
+  const j37Split = `host:lo\u2063cal\u2064-1`;
+  const j37Alerts = [
+    createProbeAlert({
+      alertId: "j37-a1",
+      outageKey: j37Split,
+      source: "probe-j37",
+      raisedAtIso: new Date(baseMs + 41_000).toISOString(),
+      severity: AlertSeverity.P3,
+      message: "J37 invisible math separator",
+    }),
+    createProbeAlert({
+      alertId: "j37-a2",
+      outageKey: j37Key,
+      source: "probe-j37",
+      raisedAtIso: new Date(baseMs + 41_500).toISOString(),
+      severity: AlertSeverity.P0,
+      message: "J37 canonical",
+    }),
+  ];
+  const j37Incidents = groupAlertsIntoIncidents({
+    alerts: j37Alerts,
+    incidentIdForOutageKey: (k) => `inc-${k.replace(/[^a-z0-9-]/gi, "-")}`,
+  });
+  if (
+    j37Incidents.length === 1 &&
+    j37Incidents[0]!.outageKey === j37Key &&
+    j37Incidents[0]!.alertCount === 2
+  ) {
+    details.push(
+      "J37: invisible-math-operator outageKey collapsed — no split incident",
+    );
+  } else {
+    passed = false;
+    details.push(`J37 grouping unexpectedly ${JSON.stringify(j37Incidents)}`);
+  }
+
+  const j38Key = primaryOutage;
+  const j38Split = `host:local\u000b-1`;
+  const j38Alerts = [
+    createProbeAlert({
+      alertId: "j38-a1",
+      outageKey: j38Split,
+      source: "probe-j38",
+      raisedAtIso: new Date(baseMs + 42_000).toISOString(),
+      severity: AlertSeverity.P3,
+      message: "J38 vertical tab",
+    }),
+    createProbeAlert({
+      alertId: "j38-a2",
+      outageKey: j38Key,
+      source: "probe-j38",
+      raisedAtIso: new Date(baseMs + 42_500).toISOString(),
+      severity: AlertSeverity.P0,
+      message: "J38 canonical",
+    }),
+  ];
+  const j38Incidents = groupAlertsIntoIncidents({
+    alerts: j38Alerts,
+    incidentIdForOutageKey: (k) => `inc-${k.replace(/[^a-z0-9-]/gi, "-")}`,
+  });
+  if (
+    j38Incidents.length === 1 &&
+    j38Incidents[0]!.outageKey === j38Key &&
+    j38Incidents[0]!.alertCount === 2
+  ) {
+    details.push(
+      "J38: control-char outageKey collapsed — no split incident",
+    );
+  } else {
+    passed = false;
+    details.push(`J38 grouping unexpectedly ${JSON.stringify(j38Incidents)}`);
+  }
+
+  const j39Key = secondaryOutage;
+  const j39Split = `provider:\u2000fix\u2001ture-crm`;
+  const j39Alerts = [
+    createProbeAlert({
+      alertId: "j39-a1",
+      outageKey: j39Split,
+      source: "probe-j39",
+      raisedAtIso: new Date(baseMs + 43_000).toISOString(),
+      severity: AlertSeverity.P2,
+      message: "J39 en/em-quad space",
+    }),
+    createProbeAlert({
+      alertId: "j39-a2",
+      outageKey: j39Key,
+      source: "probe-j39",
+      raisedAtIso: new Date(baseMs + 43_500).toISOString(),
+      severity: AlertSeverity.P1,
+      message: "J39 canonical",
+    }),
+  ];
+  const j39Incidents = groupAlertsIntoIncidents({
+    alerts: j39Alerts,
+    incidentIdForOutageKey: (k) => `inc-${k.replace(/[^a-z0-9-]/gi, "-")}`,
+  });
+  if (
+    j39Incidents.length === 1 &&
+    j39Incidents[0]!.outageKey === j39Key &&
+    j39Incidents[0]!.alertCount === 2
+  ) {
+    details.push(
+      "J39: en-quad/em-quad/three-per-em outageKey collapsed — no split incident",
+    );
+  } else {
+    passed = false;
+    details.push(`J39 grouping unexpectedly ${JSON.stringify(j39Incidents)}`);
+  }
+
+  const j40Key = tertiaryOutage;
+  const j40Split = `capability:\u1680gsc\u180e-fetch`;
+  const j40Alerts = [
+    createProbeAlert({
+      alertId: "j40-a1",
+      outageKey: j40Split,
+      source: "probe-j40",
+      raisedAtIso: new Date(baseMs + 44_000).toISOString(),
+      severity: AlertSeverity.P3,
+      message: "J40 ogham/MVS",
+    }),
+    createProbeAlert({
+      alertId: "j40-a2",
+      outageKey: j40Key,
+      source: "probe-j40",
+      raisedAtIso: new Date(baseMs + 44_500).toISOString(),
+      severity: AlertSeverity.P2,
+      message: "J40 canonical",
+    }),
+  ];
+  const j40Incidents = groupAlertsIntoIncidents({
+    alerts: j40Alerts,
+    incidentIdForOutageKey: (k) => `inc-${k.replace(/[^a-z0-9-]/gi, "-")}`,
+  });
+  if (
+    j40Incidents.length === 1 &&
+    j40Incidents[0]!.outageKey === j40Key &&
+    j40Incidents[0]!.alertCount === 2
+  ) {
+    details.push(
+      "J40: ogham/MVS/function-application outageKey collapsed — no split incident",
+    );
+  } else {
+    passed = false;
+    details.push(`J40 grouping unexpectedly ${JSON.stringify(j40Incidents)}`);
+  }
+
+  const j41Key = primaryOutage;
+  const j41Split = `host:\u202elocal\u202c-1`;
+  const j41Alerts = [
+    createProbeAlert({
+      alertId: "j41-a1",
+      outageKey: j41Split,
+      source: "probe-j41",
+      raisedAtIso: new Date(baseMs + 45_000).toISOString(),
+      severity: AlertSeverity.P3,
+      message: "J41 bidi override",
+    }),
+    createProbeAlert({
+      alertId: "j41-a2",
+      outageKey: j41Key,
+      source: "probe-j41",
+      raisedAtIso: new Date(baseMs + 45_500).toISOString(),
+      severity: AlertSeverity.P0,
+      message: "J41 canonical",
+    }),
+  ];
+  const j41Incidents = groupAlertsIntoIncidents({
+    alerts: j41Alerts,
+    incidentIdForOutageKey: (k) => `inc-${k.replace(/[^a-z0-9-]/gi, "-")}`,
+  });
+  if (
+    j41Incidents.length === 1 &&
+    j41Incidents[0]!.outageKey === j41Key &&
+    j41Incidents[0]!.alertCount === 2
+  ) {
+    details.push(
+      "J41: bidi embedding/override outageKey collapsed — no split incident",
+    );
+  } else {
+    passed = false;
+    details.push(`J41 grouping unexpectedly ${JSON.stringify(j41Incidents)}`);
+  }
+
+  const j42Key = secondaryOutage;
+  const j42Split = `provider:\u2066fix\u2069ture-crm`;
+  const j42Alerts = [
+    createProbeAlert({
+      alertId: "j42-a1",
+      outageKey: j42Split,
+      source: "probe-j42",
+      raisedAtIso: new Date(baseMs + 46_000).toISOString(),
+      severity: AlertSeverity.P2,
+      message: "J42 bidi isolate",
+    }),
+    createProbeAlert({
+      alertId: "j42-a2",
+      outageKey: j42Key,
+      source: "probe-j42",
+      raisedAtIso: new Date(baseMs + 46_500).toISOString(),
+      severity: AlertSeverity.P1,
+      message: "J42 canonical",
+    }),
+  ];
+  const j42Incidents = groupAlertsIntoIncidents({
+    alerts: j42Alerts,
+    incidentIdForOutageKey: (k) => `inc-${k.replace(/[^a-z0-9-]/gi, "-")}`,
+  });
+  if (
+    j42Incidents.length === 1 &&
+    j42Incidents[0]!.outageKey === j42Key &&
+    j42Incidents[0]!.alertCount === 2
+  ) {
+    details.push(
+      "J42: bidi-isolate outageKey collapsed — no split incident",
+    );
+  } else {
+    passed = false;
+    details.push(`J42 grouping unexpectedly ${JSON.stringify(j42Incidents)}`);
+  }
+
   details.push(
     "liveProviderSuccessClaimed=false liveProviderWiring=NOT_WIRED externalEffects=NONE",
   );
