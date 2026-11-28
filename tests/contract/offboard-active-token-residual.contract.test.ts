@@ -1,7 +1,7 @@
 /**
- * Contract: T-X073 offboard ACTIVE_TOKEN residual (O70 promoted-332 @ 79a4fc8f SOLE exclusive).
+ * Contract: T-X073 offboard ACTIVE_TOKEN residual (O71 continue @ f160027f edge-deepen).
  * Catalog ceiling T-X073. ACCEPTED ≠ VERIFIED. externalEffects NONE. NOT_WIRED.
- * Soft-skip Ads. Does not edit catalog docs. #332 Slot O — SOLE exclusive T-X073.
+ * Soft-skip Ads. Does not edit catalog docs. Exclusive elsewhere: #333 Slot K.
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -722,5 +722,18 @@ describe("contract: T-X073 offboard ACTIVE_TOKEN residual", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.CUSTOMER_DATA_EVAL_REDACTION_BLOCKS),
     ).not.toContain("T-X073");
+  });
+
+  it("retip-332 continue HOLD: T-X057 repair-weaken off T-X073; exclusive #333 unclaimed", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X057");
+    expect(expectedProofsForFixtureCase("T-X057")).toEqual([
+      SoakProofKind.REPAIR_WEAKEN_TEST_REJECTED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.REPAIR_WEAKEN_TEST_REJECTED),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X057");
   });
 });
