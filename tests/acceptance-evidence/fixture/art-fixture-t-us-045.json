@@ -3,13 +3,13 @@
   "caseId": "T-US-045",
   "environment": "fixture",
   "redacted": true,
-  "summary": "Fixture ACCEPTED for T-US-045 (Semantic search / no-result — evaluation comparison)\nproof=semantic_search_no_result_eval_comparison applyCount=1 :: Hard-constraint miss → NO_RESULT with parsed intent (people=20, video) and no invented handoff | Judgment jud-e894ef32 → NO_MATCH for query q-us045-before | Remediation rem-d6b8d297 open, linked to judgment jud-e894ef32 | EVAL_ONLY COMPARE_GOLDEN tool allowed for evaluation comparison | Post-remediation golden re-run → GROUNDED room-20 with filterTrace, citations, booking handoff | Evaluation comparison: before=NO_RESULT (v1) → after=GROUNDED (v2) — golden improved, not silent false match | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
+  "summary": "Fixture ACCEPTED for T-US-045 (Semantic search / no-result — evaluation comparison)\nproof=semantic_search_no_result_eval_comparison applyCount=1 :: Hard-constraint miss → NO_RESULT with parsed intent (people=20, video) and no invented handoff | Judgment jud-a4b9bcdf → NO_MATCH for query q-us045-before | Remediation rem-1dbd5fc7 open, linked to judgment jud-a4b9bcdf | EVAL_ONLY COMPARE_GOLDEN tool allowed for evaluation comparison | Post-remediation golden re-run → GROUNDED room-20 with filterTrace, citations, booking handoff | Evaluation comparison: before=NO_RESULT (v1) → after=GROUNDED (v2) — golden improved, not silent false match | liveProviderSuccessClaimed=false externalEffects=NONE\nliveProviderSuccessClaimed=false externalEffects=NONE",
   "proofKinds": [
     "semantic_search_no_result_eval_comparison"
   ],
   "evidenceRef": "soak/evidence/art-fixture-t-us-045.json",
-  "createdAtIso": "2026-11-27T23:54:29.787Z",
+  "createdAtIso": "2026-11-28T00:02:31.633Z",
   "liveProviderSuccessClaimed": false,
   "externalEffects": "NONE",
-  "uniqueSourceArtifactId": "art-fixture-t-us-045-59577e18922c"
+  "uniqueSourceArtifactId": "art-fixture-t-us-045-cf7341a35c64"
 }
