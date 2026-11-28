@@ -1,7 +1,7 @@
 /**
- * Contract: T-X073 offboard ACTIVE_TOKEN residual (O70 promoted-332 @ 79a4fc8f SOLE exclusive).
+ * Contract: T-X073 offboard ACTIVE_TOKEN residual (O81 continue @ b106092f HOLD).
  * Catalog ceiling T-X073. ACCEPTED ≠ VERIFIED. externalEffects NONE. NOT_WIRED.
- * Soft-skip Ads. Does not edit catalog docs. #332 Slot O — SOLE exclusive T-X073.
+ * Soft-skip Ads. Does not edit catalog docs. Exclusive elsewhere: #343 Slot S.
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -722,5 +722,726 @@ describe("contract: T-X073 offboard ACTIVE_TOKEN residual", () => {
     expect(
       mapProofToFixtureCases(SoakProofKind.CUSTOMER_DATA_EVAL_REDACTION_BLOCKS),
     ).not.toContain("T-X073");
+  });
+
+  it("O71 tip-moved-332 continue HOLD: T-X057 repair-weaken off T-X073; exclusive #333 unclaimed; residual sole", () => {
+    // Exclusive #333 Slot K owns T-X057 — Slot O does not claim.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X057");
+    expect(expectedProofsForFixtureCase("T-X057")).toEqual([
+      SoakProofKind.REPAIR_WEAKEN_TEST_REJECTED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.REPAIR_WEAKEN_TEST_REJECTED),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X057");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).toEqual(["T-X073"]);
+
+    expect(SOAK_FIXTURE_CASE_IDS).not.toContain("T-X074");
+    for (const id of SOAK_FIXTURE_CASE_IDS) {
+      const m = /^T-X(\d+)$/.exec(id);
+      if (m) {
+        expect(Number(m[1])).toBeLessThanOrEqual(73);
+      }
+    }
+
+    for (const adsCase of ["T-F07", "T-US-013", "T-US-014"] as const) {
+      expect(
+        mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+      ).not.toContain(adsCase);
+    }
+
+    const honestManifest = {
+      offboardId: "ob-o71",
+      connectionId: "conn-o71",
+      revokedLocally: true,
+      auditRetained: true,
+      schedulesDisabled: true,
+      secretsExported: false,
+      catalogClaim: "NOT_RUN" as const,
+      liveProviderRevoke: "NOT_WIRED" as const,
+      externalEffects: "NONE" as const,
+      productionActivated: false,
+      summary: "T-X073 O71 continue; ACCEPTED≠VERIFIED; NONE/NOT_WIRED",
+      residualObligations: [
+        {
+          kind: "ACTIVE_TOKEN" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "provider token may still be active",
+        },
+        {
+          kind: "PROVIDER_REVOKE" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "live revoke not wired",
+        },
+      ],
+    };
+    const honesty = assertOffboardActiveTokenResidualHonest(honestManifest);
+    expect(honesty.ok).toBe(true);
+    expect(honesty.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(honesty.externalEffects).toBe("NONE");
+    const r1 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const r2 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const reclaim = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: r2,
+    });
+    expect(reclaim.ok).toBe(true);
+    expect(reclaim.code).toBe("OFFBOARD_RECLAIM_IDEMPOTENT");
+  });
+
+  it("retip-333 continue HOLD: T-X058 repair-limit off T-X073; exclusive #334 unclaimed", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X058");
+    expect(expectedProofsForFixtureCase("T-X058")).toEqual([
+      SoakProofKind.REPAIR_ATTEMPT_LIMIT_ESCALATED,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.REPAIR_ATTEMPT_LIMIT_ESCALATED),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X058");
+  });
+
+  it("retip-334 continue HOLD: T-X059 dup-attribution off T-X073; exclusive #335 unclaimed", () => {
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X059");
+    expect(expectedProofsForFixtureCase("T-X059")).toEqual([
+      SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING,
+      ),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X059");
+  });
+
+  it("O74 tip-moved-335 continue HOLD: T-X060 currency/tz off T-X073; exclusive #336 unclaimed; residual sole", () => {
+    // Exclusive #336 Slot G owns T-X060 — Slot O does not claim.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X060");
+    expect(expectedProofsForFixtureCase("T-X060")).toEqual([
+      SoakProofKind.CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM,
+      ),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X060");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).toEqual(["T-X073"]);
+
+    // T-X059 now on tip via #335 — still off residual mapping.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X059");
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.DUPLICATE_PLATFORM_ATTRIBUTION_ONE_BOOKING,
+      ),
+    ).not.toContain("T-X073");
+
+    expect(SOAK_FIXTURE_CASE_IDS).not.toContain("T-X074");
+    for (const id of SOAK_FIXTURE_CASE_IDS) {
+      const m = /^T-X(\d+)$/.exec(id);
+      if (m) {
+        expect(Number(m[1])).toBeLessThanOrEqual(73);
+      }
+    }
+
+    for (const adsCase of ["T-F07", "T-US-013", "T-US-014"] as const) {
+      expect(
+        mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+      ).not.toContain(adsCase);
+    }
+
+    const honestManifest = {
+      offboardId: "ob-o74",
+      connectionId: "conn-o74",
+      revokedLocally: true,
+      auditRetained: true,
+      schedulesDisabled: true,
+      secretsExported: false,
+      catalogClaim: "NOT_RUN" as const,
+      liveProviderRevoke: "NOT_WIRED" as const,
+      externalEffects: "NONE" as const,
+      productionActivated: false,
+      summary: "T-X073 O74 continue; ACCEPTED≠VERIFIED; NONE/NOT_WIRED",
+      residualObligations: [
+        {
+          kind: "ACTIVE_TOKEN" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "provider token may still be active",
+        },
+        {
+          kind: "PROVIDER_REVOKE" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "live revoke not wired",
+        },
+      ],
+    };
+    const honesty = assertOffboardActiveTokenResidualHonest(honestManifest);
+    expect(honesty.ok).toBe(true);
+    expect(honesty.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(honesty.externalEffects).toBe("NONE");
+    const r1 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const r2 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const reclaim = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: r2,
+    });
+    expect(reclaim.ok).toBe(true);
+    expect(reclaim.code).toBe("OFFBOARD_RECLAIM_IDEMPOTENT");
+  });
+
+  it("O75 tip-moved-336 continue HOLD: T-X061 keyboard-focus off T-X073; exclusive #337 unclaimed; residual sole", () => {
+    // Exclusive #337 Slot T owns T-X061 — Slot O does not claim.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X061");
+    expect(expectedProofsForFixtureCase("T-X061")).toEqual([
+      SoakProofKind.KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG,
+      ),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X061");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).toEqual(["T-X073"]);
+
+    // T-X060 now on tip via #336 — still off residual mapping.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X060");
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.CURRENCY_TIMEZONE_MISMATCH_NO_SILENT_SUM,
+      ),
+    ).not.toContain("T-X073");
+
+    expect(SOAK_FIXTURE_CASE_IDS).not.toContain("T-X074");
+    for (const id of SOAK_FIXTURE_CASE_IDS) {
+      const m = /^T-X(\d+)$/.exec(id);
+      if (m) {
+        expect(Number(m[1])).toBeLessThanOrEqual(73);
+      }
+    }
+
+    for (const adsCase of ["T-F07", "T-US-013", "T-US-014"] as const) {
+      expect(
+        mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+      ).not.toContain(adsCase);
+    }
+
+    const honestManifest = {
+      offboardId: "ob-o75",
+      connectionId: "conn-o75",
+      revokedLocally: true,
+      auditRetained: true,
+      schedulesDisabled: true,
+      secretsExported: false,
+      catalogClaim: "NOT_RUN" as const,
+      liveProviderRevoke: "NOT_WIRED" as const,
+      externalEffects: "NONE" as const,
+      productionActivated: false,
+      summary: "T-X073 O75 continue; ACCEPTED≠VERIFIED; NONE/NOT_WIRED",
+      residualObligations: [
+        {
+          kind: "ACTIVE_TOKEN" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "provider token may still be active",
+        },
+        {
+          kind: "PROVIDER_REVOKE" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "live revoke not wired",
+        },
+      ],
+    };
+    const honesty = assertOffboardActiveTokenResidualHonest(honestManifest);
+    expect(honesty.ok).toBe(true);
+    expect(honesty.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(honesty.externalEffects).toBe("NONE");
+    const r1 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const r2 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const reclaim = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: r2,
+    });
+    expect(reclaim.ok).toBe(true);
+    expect(reclaim.code).toBe("OFFBOARD_RECLAIM_IDEMPOTENT");
+  });
+
+  it("O76 tip-moved-337 continue HOLD: T-X062 SSE resync off T-X073; exclusive #338 unclaimed; residual sole", () => {
+    // Exclusive #338 Slot F owns T-X062 — Slot O does not claim.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X062");
+    expect(expectedProofsForFixtureCase("T-X062")).toEqual([
+      SoakProofKind.SSE_GAP_FULL_STATE_RESYNC,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.SSE_GAP_FULL_STATE_RESYNC),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X062");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).toEqual(["T-X073"]);
+
+    // T-X061 now on tip via #337 — still off residual mapping.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X061");
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.KEYBOARD_FOCUS_RESTORE_AFTER_DIALOG,
+      ),
+    ).not.toContain("T-X073");
+
+    expect(SOAK_FIXTURE_CASE_IDS).not.toContain("T-X074");
+    for (const id of SOAK_FIXTURE_CASE_IDS) {
+      const m = /^T-X(\d+)$/.exec(id);
+      if (m) {
+        expect(Number(m[1])).toBeLessThanOrEqual(73);
+      }
+    }
+
+    for (const adsCase of ["T-F07", "T-US-013", "T-US-014"] as const) {
+      expect(
+        mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+      ).not.toContain(adsCase);
+    }
+
+    const honestManifest = {
+      offboardId: "ob-o76",
+      connectionId: "conn-o76",
+      revokedLocally: true,
+      auditRetained: true,
+      schedulesDisabled: true,
+      secretsExported: false,
+      catalogClaim: "NOT_RUN" as const,
+      liveProviderRevoke: "NOT_WIRED" as const,
+      externalEffects: "NONE" as const,
+      productionActivated: false,
+      summary: "T-X073 O76 continue; ACCEPTED≠VERIFIED; NONE/NOT_WIRED",
+      residualObligations: [
+        {
+          kind: "ACTIVE_TOKEN" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "provider token may still be active",
+        },
+        {
+          kind: "PROVIDER_REVOKE" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "live revoke not wired",
+        },
+      ],
+    };
+    const honesty = assertOffboardActiveTokenResidualHonest(honestManifest);
+    expect(honesty.ok).toBe(true);
+    expect(honesty.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(honesty.externalEffects).toBe("NONE");
+    const r1 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const r2 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const reclaim = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: r2,
+    });
+    expect(reclaim.ok).toBe(true);
+    expect(reclaim.code).toBe("OFFBOARD_RECLAIM_IDEMPOTENT");
+  });
+
+  it("O77 tip-moved-338 continue HOLD: T-X063 prompt-injection off T-X073; exclusive #339 unclaimed; residual sole", () => {
+    // Exclusive #339 Slot R owns T-X063 — Slot O does not claim.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X063");
+    expect(expectedProofsForFixtureCase("T-X063")).toEqual([
+      SoakProofKind.INDIRECT_PROMPT_INJECTION_EXFIL_DENIED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.INDIRECT_PROMPT_INJECTION_EXFIL_DENIED,
+      ),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X063");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).toEqual(["T-X073"]);
+
+    // T-X062 now on tip via #338 — still off residual mapping.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X062");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.SSE_GAP_FULL_STATE_RESYNC),
+    ).not.toContain("T-X073");
+
+    expect(SOAK_FIXTURE_CASE_IDS).not.toContain("T-X074");
+    for (const id of SOAK_FIXTURE_CASE_IDS) {
+      const m = /^T-X(\d+)$/.exec(id);
+      if (m) {
+        expect(Number(m[1])).toBeLessThanOrEqual(73);
+      }
+    }
+
+    for (const adsCase of ["T-F07", "T-US-013", "T-US-014"] as const) {
+      expect(
+        mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+      ).not.toContain(adsCase);
+    }
+
+    const honestManifest = {
+      offboardId: "ob-o77",
+      connectionId: "conn-o77",
+      revokedLocally: true,
+      auditRetained: true,
+      schedulesDisabled: true,
+      secretsExported: false,
+      catalogClaim: "NOT_RUN" as const,
+      liveProviderRevoke: "NOT_WIRED" as const,
+      externalEffects: "NONE" as const,
+      productionActivated: false,
+      summary: "T-X073 O77 continue; ACCEPTED≠VERIFIED; NONE/NOT_WIRED",
+      residualObligations: [
+        {
+          kind: "ACTIVE_TOKEN" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "provider token may still be active",
+        },
+        {
+          kind: "PROVIDER_REVOKE" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "live revoke not wired",
+        },
+      ],
+    };
+    const honesty = assertOffboardActiveTokenResidualHonest(honestManifest);
+    expect(honesty.ok).toBe(true);
+    expect(honesty.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(honesty.externalEffects).toBe("NONE");
+    const r1 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const r2 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const reclaim = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: r2,
+    });
+    expect(reclaim.ok).toBe(true);
+    expect(reclaim.code).toBe("OFFBOARD_RECLAIM_IDEMPOTENT");
+  });
+
+  it("O78 tip-moved-339 continue HOLD: T-X064 SSRF off T-X073; exclusive #340 unclaimed; residual sole", () => {
+    // Exclusive #340 Slot D owns T-X064 — Slot O does not claim.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X064");
+    expect(expectedProofsForFixtureCase("T-X064")).toEqual([
+      SoakProofKind.SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP,
+      ),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X064");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).toEqual(["T-X073"]);
+
+    // T-X063 now on tip via #339 — still off residual mapping.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X063");
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.INDIRECT_PROMPT_INJECTION_EXFIL_DENIED,
+      ),
+    ).not.toContain("T-X073");
+
+    expect(SOAK_FIXTURE_CASE_IDS).not.toContain("T-X074");
+    for (const id of SOAK_FIXTURE_CASE_IDS) {
+      const m = /^T-X(\d+)$/.exec(id);
+      if (m) {
+        expect(Number(m[1])).toBeLessThanOrEqual(73);
+      }
+    }
+
+    for (const adsCase of ["T-F07", "T-US-013", "T-US-014"] as const) {
+      expect(
+        mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+      ).not.toContain(adsCase);
+    }
+
+    const honestManifest = {
+      offboardId: "ob-o78",
+      connectionId: "conn-o78",
+      revokedLocally: true,
+      auditRetained: true,
+      schedulesDisabled: true,
+      secretsExported: false,
+      catalogClaim: "NOT_RUN" as const,
+      liveProviderRevoke: "NOT_WIRED" as const,
+      externalEffects: "NONE" as const,
+      productionActivated: false,
+      summary: "T-X073 O78 continue; ACCEPTED≠VERIFIED; NONE/NOT_WIRED",
+      residualObligations: [
+        {
+          kind: "ACTIVE_TOKEN" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "provider token may still be active",
+        },
+        {
+          kind: "PROVIDER_REVOKE" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "live revoke not wired",
+        },
+      ],
+    };
+    const honesty = assertOffboardActiveTokenResidualHonest(honestManifest);
+    expect(honesty.ok).toBe(true);
+    expect(honesty.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(honesty.externalEffects).toBe("NONE");
+    const r1 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const r2 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const reclaim = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: r2,
+    });
+    expect(reclaim.ok).toBe(true);
+    expect(reclaim.code).toBe("OFFBOARD_RECLAIM_IDEMPOTENT");
+  });
+
+  it("O79 tip-moved-340 continue HOLD: T-X065 browser-auth off T-X073; exclusive #341 unclaimed; residual sole", () => {
+    // Exclusive #341 Slot M owns T-X065 — Slot O does not claim.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X065");
+    expect(expectedProofsForFixtureCase("T-X065")).toEqual([
+      SoakProofKind.WORKER_BROWSER_AUTH_STATE_OS_DENIED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.WORKER_BROWSER_AUTH_STATE_OS_DENIED,
+      ),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X065");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).toEqual(["T-X073"]);
+
+    // T-X064 now on tip via #340 — still off residual mapping.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X064");
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.SSRF_REDIRECT_DNS_REBIND_BLOCKED_EVERY_HOP,
+      ),
+    ).not.toContain("T-X073");
+
+    expect(SOAK_FIXTURE_CASE_IDS).not.toContain("T-X074");
+    for (const id of SOAK_FIXTURE_CASE_IDS) {
+      const m = /^T-X(\d+)$/.exec(id);
+      if (m) {
+        expect(Number(m[1])).toBeLessThanOrEqual(73);
+      }
+    }
+
+    for (const adsCase of ["T-F07", "T-US-013", "T-US-014"] as const) {
+      expect(
+        mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+      ).not.toContain(adsCase);
+    }
+
+    const honestManifest = {
+      offboardId: "ob-o79",
+      connectionId: "conn-o79",
+      revokedLocally: true,
+      auditRetained: true,
+      schedulesDisabled: true,
+      secretsExported: false,
+      catalogClaim: "NOT_RUN" as const,
+      liveProviderRevoke: "NOT_WIRED" as const,
+      externalEffects: "NONE" as const,
+      productionActivated: false,
+      summary: "T-X073 O79 continue; ACCEPTED≠VERIFIED; NONE/NOT_WIRED",
+      residualObligations: [
+        {
+          kind: "ACTIVE_TOKEN" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "provider token may still be active",
+        },
+        {
+          kind: "PROVIDER_REVOKE" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "live revoke not wired",
+        },
+      ],
+    };
+    const honesty = assertOffboardActiveTokenResidualHonest(honestManifest);
+    expect(honesty.ok).toBe(true);
+    expect(honesty.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(honesty.externalEffects).toBe("NONE");
+    const r1 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const r2 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const reclaim = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: r2,
+    });
+    expect(reclaim.ok).toBe(true);
+    expect(reclaim.code).toBe("OFFBOARD_RECLAIM_IDEMPOTENT");
+  });
+
+  it("O80 tip-moved-341 continue HOLD: T-X066 backup-omit off T-X073; exclusive #342 unclaimed; residual sole", () => {
+    // Exclusive #342 Slot L owns T-X066 — Slot O does not claim.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X066");
+    expect(expectedProofsForFixtureCase("T-X066")).toEqual([
+      SoakProofKind.BACKUP_OMIT_RECEIPT,
+    ]);
+    expect(
+      mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).toEqual(["T-X073"]);
+
+    // T-X065 now on tip via #341 — still off residual mapping.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X065");
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.WORKER_BROWSER_AUTH_STATE_OS_DENIED,
+      ),
+    ).not.toContain("T-X073");
+
+    expect(SOAK_FIXTURE_CASE_IDS).not.toContain("T-X074");
+    for (const id of SOAK_FIXTURE_CASE_IDS) {
+      const m = /^T-X(\d+)$/.exec(id);
+      if (m) {
+        expect(Number(m[1])).toBeLessThanOrEqual(73);
+      }
+    }
+
+    for (const adsCase of ["T-F07", "T-US-013", "T-US-014"] as const) {
+      expect(
+        mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+      ).not.toContain(adsCase);
+    }
+
+    const honestManifest = {
+      offboardId: "ob-o80",
+      connectionId: "conn-o80",
+      revokedLocally: true,
+      auditRetained: true,
+      schedulesDisabled: true,
+      secretsExported: false,
+      catalogClaim: "NOT_RUN" as const,
+      liveProviderRevoke: "NOT_WIRED" as const,
+      externalEffects: "NONE" as const,
+      productionActivated: false,
+      summary: "T-X073 O80 continue; ACCEPTED≠VERIFIED; NONE/NOT_WIRED",
+      residualObligations: [
+        {
+          kind: "ACTIVE_TOKEN" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "provider token may still be active",
+        },
+        {
+          kind: "PROVIDER_REVOKE" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "live revoke not wired",
+        },
+      ],
+    };
+    const honesty = assertOffboardActiveTokenResidualHonest(honestManifest);
+    expect(honesty.ok).toBe(true);
+    expect(honesty.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(honesty.externalEffects).toBe("NONE");
+    const r1 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const r2 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const reclaim = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: r2,
+    });
+    expect(reclaim.ok).toBe(true);
+    expect(reclaim.code).toBe("OFFBOARD_RECLAIM_IDEMPOTENT");
+  });
+
+  it("O81 tip-moved-342 continue HOLD: T-X067 workflow-upgrade off T-X073; exclusive #343 unclaimed; residual sole", () => {
+    // Exclusive #343 Slot S owns T-X067 — Slot O does not claim.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X067");
+    expect(expectedProofsForFixtureCase("T-X067")).toEqual([
+      SoakProofKind.INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED,
+    ]);
+    expect(
+      mapProofToFixtureCases(
+        SoakProofKind.INCOMPATIBLE_WORKFLOW_UPGRADE_BLOCKED_OR_RETAINED,
+      ),
+    ).not.toContain("T-X073");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).not.toContain("T-X067");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+    ).toEqual(["T-X073"]);
+
+    // T-X066 now on tip via #342 — still off residual mapping.
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X066");
+    expect(
+      mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT),
+    ).not.toContain("T-X073");
+
+    expect(SOAK_FIXTURE_CASE_IDS).not.toContain("T-X074");
+    for (const id of SOAK_FIXTURE_CASE_IDS) {
+      const m = /^T-X(\d+)$/.exec(id);
+      if (m) {
+        expect(Number(m[1])).toBeLessThanOrEqual(73);
+      }
+    }
+
+    for (const adsCase of ["T-F07", "T-US-013", "T-US-014"] as const) {
+      expect(
+        mapProofToFixtureCases(SoakProofKind.OFFBOARD_ACTIVE_TOKEN_RESIDUAL),
+      ).not.toContain(adsCase);
+    }
+
+    const honestManifest = {
+      offboardId: "ob-o81",
+      connectionId: "conn-o81",
+      revokedLocally: true,
+      auditRetained: true,
+      schedulesDisabled: true,
+      secretsExported: false,
+      catalogClaim: "NOT_RUN" as const,
+      liveProviderRevoke: "NOT_WIRED" as const,
+      externalEffects: "NONE" as const,
+      productionActivated: false,
+      summary: "T-X073 O81 continue; ACCEPTED≠VERIFIED; NONE/NOT_WIRED",
+      residualObligations: [
+        {
+          kind: "ACTIVE_TOKEN" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "provider token may still be active",
+        },
+        {
+          kind: "PROVIDER_REVOKE" as const,
+          status: ResidualObligationStatus.BLOCKED_NOT_WIRED,
+          summary: "live revoke not wired",
+        },
+      ],
+    };
+    const honesty = assertOffboardActiveTokenResidualHonest(honestManifest);
+    expect(honesty.ok).toBe(true);
+    expect(honesty.liveProviderRevoke).toBe("NOT_WIRED");
+    expect(honesty.externalEffects).toBe("NONE");
+    const r1 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const r2 = reclaimOffboardActiveTokenResidual(honestManifest);
+    const reclaim = assertOffboardActiveTokenResidualReclaimIdempotent({
+      first: r1,
+      second: r2,
+    });
+    expect(reclaim.ok).toBe(true);
+    expect(reclaim.code).toBe("OFFBOARD_RECLAIM_IDEMPOTENT");
   });
 });
