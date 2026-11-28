@@ -245,6 +245,34 @@ describe("browser-auth-isolation (T-X065)", () => {
     expect(allowed.liveBrowserAuthWiring).toBe("NOT_WIRED");
   });
 
+  it("locks host-admin false consent on system kinds and workspace (M19)", () => {
+    for (const stateKind of SYSTEM_BROWSER_AUTH_STATE_KINDS) {
+      const decision = evaluateBrowserAuthStateAccess({
+        principal: BrowserAuthPrincipal.HOST_ADMIN,
+        stateKind,
+        explicitUserConsent: false,
+      });
+      expect(decision.allowed).toBe(false);
+      expect(decision.code).toBe(BrowserAuthAccessCode.OS_DENY);
+      expect(decision.code).not.toBe(BrowserAuthAccessCode.CONSENT_REQUIRED);
+      expect(decision.authMaterialReturned).toBe(false);
+      expect(decision.externalEffects).toBe("NONE");
+      expect(decision.liveBrowserAuthWiring).toBe("NOT_WIRED");
+    }
+
+    const workspace = evaluateBrowserAuthStateAccess({
+      principal: BrowserAuthPrincipal.HOST_ADMIN,
+      stateKind: BrowserAuthStateKind.WORKSPACE_BROWSER_PARTITION,
+      explicitUserConsent: false,
+    });
+    expect(workspace.allowed).toBe(false);
+    expect(workspace.code).toBe(BrowserAuthAccessCode.OS_DENY);
+    expect(workspace.code).not.toBe(BrowserAuthAccessCode.CONSENT_REQUIRED);
+    expect(workspace.authMaterialReturned).toBe(false);
+    expect(workspace.externalEffects).toBe("NONE");
+    expect(workspace.liveBrowserAuthWiring).toBe("NOT_WIRED");
+  });
+
   it("OS-denies full worker × state-kind domain matrix (M16)", () => {
     const stateKinds = [
       BrowserAuthStateKind.SYSTEM_CHROME_COOKIES,
