@@ -1086,6 +1086,123 @@ describe("incompatible workflow upgrade (T-X067)", () => {
     expect(decision.upgradeApplied).toBe(false);
   });
 
+  it("COMPLETE retain reports externalEffects NONE (T-X067 S64)", () => {
+    const instance = baseInstance({
+      workflowId: "wf-complete-retain-none",
+      phase: WorkflowInstancePhase.COMPLETE,
+    });
+    const decision = evaluateWorkflowDefinitionUpgrade({
+      instance,
+      proposed: {
+        definitionVersion: "2.0.0",
+        compatibilityEpoch: "epoch-b",
+        breakingRevision: 3,
+        breakingChange: true,
+      },
+      nowIso: now,
+    });
+    expect(decision.code).toBe(
+      WorkflowUpgradeCode.COMPATIBLE_DEFINITION_RETAINED,
+    );
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.temporalWiring).toBe("NOT_WIRED");
+    expect(decision.upgradeApplied).toBe(false);
+  });
+
+  it("RUNNING matching proposal retains without upgrade (T-X067 S65)", () => {
+    const instance = baseInstance({
+      workflowId: "wf-running-match",
+      phase: WorkflowInstancePhase.RUNNING,
+    });
+    expect(isWorkflowInFlight(instance.phase)).toBe(true);
+    const decision = evaluateWorkflowDefinitionUpgrade({
+      instance,
+      proposed: {
+        definitionVersion: "1.0.0",
+        compatibilityEpoch: "epoch-a",
+        breakingRevision: 0,
+        breakingChange: false,
+      },
+      nowIso: now,
+    });
+    expect(decision.allowed).toBe(true);
+    expect(decision.code).toBe(
+      WorkflowUpgradeCode.COMPATIBLE_DEFINITION_RETAINED,
+    );
+    expect(decision.upgradeApplied).toBe(false);
+    expect(decision.instance.updatedAtIso).toBe(now);
+  });
+
+  it("COMPLETE retain reasons name phase (T-X067 S66)", () => {
+    const instance = baseInstance({
+      workflowId: "wf-complete-phase-reason",
+      phase: WorkflowInstancePhase.COMPLETE,
+    });
+    const decision = evaluateWorkflowDefinitionUpgrade({
+      instance,
+      proposed: {
+        definitionVersion: "2.0.0",
+        compatibilityEpoch: "epoch-b",
+        breakingRevision: 0,
+        breakingChange: false,
+      },
+      nowIso: now,
+    });
+    expect(decision.code).toBe(
+      WorkflowUpgradeCode.COMPATIBLE_DEFINITION_RETAINED,
+    );
+    expect(decision.reasons.some((r) => r.includes("phase=COMPLETE"))).toBe(
+      true,
+    );
+    expect(decision.externalEffects).toBe("NONE");
+  });
+
+  it("APPLYING block reasons name phase (T-X067 S67)", () => {
+    const instance = baseInstance({
+      workflowId: "wf-applying-phase-reason",
+      phase: WorkflowInstancePhase.APPLYING,
+    });
+    const decision = evaluateWorkflowDefinitionUpgrade({
+      instance,
+      proposed: {
+        definitionVersion: "2.0.0",
+        compatibilityEpoch: "epoch-b",
+        breakingRevision: 0,
+        breakingChange: false,
+      },
+      nowIso: now,
+    });
+    expect(decision.code).toBe(
+      WorkflowUpgradeCode.INCOMPATIBLE_UPGRADE_BLOCKED,
+    );
+    expect(decision.reasons.some((r) => r.includes("phase=APPLYING"))).toBe(
+      true,
+    );
+    expect(decision.temporalWiring).toBe("NOT_WIRED");
+    expect(decision.externalEffects).toBe("NONE");
+  });
+
+  it("stamps updatedAtIso on IDLE compatible upgrade (T-X067 S68)", () => {
+    const instance = baseInstance({
+      workflowId: "wf-idle-compat-stamp",
+      phase: WorkflowInstancePhase.IDLE,
+    });
+    const appliedAt = "2026-11-22T23:00:00.000Z";
+    const decision = evaluateWorkflowDefinitionUpgrade({
+      instance,
+      proposed: {
+        definitionVersion: "1.3.0",
+        compatibilityEpoch: "epoch-a",
+        breakingRevision: 0,
+        breakingChange: false,
+      },
+      nowIso: appliedAt,
+    });
+    expect(decision.code).toBe(WorkflowUpgradeCode.COMPATIBLE_UPGRADE_APPLIED);
+    expect(decision.instance.updatedAtIso).toBe(appliedAt);
+    expect(decision.externalEffects).toBe("NONE");
+  });
+
   it("rejects invalid createWorkflowInstance inputs", () => {
     expect(() =>
       createWorkflowInstance({
