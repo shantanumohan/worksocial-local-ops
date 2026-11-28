@@ -1288,6 +1288,73 @@ describe("contract: M9 soak / acceptance evidence", () => {
     // Q35/S41 — fence exclusive T-X058 (#317) without claiming it
     expect(art.proofKinds).not.toContain("repair_attempt_limit_escalated");
     expect(art.summary).not.toMatch(/repair_attempt_limit_escalated/);
+    // Q36/S42 tip-moved-334 @ 27a872ed — not T-X060 currency/timezone drift (#319)
+    expect(art.proofKinds).not.toContain(
+      "currency_timezone_mismatch_no_silent_sum",
+    );
+    expect(art.summary).not.toMatch(
+      /currency_timezone_mismatch_no_silent_sum/,
+    );
+    // Q36/S46 — not T-X063 indirect-prompt-injection drift (#322)
+    expect(art.proofKinds).not.toContain(
+      "indirect_prompt_injection_exfil_denied",
+    );
+    expect(art.summary).not.toMatch(/indirect_prompt_injection_exfil_denied/);
+    // Q36/S47 — not T-X065 browser-auth drift (#324)
+    expect(art.proofKinds).not.toContain(
+      "worker_browser_auth_state_os_denied",
+    );
+    expect(art.summary).not.toMatch(/worker_browser_auth_state_os_denied/);
+    // Q36/S48 — not T-X066 backup-omit drift (#325)
+    expect(art.proofKinds).not.toContain("backup_omit_receipt");
+    expect(art.summary).not.toMatch(/backup_omit_receipt/);
+    // Q36/S49 — not T-X067 workflow-upgrade drift (#326)
+    expect(art.proofKinds).not.toContain(
+      "incompatible_workflow_upgrade_blocked_or_retained",
+    );
+    expect(art.summary).not.toMatch(
+      /incompatible_workflow_upgrade_blocked_or_retained/,
+    );
+    // Q36/S50 — not T-X068 grouped-outage drift (#327)
+    expect(art.proofKinds).not.toContain("thirty_alerts_one_outage_grouped");
+    expect(art.summary).not.toMatch(/thirty_alerts_one_outage_grouped/);
+    // Q36/S51 — not T-X069 imported-doc drift (#328)
+    expect(art.proofKinds).not.toContain("imported_doc_quarantined_as_data");
+    expect(art.summary).not.toMatch(/imported_doc_quarantined_as_data/);
+    // Q36/S52 — not T-X070 validated-payload drift (#329)
+    expect(art.proofKinds).not.toContain(
+      "validated_payload_not_collected_separate_states",
+    );
+    expect(art.summary).not.toMatch(
+      /validated_payload_not_collected_separate_states/,
+    );
+    // Q36/S53 — not T-X071 host-offline drift (#330)
+    expect(art.proofKinds).not.toContain(
+      "host_offline_public_discovery_unavailable",
+    );
+    expect(art.summary).not.toMatch(/host_offline_public_discovery/);
+    // Q36/S54 — not T-X072 eval-redaction drift (#331)
+    expect(art.proofKinds).not.toContain("customer_data_eval_redaction_blocks");
+    expect(art.summary).not.toMatch(/customer_data_eval_redaction/);
+    // Q36/S55 — not T-X073 offboard residual drift (#332)
+    expect(art.proofKinds).not.toContain("offboard_active_token_residual");
+    expect(art.summary).not.toMatch(/offboard_active_token_residual/);
+    // Q36/S56 — not T-X057 repair-weaken drift (#333)
+    expect(art.proofKinds).not.toContain("repair_weaken_test_rejected");
+    expect(art.summary).not.toMatch(/repair_weaken_test_rejected/);
+    // Q36/S57 — not T-X058 repair-limit drift (#334 merged); SOLE exclusive is #335
+    expect(art.proofKinds).not.toContain("repair_attempt_limit_escalated");
+    expect(art.summary).not.toMatch(/repair_attempt_limit_escalated/);
+    // Q36/S58 — sole duplicate-platform proof kind for SOLE #335
+    expect(art.proofKinds).toEqual([
+      "duplicate_platform_attribution_one_booking",
+    ]);
+    expect(art.proofKinds).toHaveLength(1);
+    // Soft-skip Ads — T-X059 fixture must not invent Ads access claims
+    expect(art.summary).not.toMatch(/chatgptAdsAccess=/);
+    // Pool ≤ T-X073 — no invented fixture past offboard residual
+    expect(SOAK_FIXTURE_CASE_IDS).toContain("T-X073");
+    expect(SOAK_FIXTURE_CASE_IDS).not.toContain("T-X074");
     // Honesty pins — ACCEPTED≠VERIFIED; NONE/NOT_WIRED
     expect(art.summary).toContain("ACCEPTED≠VERIFIED");
     expect(art.externalEffects).toBe("NONE");
