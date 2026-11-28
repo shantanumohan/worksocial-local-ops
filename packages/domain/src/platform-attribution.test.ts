@@ -849,4 +849,178 @@ describe("platform-attribution (T-X059)", () => {
       "T-X058",
     );
   });
+
+  it("excludes T-X060 currency-timezone from attribution wiring (Q36/S42 tip-moved-334 @ 27a872ed)", () => {
+    // Drift fence — T-X060 merged #319; SOLE exclusive is #335 Slot Q.
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X060",
+    );
+  });
+
+  it("sorts retainedClaims by parsed instant across offset timezones (Q36/S43)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-later-utc",
+        platformId: "meta_ads",
+        bookingId: "booking-offset",
+        claimedAtIso: "2026-11-22T19:00:00.000Z",
+      },
+      {
+        claimId: "c-earlier-offset",
+        platformId: "google_ads",
+        bookingId: "booking-offset",
+        claimedAtIso: "2026-11-22T18:30:00+05:30",
+      },
+    ]);
+    expect(projection.retainedClaims.map((c) => c.claimId)).toEqual([
+      "c-earlier-offset",
+      "c-later-utc",
+    ]);
+    expect(projection.wouldDoubleCountIfSummed).toBe(true);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(false);
+    if (decision.allowed) return;
+    expect(decision.code).toBe("SILENT_PLATFORM_SUM_REFUSED");
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("treats claimedAtIso without timezone as invalid (Q36/S44)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-notz",
+        platformId: "google_ads",
+        bookingId: "booking-notz",
+        claimedAtIso: "2026-11-22T19:00:00",
+      },
+    ]);
+    expect(projection.hasInvalidClaims).toBe(true);
+    expect(projection.invalidClaimCount).toBe(1);
+    expect(projection.uniqueBookingCount).toBe(0);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(false);
+    if (decision.allowed) return;
+    expect(decision.code).toBe("INVALID_ATTRIBUTION_CLAIM");
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("sorts uniqueBookingIds lexicographically across platforms (Q36/S45)", () => {
+    const projection = projectUniqueOutcomes([
+      {
+        claimId: "c-b",
+        platformId: "google_ads",
+        bookingId: "booking-b",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "c-a",
+        platformId: "meta_ads",
+        bookingId: "booking-a",
+        claimedAtIso: nowIso,
+      },
+      {
+        claimId: "c-c",
+        platformId: "google_ads",
+        bookingId: "booking-c",
+        claimedAtIso: nowIso,
+      },
+    ]);
+    expect(projection.uniqueBookingIds).toEqual([
+      "booking-a",
+      "booking-b",
+      "booking-c",
+    ]);
+    expect(projection.wouldDoubleCountIfSummed).toBe(false);
+    const decision = refuseSilentPlatformSum(projection);
+    expect(decision.allowed).toBe(true);
+    if (!decision.allowed) return;
+    expect(decision.externalEffects).toBe("NONE");
+    expect(decision.liveProviderWiring).toBe("NOT_WIRED");
+  });
+
+  it("excludes T-X065 browser-auth from attribution wiring (Q36/S47 tip-moved-334)", () => {
+    // Drift fence — T-X065 merged #324; SOLE exclusive is #335 Slot Q.
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X065",
+    );
+  });
+
+  it("excludes T-X066 backup-omit from attribution wiring (Q36/S48 tip-moved-334)", () => {
+    // Drift fence — T-X066 merged #325; SOLE exclusive is #335 Slot Q.
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X066",
+    );
+  });
+
+  it("excludes T-X067 workflow-upgrade from attribution wiring (Q36/S49 tip-moved-334)", () => {
+    // Drift fence — T-X067 merged #326; SOLE exclusive is #335 Slot Q.
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X067",
+    );
+  });
+
+  it("excludes T-X068 grouped-outage from attribution wiring (Q36/S50 tip-moved-334)", () => {
+    // Drift fence — T-X068 merged #327; SOLE exclusive is #335 Slot Q.
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X068",
+    );
+  });
+
+  it("excludes T-X069 imported-doc from attribution wiring (Q36/S51 tip-moved-334)", () => {
+    // Drift fence — T-X069 merged #328; SOLE exclusive is #335 Slot Q.
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X069",
+    );
+  });
+
+  it("excludes T-X070 payload-collection from attribution wiring (Q36/S52 tip-moved-334)", () => {
+    // Drift fence — T-X070 merged #329; SOLE exclusive is #335 Slot Q.
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X070",
+    );
+  });
+
+  it("excludes T-X071 host-offline from attribution wiring (Q36/S53 tip-moved-334)", () => {
+    // Drift fence — T-X071 merged #330; SOLE exclusive is #335 Slot Q.
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X071",
+    );
+  });
+
+  it("excludes T-X072 eval-redaction from attribution wiring (Q36/S54 tip-moved-334)", () => {
+    // Drift fence — T-X072 merged #331; SOLE exclusive is #335 Slot Q.
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X072",
+    );
+  });
+
+  it("excludes T-X073 offboard from attribution wiring (Q36/S55 tip-moved-334)", () => {
+    // Drift fence — T-X073 merged #332; SOLE exclusive is #335 Slot Q.
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X073",
+    );
+  });
+
+  it("excludes T-X057 repair-weaken from attribution wiring (Q36/S56 tip-moved-334)", () => {
+    // Drift fence — T-X057 merged #333; SOLE exclusive is #335 Slot Q.
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X057",
+    );
+  });
+
+  it("excludes T-X058 repair-limit from attribution wiring (Q36/S57 tip-moved-334)", () => {
+    // Drift fence — T-X058 merged #334; SOLE exclusive is #335 Slot Q.
+    expect(DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS).not.toContain(
+      "T-X058",
+    );
+  });
+
+  it("pins SOLE exclusive related case ids for T-X059 (Q36/S58 tip-moved-334)", () => {
+    // SOLE exclusive #335 Slot Q — related wiring stays T-X059 + T-US-038 only.
+    expect([...DUPLICATE_PLATFORM_ATTRIBUTION_RELATED_CASE_IDS]).toEqual([
+      "T-X059",
+      "T-US-038",
+    ]);
+  });
 });
