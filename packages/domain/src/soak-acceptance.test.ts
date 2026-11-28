@@ -1594,7 +1594,7 @@ describe("soak-acceptance domain", () => {
   });
 });
 
-describe("T-X066 backup omit receipt (idle hillclimb L36+ continue L64)", () => {
+describe("T-X066 backup omit receipt (idle hillclimb L36+ continue L65)", () => {
   it("T-X066 maps only BACKUP_OMIT_RECEIPT; sibling proofs exclude T-X066 (L36)", () => {
     expect(expectedProofsForFixtureCase("T-X066")).toEqual([
       SoakProofKind.BACKUP_OMIT_RECEIPT,
@@ -2099,6 +2099,26 @@ describe("T-X066 backup omit receipt (idle hillclimb L36+ continue L64)", () => 
     expect(keyboardFocus).toContain("T-X061");
     expect(keyboardFocus).not.toContain("T-X066");
     expect(soakNotWiredLiveWiring()).toEqual(SOAK_NOT_WIRED_LIVE_WIRING);
+    expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
+      "T-X066",
+    ]);
+  });
+
+  it("T-X066 host-offline-public-discovery and thirty-alerts proofs exclude; T-X071/T-X068 (L65)", () => {
+    const hostOffline = mapProofToFixtureCases(
+      SoakProofKind.HOST_OFFLINE_PUBLIC_DISCOVERY_UNAVAILABLE,
+    );
+    expect(hostOffline).toContain("T-X071");
+    expect(hostOffline).not.toContain("T-X066");
+    const thirtyAlerts = mapProofToFixtureCases(
+      SoakProofKind.THIRTY_ALERTS_ONE_OUTAGE_GROUPED,
+    );
+    expect(thirtyAlerts).toContain("T-X068");
+    expect(thirtyAlerts).not.toContain("T-X066");
+    expect(SOAK_CHATGPT_ADS_SOFT_SKIP_CASE_IDS).not.toContain("T-X066");
+    expect(expectedProofsForFixtureCase("T-X066")).toEqual([
+      SoakProofKind.BACKUP_OMIT_RECEIPT,
+    ]);
     expect(mapProofToFixtureCases(SoakProofKind.BACKUP_OMIT_RECEIPT)).toEqual([
       "T-X066",
     ]);
